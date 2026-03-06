@@ -259,7 +259,7 @@ public class InstrumentedStateStoreTests
     {
         // Arrange
         _innerStoreMock
-            .Setup(x => x.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new TestEntity(), "etag-1"));
 
         // Act
@@ -305,7 +305,7 @@ public class InstrumentedStateStoreTests
         // Arrange
         var expectedException = new InvalidOperationException("Test error");
         _innerStoreMock
-            .Setup(x => x.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(expectedException);
 
         // Act & Assert

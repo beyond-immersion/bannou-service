@@ -103,7 +103,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((TypeEncounterIndexData?)null);
         _mockTypeEncounterIndexStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((TypeEncounterIndexData?)null, (string?)null));
         _mockTypeEncounterIndexStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<TypeEncounterIndexData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -1162,7 +1162,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
                 It.IsAny<string>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, PerspectiveData, string, StateOptions?, CancellationToken>((_, p, _, _) => savedPerspective = p)
+            .Callback<string, PerspectiveData, string, StateOptions?, CancellationToken>((_, p, _, _, _) => savedPerspective = p)
             .ReturnsAsync("etag-1");
 
         var request = new UpdatePerspectiveRequest
@@ -1249,7 +1249,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         PerspectiveData? savedPerspective = null;
         _mockPerspectiveStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, PerspectiveData, string, StateOptions?, CancellationToken>((_, p, _, _) => savedPerspective = p)
+            .Callback<string, PerspectiveData, string, StateOptions?, CancellationToken>((_, p, _, _, _) => savedPerspective = p)
             .ReturnsAsync("etag-1");
 
         var request = new RefreshMemoryRequest
@@ -1291,7 +1291,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         PerspectiveData? savedPerspective = null;
         _mockPerspectiveStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, PerspectiveData, string, StateOptions?, CancellationToken>((_, p, _, _) => savedPerspective = p)
+            .Callback<string, PerspectiveData, string, StateOptions?, CancellationToken>((_, p, _, _, _) => savedPerspective = p)
             .ReturnsAsync("etag-1");
 
         // Act

@@ -218,7 +218,7 @@ public class InterNodeBroadcastManagerTests
 
         // Should not try to remove from Redis
         _mockCacheStore.Verify(s => s.SortedSetRemoveAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -226,7 +226,7 @@ public class InterNodeBroadcastManagerTests
     {
         _mockCacheStore
             .Setup(s => s.SortedSetRemoveAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns(Task.FromResult(true));
 
         using var manager = CreateManager(BroadcastMode.Both, "ws://localhost:5012/connect/broadcast");
@@ -237,7 +237,7 @@ public class InterNodeBroadcastManagerTests
         _mockCacheStore.Verify(s => s.SortedSetRemoveAsync(
             "broadcast-registry",
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -245,7 +245,7 @@ public class InterNodeBroadcastManagerTests
     {
         _mockCacheStore
             .Setup(s => s.SortedSetRemoveAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns(Task.FromResult(true));
 
         using var manager = CreateManager(BroadcastMode.Both, "ws://localhost:5012/connect/broadcast");
@@ -254,7 +254,7 @@ public class InterNodeBroadcastManagerTests
         manager.Dispose();
 
         _mockCacheStore.Verify(s => s.SortedSetRemoveAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

@@ -122,7 +122,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Default GetWithETagAsync for optimistic concurrency in list operations
         _mockTemplateStringStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((string?)null, (string?)null));
         _mockTemplateStringStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -132,7 +132,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync("etag");
 
         _mockInstanceStringStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((string?)null, (string?)null));
         _mockInstanceStringStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))

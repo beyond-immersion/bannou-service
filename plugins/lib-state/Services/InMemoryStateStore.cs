@@ -127,6 +127,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     where TValue : class
 {
     private readonly string _storeName;
+    private readonly TimeSpan? _defaultTtl;
     private readonly ILogger<InMemoryStateStore<TValue>> _logger;
     private readonly StateErrorPublisherAsync? _errorPublisher;
 
@@ -141,14 +142,17 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     /// Creates a new in-memory state store.
     /// </summary>
     /// <param name="storeName">Store name for namespacing.</param>
+    /// <param name="defaultTtl">Default TTL for entries (null = no expiration). Matches Redis behavior.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="errorPublisher">Optional callback for publishing state errors with deduplication.</param>
     public InMemoryStateStore(
         string storeName,
+        TimeSpan? defaultTtl,
         ILogger<InMemoryStateStore<TValue>> logger,
         StateErrorPublisherAsync? errorPublisher = null)
     {
         _storeName = storeName;
+        _defaultTtl = defaultTtl;
         _logger = logger;
         _errorPublisher = errorPublisher;
 
@@ -179,6 +183,26 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         {
             _store.TryRemove(key, out _);
         }
+    }
+
+    /// <summary>
+    /// Resolves TTL to an absolute expiration timestamp, matching Redis behavior:
+    /// explicit options TTL wins, then falls back to store default TTL, then no expiration.
+    /// </summary>
+    private DateTimeOffset? ResolveExpiration(StateOptions? options)
+    {
+        var ttlSeconds = options?.Ttl;
+        if (ttlSeconds.HasValue)
+        {
+            return DateTimeOffset.UtcNow.AddSeconds(ttlSeconds.Value);
+        }
+
+        if (_defaultTtl.HasValue)
+        {
+            return DateTimeOffset.UtcNow.Add(_defaultTtl.Value);
+        }
+
+        return null;
     }
 
     /// <inheritdoc/>
@@ -251,10 +275,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     {
 
         var json = BannouJson.Serialize(value);
-        var ttl = options?.Ttl;
-        DateTimeOffset? expiresAt = ttl.HasValue
-            ? DateTimeOffset.UtcNow.AddSeconds(ttl.Value)
-            : null;
+        var expiresAt = ResolveExpiration(options);
 
         var entry = _store.AddOrUpdate(
             key,
@@ -289,10 +310,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         await Task.CompletedTask;
 
         var json = BannouJson.Serialize(value);
-        var ttl = options?.Ttl;
-        DateTimeOffset? expiresAt = ttl.HasValue
-            ? DateTimeOffset.UtcNow.AddSeconds(ttl.Value)
-            : null;
+        var expiresAt = ResolveExpiration(options);
 
         // Empty etag means "create new entry if it doesn't exist" (matches Redis/MySQL semantics)
         if (string.IsNullOrEmpty(etag))
@@ -339,7 +357,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             {
                 Json = json,
                 Version = existing.Version + 1,
-                ExpiresAt = expiresAt ?? existing.ExpiresAt
+                ExpiresAt = expiresAt
             };
 
             // Attempt atomic update
@@ -433,10 +451,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         }
 
         var result = new Dictionary<string, string>();
-        var ttl = options?.Ttl;
-        DateTimeOffset? expiresAt = ttl.HasValue
-            ? DateTimeOffset.UtcNow.AddSeconds(ttl.Value)
-            : null;
+        var expiresAt = ResolveExpiration(options);
 
         foreach (var (key, value) in itemList)
         {
@@ -579,9 +594,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         await Task.CompletedTask;
 
         var json = BannouJson.Serialize(item);
-        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
-            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
-            : null;
+        var expiresAt = ResolveExpiration(options);
 
         var entry = _setStore.GetOrAdd(key, _ => new InMemoryStoreData.SetEntry());
 
@@ -620,9 +633,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             return 0;
         }
 
-        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
-            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
-            : null;
+        var expiresAt = ResolveExpiration(options);
 
         var entry = _setStore.GetOrAdd(key, _ => new InMemoryStoreData.SetEntry());
 
@@ -858,9 +869,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     {
         await Task.CompletedTask;
 
-        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
-            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
-            : null;
+        var expiresAt = ResolveExpiration(options);
 
         var entry = _sortedSetStore.GetOrAdd(key, _ => new InMemoryStoreData.SortedSetEntry());
 
@@ -901,9 +910,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             return 0;
         }
 
-        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
-            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
-            : null;
+        var expiresAt = ResolveExpiration(options);
 
         var sortedSetEntry = _sortedSetStore.GetOrAdd(key, _ => new InMemoryStoreData.SortedSetEntry());
 
@@ -1209,9 +1216,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     {
         await Task.CompletedTask;
 
-        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
-            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
-            : null;
+        var expiresAt = ResolveExpiration(options);
 
         var entry = _counterStore.GetOrAdd(key, _ => new InMemoryStoreData.CounterEntry());
 
@@ -1280,9 +1285,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     {
         await Task.CompletedTask;
 
-        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
-            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
-            : null;
+        var expiresAt = ResolveExpiration(options);
 
         var entry = _counterStore.GetOrAdd(key, _ => new InMemoryStoreData.CounterEntry());
 
@@ -1390,9 +1393,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         await Task.CompletedTask;
 
         var json = BannouJson.Serialize(value);
-        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
-            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
-            : null;
+        var expiresAt = ResolveExpiration(options);
 
         var entry = _hashStore.GetOrAdd(key, _ => new InMemoryStoreData.HashStoreEntry());
 
@@ -1437,9 +1438,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             return;
         }
 
-        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
-            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
-            : null;
+        var expiresAt = ResolveExpiration(options);
 
         var entry = _hashStore.GetOrAdd(key, _ => new InMemoryStoreData.HashStoreEntry());
 

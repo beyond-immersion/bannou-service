@@ -28,7 +28,7 @@ public class InMemoryHashTests : IDisposable
     {
         _mockLogger = new Mock<ILogger<InMemoryStateStore<TestEntity>>>();
         _storeName = $"test-hash-store-{Guid.NewGuid():N}";
-        _store = new InMemoryStateStore<TestEntity>(_storeName, _mockLogger.Object);
+        _store = new InMemoryStateStore<TestEntity>(_storeName, null, _mockLogger.Object);
     }
 
     public void Dispose()
@@ -587,8 +587,8 @@ public class InMemoryHashTests : IDisposable
     {
         // Arrange
         var sharedStoreName = $"shared-hash-{Guid.NewGuid():N}";
-        var store1 = new InMemoryStateStore<TestEntity>(sharedStoreName, _mockLogger.Object);
-        var store2 = new InMemoryStateStore<TestEntity>(sharedStoreName, _mockLogger.Object);
+        var store1 = new InMemoryStateStore<TestEntity>(sharedStoreName, null, _mockLogger.Object);
+        var store2 = new InMemoryStateStore<TestEntity>(sharedStoreName, null, _mockLogger.Object);
 
         // Act - Set via store1
         await store1.HashSetAsync("user:123", "name", "Alice");

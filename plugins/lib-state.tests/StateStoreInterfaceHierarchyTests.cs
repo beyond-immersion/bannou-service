@@ -143,7 +143,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     {
         // Arrange
         var logger = new Mock<ILogger<InMemoryStateStore<TestEntity>>>();
-        var store = new InMemoryStateStore<TestEntity>("cast-test-store", logger.Object);
+        var store = new InMemoryStateStore<TestEntity>("cast-test-store", null, logger.Object);
 
         // Act & Assert - Should not throw
         var cacheableStore = store as ICacheableStateStore<TestEntity>;
@@ -158,7 +158,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     {
         // Arrange
         var logger = new Mock<ILogger<InMemoryStateStore<TestEntity>>>();
-        var store = new InMemoryStateStore<TestEntity>("cast-test-store", logger.Object);
+        var store = new InMemoryStateStore<TestEntity>("cast-test-store", null, logger.Object);
 
         // Act & Assert - Should not throw
         var baseStore = store as IStateStore<TestEntity>;
@@ -398,7 +398,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
         // Arrange - use a unique store name for this test
         var testStoreName = $"static-count-test-{Guid.NewGuid():N}";
         var logger = new Mock<ILogger<InMemoryStateStore<TestEntity>>>();
-        var store = new InMemoryStateStore<TestEntity>(testStoreName, logger.Object);
+        var store = new InMemoryStateStore<TestEntity>(testStoreName, null, logger.Object);
 
         await store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test1" });
         await store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Test2" });
@@ -472,7 +472,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     {
         // Arrange
         var logger = new Mock<ILogger<InMemoryStateStore<TestEntity>>>();
-        IStateStore<TestEntity> store = new InMemoryStateStore<TestEntity>("type-check-store", logger.Object);
+        IStateStore<TestEntity> store = new InMemoryStateStore<TestEntity>("type-check-store", null, logger.Object);
 
         // Act & Assert - Pattern: check searchable first
         if (store is ISearchableStateStore<TestEntity>)

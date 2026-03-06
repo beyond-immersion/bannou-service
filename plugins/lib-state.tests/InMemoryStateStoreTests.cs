@@ -29,7 +29,7 @@ public class InMemoryStateStoreTests : IDisposable
     {
         _mockLogger = new Mock<ILogger<InMemoryStateStore<TestEntity>>>();
         _storeName = $"test-store-{Guid.NewGuid():N}"; // Unique store per test
-        _store = new InMemoryStateStore<TestEntity>(_storeName, _mockLogger.Object);
+        _store = new InMemoryStateStore<TestEntity>(_storeName, null, _mockLogger.Object);
     }
 
     public void Dispose()
@@ -489,8 +489,8 @@ public class InMemoryStateStoreTests : IDisposable
     {
         // Arrange
         var sharedStoreName = $"shared-{Guid.NewGuid():N}";
-        var store1 = new InMemoryStateStore<TestEntity>(sharedStoreName, _mockLogger.Object);
-        var store2 = new InMemoryStateStore<TestEntity>(sharedStoreName, _mockLogger.Object);
+        var store1 = new InMemoryStateStore<TestEntity>(sharedStoreName, null, _mockLogger.Object);
+        var store2 = new InMemoryStateStore<TestEntity>(sharedStoreName, null, _mockLogger.Object);
 
         // Act - Save via store1
         await store1.SaveAsync("shared-key", new TestEntity { Id = "1", Name = "Shared", Value = 42 });
@@ -508,8 +508,8 @@ public class InMemoryStateStoreTests : IDisposable
     public async Task MultipleInstances_WithDifferentStoreNames_DoNotShareData()
     {
         // Arrange
-        var store1 = new InMemoryStateStore<TestEntity>($"store-a-{Guid.NewGuid():N}", _mockLogger.Object);
-        var store2 = new InMemoryStateStore<TestEntity>($"store-b-{Guid.NewGuid():N}", _mockLogger.Object);
+        var store1 = new InMemoryStateStore<TestEntity>($"store-a-{Guid.NewGuid():N}", null, _mockLogger.Object);
+        var store2 = new InMemoryStateStore<TestEntity>($"store-b-{Guid.NewGuid():N}", null, _mockLogger.Object);
 
         // Act - Save via store1
         await store1.SaveAsync("key", new TestEntity { Id = "1", Name = "Store1", Value = 1 });
@@ -903,8 +903,8 @@ public class InMemoryStateStoreTests : IDisposable
     {
         // Arrange
         var sharedStoreName = $"shared-set-store-{Guid.NewGuid():N}";
-        var store1 = new InMemoryStateStore<TestEntity>(sharedStoreName, _mockLogger.Object);
-        var store2 = new InMemoryStateStore<TestEntity>(sharedStoreName, _mockLogger.Object);
+        var store1 = new InMemoryStateStore<TestEntity>(sharedStoreName, null, _mockLogger.Object);
+        var store2 = new InMemoryStateStore<TestEntity>(sharedStoreName, null, _mockLogger.Object);
 
         var item = new TestEntity { Id = "1", Name = "Shared", Value = 42 };
 

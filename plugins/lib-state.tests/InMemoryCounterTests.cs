@@ -28,7 +28,7 @@ public class InMemoryCounterTests : IDisposable
     {
         _mockLogger = new Mock<ILogger<InMemoryStateStore<TestEntity>>>();
         _storeName = $"test-counter-store-{Guid.NewGuid():N}";
-        _store = new InMemoryStateStore<TestEntity>(_storeName, _mockLogger.Object);
+        _store = new InMemoryStateStore<TestEntity>(_storeName, null, _mockLogger.Object);
     }
 
     public void Dispose()
@@ -386,8 +386,8 @@ public class InMemoryCounterTests : IDisposable
     {
         // Arrange
         var sharedStoreName = $"shared-counter-{Guid.NewGuid():N}";
-        var store1 = new InMemoryStateStore<TestEntity>(sharedStoreName, _mockLogger.Object);
-        var store2 = new InMemoryStateStore<TestEntity>(sharedStoreName, _mockLogger.Object);
+        var store1 = new InMemoryStateStore<TestEntity>(sharedStoreName, null, _mockLogger.Object);
+        var store2 = new InMemoryStateStore<TestEntity>(sharedStoreName, null, _mockLogger.Object);
 
         // Act - Increment via store1
         await store1.IncrementAsync("counter", 50);

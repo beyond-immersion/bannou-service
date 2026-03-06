@@ -277,7 +277,7 @@ public class ActorLocalMemoryStoreTests
             .Callback<string, CognitionMemory, StateOptions?, CancellationToken>((_, mem, _, _) => savedMemory = mem)
             .ReturnsAsync("etag-new");
 
-        _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string>(), "etag-1"));
         _mockIndexStore.Setup(s => s.TrySaveAsync(
             It.IsAny<string>(),
@@ -311,7 +311,7 @@ public class ActorLocalMemoryStoreTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-new");
 
-        _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { "existing-mem" }, "etag-1"));
         _mockIndexStore.Setup(s => s.TrySaveAsync(
             It.IsAny<string>(),
@@ -350,7 +350,7 @@ public class ActorLocalMemoryStoreTests
             .Callback<string, CognitionMemory, StateOptions?, CancellationToken>((_, mem, _, _) => savedMemory = mem)
             .ReturnsAsync("etag-new");
 
-        _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((List<string>?)null, (string?)null));
         _mockIndexStore.Setup(s => s.SaveAsync(
             It.IsAny<string>(),
@@ -453,7 +453,7 @@ public class ActorLocalMemoryStoreTests
             .Callback<string, CancellationToken>((key, _) => deletedKey = key)
             .ReturnsAsync(true);
 
-        _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { "mem-1", "mem-2" }, "etag-1"));
         _mockIndexStore.Setup(s => s.TrySaveAsync(
             It.IsAny<string>(),
@@ -481,7 +481,7 @@ public class ActorLocalMemoryStoreTests
         _mockMemoryStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { "other-mem" }, "etag-1"));
 
         // Should not throw

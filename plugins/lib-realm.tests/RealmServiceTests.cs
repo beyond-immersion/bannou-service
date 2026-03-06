@@ -537,7 +537,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
 
         // Verify save was called with optimistic concurrency
         _mockRealmStore.Verify(s => s.TrySaveAsync(
-            $"{REALM_KEY_PREFIX}{realmId}", It.IsAny<RealmModel>(), "mock-etag", It.IsAny<CancellationToken>()), Times.Once);
+            $"{REALM_KEY_PREFIX}{realmId}", It.IsAny<RealmModel>(), "mock-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify event was published via IMessageBus (3-param convenience overload)
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -645,7 +645,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
 
         // Verify no delete occurred
         _mockRealmStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -2126,8 +2126,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         RealmModel? savedModel = null;
         _mockRealmStore
             .Setup(s => s.TrySaveAsync(
-                $"{REALM_KEY_PREFIX}{existingId}", It.IsAny<RealmModel>(), "mock-etag", It.IsAny<CancellationToken>()))
-            .Callback<string, RealmModel, string, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+                $"{REALM_KEY_PREFIX}{existingId}", It.IsAny<RealmModel>(), "mock-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, RealmModel, string, StateOptions?, CancellationToken>((_, m, _, _, _) => savedModel = m)
             .ReturnsAsync("new-etag");
 
         // Act

@@ -368,7 +368,7 @@ public class TokenServiceTests
         _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
             It.IsAny<Guid>(),
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
@@ -409,7 +409,7 @@ public class TokenServiceTests
         _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
             It.IsAny<Guid>(),
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
@@ -481,7 +481,7 @@ public class TokenServiceTests
         _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
             It.IsAny<Guid>(),
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
@@ -509,7 +509,7 @@ public class TokenServiceTests
 
         _mockSessionService.Setup(s => s.GetSessionAsync(
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(corruptedSession);
 
         string? capturedOperation = null;
@@ -559,7 +559,7 @@ public class TokenServiceTests
         _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
             It.IsAny<Guid>(),
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
@@ -586,7 +586,7 @@ public class TokenServiceTests
 
         _mockSessionService.Setup(s => s.GetSessionAsync(
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(expiredSession);
 
         // Act
@@ -613,7 +613,7 @@ public class TokenServiceTests
         _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
             It.IsAny<Guid>(),
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
@@ -642,7 +642,7 @@ public class TokenServiceTests
 
         _mockSessionService.Setup(s => s.GetSessionAsync(
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(validSession);
 
         // Capture the session data when saved (to verify LastActiveAt was updated)

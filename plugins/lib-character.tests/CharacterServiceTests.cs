@@ -780,7 +780,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Setup refcount store
         _mockRefCountStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new RefCountData { CharacterId = characterId }, "etag1"));
         _mockRefCountStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<RefCountData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -839,7 +839,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Setup refcount store
         _mockRefCountStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((RefCountData?)null, (string?)null));
         _mockRefCountStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<RefCountData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -896,7 +896,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Setup refcount store
         _mockRefCountStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((RefCountData?)null, (string?)null));
         _mockRefCountStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<RefCountData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -970,7 +970,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Setup refcount store
         _mockRefCountStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((RefCountData?)null, (string?)null));
         _mockRefCountStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<RefCountData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -1410,7 +1410,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Setup realm index (empty initially)
         _mockListStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((List<string>?)null, (string?)null));
         _mockListStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -1641,7 +1641,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Setup realm index
         _mockListStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((List<string>?)null, (string?)null));
         _mockListStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -1690,7 +1690,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Setup realm index for removal
         _mockListStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { characterId.ToString() }, "etag1"));
         _mockListStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -1808,7 +1808,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Setup realm index removal
         _mockListStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { characterId.ToString() }, "etag1"));
         _mockListStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -1872,7 +1872,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Verify character was NOT deleted
         _mockCharacterStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -1893,7 +1893,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Setup realm index removal
         _mockListStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { characterId.ToString() }, "etag1"));
         _mockListStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -1935,7 +1935,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Verify character was NOT deleted
         _mockCharacterStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
 
         // Verify error event was published
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
@@ -2014,7 +2014,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         // Setup realm index operations
         _mockListStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { characterId.ToString() }, "etag1"));
         _mockListStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))

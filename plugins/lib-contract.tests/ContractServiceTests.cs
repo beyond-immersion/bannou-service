@@ -666,7 +666,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         _mockInstanceStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, ContractInstanceModel, string, StateOptions?, CancellationToken>((k, m, _, _) => savedInstance = m)
+            .Callback<string, ContractInstanceModel, string, StateOptions?, CancellationToken>((k, m, _, _, _) => savedInstance = m)
             .ReturnsAsync("etag-1");
 
         var request = new ConsentToContractRequest
@@ -713,7 +713,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         _mockInstanceStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, ContractInstanceModel, string, StateOptions?, CancellationToken>((k, m, _, _) => savedInstance = m)
+            .Callback<string, ContractInstanceModel, string, StateOptions?, CancellationToken>((k, m, _, _, _) => savedInstance = m)
             .ReturnsAsync("etag-1");
 
         var request = new ConsentToContractRequest
@@ -5256,7 +5256,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .ReturnsAsync((instance, "etag-0"));
         _mockInstanceStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, ContractInstanceModel, string, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .Callback<string, ContractInstanceModel, string, StateOptions?, CancellationToken>((_, m, _, _, _) => savedModel = m)
             .ReturnsAsync("etag-1");
 
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
@@ -5754,7 +5754,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                 It.IsAny<string>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ContractInstanceModel, string, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .Callback<string, ContractInstanceModel, string, StateOptions?, CancellationToken>((_, m, _, _, _) => savedModel = m)
             .ReturnsAsync("etag-1");
 
         var request = new ExecuteContractRequest

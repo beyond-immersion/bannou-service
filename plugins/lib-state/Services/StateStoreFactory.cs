@@ -434,7 +434,11 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                 backend = "memory";
                 var errorPublisher = CreateErrorPublisher(storeName, backend);
                 var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
-                store = new InMemoryStateStore<TValue>(storeName, memoryLogger, errorPublisher);
+                var defaultTtl = _configuration.Stores.TryGetValue(storeName, out var memStoreConfig)
+                    && memStoreConfig.DefaultTtlSeconds.HasValue
+                    ? TimeSpan.FromSeconds(memStoreConfig.DefaultTtlSeconds.Value)
+                    : (TimeSpan?)null;
+                store = new InMemoryStateStore<TValue>(storeName, defaultTtl, memoryLogger, errorPublisher);
             }
             else if (_configuration.UseSqlite)
             {
@@ -464,7 +468,10 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                     backend = "memory";
                     var errorPublisher = CreateErrorPublisher(storeName, backend);
                     var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
-                    store = new InMemoryStateStore<TValue>(storeName, memoryLogger, errorPublisher);
+                    var defaultTtl = storeConfig.DefaultTtlSeconds.HasValue
+                        ? TimeSpan.FromSeconds(storeConfig.DefaultTtlSeconds.Value)
+                        : (TimeSpan?)null;
+                    store = new InMemoryStateStore<TValue>(storeName, defaultTtl, memoryLogger, errorPublisher);
                 }
             }
             else
@@ -512,7 +519,10 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                     backend = "memory";
                     var errorPublisher = CreateErrorPublisher(storeName, backend);
                     var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
-                    store = new InMemoryStateStore<TValue>(storeName, memoryLogger, errorPublisher);
+                    var defaultTtl = storeConfig.DefaultTtlSeconds.HasValue
+                        ? TimeSpan.FromSeconds(storeConfig.DefaultTtlSeconds.Value)
+                        : (TimeSpan?)null;
+                    store = new InMemoryStateStore<TValue>(storeName, defaultTtl, memoryLogger, errorPublisher);
                 }
                 else // MySql
                 {

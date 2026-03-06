@@ -1013,7 +1013,7 @@ public class GameServiceServiceTests
 
         // Verify service was NOT deleted (cleanup failed)
         _mockModelStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -1051,7 +1051,7 @@ public class GameServiceServiceTests
 
         // Verify service was NOT deleted
         _mockModelStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

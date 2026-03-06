@@ -27,7 +27,7 @@ public class InMemoryBulkOperationsTests : IDisposable
     {
         _mockLogger = new Mock<ILogger<InMemoryStateStore<TestModel>>>();
         _storeName = $"bulk-test-{Guid.NewGuid():N}";
-        _store = new InMemoryStateStore<TestModel>(_storeName, _mockLogger.Object);
+        _store = new InMemoryStateStore<TestModel>(_storeName, null, _mockLogger.Object);
     }
 
     public void Dispose()

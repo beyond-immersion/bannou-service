@@ -508,13 +508,13 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockSpeciesStore
             .Setup(s => s.DeleteAsync(
                 It.IsAny<string>(),
-                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         _mockStringStore
             .Setup(s => s.DeleteAsync(
                 It.IsAny<string>(),
-                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         _mockListStore

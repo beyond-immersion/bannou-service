@@ -21,7 +21,7 @@ public class ChatServiceTypingTests : ChatServiceTestBase
 
         // Sorted set score returns null => new typing (not heartbeat)
         MockParticipantStore
-            .Setup(s => s.SortedSetScoreAsync("typing:active", It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SortedSetScoreAsync("typing:active", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((double?)null);
 
         // Set up participant for display name resolution
@@ -61,7 +61,7 @@ public class ChatServiceTypingTests : ChatServiceTestBase
 
         // Sorted set score returns a value => heartbeat refresh (already typing)
         MockParticipantStore
-            .Setup(s => s.SortedSetScoreAsync("typing:active", It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SortedSetScoreAsync("typing:active", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1234567890.0);
 
         var status = await service.TypingAsync(new TypingRequest
@@ -95,7 +95,7 @@ public class ChatServiceTypingTests : ChatServiceTestBase
 
         // SortedSetRemoveAsync returns true => was typing
         MockParticipantStore
-            .Setup(s => s.SortedSetRemoveAsync("typing:active", It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SortedSetRemoveAsync("typing:active", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var status = await service.EndTypingAsync(new EndTypingRequest
@@ -122,7 +122,7 @@ public class ChatServiceTypingTests : ChatServiceTestBase
 
         // SortedSetRemoveAsync returns false => was not typing
         MockParticipantStore
-            .Setup(s => s.SortedSetRemoveAsync("typing:active", It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SortedSetRemoveAsync("typing:active", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         var status = await service.EndTypingAsync(new EndTypingRequest
@@ -150,7 +150,7 @@ public class ChatServiceTypingTests : ChatServiceTestBase
         var service = CreateService();
 
         MockParticipantStore
-            .Setup(s => s.SortedSetScoreAsync("typing:active", It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SortedSetScoreAsync("typing:active", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1234567890.0);
 
         await service.TypingAsync(new TypingRequest
