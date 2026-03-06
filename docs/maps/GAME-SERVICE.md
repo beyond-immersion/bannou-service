@@ -88,18 +88,18 @@ This plugin does not consume external events.
 
 | Method | Route | Roles | Mutates | Publishes |
 |--------|-------|-------|---------|-----------|
-| ListServices | POST /game-service/services/list | user | - | - |
-| GetService | POST /game-service/services/get | user | - | - |
-| CreateService | POST /game-service/services/create | admin | service, stub-index, list | game-service.created |
-| UpdateService | POST /game-service/services/update | admin | service | game-service.updated |
-| DeleteService | POST /game-service/services/delete | admin | service, stub-index, list | game-service.deleted |
+| ListServices | POST /game-service/services/list | [] | - | - |
+| GetService | POST /game-service/services/get | [] | - | - |
+| CreateService | POST /game-service/services/create | [] | service, stub-index, list | game-service.created |
+| UpdateService | POST /game-service/services/update | [] | service | game-service.updated |
+| DeleteService | POST /game-service/services/delete | [] | service, stub-index, list | game-service.deleted |
 
 ---
 
 ## Methods
 
 ### ListServices
-POST /game-service/services/list | Roles: [user]
+POST /game-service/services/list | Roles: []
 
 ```
 READ list-store:"game-service-list" -> serviceIds
@@ -115,7 +115,7 @@ RETURN (200, { Services: paginated, TotalCount: filtered count before pagination
 ```
 
 ### GetService
-POST /game-service/services/get | Roles: [user]
+POST /game-service/services/get | Roles: []
 
 ```
 IF body.ServiceId has value
@@ -129,7 +129,7 @@ RETURN (200, ServiceInfo from model)
 ```
 
 ### CreateService
-POST /game-service/services/create | Roles: [admin]
+POST /game-service/services/create | Roles: []
 
 ```
 normalizedStubName = body.StubName.ToLower()
@@ -150,7 +150,7 @@ RETURN (200, ServiceInfo)
 ```
 
 ### UpdateService
-POST /game-service/services/update | Roles: [admin]
+POST /game-service/services/update | Roles: []
 
 ```
 READ model-store:"game-service:{body.ServiceId}" -> model
@@ -168,7 +168,7 @@ RETURN (200, ServiceInfo)
 ```
 
 ### DeleteService
-POST /game-service/services/delete | Roles: [admin]
+POST /game-service/services/delete | Roles: []
 
 ```
 READ model-store:"game-service:{body.ServiceId}" -> model

@@ -863,7 +863,7 @@ Archives lifecycle summary (stages traversed, marriages, children, fulfillment) 
 
 ### Lifecycle Management (8 endpoints)
 
-All endpoints require `developer` role.
+Orchestration endpoints (`InitiateMarriage`, `InitiateProcreation`, `RecordDeath`) and service queries (`QueryByStage`, `QueryByBloodline`) use `x-permissions: []` (service-to-service only — called by god-actors via ABML action handlers, behavior systems, and other L4 services). Profile read (`GetLifecycleProfile`) uses `x-permissions: []`. Administrative endpoints (`SetNaturalDeathYear`, `SeedLifecycleProfile`) require `developer` role.
 
 - **InitiateMarriage** (`/character-lifecycle/marriage/initiate`): Validates eligibility (adult/elder stage, no prohibited relationship, species compatibility). Creates marriage contract via `IContractClient`. Creates SPOUSE relationship via `IRelationshipClient`. Resolves household (configurable: join existing, merge, or create new via Organization). Seeds Disposition feelings. Publishes `character-lifecycle.marriage`.
 
@@ -883,7 +883,7 @@ All endpoints require `developer` role.
 
 ### Heritage Management (6 endpoints)
 
-Read endpoints (`GetGeneticProfile`, `GetPhenotype`, `QueryByAptitude`, `GetFamilyTree`) use `x-permissions: [user]`. Write endpoints (`SeedGeneticProfile`, `SimulateOffspring`) require `developer` role.
+Player-facing reads (`GetGeneticProfile`, `GetPhenotype`, `GetFamilyTree`) use `x-permissions: [user]`. Service queries (`QueryByAptitude`, `SimulateOffspring`) use `x-permissions: []` (called by Storyline, Quest, and behavior systems). Write endpoints (`SeedGeneticProfile`) require `developer` role.
 
 - **GetGeneticProfile** (`/character-lifecycle/heritage/get-genetic-profile`): Returns full genetic profile for a character: genotype, phenotype, aptitudes, bloodlines, mutations, parent references.
 
@@ -899,7 +899,7 @@ Read endpoints (`GetGeneticProfile`, `GetPhenotype`, `QueryByAptitude`, `GetFami
 
 ### Template Management (6 endpoints)
 
-All require `developer` role.
+Seed/write endpoints (`SeedLifecycleTemplate`, `SeedHeritableTraitTemplate`, `SeedHybridTemplate`, `ListTemplates`) require `developer` role. Read endpoints (`GetLifecycleTemplate`, `GetHeritableTraitTemplate`) use `x-permissions: []` (internal configuration reads by lifecycle processing and other services).
 
 - **SeedLifecycleTemplate** (`/character-lifecycle/template/seed-lifecycle`): Creates lifecycle stage definitions for a species. Validates stage boundaries are contiguous (no age gaps or overlaps).
 

@@ -49,9 +49,7 @@ paths:
       operationId: getSpecies
       tags:
       - Species
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -75,9 +73,7 @@ paths:
       operationId: getSpeciesByCode
       tags:
       - Species
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -101,9 +97,7 @@ paths:
       operationId: listSpecies
       tags:
       - Species
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -125,9 +119,7 @@ paths:
       operationId: listSpeciesByRealm
       tags:
       - Species
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -150,9 +142,7 @@ paths:
       operationId: createSpecies
       tags:
       - Species Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -177,9 +167,7 @@ paths:
       operationId: updateSpecies
       tags:
       - Species Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -208,9 +196,7 @@ paths:
       operationId: deleteSpecies
       tags:
       - Species Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -238,9 +224,7 @@ paths:
       operationId: deprecateSpecies
       tags:
       - Species Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -266,9 +250,7 @@ paths:
       operationId: undeprecateSpecies
       tags:
       - Species Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -303,9 +285,7 @@ paths:
       operationId: mergeSpecies
       tags:
       - Species Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -333,9 +313,7 @@ paths:
       operationId: addSpeciesToRealm
       tags:
       - Species Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -361,9 +339,7 @@ paths:
       operationId: removeSpeciesFromRealm
       tags:
       - Species Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -392,9 +368,7 @@ paths:
       operationId: seedSpecies
       tags:
       - Species Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

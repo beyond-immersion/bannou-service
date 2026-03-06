@@ -112,7 +112,7 @@ Session connected/disconnected/reconnected/heartbeat received via `ISessionActiv
 | GetCapabilities | POST /permission/capabilities | [] | - | - |
 | ValidateApiAccess | POST /permission/validate | [] | - | - |
 | RegisterServicePermissions | POST /permission/register-service | [] | matrix, hash, version, registration, service-states, session-permissions | permission.capability-update, PUSH session-capabilities |
-| UpdateSessionState | POST /permission/update-session-state | [admin] | session-states, session-permissions | permission.capability-update, PUSH session-capabilities |
+| UpdateSessionState | POST /permission/update-session-state | [] | session-states, session-permissions | permission.capability-update, PUSH session-capabilities |
 | UpdateSessionRole | POST /permission/update-session-role | [] | session-states, session-permissions | permission.capability-update, PUSH session-capabilities |
 | ClearSessionState | POST /permission/clear-session-state | [] | session-states, session-permissions | permission.capability-update, PUSH session-capabilities |
 | GetSessionInfo | POST /permission/get-session-info | [] | - | - |
@@ -178,7 +178,7 @@ RETURN (200, RegistrationResponse {})
 ```
 
 ### UpdateSessionState
-POST /permission/update-session-state | Roles: [admin]
+POST /permission/update-session-state | Roles: []
 
 ```
 LOCK permission-lock:"{sessionId}" timeout=SessionLockTimeoutSeconds

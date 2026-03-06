@@ -2299,7 +2299,7 @@ public partial class AssetService : IAssetService
                 return; // Success
             }
 
-            var savedEtag = await _stringListIndexStore.TrySaveAsync(indexKey, index, etag, cancellationToken).ConfigureAwait(false);
+            var savedEtag = await _stringListIndexStore.TrySaveAsync(indexKey, index, etag, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (savedEtag != null)
             {
                 return; // Success
@@ -2377,7 +2377,7 @@ public partial class AssetService : IAssetService
                 return;
             }
 
-            var savedEtag = await indexStore.TrySaveAsync(indexKey, index, etag, cancellationToken).ConfigureAwait(false);
+            var savedEtag = await indexStore.TrySaveAsync(indexKey, index, etag, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (savedEtag != null)
             {
                 return;
@@ -2802,7 +2802,7 @@ public partial class AssetService : IAssetService
         // Save updated bundle with ETag
         // GetWithETagAsync returns non-null ETag when bundle is found (null check above);
         // coalesce satisfies compiler's nullable analysis
-        var newBundleEtag = await _bundleMetadataStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
+        var newBundleEtag = await _bundleMetadataStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newBundleEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for bundle {BundleId}", body.BundleId);
@@ -2918,7 +2918,7 @@ public partial class AssetService : IAssetService
             await _bundleVersionRecordCacheStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
 
             // GetWithETagAsync returns non-null ETag when bundle is found; coalesce satisfies compiler
-            var deleteEtag = await _bundleMetadataStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
+            var deleteEtag = await _bundleMetadataStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken: cancellationToken);
             if (deleteEtag == null)
             {
                 _logger.LogWarning("Concurrent modification detected for bundle {BundleId} during delete", body.BundleId);
@@ -3016,7 +3016,7 @@ public partial class AssetService : IAssetService
         await _bundleVersionRecordCacheStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
 
         // GetWithETagAsync returns non-null ETag when bundle is found; coalesce satisfies compiler
-        var restoreEtag = await _bundleMetadataStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
+        var restoreEtag = await _bundleMetadataStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (restoreEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for bundle {BundleId} during restore", body.BundleId);

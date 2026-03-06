@@ -81,9 +81,7 @@ paths:
       operationId: getVoiceRoom
       tags:
       - Voice Rooms
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -111,7 +109,8 @@ paths:
       operationId: joinVoiceRoom
       tags:
       - Voice Rooms
-      x-permissions: []
+      x-permissions:
+      - role: user
       requestBody:
         required: true
         content:
@@ -140,7 +139,10 @@ paths:
       operationId: leaveVoiceRoom
       tags:
       - Voice Rooms
-      x-permissions: []
+      x-permissions:
+      - role: user
+        states:
+          voice: in_room
       requestBody:
         required: true
         content:
@@ -187,9 +189,7 @@ paths:
       operationId: peerHeartbeat
       tags:
       - Voice Peers
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

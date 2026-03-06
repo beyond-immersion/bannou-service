@@ -702,7 +702,7 @@ All endpoints require `developer` role.
 
 ### Inhabitant Management (4 endpoints)
 
-All endpoints require `developer` role.
+Automation endpoints (`Spawn`, `Kill`) use `x-permissions: []` (service-to-service only — called by dungeon core actor via ABML action handlers). Developer endpoints (`List`, `GetCounts`) require `developer` role.
 
 - **Spawn** (`/dungeon/inhabitant/spawn`): Validates dungeon `spawn_monster.*` seed capability for requested quality tier. Validates sufficient mana. Deducts spawn cost from mana wallet. Creates inhabitant record in Redis. Updates denormalized counts. Records seed growth to `genetic_library.{species}`. If master directed: records growth to master's `command.spawning`. Publishes `dungeon.inhabitant.spawned`.
 - **Kill** (`/dungeon/inhabitant/kill`): Removes inhabitant. Credits mana from death (`mana_reserves.harvested` growth). Absorbs logos to `genetic_library.{species}`. Evaluates memory capture significance. Publishes `dungeon.inhabitant.killed`.
@@ -711,7 +711,7 @@ All endpoints require `developer` role.
 
 ### Memory Management (4 endpoints)
 
-All endpoints require `developer` role.
+Automation endpoints (`CaptureMemory`, `ManifestMemory`) use `x-permissions: []` (service-to-service only — called by dungeon cognition pipeline via ABML action handlers). Developer endpoints (`ListMemories`, `GetMemory`) require `developer` role.
 
 - **CaptureMemory** (`/dungeon/memory/capture`): Acquires `memory:{dungeonId}` distributed lock. Calculates significance score from event properties. If above `MemorySignificanceThreshold`: stores memory, records seed growth to `memory_depth.capture`. If master present: records growth to master's `perception.emotional`. If above `MemoryManifestationThreshold` and `manifest_memory` capability unlocked: queues for manifestation. Publishes `dungeon.memory.captured`.
 - **ManifestMemory** (`/dungeon/memory/manifest`): Acquires `memory:{dungeonId}` distributed lock. Validates `manifest_memory` capability. Manifests as item (via `IItemClient`), scene decoration (via `ISceneClient`), or environmental effect (via `IMappingClient`) based on manifestation type. Records seed growth to `memory_depth.manifestation`. If master guided: records growth to master's `coordination.manifestation`. Publishes `dungeon.memory.manifested`.

@@ -1045,7 +1045,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
+        var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for perspective {PerspectiveId}", found.PerspectiveId);
@@ -1107,7 +1107,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
+        var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for perspective {PerspectiveId}", found.PerspectiveId);
@@ -1361,7 +1361,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     {
                         perspective.MemoryStrength = Math.Max(0, previousStrength - decayAmount);
                         perspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                        var decayResult = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, pEtag ?? string.Empty, cancellationToken);
+                        var decayResult = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, pEtag ?? string.Empty, cancellationToken: cancellationToken);
                         if (decayResult == null)
                         {
                             _logger.LogWarning("Concurrent modification during decay for perspective {PerspectiveId}, skipping", perspectiveId);
@@ -1837,7 +1837,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 index.PerspectiveIds.Add(perspectiveId);
                 // etag is null when key doesn't exist yet; empty string signals
                 // "create new" to TrySaveAsync (will never conflict on new entries)
-                var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+                var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (saveResult == null)
                 {
                     _logger.LogDebug("Concurrent modification on character index {CharacterId}, retrying (attempt {Attempt})",
@@ -1874,7 +1874,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 globalIndex.CharacterIds.Add(characterId);
                 // etag is null when key doesn't exist yet; empty string signals
                 // "create new" to TrySaveAsync (will never conflict on new entries)
-                var saveResult = await globalIndexStore.TrySaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, etag ?? string.Empty, cancellationToken);
+                var saveResult = await globalIndexStore.TrySaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (saveResult == null)
                 {
                     _logger.LogDebug("Concurrent modification on global character index, retrying (attempt {Attempt})", attempt + 1);
@@ -1905,7 +1905,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             index.PerspectiveIds.Remove(perspectiveId);
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null)
             {
                 _logger.LogDebug("Concurrent modification on character index {CharacterId} during remove, retrying (attempt {Attempt})",
@@ -1942,7 +1942,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             globalIndex.CharacterIds.Remove(characterId);
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await globalIndexStore.TrySaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, etag ?? string.Empty, cancellationToken);
+            var saveResult = await globalIndexStore.TrySaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null)
             {
                 _logger.LogDebug("Concurrent modification on global character index during remove, retrying (attempt {Attempt})", attempt + 1);
@@ -1970,7 +1970,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 index.TypeCodes.Add(typeCode);
                 // etag is null when key doesn't exist yet; empty string signals
                 // "create new" to TrySaveAsync (will never conflict on new entries)
-                var saveResult = await indexStore.TrySaveAsync(CUSTOM_TYPE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken);
+                var saveResult = await indexStore.TrySaveAsync(CUSTOM_TYPE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (saveResult == null)
                 {
                     _logger.LogDebug("Concurrent modification on custom type index, retrying (attempt {Attempt})", attempt + 1);
@@ -2000,7 +2000,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             index.TypeCodes.Remove(typeCode);
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await indexStore.TrySaveAsync(CUSTOM_TYPE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken);
+            var saveResult = await indexStore.TrySaveAsync(CUSTOM_TYPE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null)
             {
                 _logger.LogDebug("Concurrent modification on custom type index during remove, retrying (attempt {Attempt})", attempt + 1);
@@ -2033,7 +2033,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 index.EncounterIds.Add(encounterId);
                 // etag is null when key doesn't exist yet; empty string signals
                 // "create new" to TrySaveAsync (will never conflict on new entries)
-                var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+                var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (saveResult == null)
                 {
                     _logger.LogDebug("Concurrent modification on type-encounter index {TypeCode}, retrying (attempt {Attempt})",
@@ -2070,7 +2070,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             index.EncounterIds.Remove(encounterId);
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null)
             {
                 _logger.LogDebug("Concurrent modification on type-encounter index {TypeCode} during remove, retrying (attempt {Attempt})",
@@ -2272,7 +2272,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                         index.EncounterIds.Add(encounterId);
                         // etag is null when key doesn't exist yet; empty string signals
                         // "create new" to TrySaveAsync (will never conflict on new entries)
-                        var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+                        var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
                         if (saveResult == null)
                         {
                             _logger.LogDebug("Concurrent modification on pair index {PairKey}, retrying (attempt {Attempt})",
@@ -2310,7 +2310,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     index.EncounterIds.Remove(encounterId);
                     // GetWithETagAsync returns non-null etag for existing records;
                     // coalesce satisfies compiler's nullable analysis (will never execute)
-                    var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+                    var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
                     if (saveResult == null)
                     {
                         _logger.LogDebug("Concurrent modification on pair index {PairKey} during remove, retrying (attempt {Attempt})",
@@ -2340,7 +2340,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 index.EncounterIds.Add(encounterId);
                 // etag is null when key doesn't exist yet; empty string signals
                 // "create new" to TrySaveAsync (will never conflict on new entries)
-                var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+                var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (saveResult == null)
                 {
                     _logger.LogDebug("Concurrent modification on location index {LocationId}, retrying (attempt {Attempt})",
@@ -2373,7 +2373,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             index.EncounterIds.Remove(encounterId);
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null)
             {
                 _logger.LogDebug("Concurrent modification on location index {LocationId} during remove, retrying (attempt {Attempt})",
@@ -2408,7 +2408,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 index.PerspectiveIds.Add(perspectiveId);
                 // etag is null when key doesn't exist yet; empty string signals
                 // "create new" to TrySaveAsync (will never conflict on new entries)
-                var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+                var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (saveResult == null)
                 {
                     _logger.LogDebug("Concurrent modification on encounter perspective index {EncounterId}, retrying (attempt {Attempt})",
@@ -2445,7 +2445,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null)
             {
                 _logger.LogDebug("Concurrent modification on encounter perspective index {EncounterId}, retrying (attempt {Attempt})",
@@ -2771,7 +2771,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var saveResult = await store.TrySaveAsync(perspectiveKey, freshPerspective, etag ?? string.Empty, cancellationToken);
+        var saveResult = await store.TrySaveAsync(perspectiveKey, freshPerspective, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (saveResult == null)
         {
             // Concurrent modification - another instance likely already applied decay

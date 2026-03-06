@@ -163,20 +163,20 @@
 | GetImplicitMapping | POST /affix/implicit/get | developer | - | - |
 | SeedImplicitMappings | POST /affix/implicit/seed | developer | implicit-mapping | - |
 | RollImplicits | POST /affix/implicit/roll | developer | - | - |
-| InitializeItemAffixes | POST /affix/initialize | developer | instance, instance-cache, instance-game-index | affix.instance.initialized |
-| GetAffixInstance | POST /affix/instance/get | developer | - | - |
-| ApplyAffix | POST /affix/apply | developer | instance, instance-cache, stats-cache | affix.modifier.applied, affix.rarity.changed |
-| RemoveAffix | POST /affix/remove | developer | instance, instance-cache, stats-cache | affix.modifier.removed, affix.rarity.changed |
-| RerollValues | POST /affix/reroll-values | developer | instance, instance-cache, stats-cache | affix.modifier.rerolled |
-| SetItemState | POST /affix/state/set | developer | instance, instance-cache, stats-cache | affix.instance.state-changed |
-| GenerateAffixPool | POST /affix/generate/pool | developer | pool-cache (on miss) | - |
-| GenerateAffixSet | POST /affix/generate/set | developer | - | - |
-| BatchGenerateAffixSets | POST /affix/generate/batch | developer | - | affix.batch.generated |
-| GetItemAffixes | POST /affix/item/get | developer | - | - |
-| ComputeItemStats | POST /affix/item/compute-stats | developer | stats-cache | - |
-| ComputeEquipmentStats | POST /affix/equipment/compute | developer | equip-cache | - |
-| CompareItems | POST /affix/item/compare | developer | - | - |
-| EstimateItemValue | POST /affix/item/estimate-value | developer | - | - |
+| InitializeItemAffixes | POST /affix/initialize | [] | instance, instance-cache, instance-game-index | affix.instance.initialized |
+| GetAffixInstance | POST /affix/instance/get | [] | - | - |
+| ApplyAffix | POST /affix/apply | [] | instance, instance-cache, stats-cache | affix.modifier.applied, affix.rarity.changed |
+| RemoveAffix | POST /affix/remove | [] | instance, instance-cache, stats-cache | affix.modifier.removed, affix.rarity.changed |
+| RerollValues | POST /affix/reroll-values | [] | instance, instance-cache, stats-cache | affix.modifier.rerolled |
+| SetItemState | POST /affix/state/set | [] | instance, instance-cache, stats-cache | affix.instance.state-changed |
+| GenerateAffixPool | POST /affix/generate/pool | [] | pool-cache (on miss) | - |
+| GenerateAffixSet | POST /affix/generate/set | [] | - | - |
+| BatchGenerateAffixSets | POST /affix/generate/batch | [] | - | affix.batch.generated |
+| GetItemAffixes | POST /affix/item/get | [] | - | - |
+| ComputeItemStats | POST /affix/item/compute-stats | [] | stats-cache | - |
+| ComputeEquipmentStats | POST /affix/equipment/compute | [] | equip-cache | - |
+| CompareItems | POST /affix/item/compare | [] | - | - |
+| EstimateItemValue | POST /affix/item/estimate-value | [] | - | - |
 | CleanupByGameService | POST /affix/cleanup-by-game-service | [] | all stores | - |
 
 ---
@@ -351,7 +351,7 @@ RETURN (200, RolledImplicitsResponse { rolledSlots })
 ---
 
 ### InitializeItemAffixes
-POST /affix/initialize | Roles: [developer]
+POST /affix/initialize | Roles: []
 
 CALL IItemClient.GetItemInstanceAsync(itemInstanceId)               -> 400 if not found
 READ _instanceStore:"inst:{itemInstanceId}"                         -> 409 if non-null (already initialized)
@@ -365,7 +365,7 @@ RETURN (200, AffixInstanceResponse)
 ---
 
 ### GetAffixInstance
-POST /affix/instance/get | Roles: [developer]
+POST /affix/instance/get | Roles: []
 
 READ _instanceCache:"inst:{itemInstanceId}"
 IF cache miss
@@ -376,7 +376,7 @@ RETURN (200, AffixInstanceResponse)
 ---
 
 ### ApplyAffix
-POST /affix/apply | Roles: [developer]
+POST /affix/apply | Roles: []
 
 LOCK _lockStore:"item:{itemInstanceId}"                             -> 409 if fails
   READ _instanceStore:"inst:{itemInstanceId}" [with ETag]
@@ -406,7 +406,7 @@ RETURN (200, ApplyAffixResponse)
 ---
 
 ### RemoveAffix
-POST /affix/remove | Roles: [developer]
+POST /affix/remove | Roles: []
 
 LOCK _lockStore:"item:{itemInstanceId}"                             -> 409 if fails
   READ _instanceStore:"inst:{itemInstanceId}" [with ETag]           -> 404 if null
@@ -426,7 +426,7 @@ RETURN (200, RemoveAffixResponse)
 ---
 
 ### RerollValues
-POST /affix/reroll-values | Roles: [developer]
+POST /affix/reroll-values | Roles: []
 
 LOCK _lockStore:"item:{itemInstanceId}"                             -> 409 if fails
   READ _instanceStore:"inst:{itemInstanceId}" [with ETag]           -> 404 if null
@@ -448,7 +448,7 @@ RETURN (200, RerollValuesResponse)
 ---
 
 ### SetItemState
-POST /affix/state/set | Roles: [developer]
+POST /affix/state/set | Roles: []
 
 LOCK _lockStore:"item:{itemInstanceId}"                             -> 409 if fails
   READ _instanceStore:"inst:{itemInstanceId}" [with ETag]           -> 404 if null
@@ -466,7 +466,7 @@ RETURN (200, SetItemStateResponse)
 ---
 
 ### GenerateAffixPool
-POST /affix/generate/pool | Roles: [developer]
+POST /affix/generate/pool | Roles: []
 
 // Compute ilvlBucket = floor(itemLevel / config.ItemLevelBucketSize) * config.ItemLevelBucketSize
 READ _poolCache:"pool:{gameServiceId}:{itemClass}:{slotType}:{ilvlBucket}"
@@ -489,7 +489,7 @@ RETURN (200, AffixPoolResponse { entries with effectiveWeight and statGrantRange
 ---
 
 ### GenerateAffixSet
-POST /affix/generate/set | Roles: [developer]
+POST /affix/generate/set | Roles: []
 
 READ _implicitMappingStore:"impl-tpl:{gameServiceId}:{itemTemplateCode}"
 IF mapping exists
@@ -506,7 +506,7 @@ RETURN (200, AffixSetDataResponse { implicitSlots, prefixSlots, suffixSlots, eff
 ---
 
 ### BatchGenerateAffixSets
-POST /affix/generate/batch | Roles: [developer]
+POST /affix/generate/batch | Roles: []
 
 FOREACH item in request.items (parallel where pool is cached)
   // Same logic as GenerateAffixSet per item
@@ -523,7 +523,7 @@ RETURN (200, BatchAffixSetDataResponse { results })
 ---
 
 ### GetItemAffixes
-POST /affix/item/get | Roles: [developer]
+POST /affix/item/get | Roles: []
 
 READ _instanceCache:"inst:{itemInstanceId}"
 IF cache miss
@@ -541,7 +541,7 @@ RETURN (200, EnrichedAffixInstanceResponse)
 ---
 
 ### ComputeItemStats
-POST /affix/item/compute-stats | Roles: [developer]
+POST /affix/item/compute-stats | Roles: []
 
 READ _instanceCache:"stats:{itemInstanceId}"
 IF cache hit -> RETURN (200, ComputedItemStatsResponse)
@@ -563,7 +563,7 @@ RETURN (200, ComputedItemStatsResponse { stats, qualityModifier })
 ---
 
 ### ComputeEquipmentStats
-POST /affix/equipment/compute | Roles: [developer]
+POST /affix/equipment/compute | Roles: []
 
 READ _instanceCache:"equip:{entityId}:{entityType}"
 IF cache hit -> RETURN (200, EquipmentStatsResponse)
@@ -580,7 +580,7 @@ RETURN (200, EquipmentStatsResponse { perStatTotals, perItemBreakdown })
 ---
 
 ### CompareItems
-POST /affix/item/compare | Roles: [developer]
+POST /affix/item/compare | Roles: []
 
 // For each of the two itemInstanceIds:
 READ _instanceStore:"inst:{itemInstanceIdA}" (or cache)             -> 404 if null
@@ -594,7 +594,7 @@ RETURN (200, ItemComparisonResponse { statDiffs })
 ---
 
 ### EstimateItemValue
-POST /affix/item/estimate-value | Roles: [developer]
+POST /affix/item/estimate-value | Roles: []
 
 READ _instanceStore:"inst:{itemInstanceId}" (or cache)              -> 404 if null
 FOREACH affix slot in instance

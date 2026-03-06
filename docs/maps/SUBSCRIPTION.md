@@ -112,7 +112,7 @@ Published best-effort alongside every `subscription.updated` event. Failure to p
 ## Methods
 
 ### GetAccountSubscriptions
-POST /subscription/account/list | Roles: [user]
+POST /subscription/account/list | Roles: [] (service-to-service)
 
 ```
 READ _indexStore:"account-subscriptions:{accountId}"            -> empty list if null
@@ -153,7 +153,7 @@ RETURN (200, QuerySubscriptionsResponse { subscriptions, accountIds })
 ---
 
 ### GetSubscription
-POST /subscription/get | Roles: [user]
+POST /subscription/get | Roles: [] (service-to-service)
 
 ```
 READ _subscriptionStore:"subscription:{subscriptionId}"        -> 404 if null
@@ -163,7 +163,7 @@ RETURN (200, SubscriptionInfo)
 ---
 
 ### CreateSubscription
-POST /subscription/create | Roles: [admin]
+POST /subscription/create | Roles: [] (service-to-service)
 
 ```
 CALL IGameServiceClient.GetServiceAsync({ serviceId })         -> 404 if not found
@@ -196,7 +196,7 @@ RETURN (200, SubscriptionInfo)
 ---
 
 ### UpdateSubscription
-POST /subscription/update | Roles: [admin]
+POST /subscription/update | Roles: [] (service-to-service)
 
 ```
 LOCK subscription-lock:"{subscriptionId}"                      -> 409 if fails
@@ -232,7 +232,7 @@ RETURN (200, SubscriptionInfo)
 ---
 
 ### RenewSubscription
-POST /subscription/renew | Roles: [admin]
+POST /subscription/renew | Roles: [] (service-to-service)
 
 ```
 LOCK subscription-lock:"{subscriptionId}"                      -> 409 if fails

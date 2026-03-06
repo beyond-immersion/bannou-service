@@ -106,9 +106,7 @@ paths:
         Returns the most relevant documents with voice-friendly summaries.
       tags:
       - Search
-      x-permissions:
-      - role: anonymous
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -136,9 +134,7 @@ paths:
         Returns full content with metadata.
       tags:
       - Documents
-      x-permissions:
-      - role: anonymous
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -164,9 +160,7 @@ paths:
         Faster than semantic search but less flexible.
       tags:
       - Search
-      x-permissions:
-      - role: anonymous
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -190,9 +184,7 @@ paths:
         Supports pagination for large result sets.
       tags:
       - Documents
-      x-permissions:
-      - role: anonymous
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -216,9 +208,7 @@ paths:
         might want to explore. Useful for conversational AI flow.
       tags:
       - Search
-      x-permissions:
-      - role: anonymous
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -241,8 +231,7 @@ paths:
       tags:
       - Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -266,8 +255,7 @@ paths:
       tags:
       - Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -294,8 +282,7 @@ paths:
       tags:
       - Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -322,8 +309,7 @@ paths:
       tags:
       - Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -352,8 +338,7 @@ paths:
       tags:
       - Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -378,8 +363,7 @@ paths:
       tags:
       - Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -404,8 +388,7 @@ paths:
       tags:
       - Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -430,8 +413,7 @@ paths:
       tags:
       - Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -456,8 +438,7 @@ paths:
       tags:
       - Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -482,8 +463,7 @@ paths:
       tags:
       - Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -511,7 +491,6 @@ paths:
       - Repository
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -540,8 +519,7 @@ paths:
       tags:
       - Repository
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -569,7 +547,6 @@ paths:
       - Repository
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -598,7 +575,6 @@ paths:
       - Repository
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -625,7 +601,6 @@ paths:
       - Repository
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -650,7 +625,6 @@ paths:
       - Repository
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -679,7 +653,6 @@ paths:
       - Archive
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -706,7 +679,6 @@ paths:
       - Archive
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -731,8 +703,7 @@ paths:
       tags:
       - Archive
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -758,8 +729,7 @@ paths:
       tags:
       - Archive
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:

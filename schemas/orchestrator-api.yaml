@@ -48,9 +48,7 @@ paths:
         - RabbitMQ (direct connection via RabbitMQ.Client)
         - 
       operationId: GetInfrastructureHealth
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -72,9 +70,7 @@ paths:
         Retrieves health information from all services via Redis heartbeat monitoring.
         Uses existing ServiceHeartbeatEvent schema from common-events.yaml.
       operationId: GetServicesHealth
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -98,9 +94,7 @@ paths:
 
         Supports optional environment variable updates during restart.
       operationId: RestartService
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -131,9 +125,7 @@ paths:
         - Degraded > 5 min: Restart recommended
         - Unavailable: Restart needed
       operationId: ShouldRestartService
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -171,9 +163,7 @@ paths:
         - Swarm: Check `docker info` for swarm mode
         - Compose: Check for docker compose v2 availability
       operationId: GetBackends
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -203,9 +193,7 @@ paths:
         - `split-auth-account`: Auth and Account in separate containers
         - `distributed-npc`: NPC processing distributed across nodes
       operationId: GetPresets
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -242,9 +230,7 @@ paths:
         - Scale specific services to additional nodes
         - Update environment variables without restart (where supported)
       operationId: Deploy
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -280,9 +266,7 @@ paths:
         - Debugging service communication issues
         - Monitoring deployment topology
       operationId: GetServiceRouting
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -308,9 +292,7 @@ paths:
         - Infrastructure component status
         - Active preset and any customizations
       operationId: GetStatus
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -337,9 +319,7 @@ paths:
         - `force`: Immediately stop all containers (SIGKILL)
         - `preserve-data`: Keep volumes and networks, only remove containers
       operationId: Teardown
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -372,9 +352,7 @@ paths:
         - `images`: Remove dangling images
         - `all`: All of the above
       operationId: Clean
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -398,9 +376,7 @@ paths:
         Retrieves logs from services or containers with filtering options.
         Supports real-time streaming via WebSocket upgrade.
       operationId: GetLogs
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -435,9 +411,7 @@ paths:
         - Split services for debugging/isolation
         - Add new service nodes to running environment
       operationId: UpdateTopology
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -481,9 +455,7 @@ paths:
         - `immediate`: Rolling update but don't wait for connection drain
         - `force`: Kill all instances simultaneously (causes downtime)
       operationId: RequestContainerRestart
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -509,9 +481,7 @@ paths:
         Returns detailed status of a container including health, restart history,
         running plugins, and current configuration.
       operationId: GetContainerStatus
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -543,9 +513,7 @@ paths:
         **Note**: This is a quick fix. GitHub secrets should still be corrected
         to prevent re-breaking on next orchestrator deploy.
       operationId: RollbackConfiguration
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -571,9 +539,7 @@ paths:
         Returns the current configuration version, last update time,
         and summary of configuration state (not actual values for security).
       operationId: GetConfigVersion
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -604,9 +570,7 @@ paths:
         (Docker labels, K8s ConfigMap watches, Portainer webhooks) is tracked
         separately.
       operationId: NotifyConfigChange
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -629,9 +593,7 @@ paths:
         Returns the app-id of an available processor or 429 if none available.
         The processor is marked as busy until explicitly released.
       operationId: AcquireProcessor
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -655,9 +617,7 @@ paths:
         Releases a previously acquired processor, making it available for other requests.
         Should be called when processing is complete or on error cleanup.
       operationId: ReleaseProcessor
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -684,9 +644,7 @@ paths:
         - Queue depth (waiting requests)
         - Recent processing metrics
       operationId: GetPoolStatus
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -709,9 +667,7 @@ paths:
         Can scale up (add instances) or scale down (remove idle instances).
         Respects min/max constraints from pool configuration.
       operationId: ScalePool
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -735,9 +691,7 @@ paths:
         Scales pool back to minimum instances by removing idle processors.
         Used for resource reclamation during low-activity periods.
       operationId: CleanupPool
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

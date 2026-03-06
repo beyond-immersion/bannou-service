@@ -85,9 +85,9 @@ public partial class StateService : IStateService
         var store = _stateStoreFactory.GetStore<object>(body.StoreName);
 
         // If ETag is provided, use optimistic concurrency
-        if (!string.IsNullOrEmpty(body.Options?.Etag))
+        if (!string.IsNullOrEmpty(body.Etag))
         {
-            var optimisticEtag = await store.TrySaveAsync(body.Key, body.Value, body.Options.Etag, cancellationToken);
+            var optimisticEtag = await store.TrySaveAsync(body.Key, body.Value, body.Etag, body.Options, cancellationToken: cancellationToken);
             if (optimisticEtag == null)
             {
                 _logger.LogDebug("ETag mismatch for key {Key} in store {StoreName}", body.Key, body.StoreName);

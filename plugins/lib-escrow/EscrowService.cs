@@ -399,7 +399,7 @@ public partial class EscrowService : IEscrowService
 
             // etag is null when key doesn't exist yet; empty string signals
             // "create new" to TrySaveAsync (will never conflict on new entries)
-            var saveResult = await _partyPendingStore.TrySaveAsync(partyKey, newCount, etag ?? string.Empty, cancellationToken);
+            var saveResult = await _partyPendingStore.TrySaveAsync(partyKey, newCount, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult != null)
             {
                 return;
@@ -439,7 +439,7 @@ public partial class EscrowService : IEscrowService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await _partyPendingStore.TrySaveAsync(partyKey, existing, etag ?? string.Empty, cancellationToken);
+            var saveResult = await _partyPendingStore.TrySaveAsync(partyKey, existing, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult != null)
             {
                 return;

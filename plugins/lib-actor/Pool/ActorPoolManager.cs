@@ -421,7 +421,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await store.TrySaveAsync(actorId, assignment, etag ?? string.Empty, ct);
+            var result = await store.TrySaveAsync(actorId, assignment, etag ?? string.Empty, cancellationToken: ct);
             if (result != null)
             {
                 return; // Successfully saved
@@ -467,7 +467,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await store.TrySaveAsync(actorId, assignment, etag ?? string.Empty, ct);
+            var result = await store.TrySaveAsync(actorId, assignment, etag ?? string.Empty, cancellationToken: ct);
             if (result != null)
             {
                 return; // Successfully saved
@@ -627,7 +627,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await nodeStore.TrySaveAsync(nodeId, node, etag ?? string.Empty, ct);
+            var result = await nodeStore.TrySaveAsync(nodeId, node, etag ?? string.Empty, cancellationToken: ct);
             if (result != null)
             {
                 return; // Successfully saved
@@ -691,7 +691,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
             // etag is null when index key doesn't exist yet; empty string signals
             // "create new" to TrySaveAsync (will never conflict on new entries)
-            var result = await store.TrySaveAsync(NODE_INDEX_KEY, index, etag ?? string.Empty, ct);
+            var result = await store.TrySaveAsync(NODE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken: ct);
             if (result != null)
             {
                 return; // Successfully saved
@@ -761,7 +761,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
             // etag is null when index key doesn't exist yet; empty string signals
             // "create new" to TrySaveAsync (will never conflict on new entries)
-            var result = await store.TrySaveAsync(ACTOR_INDEX_KEY, index, etag ?? string.Empty, ct);
+            var result = await store.TrySaveAsync(ACTOR_INDEX_KEY, index, etag ?? string.Empty, cancellationToken: ct);
             if (result != null)
             {
                 return; // Successfully saved

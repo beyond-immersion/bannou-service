@@ -1546,7 +1546,7 @@ public partial class DocumentationService : IDocumentationService
             {
                 // GetWithETagAsync returns non-null etag when key exists (loaded above);
                 // coalesce satisfies compiler's nullable analysis (will never execute)
-                var saveResult = await _guidListStore.TrySaveAsync(trashListKey, trashedDocIds, trashEtag ?? string.Empty, cancellationToken);
+                var saveResult = await _guidListStore.TrySaveAsync(trashListKey, trashedDocIds, trashEtag ?? string.Empty, cancellationToken: cancellationToken);
                 if (saveResult == null)
                 {
                     _logger.LogWarning("PurgeTrashcan: Concurrent modification on trashcan index for namespace {Namespace}", namespaceId);
@@ -1641,7 +1641,7 @@ public partial class DocumentationService : IDocumentationService
             if (docIds.Add(documentId))
             {
                 // etag is null when key doesn't exist yet; passing empty string signals "create new" semantics
-                var result = await _guidSetStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
+                var result = await _guidSetStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (result != null)
                 {
                     break;
@@ -1663,7 +1663,7 @@ public partial class DocumentationService : IDocumentationService
             if (allNamespaces.Add(namespaceId))
             {
                 // nsEtag is null when registry doesn't exist yet; passing empty string signals "create new" semantics
-                var result = await _stringSetStore.TrySaveAsync(ALL_NAMESPACES_KEY, allNamespaces, nsEtag ?? string.Empty, cancellationToken);
+                var result = await _stringSetStore.TrySaveAsync(ALL_NAMESPACES_KEY, allNamespaces, nsEtag ?? string.Empty, cancellationToken: cancellationToken);
                 if (result != null)
                 {
                     break;
@@ -1693,7 +1693,7 @@ public partial class DocumentationService : IDocumentationService
             {
                 // GetWithETagAsync returns non-null etag when key exists (checked above);
                 // coalesce satisfies compiler's nullable analysis (will never execute)
-                var result = await _guidSetStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
+                var result = await _guidSetStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (result != null)
                 {
                     return;
@@ -1726,7 +1726,7 @@ public partial class DocumentationService : IDocumentationService
             {
                 trashedDocIds.Add(documentId);
                 // etag is null when trashcan doesn't exist yet; passing empty string signals "create new" semantics
-                var result = await _guidListStore.TrySaveAsync(trashListKey, trashedDocIds, etag ?? string.Empty, cancellationToken);
+                var result = await _guidListStore.TrySaveAsync(trashListKey, trashedDocIds, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (result != null)
                 {
                     return;
@@ -1760,7 +1760,7 @@ public partial class DocumentationService : IDocumentationService
                 {
                     // GetWithETagAsync returns non-null etag when key exists (checked above);
                     // coalesce satisfies compiler's nullable analysis (will never execute)
-                    var result = await _guidListStore.TrySaveAsync(trashListKey, trashedDocIds, etag ?? string.Empty, cancellationToken);
+                    var result = await _guidListStore.TrySaveAsync(trashListKey, trashedDocIds, etag ?? string.Empty, cancellationToken: cancellationToken);
                     if (result != null)
                     {
                         return;

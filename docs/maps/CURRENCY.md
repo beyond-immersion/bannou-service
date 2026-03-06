@@ -166,38 +166,38 @@ Self-subscription only — no external event consumption.
 | Method | Route | Roles | Mutates | Publishes |
 |--------|-------|-------|---------|-----------|
 | CreateCurrencyDefinition | POST /currency/definition/create | admin | def, def-code, all-defs, base-currency | currency.definition.created |
-| GetCurrencyDefinition | POST /currency/definition/get | user | - | - |
-| ListCurrencyDefinitions | POST /currency/definition/list | user | - | - |
-| UpdateCurrencyDefinition | POST /currency/definition/update | admin | def | currency.definition.updated |
-| CreateWallet | POST /currency/wallet/create | developer | wallet, wallet-owner | currency.wallet.created |
-| GetWallet | POST /currency/wallet/get | user | - | - |
-| GetOrCreateWallet | POST /currency/wallet/get-or-create | developer | wallet, wallet-owner | currency.wallet.created |
+| GetCurrencyDefinition | POST /currency/definition/get | [] | - | - |
+| ListCurrencyDefinitions | POST /currency/definition/list | [] | - | - |
+| UpdateCurrencyDefinition | POST /currency/definition/update | developer | def | currency.definition.updated |
+| CreateWallet | POST /currency/wallet/create | [] | wallet, wallet-owner | currency.wallet.created |
+| GetWallet | POST /currency/wallet/get | [] | - | - |
+| GetOrCreateWallet | POST /currency/wallet/get-or-create | [] | wallet, wallet-owner | currency.wallet.created |
 | FreezeWallet | POST /currency/wallet/freeze | admin | wallet | currency.wallet.frozen |
 | UnfreezeWallet | POST /currency/wallet/unfreeze | admin | wallet | currency.wallet.unfrozen |
 | CloseWallet | POST /currency/wallet/close | admin | wallet, bal, tx | currency.wallet.closed, currency.credited |
 | GetBalance | POST /currency/balance/get | user | bal (autogain only) | currency.autogain.calculated |
 | BatchGetBalances | POST /currency/balance/batch-get | user | bal (autogain only) | currency.autogain.calculated |
-| CreditCurrency | POST /currency/credit | developer | bal, tx, idempotency | currency.credited, currency.earn-cap.reached, currency.wallet-cap.reached |
-| DebitCurrency | POST /currency/debit | developer | bal, tx, idempotency | currency.debited |
-| TransferCurrency | POST /currency/transfer | developer | bal (x2), tx, idempotency | currency.transferred, currency.wallet-cap.reached |
-| BatchCreditCurrency | POST /currency/batch-credit | developer | bal, tx, idempotency | currency.credited |
-| BatchDebitCurrency | POST /currency/batch-debit | developer | bal, tx, idempotency | currency.debited |
+| CreditCurrency | POST /currency/credit | [] | bal, tx, idempotency | currency.credited, currency.earn-cap.reached, currency.wallet-cap.reached |
+| DebitCurrency | POST /currency/debit | [] | bal, tx, idempotency | currency.debited |
+| TransferCurrency | POST /currency/transfer | [] | bal (x2), tx, idempotency | currency.transferred, currency.wallet-cap.reached |
+| BatchCreditCurrency | POST /currency/batch-credit | [] | bal, tx, idempotency | currency.credited |
+| BatchDebitCurrency | POST /currency/batch-debit | [] | bal, tx, idempotency | currency.debited |
 | CalculateConversion | POST /currency/convert/calculate | user | - | - |
-| ExecuteConversion | POST /currency/convert/execute | developer | bal, tx, idempotency | currency.debited, currency.credited |
+| ExecuteConversion | POST /currency/convert/execute | [] | bal, tx, idempotency | currency.debited, currency.credited |
 | GetExchangeRate | POST /currency/exchange-rate/get | user | - | - |
-| UpdateExchangeRate | POST /currency/exchange-rate/update | admin | def | currency.exchange-rate.updated |
-| GetTransaction | POST /currency/transaction/get | developer | - | - |
+| UpdateExchangeRate | POST /currency/exchange-rate/update | developer | def | currency.exchange-rate.updated |
+| GetTransaction | POST /currency/transaction/get | [] | - | - |
 | GetTransactionHistory | POST /currency/transaction/history | user | - | - |
-| GetTransactionsByReference | POST /currency/transaction/by-reference | developer | - | - |
-| GetGlobalSupply | POST /currency/stats/global-supply | user | - | - |
-| GetWalletDistribution | POST /currency/stats/wallet-distribution | admin | - | - |
-| EscrowDeposit | POST /currency/escrow/deposit | developer | bal, tx, idempotency | currency.debited |
-| EscrowRelease | POST /currency/escrow/release | developer | bal, tx, idempotency | currency.credited |
-| EscrowRefund | POST /currency/escrow/refund | developer | bal, tx, idempotency | currency.credited |
-| CreateHold | POST /currency/hold/create | developer | hold, hold-wallet, idempotency | currency.hold.created |
-| CaptureHold | POST /currency/hold/capture | developer | hold, bal, tx, hold-wallet, idempotency | currency.hold.captured, currency.debited |
-| ReleaseHold | POST /currency/hold/release | developer | hold, hold-wallet | currency.hold.released |
-| GetHold | POST /currency/hold/get | developer | - | - |
+| GetTransactionsByReference | POST /currency/transaction/by-reference | [] | - | - |
+| GetGlobalSupply | POST /currency/stats/global-supply | [] | - | - |
+| GetWalletDistribution | POST /currency/stats/wallet-distribution | [] | - | - |
+| EscrowDeposit | POST /currency/escrow/deposit | [] | bal, tx, idempotency | currency.debited |
+| EscrowRelease | POST /currency/escrow/release | [] | bal, tx, idempotency | currency.credited |
+| EscrowRefund | POST /currency/escrow/refund | [] | bal, tx, idempotency | currency.credited |
+| CreateHold | POST /currency/hold/create | [] | hold, hold-wallet, idempotency | currency.hold.created |
+| CaptureHold | POST /currency/hold/capture | [] | hold, bal, tx, hold-wallet, idempotency | currency.hold.captured, currency.debited |
+| ReleaseHold | POST /currency/hold/release | [] | hold, hold-wallet | currency.hold.released |
+| GetHold | POST /currency/hold/get | [] | - | - |
 
 ---
 
@@ -222,7 +222,7 @@ RETURN (200, CurrencyDefinitionResponse)
 ```
 
 ### GetCurrencyDefinition
-POST /currency/definition/get | Roles: [user]
+POST /currency/definition/get | Roles: []
 
 ```
 // ResolveCurrencyDefinitionAsync: by code or by ID
@@ -233,7 +233,7 @@ RETURN (200, CurrencyDefinitionResponse)
 ```
 
 ### ListCurrencyDefinitions
-POST /currency/definition/list | Roles: [user]
+POST /currency/definition/list | Roles: []
 
 ```
 READ definitions:all-defs                          // JSON list of all definition IDs
@@ -244,7 +244,7 @@ RETURN (200, ListCurrencyDefinitionsResponse)
 ```
 
 ### UpdateCurrencyDefinition
-POST /currency/definition/update | Roles: [admin]
+POST /currency/definition/update | Roles: [developer]
 
 ```
 READ definitions:def:{definitionId}                -> 404 if null
@@ -258,7 +258,7 @@ RETURN (200, CurrencyDefinitionResponse)
 ```
 
 ### CreateWallet
-POST /currency/wallet/create | Roles: [developer]
+POST /currency/wallet/create | Roles: []
 
 ```
 // ownerKey = "{ownerId}:{ownerType}" or "{ownerId}:{ownerType}:{realmId}"
@@ -270,7 +270,7 @@ RETURN (200, WalletResponse)
 ```
 
 ### GetWallet
-POST /currency/wallet/get | Roles: [user]
+POST /currency/wallet/get | Roles: []
 
 ```
 // ResolveWalletAsync: by walletId or by ownerId+ownerType+realmId
@@ -287,7 +287,7 @@ RETURN (200, WalletWithBalancesResponse)
 ```
 
 ### GetOrCreateWallet
-POST /currency/wallet/get-or-create | Roles: [developer]
+POST /currency/wallet/get-or-create | Roles: []
 
 ```
 READ wallets:wallet-owner:{ownerKey}
@@ -386,7 +386,7 @@ RETURN (200, BatchGetBalancesResponse { balances })
 ```
 
 ### CreditCurrency
-POST /currency/credit | Roles: [developer]
+POST /currency/credit | Roles: []
 
 ```
 READ idempotency:{idempotencyKey}                  -> 409 if exists
@@ -422,7 +422,7 @@ RETURN (200, CreditCurrencyResponse { transaction, newBalance, earnCapApplied, w
 ```
 
 ### DebitCurrency
-POST /currency/debit | Roles: [developer]
+POST /currency/debit | Roles: []
 
 ```
 READ idempotency:{idempotencyKey}                  -> 409 if exists
@@ -444,7 +444,7 @@ RETURN (200, DebitCurrencyResponse { transaction, newBalance })
 ```
 
 ### TransferCurrency
-POST /currency/transfer | Roles: [developer]
+POST /currency/transfer | Roles: []
 
 ```
 READ idempotency:{idempotencyKey}                  -> 409 if exists
@@ -476,7 +476,7 @@ RETURN (200, TransferCurrencyResponse { transaction, sourceNewBalance, targetNew
 ```
 
 ### BatchCreditCurrency
-POST /currency/batch-credit | Roles: [developer]
+POST /currency/batch-credit | Roles: []
 
 ```
 READ idempotency:{idempotencyKey}                  -> 409 if batch already submitted
@@ -493,7 +493,7 @@ RETURN (200, BatchCreditResponse { results })
 ```
 
 ### BatchDebitCurrency
-POST /currency/batch-debit | Roles: [developer]
+POST /currency/batch-debit | Roles: []
 
 ```
 READ idempotency:{idempotencyKey}                  -> 409 if batch already submitted
@@ -520,7 +520,7 @@ RETURN (200, CalculateConversionResponse { toAmount, effectiveRate, baseCurrency
 ```
 
 ### ExecuteConversion
-POST /currency/convert/execute | Roles: [developer]
+POST /currency/convert/execute | Roles: []
 
 ```
 READ idempotency:{idempotencyKey}                  -> 409 if exists
@@ -555,7 +555,7 @@ RETURN (200, GetExchangeRateResponse { rate, inverseRate, baseCurrency, fromRate
 ```
 
 ### UpdateExchangeRate
-POST /currency/exchange-rate/update | Roles: [admin]
+POST /currency/exchange-rate/update | Roles: [developer]
 
 ```
 // Retry loop up to ExchangeRateUpdateMaxRetries
@@ -574,7 +574,7 @@ FOREACH attempt
 ```
 
 ### GetTransaction
-POST /currency/transaction/get | Roles: [developer]
+POST /currency/transaction/get | Roles: []
 
 ```
 READ transactions:tx:{transactionId}               -> 404 if null
@@ -595,7 +595,7 @@ RETURN (200, GetTransactionHistoryResponse { transactions, totalCount })
 ```
 
 ### GetTransactionsByReference
-POST /currency/transaction/by-reference | Roles: [developer]
+POST /currency/transaction/by-reference | Roles: []
 
 ```
 READ transactions:tx-ref:{referenceType}:{referenceId}  // JSON list of txIds
@@ -604,7 +604,7 @@ RETURN (200, GetTransactionsByReferenceResponse { transactions })
 ```
 
 ### GetGlobalSupply
-POST /currency/stats/global-supply | Roles: [user]
+POST /currency/stats/global-supply | Roles: []
 
 ```
 // STUB: returns all zeros
@@ -613,7 +613,7 @@ RETURN (200, GetGlobalSupplyResponse { totalSupply: 0, inCirculation: 0, inEscro
 ```
 
 ### GetWalletDistribution
-POST /currency/stats/wallet-distribution | Roles: [admin]
+POST /currency/stats/wallet-distribution | Roles: []
 
 ```
 // STUB: returns all zeros
@@ -622,7 +622,7 @@ RETURN (200, GetWalletDistributionResponse { all fields: 0 })
 ```
 
 ### EscrowDeposit
-POST /currency/escrow/deposit | Roles: [developer]
+POST /currency/escrow/deposit | Roles: []
 
 ```
 // Thin wrapper: delegates to DebitCurrencyAsync
@@ -631,7 +631,7 @@ RETURN (debitStatus, EscrowDepositResponse { transaction, newBalance })
 ```
 
 ### EscrowRelease
-POST /currency/escrow/release | Roles: [developer]
+POST /currency/escrow/release | Roles: []
 
 ```
 // Thin wrapper: delegates to CreditCurrencyAsync
@@ -640,7 +640,7 @@ RETURN (creditStatus, EscrowReleaseResponse { transaction, newBalance })
 ```
 
 ### EscrowRefund
-POST /currency/escrow/refund | Roles: [developer]
+POST /currency/escrow/refund | Roles: []
 
 ```
 // Thin wrapper: delegates to CreditCurrencyAsync
@@ -649,7 +649,7 @@ RETURN (creditStatus, EscrowRefundResponse { transaction, newBalance })
 ```
 
 ### CreateHold
-POST /currency/hold/create | Roles: [developer]
+POST /currency/hold/create | Roles: []
 
 ```
 READ idempotency:{idempotencyKey}                  -> 409 if exists
@@ -671,7 +671,7 @@ RETURN (200, HoldResponse)
 ```
 
 ### CaptureHold
-POST /currency/hold/capture | Roles: [developer]
+POST /currency/hold/capture | Roles: []
 
 ```
 READ idempotency:{idempotencyKey}                  -> 409 if exists
@@ -693,7 +693,7 @@ RETURN (200, CaptureHoldResponse { hold, transaction, newBalance, amountReleased
 ```
 
 ### ReleaseHold
-POST /currency/hold/release | Roles: [developer]
+POST /currency/hold/release | Roles: []
 
 ```
 LOCK hold:{holdId}                                 -> 409 if fails
@@ -711,7 +711,7 @@ RETURN (200, HoldResponse)
 ```
 
 ### GetHold
-POST /currency/hold/get | Roles: [developer]
+POST /currency/hold/get | Roles: []
 
 ```
 READ holds-cache:hold:{holdId}                     // Redis cache check

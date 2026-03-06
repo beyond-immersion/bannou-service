@@ -83,7 +83,6 @@ paths:
       - Client Capabilities
       x-permissions:
       - role: user
-        states: {}
       description: |
         Returns the capability manifest for the authenticated client's session.
         Maps client-salted GUIDs to available API endpoints based on the client's
@@ -334,7 +333,6 @@ paths:
       - Session Management
       x-permissions:
       - role: admin
-        states: {}
       description: |
         Returns all active WebSocket session IDs for a specified account.
         This is an internal endpoint used by services that need to know which

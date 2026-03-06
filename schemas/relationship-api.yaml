@@ -87,9 +87,7 @@ paths:
           description: Invalid request (missing fields, invalid entity types)
         '409':
           description: Relationship already exists between these entities with this type
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
 
   /relationship/get:
     post:
@@ -217,9 +215,7 @@ paths:
                 $ref: '#/components/schemas/RelationshipResponse'
         '404':
           description: Relationship not found
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
 
   /relationship/end:
     post:
@@ -243,9 +239,7 @@ paths:
           description: Relationship ended successfully
         '404':
           description: Relationship not found
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
 
   /relationship/cleanup-by-entity:
     post:
@@ -272,9 +266,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CleanupByEntityResponse'
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   # ============================================================
   # Relationship Type Operations
@@ -445,8 +437,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -472,8 +463,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -503,8 +493,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -533,8 +522,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -561,8 +549,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -598,8 +585,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -630,9 +616,7 @@ paths:
       operationId: seedRelationshipTypes
       tags:
       - Relationship Type Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

@@ -703,12 +703,12 @@ All endpoints MUST declare `x-permissions` in the schema. Disposition is interna
 | Endpoint | x-permissions | Notes |
 |----------|--------------|-------|
 | `/disposition/feeling/record` | `[]` | Internal service-to-service |
-| `/disposition/feeling/record-shock` | `[developer]` | Administrative — formative emotional events |
+| `/disposition/feeling/record-shock` | `[]` | Internal — called by event handlers for formative emotional events |
 | `/disposition/feeling/query` | `[]` | Internal service-to-service |
 | `/disposition/feeling/get-manifest` | `[]` | Internal service-to-service |
 | `/disposition/feeling/query-about` | `[]` | Internal service-to-service |
-| `/disposition/feeling/resynthesize` | `[developer]` | Administrative — force resynthesis |
-| `/disposition/drive/seed` | `[developer]` | Administrative — manual drive creation |
+| `/disposition/feeling/resynthesize` | `[]` | Internal — called by background worker and source change handlers |
+| `/disposition/drive/seed` | `[]` | Internal — called by character creation handlers and experience event handlers |
 | `/disposition/drive/query` | `[]` | Internal service-to-service |
 | `/disposition/drive/record-progress` | `[]` | Internal service-to-service |
 | `/disposition/drive/record-frustration` | `[]` | Internal service-to-service |
@@ -724,7 +724,7 @@ All endpoints MUST declare `x-permissions` in the schema. Disposition is interna
 
 - **RecordFeeling** (`/disposition/feeling/record`): Creates or updates a feeling modifier for a character toward a target. If a feeling with matching `characterId + targetType + targetId + axis` exists, adjusts the modifier. Otherwise creates new feeling entry with the provided modifier and synthesizes the base from available sources. Validates character existence. Acquires distributed lock. Invalidates cache. Publishes `feeling.changed` event if effective value change exceeds threshold.
 
-- **RecordShock** (`/disposition/feeling/record-shock`): Records a shock event that causes immediate, large modifier shifts across multiple axes simultaneously. Used for formative emotional experiences (betrayal, rescue, witnessing heroism). Accepts a list of axis-modifier pairs and applies them atomically. Publishes `feeling.shocked` event. Requires `developer` role.
+- **RecordShock** (`/disposition/feeling/record-shock`): Records a shock event that causes immediate, large modifier shifts across multiple axes simultaneously. Used for formative emotional experiences (betrayal, rescue, witnessing heroism). Accepts a list of axis-modifier pairs and applies them atomically. Publishes `feeling.shocked` event.
 
 - **QueryFeelings** (`/disposition/feeling/query`): Paginated query of a character's feelings. Filters by target type, target ID, axis, minimum effective value, and time range. Returns feelings sorted by absolute effective value descending (strongest feelings first).
 
@@ -732,7 +732,7 @@ All endpoints MUST declare `x-permissions` in the schema. Disposition is interna
 
 - **QueryFeelingsAbout** (`/disposition/feeling/query-about`): Reverse query: "Who feels strongly about this entity?" Given a target type and target ID, returns characters with feelings above a threshold. Used by Storyline for scenario matching ("find characters who hate this faction leader"). Paginated.
 
-- **ResynthesizeBase** (`/disposition/feeling/resynthesize`): Administrative endpoint to force immediate resynthesis of base values for a character. Bypasses the background worker schedule. Requires `developer` role.
+- **ResynthesizeBase** (`/disposition/feeling/resynthesize`): Forces immediate resynthesis of base values for a character. Called by background worker and triggered on source changes (personality evolution, relationship changes).
 
 ### Drive Management (5 endpoints)
 
@@ -1255,7 +1255,7 @@ History (my PAST)             ─┤    (what I WANT)                        GOA
 
 4. **Guardian feelings are per-character, not per-account**: Each character has an independent emotional relationship with the guardian spirit. A spirit's second character starts with zero familiarity even though the spirit has experience from the first character. The spirit knows the character; the character doesn't know the spirit.
 
-5. **Drives can be manually seeded**: The `SeedDrive` endpoint allows direct drive creation (for backstory seeding, divine intervention, or testing). This bypasses the organic formation pipeline. The endpoint requires `developer` role to prevent abuse.
+5. **Drives can be seeded directly**: The `SeedDrive` endpoint allows direct drive creation (for backstory seeding during character creation, divine intervention, or experience-catalyzed formation). This bypasses the organic formation pipeline. The endpoint uses `x-permissions: []` (service-to-service only — called by character creation handlers and event handlers).
 
 6. **Compression restores modifiers at 50% strength**: When a compressed character is restored, their feeling modifiers are halved. This simulates "emotional distance" -- after a long absence, feelings are muted but not erased. Base values are resynthesized from current data (the world may have changed).
 

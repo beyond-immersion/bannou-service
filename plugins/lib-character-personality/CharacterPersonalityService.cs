@@ -230,7 +230,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
                 // GetWithETagAsync returns non-null etag for existing records;
                 // coalesce satisfies compiler's nullable analysis (will never execute)
-                var saveResult = await _personalityStore.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
+                var saveResult = await _personalityStore.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (saveResult != null)
                 {
                     result.ChangedTraits = changedTraits;
@@ -593,7 +593,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
                 // GetWithETagAsync returns non-null etag for existing records;
                 // coalesce satisfies compiler's nullable analysis (will never execute)
-                var saveResult = await _combatPreferencesStore.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
+                var saveResult = await _combatPreferencesStore.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (saveResult != null)
                 {
                     result.NewPreferences = MapToCombatPreferences(data);

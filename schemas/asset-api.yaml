@@ -46,7 +46,6 @@ paths:
       - Assets
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -79,7 +78,6 @@ paths:
       - Assets
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -113,7 +111,6 @@ paths:
       - Assets
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -141,7 +138,6 @@ paths:
       - Assets
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -170,7 +166,6 @@ paths:
       - Assets
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -198,7 +193,6 @@ paths:
       - Assets
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -229,7 +223,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -263,7 +256,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -291,7 +283,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -324,7 +315,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -359,7 +349,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -390,7 +379,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -432,7 +420,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -461,7 +448,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -496,7 +482,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -533,7 +518,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -567,7 +551,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -608,7 +591,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -643,7 +625,6 @@ paths:
       - Bundles
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -676,7 +657,6 @@ paths:
       - Assets
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:

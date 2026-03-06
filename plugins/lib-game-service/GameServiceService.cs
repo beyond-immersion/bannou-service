@@ -413,7 +413,7 @@ public partial class GameServiceService : IGameServiceService
 
             // etag is null when the list key doesn't exist yet; empty string signals
             // "new entry" to TrySaveAsync (will never conflict on new entries)
-            var result = await _listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken);
+            var result = await _listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (result != null)
             {
                 return;
@@ -447,7 +447,7 @@ public partial class GameServiceService : IGameServiceService
 
             // etag is null when the list key doesn't exist yet; empty string signals
             // "new entry" to TrySaveAsync (will never conflict on new entries)
-            var result = await _listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken);
+            var result = await _listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (result != null)
             {
                 return;

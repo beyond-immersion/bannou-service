@@ -281,7 +281,7 @@ public partial class LeaderboardService : ILeaderboardService
         }
 
         // etag is non-null at this point; coalesce satisfies compiler nullable analysis
-        var newEtag = await _definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for leaderboard {LeaderboardId}", body.LeaderboardId);
@@ -754,7 +754,7 @@ public partial class LeaderboardService : ILeaderboardService
         // Update definition with new season using optimistic concurrency
         definition.CurrentSeason = newSeasonNumber;
         // defEtag is non-null at this point; coalesce satisfies compiler nullable analysis
-        var newDefEtag = await _definitionStore.TrySaveAsync(defKey, definition, defEtag ?? string.Empty, cancellationToken);
+        var newDefEtag = await _definitionStore.TrySaveAsync(defKey, definition, defEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newDefEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for leaderboard {LeaderboardId} season creation", body.LeaderboardId);

@@ -292,7 +292,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                 currentVersion.UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE;
 
                 // Save updated manifest with optimistic concurrency
-                var newEtag = await _versionStore.TrySaveAsync(versionKey, currentVersion, versionEtag ?? string.Empty, cancellationToken);
+                var newEtag = await _versionStore.TrySaveAsync(versionKey, currentVersion, versionEtag ?? string.Empty, cancellationToken: cancellationToken);
                 if (newEtag == null)
                 {
                     _logger.LogDebug(

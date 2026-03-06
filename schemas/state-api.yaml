@@ -253,7 +253,7 @@ components:
           description: ETag for optimistic concurrency
 
     SaveStateRequest:
-      description: Request to save a state value to a state store with optional TTL and consistency settings
+      description: Request to save a state value to a state store with optional TTL and optimistic concurrency
       type: object
       additionalProperties: false
       required:
@@ -275,10 +275,16 @@ components:
           type: object
           additionalProperties: true
           description: Value to store
+        etag:
+          type: string
+          minLength: 1
+          maxLength: 100
+          nullable: true
+          description: Expected ETag for optimistic concurrency - save fails with 409 Conflict if mismatch
         options:
           nullable: true
           $ref: '#/components/schemas/StateOptions'
-          description: Optional settings for the save operation including TTL and consistency
+          description: Optional settings for the save operation including TTL
 
     SaveStateResponse:
       description: Response from a save operation containing the new ETag
@@ -322,8 +328,7 @@ components:
           description: Whether the key was deleted (false if not found)
 
     StateOptions:
-      description: Configuration options for state save operations including TTL, consistency level, and optimistic
-        concurrency
+      description: Configuration options for state save operations including TTL
       type: object
       additionalProperties: false
       properties:
@@ -333,12 +338,6 @@ components:
           maximum: 31536000
           nullable: true
           description: TTL in seconds (Redis only). Maximum 1 year (31536000 seconds).
-        etag:
-          type: string
-          minLength: 1
-          maxLength: 100
-          nullable: true
-          description: Optimistic concurrency check - save fails if ETag mismatch
 
     QueryStateRequest:
       description: Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis

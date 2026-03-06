@@ -105,31 +105,31 @@ This plugin does not consume external events. `RegisterEventConsumers` is a no-o
 |--------|-------|-------|---------|-----------|
 | ViewDocumentBySlug | GET /documentation/view/{slug} | [] | - | - |
 | RawDocumentBySlug | GET /documentation/raw/{slug} | [] | - | - |
-| QueryDocumentation | POST /documentation/query | [anonymous] | - | documentation.queried |
-| GetDocument | POST /documentation/get | [anonymous] | - | - |
-| SearchDocumentation | POST /documentation/search | [anonymous] | - | documentation.searched |
-| ListDocuments | POST /documentation/list | [anonymous] | - | - |
-| SuggestRelatedTopics | POST /documentation/suggest | [anonymous] | - | - |
-| CreateDocument | POST /documentation/create | [admin] | doc, slug-idx, ns-docs, all-namespaces, ns-last-updated | document.created |
-| UpdateDocument | POST /documentation/update | [admin] | doc, slug-idx, ns-last-updated | document.updated |
-| DeleteDocument | POST /documentation/delete | [admin] | doc, slug-idx, ns-docs, ns-trash, trash | document.deleted |
-| RecoverDocument | POST /documentation/recover | [admin] | doc, slug-idx, ns-docs, ns-trash, trash, ns-last-updated | - |
-| BulkUpdateDocuments | POST /documentation/bulk-update | [admin] | doc, ns-last-updated | document.updated |
-| BulkDeleteDocuments | POST /documentation/bulk-delete | [admin] | doc, slug-idx, ns-docs, ns-trash, trash | document.deleted |
-| ImportDocumentation | POST /documentation/import | [admin] | doc, slug-idx, ns-docs, all-namespaces, ns-last-updated | document.created, document.updated |
-| ListTrashcan | POST /documentation/trashcan | [admin] | ns-trash, trash (lazy cleanup) | - |
-| PurgeTrashcan | POST /documentation/purge | [admin] | ns-trash, trash | - |
-| GetNamespaceStats | POST /documentation/stats | [admin] | - | - |
+| QueryDocumentation | POST /documentation/query | [] | - | documentation.queried |
+| GetDocument | POST /documentation/get | [] | - | - |
+| SearchDocumentation | POST /documentation/search | [] | - | documentation.searched |
+| ListDocuments | POST /documentation/list | [] | - | - |
+| SuggestRelatedTopics | POST /documentation/suggest | [] | - | - |
+| CreateDocument | POST /documentation/create | [developer] | doc, slug-idx, ns-docs, all-namespaces, ns-last-updated | document.created |
+| UpdateDocument | POST /documentation/update | [developer] | doc, slug-idx, ns-last-updated | document.updated |
+| DeleteDocument | POST /documentation/delete | [developer] | doc, slug-idx, ns-docs, ns-trash, trash | document.deleted |
+| RecoverDocument | POST /documentation/recover | [developer] | doc, slug-idx, ns-docs, ns-trash, trash, ns-last-updated | - |
+| BulkUpdateDocuments | POST /documentation/bulk-update | [developer] | doc, ns-last-updated | document.updated |
+| BulkDeleteDocuments | POST /documentation/bulk-delete | [developer] | doc, slug-idx, ns-docs, ns-trash, trash | document.deleted |
+| ImportDocumentation | POST /documentation/import | [developer] | doc, slug-idx, ns-docs, all-namespaces, ns-last-updated | document.created, document.updated |
+| ListTrashcan | POST /documentation/trashcan | [developer] | ns-trash, trash (lazy cleanup) | - |
+| PurgeTrashcan | POST /documentation/purge | [developer] | ns-trash, trash | - |
+| GetNamespaceStats | POST /documentation/stats | [developer] | - | - |
 | BindRepository | POST /documentation/repo/bind | [developer] | repo-binding, repo-bindings | documentation-binding.created |
-| UnbindRepository | POST /documentation/repo/unbind | [admin] | repo-binding, repo-bindings, (docs if flag) | documentation-binding.removed |
+| UnbindRepository | POST /documentation/repo/unbind | [developer] | repo-binding, repo-bindings, (docs if flag) | documentation-binding.removed |
 | SyncRepository | POST /documentation/repo/sync | [developer] | doc, slug-idx, ns-docs, repo-binding, ns-last-updated | documentation-sync.started, documentation-sync.completed |
 | GetRepositoryStatus | POST /documentation/repo/status | [developer] | - | - |
 | ListRepositoryBindings | POST /documentation/repo/list | [developer] | - | - |
 | UpdateRepositoryBinding | POST /documentation/repo/update | [developer] | repo-binding, repo-bindings | - |
 | CreateDocumentationArchive | POST /documentation/repo/archive/create | [developer] | archive, archive:list | documentation-archive.created |
 | ListDocumentationArchives | POST /documentation/repo/archive/list | [developer] | - | - |
-| RestoreDocumentationArchive | POST /documentation/repo/archive/restore | [admin] | doc, slug-idx, ns-docs, ns-last-updated | - |
-| DeleteDocumentationArchive | POST /documentation/repo/archive/delete | [admin] | archive, archive:list | - |
+| RestoreDocumentationArchive | POST /documentation/repo/archive/restore | [developer] | doc, slug-idx, ns-docs, ns-last-updated | - |
+| DeleteDocumentationArchive | POST /documentation/repo/archive/delete | [developer] | archive, archive:list | - |
 
 ---
 
@@ -161,7 +161,7 @@ RETURN (200, raw markdown string with text/markdown content type)
 ```
 
 ### QueryDocumentation
-POST /documentation/query | Roles: [anonymous]
+POST /documentation/query | Roles: []
 
 ```
 IF namespace is whitespace                            -> 400
@@ -177,7 +177,7 @@ RETURN (200, QueryDocumentationResponse { Results, TotalResults })
 ```
 
 ### GetDocument
-POST /documentation/get | Roles: [anonymous]
+POST /documentation/get | Roles: []
 
 ```
 IF namespace is whitespace                            -> 400
@@ -198,7 +198,7 @@ RETURN (200, GetDocumentResponse { Document, ContentFormat, RelatedDocuments })
 ```
 
 ### SearchDocumentation
-POST /documentation/search | Roles: [anonymous]
+POST /documentation/search | Roles: []
 
 ```
 IF namespace is whitespace                            -> 400
@@ -219,7 +219,7 @@ RETURN (200, SearchDocumentationResponse { Results, TotalResults })
 ```
 
 ### ListDocuments
-POST /documentation/list | Roles: [anonymous]
+POST /documentation/list | Roles: []
 
 ```
 IF namespace is whitespace                            -> 400
@@ -236,7 +236,7 @@ RETURN (200, ListDocumentsResponse { Documents, TotalCount, TotalPages })
 ```
 
 ### SuggestRelatedTopics
-POST /documentation/suggest | Roles: [anonymous]
+POST /documentation/suggest | Roles: []
 
 ```
 IF sourceValue is null/empty                          -> 400
@@ -248,7 +248,7 @@ RETURN (200, SuggestRelatedResponse { Suggestions, Namespace })
 ```
 
 ### CreateDocument
-POST /documentation/create | Roles: [admin]
+POST /documentation/create | Roles: [developer]
 
 ```
 IF namespace is whitespace                            -> 400
@@ -273,7 +273,7 @@ RETURN (200, CreateDocumentResponse { DocumentId, Slug, CreatedAt })
 ```
 
 ### UpdateDocument
-POST /documentation/update | Roles: [admin]
+POST /documentation/update | Roles: [developer]
 
 ```
 READ _bindingStore:"repo-binding:{namespace}"
@@ -295,7 +295,7 @@ RETURN (200, UpdateDocumentResponse { DocumentId, UpdatedAt })
 ```
 
 ### DeleteDocument
-POST /documentation/delete | Roles: [admin]
+POST /documentation/delete | Roles: [developer]
 
 ```
 IF namespace is whitespace                            -> 400
@@ -320,7 +320,7 @@ RETURN (200, DeleteDocumentResponse { DocumentId, DeletedAt, RecoverableUntil })
 ```
 
 ### RecoverDocument
-POST /documentation/recover | Roles: [admin]
+POST /documentation/recover | Roles: [developer]
 
 ```
 READ _trashStore:"trash:{namespace}:{documentId}"     -> 404 if null
@@ -344,7 +344,7 @@ RETURN (200, RecoverDocumentResponse { DocumentId, RecoveredAt })
 ```
 
 ### BulkUpdateDocuments
-POST /documentation/bulk-update | Roles: [admin]
+POST /documentation/bulk-update | Roles: [developer]
 
 ```
 // No repository binding check
@@ -364,7 +364,7 @@ RETURN (200, BulkUpdateResponse { Succeeded, Failed })
 ```
 
 ### BulkDeleteDocuments
-POST /documentation/bulk-delete | Roles: [admin]
+POST /documentation/bulk-delete | Roles: [developer]
 
 ```
 // No repository binding check
@@ -385,7 +385,7 @@ RETURN (200, BulkDeleteResponse { Succeeded, Failed })
 ```
 
 ### ImportDocumentation
-POST /documentation/import | Roles: [admin]
+POST /documentation/import | Roles: [developer]
 
 ```
 IF documents.Count > config.MaxImportDocuments (when > 0)  -> 400
@@ -417,7 +417,7 @@ RETURN (200, ImportDocumentationResponse { Namespace, Created, Updated, Skipped,
 ```
 
 ### ListTrashcan
-POST /documentation/trashcan | Roles: [admin]
+POST /documentation/trashcan | Roles: [developer]
 
 ```
 READ _guidListStore:"ns-trash:{namespace}"
@@ -436,7 +436,7 @@ RETURN (200, ListTrashcanResponse { Namespace, Items, TotalCount })
 ```
 
 ### PurgeTrashcan
-POST /documentation/purge | Roles: [admin]
+POST /documentation/purge | Roles: [developer]
 
 ```
 READ _guidListStore:"ns-trash:{namespace}" [with ETag]
@@ -455,7 +455,7 @@ RETURN (200, PurgeTrashcanResponse { PurgedCount })
 ```
 
 ### GetNamespaceStats
-POST /documentation/stats | Roles: [admin]
+POST /documentation/stats | Roles: [developer]
 
 ```
 CALL _searchIndexService.GetNamespaceStatsAsync(namespace)
@@ -482,7 +482,7 @@ RETURN (200, BindRepositoryResponse { BindingId, Namespace, RepositoryUrl, Branc
 ```
 
 ### UnbindRepository
-POST /documentation/repo/unbind | Roles: [admin]
+POST /documentation/repo/unbind | Roles: [developer]
 
 ```
 READ _bindingStore:"repo-binding:{namespace}"         -> 404 if null
@@ -601,7 +601,7 @@ RETURN (200, ListArchivesResponse { Archives, Total })
 ```
 
 ### RestoreDocumentationArchive
-POST /documentation/repo/archive/restore | Roles: [admin]
+POST /documentation/repo/archive/restore | Roles: [developer]
 
 ```
 READ _archiveStore:"archive:{archiveId}"              -> 404 if null
@@ -626,7 +626,7 @@ RETURN (200, RestoreArchiveResponse { Namespace, DocumentsRestored })
 ```
 
 ### DeleteDocumentationArchive
-POST /documentation/repo/archive/delete | Roles: [admin]
+POST /documentation/repo/archive/delete | Roles: [developer]
 
 ```
 READ _archiveStore:"archive:{archiveId}"              -> 404 if null

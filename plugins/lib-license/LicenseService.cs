@@ -1457,7 +1457,7 @@ public partial class LicenseService : ILicenseService
                 break;
             }
 
-            var newEtag = await _boardCache.TrySaveAsync(cacheKey, currentCache, etag, cancellationToken);
+            var newEtag = await _boardCache.TrySaveAsync(cacheKey, currentCache, etag, cancellationToken: cancellationToken);
             if (newEtag != null)
             {
                 break;

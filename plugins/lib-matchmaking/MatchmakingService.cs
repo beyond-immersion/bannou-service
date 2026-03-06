@@ -307,7 +307,7 @@ public partial class MatchmakingService : IMatchmakingService
 
         // Save queue with ETag - etag is non-null when queue was successfully loaded above;
         // null-coalesce satisfies compiler nullable analysis (will never execute)
-        var newEtag = await _queueStore.TrySaveAsync(queueKey, queue, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _queueStore.TrySaveAsync(queueKey, queue, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for queue {QueueId}", body.QueueId);

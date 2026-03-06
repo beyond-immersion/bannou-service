@@ -63,7 +63,6 @@ paths:
           description: Code already exists or base currency already set for scope
       x-permissions:
       - role: admin
-        states: {}
 
   /currency/definition/get:
     post:
@@ -91,9 +90,7 @@ paths:
           description: Neither definitionId nor code provided
         '404':
           description: Currency definition not found
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
 
   /currency/definition/list:
     post:
@@ -117,9 +114,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListCurrencyDefinitionsResponse'
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
 
   /currency/definition/update:
     post:
@@ -148,8 +143,7 @@ paths:
         '404':
           description: Currency definition not found
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
 
   # ===========================================================================
   # Wallet (6 endpoints)
@@ -179,9 +173,7 @@ paths:
                 $ref: '#/components/schemas/WalletResponse'
         '409':
           description: Wallet already exists for this owner/realm
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/wallet/get:
     post:
@@ -207,9 +199,7 @@ paths:
                 $ref: '#/components/schemas/WalletWithBalancesResponse'
         '404':
           description: Wallet not found
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
 
   /currency/wallet/get-or-create:
     post:
@@ -233,9 +223,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetOrCreateWalletResponse'
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/wallet/freeze:
     post:
@@ -265,7 +253,6 @@ paths:
           description: Wallet already frozen
       x-permissions:
       - role: admin
-        states: {}
 
   /currency/wallet/unfreeze:
     post:
@@ -293,7 +280,6 @@ paths:
           description: Wallet is not frozen
       x-permissions:
       - role: admin
-        states: {}
 
   /currency/wallet/close:
     post:
@@ -323,7 +309,6 @@ paths:
           description: Wallet already closed
       x-permissions:
       - role: admin
-        states: {}
 
   # ===========================================================================
   # Balance (6 endpoints)
@@ -356,7 +341,6 @@ paths:
           description: Wallet or currency not found
       x-permissions:
       - role: user
-        states: {}
 
   /currency/balance/batch-get:
     post:
@@ -382,7 +366,6 @@ paths:
                 $ref: '#/components/schemas/BatchGetBalancesResponse'
       x-permissions:
       - role: user
-        states: {}
 
   /currency/credit:
     post:
@@ -414,9 +397,7 @@ paths:
           description: Idempotency key already used
         '422':
           description: Earn cap or supply cap exceeded
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/debit:
     post:
@@ -446,9 +427,7 @@ paths:
           description: Wallet or currency not found
         '422':
           description: Insufficient funds
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/transfer:
     post:
@@ -478,9 +457,7 @@ paths:
           description: Wallet or currency not found
         '422':
           description: Insufficient funds or cross-realm not allowed
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/batch-credit:
     post:
@@ -504,9 +481,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchCreditResponse'
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/batch-debit:
     post:
@@ -530,9 +505,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchDebitResponse'
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   # ===========================================================================
   # Conversion (4 endpoints)
@@ -566,7 +539,6 @@ paths:
           description: No base currency or missing exchange rate
       x-permissions:
       - role: user
-        states: {}
 
   /currency/convert/execute:
     post:
@@ -594,9 +566,7 @@ paths:
           description: Wallet or currency not found
         '422':
           description: Insufficient funds or missing exchange rate
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/exchange-rate/get:
     post:
@@ -626,7 +596,6 @@ paths:
           description: No base currency or missing exchange rate
       x-permissions:
       - role: user
-        states: {}
 
   /currency/exchange-rate/update:
     post:
@@ -655,8 +624,7 @@ paths:
         '404':
           description: Currency not found
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
 
   # ===========================================================================
   # Transaction History (3 endpoints)
@@ -684,9 +652,7 @@ paths:
                 $ref: '#/components/schemas/TransactionResponse'
         '404':
           description: Transaction not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/transaction/history:
     post:
@@ -714,7 +680,6 @@ paths:
           description: Wallet not found
       x-permissions:
       - role: user
-        states: {}
 
   /currency/transaction/by-reference:
     post:
@@ -738,9 +703,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetTransactionsByReferenceResponse'
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   # ===========================================================================
   # Analytics (2 endpoints)
@@ -770,9 +733,7 @@ paths:
                 $ref: '#/components/schemas/GetGlobalSupplyResponse'
         '404':
           description: Currency not found
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
 
   /currency/stats/wallet-distribution:
     post:
@@ -798,9 +759,7 @@ paths:
                 $ref: '#/components/schemas/GetWalletDistributionResponse'
         '404':
           description: Currency not found
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
 
   # ===========================================================================
   # Escrow Integration (3 endpoints)
@@ -832,9 +791,7 @@ paths:
           description: Wallet or currency not found
         '422':
           description: Insufficient funds or wallet frozen
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/escrow/release:
     post:
@@ -860,9 +817,7 @@ paths:
                 $ref: '#/components/schemas/EscrowReleaseResponse'
         '404':
           description: Wallet or currency not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/escrow/refund:
     post:
@@ -888,9 +843,7 @@ paths:
                 $ref: '#/components/schemas/EscrowRefundResponse'
         '404':
           description: Wallet or currency not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   # ===========================================================================
   # Authorization Holds (4 endpoints)
@@ -923,9 +876,7 @@ paths:
           description: Wallet or currency not found
         '422':
           description: Insufficient effective balance for hold
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/hold/capture:
     post:
@@ -953,9 +904,7 @@ paths:
           description: Hold is not in active status or capture amount exceeds hold
         '404':
           description: Hold not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/hold/release:
     post:
@@ -983,9 +932,7 @@ paths:
           description: Hold is not in active status
         '404':
           description: Hold not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /currency/hold/get:
     post:
@@ -1009,9 +956,7 @@ paths:
                 $ref: '#/components/schemas/HoldResponse'
         '404':
           description: Hold not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
 components:
   schemas:

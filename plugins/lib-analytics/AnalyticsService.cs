@@ -1729,7 +1729,7 @@ public partial class AnalyticsService : IAnalyticsService
                 {
                     // GetWithETagAsync returns null ETag for new entities; TrySaveAsync expects
                     // empty string for create operations - coalesce satisfies compiler's nullable analysis
-                    var newSummaryEtag = await _summaryDataStore.TrySaveAsync(entityKey, summary, summaryEtag ?? string.Empty, cancellationToken);
+                    var newSummaryEtag = await _summaryDataStore.TrySaveAsync(entityKey, summary, summaryEtag ?? string.Empty, cancellationToken: cancellationToken);
                     if (newSummaryEtag == null)
                     {
                         _logger.LogWarning("Concurrent modification detected for analytics summary {EntityKey}, skipping batch", entityKey);

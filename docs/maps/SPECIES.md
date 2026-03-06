@@ -113,7 +113,7 @@ This plugin does not consume external events.
 ## Methods
 
 ### GetSpecies
-POST /species/get | Roles: [user]
+POST /species/get | Roles: [] (service-to-service)
 
 ```
 READ _speciesStore:"species:{speciesId}"                -> 404 if null
@@ -121,7 +121,7 @@ RETURN (200, SpeciesResponse)
 ```
 
 ### GetSpeciesByCode
-POST /species/get-by-code | Roles: [user]
+POST /species/get-by-code | Roles: [] (service-to-service)
 
 ```
 READ _codeIndexStore:"code-index:{code.ToUpperInvariant()}"  -> 404 if null/empty
@@ -133,7 +133,7 @@ RETURN (200, SpeciesResponse)
 ```
 
 ### ListSpecies
-POST /species/list | Roles: [user]
+POST /species/list | Roles: [] (service-to-service)
 
 ```
 READ _idListStore:"all-species"
@@ -151,7 +151,7 @@ RETURN (200, SpeciesListResponse { species, totalCount })
 ```
 
 ### ListSpeciesByRealm
-POST /species/list-by-realm | Roles: [user]
+POST /species/list-by-realm | Roles: [] (service-to-service)
 
 ```
 CALL IRealmClient.RealmExistsAsync({ realmId })
@@ -169,7 +169,7 @@ RETURN (200, SpeciesListResponse { species, totalCount })
 ```
 
 ### CreateSpecies
-POST /species/create | Roles: [admin]
+POST /species/create | Roles: [] (service-to-service)
 
 ```
 // Normalize code to uppercase
@@ -193,7 +193,7 @@ RETURN (200, SpeciesResponse)
 ```
 
 ### UpdateSpecies
-POST /species/update | Roles: [admin]
+POST /species/update | Roles: [] (service-to-service)
 
 ```
 LOCK species-lock:"{speciesId}"
@@ -207,7 +207,7 @@ RETURN (200, SpeciesResponse)
 ```
 
 ### DeleteSpecies
-POST /species/delete | Roles: [admin]
+POST /species/delete | Roles: [] (service-to-service)
 
 ```
 LOCK species-lock:"{speciesId}"
@@ -234,7 +234,7 @@ RETURN (200)
 ```
 
 ### DeprecateSpecies
-POST /species/deprecate | Roles: [admin]
+POST /species/deprecate | Roles: [] (service-to-service)
 
 ```
 LOCK species-lock:"{speciesId}"
@@ -248,7 +248,7 @@ RETURN (200, SpeciesResponse)
 ```
 
 ### UndeprecateSpecies
-POST /species/undeprecate | Roles: [admin]
+POST /species/undeprecate | Roles: [] (service-to-service)
 
 ```
 LOCK species-lock:"{speciesId}"
@@ -262,7 +262,7 @@ RETURN (200, SpeciesResponse)
 ```
 
 ### MergeSpecies
-POST /species/merge | Roles: [admin]
+POST /species/merge | Roles: [] (service-to-service)
 
 ```
 // Deterministic lock ordering: lower GUID first
@@ -287,7 +287,7 @@ RETURN (200, MergeSpeciesResponse { charactersMigrated, sourceDeleted, failedEnt
 ```
 
 ### AddSpeciesToRealm
-POST /species/add-to-realm | Roles: [admin]
+POST /species/add-to-realm | Roles: [] (service-to-service)
 
 ```
 CALL IRealmClient.RealmExistsAsync({ realmId })
@@ -306,7 +306,7 @@ RETURN (200, SpeciesResponse)
 ```
 
 ### RemoveSpeciesFromRealm
-POST /species/remove-from-realm | Roles: [admin]
+POST /species/remove-from-realm | Roles: [] (service-to-service)
 
 ```
 LOCK species-lock:"{speciesId}"
@@ -324,7 +324,7 @@ RETURN (200, SpeciesResponse)
 ```
 
 ### SeedSpecies
-POST /species/seed | Roles: [admin]
+POST /species/seed | Roles: [] (service-to-service)
 
 ```
 FOREACH seedItem in request.species

@@ -65,9 +65,7 @@ paths:
       operationId: getLocation
       tags:
       - Location
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -91,9 +89,7 @@ paths:
       operationId: getLocationByCode
       tags:
       - Location
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -117,9 +113,7 @@ paths:
       operationId: listLocations
       tags:
       - Location
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -144,9 +138,7 @@ paths:
       operationId: listLocationsByRealm
       tags:
       - Location
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -170,9 +162,7 @@ paths:
       operationId: listLocationsByParent
       tags:
       - Location
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -198,9 +188,7 @@ paths:
       operationId: listRootLocations
       tags:
       - Location
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -225,9 +213,7 @@ paths:
       operationId: getLocationAncestors
       tags:
       - Location
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -272,9 +258,7 @@ paths:
                 $ref: '#/components/schemas/ValidateTerritoryResponse'
         '404':
           description: Location not found
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
 
   /location/get-descendants:
     post:
@@ -286,9 +270,7 @@ paths:
       operationId: getLocationDescendants
       tags:
       - Location
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -312,8 +294,7 @@ paths:
       tags:
       - Location Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -339,8 +320,7 @@ paths:
       tags:
       - Location Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -372,8 +352,7 @@ paths:
       tags:
       - Location Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -402,8 +381,7 @@ paths:
       tags:
       - Location Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -433,8 +411,7 @@ paths:
       tags:
       - Location Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -462,8 +439,7 @@ paths:
       tags:
       - Location Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -495,8 +471,7 @@ paths:
       tags:
       - Location Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -525,8 +500,7 @@ paths:
       tags:
       - Location Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -554,9 +528,7 @@ paths:
       operationId: locationExists
       tags:
       - Location
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -582,9 +554,7 @@ paths:
       operationId: queryLocationsByPosition
       tags:
       - Location
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -611,8 +581,7 @@ paths:
       tags:
       - Location Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -644,9 +613,7 @@ paths:
       operationId: reportEntityPosition
       tags:
       - Location Presence
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -672,9 +639,7 @@ paths:
       operationId: getEntityLocation
       tags:
       - Location Presence
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -699,9 +664,7 @@ paths:
       operationId: listEntitiesAtLocation
       tags:
       - Location Presence
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -725,9 +688,7 @@ paths:
       operationId: clearEntityPosition
       tags:
       - Location Presence
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -756,8 +717,7 @@ paths:
         Called by Resource service during compression.
         Returns core location data (name, type, hierarchy, spatial, parent context).
         Returns BadRequest if location is not deprecated - only deprecated locations can be compressed.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:

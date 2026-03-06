@@ -265,7 +265,7 @@ public class ContractExpirationService : BackgroundService
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
         model.UpdatedAt = now;
-        await instanceStore.TrySaveAsync(instanceKey, model, etag ?? string.Empty, ct);
+        await instanceStore.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken: ct);
 
         return 1;
     }

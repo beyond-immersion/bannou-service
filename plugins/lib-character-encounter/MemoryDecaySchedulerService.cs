@@ -245,7 +245,7 @@ public class MemoryDecaySchedulerService : BackgroundService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
+            var saveResult = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null)
             {
                 _logger.LogDebug(

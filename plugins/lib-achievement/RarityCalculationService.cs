@@ -141,7 +141,7 @@ public class RarityCalculationService : BackgroundService
 
                         // GetWithETagAsync always returns a non-null etag for existing records;
                         // coalesce satisfies compiler's nullable analysis (will never execute)
-                        var savedEtag = await definitionStore.TrySaveAsync(defKey, definition, etag ?? string.Empty, cancellationToken);
+                        var savedEtag = await definitionStore.TrySaveAsync(defKey, definition, etag ?? string.Empty, cancellationToken: cancellationToken);
                         if (savedEtag != null)
                         {
                             updatedCount++;

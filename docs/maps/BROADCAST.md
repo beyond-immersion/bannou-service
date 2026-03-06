@@ -155,13 +155,13 @@ All consumed voice event models are redefined inline in `broadcast-events.yaml` 
 | AssociateSession | POST /broadcast/session/associate | generated | user | sess, sess-account | broadcast.platform-session.updated |
 | GetSessionStatus | POST /broadcast/session/status | generated | user | - | - |
 | ListSessions | POST /broadcast/session/list | generated | user | - | - |
-| AnnounceCamera | POST /broadcast/camera/announce | generated | admin | cam | - |
-| RetireCamera | POST /broadcast/camera/retire | generated | admin | cam | broadcast.output.updated |
-| StartOutput | POST /broadcast/output/start | generated | admin | out | broadcast.output.created |
-| StopOutput | POST /broadcast/output/stop | generated | admin | out | broadcast.output.deleted |
-| UpdateOutput | POST /broadcast/output/update | generated | admin | out | broadcast.output.updated |
-| GetOutputStatus | POST /broadcast/output/status | generated | admin | - | - |
-| ListOutputs | POST /broadcast/output/list | generated | admin | - | - |
+| AnnounceCamera | POST /broadcast/camera/announce | generated | developer | cam | - |
+| RetireCamera | POST /broadcast/camera/retire | generated | developer | cam | broadcast.output.updated |
+| StartOutput | POST /broadcast/output/start | generated | developer | out | broadcast.output.created |
+| StopOutput | POST /broadcast/output/stop | generated | developer | out | broadcast.output.deleted |
+| UpdateOutput | POST /broadcast/output/update | generated | developer | out | broadcast.output.updated |
+| GetOutputStatus | POST /broadcast/output/status | generated | developer | - | - |
+| ListOutputs | POST /broadcast/output/list | generated | developer | - | - |
 | WebhookTwitch | POST /broadcast/webhook/twitch | x-controller-only | [] | sent | - |
 | WebhookYouTube | POST /broadcast/webhook/youtube | x-controller-only | [] | sent | - |
 | WebhookCustom | POST /broadcast/webhook/custom | x-controller-only | [] | sent | - |
@@ -320,7 +320,7 @@ RETURN (200, SessionListResponse { sessions, totalCount, page, pageSize })
 ```
 
 ### AnnounceCamera
-POST /broadcast/camera/announce | Roles: [admin]
+POST /broadcast/camera/announce | Roles: [developer]
 
 ```
 IF NOT config.OutputEnabled                           -> 400
@@ -331,7 +331,7 @@ RETURN (200, CameraAnnounceResponse { cameraId })
 ```
 
 ### RetireCamera
-POST /broadcast/camera/retire | Roles: [admin]
+POST /broadcast/camera/retire | Roles: [developer]
 
 ```
 READ cameraStore:cam:{cameraId}                       -> 404 if null
@@ -345,7 +345,7 @@ RETURN (200, CameraRetireResponse)
 ```
 
 ### StartOutput
-POST /broadcast/output/start | Roles: [admin]
+POST /broadcast/output/start | Roles: [developer]
 
 ```
 IF NOT config.OutputEnabled                           -> 400
@@ -374,7 +374,7 @@ RETURN (200, OutputStartResponse { broadcastId })
 ```
 
 ### StopOutput
-POST /broadcast/output/stop | Roles: [admin]
+POST /broadcast/output/stop | Roles: [developer]
 
 ```
 READ broadcastStore:out:{broadcastId} [with ETag]     -> 404 if null
@@ -388,7 +388,7 @@ RETURN (200, OutputStopResponse)
 ```
 
 ### UpdateOutput
-POST /broadcast/output/update | Roles: [admin]
+POST /broadcast/output/update | Roles: [developer]
 
 ```
 READ broadcastStore:out:{broadcastId} [with ETag]     -> 404 if null
@@ -405,7 +405,7 @@ RETURN (200, OutputUpdateResponse)
 ```
 
 ### GetOutputStatus
-POST /broadcast/output/status | Roles: [admin]
+POST /broadcast/output/status | Roles: [developer]
 
 ```
 READ broadcastStore:out:{broadcastId}                 -> 404 if null
@@ -415,7 +415,7 @@ RETURN (200, OutputStatusResponse { broadcastId, sourceType, maskedRtmpUrl, stat
 ```
 
 ### ListOutputs
-POST /broadcast/output/list | Roles: [admin]
+POST /broadcast/output/list | Roles: [developer]
 
 ```
 QUERY broadcastStore WHERE (NOT body.activeOnly OR $.state == Active) PAGED(body.page, body.pageSize)

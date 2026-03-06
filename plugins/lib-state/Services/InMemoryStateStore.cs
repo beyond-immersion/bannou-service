@@ -283,11 +283,16 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         string key,
         TValue value,
         string etag,
+        StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
 
         var json = BannouJson.Serialize(value);
+        var ttl = options?.Ttl;
+        DateTimeOffset? expiresAt = ttl.HasValue
+            ? DateTimeOffset.UtcNow.AddSeconds(ttl.Value)
+            : null;
 
         // Empty etag means "create new entry if it doesn't exist" (matches Redis/MySQL semantics)
         if (string.IsNullOrEmpty(etag))
@@ -296,7 +301,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             {
                 Json = json,
                 Version = 1,
-                ExpiresAt = null
+                ExpiresAt = expiresAt
             };
 
             // TryAdd is atomic - returns false if key already exists
@@ -334,7 +339,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             {
                 Json = json,
                 Version = existing.Version + 1,
-                ExpiresAt = existing.ExpiresAt // Preserve TTL
+                ExpiresAt = expiresAt ?? existing.ExpiresAt
             };
 
             // Attempt atomic update

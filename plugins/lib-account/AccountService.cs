@@ -568,7 +568,7 @@ public partial class AccountService : IAccountService
         // Save updated account with optimistic concurrency check
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for account {AccountId}", accountId);
@@ -764,7 +764,7 @@ public partial class AccountService : IAccountService
         // Save updated auth methods with optimistic concurrency
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var savedEtag = await _authMethodStore.TrySaveAsync(authMethodsKey, authMethods, authMethodsEtag ?? string.Empty, cancellationToken);
+        var savedEtag = await _authMethodStore.TrySaveAsync(authMethodsKey, authMethods, authMethodsEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (savedEtag == null)
         {
             _logger.LogWarning("Concurrent modification of auth methods for account {AccountId}", accountId);
@@ -956,7 +956,7 @@ public partial class AccountService : IAccountService
         // Save with optimistic concurrency check
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for account profile {AccountId}", accountId);
@@ -1011,7 +1011,7 @@ public partial class AccountService : IAccountService
         // Save the soft-deleted account with optimistic concurrency check
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for account deletion {AccountId}", accountId);
@@ -1093,7 +1093,7 @@ public partial class AccountService : IAccountService
         // Save updated auth methods with optimistic concurrency check
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newAuthEtag = await _authMethodStore.TrySaveAsync(authMethodsKey, authMethods, authEtag ?? string.Empty, cancellationToken);
+        var newAuthEtag = await _authMethodStore.TrySaveAsync(authMethodsKey, authMethods, authEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newAuthEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for auth methods on account {AccountId}", accountId);
@@ -1137,7 +1137,7 @@ public partial class AccountService : IAccountService
         // Save updated account with optimistic concurrency check
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for password update on account {AccountId}", accountId);
@@ -1174,7 +1174,7 @@ public partial class AccountService : IAccountService
 
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for MFA update on account {AccountId}", accountId);
@@ -1213,7 +1213,7 @@ public partial class AccountService : IAccountService
         // Save updated account with optimistic concurrency check
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for verification update on account {AccountId}", accountId);
@@ -1684,7 +1684,7 @@ public partial class AccountService : IAccountService
 
                 // GetWithETagAsync returns non-null etag for existing records;
                 // coalesce satisfies compiler's nullable analysis (will never execute)
-                var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+                var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (newEtag == null)
                 {
                     failed.Add(new BulkOperationFailure

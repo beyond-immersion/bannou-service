@@ -378,7 +378,7 @@ public partial class TransitService : ITransitService
         if (changedFields.Count > 0)
         {
             model.ModifiedAt = DateTimeOffset.UtcNow;
-            var savedEtag = await _modeStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken);
+            var savedEtag = await _modeStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (savedEtag == null)
             {
                 _logger.LogDebug("Concurrent modification detected for transit mode {ModeCode}", body.Code);
@@ -433,7 +433,7 @@ public partial class TransitService : ITransitService
         model.DeprecationReason = body.Reason;
         model.ModifiedAt = DateTimeOffset.UtcNow;
 
-        var savedEtag = await _modeStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken);
+        var savedEtag = await _modeStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (savedEtag == null)
         {
             _logger.LogDebug("Concurrent modification detected during deprecation of transit mode {ModeCode}", body.Code);
@@ -480,7 +480,7 @@ public partial class TransitService : ITransitService
         model.DeprecationReason = null;
         model.ModifiedAt = DateTimeOffset.UtcNow;
 
-        var savedEtag = await _modeStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken);
+        var savedEtag = await _modeStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (savedEtag == null)
         {
             _logger.LogDebug("Concurrent modification detected during undeprecation of transit mode {ModeCode}", body.Code);
@@ -1443,7 +1443,7 @@ public partial class TransitService : ITransitService
         if (changedFields.Count > 0)
         {
             model.ModifiedAt = DateTimeOffset.UtcNow;
-            var savedEtag = await _connectionStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken);
+            var savedEtag = await _connectionStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (savedEtag == null)
             {
                 _logger.LogDebug("Concurrent modification detected for connection {ConnectionId}", body.ConnectionId);
@@ -1532,7 +1532,7 @@ public partial class TransitService : ITransitService
         model.StatusChangedAt = DateTimeOffset.UtcNow;
         model.ModifiedAt = DateTimeOffset.UtcNow;
 
-        var savedEtag = await _connectionStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken);
+        var savedEtag = await _connectionStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (savedEtag == null)
         {
             _logger.LogDebug("Concurrent modification detected during status update of connection {ConnectionId}",
@@ -1780,7 +1780,7 @@ public partial class TransitService : ITransitService
                     currentModel.CrossRealm = crossRealm;
                     currentModel.ModifiedAt = DateTimeOffset.UtcNow;
 
-                    var savedEtag = await _connectionStore.TrySaveAsync(key, currentModel, etag ?? string.Empty, cancellationToken);
+                    var savedEtag = await _connectionStore.TrySaveAsync(key, currentModel, etag ?? string.Empty, cancellationToken: cancellationToken);
                     if (savedEtag != null)
                     {
                         updated++;
@@ -3258,7 +3258,7 @@ public partial class TransitService : ITransitService
                 return;
             }
 
-            var result = await _journeyIndexStore.TrySaveAsync(JOURNEY_INDEX_KEY, updatedIndex, etag ?? string.Empty, cancellationToken);
+            var result = await _journeyIndexStore.TrySaveAsync(JOURNEY_INDEX_KEY, updatedIndex, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (result != null)
             {
                 return;
@@ -4600,7 +4600,7 @@ public partial class TransitService : ITransitService
             freshConnection.StatusChangedAt = DateTimeOffset.UtcNow;
             freshConnection.ModifiedAt = DateTimeOffset.UtcNow;
 
-            var savedEtag = await _connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken);
+            var savedEtag = await _connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken: cancellationToken);
             if (savedEtag == null)
             {
                 _logger.LogWarning("Concurrent modification detected for connection {ConnectionId} during location cleanup, skipping", connection.Id);
@@ -4655,7 +4655,7 @@ public partial class TransitService : ITransitService
             freshJourney.StatusReason = "location_deleted";
             freshJourney.ModifiedAt = DateTimeOffset.UtcNow;
 
-            var savedJourneyEtag = await _journeyArchiveStore.TrySaveAsync(archiveKey, freshJourney, journeyEtag ?? string.Empty, cancellationToken);
+            var savedJourneyEtag = await _journeyArchiveStore.TrySaveAsync(archiveKey, freshJourney, journeyEtag ?? string.Empty, cancellationToken: cancellationToken);
             if (savedJourneyEtag == null)
             {
                 _logger.LogWarning("Concurrent modification detected for archived journey {JourneyId} during location cleanup, skipping", archivedJourney.Id);
@@ -4769,7 +4769,7 @@ public partial class TransitService : ITransitService
             freshJourney.StatusReason = "character_deleted";
             freshJourney.ModifiedAt = DateTimeOffset.UtcNow;
 
-            var savedJourneyEtag = await _journeyArchiveStore.TrySaveAsync(archiveKey, freshJourney, journeyEtag ?? string.Empty, cancellationToken);
+            var savedJourneyEtag = await _journeyArchiveStore.TrySaveAsync(archiveKey, freshJourney, journeyEtag ?? string.Empty, cancellationToken: cancellationToken);
             if (savedJourneyEtag == null)
             {
                 _logger.LogWarning("Concurrent modification detected for archived journey {JourneyId} during character cleanup, skipping", archivedJourney.Id);

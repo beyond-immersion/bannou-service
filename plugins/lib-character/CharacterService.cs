@@ -924,7 +924,7 @@ public partial class CharacterService : ICharacterService
 
             // initialEtag is null on first save (no prior value); empty string signals
             // "create new" to TrySaveAsync (will never execute when etag exists)
-            var savedEtag = await _refCountStore.TrySaveAsync(refCountKey, refData, initialEtag ?? string.Empty, cancellationToken);
+            var savedEtag = await _refCountStore.TrySaveAsync(refCountKey, refData, initialEtag ?? string.Empty, cancellationToken: cancellationToken);
             if (savedEtag != null)
             {
                 break; // Successfully saved
@@ -1489,7 +1489,7 @@ public partial class CharacterService : ICharacterService
                 }
 
                 // Otherwise use optimistic concurrency
-                if (await _realmIndexStore.TrySaveAsync(realmIndexKey, characterIds, etag, cancellationToken) != null)
+                if (await _realmIndexStore.TrySaveAsync(realmIndexKey, characterIds, etag, cancellationToken: cancellationToken) != null)
                     break;
 
                 // Retry on conflict
@@ -1529,7 +1529,7 @@ public partial class CharacterService : ICharacterService
 
             if (characterIds.Remove(characterId))
             {
-                if (await _realmIndexStore.TrySaveAsync(realmIndexKey, characterIds, etag, cancellationToken) != null)
+                if (await _realmIndexStore.TrySaveAsync(realmIndexKey, characterIds, etag, cancellationToken: cancellationToken) != null)
                     break;
 
                 // Retry on conflict

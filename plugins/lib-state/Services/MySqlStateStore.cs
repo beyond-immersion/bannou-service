@@ -185,8 +185,17 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         string key,
         TValue value,
         string etag,
+        StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        // MySQL stores do not support TTL - use Redis for ephemeral data
+        if (options?.Ttl != null)
+        {
+            throw new InvalidOperationException(
+                $"TTL is not supported for MySQL stores. Store '{_storeName}' uses MySQL backend. " +
+                "For ephemeral data requiring expiration, use a Redis-backed store instead.");
+        }
+
         using var context = CreateContext();
         var existing = await context.StateEntries
             .Where(e => e.StoreName == _storeName && e.Key == key)

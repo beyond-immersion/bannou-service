@@ -485,7 +485,7 @@ public partial class ActorService : IActorService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, etag ?? string.Empty, cancellationToken);
+            var result = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (result != null)
             {
                 return; // Successfully saved

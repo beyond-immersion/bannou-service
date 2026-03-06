@@ -47,7 +47,6 @@ paths:
       - Definitions
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -97,7 +96,6 @@ paths:
       - Definitions
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -123,7 +121,6 @@ paths:
       - Definitions
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -155,7 +152,6 @@ paths:
       - Definitions
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -181,7 +177,6 @@ paths:
       - Progress
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -259,7 +254,6 @@ paths:
       - Progress
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -285,7 +279,6 @@ paths:
       - Platform Sync
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -335,9 +328,7 @@ paths:
       description: |
         Deletes all achievement progress records for a specific character across all game services.
         Called by lib-resource during character deletion cleanup. This is a hard delete.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

@@ -202,7 +202,6 @@ paths:
         growth phase (denormalized from lib-seed for convenience) and member count.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -230,7 +229,6 @@ paths:
         Codes are human-readable identifiers like "thieves_guild" or "royal_guard".
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -258,7 +256,6 @@ paths:
         game service, status, and parent faction. Supports cursor-based pagination.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -373,7 +370,6 @@ paths:
         the associated seed.
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -403,7 +399,6 @@ paths:
         factions (matched by code within game service) are skipped.
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -465,7 +460,6 @@ paths:
         Returns 404 if no baseline has been designated.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -503,7 +497,6 @@ paths:
         Publishes a faction.member.added event for downstream consumers.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -533,7 +526,6 @@ paths:
         faction.member.removed event for downstream consumers.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -557,7 +549,6 @@ paths:
         by role and cursor-based pagination. Ordered by join date descending.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -586,7 +577,6 @@ paths:
         ${faction.*} variable provider for ABML behavior expressions.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -612,7 +602,6 @@ paths:
         faction.member.role-changed event for downstream consumers.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -640,7 +629,6 @@ paths:
         and if so, their role. Lightweight lookup for permission/capability checks.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -728,7 +716,6 @@ paths:
         and cursor-based pagination.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -759,7 +746,6 @@ paths:
         Returns 404 if the location has no controlling faction.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -886,7 +872,6 @@ paths:
         by severity and scope.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -954,8 +939,7 @@ paths:
         Called by lib-resource cleanup coordination when a character is deleted.
         Removes all faction memberships for the character. Territory claims and
         norm definitions are faction-owned, not character-owned, so they remain.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -980,8 +964,7 @@ paths:
         Called by lib-resource cleanup coordination when a realm is deleted.
         Removes all factions belonging to the realm, including their memberships,
         territory claims, norm definitions, and associated seeds.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1006,8 +989,7 @@ paths:
         Called by lib-resource cleanup coordination when a location is deleted.
         Removes all territory claims referencing the location. The faction itself
         remains intact.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1036,8 +1018,7 @@ paths:
         Called by Resource service during character compression. Returns faction
         memberships and roles for the character for archival. Norm definitions
         are faction-owned data and not included in character archives.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1064,9 +1045,7 @@ paths:
         Called by Resource service during character decompression. Restores
         faction memberships from archive data. Only restores memberships for
         factions that still exist.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

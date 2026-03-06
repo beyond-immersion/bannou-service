@@ -2166,7 +2166,7 @@ public partial class ItemService : IItemService
             // Use TrySaveAsync for both paths. Empty etag = "create only if not exists"
             // semantics across all backends (Redis transaction, InMemory TryAdd).
             // This prevents two concurrent first-writes from losing one record (IMPLEMENTATION TENETS).
-            var newEtag = await stringStore.TrySaveAsync(key, serialized, etag ?? string.Empty, ct);
+            var newEtag = await stringStore.TrySaveAsync(key, serialized, etag ?? string.Empty, cancellationToken: ct);
             if (newEtag is not null) return;
 
             _logger.LogDebug("Optimistic concurrency conflict on list {Key}, retry {Attempt}", key, attempt + 1);
@@ -2212,7 +2212,7 @@ public partial class ItemService : IItemService
                 return;
             }
 
-            var newEtag = await stringStore.TrySaveAsync(key, serialized, etag, ct);
+            var newEtag = await stringStore.TrySaveAsync(key, serialized, etag, cancellationToken: ct);
             if (newEtag is not null) return;
 
             _logger.LogDebug("Optimistic concurrency conflict on list {Key}, retry {Attempt}", key, attempt + 1);

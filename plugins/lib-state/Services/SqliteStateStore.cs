@@ -179,8 +179,17 @@ public sealed class SqliteStateStore<TValue> : IJsonQueryableStateStore<TValue>
         string key,
         TValue value,
         string etag,
+        StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        // SQLite stores do not support TTL - use Redis for ephemeral data
+        if (options?.Ttl != null)
+        {
+            throw new InvalidOperationException(
+                $"TTL is not supported for SQLite stores. Store '{_storeName}' uses SQLite backend. " +
+                "For ephemeral data requiring expiration, use a Redis-backed store instead.");
+        }
+
         using var context = CreateContext();
         var existing = await context.StateEntries
             .Where(e => e.StoreName == _storeName && e.Key == key)

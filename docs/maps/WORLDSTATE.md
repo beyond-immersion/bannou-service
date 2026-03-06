@@ -167,7 +167,7 @@ All consumed events are self-subscriptions for cross-node in-memory cache invali
 ## Methods
 
 ### GetRealmTime
-POST /worldstate/clock/get-realm-time | Roles: [user]
+POST /worldstate/clock/get-realm-time | Roles: [] (service-to-service)
 
 ```
 READ _clockStore:realm:{realmId}                     -> 404 if null
@@ -175,7 +175,7 @@ RETURN (200, GameTimeSnapshot from clock)
 ```
 
 ### GetRealmTimeByCode
-POST /worldstate/clock/get-realm-time-by-code | Roles: [user]
+POST /worldstate/clock/get-realm-time-by-code | Roles: [] (service-to-service)
 
 ```
 CALL IRealmClient.GetRealmByCodeAsync(realmCode)     -> propagate upstream error
@@ -185,7 +185,7 @@ RETURN (200, GameTimeSnapshot from clock)
 ```
 
 ### BatchGetRealmTimes
-POST /worldstate/clock/batch-get-realm-times | Roles: [user]
+POST /worldstate/clock/batch-get-realm-times | Roles: [] (service-to-service)
 
 ```
 IF realmIds.Count > config.MaxBatchRealmTimeQueries  -> 400
@@ -197,7 +197,7 @@ RETURN (200, BatchGetRealmTimesResponse { snapshots, notFoundRealmIds })
 ```
 
 ### GetElapsedGameTime
-POST /worldstate/clock/get-elapsed-game-time | Roles: [user]
+POST /worldstate/clock/get-elapsed-game-time | Roles: [] (service-to-service)
 
 ```
 IF fromRealTime >= toRealTime                        -> 400
@@ -211,7 +211,7 @@ RETURN (200, GetElapsedGameTimeResponse { totalGameSeconds, gameDays, gameHours,
 ```
 
 ### TriggerTimeSync
-POST /worldstate/clock/trigger-sync | Roles: [user]
+POST /worldstate/clock/trigger-sync | Roles: [] (service-to-service)
 
 ```
 READ _clockStore:realm:{realmId}                     -> 404 if null
@@ -319,7 +319,7 @@ RETURN (200, CalendarTemplateResponse)
 ```
 
 ### GetCalendar
-POST /worldstate/calendar/get | Roles: [developer]
+POST /worldstate/calendar/get | Roles: [] (service-to-service)
 
 ```
 READ _calendarStore:calendar:{gsId}:{templateCode}   -> 404 if null
@@ -327,7 +327,7 @@ RETURN (200, CalendarTemplateResponse)
 ```
 
 ### ListCalendars
-POST /worldstate/calendar/list | Roles: [developer]
+POST /worldstate/calendar/list | Roles: [] (service-to-service)
 
 ```
 QUERY _queryableCalendarStore WHERE GameServiceId == gameServiceId
@@ -365,7 +365,7 @@ RETURN (200, DeleteCalendarResponse)
 ```
 
 ### GetRealmConfig
-POST /worldstate/realm-config/get | Roles: [developer]
+POST /worldstate/realm-config/get | Roles: [] (service-to-service)
 
 ```
 READ _realmConfigStore:realm-config:{realmId}        -> 404 if null
@@ -396,7 +396,7 @@ RETURN (200, RealmConfigResponse)
 ```
 
 ### ListRealmClocks
-POST /worldstate/realm-config/list | Roles: [developer]
+POST /worldstate/realm-config/list | Roles: [] (service-to-service)
 
 ```
 IF gameServiceId provided

@@ -168,7 +168,7 @@ public partial class EscrowService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await _agreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
+            var saveResult = await _agreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null)
             {
                 _logger.LogDebug("Concurrent modification during deposit for escrow {EscrowId}, retrying (attempt {Attempt})",

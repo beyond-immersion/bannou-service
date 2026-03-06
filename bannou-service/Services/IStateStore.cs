@@ -82,12 +82,14 @@ public interface IStateStore<TValue>
     /// <param name="key">The key to save.</param>
     /// <param name="value">The value to store.</param>
     /// <param name="etag">The expected ETag - save fails if mismatch.</param>
+    /// <param name="options">Optional save options (TTL). Applied on success.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The new ETag if save succeeded, null if ETag mismatch (conflict).</returns>
     Task<string?> TrySaveAsync(
         string key,
         TValue value,
         string etag,
+        StateOptions? options = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

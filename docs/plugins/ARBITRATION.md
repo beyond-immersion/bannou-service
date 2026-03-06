@@ -237,7 +237,7 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 
 ### Case Management (8 endpoints)
 
-All endpoints require `developer` role.
+All endpoints use `x-permissions: []` (service-to-service only). Arbitration is a pure orchestration service called by god-actors and other services via lib-mesh, never by WebSocket clients or developers directly.
 
 - **FileCase** (`/arbitration/case/file`): Validates game service and party existence. Resolves jurisdiction: queries Faction for sovereign at location, retrieves governance data for case type. Validates sovereign has governance data for this case type (rejects if no procedural template exists — checks for existence of governance data, not its contents). Creates Contract instance from procedural template code via `IContractClient`, passing governance data blob unchanged to `SetTemplateValues`. Acquires distributed lock on case creation. Saves case record under ID, code, and contract lookup keys. Publishes `arbitration.case.filed`. Returns case ID and procedural timeline (derived from the created Contract instance's milestone deadlines, not from reading governance parameters directly).
 
@@ -920,7 +920,7 @@ When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitratio
 - `x-service-layer: GameFeatures` at root level
 - `servers: [{ url: http://localhost:5012 }]`
 - Schema Modification Gate in `info.description`
-- `x-permissions: ['developer']` on all endpoints
+- `x-permissions: []` on all endpoints (service-to-service only — pure orchestration service)
 - `x-references` block for all 4 resource cleanup targets (character, realm, faction, location) with `sourceType: arbitration`
 - Consider `x-compression-callback` for character archival (case participation history)
 - All service-specific enums (`ArbitrationRulingType`, `ArbitrationEvidenceType`, `ArbitrationCaseStatus`, `ArbiterSelectionMode`) defined here, referenced via `$ref` from events

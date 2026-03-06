@@ -49,8 +49,7 @@ paths:
       description: Returns full GameTimeSnapshot for a realm. Reads from Redis cache (hot path).
       tags:
         - Worldstate
-      x-permissions:
-        - role: user
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -74,8 +73,7 @@ paths:
       description: Convenience endpoint accepting realm code string instead of GUID. Resolves to realm ID via IRealmClient, then delegates to GetRealmTime.
       tags:
         - Worldstate
-      x-permissions:
-        - role: user
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -99,8 +97,7 @@ paths:
       description: Returns GameTimeSnapshot for multiple realms in a single call. Used by services operating across realms.
       tags:
         - Worldstate
-      x-permissions:
-        - role: user
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -122,8 +119,7 @@ paths:
       description: Given a realmId, fromRealTime, and toRealTime, computes total game-seconds elapsed. Integrates over ratio history segments. Critical for lazy evaluation patterns.
       tags:
         - Worldstate
-      x-permissions:
-        - role: user
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -151,8 +147,7 @@ paths:
       description: Publishes a WorldstateTimeSyncEvent with syncReason TriggerSync to a specific entity's connected sessions. Primary caller is Agency (L4) on realm entry for immediate client time sync.
       tags:
         - Worldstate
-      x-permissions:
-        - role: user
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -294,8 +289,7 @@ paths:
       description: Returns a calendar template by game service ID and template code.
       tags:
         - Worldstate
-      x-permissions:
-        - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -319,8 +313,7 @@ paths:
       description: Returns all calendar templates registered for a game service.
       tags:
         - Worldstate
-      x-permissions:
-        - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -400,8 +393,7 @@ paths:
       description: Returns the realm's worldstate configuration including calendar template, time ratio, downtime policy, epoch, and active status.
       tags:
         - Worldstate
-      x-permissions:
-        - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -450,8 +442,7 @@ paths:
       description: Lists all active realm clocks with summary info. Supports pagination and optional gameServiceId filter.
       tags:
         - Worldstate
-      x-permissions:
-        - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:

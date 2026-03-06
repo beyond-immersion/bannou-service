@@ -243,7 +243,7 @@ public class EscrowExpirationService : BackgroundService
 
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var saveResult = await agreementStore.TrySaveAsync(agreementKey, currentAgreement, etag ?? string.Empty, cancellationToken);
+        var saveResult = await agreementStore.TrySaveAsync(agreementKey, currentAgreement, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (saveResult == null)
         {
             _logger.LogDebug("Concurrent modification on escrow {EscrowId} during expiration processing", agreement.EscrowId);
@@ -357,7 +357,7 @@ public class EscrowExpirationService : BackgroundService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await partyPendingStore.TrySaveAsync(partyKey, existing, etag ?? string.Empty, cancellationToken);
+            var saveResult = await partyPendingStore.TrySaveAsync(partyKey, existing, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult != null)
             {
                 return;

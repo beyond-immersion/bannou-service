@@ -626,7 +626,7 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 
 ### Recipe Management (7 endpoints)
 
-All endpoints require `developer` role.
+Write endpoints (`CreateRecipe`, `UpdateRecipe`, `DeprecateRecipe`, `SeedRecipes`) require `developer` role. Read endpoints (`GetRecipe`, `ListRecipes`, `ListDomains`) use `x-permissions: []` (internal queries called by NPC GOAP and game engine).
 
 - **CreateRecipe** (`/craft/recipe/create`): Validates game service existence. Validates code uniqueness. Validates step structure (at least one step, valid step codes). Validates input references (item template codes exist). Validates output references. Enforces `MaxRecipesPerGameService`. Saves to MySQL. Populates cache. Publishes `craft.recipe.created`.
 
@@ -670,7 +670,7 @@ All endpoints require `developer` role.
 
 ### Station Management (4 endpoints)
 
-All endpoints require `developer` role.
+Write endpoints (`RegisterStation`, `DeregisterStation`) require `developer` role. Read endpoints (`GetStation`, `ListStations`) use `x-permissions: []` (internal queries called by NPC GOAP and session validation).
 
 - **RegisterStation** (`/craft/station/register`): Creates a station definition at a location. Validates location exists via `ILocationClient` (L2, hard dependency). Updates location and type indexes.
 

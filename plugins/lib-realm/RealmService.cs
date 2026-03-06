@@ -438,7 +438,7 @@ public partial class RealmService : IRealmService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken);
+            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (result != null)
             {
                 await PublishRealmUpdatedEventAsync(model, changedFields, cancellationToken);
@@ -593,7 +593,7 @@ public partial class RealmService : IRealmService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken);
+            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (result != null)
             {
                 await PublishRealmUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -645,7 +645,7 @@ public partial class RealmService : IRealmService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken);
+            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (result != null)
             {
                 await PublishRealmUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -1332,7 +1332,7 @@ public partial class RealmService : IRealmService
             realmIds.Add(realmId);
             // etag is null when list key doesn't exist yet; empty string signals
             // "create new" to TrySaveAsync (will never conflict on new entries)
-            var result = await _realmListStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken);
+            var result = await _realmListStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (result != null)
             {
                 return;
@@ -1361,7 +1361,7 @@ public partial class RealmService : IRealmService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await _realmListStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken);
+            var result = await _realmListStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (result != null)
             {
                 return;

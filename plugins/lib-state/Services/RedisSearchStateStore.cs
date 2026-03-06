@@ -213,12 +213,14 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         string key,
         TValue value,
         string etag,
+        StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
         var json = BannouJson.Serialize(value);
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
 
         // Empty etag means "create new entry if it doesn't exist"
         if (string.IsNullOrEmpty(etag))
@@ -233,6 +235,13 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
             var createSuccess = (long)createResult;
             if (createSuccess == 1)
             {
+                // Apply TTL post-script (non-atomic but acceptable — TTL refresh is not a concurrency concern)
+                if (ttl.HasValue)
+                {
+                    await _database.KeyExpireAsync(fullKey, ttl.Value);
+                    await _database.KeyExpireAsync(metaKey, ttl.Value);
+                }
+
                 _logger.LogDebug("Created new key '{Key}' in store '{Store}'", key, _keyPrefix);
                 return "1";
             }
@@ -259,6 +268,13 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
             _logger.LogDebug("ETag mismatch for key '{Key}' in store '{Store}' (expected: {Expected})",
                 key, _keyPrefix, etag);
             return null;
+        }
+
+        // Apply TTL post-script on successful update
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(fullKey, ttl.Value);
+            await _database.KeyExpireAsync(metaKey, ttl.Value);
         }
 
         _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}' (version: {Version})",

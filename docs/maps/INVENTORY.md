@@ -119,10 +119,10 @@ Note: `inventory.item.moved`, `inventory.item.split`, and `inventory.item.stacke
 | ListContainers | POST /inventory/container/list | user | - | - |
 | UpdateContainer | POST /inventory/container/update | developer | container | inventory.container.updated |
 | DeleteContainer | POST /inventory/container/delete | admin | container, owner-index, type-index, cache | inventory.container.deleted |
-| AddItemToContainer | POST /inventory/add | developer | container | inventory.item.placed, inventory.container.full |
-| RemoveItemFromContainer | POST /inventory/remove | developer | container | inventory.item.removed |
+| AddItemToContainer | POST /inventory/add | [] | container | inventory.item.placed, inventory.container.full |
+| RemoveItemFromContainer | POST /inventory/remove | [] | container | inventory.item.removed |
 | MoveItem | POST /inventory/move | user | container (cross-container) | inventory.item.moved (+.removed, .placed if cross-container) |
-| TransferItem | POST /inventory/transfer | developer | container (via delegates) | inventory.item.transferred (+split, move events) |
+| TransferItem | POST /inventory/transfer | [] | container (via delegates) | inventory.item.transferred (+split, move events) |
 | SplitStack | POST /inventory/split | user | container | inventory.item.split |
 | MergeStacks | POST /inventory/merge | user | container | inventory.item.stacked |
 | QueryItems | POST /inventory/query | user | - | - |
@@ -286,7 +286,7 @@ RETURN (200, DeleteContainerResponse { itemsHandled })
 ---
 
 ### AddItemToContainer
-POST /inventory/add | Roles: [developer]
+POST /inventory/add | Roles: []
 
 ```
 CALL IItemClient.GetItemInstanceAsync(instanceId)           -> mapped status on ApiException
@@ -324,7 +324,7 @@ RETURN (200, AddItemResponse { slotIndex, slotX, slotY })
 ---
 
 ### RemoveItemFromContainer
-POST /inventory/remove | Roles: [developer]
+POST /inventory/remove | Roles: []
 
 ```
 CALL IItemClient.GetItemInstanceAsync(instanceId)           -> mapped status on ApiException
@@ -390,7 +390,7 @@ RETURN (200, MoveItemResponse { sourceContainerId, slotIndex, slotX, slotY })
 ---
 
 ### TransferItem
-POST /inventory/transfer | Roles: [developer]
+POST /inventory/transfer | Roles: []
 
 ```
 CALL IItemClient.GetItemInstanceAsync(instanceId)           -> mapped status on ApiException

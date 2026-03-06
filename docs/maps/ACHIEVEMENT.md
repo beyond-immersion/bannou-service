@@ -124,7 +124,7 @@
 | ListUnlockedAchievements | POST /achievement/list-unlocked | [user] | - | - |
 | SyncPlatformAchievements | POST /achievement/platform/sync | [admin] | - | achievement.platform.synced |
 | GetPlatformSyncStatus | POST /achievement/platform/status | [] | - | - |
-| CleanupByCharacter | POST /achievement/cleanup-by-character | [admin] | progress | - |
+| CleanupByCharacter | POST /achievement/cleanup-by-character | [] | progress | - |
 
 ---
 
@@ -343,7 +343,7 @@ RETURN (200, PlatformSyncStatusResponse { entityId, entityType, platforms })
 ```
 
 ### CleanupByCharacter
-POST /achievement/cleanup-by-character | Roles: [admin]
+POST /achievement/cleanup-by-character | Roles: []
 
 ```
 // Called by lib-resource during character deletion cleanup

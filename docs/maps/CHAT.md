@@ -177,15 +177,15 @@ All handlers paginate with `ContractRoomQueryBatchSize` and cap at `MaxContractR
 | UnmuteParticipant | POST /chat/room/participant/unmute | user, state:in_room | participants | chat.participant.unmuted |
 | ChangeParticipantRole | POST /chat/room/participant/change-role | user, state:in_room | participants | chat.participant.role-changed |
 | SendMessage | POST /chat/message/send | user, state:in_room | messages/buffer, participants, room, cache, typing | chat.message.sent (+unmuted) |
-| SendMessageBatch | POST /chat/message/send-batch | developer | messages/buffer, room, cache | chat.message.sent (per message) |
+| SendMessageBatch | POST /chat/message/send-batch | [] | messages/buffer, room, cache | chat.message.sent (per message) |
 | GetMessageHistory | POST /chat/message/history | user, state:in_room | - | - |
 | DeleteMessage | POST /chat/message/delete | user, state:in_room | messages | chat.message.deleted |
 | PinMessage | POST /chat/message/pin | user, state:in_room | messages | - |
 | UnpinMessage | POST /chat/message/unpin | user, state:in_room | messages | - |
 | SearchMessages | POST /chat/message/search | user, state:in_room | - | - |
-| AdminListRooms | POST /chat/admin/rooms | developer | - | - |
-| AdminGetStats | POST /chat/admin/stats | developer | - | - |
-| AdminForceCleanup | POST /chat/admin/cleanup | developer | room, cache, participants | chat.room.deleted/archived |
+| AdminListRooms | POST /chat/admin/rooms | admin | - | - |
+| AdminGetStats | POST /chat/admin/stats | admin | - | - |
+| AdminForceCleanup | POST /chat/admin/cleanup | admin | room, cache, participants | chat.room.deleted/archived |
 | Typing | POST /chat/typing | [] | typing | - |
 | EndTyping | POST /chat/end-typing | [] | typing | - |
 
@@ -558,7 +558,7 @@ RETURN (200, ChatMessageResponse)
 ```
 
 ### SendMessageBatch
-POST /chat/message/send-batch | Roles: [developer]
+POST /chat/message/send-batch | Roles: []
 
 ```
 READ room:room:{roomId}                                         -> 404 if null
@@ -656,7 +656,7 @@ RETURN (200, SearchMessagesResponse { messages, totalMatches })
 ```
 
 ### AdminListRooms
-POST /chat/admin/rooms | Roles: [developer]
+POST /chat/admin/rooms | Roles: [admin]
 
 ```
 QUERY rooms WHERE $.RoomId EXISTS
@@ -668,7 +668,7 @@ RETURN (200, ListRoomsResponse { items, totalCount, page, pageSize })
 ```
 
 ### AdminGetStats
-POST /chat/admin/stats | Roles: [developer]
+POST /chat/admin/stats | Roles: [admin]
 
 ```
 COUNT rooms WHERE $.RoomId EXISTS                                // totalRooms
@@ -683,7 +683,7 @@ RETURN (200, AdminStatsResponse { totalRooms, activeRooms, lockedRooms, archived
 ```
 
 ### AdminForceCleanup
-POST /chat/admin/cleanup | Roles: [developer]
+POST /chat/admin/cleanup | Roles: [admin]
 
 ```
 // Delegates to CleanupIdleRoomsAsync — see Background Services

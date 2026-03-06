@@ -74,8 +74,7 @@ paths:
       operationId: createDeity
       tags:
       - Deity Management
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -101,8 +100,7 @@ paths:
       operationId: getDeity
       tags:
       - Deity Management
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -126,8 +124,7 @@ paths:
       operationId: getDeityByCode
       tags:
       - Deity Management
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -153,8 +150,7 @@ paths:
       operationId: listDeities
       tags:
       - Deity Management
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -178,8 +174,7 @@ paths:
       operationId: updateDeity
       tags:
       - Deity Management
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -207,8 +202,7 @@ paths:
       operationId: activateDeity
       tags:
       - Deity Management
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -236,8 +230,7 @@ paths:
       operationId: deactivateDeity
       tags:
       - Deity Management
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -267,8 +260,7 @@ paths:
       operationId: deleteDeity
       tags:
       - Deity Management
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -292,8 +284,7 @@ paths:
       operationId: getDivinityBalance
       tags:
       - Divinity Economy
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -319,8 +310,7 @@ paths:
       operationId: creditDivinity
       tags:
       - Divinity Economy
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -347,8 +337,7 @@ paths:
       operationId: debitDivinity
       tags:
       - Divinity Economy
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -374,8 +363,7 @@ paths:
       operationId: getDivinityHistory
       tags:
       - Divinity Economy
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -408,8 +396,7 @@ paths:
       operationId: grantBlessing
       tags:
       - Blessing Orchestration
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -440,8 +427,7 @@ paths:
       operationId: revokeBlessing
       tags:
       - Blessing Orchestration
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -467,8 +453,7 @@ paths:
       operationId: listBlessingsByEntity
       tags:
       - Blessing Orchestration
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -490,8 +475,7 @@ paths:
       operationId: listBlessingsByDeity
       tags:
       - Blessing Orchestration
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -513,8 +497,7 @@ paths:
       operationId: getBlessing
       tags:
       - Blessing Orchestration
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -545,8 +528,7 @@ paths:
       operationId: registerFollower
       tags:
       - Follower Management
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -574,8 +556,7 @@ paths:
       operationId: unregisterFollower
       tags:
       - Follower Management
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -595,8 +576,7 @@ paths:
       operationId: getFollowers
       tags:
       - Follower Management
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -628,8 +608,7 @@ paths:
       operationId: cleanupByCharacter
       tags:
       - Resource Cleanup
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -650,8 +629,7 @@ paths:
       operationId: cleanupByGameService
       tags:
       - Resource Cleanup
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:

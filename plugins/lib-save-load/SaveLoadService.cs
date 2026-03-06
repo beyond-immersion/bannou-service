@@ -1466,7 +1466,7 @@ public partial class SaveLoadService : ISaveLoadService
         // Pin the version
         version.IsPinned = true;
         version.CheckpointName = body.CheckpointName;
-        var newEtag = await _versionStore.TrySaveAsync(versionKey, version, versionEtag ?? string.Empty, cancellationToken);
+        var newEtag = await _versionStore.TrySaveAsync(versionKey, version, versionEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogDebug("Concurrent modification detected for version {Version} in slot {SlotId}",
@@ -1526,7 +1526,7 @@ public partial class SaveLoadService : ISaveLoadService
         var previousCheckpointName = version.CheckpointName;
         version.IsPinned = false;
         version.CheckpointName = null;
-        var newEtag = await _versionStore.TrySaveAsync(versionKey, version, versionEtag ?? string.Empty, cancellationToken);
+        var newEtag = await _versionStore.TrySaveAsync(versionKey, version, versionEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogDebug("Concurrent modification detected for version {Version} in slot {SlotId}",

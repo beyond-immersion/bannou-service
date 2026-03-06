@@ -462,7 +462,7 @@ public partial class CurrencyService : ICurrencyService
 
         // GetWithETagAsync returns non-null etag when entity exists (checked above);
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await _walletStore.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _walletStore.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected freezing wallet {WalletId}", body.WalletId);
@@ -507,7 +507,7 @@ public partial class CurrencyService : ICurrencyService
 
         // GetWithETagAsync returns non-null etag when entity exists (checked above);
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await _walletStore.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _walletStore.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected unfreezing wallet {WalletId}", body.WalletId);
@@ -591,7 +591,7 @@ public partial class CurrencyService : ICurrencyService
         wallet.Status = WalletStatus.Closed;
         // GetWithETagAsync returns non-null etag when entity exists (checked above);
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newWalletEtag = await _walletStore.TrySaveAsync(walletKey, wallet, walletEtag ?? string.Empty, cancellationToken);
+        var newWalletEtag = await _walletStore.TrySaveAsync(walletKey, wallet, walletEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newWalletEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected closing wallet {WalletId}", body.WalletId);
@@ -1396,7 +1396,7 @@ public partial class CurrencyService : ICurrencyService
 
             // GetWithETagAsync returns non-null etag when entity exists (checked above);
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await _definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+            var saveResult = await _definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult != null)
             {
                 var baseCurrencyCode = await FindBaseCurrencyCodeAsync(cancellationToken) ?? definition.Code;
@@ -1798,7 +1798,7 @@ public partial class CurrencyService : ICurrencyService
 
         // GetWithETagAsync returns non-null etag when entity exists (checked above);
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newHoldEtag = await _holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken);
+        var newHoldEtag = await _holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newHoldEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for hold {HoldId}", body.HoldId);
@@ -1882,7 +1882,7 @@ public partial class CurrencyService : ICurrencyService
 
         // GetWithETagAsync returns non-null etag when entity exists (checked above);
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newHoldEtag = await _holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken);
+        var newHoldEtag = await _holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newHoldEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for hold {HoldId}", body.HoldId);

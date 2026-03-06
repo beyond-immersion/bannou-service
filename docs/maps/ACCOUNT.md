@@ -92,23 +92,23 @@ This plugin does not consume external events.
 | Method | Route | Roles | Mutates | Publishes |
 |--------|-------|-------|---------|-----------|
 | ListAccounts | POST /account/list | admin | - | - |
-| CreateAccount | POST /account/create | admin | account, email-index | account.created |
-| GetAccount | POST /account/get | admin | - | - |
-| UpdateAccount | POST /account/update | admin | account | account.updated |
-| DeleteAccount | POST /account/delete | admin | account, email-index, provider-index, auth-methods | account.deleted |
-| GetAccountByEmail | POST /account/by-email | admin | - | - |
-| GetAuthMethods | POST /account/auth-methods/list | admin | - | - |
-| AddAuthMethod | POST /account/auth-methods/add | admin | auth-methods, provider-index | account.updated |
-| RemoveAuthMethod | POST /account/auth-methods/remove | admin | auth-methods, provider-index | account.updated |
-| GetAccountByProvider | POST /account/by-provider | admin | - | - |
+| CreateAccount | POST /account/create | [] | account, email-index | account.created |
+| GetAccount | POST /account/get | [] | - | - |
+| UpdateAccount | POST /account/update | [] | account | account.updated |
+| DeleteAccount | POST /account/delete | [] | account, email-index, provider-index, auth-methods | account.deleted |
+| GetAccountByEmail | POST /account/by-email | [] | - | - |
+| GetAuthMethods | POST /account/auth-methods/list | [] | - | - |
+| AddAuthMethod | POST /account/auth-methods/add | [] | auth-methods, provider-index | account.updated |
+| RemoveAuthMethod | POST /account/auth-methods/remove | [] | auth-methods, provider-index | account.updated |
+| GetAccountByProvider | POST /account/by-provider | [] | - | - |
 | UpdateProfile | POST /account/profile/update | user | account | account.updated |
-| UpdatePasswordHash | POST /account/password/update | user | account | account.updated |
-| UpdateMfa | POST /account/mfa/update | user | account | account.updated |
-| BatchGetAccounts | POST /account/batch-get | admin | - | - |
-| CountAccounts | POST /account/count | admin | - | - |
+| UpdatePasswordHash | POST /account/password/update | [] | account | account.updated |
+| UpdateMfa | POST /account/mfa/update | [] | account | account.updated |
+| BatchGetAccounts | POST /account/batch-get | [] | - | - |
+| CountAccounts | POST /account/count | [] | - | - |
 | BulkUpdateRoles | POST /account/roles/bulk-update | admin | account | account.updated |
-| UpdateVerificationStatus | POST /account/verification/update | user | account | account.updated |
-| UpdateEmail | POST /account/email/update | admin | account, email-index | account.updated |
+| UpdateVerificationStatus | POST /account/verification/update | [] | account | account.updated |
+| UpdateEmail | POST /account/email/update | [] | account, email-index | account.updated |
 
 ---
 
@@ -142,7 +142,7 @@ ELSE
 ---
 
 ### CreateAccount
-POST /account/create | Roles: [admin]
+POST /account/create | Roles: []
 
 IF request.Email is not null
   LOCK account-lock:account-email:{normalizedEmail}     -> 409 if lock fails
@@ -161,7 +161,7 @@ RETURN (200, AccountResponse)
 ---
 
 ### GetAccount
-POST /account/get | Roles: [admin]
+POST /account/get | Roles: []
 
 READ account-{accountId}                                -> 404 if null
 IF account.DeletedAt has value                          -> 404
@@ -172,7 +172,7 @@ RETURN (200, AccountResponse)
 ---
 
 ### UpdateAccount
-POST /account/update | Roles: [admin]
+POST /account/update | Roles: []
 
 READ account-{accountId} [with ETag]                    -> 404 if null or deleted
 // Track changed fields: displayName, roles, metadata
@@ -188,7 +188,7 @@ RETURN (200, AccountResponse)
 ---
 
 ### DeleteAccount
-POST /account/delete | Roles: [admin]
+POST /account/delete | Roles: []
 
 READ account-{accountId} [with ETag]                    -> 404 if null
 // Soft-delete: set DeletedAt timestamp
@@ -206,7 +206,7 @@ RETURN (200)
 ---
 
 ### GetAccountByEmail
-POST /account/by-email | Roles: [admin]
+POST /account/by-email | Roles: []
 
 READ email-index-{normalizedEmail}                      -> 404 if null
 READ account-{accountId}                                -> 404 if null
@@ -218,7 +218,7 @@ RETURN (200, AccountResponse)
 ---
 
 ### GetAuthMethods
-POST /account/auth-methods/list | Roles: [admin]
+POST /account/auth-methods/list | Roles: []
 
 READ account-{accountId}                                -> 404 if null or deleted
 READ auth-methods-{accountId}
@@ -227,7 +227,7 @@ RETURN (200, AuthMethodsResponse)
 ---
 
 ### AddAuthMethod
-POST /account/auth-methods/add | Roles: [admin]
+POST /account/auth-methods/add | Roles: []
 
 READ account-{accountId}                                -> 404 if null or deleted
 READ auth-methods-{accountId} [with ETag]
@@ -251,7 +251,7 @@ RETURN (200, AuthMethodResponse)
 ---
 
 ### RemoveAuthMethod
-POST /account/auth-methods/remove | Roles: [admin]
+POST /account/auth-methods/remove | Roles: []
 
 READ account-{accountId}                                -> 404 if null or deleted
 READ auth-methods-{accountId} [with ETag]
@@ -268,7 +268,7 @@ RETURN (200)
 ---
 
 ### GetAccountByProvider
-POST /account/by-provider | Roles: [admin]
+POST /account/by-provider | Roles: []
 
 READ provider-index-{provider}:{externalId}             -> 404 if null
 READ account-{accountId}                                -> 404 if null
@@ -294,7 +294,7 @@ RETURN (200, AccountResponse)
 ---
 
 ### UpdatePasswordHash
-POST /account/password/update | Roles: [user]
+POST /account/password/update | Roles: []
 
 READ account-{accountId} [with ETag]                    -> 404 if null or deleted
 // Store pre-hashed password from Auth service (Account never handles raw passwords)
@@ -305,7 +305,7 @@ RETURN (200)
 ---
 
 ### UpdateMfa
-POST /account/mfa/update | Roles: [user]
+POST /account/mfa/update | Roles: []
 
 READ account-{accountId} [with ETag]                    -> 404 if null or deleted
 // Update: mfaEnabled, mfaSecret (AES-256-GCM ciphertext), mfaRecoveryCodes (BCrypt hashes)
@@ -317,7 +317,7 @@ RETURN (200)
 ---
 
 ### BatchGetAccounts
-POST /account/batch-get | Roles: [admin]
+POST /account/batch-get | Roles: []
 
 // Max 100 IDs per call (schema-enforced maxItems: 100)
 FOREACH accountId in request.AccountIds (parallel)
@@ -334,7 +334,7 @@ RETURN (200, BatchGetAccountsResponse { accounts, notFound, failed })
 ---
 
 ### CountAccounts
-POST /account/count | Roles: [admin]
+POST /account/count | Roles: []
 
 COUNT account-statestore WHERE $.AccountId exists AND $.DeletedAtUnix not exists
   [+ optional: $.Email contains, $.DisplayName contains, $.IsVerified equals]
@@ -365,7 +365,7 @@ RETURN (200, BulkUpdateRolesResponse { succeeded, failed })
 ---
 
 ### UpdateVerificationStatus
-POST /account/verification/update | Roles: [user]
+POST /account/verification/update | Roles: []
 
 READ account-{accountId} [with ETag]                    -> 404 if null or deleted
 // Set IsVerified flag
@@ -376,7 +376,7 @@ RETURN (200)
 ---
 
 ### UpdateEmail
-POST /account/email/update | Roles: [admin]
+POST /account/email/update | Roles: []
 
 LOCK account-lock:account-email:{normalizedNewEmail}    -> 409 if lock fails
   READ email-index-{normalizedNewEmail}                 -> 409 if exists (email taken)

@@ -108,11 +108,11 @@
 | Method | Route | Roles | Mutates | Publishes |
 |--------|-------|-------|---------|-----------|
 | CreateVoiceRoom | POST /voice/room/create | [] | room, session-room | voice.room.created |
-| GetVoiceRoom | POST /voice/room/get | [admin] | - | - |
-| JoinVoiceRoom | POST /voice/room/join | [] | room (ad-hoc), session-room (ad-hoc), participants | voice.room.created (ad-hoc), voice.peer.joined |
-| LeaveVoiceRoom | POST /voice/room/leave | [] | room (grace period), participants | voice.peer.left, voice.broadcast.stopped (if active) |
+| GetVoiceRoom | POST /voice/room/get | [] | - | - |
+| JoinVoiceRoom | POST /voice/room/join | [user] | room (ad-hoc), session-room (ad-hoc), participants | voice.room.created (ad-hoc), voice.peer.joined |
+| LeaveVoiceRoom | POST /voice/room/leave | [user; state: voice=in_room] | room (grace period), participants | voice.peer.left, voice.broadcast.stopped (if active) |
 | DeleteVoiceRoom | POST /voice/room/delete | [] | room, session-room, participants | voice.room.deleted, voice.broadcast.stopped (if active) |
-| PeerHeartbeat | POST /voice/peer/heartbeat | [admin] | participants (heartbeat) | - |
+| PeerHeartbeat | POST /voice/peer/heartbeat | [] | participants (heartbeat) | - |
 | AnswerPeer | POST /voice/peer/answer | [user; state: voice=ringing] | - | - |
 | RequestBroadcastConsent | POST /voice/room/broadcast/request | [user; state: voice=in_room] | room | - |
 | RespondBroadcastConsent | POST /voice/room/broadcast/consent | [user; state: voice=consent_pending] | room | voice.broadcast.approved or voice.broadcast.declined |
@@ -142,7 +142,7 @@ LOCK voice-lock:"session-room:{sessionId}"                   -> 409 if fails
 ---
 
 ### GetVoiceRoom
-POST /voice/room/get | Roles: [admin]
+POST /voice/room/get | Roles: []
 
 ```
 READ _roomStore:"voice:room:{roomId}"                        -> 404 if null
@@ -153,7 +153,7 @@ RETURN (200, VoiceRoomResponse)
 ---
 
 ### JoinVoiceRoom
-POST /voice/room/join | Roles: []
+POST /voice/room/join | Roles: [user]
 
 ```
 READ _roomStore:"voice:room:{roomId}"
@@ -205,7 +205,7 @@ ELSE // P2P
 ---
 
 ### LeaveVoiceRoom
-POST /voice/room/leave | Roles: []
+POST /voice/room/leave | Roles: [user; state: voice=in_room]
 
 ```
 CALL _endpointRegistry.UnregisterAsync(roomId, sessionId)    -> 404 if null
@@ -261,7 +261,7 @@ RETURN (200)
 ---
 
 ### PeerHeartbeat
-POST /voice/peer/heartbeat | Roles: [admin]
+POST /voice/peer/heartbeat | Roles: []
 
 ```
 CALL _endpointRegistry.UpdateHeartbeatAsync(roomId, sessionId)  -> 404 if false

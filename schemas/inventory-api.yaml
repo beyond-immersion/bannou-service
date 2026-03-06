@@ -66,7 +66,6 @@ paths:
           description: Invalid request (validation error)
       x-permissions:
       - role: developer
-        states: {}
 
   /inventory/container/get:
     post:
@@ -92,7 +91,6 @@ paths:
           description: Container not found
       x-permissions:
       - role: user
-        states: {}
 
   /inventory/container/get-or-create:
     post:
@@ -119,7 +117,6 @@ paths:
                 $ref: '#/components/schemas/ContainerResponse'
       x-permissions:
       - role: developer
-        states: {}
 
   /inventory/container/list:
     post:
@@ -143,7 +140,6 @@ paths:
                 $ref: '#/components/schemas/ListContainersResponse'
       x-permissions:
       - role: user
-        states: {}
 
   /inventory/container/update:
     post:
@@ -169,7 +165,6 @@ paths:
           description: Container not found
       x-permissions:
       - role: developer
-        states: {}
 
   /inventory/container/delete:
     post:
@@ -199,7 +194,6 @@ paths:
           description: Container not found
       x-permissions:
       - role: admin
-        states: {}
 
   # ===========================================================================
   # Inventory Operations (6 endpoints)
@@ -232,9 +226,7 @@ paths:
           description: Constraint violation (full, overweight, wrong category)
         '404':
           description: Container or item not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /inventory/remove:
     post:
@@ -260,9 +252,7 @@ paths:
                 $ref: '#/components/schemas/RemoveItemResponse'
         '404':
           description: Item not found in specified container
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /inventory/move:
     post:
@@ -293,7 +283,6 @@ paths:
           description: Item or container not found
       x-permissions:
       - role: user
-        states: {}
 
   /inventory/transfer:
     post:
@@ -321,9 +310,7 @@ paths:
           description: Item is bound or not tradeable
         '404':
           description: Item or container not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
 
   /inventory/split:
     post:
@@ -353,7 +340,6 @@ paths:
           description: Item not found
       x-permissions:
       - role: user
-        states: {}
 
   /inventory/merge:
     post:
@@ -383,7 +369,6 @@ paths:
           description: Item not found
       x-permissions:
       - role: user
-        states: {}
 
   # ===========================================================================
   # Inventory Queries (4 endpoints)
@@ -413,7 +398,6 @@ paths:
                 $ref: '#/components/schemas/QueryItemsResponse'
       x-permissions:
       - role: user
-        states: {}
 
   /inventory/count:
     post:
@@ -437,7 +421,6 @@ paths:
                 $ref: '#/components/schemas/CountItemsResponse'
       x-permissions:
       - role: user
-        states: {}
 
   /inventory/has:
     post:
@@ -463,7 +446,6 @@ paths:
                 $ref: '#/components/schemas/HasItemsResponse'
       x-permissions:
       - role: user
-        states: {}
 
   /inventory/find-space:
     post:
@@ -489,7 +471,6 @@ paths:
                 $ref: '#/components/schemas/FindSpaceResponse'
       x-permissions:
       - role: user
-        states: {}
 
 components:
   schemas:

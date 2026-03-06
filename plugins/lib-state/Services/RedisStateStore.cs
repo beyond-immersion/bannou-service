@@ -215,12 +215,14 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         string key,
         TValue value,
         string etag,
+        StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
         var json = BannouJson.Serialize(value);
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
 
         try
         {
@@ -240,13 +242,24 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
                 var createTransaction = _database.CreateTransaction();
                 createTransaction.AddCondition(Condition.KeyNotExists(fullKey));
 
-                _ = createTransaction.StringSetAsync(fullKey, json);
+                if (ttl.HasValue)
+                {
+                    _ = createTransaction.StringSetAsync(fullKey, json, ttl.Value);
+                }
+                else
+                {
+                    _ = createTransaction.StringSetAsync(fullKey, json);
+                }
                 _ = createTransaction.HashSetAsync(metaKey, new HashEntry[]
                 {
                     new("version", 1),
                     new("created", now),
                     new("updated", now)
                 });
+                if (ttl.HasValue)
+                {
+                    _ = createTransaction.KeyExpireAsync(metaKey, ttl);
+                }
 
                 var createSuccess = await createTransaction.ExecuteAsync();
                 if (createSuccess)
@@ -274,12 +287,23 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             var transaction = _database.CreateTransaction();
             transaction.AddCondition(Condition.HashEqual(metaKey, "version", etag));
 
-            _ = transaction.StringSetAsync(fullKey, json);
+            if (ttl.HasValue)
+            {
+                _ = transaction.StringSetAsync(fullKey, json, ttl.Value);
+            }
+            else
+            {
+                _ = transaction.StringSetAsync(fullKey, json);
+            }
             _ = transaction.HashIncrementAsync(metaKey, "version", 1);
             _ = transaction.HashSetAsync(metaKey, new HashEntry[]
             {
                 new("updated", now)
             });
+            if (ttl.HasValue)
+            {
+                _ = transaction.KeyExpireAsync(metaKey, ttl);
+            }
 
             var success = await transaction.ExecuteAsync();
 

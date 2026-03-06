@@ -359,7 +359,7 @@ Both workers acquire distributed locks before processing to ensure multi-instanc
 
 ### Deity Management (8 endpoints)
 
-All endpoints require `developer` role.
+All endpoints are service-to-service (`x-permissions: []`).
 
 - **Create** (`/divine/deity/create`): Validates game service existence, code uniqueness per game service. Provisions divinity currency wallet via `ICurrencyClient`, domain power seed via `ISeedClient`, and optionally starts a deity watcher actor via `IPuppetmasterClient` (soft). Saves under both ID and code lookup keys.
 - **Get** (`/divine/deity/get`): Load from MySQL by deityId. 404 if not found.
@@ -372,7 +372,7 @@ All endpoints require `developer` role.
 
 ### Divinity Economy (4 endpoints)
 
-All endpoints require `developer` role. All operations proxy through `ICurrencyClient` using the deity's `currencyWalletId`.
+All endpoints are service-to-service (`x-permissions: []`). All operations proxy through `ICurrencyClient` using the deity's `currencyWalletId`.
 
 - **GetBalance** (`/divine/divinity/get-balance`): Load deity, get walletId, query `ICurrencyClient.GetBalanceAsync`.
 - **Credit** (`/divine/divinity/credit`): Validate deity exists, credit wallet. Publishes `divine.divinity.credited` event.
@@ -381,7 +381,7 @@ All endpoints require `developer` role. All operations proxy through `ICurrencyC
 
 ### Blessing Orchestration (5 endpoints)
 
-All endpoints require `developer` role. Blessings are entity-agnostic (entityId + entityType polymorphism).
+All endpoints are service-to-service (`x-permissions: []`). Blessings are entity-agnostic (entityId + entityType polymorphism).
 
 - **Grant** (`/divine/blessing/grant`): Full ceremony -- validate deity is Active, validate entity exists, check blessing count < `MaxBlessingsPerEntity`, calculate divinity cost from tier config, debit divinity, grant via lib-collection (Greater/Supreme) or Status Inventory (Minor/Standard), create BlessingModel record. Publishes `divine.blessing.granted` event.
 - **Revoke** (`/divine/blessing/revoke`): Lock. For status-type blessings: remove status item. For permanent blessings: mark revoked in collection. Update BlessingModel with revocation timestamp. Publishes `divine.blessing.revoked` event.
@@ -391,7 +391,7 @@ All endpoints require `developer` role. Blessings are entity-agnostic (entityId 
 
 ### Follower Management (3 endpoints)
 
-All endpoints require `developer` role. Followers are always characters (not entity-agnostic).
+All endpoints are service-to-service (`x-permissions: []`). Followers are always characters (not entity-agnostic).
 
 - **Register** (`/divine/follower/register`): Validate deity and character exist. Create relationship via `IRelationshipClient` (type: `FollowerRelationshipTypeCode`). Increment deity FollowerCount. Add to attention slots if capacity available. Publishes `divine.follower.registered` event.
 - **Unregister** (`/divine/follower/unregister`): Delete relationship. Decrement FollowerCount. Remove from attention slots. Publishes `divine.follower.removed` event.
@@ -399,7 +399,7 @@ All endpoints require `developer` role. Followers are always characters (not ent
 
 ### Resource Cleanup (2 endpoints)
 
-All endpoints require `developer` role. Called by lib-resource when referenced entities are deleted (FOUNDATION TENETS: Resource-Managed Cleanup).
+All endpoints are service-to-service (`x-permissions: []`). Called by lib-resource when referenced entities are deleted (FOUNDATION TENETS: Resource-Managed Cleanup).
 
 - **CleanupByCharacter** (`/divine/cleanup-by-character`): Revoke all blessings where entityType=character and entityId matches. Remove follower relationships. Update follower counts. Clear attention slots.
 - **CleanupByGameService** (`/divine/cleanup-by-game-service`): Query all deities for the gameServiceId. For each: deactivate, revoke blessings, remove followers, delete deity record.

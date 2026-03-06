@@ -697,7 +697,7 @@ public partial class SceneService : ISceneService
         indexEntry.IsCheckedOut = true;
         indexEntry.CheckedOutByType = checkoutState.EditorType;
         indexEntry.CheckedOutById = checkoutState.EditorId;
-        var newIndexEtag = await _indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
+        var newIndexEtag = await _indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newIndexEtag == null)
         {
             _logger.LogDebug("CheckoutScene: Concurrent modification on scene index {SceneId}", body.SceneId);
@@ -776,7 +776,7 @@ public partial class SceneService : ISceneService
         indexEntry.IsCheckedOut = false;
         indexEntry.CheckedOutByType = null;
         indexEntry.CheckedOutById = null;
-        var newIndexEtag = await _indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
+        var newIndexEtag = await _indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newIndexEtag == null)
         {
             _logger.LogDebug("CommitScene: Concurrent modification on scene index {SceneId}", body.SceneId);
@@ -837,7 +837,7 @@ public partial class SceneService : ISceneService
             indexEntry.IsCheckedOut = false;
             indexEntry.CheckedOutByType = null;
             indexEntry.CheckedOutById = null;
-            var newIndexEtag = await _indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
+            var newIndexEtag = await _indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken: cancellationToken);
             if (newIndexEtag == null)
             {
                 _logger.LogDebug("DiscardCheckout: Concurrent modification on scene index {SceneId}", body.SceneId);

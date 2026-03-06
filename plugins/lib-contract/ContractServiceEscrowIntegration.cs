@@ -97,7 +97,7 @@ public partial class ContractService
 
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (savedEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for contract lock: {ContractId}", body.ContractInstanceId);
@@ -180,7 +180,7 @@ public partial class ContractService
 
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (savedEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for contract unlock: {ContractId}", body.ContractInstanceId);
@@ -272,7 +272,7 @@ public partial class ContractService
 
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (savedEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for contract transfer: {ContractId}", body.ContractInstanceId);
@@ -1003,7 +1003,7 @@ public partial class ContractService
 
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractInstanceId);

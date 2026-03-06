@@ -355,7 +355,7 @@ public partial class AchievementService : IAchievementService
 
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await _definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for achievement definition {AchievementId}", body.AchievementId);
@@ -398,7 +398,7 @@ public partial class AchievementService : IAchievementService
 
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await _definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for achievement definition {AchievementId}", body.AchievementId);
@@ -1187,7 +1187,7 @@ public partial class AchievementService : IAchievementService
             freshDef.EarnedCount++;
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var savedEtag = await _definitionStore.TrySaveAsync(defKey, freshDef, defEtag ?? string.Empty, cancellationToken);
+            var savedEtag = await _definitionStore.TrySaveAsync(defKey, freshDef, defEtag ?? string.Empty, cancellationToken: cancellationToken);
             if (savedEtag != null)
             {
                 return;
@@ -1248,7 +1248,7 @@ public partial class AchievementService : IAchievementService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var savedEtag = await _syncStore.TrySaveAsync(key, tracking, etag ?? string.Empty, cancellationToken);
+            var savedEtag = await _syncStore.TrySaveAsync(key, tracking, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (savedEtag != null)
             {
                 return;

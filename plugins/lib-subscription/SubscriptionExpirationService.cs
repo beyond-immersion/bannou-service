@@ -236,7 +236,7 @@ public class SubscriptionExpirationService : BackgroundService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await indexStore.TrySaveAsync(SubscriptionIndexKey, updatedIndex, etag ?? string.Empty, cancellationToken);
+            var result = await indexStore.TrySaveAsync(SubscriptionIndexKey, updatedIndex, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (result != null)
             {
                 _logger.LogDebug("Cleaned {Count} entries from subscription index", currentIndex.Count - updatedIndex.Count);

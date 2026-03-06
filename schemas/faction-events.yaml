@@ -7,7 +7,7 @@ info:
     for Faction entities. Custom events cover membership changes, territory claims,
     norm lifecycle, and realm baseline designation.
 
-    **Cross-Service Integration** (per FOUNDATION TENETS, T27 "DI interfaces for lower<->higher"):
+    **Cross-Service Integration** (per FOUNDATION TENETS):
     - Implements ISeedEvolutionListener DI provider pattern for growth/phase/capability
       notifications (in-process, guaranteed delivery, writes to distributed state).
       This replaces broadcast event subscriptions for seed.growth.updated and
@@ -27,6 +27,7 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  x-event-subscriptions: []
   x-event-publications:
     # Faction lifecycle events (auto-generated from x-lifecycle)
     - topic: faction.created
@@ -86,6 +87,8 @@ x-lifecycle:
       status: { $ref: 'faction-api.yaml#/components/schemas/FactionStatus', required: true, description: "Current lifecycle status" }
       currentPhase: { type: string, nullable: true, description: "Current seed growth phase" }
       memberCount: { type: integer, required: true, description: "Current number of members" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the faction was deprecated (null if not deprecated)" }
+      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation (null if not deprecated)" }
       createdAt: { type: string, format: date-time, required: true, description: "When the faction was created" }
       updatedAt: { type: string, format: date-time, required: true, description: "When the faction was last updated" }
     sensitive: []
@@ -104,16 +107,24 @@ components:
     # --- Membership Events ---
 
     FactionMemberAddedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character joins a faction
       required:
+        - eventId
+        - timestamp
         - factionId
         - characterId
         - role
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         factionId:
           type: string
           format: uuid
@@ -127,15 +138,23 @@ components:
           description: Role assigned to the new member
 
     FactionMemberRemovedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character leaves or is removed from a faction
       required:
+        - eventId
+        - timestamp
         - factionId
         - characterId
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         factionId:
           type: string
           format: uuid
@@ -146,17 +165,25 @@ components:
           description: Character that was removed
 
     FactionMemberRoleChangedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a member's role is updated
       required:
+        - eventId
+        - timestamp
         - factionId
         - characterId
         - previousRole
         - newRole
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         factionId:
           type: string
           format: uuid
@@ -175,16 +202,24 @@ components:
     # --- Territory Events ---
 
     FactionTerritoryClaimedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a faction claims a location as territory
       required:
+        - eventId
+        - timestamp
         - factionId
         - locationId
         - claimId
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         factionId:
           type: string
           format: uuid
@@ -199,16 +234,24 @@ components:
           description: Territory claim record ID
 
     FactionTerritoryReleasedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a faction releases a territory claim
       required:
+        - eventId
+        - timestamp
         - factionId
         - locationId
         - claimId
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         factionId:
           type: string
           format: uuid
@@ -225,12 +268,12 @@ components:
     # --- Norm Events ---
 
     FactionNormDefinedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a new behavioral norm is defined for a faction
       required:
+        - eventId
+        - timestamp
         - factionId
         - normId
         - violationType
@@ -238,6 +281,14 @@ components:
         - severity
         - scope
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         factionId:
           type: string
           format: uuid
@@ -261,16 +312,24 @@ components:
           description: Applicability scope
 
     FactionNormUpdatedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a norm definition is modified
       required:
+        - eventId
+        - timestamp
         - factionId
         - normId
         - violationType
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         factionId:
           type: string
           format: uuid
@@ -297,16 +356,24 @@ components:
           description: Updated scope (null if unchanged)
 
     FactionNormDeletedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a norm definition is removed from a faction
       required:
+        - eventId
+        - timestamp
         - factionId
         - normId
         - violationType
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         factionId:
           type: string
           format: uuid
@@ -322,15 +389,23 @@ components:
     # --- Realm Baseline Events ---
 
     FactionRealmBaselineDesignatedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a faction is designated as the realm baseline cultural faction
       required:
+        - eventId
+        - timestamp
         - factionId
         - realmId
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         factionId:
           type: string
           format: uuid

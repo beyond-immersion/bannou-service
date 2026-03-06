@@ -66,7 +66,6 @@ paths:
         an item template for inventory placement, and includes display/metadata fields.
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -96,7 +95,6 @@ paths:
       description: Retrieves an entry template by its unique identifier.
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -122,7 +120,6 @@ paths:
       description: Paginated list of entry templates filtered by collection type, game service, and optional category.
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -146,7 +143,6 @@ paths:
       description: Update mutable fields of an entry template (displayName, tags, assets, unlockHint, themes, music metadata).
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -176,7 +172,6 @@ paths:
         no delete. Idempotent — returns OK if already deprecated.
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -202,7 +197,6 @@ paths:
       description: Bulk create entry templates from a payload, skipping duplicates. Validates item template IDs. Returns count of created templates.
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -235,7 +229,6 @@ paths:
         container (unlimited type) to hold unlocked entry items.
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -263,7 +256,6 @@ paths:
       description: Retrieves a collection instance with its unlocked entry count.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -289,7 +281,6 @@ paths:
       description: List all collection instances for an owner entity, with optional game service filter.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -313,7 +304,6 @@ paths:
       description: Delete a collection instance, destroying its inventory container and all contained entry items.
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -347,7 +337,6 @@ paths:
         and places it in the collection container.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -375,7 +364,6 @@ paths:
       description: Check if an owner has a specific entry unlocked in their collection.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -399,7 +387,6 @@ paths:
       description: Query unlocked entries in a collection with optional filtering by category, tags, and metadata.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -425,7 +412,6 @@ paths:
       description: Update metadata for an unlocked entry (play count, kill count, favorites, discovery level, custom data).
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -451,7 +437,6 @@ paths:
       description: Get completion statistics for a collection including total entries, unlocked count, percentage, and breakdown by category.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -484,7 +469,6 @@ paths:
         Falls back to the area's default entry if no matches are found.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -510,7 +494,6 @@ paths:
       description: Create or update an area content configuration that maps an area code to themes and a default entry.
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -536,7 +519,6 @@ paths:
       description: Get the content configuration for a specific area and game service.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -562,7 +544,6 @@ paths:
       description: List all area content configurations for a game service.
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -586,7 +567,6 @@ paths:
       description: Delete an area content configuration. Area configs are configuration singletons with no deprecation lifecycle — immediate hard delete.
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -619,7 +599,6 @@ paths:
         in the entry template's discovery levels.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -655,8 +634,7 @@ paths:
         lifecycle events.
         This endpoint is designed for internal service-to-service calls during
         cascading resource cleanup.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:

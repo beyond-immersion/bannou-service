@@ -299,7 +299,7 @@ public class SeasonalConnectionWorker : BackgroundService
                     freshConnection.StatusChangedAt = DateTimeOffset.UtcNow;
                     freshConnection.ModifiedAt = DateTimeOffset.UtcNow;
 
-                    var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken);
+                    var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken: cancellationToken);
                     if (savedEtag == null)
                     {
                         _logger.LogWarning("Concurrent modification on connection {ConnectionId} during seasonal reopen, skipping", connection.Id);
@@ -330,7 +330,7 @@ public class SeasonalConnectionWorker : BackgroundService
                 freshConnection.StatusChangedAt = DateTimeOffset.UtcNow;
                 freshConnection.ModifiedAt = DateTimeOffset.UtcNow;
 
-                var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken);
+                var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken: cancellationToken);
                 if (savedEtag == null)
                 {
                     _logger.LogWarning("Concurrent modification on connection {ConnectionId} during seasonal close, skipping", connection.Id);
@@ -358,7 +358,7 @@ public class SeasonalConnectionWorker : BackgroundService
                 freshConnection.StatusChangedAt = DateTimeOffset.UtcNow;
                 freshConnection.ModifiedAt = DateTimeOffset.UtcNow;
 
-                var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken);
+                var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken: cancellationToken);
                 if (savedEtag == null)
                 {
                     _logger.LogWarning("Concurrent modification on connection {ConnectionId} during seasonal reopen, skipping", connection.Id);

@@ -70,7 +70,6 @@ paths:
           description: Code already exists for this gameId
       x-permissions:
       - role: developer
-        states: {}
 
   /item/template/get:
     post:
@@ -100,7 +99,6 @@ paths:
           description: Item template not found
       x-permissions:
       - role: user
-        states: {}
 
   /item/template/list:
     post:
@@ -126,7 +124,6 @@ paths:
                 $ref: '#/components/schemas/ListItemTemplatesResponse'
       x-permissions:
       - role: user
-        states: {}
 
   /item/template/update:
     post:
@@ -156,7 +153,6 @@ paths:
           description: Item template not found
       x-permissions:
       - role: developer
-        states: {}
 
   /item/template/deprecate:
     post:
@@ -187,7 +183,6 @@ paths:
           description: Template already deprecated
       x-permissions:
       - role: admin
-        states: {}
 
   # ===========================================================================
   # Item Instance (5 endpoints)
@@ -224,7 +219,6 @@ paths:
           description: Template is deprecated
       x-permissions:
       - role: developer
-        states: {}
 
   /item/instance/get:
     post:
@@ -250,7 +244,6 @@ paths:
           description: Item instance not found
       x-permissions:
       - role: user
-        states: {}
 
   /item/instance/modify:
     post:
@@ -282,7 +275,6 @@ paths:
           description: Item is corrupted/mirrored and cannot be modified
       x-permissions:
       - role: developer
-        states: {}
 
   /item/instance/bind:
     post:
@@ -314,7 +306,6 @@ paths:
           description: Item already bound
       x-permissions:
       - role: developer
-        states: {}
 
   /item/instance/unbind:
     post:
@@ -344,7 +335,6 @@ paths:
           description: Item instance not found
       x-permissions:
       - role: admin
-        states: {}
 
   /item/instance/destroy:
     post:
@@ -374,7 +364,6 @@ paths:
           description: Item is bound and cannot be destroyed
       x-permissions:
       - role: developer
-        states: {}
 
   /item/use:
     post:
@@ -409,7 +398,6 @@ paths:
           description: Item use failed (contract prebound APIs failed)
       x-permissions:
       - role: user
-        states: {}
 
   /item/use-step:
     post:
@@ -446,7 +434,6 @@ paths:
           description: Step execution failed (CanUse validation or milestone completion)
       x-permissions:
       - role: user
-        states: {}
 
   # ===========================================================================
   # Item Queries (3 endpoints)
@@ -474,7 +461,6 @@ paths:
                 $ref: '#/components/schemas/ListItemsResponse'
       x-permissions:
       - role: user
-        states: {}
 
   /item/instance/list-by-template:
     post:
@@ -500,7 +486,6 @@ paths:
                 $ref: '#/components/schemas/ListItemsResponse'
       x-permissions:
       - role: admin
-        states: {}
 
   /item/instance/batch-get:
     post:
@@ -524,7 +509,6 @@ paths:
                 $ref: '#/components/schemas/BatchGetItemInstancesResponse'
       x-permissions:
       - role: user
-        states: {}
 
 components:
   schemas:

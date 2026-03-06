@@ -129,36 +129,36 @@ No Bannou service client dependencies (`I{Service}Client`). All external I/O is 
 
 | Method | Route | Roles | Mutates | Publishes |
 |--------|-------|-------|---------|-----------|
-| GetInfrastructureHealth | POST /orchestrator/health/infrastructure | admin | - | orchestrator.health-ping |
-| GetServicesHealth | POST /orchestrator/health/services | admin | - | - |
-| RestartService | POST /orchestrator/services/restart | admin | - | bannou.service-lifecycle |
-| ShouldRestartService | POST /orchestrator/services/should-restart | admin | - | - |
-| GetBackends | POST /orchestrator/backends/list | admin | - | - |
-| GetPresets | POST /orchestrator/presets/list | admin | - | - |
-| Deploy | POST /orchestrator/deploy | admin | routings, config | bannou.deployment-events, bannou.full-service-mappings |
-| GetServiceRouting | POST /orchestrator/service-routing | admin | - | - |
-| GetStatus | POST /orchestrator/status | admin | - | - |
-| Teardown | POST /orchestrator/teardown | admin | routings | bannou.deployment-events, bannou.full-service-mappings |
-| Clean | POST /orchestrator/clean | admin | - | - |
-| GetLogs | POST /orchestrator/logs | admin | - | - |
-| UpdateTopology | POST /orchestrator/topology | admin | routings, config | bannou.full-service-mappings |
-| RequestContainerRestart | POST /orchestrator/containers/request-restart | admin | - | - |
-| GetContainerStatus | POST /orchestrator/containers/status | admin | - | - |
-| RollbackConfiguration | POST /orchestrator/config/rollback | admin | config | - |
-| GetConfigVersion | POST /orchestrator/config/version | admin | - | - |
-| NotifyConfigChange | POST /orchestrator/config/notify-change | admin | - | bannou.configuration-events |
-| AcquireProcessor | POST /orchestrator/processing-pool/acquire | admin | pool leases, pool available, pool metrics | - |
-| ReleaseProcessor | POST /orchestrator/processing-pool/release | admin | pool leases, pool available, pool metrics | orchestrator.processor.released |
-| GetPoolStatus | POST /orchestrator/processing-pool/status | admin | - | - |
-| ScalePool | POST /orchestrator/processing-pool/scale | admin | pool instances, pool available, pool metrics | - |
-| CleanupPool | POST /orchestrator/processing-pool/cleanup | admin | pool leases, pool available, pool instances, pool metrics | - |
+| GetInfrastructureHealth | POST /orchestrator/health/infrastructure | [] | - | orchestrator.health-ping |
+| GetServicesHealth | POST /orchestrator/health/services | [] | - | - |
+| RestartService | POST /orchestrator/services/restart | [] | - | bannou.service-lifecycle |
+| ShouldRestartService | POST /orchestrator/services/should-restart | [] | - | - |
+| GetBackends | POST /orchestrator/backends/list | [] | - | - |
+| GetPresets | POST /orchestrator/presets/list | [] | - | - |
+| Deploy | POST /orchestrator/deploy | [] | routings, config | bannou.deployment-events, bannou.full-service-mappings |
+| GetServiceRouting | POST /orchestrator/service-routing | [] | - | - |
+| GetStatus | POST /orchestrator/status | [] | - | - |
+| Teardown | POST /orchestrator/teardown | [] | routings | bannou.deployment-events, bannou.full-service-mappings |
+| Clean | POST /orchestrator/clean | [] | - | - |
+| GetLogs | POST /orchestrator/logs | [] | - | - |
+| UpdateTopology | POST /orchestrator/topology | [] | routings, config | bannou.full-service-mappings |
+| RequestContainerRestart | POST /orchestrator/containers/request-restart | [] | - | - |
+| GetContainerStatus | POST /orchestrator/containers/status | [] | - | - |
+| RollbackConfiguration | POST /orchestrator/config/rollback | [] | config | - |
+| GetConfigVersion | POST /orchestrator/config/version | [] | - | - |
+| NotifyConfigChange | POST /orchestrator/config/notify-change | [] | - | bannou.configuration-events |
+| AcquireProcessor | POST /orchestrator/processing-pool/acquire | [] | pool leases, pool available, pool metrics | - |
+| ReleaseProcessor | POST /orchestrator/processing-pool/release | [] | pool leases, pool available, pool metrics | orchestrator.processor.released |
+| GetPoolStatus | POST /orchestrator/processing-pool/status | [] | - | - |
+| ScalePool | POST /orchestrator/processing-pool/scale | [] | pool instances, pool available, pool metrics | - |
+| CleanupPool | POST /orchestrator/processing-pool/cleanup | [] | pool leases, pool available, pool instances, pool metrics | - |
 
 ---
 
 ## Methods
 
 ### GetInfrastructureHealth
-POST /orchestrator/health/infrastructure | Roles: [admin]
+POST /orchestrator/health/infrastructure | Roles: []
 
 ```
 CALL _backendDetector.DetectBackendsAsync()
@@ -169,7 +169,7 @@ RETURN (200, InfrastructureHealthResponse { healthy, components })
 ```
 
 ### GetServicesHealth
-POST /orchestrator/health/services | Roles: [admin]
+POST /orchestrator/health/services | Roles: []
 
 ```
 // Delegates to ServiceHealthMonitor.GetServiceHealthReportAsync
@@ -188,7 +188,7 @@ RETURN (200, ServiceHealthReport { source, healthyServices, unhealthyServices, h
 ```
 
 ### RestartService
-POST /orchestrator/services/restart | Roles: [admin]
+POST /orchestrator/services/restart | Roles: []
 
 ```
 // Delegates to SmartRestartManager.RestartServiceAsync
@@ -204,7 +204,7 @@ RETURN (200, ServiceRestartResult { duration, previousStatus, currentStatus })
 ```
 
 ### ShouldRestartService
-POST /orchestrator/services/should-restart | Roles: [admin]
+POST /orchestrator/services/should-restart | Roles: []
 
 ```
 // Delegates to ServiceHealthMonitor.ShouldRestartServiceAsync
@@ -219,7 +219,7 @@ RETURN (200, RestartRecommendation { shouldRestart: false, worstStatus })
 ```
 
 ### GetBackends
-POST /orchestrator/backends/list | Roles: [admin]
+POST /orchestrator/backends/list | Roles: []
 
 ```
 CALL _backendDetector.DetectBackendsAsync()
@@ -228,7 +228,7 @@ RETURN (200, BackendsResponse { backends, recommended })
 ```
 
 ### GetPresets
-POST /orchestrator/presets/list | Roles: [admin]
+POST /orchestrator/presets/list | Roles: []
 
 ```
 CALL _presetLoader.ListPresetsAsync()
@@ -238,7 +238,7 @@ RETURN (200, PresetsResponse { presets })
 ```
 
 ### Deploy
-POST /orchestrator/deploy | Roles: [admin]
+POST /orchestrator/deploy | Roles: []
 
 ```
 // Load or build topology
@@ -285,7 +285,7 @@ RETURN (200, DeployResponse { success, deploymentId, backend, duration, services
 ```
 
 ### GetServiceRouting
-POST /orchestrator/service-routing | Roles: [admin]
+POST /orchestrator/service-routing | Roles: []
 
 ```
 IF request.ServiceFilter != null
@@ -300,7 +300,7 @@ ELSE
 ```
 
 ### GetStatus
-POST /orchestrator/status | Roles: [admin]
+POST /orchestrator/status | Roles: []
 
 ```
 READ config:current                                // via EnsureLastDeploymentLoadedAsync
@@ -314,7 +314,7 @@ RETURN (200, EnvironmentStatus { deployed, configuration, activeRoutings, servic
 ```
 
 ### Teardown
-POST /orchestrator/teardown | Roles: [admin]
+POST /orchestrator/teardown | Roles: []
 
 ```
 // Resolve which appIds to tear down
@@ -341,7 +341,7 @@ RETURN (200, TeardownResponse { duration, stoppedContainers, removedVolumes })
 ```
 
 ### Clean
-POST /orchestrator/clean | Roles: [admin]
+POST /orchestrator/clean | Roles: []
 
 ```
 CALL _orchestrator.ListContainersAsync()
@@ -360,7 +360,7 @@ RETURN (200, CleanResponse { removedContainers, removedNetworks, removedVolumes,
 ```
 
 ### GetLogs
-POST /orchestrator/logs | Roles: [admin]
+POST /orchestrator/logs | Roles: []
 
 ```
 // Resolves target from service name or container name (falls back to "bannou")
@@ -372,7 +372,7 @@ RETURN (200, LogsResponse { logs, service, container })
 ```
 
 ### UpdateTopology
-POST /orchestrator/topology | Roles: [admin]
+POST /orchestrator/topology | Roles: []
 
 ```
 IF request.ResetToDefault
@@ -409,7 +409,7 @@ RETURN (200, TopologyUpdateResponse { appliedChanges, warnings })
 ```
 
 ### RequestContainerRestart
-POST /orchestrator/containers/request-restart | Roles: [admin]
+POST /orchestrator/containers/request-restart | Roles: []
 
 ```
 CALL _backendDetector.CreateOrchestrator(config.DefaultBackend)
@@ -419,7 +419,7 @@ RETURN (200, ContainerRestartResponse { accepted })
 ```
 
 ### GetContainerStatus
-POST /orchestrator/containers/status | Roles: [admin]
+POST /orchestrator/containers/status | Roles: []
 
 ```
 CALL _backendDetector.CreateOrchestrator(config.DefaultBackend)
@@ -429,7 +429,7 @@ RETURN (200, ContainerStatus { appName, status, instances, labels })
 ```
 
 ### RollbackConfiguration
-POST /orchestrator/config/rollback | Roles: [admin]
+POST /orchestrator/config/rollback | Roles: []
 
 ```
 READ config:version                                // Current version number
@@ -452,7 +452,7 @@ RETURN (200, ConfigRollbackResponse { previousVersion, currentVersion, changedKe
 ```
 
 ### GetConfigVersion
-POST /orchestrator/config/version | Roles: [admin]
+POST /orchestrator/config/version | Roles: []
 
 ```
 READ config:version
@@ -465,7 +465,7 @@ RETURN (200, ConfigVersionResponse { version, timestamp, hasPreviousConfig, keyC
 ```
 
 ### NotifyConfigChange
-POST /orchestrator/config/notify-change | Roles: [admin]
+POST /orchestrator/config/notify-change | Roles: []
 
 ```
 READ config:version                                // Current config version
@@ -474,7 +474,7 @@ RETURN (200, NotifyConfigChangeResponse { configVersion, notifiedAt })
 ```
 
 ### AcquireProcessor
-POST /orchestrator/processing-pool/acquire | Roles: [admin]
+POST /orchestrator/processing-pool/acquire | Roles: []
 
 ```
 READ pool:known                                    // Validate pool type exists
@@ -501,7 +501,7 @@ RETURN (200, AcquireProcessorResponse { processorId, appId, leaseId, expiresAt }
 ```
 
 ### ReleaseProcessor
-POST /orchestrator/processing-pool/release | Roles: [admin]
+POST /orchestrator/processing-pool/release | Roles: []
 
 ```
 // Search all known pool types for the lease ID (read-only, outside lock)
@@ -527,7 +527,7 @@ RETURN (200, ReleaseProcessorResponse { processorId })
 ```
 
 ### GetPoolStatus
-POST /orchestrator/processing-pool/status | Roles: [admin]
+POST /orchestrator/processing-pool/status | Roles: []
 
 ```
 READ pool:known
@@ -543,7 +543,7 @@ RETURN (200, PoolStatusResponse { totalInstances, availableInstances, busyInstan
 ```
 
 ### ScalePool
-POST /orchestrator/processing-pool/scale | Roles: [admin]
+POST /orchestrator/processing-pool/scale | Roles: []
 
 ```
 READ pool:{type}:config
@@ -569,7 +569,7 @@ RETURN (200, ScalePoolResponse { previousInstances, currentInstances, scaledUp, 
 ```
 
 ### CleanupPool
-POST /orchestrator/processing-pool/cleanup | Roles: [admin]
+POST /orchestrator/processing-pool/cleanup | Roles: []
 
 ```
 LOCK orchestrator-pool:{poolType} (TTL: PoolLockTimeoutSeconds)

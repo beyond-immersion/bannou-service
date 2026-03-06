@@ -161,7 +161,7 @@ public class InstrumentedStateStore<TValue> : IStateStore<TValue>
     }
 
     /// <inheritdoc/>
-    public async Task<string?> TrySaveAsync(string key, TValue value, string etag, CancellationToken cancellationToken = default)
+    public async Task<string?> TrySaveAsync(string key, TValue value, string etag, StateOptions? options = null, CancellationToken cancellationToken = default)
     {
         using var activity = StartOperation("try_save");
         activity?.SetTag("bannou.state.key", key);
@@ -169,7 +169,7 @@ public class InstrumentedStateStore<TValue> : IStateStore<TValue>
 
         try
         {
-            var result = await _inner.TrySaveAsync(key, value, etag, cancellationToken);
+            var result = await _inner.TrySaveAsync(key, value, etag, options, cancellationToken: cancellationToken);
             RecordSuccess(activity, "try_save", sw);
             return result;
         }

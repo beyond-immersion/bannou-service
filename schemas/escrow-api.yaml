@@ -48,9 +48,7 @@ paths:
         and container (owned by escrow entity). Issues deposit tokens and returns ALL
         tokens to the creating service, which is responsible for distributing them to
         parties through appropriate channels. Sets template values on bound contract.
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -75,7 +73,6 @@ paths:
       description: Get escrow agreement details by ID.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -100,7 +97,6 @@ paths:
       description: List escrow agreements with filtering options.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -160,7 +156,6 @@ paths:
         to check if all asset requirements are satisfied.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -185,7 +180,6 @@ paths:
       description: Validate a deposit without executing (dry run).
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -209,7 +203,6 @@ paths:
       description: Get deposit status for a party in an escrow.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -237,7 +230,6 @@ paths:
       description: Record party consent for release, refund, or re-affirmation.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -262,7 +254,6 @@ paths:
       description: Get consent status for all parties in an escrow.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -291,9 +282,7 @@ paths:
         Trigger release (for trusted modes or after consent).
         If boundContractId is set, checks contract status first (must be fulfilled).
         Runs finalization flow before releasing remaining assets.
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -316,9 +305,7 @@ paths:
       - Completion
       summary: Trigger refund
       description: Trigger refund (for trusted modes or consent).
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -341,9 +328,7 @@ paths:
       - Completion
       summary: Cancel escrow before fully funded
       description: Cancel escrow before fully funded, refunding any deposits.
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -368,7 +353,6 @@ paths:
       description: Raise a dispute on a funded escrow.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -395,7 +379,6 @@ paths:
         Required when ReleaseMode is party_required or service_and_party.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -424,7 +407,6 @@ paths:
         Required when RefundMode is party_required.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -453,9 +435,7 @@ paths:
       - Arbiter
       summary: Arbiter resolves disputed escrow
       description: Arbiter resolves a disputed escrow.
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -484,9 +464,7 @@ paths:
       description: |
         Verify condition for conditional escrow (non-contract path).
         For escrows with boundContractId, use contract milestones instead.
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -513,9 +491,7 @@ paths:
       - Validation
       summary: Manually trigger validation
       description: Manually trigger validation on an active escrow.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -539,7 +515,6 @@ paths:
       description: Re-affirm after validation failure (party accepts changed state).
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -566,9 +541,7 @@ paths:
       - Handlers
       summary: Register a custom asset type handler
       description: Register a custom asset type handler for extensibility.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -591,9 +564,7 @@ paths:
       - Handlers
       summary: List registered asset handlers
       description: List registered asset handlers (includes built-in).
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -615,9 +586,7 @@ paths:
       - Handlers
       summary: Remove a custom asset handler registration
       description: Remove a custom asset handler registration.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -842,6 +811,7 @@ components:
 
     EscrowAgreement:
       type: object
+      additionalProperties: false
       description: Main escrow agreement record
       required:
       - id
@@ -997,6 +967,7 @@ components:
 
     EscrowParty:
       type: object
+      additionalProperties: false
       description: A party in the escrow agreement
       required:
       - partyId
@@ -1070,6 +1041,7 @@ components:
 
     EscrowAsset:
       type: object
+      additionalProperties: false
       description: An asset held in escrow
       required:
       - assetType
@@ -1166,6 +1138,7 @@ components:
 
     EscrowAssetBundle:
       type: object
+      additionalProperties: false
       description: Groups multiple assets for a single deposit or release
       required:
       - bundleId
@@ -1191,6 +1164,7 @@ components:
 
     ExpectedDeposit:
       type: object
+      additionalProperties: false
       description: Defines what a party should deposit
       required:
       - partyId
@@ -1225,6 +1199,7 @@ components:
 
     EscrowDeposit:
       type: object
+      additionalProperties: false
       description: Records an actual deposit
       required:
       - id
@@ -1267,6 +1242,7 @@ components:
 
     ReleaseAllocation:
       type: object
+      additionalProperties: false
       description: Defines who gets what on release
       required:
       - recipientPartyId
@@ -1298,6 +1274,7 @@ components:
 
     EscrowConsent:
       type: object
+      additionalProperties: false
       description: Records a party consent decision
       required:
       - partyId
@@ -1330,6 +1307,7 @@ components:
 
     ValidationFailure:
       type: object
+      additionalProperties: false
       description: Records a validation check failure
       required:
       - detectedAt
@@ -1369,6 +1347,7 @@ components:
 
     AssetHandlerInfo:
       type: object
+      additionalProperties: false
       description: Information about a registered asset handler
       required:
       - assetType
@@ -1407,6 +1386,7 @@ components:
 
     CreateEscrowRequest:
       type: object
+      additionalProperties: false
       description: Request to create a new escrow agreement
       required:
       - escrowType
@@ -1499,6 +1479,7 @@ components:
 
     CreateEscrowPartyInput:
       type: object
+      additionalProperties: false
       description: Input for defining a party in escrow creation
       required:
       - partyId
@@ -1536,6 +1517,7 @@ components:
 
     ExpectedDepositInput:
       type: object
+      additionalProperties: false
       description: Input for defining expected deposits from a party
       required:
       - partyId
@@ -1566,6 +1548,7 @@ components:
 
     EscrowAssetInput:
       type: object
+      additionalProperties: false
       description: Input for specifying an asset in escrow operations
       required:
       - assetType
@@ -1643,6 +1626,7 @@ components:
 
     ReleaseAllocationInput:
       type: object
+      additionalProperties: false
       description: Input for specifying how assets should be allocated on release
       required:
       - recipientPartyId
@@ -1674,6 +1658,7 @@ components:
 
     CreateEscrowResponse:
       type: object
+      additionalProperties: false
       description: Response from creating an escrow agreement
       required:
       - escrow
@@ -1690,6 +1675,7 @@ components:
 
     PartyToken:
       type: object
+      additionalProperties: false
       description: Token issued to a party for deposit or release operations
       required:
       - partyId
@@ -1709,6 +1695,7 @@ components:
 
     GetEscrowRequest:
       type: object
+      additionalProperties: false
       description: Request to retrieve an escrow agreement by ID
       required:
       - escrowId
@@ -1720,6 +1707,7 @@ components:
 
     GetEscrowResponse:
       type: object
+      additionalProperties: false
       description: Response containing escrow agreement details
       required:
       - escrow
@@ -1730,6 +1718,7 @@ components:
 
     ListEscrowsRequest:
       type: object
+      additionalProperties: false
       description: Request to list escrow agreements with optional filters
       properties:
         partyId:
@@ -1778,6 +1767,7 @@ components:
 
     ListEscrowsResponse:
       type: object
+      additionalProperties: false
       description: Response containing list of escrow agreements
       required:
       - escrows
@@ -1794,6 +1784,7 @@ components:
 
     GetMyTokenRequest:
       type: object
+      additionalProperties: false
       description: Request to retrieve a party token for deposit or release
       required:
       - escrowId
@@ -1818,6 +1809,7 @@ components:
 
     GetMyTokenResponse:
       type: object
+      additionalProperties: false
       description: Response containing party token information
       required:
       - tokenUsed
@@ -1841,6 +1833,7 @@ components:
 
     DepositRequest:
       type: object
+      additionalProperties: false
       description: Request to deposit assets into an escrow
       required:
       - escrowId
@@ -1873,6 +1866,7 @@ components:
 
     EscrowAssetBundleInput:
       type: object
+      additionalProperties: false
       description: Input for specifying a bundle of assets
       required:
       - assets
@@ -1893,6 +1887,7 @@ components:
 
     DepositResponse:
       type: object
+      additionalProperties: false
       description: Response from depositing assets into an escrow
       required:
       - escrow
@@ -1917,6 +1912,7 @@ components:
 
     ValidateDepositRequest:
       type: object
+      additionalProperties: false
       description: Request to validate a deposit without executing
       required:
       - escrowId
@@ -1941,6 +1937,7 @@ components:
 
     ValidateDepositResponse:
       type: object
+      additionalProperties: false
       description: Response from deposit validation
       required:
       - valid
@@ -1963,6 +1960,7 @@ components:
 
     GetDepositStatusRequest:
       type: object
+      additionalProperties: false
       description: Request to get deposit status for a party
       required:
       - escrowId
@@ -1983,6 +1981,7 @@ components:
 
     GetDepositStatusResponse:
       type: object
+      additionalProperties: false
       description: Response containing party deposit status
       required:
       - expectedAssets
@@ -2018,6 +2017,7 @@ components:
 
     ConsentRequest:
       type: object
+      additionalProperties: false
       description: Request to record party consent for release or refund
       required:
       - escrowId
@@ -2054,6 +2054,7 @@ components:
 
     ConsentResponse:
       type: object
+      additionalProperties: false
       description: Response from recording party consent
       required:
       - escrow
@@ -2072,6 +2073,7 @@ components:
 
     GetConsentStatusRequest:
       type: object
+      additionalProperties: false
       description: Request to get consent status for all parties
       required:
       - escrowId
@@ -2083,6 +2085,7 @@ components:
 
     GetConsentStatusResponse:
       type: object
+      additionalProperties: false
       description: Response containing consent status for all parties
       required:
       - partiesRequiringConsent
@@ -2111,6 +2114,7 @@ components:
 
     PartyConsentStatus:
       type: object
+      additionalProperties: false
       description: Consent status for a single party
       required:
       - partyId
@@ -2147,6 +2151,7 @@ components:
 
     ReleaseRequest:
       type: object
+      additionalProperties: false
       description: Request to trigger escrow release to recipients
       required:
       - escrowId
@@ -2170,6 +2175,7 @@ components:
 
     ReleaseResponse:
       type: object
+      additionalProperties: false
       description: Response from releasing escrow assets to recipients
       required:
       - escrow
@@ -2192,6 +2198,7 @@ components:
 
     FinalizerResult:
       type: object
+      additionalProperties: false
       description: Result from a contract finalizer API call
       required:
       - endpoint
@@ -2210,6 +2217,7 @@ components:
 
     ReleaseResult:
       type: object
+      additionalProperties: false
       description: Result of releasing assets to a single recipient
       required:
       - recipientPartyId
@@ -2233,6 +2241,7 @@ components:
 
     RefundRequest:
       type: object
+      additionalProperties: false
       description: Request to trigger escrow refund to depositors
       required:
       - escrowId
@@ -2256,6 +2265,7 @@ components:
 
     RefundResponse:
       type: object
+      additionalProperties: false
       description: Response from refunding escrow assets to depositors
       required:
       - escrow
@@ -2272,6 +2282,7 @@ components:
 
     RefundResult:
       type: object
+      additionalProperties: false
       description: Result of refunding assets to a single depositor
       required:
       - depositorPartyId
@@ -2295,6 +2306,7 @@ components:
 
     CancelRequest:
       type: object
+      additionalProperties: false
       description: Request to cancel escrow before fully funded
       required:
       - escrowId
@@ -2314,6 +2326,7 @@ components:
 
     CancelResponse:
       type: object
+      additionalProperties: false
       description: Response from cancelling an escrow
       required:
       - escrow
@@ -2330,6 +2343,7 @@ components:
 
     DisputeRequest:
       type: object
+      additionalProperties: false
       description: Request to raise a dispute on a funded escrow
       required:
       - escrowId
@@ -2362,6 +2376,7 @@ components:
 
     DisputeResponse:
       type: object
+      additionalProperties: false
       description: Response from raising a dispute on an escrow
       required:
       - escrow
@@ -2470,6 +2485,7 @@ components:
 
     ResolveRequest:
       type: object
+      additionalProperties: false
       description: Request for arbiter to resolve a disputed escrow
       required:
       - escrowId
@@ -2508,6 +2524,7 @@ components:
 
     SplitAllocation:
       type: object
+      additionalProperties: false
       description: Allocation of assets to a party in a split resolution
       required:
       - partyId
@@ -2529,6 +2546,7 @@ components:
 
     ResolveResponse:
       type: object
+      additionalProperties: false
       description: Response from arbiter resolving a disputed escrow
       required:
       - escrow
@@ -2545,6 +2563,7 @@ components:
 
     TransferResult:
       type: object
+      additionalProperties: false
       description: Result of transferring assets to a party during resolution
       required:
       - partyId
@@ -2572,6 +2591,7 @@ components:
 
     VerifyConditionRequest:
       type: object
+      additionalProperties: false
       description: Request to verify a condition for conditional escrow
       required:
       - escrowId
@@ -2607,6 +2627,7 @@ components:
 
     VerifyConditionResponse:
       type: object
+      additionalProperties: false
       description: Response from verifying a condition on an escrow
       required:
       - escrow
@@ -2625,6 +2646,7 @@ components:
 
     ValidateEscrowRequest:
       type: object
+      additionalProperties: false
       description: Request to manually validate escrow assets
       required:
       - escrowId
@@ -2636,6 +2658,7 @@ components:
 
     ValidateEscrowResponse:
       type: object
+      additionalProperties: false
       description: Response from validating escrow assets
       required:
       - valid
@@ -2656,6 +2679,7 @@ components:
 
     ReaffirmRequest:
       type: object
+      additionalProperties: false
       description: Request to re-affirm after validation failure
       required:
       - escrowId
@@ -2684,6 +2708,7 @@ components:
 
     ReaffirmResponse:
       type: object
+      additionalProperties: false
       description: Response from party re-affirming after validation failure
       required:
       - escrow
@@ -2702,6 +2727,7 @@ components:
 
     RegisterHandlerRequest:
       type: object
+      additionalProperties: false
       description: Request to register a custom asset type handler
       required:
       - assetType
@@ -2732,16 +2758,19 @@ components:
 
     RegisterHandlerResponse:
       type: object
+      additionalProperties: false
       description: Response from registering an asset handler
       properties: {}
 
     ListHandlersRequest:
       type: object
+      additionalProperties: false
       description: Empty request to list handlers
       properties: {}
 
     ListHandlersResponse:
       type: object
+      additionalProperties: false
       description: Response containing list of registered asset handlers
       required:
       - handlers
@@ -2754,6 +2783,7 @@ components:
 
     DeregisterHandlerRequest:
       type: object
+      additionalProperties: false
       description: Request to remove a custom asset handler registration
       required:
       - assetType
@@ -2764,6 +2794,7 @@ components:
 
     DeregisterHandlerResponse:
       type: object
+      additionalProperties: false
       description: Response from deregistering an asset handler
       properties: {}
 
