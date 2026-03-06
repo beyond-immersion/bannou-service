@@ -5752,6 +5752,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                 It.Is<string>(k => k.StartsWith("instance:")),
                 It.IsAny<ContractInstanceModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .Callback<string, ContractInstanceModel, string, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag-1");
@@ -5907,6 +5908,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                 It.Is<string>(k => k.StartsWith("instance:")),
                 It.IsAny<ContractInstanceModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 

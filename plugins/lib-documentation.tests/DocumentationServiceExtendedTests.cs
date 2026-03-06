@@ -1182,7 +1182,8 @@ public class DocumentationServiceExtendedTests
 
         _mockGuidListStore.Setup(s => s.TrySaveAsync(
             It.IsAny<string>(), It.IsAny<List<Guid>>(), It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Act
@@ -1645,7 +1646,8 @@ public class DocumentationServiceExtendedTests
 
         _mockGuidListStore.Setup(s => s.TrySaveAsync(
             It.IsAny<string>(), It.IsAny<List<Guid>>(), It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Act
@@ -1717,7 +1719,8 @@ public class DocumentationServiceExtendedTests
         // Git sync returns success with new commit
         _mockGitSyncService.Setup(g => g.SyncRepositoryAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GitSyncResult(
                 Success: true,
                 CommitHash: "def456"));

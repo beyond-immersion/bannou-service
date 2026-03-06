@@ -97,7 +97,7 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
             return;
         }
 
-        var factionKey = $"fac:{notification.OwnerId}";
+        var factionKey = FactionService.FactionKey(notification.OwnerId);
 
         var faction = await _factionStore.GetAsync(factionKey, ct);
         if (faction == null)
@@ -111,7 +111,7 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
         faction.CurrentPhase = notification.NewPhase;
         faction.UpdatedAt = DateTimeOffset.UtcNow;
         await _factionStore.SaveAsync(factionKey, faction, cancellationToken: ct);
-        await _factionStore.SaveAsync($"fac:{faction.GameServiceId}:{faction.Code}", faction, cancellationToken: ct);
+        await _factionStore.SaveAsync(FactionService.FactionCodeKey(faction.GameServiceId, faction.Code), faction, cancellationToken: ct);
 
         _logger.LogInformation(
             "Updated faction {FactionId} phase from {OldPhase} to {NewPhase} for seed {SeedId}",
@@ -134,8 +134,11 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
                 Status = faction.Status,
                 CurrentPhase = notification.NewPhase,
                 MemberCount = faction.MemberCount,
+                DeprecatedAt = faction.DeprecatedAt,
+                DeprecationReason = faction.DeprecationReason,
                 CreatedAt = faction.CreatedAt,
-                UpdatedAt = faction.UpdatedAt
+                UpdatedAt = faction.UpdatedAt,
+                ChangedFields = new List<string> { "currentPhase", "updatedAt" },
             },
             ct);
     }

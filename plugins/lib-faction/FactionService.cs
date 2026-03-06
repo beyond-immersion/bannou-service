@@ -111,16 +111,16 @@ public partial class FactionService : IFactionService
     // KEY BUILDERS
     // ========================================================================
 
-    private static string FactionKey(Guid factionId) => $"fac:{factionId}";
-    private static string FactionCodeKey(Guid gameServiceId, string code) => $"fac:{gameServiceId}:{code}";
-    private static string MemberKey(Guid factionId, Guid characterId) => $"mem:{factionId}:{characterId}";
-    private static string CharacterMembershipsKey(Guid characterId) => $"mem:char:{characterId}";
-    private static string ClaimKey(Guid claimId) => $"tcl:{claimId}";
-    private static string LocationClaimKey(Guid locationId) => $"tcl:loc:{locationId}";
-    private static string FactionClaimsKey(Guid factionId) => $"tcl:fac:{factionId}";
-    private static string NormKey(Guid normId) => $"nrm:{normId}";
-    private static string FactionNormsKey(Guid factionId) => $"nrm:fac:{factionId}";
-    private static string NormCacheKey(Guid characterId, Guid? locationId) =>
+    internal static string FactionKey(Guid factionId) => $"fac:{factionId}";
+    internal static string FactionCodeKey(Guid gameServiceId, string code) => $"fac:{gameServiceId}:{code}";
+    internal static string MemberKey(Guid factionId, Guid characterId) => $"mem:{factionId}:{characterId}";
+    internal static string CharacterMembershipsKey(Guid characterId) => $"mem:char:{characterId}";
+    internal static string ClaimKey(Guid claimId) => $"tcl:{claimId}";
+    internal static string LocationClaimKey(Guid locationId) => $"tcl:loc:{locationId}";
+    internal static string FactionClaimsKey(Guid factionId) => $"tcl:fac:{factionId}";
+    internal static string NormKey(Guid normId) => $"nrm:{normId}";
+    internal static string FactionNormsKey(Guid factionId) => $"nrm:fac:{factionId}";
+    internal static string NormCacheKey(Guid characterId, Guid? locationId) =>
         $"ncache:{characterId}:{locationId?.ToString() ?? "none"}";
 
     // ========================================================================
@@ -227,6 +227,8 @@ public partial class FactionService : IFactionService
             Status = model.Status,
             CurrentPhase = model.CurrentPhase,
             MemberCount = model.MemberCount,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
         };
@@ -255,6 +257,8 @@ public partial class FactionService : IFactionService
             Status = model.Status,
             CurrentPhase = model.CurrentPhase,
             MemberCount = model.MemberCount,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
             ChangedFields = changedFields.ToList(),

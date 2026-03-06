@@ -141,6 +141,18 @@ public partial class FactionCreatedEvent : BaseServiceEvent
     public int MemberCount { get; set; } = default!;
 
     /// <summary>
+    /// When the faction was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
     /// When the faction was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
@@ -251,6 +263,18 @@ public partial class FactionUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("memberCount")]
     public int MemberCount { get; set; } = default!;
+
+    /// <summary>
+    /// When the faction was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// When the faction was created
@@ -371,6 +395,18 @@ public partial class FactionDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("memberCount")]
     public int MemberCount { get; set; } = default!;
+
+    /// <summary>
+    /// When the faction was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// When the faction was created

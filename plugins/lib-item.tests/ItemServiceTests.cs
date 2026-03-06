@@ -128,7 +128,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
         _mockTemplateStringStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
 
         _mockInstanceStringStore
@@ -222,7 +222,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Override default TrySaveAsync to simulate code already claimed
         _mockTemplateStringStore
-            .Setup(s => s.TrySaveAsync(It.Is<string>(k => k.StartsWith("tpl-code:")), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.Is<string>(k => k.StartsWith("tpl-code:")), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -3092,7 +3092,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.GetWithETagAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag-1"));
         _mockInstanceStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Contract created for first step
@@ -3333,6 +3333,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
                 It.Is<string>(k => k.StartsWith("tpl-game:")),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .Returns<string, string, string, CancellationToken>((_, _, _, _) =>
             {
@@ -3376,6 +3377,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
                 It.Is<string>(k => k.StartsWith("tpl-game:")),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -3385,6 +3387,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
                 It.Is<string>(k => k == "all-templates"),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -3505,6 +3508,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
                 It.Is<string>(k => k.StartsWith("inst-container:")),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .Returns<string, string, string, CancellationToken>((_, _, _, _) =>
             {
@@ -3889,7 +3893,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // No contract instance should have been stored on the item
         _mockInstanceStore.Verify(
-            s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -4022,7 +4026,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Optimistic concurrency failure when saving contract to instance
         _mockInstanceStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -4183,6 +4187,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
                 It.Is<string>(k => k.StartsWith("tpl-code:")),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 

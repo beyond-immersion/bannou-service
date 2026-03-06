@@ -88,7 +88,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Escrow](#escrow-status) | L4 | 75% | 1 | 13-state FSM works. Hardened: sentinel values→nullable, typed config enums, telemetry spans, additionalProperties:false, filler booleans removed. Validation placeholder, custom handlers inert, status index broken. |
 | [Environment](#environment-status) | L4 | 0% | 0 | L4-audited 3x (2026-03-06): Pre-implementation spec hardened. 3 audit passes fixed: T28 cleanup, T16 topics, T31 Category A, T25 types, T13 permissions, T21 thresholds, T26 sentinel values, binding/realm-config endpoints added to API section, IEventConsumer, cleanup completeness, cross-reference consistency. No schema, no code. |
 | [Ethology](#ethology-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): T28 cleanup (location/species event subs→lib-resource x-references), T31 Category A deprecation (undeprecate+delete endpoints), T13 x-permissions (nature query/cleanup→[]), T25 PascalCase enums (ActivityPattern, DietType, SocialStructure, OverrideScopeType), T5 x-lifecycle adoption, T30 ITelemetryProvider, IRealmClient/IResourceClient added, variable-providers.yaml registration, T29 speciesCode metadata concern (#308). 6 design considerations remain. No schema, no code. |
-| [Faction](#faction-status) | L4 | 80% | 0 | All 31 endpoints done. Seed-based growth, norms, territory. Obligation integration missing. |
+| [Faction](#faction-status) | L4 | 85% | 0 | All 31 endpoints done. L4-audited (2026-03-06): T8 filler removed (5 responses), T31 deprecation lifecycle (triple-field, idempotent, delete guard, includeDeprecated), T21 collection growth configurable, event schemas flattened. Obligation integration missing. |
 | [Gardener](#gardener-status) | L4 | 62% | 0 | Void garden works. Broader garden concept unimplemented. No client events, no divine actors. |
 | [Leaderboard](#leaderboard-status) | L4 | 78% | 0 | Redis Sorted Set rankings work. IncludeArchived stub, batch UpdateMode ignored. |
 | [Lexicon](#lexicon-status) | L4 | 0% | 0 | Pre-implementation. Structured world knowledge ontology and concept decomposition spec. No schema, no code. |
@@ -1657,9 +1657,9 @@ gh issue list --search "Ethology:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [FACTION.md](plugins/FACTION.md)
 
-### Production Readiness: 80%
+### Production Readiness: 85%
 
-All 31 endpoints are fully implemented with business logic -- CRUD, membership management, territory claims, norm definitions, cleanup, and compression all work. The seed-based growth pipeline, norm resolution hierarchy, `ISeedEvolutionListener`/`ICollectionUnlockListener` DI integrations, and `IVariableProviderFactory` (`${faction.*}` namespace) are operational. However, the variable provider is missing critical norm/territory variables, lib-contract integration for guild charters is absent, and the lib-obligation integration (the primary consumer) is not yet wired.
+All 31 endpoints are fully implemented with business logic -- CRUD, membership management, territory claims, norm definitions, cleanup, and compression all work. The seed-based growth pipeline, norm resolution hierarchy, `ISeedEvolutionListener`/`ICollectionUnlockListener` DI integrations, and `IVariableProviderFactory` (`${faction.*}` namespace) are operational. L4 production audit (2026-03-06) applied comprehensive corrections: T8 filler removal from 5 response models, T31 deprecation lifecycle (triple-field model with `deprecatedAt`/`deprecationReason`, idempotent deprecate/undeprecate, delete guard requiring deprecation, `includeDeprecated` filter on list), T21 collection growth amount made configurable, event schemas flattened per SCHEMA-RULES, T0 tenet number removed from events schema. Variable provider is missing critical norm/territory variables, lib-contract integration for guild charters is absent, and lib-obligation integration (the primary consumer) is not yet wired.
 
 ### Bug Count: 0
 
@@ -1676,6 +1676,16 @@ No known bugs.
 | 1 | **Missing norm/territory variables in Variable Provider** | Provider only exposes membership data. `${faction.has_norm.<type>}`, `${faction.norm_penalty.<type>}`, `${faction.in_controlled_territory}`, `${faction.primary_faction}` are missing -- critical for lib-obligation's cognition stage. | [#410](https://github.com/beyond-immersion/bannou-service/issues/410) |
 | 2 | **Missing lib-contract integration for guild charters** | Plan specifies guild membership should create contracts with behavioral clauses. Current implementation manages membership directly without contract backing, breaking the faction-to-obligation pipeline. | [#410](https://github.com/beyond-immersion/bannou-service/issues/410) |
 | 3 | **Faction diplomacy system** | Formalized alliance/rivalry mechanics through seed bonds with capability-gated treaty operations. Schema references seed bonds but no API endpoints exist for faction-level bond management. | [#413](https://github.com/beyond-immersion/bannou-service/issues/413) |
+
+### Audit Log
+
+**L4 Production Audit (2026-03-06)**:
+- **Schema (faction-events.yaml)**: Flattened all 9 custom events (removed `allOf` with `BaseServiceEvent`, added inline `eventId`/`timestamp`), added `deprecatedAt`/`deprecationReason` to x-lifecycle Faction model, added `minLength`/`maxLength` to `violationType` in norm events, removed tenet number reference (T0), added `x-event-subscriptions: []`
+- **Schema (faction-api.yaml)**: T8 filler removed from `QueryApplicableNormsResponse` (characterId, realmId, locationId), `CheckMembershipResponse` (factionId, characterId), `ListMembershipsByCharacterResponse` (characterId), `CleanupByCharacterResponse`/`CleanupByRealmResponse`/`CleanupByLocationResponse` (success boolean), `RestoreFromArchiveResponse` (characterId, success, boolean→count). T31 deprecation fields (`deprecatedAt`, `deprecationReason`) added to `FactionResponse` and `DeprecateFactionRequest`. `includeDeprecated` filter added to `ListFactionsRequest`. Validation added to `CharacterMembershipEntry`, `ApplicableNormEntry`, `RestoreFromArchiveRequest.data`
+- **Schema (faction-configuration.yaml)**: Added `CollectionGrowthAmount` config property (T21), `minLength`/`maxLength` on `SeedTypeCode`
+- **Code (FactionService.cs)**: T31 deprecation lifecycle (deprecatedAt/deprecationReason in model+response, idempotent deprecate/undeprecate with dissolved guard, delete requires deprecation, includeDeprecated filter). T8 filler field assignments removed from 7 response constructions. RestoreFromArchive changed from boolean to count tracking
+- **Code (FactionCollectionUnlockListener.cs)**: Replaced hardcoded `1.0f` growth amount with `_configuration.CollectionGrowthAmount` (T21)
+- **T30 telemetry**: Already compliant -- 31 controller spans + 7 private helper spans + 5 provider spans
 
 ### GH Issues
 

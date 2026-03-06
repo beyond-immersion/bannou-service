@@ -210,6 +210,7 @@ public class GameServiceServiceTests
                 "game-service-list",
                 It.IsAny<List<Guid>>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .Callback<string, List<Guid>, string, CancellationToken>(
                 (key, data, etag, ct) => savedList = data)
@@ -903,6 +904,7 @@ public class GameServiceServiceTests
                 "game-service-list",
                 It.IsAny<List<Guid>>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .Callback<string, List<Guid>, string, CancellationToken>(
                 (key, data, etag, ct) => savedList = data)

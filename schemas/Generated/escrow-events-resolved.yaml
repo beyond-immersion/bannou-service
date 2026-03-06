@@ -899,6 +899,7 @@ components:
 
     EscrowAsset:
       type: object
+      additionalProperties: false
       description: An asset held in escrow
       required:
       - assetType
@@ -995,6 +996,7 @@ components:
 
     EscrowAssetBundle:
       type: object
+      additionalProperties: false
       description: Groups multiple assets for a single deposit or release
       required:
       - bundleId
@@ -1020,6 +1022,7 @@ components:
 
     EscrowDeposit:
       type: object
+      additionalProperties: false
       description: Records an actual deposit
       required:
       - id

@@ -845,6 +845,7 @@ public class ContractExpirationServiceTests
                 $"instance:{contractId}",
                 It.IsAny<ContractInstanceModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()),
             Times.AtLeastOnce);
     }

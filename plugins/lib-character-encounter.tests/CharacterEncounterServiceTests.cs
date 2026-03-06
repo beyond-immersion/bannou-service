@@ -1160,6 +1160,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
                 It.IsAny<string>(),
                 It.IsAny<PerspectiveData>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .Callback<string, PerspectiveData, string, CancellationToken>((_, p, _, _) => savedPerspective = p)
             .ReturnsAsync("etag-1");

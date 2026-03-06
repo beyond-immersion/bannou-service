@@ -73,11 +73,20 @@ components:
         memberCount: &id011
           type: integer
           description: "Current number of members"
-        createdAt: &id012
+        deprecatedAt: &id012
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the faction was deprecated (null if not deprecated)"
+        deprecationReason: &id013
+          type: string
+          nullable: true
+          description: "Reason for deprecation (null if not deprecated)"
+        createdAt: &id014
           type: string
           format: date-time
           description: "When the faction was created"
-        updatedAt: &id013
+        updatedAt: &id015
           type: string
           format: date-time
           description: "When the faction was last updated"
@@ -118,8 +127,10 @@ components:
         status: *id009
         currentPhase: *id010
         memberCount: *id011
-        createdAt: *id012
-        updatedAt: *id013
+        deprecatedAt: *id012
+        deprecationReason: *id013
+        createdAt: *id014
+        updatedAt: *id015
         changedFields:
           type: array
           items:
@@ -161,8 +172,10 @@ components:
         status: *id009
         currentPhase: *id010
         memberCount: *id011
-        createdAt: *id012
-        updatedAt: *id013
+        deprecatedAt: *id012
+        deprecationReason: *id013
+        createdAt: *id014
+        updatedAt: *id015
         deletedReason:
           type: string
           nullable: true

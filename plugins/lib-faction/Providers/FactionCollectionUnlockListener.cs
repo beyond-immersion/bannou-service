@@ -98,7 +98,7 @@ public class FactionCollectionUnlockListener : ICollectionUnlockListener
 
         // Look up the character's faction memberships
         var membershipList = await _memberListStore.GetAsync(
-            $"mem:char:{notification.OwnerId}", ct);
+            FactionService.CharacterMembershipsKey(notification.OwnerId), ct);
 
         if (membershipList == null || membershipList.Memberships.Count == 0)
         {
@@ -111,7 +111,7 @@ public class FactionCollectionUnlockListener : ICollectionUnlockListener
         // For each faction the character belongs to, record growth from the collection unlock
         foreach (var membership in membershipList.Memberships)
         {
-            var faction = await _factionStore.GetAsync($"fac:{membership.FactionId}", ct);
+            var faction = await _factionStore.GetAsync(FactionService.FactionKey(membership.FactionId), ct);
             if (faction == null || faction.SeedId == null)
             {
                 continue;
@@ -152,7 +152,7 @@ public class FactionCollectionUnlockListener : ICollectionUnlockListener
                     faction.FactionId, faction.SeedId);
 
                 await _messageBus.TryPublishErrorAsync(
-                    "faction", "FactionCollectionUnlockListener", "growth_recording_failed",
+                    "faction", "FactionCollectionUnlockListener", ex.GetType().Name,
                     ex.Message, dependency: "seed", endpoint: "listener:collection-unlock",
                     details: null, stack: ex.StackTrace, cancellationToken: ct);
             }

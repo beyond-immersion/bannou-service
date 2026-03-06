@@ -63,7 +63,7 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
 
         // Load the character's faction memberships
         var membershipList = await _memberListStore.GetAsync(
-            $"mem:char:{characterId.Value}", ct);
+            FactionService.CharacterMembershipsKey(characterId.Value), ct);
 
         if (membershipList == null || membershipList.Memberships.Count == 0)
         {
@@ -77,7 +77,7 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
 
         foreach (var membership in membershipList.Memberships)
         {
-            var faction = await _factionStore.GetAsync($"fac:{membership.FactionId}", ct);
+            var faction = await _factionStore.GetAsync(FactionService.FactionKey(membership.FactionId), ct);
             if (faction == null) continue;
 
             // Filter to realm-relevant factions — skip factions in other realms
@@ -94,12 +94,12 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
                 membership.Role));
 
             // Load norms for this faction (membership-scoped norm resolution)
-            var normList = await _normListStore.GetAsync($"nrm:fac:{membership.FactionId}", ct);
+            var normList = await _normListStore.GetAsync(FactionService.FactionNormsKey(membership.FactionId), ct);
             if (normList == null) continue;
 
             foreach (var normId in normList.NormIds)
             {
-                var norm = await _normStore.GetAsync($"nrm:{normId}", ct);
+                var norm = await _normStore.GetAsync(FactionService.NormKey(normId), ct);
                 if (norm == null) continue;
 
                 // Keep highest penalty per violation type across all membership factions

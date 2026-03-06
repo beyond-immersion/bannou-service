@@ -283,7 +283,8 @@ public class ActorLocalMemoryStoreTests
             It.IsAny<string>(),
             It.IsAny<List<string>>(),
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         await _memoryStore.StoreExperienceAsync(
@@ -316,7 +317,8 @@ public class ActorLocalMemoryStoreTests
             It.IsAny<string>(),
             It.IsAny<List<string>>(),
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
             .Callback<string, List<string>, string, CancellationToken>((_, idx, _, _) => savedIndex = idx)
             .ReturnsAsync("etag-2");
 
@@ -457,7 +459,8 @@ public class ActorLocalMemoryStoreTests
             It.IsAny<string>(),
             It.IsAny<List<string>>(),
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
             .Callback<string, List<string>, string, CancellationToken>((_, idx, _, _) => savedIndex = idx)
             .ReturnsAsync("etag-2");
 

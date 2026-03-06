@@ -277,6 +277,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
@@ -325,6 +326,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
@@ -1579,6 +1581,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -1661,6 +1664,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .Callback<string, AccountModel, string, CancellationToken>(
                 (key, account, etag, ct) => savedAccount = account)
@@ -1702,6 +1706,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
     }
@@ -2347,7 +2352,8 @@ public class AccountServiceTests
         // Verify auth methods store was NOT asked to delete (nothing to delete)
         _mockAuthMethodsStore.Verify(s => s.DeleteAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -3560,7 +3566,8 @@ public class AccountServiceTests
             It.IsAny<string>(),
             It.IsAny<AccountModel>(),
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()), Times.Never);
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "account.updated",
@@ -4265,7 +4272,8 @@ public class AccountServiceTests
             It.IsAny<string>(),
             It.IsAny<AccountModel>(),
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()), Times.Never);
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "account.updated",

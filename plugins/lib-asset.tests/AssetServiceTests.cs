@@ -666,6 +666,7 @@ public class AssetServiceTests
         _mockAssetStore
             .Setup(s => s.GetAsync(
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((InternalAssetRecord?)null);
 
@@ -754,6 +755,7 @@ public class AssetServiceTests
         _mockAssetStore
             .Setup(s => s.GetAsync(
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((InternalAssetRecord?)null);
 
@@ -804,6 +806,7 @@ public class AssetServiceTests
         _mockAssetStore
             .Setup(s => s.GetAsync(
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(internalRecord);
 
@@ -846,6 +849,7 @@ public class AssetServiceTests
         _mockIndexStore
             .Setup(s => s.GetAsync(
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
 
@@ -1229,6 +1233,7 @@ public class AssetServiceTests
         _mockBundleStore
             .Setup(s => s.GetAsync(
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((BundleMetadata?)null);
 
@@ -2820,7 +2825,8 @@ public class AssetServiceTests
             null,
             MetabundleErrorCode.Cancelled,
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -2845,7 +2851,8 @@ public class AssetServiceTests
             null,
             MetabundleErrorCode.Cancelled,
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()),
+            It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

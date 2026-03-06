@@ -429,6 +429,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<QuestDefinitionModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -501,6 +502,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<QuestDefinitionModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -657,6 +659,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<CharacterQuestIndex>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -854,6 +857,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<QuestInstanceModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -878,6 +882,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<CharacterQuestIndex>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1222,6 +1227,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<ObjectiveProgressModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1279,6 +1285,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<ObjectiveProgressModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1489,6 +1496,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<ObjectiveProgressModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1658,6 +1666,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<QuestInstanceModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1684,6 +1693,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<CharacterQuestIndex>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1726,6 +1736,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<QuestInstanceModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1743,6 +1754,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<CharacterQuestIndex>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1789,6 +1801,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<QuestInstanceModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1806,6 +1819,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<CharacterQuestIndex>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1885,6 +1899,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<QuestInstanceModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1911,6 +1926,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<CharacterQuestIndex>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -1967,6 +1983,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<ObjectiveProgressModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -2698,6 +2715,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<QuestInstanceModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -2719,6 +2737,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<CharacterQuestIndex>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -2988,6 +3007,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<ObjectiveProgressModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -3067,6 +3087,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<ObjectiveProgressModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -3173,6 +3194,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<QuestInstanceModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
@@ -3199,6 +3221,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<CharacterQuestIndex>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
