@@ -358,7 +358,6 @@ struct FDeleteSceneResponse;
 struct FDeleteSeedTypeRequest;
 struct FDeleteSlotRequest;
 struct FDeleteSlotResponse;
-struct FDeleteTemplateRequest;
 struct FDeleteVersionRequest;
 struct FDeleteVersionResponse;
 struct FDeletionStatus;
@@ -1300,10 +1299,6 @@ USTRUCT(BlueprintType)
 struct FAbandonScenarioResponse
 {
     GENERATED_BODY()
-
-    /** Abandoned scenario instance ID */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid ScenarioInstanceId;
 
     /** Partial growth awarded based on time spent */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -9129,7 +9124,7 @@ struct FCreateLeaderboardDefinitionRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Description;
 
-    /** Which entity types can appear on this leaderboard */
+    /** Which entity types can appear on this leaderboard (null allows all types) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FEntityType> EntityTypes;
 
@@ -9148,6 +9143,14 @@ struct FCreateLeaderboardDefinitionRequest
     /** Whether the leaderboard is publicly visible */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IsPublic = true;
+
+    /** Analytics score type that maps to this leaderboard for automatic score ingestion */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ScoreType;
+
+    /** Analytics rating type that maps to this leaderboard for automatic rating ingestion */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RatingType;
 
     /** Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -10167,14 +10170,6 @@ struct FDeclinePoiResponse
 {
     GENERATED_BODY()
 
-    /** POI that was declined */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid PoiId;
-
-    /** Whether the decline was processed */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Acknowledged = false;
-
 };
 
 /**
@@ -10734,20 +10729,6 @@ struct FDeleteSlotResponse
     /** Storage freed in bytes */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int64 BytesFreed = 0;
-
-};
-
-/**
- * Request to permanently delete a deprecated template
- */
-USTRUCT(BlueprintType)
-struct FDeleteTemplateRequest
-{
-    GENERATED_BODY()
-
-    /** Template ID to delete */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid ScenarioTemplateId;
 
 };
 
@@ -11807,7 +11788,7 @@ struct FEntityRankResponse
 
     /** Percentile ranking (0-100) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<double> Percentile;
+    double Percentile = 0.0;
 
 };
 
@@ -17195,7 +17176,7 @@ struct FLeaderboardDefinitionResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Description;
 
-    /** Allowed entity types */
+    /** Allowed entity types (null if all types permitted) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FEntityType> EntityTypes;
 
@@ -17221,11 +17202,19 @@ struct FLeaderboardDefinitionResponse
 
     /** Number of entries on the leaderboard */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int64> EntryCount;
+    int64 EntryCount = 0;
 
     /** When the leaderboard was created */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
+
+    /** Analytics score type mapped to this leaderboard */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ScoreType;
+
+    /** Analytics rating type mapped to this leaderboard */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RatingType;
 
     /** Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -17354,10 +17343,6 @@ USTRUCT(BlueprintType)
 struct FLeaveGardenResponse
 {
     GENERATED_BODY()
-
-    /** Account that left the garden */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
 
     /** Total duration of the garden session in seconds */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -19560,6 +19545,10 @@ struct FListTemplatesRequest
     /** Filter by template status */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FTemplateStatus> Status;
+
+    /** Whether to include deprecated templates in results */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IncludeDeprecated = false;
 
     /** Page number (1-based) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -22487,10 +22476,6 @@ struct FPoiInteractionResponse
 {
     GENERATED_BODY()
 
-    /** POI that was interacted with */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid PoiId;
-
     /** Interaction outcome */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FPoiInteractionResult Result;
@@ -22618,10 +22603,6 @@ USTRUCT(BlueprintType)
 struct FPositionUpdateResponse
 {
     GENERATED_BODY()
-
-    /** Whether the position update was processed */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Acknowledged = false;
 
     /** POIs triggered by proximity to the new position */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -26269,10 +26250,6 @@ struct FScenarioCompletionResponse
 {
     GENERATED_BODY()
 
-    /** Completed scenario instance ID */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid ScenarioInstanceId;
-
     /** Growth awarded per domain */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> GrowthAwarded;
@@ -27253,7 +27230,7 @@ struct FSeasonResponse
 
     /** Number of entries in this season */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int64> EntryCount;
+    int64 EntryCount = 0;
 
 };
 
@@ -31718,6 +31695,14 @@ struct FUpdateLeaderboardDefinitionRequest
     /** New visibility setting */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IsPublic = false;
+
+    /** New analytics score type mapping */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ScoreType;
+
+    /** New analytics rating type mapping */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RatingType;
 
 };
 

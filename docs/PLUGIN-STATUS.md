@@ -89,8 +89,8 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Environment](#environment-status) | L4 | 0% | 0 | L4-audited 3x (2026-03-06): Pre-implementation spec hardened. 3 audit passes fixed: T28 cleanup, T16 topics, T31 Category A, T25 types, T13 permissions, T21 thresholds, T26 sentinel values, binding/realm-config endpoints added to API section, IEventConsumer, cleanup completeness, cross-reference consistency. No schema, no code. |
 | [Ethology](#ethology-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): T28 cleanup (location/species event subs→lib-resource x-references), T31 Category A deprecation (undeprecate+delete endpoints), T13 x-permissions (nature query/cleanup→[]), T25 PascalCase enums (ActivityPattern, DietType, SocialStructure, OverrideScopeType), T5 x-lifecycle adoption, T30 ITelemetryProvider, IRealmClient/IResourceClient added, variable-providers.yaml registration, T29 speciesCode metadata concern (#308). 6 design considerations remain. No schema, no code. |
 | [Faction](#faction-status) | L4 | 85% | 0 | All 31 endpoints done. L4-audited (2026-03-06): T8 filler removed (5 responses), T31 deprecation lifecycle (triple-field, idempotent, delete guard, includeDeprecated), T21 collection growth configurable, event schemas flattened. Obligation integration missing. |
-| [Gardener](#gardener-status) | L4 | 62% | 0 | Void garden works. Broader garden concept unimplemented. No client events, no divine actors. |
-| [Leaderboard](#leaderboard-status) | L4 | 78% | 0 | Redis Sorted Set rankings work. IncludeArchived stub, batch UpdateMode ignored. |
+| [Gardener](#gardener-status) | L4 | 65% | 0 | Void garden works (23 endpoints). L4-audited (2026-03-06): T8 filler removed (6 responses), T31 Category B (delete endpoint removed, idempotent deprecation, includeDeprecated), T21 GameType configurable, T26 Guid.Empty sentinel eliminated, event schemas flattened, lifecycle topic prefix added. Broader garden concept unimplemented. No client events, no divine actors. |
+| [Leaderboard](#leaderboard-status) | L4 | 85% | 0 | Production-hardened. T29/T8/T5/T25 compliant, typed scoreType/ratingType, lifecycle events, NRT-clean schemas. IncludeArchived stub, batch UpdateMode ignored, 6 design decisions deferred. |
 | [Lexicon](#lexicon-status) | L4 | 0% | 0 | Pre-implementation. Structured world knowledge ontology and concept decomposition spec. No schema, no code. |
 | [License](#license-status) | L4 | 93% | 0 | Feature-complete. 14-step unlock saga, adjacency validation, board cloning. Only respec pending. |
 | [Mapping](#mapping-status) | L4 | 80% | 2 | Spatial indexing works. Version counter race, non-atomic index ops. N+1 query pattern. |
@@ -109,7 +109,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Director](#director-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): T32 accountId→sessionId, T16 PascalCase enums, x-lifecycle adoption, T8 metrics removal (→Analytics), T31 phase events collapsed to `*.updated`, cleanup endpoint reduced. 8 design considerations remain. No schema, no code. |
 | [Disposition](#disposition-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): targetType→$ref:EntityType, targetId→Guid (no "self" sentinel), IRelationshipClient→hard dep, typed SynthesisBreakdown (T29), DriveOriginType PascalCase enum, T16 past-tense topics, x-permissions all 17 endpoints, x-event-publications, x-resource-mapping, compression priority 40→20, guilt-as-composite-feeling (GH#410), seed.phase.changed subscription (GH#497), hearsay deferred to Phase 4+. No schema, no code. |
 | [Dungeon](#dungeon-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): T29 personalityType→DungeonCoreModel (not seed metadata), T4 IItemClient/IInventoryClient→hard deps, T16 Pattern A topics (trap-triggered, layout-changed, phase-changed), DungeonStatus enum added, game-service cleanup target, ITelemetryProvider in DI, domain management permissions, config validation constraints, GrowthContributionDebounceMs config, T31 no-deprecation classification, inhabitant durability note, DC#3 resolved (#422). 10 design considerations remain, 7 missing GH issues. No schema, no code. |
-| [Hearsay](#hearsay-status) | L4 | 0% | 0 | Pre-implementation. Social information propagation and belief formation spec. No schema, no code. |
+| [Hearsay](#hearsay-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): T25 BeliefDomain+SourceChannel enums (not strings), T25 subjectEntityId→Guid (no composite GUID-in-string), T16 PascalCase enum values, factual event topic fix (encounter.recorded not character-encounter.created), Obligation→Soft Dependencies, ITelemetryProvider in DI, x-archive-type noted, Phase 1 prerequisites (state-stores.yaml, variable-providers.yaml). 9 design considerations (3 from audit). No schema, no code. |
 | [Loot](#loot-status) | L4 | 0% | 0 | Pre-implementation. Loot table management and generation spec. No schema, no code. |
 | [Market](#market-status) | L4 | 0% | 0 | Pre-implementation. Marketplace orchestration (auctions + NPC vendors) spec. No schema, no code. |
 | [Organization](#organization-status) | L4 | 0% | 0 | Pre-implementation. Legal entity management spec. No schema, no code. |
@@ -1702,9 +1702,9 @@ gh issue list --search "Faction:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [GARDENER.md](plugins/GARDENER.md)
 
-### Production Readiness: 62%
+### Production Readiness: 65%
 
-The void/discovery garden type is functional with all 24 endpoints implemented -- garden lifecycle, POI interaction with weighted scoring, scenario management with growth awards, template CRUD, phase management, bond features, and two background workers. However, the broader garden concept is unimplemented: no garden-to-garden transitions, no multiple garden types, no per-garden entity associations, no entity session registry, no divine actor integration (uses background workers instead of per-player actors), 10 implementation gaps in the current void garden (missing prerequisite validation, no per-template concurrent instance limits, MinGrowthPhase not functional, no client events, Puppetmaster notification is log-only), and no content flywheel integration.
+The void/discovery garden type is functional with 23 endpoints (delete removed per T31 Category B) -- garden lifecycle, POI interaction with weighted scoring, scenario management with growth awards, template CRUD with deprecation lifecycle, phase management, bond features, and two background workers. L4-audited (2026-03-06): T8 filler removed from 6 responses (acknowledged booleans, echoed request fields), T31 Category B compliance (delete endpoint removed, idempotent deprecation, includeDeprecated on list), T21 GameType extracted to config, T26 Guid.Empty sentinel replaced with null check, event schemas flattened (12 custom events), lifecycle topic prefix added (`gardener.scenario-template.*`). However, the broader garden concept is unimplemented: no garden-to-garden transitions, no multiple garden types, no per-garden entity associations, no entity session registry, no divine actor integration (uses background workers instead of per-player actors), implementation gaps in the current void garden (missing prerequisite validation, no per-template concurrent instance limits, MinGrowthPhase not functional, no client events, Puppetmaster notification is log-only), and no content flywheel integration.
 
 ### Bug Count: 0
 
@@ -1720,7 +1720,18 @@ No known bugs.
 |---|-------------|-------------|-------|
 | 1 | **Client event schema** | No client events exist for real-time POI push to WebSocket clients. POI spawns, expirations, and triggers happen server-side only. Clients must poll to discover changes. | No issue |
 | 2 | **Prerequisite validation during scenario entry** | Templates store prerequisites but they are never validated in `EnterScenarioAsync` or `GetEligibleTemplatesAsync`. A player can enter any scenario regardless. | No issue |
-| 3 | **Entity Session Registry** | Cross-cutting infrastructure for mapping entities to WebSocket sessions, hosted in Connect (L1). Required for real-time client event routing from entity-based services. | [#426](https://github.com/beyond-immersion/bannou-service/issues/426) |
+| 3 | **Entity Session Registry** | Cross-cutting infrastructure for mapping entities to WebSocket sessions, hosted in Connect (L1). Required for real-time client event routing from entity-based services. | [#426](https://github.com/beyond-immersion/bannou-service/issues/426) (CLOSED) / [#502](https://github.com/beyond-immersion/bannou-service/issues/502) (rollout) |
+
+### L4 Audit Changes (2026-03-06)
+
+| Change | Category | Description |
+|--------|----------|-------------|
+| T8 filler removed | Schema + Code | Removed `Acknowledged`, echoed `PoiId`, `ScenarioInstanceId`, `AccountId` from 6 responses |
+| T31 Category B | Schema + Code | Removed delete endpoint (23 endpoints), idempotent deprecation, `includeDeprecated` on list |
+| T21 config | Schema + Code | Extracted `GameType` to configuration (3 hardcoded strings replaced) |
+| T26 sentinel | Code | Replaced `Guid.Empty` check with null check in lifecycle worker |
+| Event schemas | Schema | Flattened 12 custom events (inline eventId/timestamp, no eventName) |
+| Lifecycle topics | Schema + Code | Added `topic_prefix: gardener` to x-lifecycle; updated topic strings in service code |
 
 ### GH Issues
 
@@ -1736,7 +1747,7 @@ gh issue list --search "Gardener:" --state open
 
 ### Production Readiness: 0%
 
-Entirely pre-implementation. The deep dive explicitly states "Pre-implementation. No schema, no code". A comprehensive architectural specification for social information propagation and belief formation -- what NPCs *think* they know vs. what is objectively true. Three belief domains (norms, characters, locations) acquired through six information channels (direct observation, official decree, trusted/social contact, rumor, cultural osmosis) with confidence mechanics, time-based decay, proximity-based convergence toward ground truth, and rumor injection for divine manipulation. Provides `${hearsay.*}` ABML variables via Variable Provider Factory. Integrates with Storyline for dramatic irony detection (belief vs. reality deltas). 18 planned endpoints, 8 published events, 8 consumed events, 4 state stores, 19 configuration properties, 3 background workers, and a 6-phase implementation plan.
+Entirely pre-implementation. L4-audited (2026-03-06): 8 tenet-mandated fixes applied to spec. `BeliefDomain` enum (Norm/Character/Location) and `SourceChannel` enum (DirectObservation/OfficialDecree/TrustedContact/SocialContact/Rumor/CulturalOsmosis) replace strings (T14 Category C, T25). `subjectId` composite GUID-in-string split to typed `subjectEntityId: Guid` (T25). Consumed event topic corrected from `character-encounter.created` to `encounter.recorded` (factual error — actual topic verified in schema). Obligation added to Soft Dependencies (event-only). ITelemetryProvider added to DI Services (T30). Phase 1 prerequisites (state-stores.yaml, variable-providers.yaml) noted. `x-archive-type: true` noted on HearsayArchive. 9 design considerations remain (6 original + 3 from audit: x-permissions per endpoint, config distance units, GH issue cross-references). Three belief domains acquired through six information channels with confidence mechanics, time-based decay, proximity-based convergence toward ground truth, and rumor injection. Provides `${hearsay.*}` ABML variables via Variable Provider Factory. 18 planned endpoints, 8 published events, 8 consumed events, 4 state stores, 20 configuration properties, 3 background workers, and a 6-phase implementation plan. No schema, no code.
 
 ### Bug Count: 0
 
@@ -1750,8 +1761,8 @@ No implementation exists to have bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Phase 1 - Core Belief Infrastructure** | Create schemas, generate code, implement belief CRUD (record, correct, query, get-manifest), belief cache with event-driven invalidation, variable provider factory (`${hearsay.*}` namespace), and resource cleanup/compression callbacks. | No issue |
-| 2 | **Phase 2 - Propagation Engine** | Implement encounter-triggered belief propagation, faction event-driven belief injection (territory claimed, norm defined), rumor injection API, propagation worker advancing rumor waves through social networks, and telephone-game distortion mechanics. | No issue |
+| 1 | **Phase 1 - Core Belief Infrastructure** | Add stores to state-stores.yaml/variable-providers.yaml, create schemas (with BeliefDomain/SourceChannel enums, x-archive-type), generate code, implement belief CRUD, belief cache with Redis invalidation, variable provider factory (`${hearsay.*}`), and resource cleanup/compression callbacks. | No issue |
+| 2 | **Phase 2 - Propagation Engine** | Implement encounter-triggered belief propagation (via `encounter.recorded` event), faction event-driven belief injection (territory claimed, norm defined), rumor injection API, propagation worker advancing rumor waves through social networks, and telephone-game distortion mechanics. | No issue |
 | 3 | **Phase 4 - Storyline Integration** | Implement the dramatic irony endpoint (`QueryBeliefDelta` -- beliefs alongside ground truth with narrative weight classification), belief saturation queries for scenario preconditions, and narrative protection preventing convergence from breaking active storylines. | No issue |
 
 ### GH Issues
@@ -1766,13 +1777,13 @@ gh issue list --search "Hearsay:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [LEADERBOARD.md](plugins/LEADERBOARD.md)
 
-### Production Readiness: 78%
+### Production Readiness: 85%
 
-Core leaderboard functionality is solid: Redis Sorted Set-backed rankings with O(log N) operations, polymorphic entity types, four score update modes, seasonal rotation, event-driven score ingestion from Analytics, percentile calculations, and neighbor queries. No bugs remain (the archivePrevious bug was fixed). However, `IncludeArchived` filtering returns NotImplemented, batch submit ignores UpdateMode, season timestamps are approximated, an unused MySQL state store exists in the schema, and no score validation/bounds exist (NaN and infinity accepted).
+Production-hardened (2026-03-06). Core leaderboard functionality is solid: Redis Sorted Set-backed rankings with O(log N) operations, polymorphic entity types, four score update modes, seasonal rotation, event-driven score ingestion from Analytics via typed `scoreType`/`ratingType` fields (T29-compliant, no metadata bag reads), percentile calculations, neighbor queries, and full lifecycle event coverage (definition created/updated/deleted). All schemas are NRT-compliant with proper validation constraints. Remaining gaps: `IncludeArchived` filtering returns NotImplemented, batch submit ignores UpdateMode, season timestamps are approximated, an unused MySQL state store exists, no score validation/bounds, no distributed locks for non-atomic read-calculate-write, and batch submit has no event publishing. 6 design decisions deferred with `AUDIT:NEEDS_DESIGN` markers.
 
 ### Bug Count: 0
 
-No known bugs.
+No known bugs. T29 metadata bag violation fixed (2026-03-06).
 
 ### Top 3 Bugs
 

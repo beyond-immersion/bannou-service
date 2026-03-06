@@ -333,6 +333,12 @@ public class GardenerServiceConfiguration : BaseServiceConfiguration
     public string SeedTypeCode { get; set; } = "guardian";
 
     /// <summary>
+    /// Game type string used for game session creation and queries
+    /// Environment variable: GARDENER_GAME_TYPE
+    /// </summary>
+    public string GameType { get; set; } = "gardener-scenario";
+
+    /// <summary>
     /// Seconds between scenario lifecycle worker evaluation cycles
     /// Environment variable: GARDENER_SCENARIO_LIFECYCLE_WORKER_INTERVAL_SECONDS
     /// </summary>

@@ -380,11 +380,13 @@ components:
           description: ID of the game service owning this leaderboard
         leaderboardId:
           type: string
+          minLength: 1
           maxLength: 64
           pattern: "^[a-z0-9_-]+$"
           description: Unique identifier for this leaderboard (lowercase, no spaces)
         displayName:
           type: string
+          minLength: 1
           maxLength: 100
           description: Human-readable name for the leaderboard
         description:
@@ -394,16 +396,17 @@ components:
           description: Description of what this leaderboard tracks
         entityTypes:
           type: array
+          nullable: true
           items:
             $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Which entity types can appear on this leaderboard
+          description: Which entity types can appear on this leaderboard (null allows all types)
         sortOrder:
           $ref: '#/components/schemas/SortOrder'
-          default: descending
+          default: Descending
           description: Sort order (descending for high scores, ascending for times)
         updateMode:
           $ref: '#/components/schemas/UpdateMode'
-          default: replace
+          default: Replace
           description: How to handle score updates
         isSeasonal:
           type: boolean
@@ -413,6 +416,16 @@ components:
           type: boolean
           default: true
           description: Whether the leaderboard is publicly visible
+        scoreType:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: Analytics score type that maps to this leaderboard for automatic score ingestion
+        ratingType:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: Analytics rating type that maps to this leaderboard for automatic rating ingestion
         metadata:
           type: object
           additionalProperties: true
@@ -495,6 +508,16 @@ components:
           type: boolean
           nullable: true
           description: New visibility setting
+        scoreType:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: New analytics score type mapping
+        ratingType:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: New analytics rating type mapping
 
     DeleteLeaderboardDefinitionRequest:
       type: object
@@ -525,6 +548,7 @@ components:
       - isSeasonal
       - isPublic
       - createdAt
+      - entryCount
       properties:
         gameServiceId:
           type: string
@@ -542,9 +566,10 @@ components:
           description: Description of the leaderboard
         entityTypes:
           type: array
+          nullable: true
           items:
             $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Allowed entity types
+          description: Allowed entity types (null if all types permitted)
         sortOrder:
           $ref: '#/components/schemas/SortOrder'
           description: Ordering used when ranking scores (descending for high scores, ascending for low)
@@ -569,6 +594,14 @@ components:
           type: string
           format: date-time
           description: When the leaderboard was created
+        scoreType:
+          type: string
+          nullable: true
+          description: Analytics score type mapped to this leaderboard
+        ratingType:
+          type: string
+          nullable: true
+          description: Analytics rating type mapped to this leaderboard
         metadata:
           type: object
           additionalProperties: true
@@ -622,13 +655,10 @@ components:
       description: Response after score submission
       additionalProperties: false
       required:
-      - accepted
       - currentScore
       - currentRank
+      - rankChange
       properties:
-        accepted:
-          type: boolean
-          description: Whether the score was accepted
         previousScore:
           type: number
           format: double
@@ -672,8 +702,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BatchScoreEntry'
+          minItems: 1
           maxItems: 1000
-          description: List of scores to submit (max 1000)
+          description: List of scores to submit (1-1000)
 
     BatchScoreEntry:
       type: object
@@ -749,6 +780,7 @@ components:
       - score
       - rank
       - totalEntries
+      - percentile
       properties:
         entityId:
           type: string
@@ -792,11 +824,13 @@ components:
         count:
           type: integer
           default: 100
+          minimum: 1
           maximum: 1000
           description: Number of entries to return
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Number of entries to skip
 
     GetRanksAroundRequest:
@@ -826,11 +860,13 @@ components:
         countBefore:
           type: integer
           default: 5
+          minimum: 0
           maximum: 50
           description: Entries to show before the entity
         countAfter:
           type: integer
           default: 5
+          minimum: 0
           maximum: 50
           description: Entries to show after the entity
 
@@ -950,6 +986,7 @@ components:
       - seasonNumber
       - startedAt
       - isActive
+      - entryCount
       properties:
         leaderboardId:
           type: string

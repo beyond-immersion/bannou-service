@@ -181,7 +181,7 @@ public partial class GardenerService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.gardener", "GardenerService.HandleGameSessionDeleted");
 
-        if (evt.GameType != "gardener-scenario")
+        if (evt.GameType != _configuration.GameType)
             return;
 
         _logger.LogInformation(

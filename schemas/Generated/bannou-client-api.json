@@ -8837,50 +8837,6 @@
         }
       }
     },
-    "/gardener/template/delete": {
-      "post": {
-        "summary": "Delete scenario template",
-        "description": "Permanently deletes a scenario template. Template must be in Deprecated status before deletion. Publishes a scenario-template.deleted lifecycle event.",
-        "operationId": "gardener_deleteTemplate",
-        "tags": [
-          "Template Management"
-        ],
-        "x-permissions": [
-          {
-            "role": "developer",
-            "states": {}
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeleteTemplateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Template deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScenarioTemplateResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Template not found"
-          },
-          "409": {
-            "description": "Template is not in Deprecated status"
-          }
-        }
-      }
-    },
     "/gardener/phase/get": {
       "post": {
         "summary": "Get deployment phase configuration",
@@ -20254,15 +20210,9 @@
         "type": "object",
         "description": "Response after abandoning a scenario",
         "required": [
-          "scenarioInstanceId",
           "partialGrowthAwarded"
         ],
         "properties": {
-          "scenarioInstanceId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Abandoned scenario instance ID"
-          },
           "partialGrowthAwarded": {
             "type": "object",
             "additionalProperties": {
@@ -30169,12 +30119,14 @@
           },
           "leaderboardId": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 64,
             "pattern": "^[a-z0-9_-]+$",
             "description": "Unique identifier for this leaderboard (lowercase, no spaces)"
           },
           "displayName": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 100,
             "description": "Human-readable name for the leaderboard"
           },
@@ -30186,19 +30138,20 @@
           },
           "entityTypes": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/EntityType"
             },
-            "description": "Which entity types can appear on this leaderboard"
+            "description": "Which entity types can appear on this leaderboard (null allows all types)"
           },
           "sortOrder": {
             "$ref": "#/components/schemas/SortOrder",
-            "default": "descending",
+            "default": "Descending",
             "description": "Sort order (descending for high scores, ascending for times)"
           },
           "updateMode": {
             "$ref": "#/components/schemas/UpdateMode",
-            "default": "replace",
+            "default": "Replace",
             "description": "How to handle score updates"
           },
           "isSeasonal": {
@@ -30210,6 +30163,18 @@
             "type": "boolean",
             "default": true,
             "description": "Whether the leaderboard is publicly visible"
+          },
+          "scoreType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128,
+            "description": "Analytics score type that maps to this leaderboard for automatic score ingestion"
+          },
+          "ratingType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128,
+            "description": "Analytics rating type that maps to this leaderboard for automatic rating ingestion"
           },
           "metadata": {
             "type": "object",
@@ -31607,21 +31572,7 @@
       "DeclinePoiResponse": {
         "type": "object",
         "description": "Response after declining a POI",
-        "required": [
-          "poiId",
-          "acknowledged"
-        ],
-        "properties": {
-          "poiId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "POI that was declined"
-          },
-          "acknowledged": {
-            "type": "boolean",
-            "description": "Whether the decline was processed"
-          }
-        }
+        "properties": {}
       },
       "DefineNormRequest": {
         "type": "object",
@@ -32230,20 +32181,6 @@
             "type": "integer",
             "format": "int64",
             "description": "Storage freed in bytes"
-          }
-        }
-      },
-      "DeleteTemplateRequest": {
-        "type": "object",
-        "description": "Request to permanently delete a deprecated template",
-        "required": [
-          "scenarioTemplateId"
-        ],
-        "properties": {
-          "scenarioTemplateId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Template ID to delete"
           }
         }
       },
@@ -33449,7 +33386,8 @@
           "entityType",
           "score",
           "rank",
-          "totalEntries"
+          "totalEntries",
+          "percentile"
         ],
         "properties": {
           "entityId": {
@@ -37269,12 +37207,14 @@
           "countBefore": {
             "type": "integer",
             "default": 5,
+            "minimum": 0,
             "maximum": 50,
             "description": "Entries to show before the entity"
           },
           "countAfter": {
             "type": "integer",
             "default": 5,
+            "minimum": 0,
             "maximum": 50,
             "description": "Entries to show after the entity"
           }
@@ -37969,12 +37909,14 @@
           "count": {
             "type": "integer",
             "default": 100,
+            "minimum": 1,
             "maximum": 1000,
             "description": "Number of entries to return"
           },
           "offset": {
             "type": "integer",
             "default": 0,
+            "minimum": 0,
             "description": "Number of entries to skip"
           }
         }
@@ -40119,7 +40061,8 @@
           "updateMode",
           "isSeasonal",
           "isPublic",
-          "createdAt"
+          "createdAt",
+          "entryCount"
         ],
         "properties": {
           "gameServiceId": {
@@ -40142,10 +40085,11 @@
           },
           "entityTypes": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/EntityType"
             },
-            "description": "Allowed entity types"
+            "description": "Allowed entity types (null if all types permitted)"
           },
           "sortOrder": {
             "$ref": "#/components/schemas/SortOrder",
@@ -40177,6 +40121,16 @@
             "type": "string",
             "format": "date-time",
             "description": "When the leaderboard was created"
+          },
+          "scoreType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Analytics score type mapped to this leaderboard"
+          },
+          "ratingType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Analytics rating type mapped to this leaderboard"
           },
           "metadata": {
             "type": "object",
@@ -40328,15 +40282,9 @@
         "type": "object",
         "description": "Response after leaving the garden",
         "required": [
-          "accountId",
           "sessionDurationSeconds"
         ],
         "properties": {
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Account that left the garden"
-          },
           "sessionDurationSeconds": {
             "type": "number",
             "format": "float",
@@ -43049,6 +42997,11 @@
             "$ref": "#/components/schemas/TemplateStatus",
             "nullable": true,
             "description": "Filter by template status"
+          },
+          "includeDeprecated": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to include deprecated templates in results"
           },
           "page": {
             "type": "integer",
@@ -46704,15 +46657,9 @@
         "type": "object",
         "description": "Result of interacting with a POI",
         "required": [
-          "poiId",
           "result"
         ],
         "properties": {
-          "poiId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "POI that was interacted with"
-          },
           "result": {
             "$ref": "#/components/schemas/PoiInteractionResult",
             "description": "Interaction outcome"
@@ -46861,14 +46808,7 @@
       "PositionUpdateResponse": {
         "type": "object",
         "description": "Response to a position update",
-        "required": [
-          "acknowledged"
-        ],
         "properties": {
-          "acknowledged": {
-            "type": "boolean",
-            "description": "Whether the position update was processed"
-          },
           "triggeredPois": {
             "type": "array",
             "items": {
@@ -51513,16 +51453,10 @@
         "type": "object",
         "description": "Response after completing a scenario",
         "required": [
-          "scenarioInstanceId",
           "growthAwarded",
           "returnToGarden"
         ],
         "properties": {
-          "scenarioInstanceId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Completed scenario instance ID"
-          },
           "growthAwarded": {
             "type": "object",
             "additionalProperties": {
@@ -52737,7 +52671,8 @@
           "leaderboardId",
           "seasonNumber",
           "startedAt",
-          "isActive"
+          "isActive",
+          "entryCount"
         ],
         "properties": {
           "leaderboardId": {
@@ -58548,6 +58483,18 @@
             "type": "boolean",
             "nullable": true,
             "description": "New visibility setting"
+          },
+          "scoreType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128,
+            "description": "New analytics score type mapping"
+          },
+          "ratingType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128,
+            "description": "New analytics rating type mapping"
           }
         }
       },

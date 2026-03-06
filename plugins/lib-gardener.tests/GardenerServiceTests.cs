@@ -448,7 +448,6 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(_testAccountId, response.AccountId);
         Assert.True(response.SessionDurationSeconds > 0);
 
         // Assert - POI cleaned up
@@ -552,8 +551,6 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Acknowledged);
-
         // Verify drift metrics were accumulated
         Assert.NotNull(savedGarden);
         Assert.True(savedGarden.DriftMetrics.TotalDistance > 0);
@@ -802,8 +799,6 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Acknowledged);
-
         // POI marked as declined
         Assert.NotNull(savedPoi);
         Assert.Equal(PoiStatus.Declined, savedPoi.Status);
@@ -1100,7 +1095,6 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(scenarioId, response.ScenarioInstanceId);
         Assert.True(response.ReturnToGarden);
         Assert.NotEmpty(response.GrowthAwarded);
         Assert.True(response.GrowthAwarded.ContainsKey("combat.melee"));
@@ -1208,8 +1202,6 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(scenarioId, response.ScenarioInstanceId);
-
         // Partial growth should be less than full completion
         if (response.PartialGrowthAwarded.Count > 0)
         {

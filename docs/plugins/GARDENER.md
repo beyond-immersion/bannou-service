@@ -264,9 +264,9 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `scenario-template.created` | `ScenarioTemplateCreatedEvent` | New scenario template created via `CreateTemplateAsync` |
-| `scenario-template.updated` | `ScenarioTemplateUpdatedEvent` | Template updated or deprecated via `UpdateTemplateAsync`/`DeprecateTemplateAsync` |
-| `scenario-template.deleted` | `ScenarioTemplateDeletedEvent` | Template deleted (lifecycle event, declared in schema but no delete endpoint currently) |
+| `gardener.scenario-template.created` | `ScenarioTemplateCreatedEvent` | New scenario template created via `CreateTemplateAsync` |
+| `gardener.scenario-template.updated` | `ScenarioTemplateUpdatedEvent` | Template updated or deprecated via `UpdateTemplateAsync`/`DeprecateTemplateAsync` |
+| `gardener.scenario-template.deleted` | `ScenarioTemplateDeletedEvent` | Lifecycle event declared in schema; no delete endpoint exists (T31 Category B -- templates persist forever) |
 | `gardener.garden.entered` | `GardenerGardenEnteredEvent` | Player enters the garden via `EnterGardenAsync` |
 | `gardener.garden.left` | `GardenerGardenLeftEvent` | Player leaves the garden via `LeaveGardenAsync` |
 | `gardener.poi.spawned` | `GardenerPoiSpawnedEvent` | POI spawned by `GardenerGardenOrchestratorWorker` |
@@ -387,9 +387,9 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 - **ChainScenarioAsync**: Validates chaining rules (template `LeadsTo` list and `MaxChainDepth`). Completes current scenario with growth, creates new chained scenario reusing the same game session. Increments chain depth.
 - **EnterScenarioTogetherAsync** (Bond): Resolves bond participants via `ISeedClient.GetBondAsync` + `GetSeedAsync`. Validates both in garden, template supports multiplayer. Creates shared game session and scenario for all participants.
 
-### Template Management (7 endpoints)
+### Template Management (6 endpoints)
 
-Standard CRUD on scenario templates with JSON-queryable MySQL storage. Code uniqueness enforced via JSON query on creation. `ListTemplatesAsync` supports filtering by category, connectivity mode, status, and deployment phase. Deployment phase filtering is done in-memory post-query because JSON array contains is not supported in queries. `DeprecateTemplateAsync` sets status to Deprecated and publishes update event. `DeleteTemplateAsync` requires Deprecated status, permanently removes template from store, and publishes `scenario-template.deleted` lifecycle event.
+Standard CRUD on scenario templates with JSON-queryable MySQL storage. Code uniqueness enforced via JSON query on creation. `ListTemplatesAsync` supports filtering by category, connectivity mode, status, deployment phase, and `includeDeprecated` (default false, per IMPLEMENTATION TENETS T31). Deployment phase filtering is done in-memory post-query because JSON array contains is not supported in queries. `DeprecateTemplateAsync` sets status to Deprecated (idempotent -- returns OK if already deprecated) and publishes update event. No delete endpoint exists -- scenario templates are T31 Category B entities (instances persist independently, so templates must remain readable forever).
 
 ### Phase Management (3 endpoints)
 
@@ -527,7 +527,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 14. **Per-garden entity associations**: Gardens do not currently track associated entities (characters, collections, inventories, wallets). The target architecture gives each garden its own set of entities that the player can interact with, managed dynamically by the gardener behavior. For example, a lobby garden offers character selection from a roster; an in-game garden binds the selected character and its inventory/wallet.
 
-15. **Entity Session Registry integration**: Gardener does not currently register entity→session mappings. The target architecture has Gardener as the primary registrar for gameplay entities (seed→session, character→session, collection→session, inventory→session, currency→session, status→session, location→session) in the Entity Session Registry hosted by Connect (L1). This enables entity-based services to route client events to relevant WebSocket sessions without a central event router. The `location → session` binding ([#499](https://github.com/beyond-immersion/bannou-service/issues/499)) is updated atomically when a character moves between locations (unregister old, register new). See [The Garden Concept > Entity Session Registry Role](#entity-session-registry-role) for the full architecture, and [#502](https://github.com/beyond-immersion/bannou-service/issues/502) for the full L1/L2 client event rollout plan.
+15. **Entity Session Registry integration**: Gardener does not currently register entity→session mappings. The target architecture has Gardener as the primary registrar for gameplay entities (seed→session, character→session, collection→session, inventory→session, currency→session, status→session, location→session) in the Entity Session Registry hosted by Connect (L1). This enables entity-based services to route client events to relevant WebSocket sessions without a central event router. The `location → session` binding ([#499](https://github.com/beyond-immersion/bannou-service/issues/499) -- CLOSED) is updated atomically when a character moves between locations (unregister old, register new). See [The Garden Concept > Entity Session Registry Role](#entity-session-registry-role) for the full architecture, and [#502](https://github.com/beyond-immersion/bannou-service/issues/502) for the full L1/L2 client event rollout plan.
 
 16. **Dynamic character switching**: No mechanism exists for players to switch between characters within a garden (e.g., L1/R1 on a joystick). The target architecture has the gardener behavior managing character bindings in real-time, updating entity session registrations as the player switches context.
 
@@ -535,7 +535,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 1. **MinGrowthPhase filtering**: The `GetEligibleTemplatesAsync` method in `GardenerGardenOrchestratorWorker` has a MinGrowthPhase check block (lines 457-465) with an empty body -- the comment says "For now, include all templates where the player has any growth phase." Growth phases are opaque strings without ordinal comparison, so phase ordering would need a lookup table.
 
-2. **scenario-template.deleted event**: Declared in the events schema via `x-lifecycle` but no delete endpoint exists in the API. The lifecycle event is generated but never published.
+2. **scenario-template.deleted event**: Declared in the events schema via `x-lifecycle` but no delete endpoint exists (T31 Category B -- templates persist forever). The lifecycle event is generated but never published.
 
 3. **Puppetmaster notification**: `EnterScenarioAsync` resolves `IPuppetmasterClient` and logs intent to notify about behavior documents, but does not actually call any Puppetmaster API. The notification is a log-only stub.
 
@@ -559,7 +559,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 2. **Multi-participant history**: `WriteScenarioHistoryAsync` only writes a history record for the primary participant. Secondary participants in bond scenarios do not get individual history records. This means cooldown checking and scenario diversity scoring are inaccurate for non-primary bond participants.
 
-3. **Template delete endpoint**: A delete API endpoint could allow removing deprecated templates and publishing the already-declared `scenario-template.deleted` lifecycle event.
+3. ~~**Template delete endpoint**~~: Removed -- scenario templates are T31 Category B entities. Templates persist forever; no delete endpoint is appropriate.
 
 4. **Content flywheel connection**: Scenarios complete and award growth, but there's no mechanism to feed scenario outcomes back into future content generation. No events are consumed by Storyline, no archive data is generated from scenario history. Per VISION.md, this is a load-bearing connection: "more play produces more content, which produces more play." Gardener generates play but doesn't yet contribute to the content side of the flywheel.
 
@@ -573,10 +573,17 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 9. **Gardener-to-Gardener communication for co-op gardens**: When multiple players share a cooperative garden, their gardener behaviors need to coordinate. This could use the existing pair bond mechanism for bonded players, but ad-hoc multiplayer gardens (matchmade groups, guild activities) need a coordination pattern. Possible approaches: shared garden state in Redis, inter-actor messaging via the Actor runtime, or a dedicated co-op coordination layer.
 
-10. **Location → session registration** ([#499](https://github.com/beyond-immersion/bannou-service/issues/499)): Add `("location", locationId)` entity session registration when a player's character enters a location, enabling Location (L2) to push entity presence change client events to all players at a location. Registration updated atomically (unregister old location, register new) when the character moves between locations. Part of the broader L1/L2 client event rollout ([#502](https://github.com/beyond-immersion/bannou-service/issues/502)).
+10. **Location → session registration** ([#499](https://github.com/beyond-immersion/bannou-service/issues/499) -- CLOSED): Add `("location", locationId)` entity session registration when a player's character enters a location, enabling Location (L2) to push entity presence change client events to all players at a location. Registration updated atomically (unregister old location, register new) when the character moves between locations. Part of the broader L1/L2 client event rollout ([#502](https://github.com/beyond-immersion/bannou-service/issues/502)).
 
 11. **Director-driven player targeting APIs**: Director needs to externally influence Gardener's scenario selection and POI spawning for directed events. Options: (A) Director calls Gardener APIs directly (spawn POI, create temporary template, boost scoring weights per-player) -- simpler but tighter coupling; (B) Director publishes targeting intents and Gardener has a consumer that implements them -- cleaner but requires Gardener to understand Director targeting concepts. Either approach requires new endpoints or event handlers beyond what Gardener currently exposes. The `GardenerAmplificationMultiplier` configuration in Director provides the scoring weight boost factor. See [DIRECTOR.md](DIRECTOR.md).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/499 -->
+<!-- AUDIT:DESIGN_DECISIONS:2026-03-06:L4-audit -->
+<!-- S2: Event schemas use flat structure (eventId + timestamp only, no eventName) matching location-events.yaml pattern -->
+<!-- C1: Hardcoded prompt choices ["Enter","Decline"] are presentation hints, not tenet violations -->
+<!-- C2: No per-template MaxConcurrentInstances enforcement -- feature gap, not tenet violation -->
+<!-- C3: Prerequisites not validated during scenario entry -- feature gap, not tenet violation -->
+<!-- M7: MinGrowthPhase ordinal comparison unimplemented -- feature gap, not tenet violation -->
+<!-- L1: location.entity-arrived/departed subscriptions declared but handlers are stubs -- awaiting Entity Session Registry (#426 CLOSED, #502 OPEN) -->
 
 ## Known Quirks & Caveats
 
@@ -602,7 +609,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 2. **Hardcoded prompt choices**: `InteractWithPoiAsync` returns `["Enter", "Decline"]` as hardcoded prompt choices for `TriggerMode.Prompted` POIs. These are presentation hints for the client, not authoritative -- the client renders them but the server doesn't validate responses against them.
 
-3. **Hardcoded game type string**: `"gardener-scenario"` is used as the game type string for game session creation. This is a convention-based identifier used only by Gardener and is filtered in the `HandleGameSessionDeletedAsync` event handler.
+3. ~~**Hardcoded game type string**~~: Resolved -- extracted to `GameType` configuration property (env: `GARDENER_GAME_TYPE`, default: `"gardener-scenario"`). Used in game session creation and `HandleGameSessionDeletedAsync` event filtering.
 
 4. **HandleGameSessionDeletedAsync is log-only**: The event handler for `game-session.deleted` only logs the event. Actual cleanup relies on the `GardenerScenarioLifecycleWorker` detecting the orphaned scenario via `LastActivityAt` timeout. This is intentional because there is no reverse-lookup from GameSessionId to account ID in the scenario store (scenarios are keyed by `scenario:{accountId}`).
 
@@ -618,7 +625,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 #### Architectural (Garden Concept)
 
-7. **Entity Session Registry design** ([Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)): The Entity Session Registry needs to be designed and implemented in Connect (L1), generalizing Connect's existing `account-sessions:{accountId}` pattern to arbitrary entity types. Key decisions: interface shape (`IEntitySessionRegistry` in `bannou-service/`), Redis key structure (`entity-sessions:{entityType}:{entityId}` → `Set<sessionId>`), cleanup on session disconnect (`UnregisterSessionAsync` sweeping all bindings via session-to-entities reverse index), and TTL/expiry for stale entries. Connect already manages session lifecycle, heartbeat liveness, and disconnect cleanup -- the entity registry plugs into the same infrastructure. Entity-based services (Status, Currency, Inventory, Collection, Seed, etc.) then query the registry and publish their own client events via `IClientEventPublisher`. This is a cross-cutting infrastructure addition that affects many services.
+7. **Entity Session Registry design** ([Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426) -- CLOSED): The Entity Session Registry needs to be designed and implemented in Connect (L1), generalizing Connect's existing `account-sessions:{accountId}` pattern to arbitrary entity types. Key decisions: interface shape (`IEntitySessionRegistry` in `bannou-service/`), Redis key structure (`entity-sessions:{entityType}:{entityId}` → `Set<sessionId>`), cleanup on session disconnect (`UnregisterSessionAsync` sweeping all bindings via session-to-entities reverse index), and TTL/expiry for stale entries. Connect already manages session lifecycle, heartbeat liveness, and disconnect cleanup -- the entity registry plugs into the same infrastructure. Entity-based services (Status, Currency, Inventory, Collection, Seed, etc.) then query the registry and publish their own client events via `IClientEventPublisher`. This is a cross-cutting infrastructure addition that affects many services.
 
 8. **Divine gardener behavior document design**: The divine actor tending a garden uses an ABML behavior document (or family of documents) that encodes the per-game orchestration logic -- the same ABML bytecode as any other divine actor behavior (realm-tending, encounter orchestration). Key questions: Is there a default/base gardener behavior? How does a game author customize it? How does the divine actor interact with Gardener's APIs from ABML (the behavior needs to call garden/POI/scenario endpoints -- likely via custom ABML action handlers analogous to Puppetmaster's `spawn_watcher:`, `watch:`, `load_snapshot:`)? Does a single divine actor handle both realm-tending and garden-tending flows, or are they separate actors for the same deity?
 
@@ -638,7 +645,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 5. **Background worker and API lock coordination**: The `GardenerGardenOrchestratorWorker` processes gardens without distributed locks (for throughput), while API endpoints acquire locks for the same garden instances. Resolution: last-write-wins is accepted for the worker (see Intentional Quirk #8). The worker's unlocked operations (POI expiry, spawning) have benign race consequences, and per-garden locks would throttle throughput at scale. API endpoints continue to use locks for user-initiated mutations where correctness matters (scenario entry, garden creation).
 
-6. **Plan document superseded**: The original implementation plan (`docs/plans/GARDENER.md`) was superseded by this deep dive and has been deleted. The plan had several inaccuracies: stated 25 endpoints (actual: 23), specified event-based growth awards (actual: direct API via `ISeedClient.RecordGrowthBatchAsync`), listed 5 broadcast event subscriptions (actual: 3 events + DI listener), and named `game-session.ended` (actual: `game-session.deleted`). This deep dive is the authoritative reference.
+6. **Plan document superseded**: The original implementation plan (`docs/plans/GARDENER.md`) was superseded by this deep dive and has been deleted. The plan had several inaccuracies: stated 25 endpoints (actual: 23 after T31 Category B delete removal), specified event-based growth awards (actual: direct API via `ISeedClient.RecordGrowthBatchAsync`), listed 5 broadcast event subscriptions (actual: 3 events + DI listener), and named `game-session.ended` (actual: `game-session.deleted`). This deep dive is the authoritative reference.
 
 ## Work Tracking
 
@@ -660,7 +667,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 - [ ] **Stub #7**: Create `gardener-client-events.yaml` schema for real-time POI spawn/expire/trigger push to WebSocket clients
 - [ ] **Extension #2**: Write history records for all bond scenario participants, not just primary
 - [ ] **Stub #3**: Implement actual Puppetmaster API call in `EnterScenarioAsync` (not just log)
-- [ ] **Design #7/Stub #15**: Design and implement Entity Session Registry in Connect (L1) -- `IEntitySessionRegistry` interface in `bannou-service/`, Redis-backed implementation in Connect (generalizing existing `account-sessions` pattern), cleanup on disconnect via reverse index. Cross-cutting: affects all entity-based services that want client event routing. See [Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426).
+- [ ] **Design #7/Stub #15**: Design and implement Entity Session Registry in Connect (L1) -- `IEntitySessionRegistry` interface in `bannou-service/`, Redis-backed implementation in Connect (generalizing existing `account-sessions` pattern), cleanup on disconnect via reverse index. Cross-cutting: affects all entity-based services that want client event routing. [Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426) (CLOSED -- design accepted). [Issue #502](https://github.com/beyond-immersion/bannou-service/issues/502) (OPEN -- rollout tracking).
 
 ### P2 -- Feature Gaps
 
@@ -680,7 +687,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 ### P3 -- Documentation & Cleanup
 
 - [x] **Design #6**: Implementation plan (`docs/plans/GARDENER.md`) superseded by this deep dive and deleted
-- [x] **Stub #2**: Added `/gardener/template/delete` endpoint (developer-only) that requires Deprecated status, publishes `scenario-template.deleted` lifecycle event
+- [x] **Stub #2**: Removed -- scenario templates are T31 Category B entities (instances persist independently, templates persist forever). No delete endpoint. The `scenario-template.deleted` lifecycle event is declared in schema but never published.
 - [ ] **Extension #7**: Document multi-seed-type deployment pattern (multiple Gardener instances with different `GARDENER_SEED_TYPE_CODE`)
 - [ ] **Design #8**: Design divine gardener behavior document structure (base/default behavior, per-game customization, ABML action handlers for Gardener APIs)
 - [ ] **Design #9**: Design garden type abstraction (registry, behavioral patterns, entity association rules)

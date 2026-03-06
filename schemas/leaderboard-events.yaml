@@ -23,6 +23,16 @@ info:
       event: AnalyticsRatingUpdatedEvent
       handler: HandleRatingUpdated
   x-event-publications:
+    # Lifecycle events (auto-generated from x-lifecycle)
+    - topic: leaderboard-definition.created
+      event: LeaderboardDefinitionCreatedEvent
+      description: Published when a new leaderboard definition is created
+    - topic: leaderboard-definition.updated
+      event: LeaderboardDefinitionUpdatedEvent
+      description: Published when a leaderboard definition is updated
+    - topic: leaderboard-definition.deleted
+      event: LeaderboardDefinitionDeletedEvent
+      description: Published when a leaderboard definition is deleted
     # Published when an entity's rank changes
     - topic: leaderboard.rank.changed
       event: LeaderboardRankChangedEvent
@@ -35,6 +45,21 @@ info:
     - topic: leaderboard.season.started
       event: LeaderboardSeasonStartedEvent
       description: Published when a new leaderboard season begins
+
+x-lifecycle:
+  topic_prefix: leaderboard
+  LeaderboardDefinition:
+    model:
+      gameServiceId: { type: string, format: uuid, required: true, description: "ID of the owning game service" }
+      leaderboardId: { type: string, primary: true, required: true, description: "Unique identifier for this leaderboard" }
+      displayName: { type: string, required: true, description: "Human-readable name" }
+      sortOrder: { type: string, required: true, description: "Score sort order" }
+      updateMode: { type: string, required: true, description: "Score update mode" }
+      isSeasonal: { type: boolean, required: true, description: "Whether the leaderboard is seasonal" }
+      isPublic: { type: boolean, required: true, description: "Whether the leaderboard is publicly visible" }
+    created: true
+    updated: true
+    deleted: true
 
 paths: {}  # Events don't have HTTP paths
 
@@ -57,6 +82,8 @@ components:
         - previousRank
         - newRank
         - currentScore
+        - rankChange
+        - previousScore
       properties:
         eventId:
           type: string

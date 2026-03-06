@@ -363,7 +363,6 @@ public partial class GardenerService : IGardenerService
 
         return (StatusCodes.OK, new PositionUpdateResponse
         {
-            Acknowledged = true,
             TriggeredPois = triggeredPois.Count > 0 ? triggeredPois : null
         });
     }
@@ -425,7 +424,6 @@ public partial class GardenerService : IGardenerService
 
         return (StatusCodes.OK, new LeaveGardenResponse
         {
-            AccountId = accountId.Value,
             SessionDurationSeconds = sessionDuration
         });
     }
@@ -541,7 +539,6 @@ public partial class GardenerService : IGardenerService
 
         return (StatusCodes.OK, new PoiInteractionResponse
         {
-            PoiId = body.PoiId,
             Result = result,
             ScenarioTemplateId = poi.ScenarioTemplateId,
             PromptText = promptText,
@@ -603,11 +600,7 @@ public partial class GardenerService : IGardenerService
                 ScenarioTemplateId = poi.ScenarioTemplateId
             }, cancellationToken: cancellationToken);
 
-        return (StatusCodes.OK, new DeclinePoiResponse
-        {
-            PoiId = body.PoiId,
-            Acknowledged = true
-        });
+        return (StatusCodes.OK, new DeclinePoiResponse());
     }
 
     #endregion
@@ -694,7 +687,7 @@ public partial class GardenerService : IGardenerService
             gameSession = await _gameSessionClient.CreateGameSessionAsync(
                 new CreateGameSessionRequest
                 {
-                    GameType = "gardener-scenario",
+                    GameType = _configuration.GameType,
                     MaxPlayers = template.Multiplayer?.MaxPlayers ?? 1,
                     SessionName = $"Scenario: {template.DisplayName}",
                     SessionType = SessionType.Matchmade,
@@ -879,7 +872,6 @@ public partial class GardenerService : IGardenerService
 
         return (StatusCodes.OK, new ScenarioCompletionResponse
         {
-            ScenarioInstanceId = scenario.ScenarioInstanceId,
             GrowthAwarded = growthAwarded,
             ReturnToGarden = true
         });
@@ -954,7 +946,6 @@ public partial class GardenerService : IGardenerService
 
         return (StatusCodes.OK, new AbandonScenarioResponse
         {
-            ScenarioInstanceId = scenario.ScenarioInstanceId,
             PartialGrowthAwarded = partialGrowth
         });
     }
@@ -1118,7 +1109,7 @@ public partial class GardenerService : IGardenerService
 
         await _templateStore.SaveAsync(TemplateKey(templateId), template, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("scenario-template.created",
+        await _messageBus.TryPublishAsync("gardener.scenario-template.created",
             new ScenarioTemplateCreatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1193,6 +1184,9 @@ public partial class GardenerService : IGardenerService
         if (body.Status != null)
             conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
 
+        if (!body.IncludeDeprecated)
+            conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = TemplateStatus.Deprecated.ToString() });
+
         // AllowedPhases always contains explicit values (no empty-array sentinel),
         // so JSON_CONTAINS query works directly via QueryOperator.In with a scalar value
         if (body.DeploymentPhase != null)
@@ -1251,7 +1245,7 @@ public partial class GardenerService : IGardenerService
         template.UpdatedAt = DateTimeOffset.UtcNow;
         await _templateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("scenario-template.updated",
+        await _messageBus.TryPublishAsync("gardener.scenario-template.updated",
             new ScenarioTemplateUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1292,11 +1286,14 @@ public partial class GardenerService : IGardenerService
         if (template == null)
             return (StatusCodes.NotFound, null);
 
+        if (template.Status == TemplateStatus.Deprecated)
+            return (StatusCodes.OK, MapToTemplateResponse(template));
+
         template.Status = TemplateStatus.Deprecated;
         template.UpdatedAt = DateTimeOffset.UtcNow;
         await _templateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("scenario-template.updated",
+        await _messageBus.TryPublishAsync("gardener.scenario-template.updated",
             new ScenarioTemplateUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1314,53 +1311,6 @@ public partial class GardenerService : IGardenerService
 
         _logger.LogInformation(
             "Deprecated scenario template {TemplateId} ({Code})",
-            body.ScenarioTemplateId, template.Code);
-
-        return (StatusCodes.OK, MapToTemplateResponse(template));
-    }
-
-    /// <inheritdoc />
-    public async Task<(StatusCodes, ScenarioTemplateResponse?)> DeleteTemplateAsync(
-        DeleteTemplateRequest body, CancellationToken cancellationToken)
-    {
-        await using var lockResult = await _lockProvider.LockAsync(
-            StateStoreDefinitions.GardenerLock,
-            $"template:{body.ScenarioTemplateId}",
-            Guid.NewGuid().ToString(),
-            _configuration.DistributedLockTimeoutSeconds,
-            cancellationToken);
-
-        if (!lockResult.Success)
-            return (StatusCodes.Conflict, null);
-
-        var template = await _templateStore.GetAsync(
-            TemplateKey(body.ScenarioTemplateId), cancellationToken);
-        if (template == null)
-            return (StatusCodes.NotFound, null);
-
-        if (template.Status != TemplateStatus.Deprecated)
-            return (StatusCodes.Conflict, null);
-
-        await _templateStore.DeleteAsync(TemplateKey(body.ScenarioTemplateId), cancellationToken);
-
-        await _messageBus.TryPublishAsync("scenario-template.deleted",
-            new ScenarioTemplateDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                ScenarioTemplateId = template.ScenarioTemplateId,
-                Code = template.Code,
-                DisplayName = template.DisplayName,
-                Description = template.Description,
-                Category = template.Category,
-                ConnectivityMode = template.ConnectivityMode,
-                Status = template.Status,
-                CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt
-            }, cancellationToken: cancellationToken);
-
-        _logger.LogInformation(
-            "Deleted scenario template {TemplateId} ({Code})",
             body.ScenarioTemplateId, template.Code);
 
         return (StatusCodes.OK, MapToTemplateResponse(template));
@@ -1559,7 +1509,7 @@ public partial class GardenerService : IGardenerService
             gameSession = await _gameSessionClient.CreateGameSessionAsync(
                 new CreateGameSessionRequest
                 {
-                    GameType = "gardener-scenario",
+                    GameType = _configuration.GameType,
                     MaxPlayers = template.Multiplayer.MaxPlayers,
                     SessionName = $"Bond Scenario: {template.DisplayName}",
                     SessionType = SessionType.Matchmade,

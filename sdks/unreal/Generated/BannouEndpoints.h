@@ -671,9 +671,6 @@ namespace Bannou
         /** Deprecate scenario template */
         constexpr const TCHAR* GardenerDeprecateTemplate = TEXT("POST:/gardener/template/deprecate");
 
-        /** Delete scenario template */
-        constexpr const TCHAR* GardenerDeleteTemplate = TEXT("POST:/gardener/template/delete");
-
         /** Get deployment phase configuration */
         constexpr const TCHAR* GardenerGetPhaseConfig = TEXT("POST:/gardener/phase/get");
 
@@ -3299,14 +3296,6 @@ namespace Bannou
                 TEXT("FDeprecateTemplateRequest"),
                 TEXT("FScenarioTemplateResponse"),
                 TEXT("Deprecate scenario template")
-            });
-            Registry.Add(TEXT("GardenerDeleteTemplate"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/gardener/template/delete"),
-                TEXT("gardener"),
-                TEXT("FDeleteTemplateRequest"),
-                TEXT("FScenarioTemplateResponse"),
-                TEXT("Delete scenario template")
             });
             Registry.Add(TEXT("GardenerGetPhaseConfig"), FEndpointInfo{
                 TEXT("POST"),

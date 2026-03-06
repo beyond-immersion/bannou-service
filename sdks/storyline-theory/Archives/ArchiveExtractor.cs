@@ -118,7 +118,7 @@ public sealed class ArchiveExtractor
                 if (element.RelatedEntityId.HasValue)
                 {
                     facts[$"{backstoryPrefix}.relatedEntity"] = element.RelatedEntityId.Value;
-                    facts[$"{backstoryPrefix}.relatedEntityType"] = element.RelatedEntityType ?? "unknown";
+                    facts[$"{backstoryPrefix}.relatedEntityType"] = element.RelatedEntityType?.ToString() ?? "unknown";
                 }
             }
         }

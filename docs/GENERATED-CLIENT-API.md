@@ -31,7 +31,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Faction Service API](#faction) | `client.Faction` | 31 | Faction management as seed-based living entities (L4 GameFea... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
-| [Bannou Gardener Service API](#gardener) | `client.Gardener` | 24 | Player experience orchestration service (L4 GameFeatures) fo... |
+| [Bannou Gardener Service API](#gardener) | `client.Gardener` | 23 | Player experience orchestration service (L4 GameFeatures) fo... |
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
 | [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
@@ -1235,7 +1235,6 @@ Player experience orchestration service (L4 GameFeatures) for garden navigation,
 | `ListTemplatesAsync` | `ListTemplatesRequest` | `ListTemplatesResponse` | List scenario templates |
 | `UpdateTemplateAsync` | `UpdateTemplateRequest` | `ScenarioTemplateResponse` | Update scenario template |
 | `DeprecatetemplateAsync` | `DeprecateTemplateRequest` | `ScenarioTemplateResponse` | Deprecate scenario template |
-| `DeleteTemplateAsync` | `DeleteTemplateRequest` | `ScenarioTemplateResponse` | Delete scenario template |
 
 ---
 
@@ -2549,7 +2548,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 55
-- **Total methods**: 891
+- **Total methods**: 890
 
 ---
 

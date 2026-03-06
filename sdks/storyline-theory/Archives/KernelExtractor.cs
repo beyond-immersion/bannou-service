@@ -179,10 +179,10 @@ public sealed class KernelExtractor
                     Significance = trauma.Strength,
                     SourceResourceId = sourceId,
                     SourceResourceType = "character",
-                    InvolvedCharacterIds = trauma.RelatedEntityId.HasValue && trauma.RelatedEntityType == "character"
+                    InvolvedCharacterIds = trauma.RelatedEntityId.HasValue && trauma.RelatedEntityType == EntityType.Character
                         ? [sourceId, trauma.RelatedEntityId.Value]
                         : [sourceId],
-                    SuggestedActants = trauma.RelatedEntityId.HasValue && trauma.RelatedEntityType == "character"
+                    SuggestedActants = trauma.RelatedEntityId.HasValue && trauma.RelatedEntityType == EntityType.Character
                         ? new Dictionary<Guid, ActantRole>
                         {
                             [sourceId] = ActantRole.Subject,
@@ -200,7 +200,7 @@ public sealed class KernelExtractor
                     {
                         TraumaType = trauma.Key,
                         Description = trauma.Value,
-                        PerpetratorId = trauma.RelatedEntityType == "character" ? trauma.RelatedEntityId : null
+                        PerpetratorId = trauma.RelatedEntityType == EntityType.Character ? trauma.RelatedEntityId : null
                     }
                 });
             }

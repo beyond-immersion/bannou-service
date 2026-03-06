@@ -630,6 +630,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GARDENER_DIVERSITY_WEIGHT` | double | `0.3` | Weight for category diversity in scenario scoring algorithm |
 | `GARDENER_EXPLORATION_DISTANCE_THRESHOLD` | double | `500.0` | Minimum total drift distance to classify a player as explori... |
 | `GARDENER_EXPLORATION_MAX_HESITATION_RATIO` | double | `0.3` | Maximum hesitation ratio to still classify a player as explo... |
+| `GARDENER_GAME_TYPE` | string | `gardener-scenario` | Game type string used for game session creation and queries |
 | `GARDENER_GARDEN_TICK_INTERVAL_MS` | int | `5000` | Milliseconds between garden orchestrator evaluation cycles |
 | `GARDENER_GROWTH_AWARD_MULTIPLIER` | double | `1.0` | Global multiplier applied to all growth awards from scenario... |
 | `GARDENER_GROWTH_FULL_COMPLETION_MAX_RATIO` | double | `1.5` | Maximum time ratio cap for full completion growth (overtime ... |
@@ -1279,9 +1280,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 983
+- **Total properties**: 984
 - **Required (no default)**: 59
-- **Optional (has default)**: 924
+- **Optional (has default)**: 925
 
 ## Environment Variable Naming Convention
 

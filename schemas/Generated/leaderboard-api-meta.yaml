@@ -58,48 +58,55 @@ paths:
         \    \"displayName\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n      \
         \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"ID of the game service owning this leaderboard\"\n                },\n                \"leaderboardId\": {\n \
-        \                   \"type\": \"string\",\n                    \"maxLength\": 64,\n                    \"pattern\"\
-        : \"^[a-z0-9_-]+$\",\n                    \"description\": \"Unique identifier for this leaderboard (lowercase, no
-        spaces)\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n   \
-        \                 \"maxLength\": 100,\n                    \"description\": \"Human-readable name for the leaderboard\"\
-        \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
-        \        \"maxLength\": 500,\n                    \"nullable\": true,\n                    \"description\": \"Description
-        of what this leaderboard tracks\"\n                },\n                \"entityTypes\": {\n                    \"\
-        type\": \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n             \
-        \       },\n                    \"description\": \"Which entity types can appear on this leaderboard\"\n         \
-        \       },\n                \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n             \
-        \       \"default\": \"descending\",\n                    \"description\": \"Sort order (descending for high scores,
-        ascending for times)\"\n                },\n                \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\"\
-        ,\n                    \"default\": \"replace\",\n                    \"description\": \"How to handle score updates\"\
-        \n                },\n                \"isSeasonal\": {\n                    \"type\": \"boolean\",\n            \
-        \        \"default\": false,\n                    \"description\": \"Whether this leaderboard resets each season\"\
-        \n                },\n                \"isPublic\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": true,\n                    \"description\": \"Whether the leaderboard is publicly visible\"\n\
-        \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
-        \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention.\"\
-        \n                }\n            }\n        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n    \
-        \        \"description\": \"How scores are sorted\",\n            \"enum\": [\n                \"Descending\",\n \
-        \               \"Ascending\"\n            ]\n        },\n        \"UpdateMode\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"How to handle score updates\",\n            \"enum\": [\n                \"Replace\"\
-        ,\n                \"Increment\",\n                \"Max\",\n                \"Min\"\n            ]\n        }\n \
-        \   }\n}"
+        \                   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 64,\n                    \"pattern\": \"^[a-z0-9_-]+$\",\n                    \"description\": \"Unique identifier
+        for this leaderboard (lowercase, no spaces)\"\n                },\n                \"displayName\": {\n          \
+        \          \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n\
+        \                    \"description\": \"Human-readable name for the leaderboard\"\n                },\n          \
+        \      \"description\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Description of what this leaderboard
+        tracks\"\n                },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n     \
+        \               \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"object\"\
+        \n                    },\n                    \"description\": \"Which entity types can appear on this leaderboard
+        (null allows all types)\"\n                },\n                \"sortOrder\": {\n                    \"$ref\": \"\
+        #/$defs/SortOrder\",\n                    \"default\": \"Descending\",\n                    \"description\": \"Sort
+        order (descending for high scores, ascending for times)\"\n                },\n                \"updateMode\": {\n\
+        \                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"default\": \"Replace\",\n          \
+        \          \"description\": \"How to handle score updates\"\n                },\n                \"isSeasonal\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether this leaderboard resets each season\"\n                },\n                \"isPublic\": {\n         \
+        \           \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"\
+        Whether the leaderboard is publicly visible\"\n                },\n                \"scoreType\": {\n            \
+        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 128,\n\
+        \                    \"description\": \"Analytics score type that maps to this leaderboard for automatic score ingestion\"\
+        \n                },\n                \"ratingType\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"maxLength\": 128,\n                    \"description\": \"Analytics
+        rating type that maps to this leaderboard for automatic rating ingestion\"\n                },\n                \"\
+        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Client-provided leaderboard-specific
+        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n\
+        \        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores
+        are sorted\",\n            \"enum\": [\n                \"Descending\",\n                \"Ascending\"\n         \
+        \   ]\n        },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        to handle score updates\",\n            \"enum\": [\n                \"Replace\",\n                \"Increment\",\n\
+        \                \"Max\",\n                \"Min\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaderboardDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"LeaderboardDefinitionResponse\": {\n            \"type\": \"object\",\n           \
         \ \"description\": \"Leaderboard definition details\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"gameServiceId\",\n                \"leaderboardId\",\n                \"displayName\"\
         ,\n                \"sortOrder\",\n                \"updateMode\",\n                \"isSeasonal\",\n            \
-        \    \"isPublic\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n               \
-        \ \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
-        \                 \"description\": \"ID of the owning game service\"\n                },\n                \"leaderboardId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for this
-        leaderboard\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Description of the leaderboard\"\n                },\n                \"entityTypes\": {\n                   \
-        \ \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n         \
-        \           },\n                    \"description\": \"Allowed entity types\"\n                },\n              \
-        \  \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\": \"\
+        \    \"isPublic\",\n                \"createdAt\",\n                \"entryCount\"\n            ],\n            \"\
+        properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"description\": \"ID of the owning game service\"\n            \
+        \    },\n                \"leaderboardId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique identifier for this leaderboard\"\n                },\n                \"displayName\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Description of the leaderboard\"\n                },\n             \
+        \   \"entityTypes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n      \
+        \              \"items\": {\n                        \"type\": \"object\"\n                    },\n              \
+        \      \"description\": \"Allowed entity types (null if all types permitted)\"\n                },\n             \
+        \   \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\": \"\
         Ordering used when ranking scores (descending for high scores, ascending for low)\"\n                },\n        \
         \        \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\"\
         : \"Rule applied when new scores are submitted (replace/increment/max/min)\"\n                },\n               \
@@ -111,15 +118,19 @@ paths:
         \  \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
         \                 \"description\": \"Number of entries on the leaderboard\"\n                },\n                \"\
         createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Client-provided leaderboard-specific metadata.
-        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
-        \        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores are sorted\"\
-        ,\n            \"enum\": [\n                \"Descending\",\n                \"Ascending\"\n            ]\n      \
-        \  },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle
-        score updates\",\n            \"enum\": [\n                \"Replace\",\n                \"Increment\",\n        \
-        \        \"Max\",\n                \"Min\"\n            ]\n        }\n    }\n}"
+        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"scoreType\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Analytics score type mapped to this leaderboard\"\n                },\n                \"ratingType\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Analytics rating type mapped to this leaderboard\"\n                },\n                \"metadata\": {\n    \
+        \                \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Client-provided leaderboard-specific metadata. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n      \
+        \  \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores are sorted\",\n\
+        \            \"enum\": [\n                \"Descending\",\n                \"Ascending\"\n            ]\n        },\n\
+        \        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle score
+        updates\",\n            \"enum\": [\n                \"Replace\",\n                \"Increment\",\n              \
+        \  \"Max\",\n                \"Min\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new leaderboard definition\",\n    \"description\": \"Create a
         new leaderboard with specified properties.\\nDeveloper-only endpoint for setting up game leaderboards.\\n\",\n   \
         \ \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createLeaderboardDefinition\"\
@@ -160,17 +171,18 @@ paths:
         \ \"description\": \"Leaderboard definition details\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"gameServiceId\",\n                \"leaderboardId\",\n                \"displayName\"\
         ,\n                \"sortOrder\",\n                \"updateMode\",\n                \"isSeasonal\",\n            \
-        \    \"isPublic\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n               \
-        \ \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
-        \                 \"description\": \"ID of the owning game service\"\n                },\n                \"leaderboardId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for this
-        leaderboard\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Description of the leaderboard\"\n                },\n                \"entityTypes\": {\n                   \
-        \ \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n         \
-        \           },\n                    \"description\": \"Allowed entity types\"\n                },\n              \
-        \  \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\": \"\
+        \    \"isPublic\",\n                \"createdAt\",\n                \"entryCount\"\n            ],\n            \"\
+        properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"description\": \"ID of the owning game service\"\n            \
+        \    },\n                \"leaderboardId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique identifier for this leaderboard\"\n                },\n                \"displayName\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Description of the leaderboard\"\n                },\n             \
+        \   \"entityTypes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n      \
+        \              \"items\": {\n                        \"type\": \"object\"\n                    },\n              \
+        \      \"description\": \"Allowed entity types (null if all types permitted)\"\n                },\n             \
+        \   \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\": \"\
         Ordering used when ranking scores (descending for high scores, ascending for low)\"\n                },\n        \
         \        \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\"\
         : \"Rule applied when new scores are submitted (replace/increment/max/min)\"\n                },\n               \
@@ -182,15 +194,19 @@ paths:
         \  \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
         \                 \"description\": \"Number of entries on the leaderboard\"\n                },\n                \"\
         createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Client-provided leaderboard-specific metadata.
-        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
-        \        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores are sorted\"\
-        ,\n            \"enum\": [\n                \"Descending\",\n                \"Ascending\"\n            ]\n      \
-        \  },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle
-        score updates\",\n            \"enum\": [\n                \"Replace\",\n                \"Increment\",\n        \
-        \        \"Max\",\n                \"Min\"\n            ]\n        }\n    }\n}"
+        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"scoreType\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Analytics score type mapped to this leaderboard\"\n                },\n                \"ratingType\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Analytics rating type mapped to this leaderboard\"\n                },\n                \"metadata\": {\n    \
+        \                \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Client-provided leaderboard-specific metadata. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n      \
+        \  \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores are sorted\",\n\
+        \            \"enum\": [\n                \"Descending\",\n                \"Ascending\"\n            ]\n        },\n\
+        \        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle score
+        updates\",\n            \"enum\": [\n                \"Replace\",\n                \"Increment\",\n              \
+        \  \"Max\",\n                \"Min\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get leaderboard definition\",\n    \"description\": \"Retrieve details
         about a specific leaderboard.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n \
         \   \"operationId\": \"getLeaderboardDefinition\"\n}"
@@ -234,37 +250,42 @@ paths:
         definition details\",\n            \"additionalProperties\": false,\n            \"required\": [\n               \
         \ \"gameServiceId\",\n                \"leaderboardId\",\n                \"displayName\",\n                \"sortOrder\"\
         ,\n                \"updateMode\",\n                \"isSeasonal\",\n                \"isPublic\",\n             \
-        \   \"createdAt\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n         \
-        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the owning game service\"\n                },\n                \"leaderboardId\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"Unique identifier for this leaderboard\"\n      \
-        \          },\n                \"displayName\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n             \
-        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Description
-        of the leaderboard\"\n                },\n                \"entityTypes\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"object\"\n                    },\n      \
-        \              \"description\": \"Allowed entity types\"\n                },\n                \"sortOrder\": {\n \
-        \                   \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\": \"Ordering used when ranking
-        scores (descending for high scores, ascending for low)\"\n                },\n                \"updateMode\": {\n\
-        \                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\": \"Rule applied when new
-        scores are submitted (replace/increment/max/min)\"\n                },\n                \"isSeasonal\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"description\": \"Whether the leaderboard is seasonal\"\
-        \n                },\n                \"isPublic\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"description\": \"Whether the leaderboard is publicly visible\"\n                },\n                \"currentSeason\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Current season number (if seasonal)\"\n                },\n                \"entryCount\": {\n               \
-        \     \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
-        Number of entries on the leaderboard\"\n                },\n                \"createdAt\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When
-        the leaderboard was created\"\n                },\n                \"metadata\": {\n                    \"type\":
-        \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys
-        from this field by convention.\"\n                }\n            }\n        },\n        \"SortOrder\": {\n       \
-        \     \"type\": \"string\",\n            \"description\": \"How scores are sorted\",\n            \"enum\": [\n  \
-        \              \"Descending\",\n                \"Ascending\"\n            ]\n        },\n        \"UpdateMode\":
-        {\n            \"type\": \"string\",\n            \"description\": \"How to handle score updates\",\n            \"\
-        enum\": [\n                \"Replace\",\n                \"Increment\",\n                \"Max\",\n              \
-        \  \"Min\"\n            ]\n        }\n    }\n}"
+        \   \"createdAt\",\n                \"entryCount\"\n            ],\n            \"properties\": {\n              \
+        \  \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"ID of the owning game service\"\n                },\n                \"leaderboardId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for this
+        leaderboard\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description of the leaderboard\"\n                },\n                \"entityTypes\": {\n                   \
+        \ \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n              \
+        \          \"type\": \"object\"\n                    },\n                    \"description\": \"Allowed entity types
+        (null if all types permitted)\"\n                },\n                \"sortOrder\": {\n                    \"$ref\"\
+        : \"#/$defs/SortOrder\",\n                    \"description\": \"Ordering used when ranking scores (descending for
+        high scores, ascending for low)\"\n                },\n                \"updateMode\": {\n                    \"$ref\"\
+        : \"#/$defs/UpdateMode\",\n                    \"description\": \"Rule applied when new scores are submitted (replace/increment/max/min)\"\
+        \n                },\n                \"isSeasonal\": {\n                    \"type\": \"boolean\",\n            \
+        \        \"description\": \"Whether the leaderboard is seasonal\"\n                },\n                \"isPublic\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the leaderboard is
+        publicly visible\"\n                },\n                \"currentSeason\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Current season number (if seasonal)\"\
+        \n                },\n                \"entryCount\": {\n                    \"type\": \"integer\",\n            \
+        \        \"format\": \"int64\",\n                    \"description\": \"Number of entries on the leaderboard\"\n \
+        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"description\": \"When the leaderboard was created\"\n     \
+        \           },\n                \"scoreType\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Analytics score type mapped to this leaderboard\"\n    \
+        \            },\n                \"ratingType\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Analytics rating type mapped to this leaderboard\"\n\
+        \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
+        \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"How scores are sorted\",\n            \"enum\": [\n                \"Descending\",\n \
+        \               \"Ascending\"\n            ]\n        },\n        \"UpdateMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"How to handle score updates\",\n            \"enum\": [\n                \"Replace\"\
+        ,\n                \"Increment\",\n                \"Max\",\n                \"Min\"\n            ]\n        }\n \
+        \   }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List leaderboard definitions\",\n    \"description\": \"List all leaderboards
         for a game service.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"listLeaderboardDefinitions\"\n}"
@@ -308,23 +329,29 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\"\
         : true,\n                    \"description\": \"New description\"\n                },\n                \"isPublic\"\
         : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New visibility setting\"\n                }\n            }\n        }\n    }\n}"
+        : \"New visibility setting\"\n                },\n                \"scoreType\": {\n                    \"type\":
+        \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 128,\n                  \
+        \  \"description\": \"New analytics score type mapping\"\n                },\n                \"ratingType\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"New analytics rating type mapping\"\n                }\n          \
+        \  }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaderboardDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"LeaderboardDefinitionResponse\": {\n            \"type\": \"object\",\n           \
         \ \"description\": \"Leaderboard definition details\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"gameServiceId\",\n                \"leaderboardId\",\n                \"displayName\"\
         ,\n                \"sortOrder\",\n                \"updateMode\",\n                \"isSeasonal\",\n            \
-        \    \"isPublic\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n               \
-        \ \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
-        \                 \"description\": \"ID of the owning game service\"\n                },\n                \"leaderboardId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for this
-        leaderboard\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Description of the leaderboard\"\n                },\n                \"entityTypes\": {\n                   \
-        \ \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n         \
-        \           },\n                    \"description\": \"Allowed entity types\"\n                },\n              \
-        \  \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\": \"\
+        \    \"isPublic\",\n                \"createdAt\",\n                \"entryCount\"\n            ],\n            \"\
+        properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"description\": \"ID of the owning game service\"\n            \
+        \    },\n                \"leaderboardId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique identifier for this leaderboard\"\n                },\n                \"displayName\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Description of the leaderboard\"\n                },\n             \
+        \   \"entityTypes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n      \
+        \              \"items\": {\n                        \"type\": \"object\"\n                    },\n              \
+        \      \"description\": \"Allowed entity types (null if all types permitted)\"\n                },\n             \
+        \   \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\": \"\
         Ordering used when ranking scores (descending for high scores, ascending for low)\"\n                },\n        \
         \        \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\"\
         : \"Rule applied when new scores are submitted (replace/increment/max/min)\"\n                },\n               \
@@ -336,15 +363,19 @@ paths:
         \  \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
         \                 \"description\": \"Number of entries on the leaderboard\"\n                },\n                \"\
         createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Client-provided leaderboard-specific metadata.
-        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
-        \        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores are sorted\"\
-        ,\n            \"enum\": [\n                \"Descending\",\n                \"Ascending\"\n            ]\n      \
-        \  },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle
-        score updates\",\n            \"enum\": [\n                \"Replace\",\n                \"Increment\",\n        \
-        \        \"Max\",\n                \"Min\"\n            ]\n        }\n    }\n}"
+        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"scoreType\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Analytics score type mapped to this leaderboard\"\n                },\n                \"ratingType\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Analytics rating type mapped to this leaderboard\"\n                },\n                \"metadata\": {\n    \
+        \                \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Client-provided leaderboard-specific metadata. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n      \
+        \  \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores are sorted\",\n\
+        \            \"enum\": [\n                \"Descending\",\n                \"Ascending\"\n            ]\n        },\n\
+        \        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle score
+        updates\",\n            \"enum\": [\n                \"Replace\",\n                \"Increment\",\n              \
+        \  \"Max\",\n                \"Min\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update leaderboard definition\",\n    \"description\": \"Update properties
         of an existing leaderboard.\\nDeveloper-only endpoint.\\n\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n \
         \   \"deprecated\": false,\n    \"operationId\": \"updateLeaderboardDefinition\"\n}"
@@ -432,20 +463,18 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubmitScoreResponse\"\
         ,\n    \"$defs\": {\n        \"SubmitScoreResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after score submission\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"accepted\",\n                \"currentScore\",\n                \"currentRank\"\n            ],\n\
-        \            \"properties\": {\n                \"accepted\": {\n                    \"type\": \"boolean\",\n    \
-        \                \"description\": \"Whether the score was accepted\"\n                },\n                \"previousScore\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Previous score (null if first entry)\"\n               \
-        \ },\n                \"currentScore\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"description\": \"Current score after update\"\n                },\n         \
-        \       \"previousRank\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Previous rank (null if first entry)\"\
-        \n                },\n                \"currentRank\": {\n                    \"type\": \"integer\",\n           \
-        \         \"format\": \"int64\",\n                    \"description\": \"Current rank after update (1-based)\"\n \
-        \               },\n                \"rankChange\": {\n                    \"type\": \"integer\",\n              \
-        \      \"format\": \"int64\",\n                    \"description\": \"Change in rank (positive = improved)\"\n   \
-        \             }\n            }\n        }\n    }\n}"
+        \                \"currentScore\",\n                \"currentRank\",\n                \"rankChange\"\n           \
+        \ ],\n            \"properties\": {\n                \"previousScore\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Previous score (null if first entry)\"\n                },\n                \"currentScore\": {\n            \
+        \        \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\":
+        \"Current score after update\"\n                },\n                \"previousRank\": {\n                    \"type\"\
+        : \"integer\",\n                    \"format\": \"int64\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Previous rank (null if first entry)\"\n                },\n                \"currentRank\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        description\": \"Current rank after update (1-based)\"\n                },\n                \"rankChange\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
+        : \"Change in rank (positive = improved)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Submit or update a score\",\n    \"description\": \"Submit a score for
         an entity. Behavior depends on leaderboard's updateMode:\\n- replace: Always use the new score\\n- increment: Add
         to existing score\\n- max: Keep the higher score\\n- min: Keep the lower score\\nService-only endpoint.\\n\",\n  \
@@ -482,16 +511,17 @@ paths:
         \              },\n                \"leaderboardId\": {\n                    \"type\": \"string\",\n             \
         \       \"description\": \"ID of the leaderboard\"\n                },\n                \"scores\": {\n          \
         \          \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/BatchScoreEntry\"\
-        \n                    },\n                    \"maxItems\": 1000,\n                    \"description\": \"List of
-        scores to submit (max 1000)\"\n                }\n            }\n        },\n        \"BatchScoreEntry\": {\n    \
-        \        \"type\": \"object\",\n            \"description\": \"A single score in a batch submission\",\n         \
-        \   \"additionalProperties\": false,\n            \"required\": [\n                \"entityId\",\n               \
-        \ \"entityType\",\n                \"score\"\n            ],\n            \"properties\": {\n                \"entityId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"\
-        type\": \"object\",\n                    \"description\": \"Entity type for this score entry\"\n                },\n\
-        \                \"score\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"Score value\"\n                }\n            }\n        }\n    }\n}"
+        \n                    },\n                    \"minItems\": 1,\n                    \"maxItems\": 1000,\n        \
+        \            \"description\": \"List of scores to submit (1-1000)\"\n                }\n            }\n        },\n\
+        \        \"BatchScoreEntry\": {\n            \"type\": \"object\",\n            \"description\": \"A single score
+        in a batch submission\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"entityId\",\n                \"entityType\",\n                \"score\"\n            ],\n            \"properties\"\
+        : {\n                \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"ID of the entity\"\n                },\n                \"entityType\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type for this score
+        entry\"\n                },\n                \"score\": {\n                    \"type\": \"number\",\n           \
+        \         \"format\": \"double\",\n                    \"description\": \"Score value\"\n                }\n     \
+        \       }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubmitScoreBatchResponse\"\
         ,\n    \"$defs\": {\n        \"SubmitScoreBatchResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after batch score submission\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -544,18 +574,19 @@ paths:
         ,\n    \"$defs\": {\n        \"EntityRankResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Entity's rank on a leaderboard\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
         \                \"entityId\",\n                \"entityType\",\n                \"score\",\n                \"rank\"\
-        ,\n                \"totalEntries\"\n            ],\n            \"properties\": {\n                \"entityId\":
-        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"type\": \"object\"\
-        ,\n                    \"description\": \"Entity type for the ranked entity\"\n                },\n              \
-        \  \"score\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n        \
-        \            \"description\": \"Entity's current score\"\n                },\n                \"rank\": {\n      \
-        \              \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
-        : \"Entity's current rank (1-based)\"\n                },\n                \"totalEntries\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Total
-        entries on the leaderboard\"\n                },\n                \"percentile\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Percentile ranking
-        (0-100)\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                \"totalEntries\",\n                \"percentile\"\n            ],\n            \"properties\":
+        {\n                \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"ID of the entity\"\n                },\n                \"entityType\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type for the ranked
+        entity\"\n                },\n                \"score\": {\n                    \"type\": \"number\",\n          \
+        \          \"format\": \"double\",\n                    \"description\": \"Entity's current score\"\n            \
+        \    },\n                \"rank\": {\n                    \"type\": \"integer\",\n                    \"format\":
+        \"int64\",\n                    \"description\": \"Entity's current rank (1-based)\"\n                },\n       \
+        \         \"totalEntries\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
+        ,\n                    \"description\": \"Total entries on the leaderboard\"\n                },\n               \
+        \ \"percentile\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n    \
+        \                \"description\": \"Percentile ranking (0-100)\"\n                }\n            }\n        }\n  \
+        \  }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get entity's rank\",\n    \"description\": \"Get the current rank and score
         for a specific entity.\",\n    \"tags\": [\n        \"Rankings\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"getEntityRank\"\n}"
@@ -590,10 +621,11 @@ paths:
         : \"uuid\",\n                    \"description\": \"ID of the game service\"\n                },\n               \
         \ \"leaderboardId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the
         leaderboard\"\n                },\n                \"count\": {\n                    \"type\": \"integer\",\n    \
-        \                \"default\": 100,\n                    \"maximum\": 1000,\n                    \"description\": \"\
-        Number of entries to return\"\n                },\n                \"offset\": {\n                    \"type\": \"\
-        integer\",\n                    \"default\": 0,\n                    \"description\": \"Number of entries to skip\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \                \"default\": 100,\n                    \"minimum\": 1,\n                    \"maximum\": 1000,\n\
+        \                    \"description\": \"Number of entries to return\"\n                },\n                \"offset\"\
+        : {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Number of entries to skip\"\n                }\n            }\n     \
+        \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaderboardEntriesResponse\"\
         ,\n    \"$defs\": {\n        \"LeaderboardEntriesResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response containing leaderboard entries\",\n            \"additionalProperties\": false,\n      \
@@ -662,10 +694,11 @@ paths:
         \             \"description\": \"ID of the entity to center on\"\n                },\n                \"entityType\"\
         : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type of the anchor entry\"\
         \n                },\n                \"countBefore\": {\n                    \"type\": \"integer\",\n           \
-        \         \"default\": 5,\n                    \"maximum\": 50,\n                    \"description\": \"Entries to
-        show before the entity\"\n                },\n                \"countAfter\": {\n                    \"type\": \"\
-        integer\",\n                    \"default\": 5,\n                    \"maximum\": 50,\n                    \"description\"\
-        : \"Entries to show after the entity\"\n                }\n            }\n        }\n    }\n}"
+        \         \"default\": 5,\n                    \"minimum\": 0,\n                    \"maximum\": 50,\n           \
+        \         \"description\": \"Entries to show before the entity\"\n                },\n                \"countAfter\"\
+        : {\n                    \"type\": \"integer\",\n                    \"default\": 5,\n                    \"minimum\"\
+        : 0,\n                    \"maximum\": 50,\n                    \"description\": \"Entries to show after the entity\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaderboardEntriesResponse\"\
         ,\n    \"$defs\": {\n        \"LeaderboardEntriesResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response containing leaderboard entries\",\n            \"additionalProperties\": false,\n      \
@@ -740,19 +773,20 @@ paths:
         ,\n    \"$defs\": {\n        \"SeasonResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Season information\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
         \     \"leaderboardId\",\n                \"seasonNumber\",\n                \"startedAt\",\n                \"isActive\"\
-        \n            ],\n            \"properties\": {\n                \"leaderboardId\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"ID of the leaderboard\"\n                },\n              \
-        \  \"seasonNumber\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Season
-        number\"\n                },\n                \"seasonName\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Name of the season\"\n               \
-        \ },\n                \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When this season started\"\n                },\n        \
-        \        \"endedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When this season ended (null if
-        active)\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"description\": \"Whether this is the current season\"\n                },\n                \"entryCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        description\": \"Number of entries in this season\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                \"entryCount\"\n            ],\n            \"properties\": {\n                \"leaderboardId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the leaderboard\"\n \
+        \               },\n                \"seasonNumber\": {\n                    \"type\": \"integer\",\n            \
+        \        \"description\": \"Season number\"\n                },\n                \"seasonName\": {\n             \
+        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Name
+        of the season\"\n                },\n                \"startedAt\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"When this season started\"\
+        \n                },\n                \"endedAt\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        When this season ended (null if active)\"\n                },\n                \"isActive\": {\n                 \
+        \   \"type\": \"boolean\",\n                    \"description\": \"Whether this is the current season\"\n        \
+        \        },\n                \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"\
+        format\": \"int64\",\n                    \"description\": \"Number of entries in this season\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Start a new season\",\n    \"description\": \"Archive the current leaderboard
         and start a new season.\\nAdmin-only endpoint. Previous scores are preserved in history.\\n\",\n    \"tags\": [\n\
         \        \"Seasons\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createSeason\"\n}"
@@ -795,19 +829,20 @@ paths:
         ,\n    \"$defs\": {\n        \"SeasonResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Season information\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
         \     \"leaderboardId\",\n                \"seasonNumber\",\n                \"startedAt\",\n                \"isActive\"\
-        \n            ],\n            \"properties\": {\n                \"leaderboardId\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"ID of the leaderboard\"\n                },\n              \
-        \  \"seasonNumber\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Season
-        number\"\n                },\n                \"seasonName\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Name of the season\"\n               \
-        \ },\n                \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When this season started\"\n                },\n        \
-        \        \"endedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When this season ended (null if
-        active)\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"description\": \"Whether this is the current season\"\n                },\n                \"entryCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        description\": \"Number of entries in this season\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                \"entryCount\"\n            ],\n            \"properties\": {\n                \"leaderboardId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the leaderboard\"\n \
+        \               },\n                \"seasonNumber\": {\n                    \"type\": \"integer\",\n            \
+        \        \"description\": \"Season number\"\n                },\n                \"seasonName\": {\n             \
+        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Name
+        of the season\"\n                },\n                \"startedAt\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"When this season started\"\
+        \n                },\n                \"endedAt\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        When this season ended (null if active)\"\n                },\n                \"isActive\": {\n                 \
+        \   \"type\": \"boolean\",\n                    \"description\": \"Whether this is the current season\"\n        \
+        \        },\n                \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"\
+        format\": \"int64\",\n                    \"description\": \"Number of entries in this season\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get current season info\",\n    \"description\": \"Get information about
         the current or a specific past season.\",\n    \"tags\": [\n        \"Seasons\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getSeason\"\n}"
@@ -842,11 +877,13 @@ components:
           description: ID of the game service owning this leaderboard
         leaderboardId:
           type: string
+          minLength: 1
           maxLength: 64
           pattern: "^[a-z0-9_-]+$"
           description: Unique identifier for this leaderboard (lowercase, no spaces)
         displayName:
           type: string
+          minLength: 1
           maxLength: 100
           description: Human-readable name for the leaderboard
         description:
@@ -856,16 +893,17 @@ components:
           description: Description of what this leaderboard tracks
         entityTypes:
           type: array
+          nullable: true
           items:
             $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Which entity types can appear on this leaderboard
+          description: Which entity types can appear on this leaderboard (null allows all types)
         sortOrder:
           $ref: '#/components/schemas/SortOrder'
-          default: descending
+          default: Descending
           description: Sort order (descending for high scores, ascending for times)
         updateMode:
           $ref: '#/components/schemas/UpdateMode'
-          default: replace
+          default: Replace
           description: How to handle score updates
         isSeasonal:
           type: boolean
@@ -875,6 +913,16 @@ components:
           type: boolean
           default: true
           description: Whether the leaderboard is publicly visible
+        scoreType:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: Analytics score type that maps to this leaderboard for automatic score ingestion
+        ratingType:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: Analytics rating type that maps to this leaderboard for automatic rating ingestion
         metadata:
           type: object
           additionalProperties: true
@@ -953,6 +1001,16 @@ components:
           type: boolean
           nullable: true
           description: New visibility setting
+        scoreType:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: New analytics score type mapping
+        ratingType:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: New analytics rating type mapping
     DeleteLeaderboardDefinitionRequest:
       type: object
       description: Request to delete a leaderboard
@@ -981,6 +1039,7 @@ components:
       - isSeasonal
       - isPublic
       - createdAt
+      - entryCount
       properties:
         gameServiceId:
           type: string
@@ -998,9 +1057,10 @@ components:
           description: Description of the leaderboard
         entityTypes:
           type: array
+          nullable: true
           items:
             $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Allowed entity types
+          description: Allowed entity types (null if all types permitted)
         sortOrder:
           $ref: '#/components/schemas/SortOrder'
           description: Ordering used when ranking scores (descending for high scores, ascending for low)
@@ -1025,6 +1085,14 @@ components:
           type: string
           format: date-time
           description: When the leaderboard was created
+        scoreType:
+          type: string
+          nullable: true
+          description: Analytics score type mapped to this leaderboard
+        ratingType:
+          type: string
+          nullable: true
+          description: Analytics rating type mapped to this leaderboard
         metadata:
           type: object
           additionalProperties: true
@@ -1073,13 +1141,10 @@ components:
       description: Response after score submission
       additionalProperties: false
       required:
-      - accepted
       - currentScore
       - currentRank
+      - rankChange
       properties:
-        accepted:
-          type: boolean
-          description: Whether the score was accepted
         previousScore:
           type: number
           format: double
@@ -1122,8 +1187,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BatchScoreEntry'
+          minItems: 1
           maxItems: 1000
-          description: List of scores to submit (max 1000)
+          description: List of scores to submit (1-1000)
     BatchScoreEntry:
       type: object
       description: A single score in a batch submission
@@ -1192,6 +1258,7 @@ components:
       - score
       - rank
       - totalEntries
+      - percentile
       properties:
         entityId:
           type: string
@@ -1234,11 +1301,13 @@ components:
         count:
           type: integer
           default: 100
+          minimum: 1
           maximum: 1000
           description: Number of entries to return
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Number of entries to skip
     GetRanksAroundRequest:
       type: object
@@ -1267,11 +1336,13 @@ components:
         countBefore:
           type: integer
           default: 5
+          minimum: 0
           maximum: 50
           description: Entries to show before the entity
         countAfter:
           type: integer
           default: 5
+          minimum: 0
           maximum: 50
           description: Entries to show after the entity
     LeaderboardEntriesResponse:
@@ -1383,6 +1454,7 @@ components:
       - seasonNumber
       - startedAt
       - isActive
+      - entryCount
       properties:
         leaderboardId:
           type: string

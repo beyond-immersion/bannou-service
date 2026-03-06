@@ -409,33 +409,35 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
         }
 
         // Publish event — use participant's session ID per FOUNDATION TENETS (Account Identity Boundary)
-        var participantSessionId = scenario.Participants.FirstOrDefault()?.SessionId ?? Guid.Empty;
-        var eventTopic = isTimeout
-            ? "gardener.scenario.completed"
-            : "gardener.scenario.abandoned";
-
-        if (isTimeout)
+        var firstParticipant = scenario.Participants.FirstOrDefault();
+        if (firstParticipant == null)
         {
-            await messageBus.TryPublishAsync(eventTopic,
+            _logger.LogWarning(
+                "Scenario {ScenarioInstanceId} has no participants, skipping lifecycle event",
+                scenario.ScenarioInstanceId);
+        }
+        else if (isTimeout)
+        {
+            await messageBus.TryPublishAsync("gardener.scenario.completed",
                 new GardenerScenarioCompletedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     ScenarioInstanceId = scenario.ScenarioInstanceId,
                     ScenarioTemplateId = scenario.ScenarioTemplateId,
-                    WebSocketSessionId = participantSessionId,
+                    WebSocketSessionId = firstParticipant.SessionId,
                     GrowthAwarded = partialGrowth
                 }, cancellationToken: ct);
         }
         else
         {
-            await messageBus.TryPublishAsync(eventTopic,
+            await messageBus.TryPublishAsync("gardener.scenario.abandoned",
                 new GardenerScenarioAbandonedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     ScenarioInstanceId = scenario.ScenarioInstanceId,
-                    WebSocketSessionId = participantSessionId
+                    WebSocketSessionId = firstParticipant.SessionId
                 }, cancellationToken: ct);
         }
     }

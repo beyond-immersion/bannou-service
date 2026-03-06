@@ -419,13 +419,9 @@ public partial class AnalyticsService
 
             var metadata = new Dictionary<string, object>
             {
-                ["elementCount"] = evt.ElementCount
+                ["elementCount"] = evt.ElementCount,
+                ["replaceExisting"] = evt.ReplaceExisting
             };
-
-            if (evt.ReplaceExisting.HasValue)
-            {
-                metadata["replaceExisting"] = evt.ReplaceExisting.Value;
-            }
 
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {

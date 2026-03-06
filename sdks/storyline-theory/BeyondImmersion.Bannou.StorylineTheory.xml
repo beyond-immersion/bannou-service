@@ -279,11 +279,6 @@
             Complete backstory data for a character
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryResponse.CharacterId">
-            <summary>
-            ID of the character this backstory belongs to
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryResponse.Elements">
             <summary>
             All backstory elements for this character
@@ -417,7 +412,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterHistoryArchive.Participations">
             <summary>
-            Historical event participations (empty if hasParticipations=false)
+            Historical event participations (null if hasParticipations=false)
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterHistoryArchive.HasBackstory">
@@ -694,6 +689,17 @@
             All perspectives on this encounter
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.EntityType">
+            <summary>
+            Universal entity type identifier for first-class Bannou entities.
+            <br/>Used for polymorphic entity references (ownerType, entityType, partyType).
+            <br/>
+            <br/>NOT for game-configurable content type codes (use opaque strings) or
+            <br/>service-specific roles that include non-entity values (use service-specific enums).
+            <br/>See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.EventCategory">
             <summary>
             Categories of historical events that characters can participate in
@@ -766,11 +772,6 @@
         <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.HistorySummaryResponse">
             <summary>
             Generated text summaries for character compression
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistorySummaryResponse.CharacterId">
-            <summary>
-            ID of the character summarized
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistorySummaryResponse.KeyBackstoryPoints">

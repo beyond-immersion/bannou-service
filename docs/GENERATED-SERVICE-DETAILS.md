@@ -213,7 +213,7 @@ GameSession is to players what Inventory is to items: a **container primitive**.
 
 ## Gardener {#gardener}
 
-**Version**: 1.0.0 | **Schema**: `schemas/gardener-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/GARDENER.md](plugins/GARDENER.md)
+**Version**: 1.0.0 | **Schema**: `schemas/gardener-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/GARDENER.md](plugins/GARDENER.md)
 
 Player experience orchestration service (L4 GameFeatures) and the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. A "garden" is an abstract conceptual space (lobby, in-game, housing, void/discovery) that a player inhabits, with Gardener managing their gameplay context, entity associations, and event routing. Provides the APIs and infrastructure that divine actors (running via Puppetmaster on the L2 Actor runtime) use to manipulate player experiences -- behavior-agnostic, providing primitives not policy. Currently implements the void/discovery garden type only; the broader garden concept (multiple types, garden-to-garden transitions) is the architectural target. Internal-only, never internet-facing.
 
@@ -490,7 +490,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 76
-- **Total endpoints**: 898
+- **Total endpoints**: 897
 
 ---
 

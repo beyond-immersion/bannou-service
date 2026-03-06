@@ -261,18 +261,6 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> DeprecateTemplateAsync(DeprecateTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Delete scenario template
-    /// </summary>
-
-    /// <remarks>
-    /// Permanently deletes a scenario template. Template must be in Deprecated status before deletion. Publishes a scenario-template.deleted lifecycle event.
-    /// </remarks>
-
-    /// <returns>Template deleted</returns>
-
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> DeleteTemplateAsync(DeleteTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <summary>
     /// Get deployment phase configuration
     /// </summary>
 
@@ -1254,54 +1242,6 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:gardener/template/deprecate",
-                stack: ex_.StackTrace,
-                cancellationToken: cancellationToken);
-            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
-            return StatusCode(500);
-        }
-    }
-
-    /// <summary>
-    /// Delete scenario template
-    /// </summary>
-    /// <remarks>
-    /// Permanently deletes a scenario template. Template must be in Deprecated status before deletion. Publishes a scenario-template.deleted lifecycle event.
-    /// </remarks>
-    /// <returns>Template deleted</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/template/delete")]
-
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> DeleteTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        using var activity_ = _telemetryProvider.StartActivity(
-            "bannou.gardener",
-            "GardenerController.DeleteTemplate",
-            System.Diagnostics.ActivityKind.Server);
-        activity_?.SetTag("http.route", "gardener/template/delete");
-        try
-        {
-
-            var (statusCode, result) = await _implementation.DeleteTemplateAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode, result);
-        }
-        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
-        {
-            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:gardener/template/delete");
-            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
-            return StatusCode(503);
-        }
-        catch (System.Exception ex_)
-        {
-            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:gardener/template/delete");
-            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
-            await messageBus_.TryPublishErrorAsync(
-                "gardener",
-                "DeleteTemplate",
-                "unexpected_exception",
-                ex_.Message,
-                endpoint: "post:gardener/template/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

@@ -377,6 +377,12 @@ x-service-configuration:
       default: guardian
       description: Which seed type code this gardener manages for player spirits
 
+    GameType:
+      type: string
+      env: GARDENER_GAME_TYPE
+      default: gardener-scenario
+      description: Game type string used for game session creation and queries
+
     # =========================================================================
     # Background Workers
     # =========================================================================

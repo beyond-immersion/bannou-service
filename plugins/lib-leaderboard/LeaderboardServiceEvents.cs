@@ -205,7 +205,7 @@ public partial class LeaderboardService
     private async Task<LeaderboardDefinitionData?> GetDefinitionForAnalyticsEventAsync(
         Guid gameServiceId,
         string eventType,
-        string metadataKey,
+        string typedFieldSelector,
         string eventTopic,
         CancellationToken cancellationToken)
     {
@@ -214,7 +214,6 @@ public partial class LeaderboardService
         {
             return null;
         }
-
 
         var normalized = eventType.Trim();
         var candidateIds = normalized.Equals(normalized.ToLowerInvariant(), StringComparison.Ordinal)
@@ -248,13 +247,14 @@ public partial class LeaderboardService
                 continue;
             }
 
-            var metadata = MetadataHelper.ConvertToReadOnlyDictionary(definition.Metadata);
-            if (!MetadataHelper.TryGetString(metadata, metadataKey, out var mappedType))
+            // Use typed fields instead of metadata bag per FOUNDATION TENETS (T29)
+            var typedValue = typedFieldSelector == "scoreType" ? definition.ScoreType : definition.RatingType;
+            if (string.IsNullOrEmpty(typedValue))
             {
                 continue;
             }
 
-            if (!string.Equals(mappedType, eventType, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(typedValue, eventType, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }

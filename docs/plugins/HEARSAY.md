@@ -31,42 +31,51 @@ In Persona 5, rumors literally change reality. In Bannou, rumors change NPC *per
 Every belief has the same structure regardless of domain:
 
 ```
+BeliefDomain enum: Norm, Character, Location       # System-owned (IMPLEMENTATION TENETS Category C)
+SourceChannel enum: DirectObservation, OfficialDecree, TrustedContact, SocialContact, Rumor, CulturalOsmosis
+
 BeliefEntry:
-  beliefId:       Guid          # Unique identifier
-  characterId:    Guid          # Who holds this belief
-  domain:         string        # "norm", "character", "location"
-  subjectId:      string        # What the belief is about (composite key)
-  claimCode:      string        # What they believe (opaque string)
-  believedValue:  float         # Magnitude (penalty, danger, trust, etc.)
-  confidence:     float         # 0.0 (pure hearsay) to 1.0 (directly observed)
-  valence:        float         # -1.0 (negative) to +1.0 (positive)
-  sourceChannel:  string        # How they learned it
-  sourceEntityId: Guid?         # Who told them (null for osmosis/observation)
-  acquiredAt:     DateTime      # When they first heard it
-  lastReinforcedAt: DateTime    # When confidence was last boosted
-  decayRate:      float         # How fast confidence degrades (domain-specific)
+  beliefId:           Guid            # Unique identifier
+  characterId:        Guid            # Who holds this belief
+  domain:             BeliefDomain    # Norm, Character, or Location
+  subjectEntityId:    Guid            # What the belief is about (locationId for Norm/Location, characterId for Character)
+  claimCode:          string          # What they believe (opaque game-defined string)
+  believedValue:      float           # Magnitude (penalty, danger, trust, etc.)
+  confidence:         float           # 0.0 (pure hearsay) to 1.0 (directly observed)
+  valence:            float           # -1.0 (negative) to +1.0 (positive)
+  sourceChannel:      SourceChannel   # How they learned it
+  sourceEntityId:     Guid?           # Who told them (null for osmosis/observation)
+  acquiredAt:         DateTime        # When they first heard it
+  lastReinforcedAt:   DateTime        # When confidence was last boosted
+  decayRate:          float           # How fast confidence degrades (domain-specific)
 ```
+
+**Type safety notes (per IMPLEMENTATION TENETS)**:
+- `domain` is a `BeliefDomain` enum, not a string. Three system-owned behavioral modes that require code changes to extend (T14 Category C).
+- `sourceChannel` is a `SourceChannel` enum, not a string. Six system-defined acquisition modes with hardcoded confidence ranges and per-channel processing logic (T14 Category C). PascalCase values per T16.
+- `subjectEntityId` is a `Guid`, not a composite string. For the Norm domain, this is the locationId and `claimCode` holds the violation type code. For Character and Location domains, this is the target entity's ID. The former composite `{locationId}:{violationType}` pattern violated T25 (GUIDs must be `Guid` type, never embedded in strings).
+- `claimCode` remains an opaque `string` (T14 Category B — game designers define new claim codes at deployment time).
 
 ### Subject Keys by Domain
 
-| Domain | SubjectId Format | ClaimCode Examples | BeliefValue Meaning |
-|--------|-----------------|-------------------|-------------------|
-| **norm** | `{locationId}:{violationType}` | `theft`, `violence`, `contraband` | Believed penalty magnitude |
-| **character** | `{targetCharacterId}` | `trustworthy`, `dangerous`, `dishonest`, `generous`, `skilled_fighter` | Impression strength (-1.0 to +1.0) |
-| **location** | `{locationId}` | `dangerous`, `profitable`, `cursed`, `lawless`, `sacred` | Perceived intensity (0.0 to 1.0) |
+| Domain | SubjectEntityId | ClaimCode Examples | BeliefValue Meaning |
+|--------|----------------|-------------------|-------------------|
+| **Norm** | `locationId` (Guid) | `theft`, `violence`, `contraband` | Believed penalty magnitude |
+| **Character** | `targetCharacterId` (Guid) | `trustworthy`, `dangerous`, `dishonest`, `generous`, `skilled_fighter` | Impression strength (-1.0 to +1.0) |
+| **Location** | `locationId` (Guid) | `dangerous`, `profitable`, `cursed`, `lawless`, `sacred` | Perceived intensity (0.0 to 1.0) |
 
 ### Information Channels
 
 How NPCs acquire beliefs, ranked by confidence and accuracy:
 
-| Channel | Initial Confidence | Accuracy | Speed | Trigger |
-|---------|-------------------|----------|-------|---------|
-| `direct_observation` | 0.85-1.0 | Exact | Instant | NPC witnesses event firsthand |
-| `official_decree` | 0.7-0.8 | High | Event-driven | Sovereign faction announces change |
-| `trusted_contact` | 0.5-0.7 | Good | Encounter-driven | Close relationship shares information |
-| `social_contact` | 0.3-0.5 | Variable | Encounter-driven | Casual acquaintance mentions something |
-| `rumor` | 0.1-0.3 | Low/manipulable | Propagation wave | Heard from friend-of-friend, injected externally |
-| `cultural_osmosis` | Background | Medium | Time-based (convergence worker) | Living in an area, gradually absorbing customs |
+| Channel (SourceChannel enum) | Initial Confidence | Accuracy | Speed | Trigger |
+|------------------------------|-------------------|----------|-------|---------|
+| `DirectObservation` | 0.85-1.0 | Exact | Instant | NPC witnesses event firsthand |
+| `OfficialDecree` | 0.7-0.8 | High | Event-driven | Sovereign faction announces change |
+| `TrustedContact` | 0.5-0.7 | Good | Encounter-driven | Close relationship shares information |
+| `SocialContact` | 0.3-0.5 | Variable | Encounter-driven | Casual acquaintance mentions something |
+| `Rumor` | 0.1-0.3 | Low/manipulable | Propagation wave | Heard from friend-of-friend, injected externally |
+| `CulturalOsmosis` | Background | Medium | Time-based (convergence worker) | Living in an area, gradually absorbing customs |
 
 ### Confidence Mechanics
 
@@ -107,7 +116,7 @@ Day 0: New faction (Harbor Authority) takes over Docks District
 
 Day 1-3: Official decree propagation
   - Harbor Authority publishes faction.territory.claimed event
-  - Hearsay listens and creates "official_decree" channel beliefs
+  - Hearsay listens and creates `OfficialDecree` channel beliefs
     for NPCs physically present in the Docks District
   - Confidence: 0.7 (they heard the announcement but haven't
     internalized the specifics yet)
@@ -118,7 +127,7 @@ Day 1-3: Official decree propagation
 Day 7-14: Social propagation via encounters
   - When NPC A (who knows) has an encounter with NPC B (who doesn't),
     the encounter event triggers belief propagation
-  - NPC B receives the claim at "social_contact" confidence (0.3-0.5)
+  - NPC B receives the claim at `SocialContact` confidence (0.3-0.5)
   - NPCs who traveled to the Docks and returned bring higher-confidence
     knowledge (0.6-0.7) to their home district
   - Telephone-game distortion: some NPCs hear exaggerated penalties
@@ -212,11 +221,11 @@ NPC "Aldric" has heard about the Blackmire Swamp:
 
 1. His mother warned him as a child: "Never go to the swamp"
    → { subject: blackmire, claim: "dangerous", value: 0.9, confidence: 0.5,
-      source: "trusted_contact", decayRate: 0.01 }  ← slow decay (childhood memory)
+      source: `TrustedContact`, decayRate: 0.01 }  ← slow decay (childhood memory)
 
 2. A traveling merchant said: "I lost my horse in the swamp"
    → { subject: blackmire, claim: "dangerous", value: 0.6, confidence: 0.3,
-      source: "social_contact" }
+      source: `SocialContact` }
 
 3. A rumor says there's buried treasure there:
    → { subject: blackmire, claim: "profitable", value: 0.8, confidence: 0.15,
@@ -404,6 +413,7 @@ The god creates narrative opportunities by manipulating social information. If m
 | lib-character-encounter (`ICharacterEncounterClient`) | Querying actual sentiment for convergence of character beliefs | Character beliefs never converge toward encounter-based truth |
 | lib-character-personality (`ICharacterPersonalityClient`) | Personality-mediated belief receptivity (openness affects how readily NPCs accept new claims) | All NPCs have equal receptivity to new beliefs |
 | lib-puppetmaster (`IPuppetmasterClient`) | Divine rumor injection coordination, regional watcher notification of belief saturation events | Divine rumor injection unavailable; saturation events not notified |
+| lib-obligation (event-only: `obligation.violation.reported`) | Subscribing to violation events for witness-based belief creation about violating characters | No witness-based beliefs from violations; only encounter-triggered and faction-triggered beliefs |
 | lib-storyline (`IStorylineClient`) | Querying active storylines to prevent belief corrections that would break active narrative arcs | No narrative protection -- beliefs converge freely even if a storyline depends on the misconception |
 
 ---
@@ -435,9 +445,9 @@ The god creates narrative opportunities by manipulating social information. If m
 |-------------|-----------|---------|
 | `belief:{beliefId}` | `BeliefEntryModel` | Primary lookup by belief ID |
 | `belief:char:{characterId}` | `BeliefListModel` | All beliefs held by a character (paginated query) |
-| `belief:char:{characterId}:{domain}` | `BeliefListModel` | Domain-filtered beliefs per character |
-| `belief:char:{characterId}:{domain}:{subjectId}` | `BeliefListModel` | All beliefs about a specific subject (a character may hold multiple beliefs about the same subject, e.g., "dangerous" AND "skilled_fighter") |
-| `belief:subject:{domain}:{subjectId}` | `BeliefSaturationModel` | Reverse index: how many characters believe something about this subject (for saturation queries) |
+| `belief:char:{characterId}:{domain}` | `BeliefListModel` | Domain-filtered beliefs per character (domain is `BeliefDomain` enum `.ToString()`) |
+| `belief:char:{characterId}:{domain}:{subjectEntityId}` | `BeliefListModel` | All beliefs about a specific subject (a character may hold multiple beliefs about the same subject, e.g., "dangerous" AND "skilled_fighter") |
+| `belief:subject:{domain}:{subjectEntityId}` | `BeliefSaturationModel` | Reverse index: how many characters believe something about this subject (for saturation queries) |
 
 ### Propagation Store
 **Store**: `hearsay-propagation` (Backend: MySQL)
@@ -453,7 +463,7 @@ The god creates narrative opportunities by manipulating social information. If m
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `manifest:{characterId}` | `BeliefManifestModel` | Cached composite belief manifest per character: pre-aggregated beliefs across all domains, organized for fast variable provider reads. TTL-based expiry with event-driven invalidation. |
-| `saturation:{domain}:{subjectId}:{claimCode}` | `SaturationCacheModel` | Cached belief saturation: percentage of local NPCs holding this belief. Used by storyline scenario conditions. TTL-based. |
+| `saturation:{domain}:{subjectEntityId}:{claimCode}` | `SaturationCacheModel` | Cached belief saturation: percentage of local NPCs holding this belief. Used by storyline scenario conditions. TTL-based. |
 
 ### Distributed Locks
 **Store**: `hearsay-lock` (Backend: Redis, prefix: `hearsay:lock`)
@@ -486,14 +496,14 @@ The god creates narrative opportunities by manipulating social information. If m
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `faction.territory.claimed` | `HandleTerritoryClaimedAsync` | Inject "official_decree" norm beliefs for NPCs present in the claimed territory. Start propagation wave for adjacent areas. |
+| `faction.territory.claimed` | `HandleTerritoryClaimedAsync` | Inject `OfficialDecree` norm beliefs for NPCs present in the claimed territory. Start propagation wave for adjacent areas. |
 | `faction.territory.released` | `HandleTerritoryReleasedAsync` | Mark existing norm beliefs for this territory as stale (increase decay rate). |
-| `faction.norm.defined` | `HandleNormDefinedAsync` | Inject "official_decree" beliefs for NPCs in the norm's faction territory. |
+| `faction.norm.defined` | `HandleNormDefinedAsync` | Inject `OfficialDecree` beliefs for NPCs in the norm's faction territory. |
 | `faction.norm.updated` | `HandleNormUpdatedAsync` | Update believed values for NPCs who already hold beliefs about this norm. |
 | `faction.norm.deleted` | `HandleNormDeletedAsync` | Mark beliefs about this norm as stale. |
 | `faction.realm-baseline.designated` | `HandleRealmBaselineDesignatedAsync` | Start slow propagation of realm baseline norm beliefs. |
-| `character-encounter.created` | `HandleEncounterCreatedAsync` | Propagation trigger: when two characters meet, beliefs may propagate between them based on relationship closeness, encounter context, and personality receptivity. |
-| `obligation.violation.reported` | `HandleViolationReportedAsync` | If the violation was witnessed, create "direct_observation" beliefs about the violating character for witnesses. Potential propagation trigger if witnesses share what they saw. |
+| `encounter.recorded` | `HandleEncounterRecordedAsync` | Propagation trigger: when two characters meet, beliefs may propagate between them based on relationship closeness, encounter context, and personality receptivity. |
+| `obligation.violation.reported` | `HandleViolationReportedAsync` | If the violation was witnessed, create `DirectObservation` beliefs about the violating character for witnesses. Potential propagation trigger if witnesses share what they saw. |
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
@@ -544,6 +554,7 @@ Archives belief state for character compression. On restore, beliefs are NOT res
 | Service | Role |
 |---------|------|
 | `ILogger<HearsayService>` | Structured logging |
+| `ITelemetryProvider` | Distributed tracing span creation (L0, per IMPLEMENTATION TENETS T30) |
 | `HearsayServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (creates 4 stores) |
 | `IMessageBus` | Event publishing |
@@ -552,7 +563,7 @@ Archives belief state for character compression. On restore, beliefs are NOT res
 | `ICharacterClient` | Character existence validation and location queries (L2) |
 | `ILocationClient` | Location hierarchy resolution for proximity (L2) |
 | `IResourceClient` | Reference tracking, cleanup callbacks, compression callbacks (L1) |
-| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Faction, Encounter, Personality, Puppetmaster, Storyline) |
+| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Faction, Encounter, Personality, Puppetmaster, Storyline, Obligation) |
 
 ### Background Workers
 
@@ -568,7 +579,7 @@ Archives belief state for character compression. On restore, beliefs are NOT res
 
 ### Belief Management (6 endpoints)
 
-- **RecordBelief** (`/hearsay/belief/record`): Creates or reinforces a belief for a character. If a belief with matching `characterId + domain + subjectId + claimCode` exists, reinforces confidence. Otherwise creates new belief. Validates character existence. Acquires distributed lock. Invalidates belief cache. Publishes `belief.acquired` or `belief.reinforced` event. Primary API for external systems to feed information to NPCs.
+- **RecordBelief** (`/hearsay/belief/record`): Creates or reinforces a belief for a character. If a belief with matching `characterId + domain + subjectEntityId + claimCode` exists, reinforces confidence. Otherwise creates new belief. Validates character existence. Acquires distributed lock. Invalidates belief cache. Publishes `belief.acquired` or `belief.reinforced` event. Primary API for external systems to feed information to NPCs.
 
 - **CorrectBelief** (`/hearsay/belief/correct`): Records a direct observation that contradicts an existing belief. Drops confidence on the old belief, creates or reinforces the corrected belief at high confidence. Publishes `belief.corrected` event. Used when an NPC directly witnesses something that contradicts what they've heard.
 
@@ -582,7 +593,7 @@ Archives belief state for character compression. On restore, beliefs are NOT res
 
 ### Rumor Management (3 endpoints)
 
-- **InjectRumor** (`/hearsay/rumor/inject`): External rumor injection. Creates a propagation record and seeds initial beliefs in characters within `targetRadius` of the specified location. Supports optional `sourceAttribution` (null = anonymous rumor). Initial confidence based on `rumor` channel (0.1-0.3). Acquires injection lock to prevent duplicates. Publishes `rumor.injected` event. Requires `developer` role.
+- **InjectRumor** (`/hearsay/rumor/inject`): External rumor injection. Creates a propagation record and seeds initial beliefs in characters within `targetRadius` of the specified location. Supports optional `sourceAttribution` (null = anonymous rumor). Initial confidence based on `Rumor` channel (0.1-0.3). Acquires injection lock to prevent duplicates. Publishes `rumor.injected` event. Requires `developer` role.
 
 - **ListActiveRumors** (`/hearsay/rumor/list-active`): Paginated list of active propagation waves within a game service or location scope. Shows origin, current radius, propagation speed, affected character count, injection source if attributed.
 
@@ -610,7 +621,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ### Compression Endpoints (2 endpoints)
 
-- **GetCompressData** (`/hearsay/get-compress-data`): Returns a `HearsayArchive` (extends `ResourceArchiveBase`) containing the character's belief snapshot: high-confidence beliefs only (confidence > 0.5), organized by domain. Used by Storyline for `belief_deltas` extraction in narrative state computation.
+- **GetCompressData** (`/hearsay/get-compress-data`): Returns a `HearsayArchive` (extends `ResourceArchiveBase`, schema marked with `x-archive-type: true`) containing the character's belief snapshot: high-confidence beliefs only (confidence > 0.5), organized by domain. Used by Storyline for `belief_deltas` extraction in narrative state computation.
 - **RestoreFromArchive** (`/hearsay/restore-from-archive`): Does NOT restore beliefs (they would be stale). Instead marks the character for accelerated convergence on next worker cycle, simulating "relearning" the current state of affairs.
 
 ---
@@ -926,22 +937,24 @@ Belief identity and propagation are owned here. Actual norm data comes from Fact
 ### Phase 0: Prerequisites (changes to existing services)
 
 - **EncountersProviderFactory bug fix**: The factory currently doesn't pre-load sentiment, hasMet, or pairEncounters data. This must be fixed before hearsay can compose with encounter sentiment. See CHARACTER-ENCOUNTER deep dive.
-- **Encounter event enhancement**: `character-encounter.created` events must include participant IDs and context for hearsay propagation triggers.
+- **Encounter event enhancement**: `encounter.recorded` events must include participant IDs and context for hearsay propagation triggers.
 
 ### Phase 1: Core Belief Infrastructure
 
-- Create `hearsay-api.yaml` schema with belief management endpoints
-- Create `hearsay-events.yaml` schema
+- Add hearsay stores to `schemas/state-stores.yaml` (hearsay-beliefs, hearsay-propagation, hearsay-cache, hearsay-lock)
+- Add hearsay provider to `schemas/variable-providers.yaml`
+- Create `hearsay-api.yaml` schema with belief management endpoints (include `BeliefDomain` and `SourceChannel` enums, `x-service-layer: GameFeatures`)
+- Create `hearsay-events.yaml` schema (include `x-event-publications` for all 8 custom events, `x-event-subscriptions` for all 8 consumed events)
 - Create `hearsay-configuration.yaml` schema
 - Generate service code
 - Implement belief CRUD (record, correct, query, get-manifest)
-- Implement belief cache with event-driven invalidation
+- Implement belief cache with event-driven invalidation (Redis key deletion on mutation — distributed-safe)
 - Implement variable provider factory (`${hearsay.*}` namespace)
 - Implement resource cleanup and compression callbacks
 
 ### Phase 2: Propagation Engine
 
-- Implement encounter-triggered belief propagation (HandleEncounterCreatedAsync)
+- Implement encounter-triggered belief propagation (HandleEncounterRecordedAsync)
 - Implement faction event-driven belief injection (HandleTerritoryClaimedAsync, etc.)
 - Implement rumor injection API
 - Implement propagation worker (advancing rumor waves through social networks)
@@ -1060,7 +1073,7 @@ Behavior authors choose:
 
 ### Design Considerations (Requires Planning)
 
-1. **Encounter event schema**: The `character-encounter.created` event must include enough data for hearsay propagation (participant IDs, encounter context, witness list). Current event schema may need enhancement.
+1. **Encounter event schema**: The `encounter.recorded` event must include enough data for hearsay propagation (participant IDs, encounter context, witness list). Current event schema may need enhancement.
 
 2. **Location awareness for convergence**: The convergence worker needs to know where characters are to apply proximity-based convergence. Character location tracking may not be real-time in all deployments. May need to use last-known-location from a periodic update.
 
@@ -1071,6 +1084,12 @@ Behavior authors choose:
 5. **Variable provider performance**: The belief manifest cache must be fast enough for Actor's 100-500ms decision cycle. Pre-aggregation in Redis is the current plan. May need character-scoped sub-caching for frequently accessed beliefs (e.g., norm beliefs at current location).
 
 6. **Personality integration depth**: How much should personality affect belief mechanics? Current plan: openness affects receptivity, conscientiousness affects verification tendency. Could extend to: neuroticism amplifies negative beliefs, agreeableness biases toward positive interpretations, etc. The mapping should be data-driven (like obligation's trait-to-violation mapping), not hardcoded.
+
+7. **x-permissions per endpoint** *(audit finding, deferred)*: Should the deep dive explicitly specify `x-permissions` for all 18 endpoints, or is the current style (noting `developer` role where applicable, everything else implicitly `[]` per "internal-only, never internet-facing") sufficient? T13 mandates x-permissions on schema endpoints; the deep dive currently documents role requirements implicitly. Resolve during schema creation.
+
+8. **ConvergenceProximityRadius units in property name** *(audit finding, deferred)*: T16 requires "include units in time-based names" but does not explicitly extend this to distance properties. Current name `ConvergenceProximityRadius` documents "in meters" in its description. Decide whether to rename to `ConvergenceProximityRadiusMeters` for consistency.
+
+9. **GitHub issue cross-references** *(audit finding, deferred)*: Related issues (#410 Obligation/Faction architecture, #435 sovereignty transfer, #440 scenario system design, #454 Lexicon NPC communication, #385 content flywheel pipeline) are aligned with the deep dive but not referenced by number. Decide whether to add issue references to the Work Tracking section for traceability.
 
 ---
 

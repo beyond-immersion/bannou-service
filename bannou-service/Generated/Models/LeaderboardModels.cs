@@ -89,9 +89,9 @@ public partial class CreateLeaderboardDefinitionRequest
     /// Unique identifier for this leaderboard (lowercase, no spaces)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9_-]+$")]
     public string LeaderboardId { get; set; } = default!;
 
@@ -99,9 +99,9 @@ public partial class CreateLeaderboardDefinitionRequest
     /// Human-readable name for the leaderboard
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
@@ -112,11 +112,11 @@ public partial class CreateLeaderboardDefinitionRequest
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Which entity types can appear on this leaderboard
+    /// Which entity types can appear on this leaderboard (null allows all types)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityTypes")]
     // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<EntityType> EntityTypes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<EntityType>? EntityTypes { get; set; } = default!;
 
     /// <summary>
     /// Sort order (descending for high scores, ascending for times)
@@ -143,6 +143,20 @@ public partial class CreateLeaderboardDefinitionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPublic")]
     public bool IsPublic { get; set; } = true;
+
+    /// <summary>
+    /// Analytics score type that maps to this leaderboard for automatic score ingestion
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    public string? ScoreType { get; set; } = default!;
+
+    /// <summary>
+    /// Analytics rating type that maps to this leaderboard for automatic rating ingestion
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ratingType")]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    public string? RatingType { get; set; } = default!;
 
     /// <summary>
     /// Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention.
@@ -260,6 +274,20 @@ public partial class UpdateLeaderboardDefinitionRequest
     [System.Text.Json.Serialization.JsonPropertyName("isPublic")]
     public bool? IsPublic { get; set; } = default!;
 
+    /// <summary>
+    /// New analytics score type mapping
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    public string? ScoreType { get; set; } = default!;
+
+    /// <summary>
+    /// New analytics rating type mapping
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ratingType")]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    public string? RatingType { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -325,11 +353,11 @@ public partial class LeaderboardDefinitionResponse
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Allowed entity types
+    /// Allowed entity types (null if all types permitted)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityTypes")]
     // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<EntityType> EntityTypes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<EntityType>? EntityTypes { get; set; } = default!;
 
     /// <summary>
     /// Ordering used when ranking scores (descending for high scores, ascending for low)
@@ -380,6 +408,18 @@ public partial class LeaderboardDefinitionResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Analytics score type mapped to this leaderboard
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
+    public string? ScoreType { get; set; } = default!;
+
+    /// <summary>
+    /// Analytics rating type mapped to this leaderboard
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ratingType")]
+    public string? RatingType { get; set; } = default!;
 
     /// <summary>
     /// Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention.
@@ -451,12 +491,6 @@ public partial class SubmitScoreResponse
 {
 
     /// <summary>
-    /// Whether the score was accepted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accepted")]
-    public bool Accepted { get; set; } = default!;
-
-    /// <summary>
     /// Previous score (null if first entry)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousScore")]
@@ -512,11 +546,12 @@ public partial class SubmitScoreBatchRequest
     public string LeaderboardId { get; set; } = default!;
 
     /// <summary>
-    /// List of scores to submit (max 1000)
+    /// List of scores to submit (1-1000)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scores")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
     [System.ComponentModel.DataAnnotations.MaxLength(1000)]
     public System.Collections.Generic.ICollection<BatchScoreEntry> Scores { get; set; } = new System.Collections.ObjectModel.Collection<BatchScoreEntry>();
 
@@ -694,13 +729,14 @@ public partial class GetTopRanksRequest
     /// Number of entries to return
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("count")]
-    [System.ComponentModel.DataAnnotations.Range(int.MinValue, 1000)]
+    [System.ComponentModel.DataAnnotations.Range(1, 1000)]
     public int Count { get; set; } = 100;
 
     /// <summary>
     /// Number of entries to skip
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Offset { get; set; } = 0;
 
 }
@@ -749,14 +785,14 @@ public partial class GetRanksAroundRequest
     /// Entries to show before the entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("countBefore")]
-    [System.ComponentModel.DataAnnotations.Range(int.MinValue, 50)]
+    [System.ComponentModel.DataAnnotations.Range(0, 50)]
     public int CountBefore { get; set; } = 5;
 
     /// <summary>
     /// Entries to show after the entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("countAfter")]
-    [System.ComponentModel.DataAnnotations.Range(int.MinValue, 50)]
+    [System.ComponentModel.DataAnnotations.Range(0, 50)]
     public int CountAfter { get; set; } = 5;
 
 }

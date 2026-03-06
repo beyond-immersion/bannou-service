@@ -68,6 +68,9 @@ Real-time leaderboard management (L4 GameFeatures) built on Redis Sorted Sets. S
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
+| `leaderboard.definition.created` | `LeaderboardDefinitionCreatedEvent` | New leaderboard definition created (lifecycle) |
+| `leaderboard.definition.updated` | `LeaderboardDefinitionUpdatedEvent` | Leaderboard definition updated with `changedFields` (lifecycle) |
+| `leaderboard.definition.deleted` | `LeaderboardDefinitionDeletedEvent` | Leaderboard definition deleted (lifecycle) |
 | `leaderboard.entry.added` | `LeaderboardEntryAddedEvent` | First score submitted for an entity on a leaderboard |
 | `leaderboard.rank.changed` | `LeaderboardRankChangedEvent` | Entity's rank changes after score update |
 | `leaderboard.season.started` | `LeaderboardSeasonStartedEvent` | New season created for a seasonal leaderboard |
@@ -76,8 +79,8 @@ Real-time leaderboard management (L4 GameFeatures) built on Redis Sorted Sets. S
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
-| `analytics.score.updated` | `AnalyticsScoreUpdatedEvent` | Matches event to leaderboard by ID or metadata, submits score |
-| `analytics.rating.updated` | `AnalyticsRatingUpdatedEvent` | Matches event to leaderboard by ID or metadata, submits rating as score (Replace mode only) |
+| `analytics.score.updated` | `AnalyticsScoreUpdatedEvent` | Matches event to leaderboard by ID or typed `scoreType` field, submits score |
+| `analytics.rating.updated` | `AnalyticsRatingUpdatedEvent` | Matches event to leaderboard by ID or typed `ratingType` field, submits rating as score (Replace mode only) |
 
 ---
 
@@ -108,11 +111,11 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 ### Definitions (5 endpoints)
 
-- **CreateLeaderboardDefinition** (`/leaderboard/definition/create`): Checks for existing definition (Conflict on duplicate). Saves definition with entity types, sort order, update mode, seasonal flag. If seasonal, sets `CurrentSeason=1`. Adds to per-gameService definition index via `AddToSetAsync`.
+- **CreateLeaderboardDefinition** (`/leaderboard/definition/create`): Checks for existing definition (Conflict on duplicate). Saves definition with entity types, sort order, update mode, seasonal flag, typed `scoreType`/`ratingType` for analytics event matching. If seasonal, sets `CurrentSeason=1`. Adds to per-gameService definition index via `AddToSetAsync`. Publishes `leaderboard.definition.created` lifecycle event.
 - **GetLeaderboardDefinition** (`/leaderboard/definition/get`): Loads definition by composite key. Queries ranking sorted set for current entry count.
 - **ListLeaderboardDefinitions** (`/leaderboard/definition/list`): Loads all definition IDs from gameService index set. Filters `IncludeArchived` returns `NotImplemented`. Loads each definition individually with entry count. Sorted alphabetically by leaderboard ID.
-- **UpdateLeaderboardDefinition** (`/leaderboard/definition/update`): ETag-based optimistic concurrency. Partial update (DisplayName, Description, IsPublic). Returns Conflict on concurrent modification.
-- **DeleteLeaderboardDefinition** (`/leaderboard/definition/delete`): Deletes definition, removes from index set. For seasonal: iterates all seasons from season index and deletes each ranking sorted set. For non-seasonal: deletes the single ranking sorted set.
+- **UpdateLeaderboardDefinition** (`/leaderboard/definition/update`): ETag-based optimistic concurrency. Partial update (DisplayName, Description, IsPublic, ScoreType, RatingType) with `changedFields` tracking. Publishes `leaderboard.definition.updated` lifecycle event. Returns Conflict on concurrent modification.
+- **DeleteLeaderboardDefinition** (`/leaderboard/definition/delete`): Deletes definition, removes from index set. For seasonal: iterates all seasons from season index and deletes each ranking sorted set. For non-seasonal: deletes the single ranking sorted set. Publishes `leaderboard.definition.deleted` lifecycle event.
 
 ### Scores (2 endpoints)
 
@@ -149,7 +152,8 @@ Leaderboard Architecture
   │    ├── SortOrder: Ascending | Descending                        │
   │    ├── UpdateMode: Replace | Increment | Max | Min              │
   │    ├── IsSeasonal, CurrentSeason                                │
-  │    └── Metadata (for analytics event matching)                  │
+  │    ├── ScoreType, RatingType (typed analytics event matching)   │
+  │    └── Metadata (opaque client pass-through)                    │
   │                                                                 │
   │  Key: leaderboard-definitions:{gameServiceId}                   │
   │  Value: Set<string> (leaderboard IDs)                           │
@@ -189,7 +193,7 @@ Analytics Integration
        │    (ScoreType/RatingType as leaderboard ID)
        │
        ├── Fallback: scan all definitions in game service
-       │    Match metadata[scoreType/ratingType] == event type
+       │    Match typed scoreType/ratingType field == event type
        │
        └── Submit score via internal SubmitScoreAsync
             (Rating events require Replace mode)
@@ -218,7 +222,9 @@ Season Lifecycle
 1. **IncludeArchived not implemented**: `ListLeaderboardDefinitions` returns `NotImplemented` when `IncludeArchived=true`. Archived leaderboards are mentioned in the API but not tracked.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/232 -->
 2. **GetSeason returns approximate dates**: `StartedAt` uses the definition's `CreatedAt` timestamp (not the actual season start). `EndedAt` uses `UtcNow` for inactive seasons. No per-season start/end tracking exists.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06:Per-season timestamp storage requires using the leaderboard-season MySQL store or adding per-season Redis keys -->
 3. **Batch submit ignores UpdateMode**: `SubmitScoreBatch` always uses Replace mode regardless of the leaderboard's configured `UpdateMode`. Individual `SubmitScore` respects the mode.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06:Honoring UpdateMode in batch requires per-entry read-before-write which negates batch performance benefits -->
 
 ---
 
@@ -235,8 +241,7 @@ Season Lifecycle
 
 ### Bugs (Fix Immediately)
 
-1. **T29 violation: definition `metadata` reads `scoreType`/`ratingType` by convention**: `LeaderboardServiceEvents` reads `scoreType` and `ratingType` keys from definition metadata via `MetadataHelper.TryGetString()` for analytics event matching. Schema claims "No Bannou plugin reads specific keys." These should be typed fields (`analyticsScoreType`, `analyticsRatingType`) on the leaderboard definition schema.
-   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/465 -->
+1. ~~**T29 violation: definition `metadata` reads `scoreType`/`ratingType` by convention**~~: **FIXED** (2026-03-06) — Added typed `scoreType` and `ratingType` fields to `CreateLeaderboardDefinitionRequest`, `UpdateLeaderboardDefinitionRequest`, `LeaderboardDefinitionResponse`, and internal `LeaderboardDefinitionData`. `GetDefinitionForAnalyticsEventAsync` now reads typed fields instead of `MetadataHelper.TryGetString()` from metadata bags. GH#465 can be closed.
 
 2. ~~**`archivePrevious` request parameter is ignored**~~: **FIXED** (2026-01-31) - `CreateSeasonAsync` now uses `body.ArchivePrevious` instead of `_configuration.AutoArchiveOnSeasonEnd`. The request parameter defaults to `true` per the schema, giving callers per-request control over archival behavior.
 
@@ -249,18 +254,21 @@ Season Lifecycle
 3. **`archivePrevious=false` deletes data**: When the request specifies not to archive, previous season data is permanently deleted on season creation. There's no way to recover it. The parameter defaults to `true`, so callers must explicitly opt-in to deletion.
 
 4. **Batch submit has no event publishing**: Unlike individual `SubmitScore` which publishes `entry.added` and `rank.changed` events, batch submissions produce no events. Consumers relying on leaderboard events won't see batch updates.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06:T5 event publishing for batch requires per-entry rank lookups which negates batch performance; consider post-batch summary event -->
 
 5. **No score validation or bounds**: Scores are stored as doubles with no min/max validation. Negative scores, NaN, and infinity are all accepted by the sorted set operations.
 
 ### Design Considerations
 
 1. **No distributed locks**: Unlike game-session or matchmaking, leaderboard operations don't use distributed locks. Redis sorted set operations are atomic at the command level, but the read-calculate-write pattern in `SubmitScore` (get previous, calculate final, add) is not atomic across the full operation.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06:T9 compliance for Increment/Max/Min modes requires Lua scripts or distributed locks for atomicity -->
 
 2. **Definition index loaded in full**: `ListLeaderboardDefinitions` loads all IDs from the set, then loads each definition individually. With hundreds of leaderboards per game service, this generates O(N) Redis calls.
 
 3. **No pagination for season index**: `GetSetAsync<int>` loads all season numbers into memory. Long-running seasonal leaderboards with many seasons could accumulate significant season index data.
 
 4. **Unused state store `leaderboard-season`**: The `state-stores.yaml` defines a `leaderboard-season` store (MySQL backend) for "Season history and archives", but the service doesn't use it. All season data is stored in the `leaderboard-definition` Redis store instead. Either the store should be removed from the schema, or the service should be updated to use it for proper season archival.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06:T21 dead config; remove unused store or implement season archival with MySQL persistence -->
 
 ---
 
@@ -269,5 +277,10 @@ Season Lifecycle
 ### Completed
 
 - **2026-01-31**: Fixed `archivePrevious` request parameter being ignored in `CreateSeasonAsync` - now uses per-request flag instead of global configuration. Removed orphaned `AutoArchiveOnSeasonEnd` configuration property (per-request control is sufficient).
-
-*Use `/audit-plugin leaderboard` to process remaining bugs and design considerations.*
+- **2026-03-06**: Production hardening pass — 10 definitive fixes applied:
+  - **T29**: Added typed `scoreType`/`ratingType` fields to schema and internal model; replaced `MetadataHelper` metadata bag reads with typed field access in `GetDefinitionForAnalyticsEventAsync`
+  - **T8**: Removed `accepted: true` filler boolean from `SubmitScoreResponse`
+  - **T5**: Added `x-lifecycle` to `leaderboard-events.yaml` for definition entity; lifecycle event publishing (created/updated/deleted) in `CreateLeaderboardDefinitionAsync`, `UpdateLeaderboardDefinitionAsync`, `DeleteLeaderboardDefinitionAsync`
+  - **T25**: Changed composite sorted set member keys from string-based `EntityType` to integer-based (`{(int)entityType}:{entityId}`) to eliminate `Enum.Parse`
+  - **Schema**: NRT compliance (nullable annotations), enum PascalCase defaults, validation constraints (`minLength`, `minimum`/`maximum`, `minItems`), `entryCount`/`percentile`/`rankChange` added to required arrays, configuration bounds
+  - 6 design decisions documented with `AUDIT:NEEDS_DESIGN` markers for later resolution

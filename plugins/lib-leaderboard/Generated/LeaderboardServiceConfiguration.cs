@@ -55,12 +55,14 @@ public class LeaderboardServiceConfiguration : BaseServiceConfiguration
     /// Maximum entries returned per rank query
     /// Environment variable: LEADERBOARD_MAX_ENTRIES_PER_QUERY
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MaxEntriesPerQuery { get; set; } = 1000;
 
     /// <summary>
     /// Maximum scores to process in a single batch
     /// Environment variable: LEADERBOARD_SCORE_UPDATE_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int ScoreUpdateBatchSize { get; set; } = 1000;
 
 }

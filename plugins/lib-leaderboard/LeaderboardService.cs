@@ -104,15 +104,16 @@ public partial class LeaderboardService : ILeaderboardService
     /// Format: entityType:entityId
     /// </summary>
     private static string GetMemberKey(EntityType entityType, Guid entityId)
-        => $"{entityType}:{entityId}";
+        => $"{(int)entityType}:{entityId}";
 
     /// <summary>
     /// Parses a member key back to entity type and ID.
+    /// Uses integer-based entity type for type safety per IMPLEMENTATION TENETS.
     /// </summary>
     private static (EntityType entityType, Guid entityId) ParseMemberKey(string member)
     {
         var parts = member.Split(':', 2);
-        var entityType = Enum.Parse<EntityType>(parts[0], ignoreCase: true);
+        var entityType = (EntityType)int.Parse(parts[0]);
         var entityId = Guid.Parse(parts[1]);
         return (entityType, entityId);
     }
@@ -148,6 +149,8 @@ public partial class LeaderboardService : ILeaderboardService
             UpdateMode = body.UpdateMode,
             IsSeasonal = body.IsSeasonal,
             IsPublic = body.IsPublic,
+            ScoreType = body.ScoreType,
+            RatingType = body.RatingType,
             CurrentSeason = body.IsSeasonal ? 1 : null,
             CreatedAt = now,
             Metadata = body.Metadata
@@ -166,6 +169,17 @@ public partial class LeaderboardService : ILeaderboardService
                 definition.CurrentSeason.Value,
                 cancellationToken: cancellationToken);
         }
+
+        await _messageBus.TryPublishAsync("leaderboard.definition.created", new LeaderboardDefinitionCreatedEvent
+        {
+            GameServiceId = definition.GameServiceId,
+            LeaderboardId = definition.LeaderboardId,
+            DisplayName = definition.DisplayName,
+            SortOrder = definition.SortOrder.ToString(),
+            UpdateMode = definition.UpdateMode.ToString(),
+            IsSeasonal = definition.IsSeasonal,
+            IsPublic = definition.IsPublic
+        }, cancellationToken: cancellationToken);
 
         return (StatusCodes.OK, MapToResponse(definition, 0));
     }
@@ -266,18 +280,32 @@ public partial class LeaderboardService : ILeaderboardService
             return (StatusCodes.NotFound, null);
         }
 
-        // Apply updates
+        // Apply updates and track changed fields
+        var changedFields = new List<string>();
         if (!string.IsNullOrEmpty(body.DisplayName))
         {
             definition.DisplayName = body.DisplayName;
+            changedFields.Add("displayName");
         }
         if (body.Description != null)
         {
             definition.Description = body.Description;
+            changedFields.Add("description");
         }
         if (body.IsPublic.HasValue)
         {
             definition.IsPublic = body.IsPublic.Value;
+            changedFields.Add("isPublic");
+        }
+        if (body.ScoreType != null)
+        {
+            definition.ScoreType = body.ScoreType;
+            changedFields.Add("scoreType");
+        }
+        if (body.RatingType != null)
+        {
+            definition.RatingType = body.RatingType;
+            changedFields.Add("ratingType");
         }
 
         // etag is non-null at this point; coalesce satisfies compiler nullable analysis
@@ -288,8 +316,19 @@ public partial class LeaderboardService : ILeaderboardService
             return (StatusCodes.Conflict, null);
         }
 
-        // Get entry count
+        await _messageBus.TryPublishAsync("leaderboard.definition.updated", new LeaderboardDefinitionUpdatedEvent
+        {
+            GameServiceId = definition.GameServiceId,
+            LeaderboardId = definition.LeaderboardId,
+            DisplayName = definition.DisplayName,
+            SortOrder = definition.SortOrder.ToString(),
+            UpdateMode = definition.UpdateMode.ToString(),
+            IsSeasonal = definition.IsSeasonal,
+            IsPublic = definition.IsPublic,
+            ChangedFields = changedFields
+        }, cancellationToken: cancellationToken);
 
+        // Get entry count
         var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
         var entryCount = await _rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
 
@@ -346,6 +385,17 @@ public partial class LeaderboardService : ILeaderboardService
             GetDefinitionIndexKey(body.GameServiceId),
             body.LeaderboardId,
             cancellationToken);
+
+        await _messageBus.TryPublishAsync("leaderboard.definition.deleted", new LeaderboardDefinitionDeletedEvent
+        {
+            GameServiceId = definition.GameServiceId,
+            LeaderboardId = definition.LeaderboardId,
+            DisplayName = definition.DisplayName,
+            SortOrder = definition.SortOrder.ToString(),
+            UpdateMode = definition.UpdateMode.ToString(),
+            IsSeasonal = definition.IsSeasonal,
+            IsPublic = definition.IsPublic
+        }, cancellationToken: cancellationToken);
 
         return StatusCodes.OK;
     }
@@ -441,7 +491,6 @@ public partial class LeaderboardService : ILeaderboardService
 
         return (StatusCodes.OK, new SubmitScoreResponse
         {
-            Accepted = true,
             PreviousScore = previousScore,
             CurrentScore = finalScore,
             PreviousRank = previousRank.HasValue ? prevRank : null,
@@ -867,6 +916,8 @@ public partial class LeaderboardService : ILeaderboardService
             UpdateMode = definition.UpdateMode,
             IsSeasonal = definition.IsSeasonal,
             IsPublic = definition.IsPublic,
+            ScoreType = definition.ScoreType,
+            RatingType = definition.RatingType,
             CurrentSeason = definition.CurrentSeason,
             EntryCount = entryCount,
             CreatedAt = definition.CreatedAt,

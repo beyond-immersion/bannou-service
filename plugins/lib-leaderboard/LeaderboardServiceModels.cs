@@ -46,6 +46,8 @@ internal class LeaderboardDefinitionData
     public bool IsSeasonal { get; set; }
     public bool IsPublic { get; set; }
     public int? CurrentSeason { get; set; }
+    public string? ScoreType { get; set; }
+    public string? RatingType { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public object? Metadata { get; set; }
 }

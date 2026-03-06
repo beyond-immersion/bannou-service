@@ -543,36 +543,6 @@ paths:
         '404':
           description: Template not found
 
-  /gardener/template/delete:
-    post:
-      summary: Delete scenario template
-      description: >-
-        Permanently deletes a scenario template. Template must be in Deprecated
-        status before deletion. Publishes a scenario-template.deleted lifecycle event.
-      operationId: deleteTemplate
-      tags:
-      - Template Management
-      x-permissions:
-      - role: developer
-        states: {}
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeleteTemplateRequest'
-      responses:
-        '200':
-          description: Template deleted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ScenarioTemplateResponse'
-        '404':
-          description: Template not found
-        '409':
-          description: Template is not in Deprecated status
-
   # =========================================================================
   # Deployment Phase (3 endpoints)
   # =========================================================================
@@ -1228,6 +1198,10 @@ components:
           $ref: '#/components/schemas/TemplateStatus'
           nullable: true
           description: Filter by template status
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated templates in results
         page:
           type: integer
           default: 1
@@ -1290,16 +1264,6 @@ components:
           type: string
           format: uuid
           description: Template ID to deprecate
-
-    DeleteTemplateRequest:
-      type: object
-      description: Request to permanently delete a deprecated template
-      required: [scenarioTemplateId]
-      properties:
-        scenarioTemplateId:
-          type: string
-          format: uuid
-          description: Template ID to delete
 
     GetPhaseConfigRequest:
       type: object
@@ -1389,11 +1353,7 @@ components:
     PositionUpdateResponse:
       type: object
       description: Response to a position update
-      required: [acknowledged]
       properties:
-        acknowledged:
-          type: boolean
-          description: Whether the position update was processed
         triggeredPois:
           type: array
           items:
@@ -1404,12 +1364,8 @@ components:
     LeaveGardenResponse:
       type: object
       description: Response after leaving the garden
-      required: [accountId, sessionDurationSeconds]
+      required: [sessionDurationSeconds]
       properties:
-        accountId:
-          type: string
-          format: uuid
-          description: Account that left the garden
         sessionDurationSeconds:
           type: number
           format: float
@@ -1433,12 +1389,8 @@ components:
     PoiInteractionResponse:
       type: object
       description: Result of interacting with a POI
-      required: [poiId, result]
+      required: [result]
       properties:
-        poiId:
-          type: string
-          format: uuid
-          description: POI that was interacted with
         result:
           $ref: '#/components/schemas/PoiInteractionResult'
           description: Interaction outcome
@@ -1461,15 +1413,7 @@ components:
     DeclinePoiResponse:
       type: object
       description: Response after declining a POI
-      required: [poiId, acknowledged]
-      properties:
-        poiId:
-          type: string
-          format: uuid
-          description: POI that was declined
-        acknowledged:
-          type: boolean
-          description: Whether the decline was processed
+      properties: {}
 
     ScenarioStateResponse:
       type: object
@@ -1511,12 +1455,8 @@ components:
     ScenarioCompletionResponse:
       type: object
       description: Response after completing a scenario
-      required: [scenarioInstanceId, growthAwarded, returnToGarden]
+      required: [growthAwarded, returnToGarden]
       properties:
-        scenarioInstanceId:
-          type: string
-          format: uuid
-          description: Completed scenario instance ID
         growthAwarded:
           type: object
           additionalProperties:
@@ -1530,12 +1470,8 @@ components:
     AbandonScenarioResponse:
       type: object
       description: Response after abandoning a scenario
-      required: [scenarioInstanceId, partialGrowthAwarded]
+      required: [partialGrowthAwarded]
       properties:
-        scenarioInstanceId:
-          type: string
-          format: uuid
-          description: Abandoned scenario instance ID
         partialGrowthAwarded:
           type: object
           additionalProperties:

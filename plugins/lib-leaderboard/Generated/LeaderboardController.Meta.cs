@@ -39,12 +39,14 @@ public partial class LeaderboardController
                 },
                 "leaderboardId": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 64,
                     "pattern": "^[a-z0-9_-]+$",
                     "description": "Unique identifier for this leaderboard (lowercase, no spaces)"
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 100,
                     "description": "Human-readable name for the leaderboard"
                 },
@@ -56,19 +58,20 @@ public partial class LeaderboardController
                 },
                 "entityTypes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "object"
                     },
-                    "description": "Which entity types can appear on this leaderboard"
+                    "description": "Which entity types can appear on this leaderboard (null allows all types)"
                 },
                 "sortOrder": {
                     "$ref": "#/$defs/SortOrder",
-                    "default": "descending",
+                    "default": "Descending",
                     "description": "Sort order (descending for high scores, ascending for times)"
                 },
                 "updateMode": {
                     "$ref": "#/$defs/UpdateMode",
-                    "default": "replace",
+                    "default": "Replace",
                     "description": "How to handle score updates"
                 },
                 "isSeasonal": {
@@ -80,6 +83,18 @@ public partial class LeaderboardController
                     "type": "boolean",
                     "default": true,
                     "description": "Whether the leaderboard is publicly visible"
+                },
+                "scoreType": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 128,
+                    "description": "Analytics score type that maps to this leaderboard for automatic score ingestion"
+                },
+                "ratingType": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 128,
+                    "description": "Analytics rating type that maps to this leaderboard for automatic rating ingestion"
                 },
                 "metadata": {
                     "type": "object",
@@ -128,7 +143,8 @@ public partial class LeaderboardController
                 "updateMode",
                 "isSeasonal",
                 "isPublic",
-                "createdAt"
+                "createdAt",
+                "entryCount"
             ],
             "properties": {
                 "gameServiceId": {
@@ -151,10 +167,11 @@ public partial class LeaderboardController
                 },
                 "entityTypes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "object"
                     },
-                    "description": "Allowed entity types"
+                    "description": "Allowed entity types (null if all types permitted)"
                 },
                 "sortOrder": {
                     "$ref": "#/$defs/SortOrder",
@@ -186,6 +203,16 @@ public partial class LeaderboardController
                     "type": "string",
                     "format": "date-time",
                     "description": "When the leaderboard was created"
+                },
+                "scoreType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Analytics score type mapped to this leaderboard"
+                },
+                "ratingType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Analytics rating type mapped to this leaderboard"
                 },
                 "metadata": {
                     "type": "object",
@@ -319,7 +346,8 @@ public partial class LeaderboardController
                 "updateMode",
                 "isSeasonal",
                 "isPublic",
-                "createdAt"
+                "createdAt",
+                "entryCount"
             ],
             "properties": {
                 "gameServiceId": {
@@ -342,10 +370,11 @@ public partial class LeaderboardController
                 },
                 "entityTypes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "object"
                     },
-                    "description": "Allowed entity types"
+                    "description": "Allowed entity types (null if all types permitted)"
                 },
                 "sortOrder": {
                     "$ref": "#/$defs/SortOrder",
@@ -377,6 +406,16 @@ public partial class LeaderboardController
                     "type": "string",
                     "format": "date-time",
                     "description": "When the leaderboard was created"
+                },
+                "scoreType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Analytics score type mapped to this leaderboard"
+                },
+                "ratingType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Analytics rating type mapped to this leaderboard"
                 },
                 "metadata": {
                     "type": "object",
@@ -527,7 +566,8 @@ public partial class LeaderboardController
                 "updateMode",
                 "isSeasonal",
                 "isPublic",
-                "createdAt"
+                "createdAt",
+                "entryCount"
             ],
             "properties": {
                 "gameServiceId": {
@@ -550,10 +590,11 @@ public partial class LeaderboardController
                 },
                 "entityTypes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "object"
                     },
-                    "description": "Allowed entity types"
+                    "description": "Allowed entity types (null if all types permitted)"
                 },
                 "sortOrder": {
                     "$ref": "#/$defs/SortOrder",
@@ -585,6 +626,16 @@ public partial class LeaderboardController
                     "type": "string",
                     "format": "date-time",
                     "description": "When the leaderboard was created"
+                },
+                "scoreType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Analytics score type mapped to this leaderboard"
+                },
+                "ratingType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Analytics rating type mapped to this leaderboard"
                 },
                 "metadata": {
                     "type": "object",
@@ -711,6 +762,18 @@ public partial class LeaderboardController
                     "type": "boolean",
                     "nullable": true,
                     "description": "New visibility setting"
+                },
+                "scoreType": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 128,
+                    "description": "New analytics score type mapping"
+                },
+                "ratingType": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 128,
+                    "description": "New analytics rating type mapping"
                 }
             }
         }
@@ -735,7 +798,8 @@ public partial class LeaderboardController
                 "updateMode",
                 "isSeasonal",
                 "isPublic",
-                "createdAt"
+                "createdAt",
+                "entryCount"
             ],
             "properties": {
                 "gameServiceId": {
@@ -758,10 +822,11 @@ public partial class LeaderboardController
                 },
                 "entityTypes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "object"
                     },
-                    "description": "Allowed entity types"
+                    "description": "Allowed entity types (null if all types permitted)"
                 },
                 "sortOrder": {
                     "$ref": "#/$defs/SortOrder",
@@ -793,6 +858,16 @@ public partial class LeaderboardController
                     "type": "string",
                     "format": "date-time",
                     "description": "When the leaderboard was created"
+                },
+                "scoreType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Analytics score type mapped to this leaderboard"
+                },
+                "ratingType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Analytics rating type mapped to this leaderboard"
                 },
                 "metadata": {
                     "type": "object",
@@ -1031,15 +1106,11 @@ public partial class LeaderboardController
             "description": "Response after score submission",
             "additionalProperties": false,
             "required": [
-                "accepted",
                 "currentScore",
-                "currentRank"
+                "currentRank",
+                "rankChange"
             ],
             "properties": {
-                "accepted": {
-                    "type": "boolean",
-                    "description": "Whether the score was accepted"
-                },
                 "previousScore": {
                     "type": "number",
                     "format": "double",
@@ -1158,8 +1229,9 @@ public partial class LeaderboardController
                     "items": {
                         "$ref": "#/$defs/BatchScoreEntry"
                     },
+                    "minItems": 1,
                     "maxItems": 1000,
-                    "description": "List of scores to submit (max 1000)"
+                    "description": "List of scores to submit (1-1000)"
                 }
             }
         },
@@ -1331,7 +1403,8 @@ public partial class LeaderboardController
                 "entityType",
                 "score",
                 "rank",
-                "totalEntries"
+                "totalEntries",
+                "percentile"
             ],
             "properties": {
                 "entityId": {
@@ -1451,12 +1524,14 @@ public partial class LeaderboardController
                 "count": {
                     "type": "integer",
                     "default": 100,
+                    "minimum": 1,
                     "maximum": 1000,
                     "description": "Number of entries to return"
                 },
                 "offset": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Number of entries to skip"
                 }
             }
@@ -1638,12 +1713,14 @@ public partial class LeaderboardController
                 "countBefore": {
                     "type": "integer",
                     "default": 5,
+                    "minimum": 0,
                     "maximum": 50,
                     "description": "Entries to show before the entity"
                 },
                 "countAfter": {
                     "type": "integer",
                     "default": 5,
+                    "minimum": 0,
                     "maximum": 50,
                     "description": "Entries to show after the entity"
                 }
@@ -1842,7 +1919,8 @@ public partial class LeaderboardController
                 "leaderboardId",
                 "seasonNumber",
                 "startedAt",
-                "isActive"
+                "isActive",
+                "entryCount"
             ],
             "properties": {
                 "leaderboardId": {
@@ -1987,7 +2065,8 @@ public partial class LeaderboardController
                 "leaderboardId",
                 "seasonNumber",
                 "startedAt",
-                "isActive"
+                "isActive",
+                "entryCount"
             ],
             "properties": {
                 "leaderboardId": {

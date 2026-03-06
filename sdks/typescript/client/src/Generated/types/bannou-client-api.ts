@@ -4550,26 +4550,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/gardener/template/delete': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Delete scenario template
-     * @description Permanently deletes a scenario template. Template must be in Deprecated status before deletion. Publishes a scenario-template.deleted lifecycle event.
-     */
-    post: operations['gardener_deleteTemplate'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/gardener/phase/get': {
     parameters: {
       query?: never;
@@ -10501,11 +10481,6 @@ export interface components {
     };
     /** @description Response after abandoning a scenario */
     AbandonScenarioResponse: {
-      /**
-       * Format: uuid
-       * @description Abandoned scenario instance ID
-       */
-      scenarioInstanceId: string;
       /** @description Partial growth awarded based on time spent */
       partialGrowthAwarded: {
         [key: string]: number;
@@ -15550,16 +15525,16 @@ export interface components {
       displayName: string;
       /** @description Description of what this leaderboard tracks */
       description?: string | null;
-      /** @description Which entity types can appear on this leaderboard */
-      entityTypes?: components['schemas']['EntityType'][];
+      /** @description Which entity types can appear on this leaderboard (null allows all types) */
+      entityTypes?: components['schemas']['EntityType'][] | null;
       /**
        * @description Sort order (descending for high scores, ascending for times)
-       * @default descending
+       * @default Descending
        */
       sortOrder: components['schemas']['SortOrder'];
       /**
        * @description How to handle score updates
-       * @default replace
+       * @default Replace
        */
       updateMode: components['schemas']['UpdateMode'];
       /**
@@ -15572,6 +15547,10 @@ export interface components {
        * @default true
        */
       isPublic: boolean;
+      /** @description Analytics score type that maps to this leaderboard for automatic score ingestion */
+      scoreType?: string | null;
+      /** @description Analytics rating type that maps to this leaderboard for automatic rating ingestion */
+      ratingType?: string | null;
       /** @description Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
@@ -16283,15 +16262,7 @@ export interface components {
       poiId: string;
     };
     /** @description Response after declining a POI */
-    DeclinePoiResponse: {
-      /**
-       * Format: uuid
-       * @description POI that was declined
-       */
-      poiId: string;
-      /** @description Whether the decline was processed */
-      acknowledged: boolean;
-    };
+    DeclinePoiResponse: Record<string, never>;
     /** @description Request to define a behavioral norm for a faction */
     DefineNormRequest: {
       /**
@@ -16591,14 +16562,6 @@ export interface components {
        * @description Storage freed in bytes
        */
       bytesFreed: number;
-    };
-    /** @description Request to permanently delete a deprecated template */
-    DeleteTemplateRequest: {
-      /**
-       * Format: uuid
-       * @description Template ID to delete
-       */
-      scenarioTemplateId: string;
     };
     /** @description Request to permanently delete a specific save version */
     DeleteVersionRequest: {
@@ -17248,7 +17211,7 @@ export interface components {
        * Format: double
        * @description Percentile ranking (0-100)
        */
-      percentile?: number;
+      percentile: number;
     };
     /** @description An entity required for the storyline */
     EntityRequirement: {
@@ -20748,8 +20711,8 @@ export interface components {
       displayName: string;
       /** @description Description of the leaderboard */
       description?: string | null;
-      /** @description Allowed entity types */
-      entityTypes?: components['schemas']['EntityType'][];
+      /** @description Allowed entity types (null if all types permitted) */
+      entityTypes?: components['schemas']['EntityType'][] | null;
       /** @description Ordering used when ranking scores (descending for high scores, ascending for low) */
       sortOrder: components['schemas']['SortOrder'];
       /** @description Rule applied when new scores are submitted (replace/increment/max/min) */
@@ -20764,12 +20727,16 @@ export interface components {
        * Format: int64
        * @description Number of entries on the leaderboard
        */
-      entryCount?: number;
+      entryCount: number;
       /**
        * Format: date-time
        * @description When the leaderboard was created
        */
       createdAt: string;
+      /** @description Analytics score type mapped to this leaderboard */
+      scoreType?: string | null;
+      /** @description Analytics rating type mapped to this leaderboard */
+      ratingType?: string | null;
       /** @description Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
@@ -20856,11 +20823,6 @@ export interface components {
     };
     /** @description Response after leaving the garden */
     LeaveGardenResponse: {
-      /**
-       * Format: uuid
-       * @description Account that left the garden
-       */
-      accountId: string;
       /**
        * Format: float
        * @description Total duration of the garden session in seconds
@@ -22172,6 +22134,11 @@ export interface components {
       deploymentPhase?: components['schemas']['DeploymentPhase'];
       /** @description Filter by template status */
       status?: components['schemas']['TemplateStatus'];
+      /**
+       * @description Whether to include deprecated templates in results
+       * @default false
+       */
+      includeDeprecated: boolean;
       /**
        * @description Page number (1-based)
        * @default 1
@@ -24009,11 +23976,6 @@ export interface components {
     PlayerRole: 'Player' | 'Spectator' | 'Moderator';
     /** @description Result of interacting with a POI */
     PoiInteractionResponse: {
-      /**
-       * Format: uuid
-       * @description POI that was interacted with
-       */
-      poiId: string;
       /** @description Interaction outcome */
       result: components['schemas']['PoiInteractionResult'];
       /**
@@ -24097,8 +24059,6 @@ export interface components {
     };
     /** @description Response to a position update */
     PositionUpdateResponse: {
-      /** @description Whether the position update was processed */
-      acknowledged: boolean;
       /** @description POIs triggered by proximity to the new position */
       triggeredPois?: components['schemas']['PoiSummary'][] | null;
     };
@@ -26436,11 +26396,6 @@ export interface components {
     };
     /** @description Response after completing a scenario */
     ScenarioCompletionResponse: {
-      /**
-       * Format: uuid
-       * @description Completed scenario instance ID
-       */
-      scenarioInstanceId: string;
       /** @description Growth awarded per domain */
       growthAwarded: {
         [key: string]: number;
@@ -27102,7 +27057,7 @@ export interface components {
        * Format: int64
        * @description Number of entries in this season
        */
-      entryCount?: number;
+      entryCount: number;
     };
     /** @description Per-season availability for a connection. Season codes must match the realm's Worldstate calendar template. */
     SeasonalAvailabilityEntry: {
@@ -29960,6 +29915,10 @@ export interface components {
       description?: string | null;
       /** @description New visibility setting */
       isPublic?: boolean | null;
+      /** @description New analytics score type mapping */
+      scoreType?: string | null;
+      /** @description New analytics rating type mapping */
+      ratingType?: string | null;
     };
     /** @description Request to update mutable fields of a license definition */
     UpdateLicenseDefinitionRequest: {
@@ -37913,44 +37872,6 @@ export interface operations {
       };
       /** @description Template not found */
       404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  gardener_deleteTemplate: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['DeleteTemplateRequest'];
-      };
-    };
-    responses: {
-      /** @description Template deleted */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ScenarioTemplateResponse'];
-        };
-      };
-      /** @description Template not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Template is not in Deprecated status */
-      409: {
         headers: {
           [name: string]: unknown;
         };

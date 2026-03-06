@@ -1301,6 +1301,12 @@ public partial class ListTemplatesRequest
     public TemplateStatus? Status { get; set; } = default!;
 
     /// <summary>
+    /// Whether to include deprecated templates in results
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
+    public bool IncludeDeprecated { get; set; } = false;
+
+    /// <summary>
     /// Page number (1-based)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
@@ -1412,35 +1418,6 @@ public partial class DeprecateTemplateRequest
 
     /// <summary>
     /// Template ID to deprecate
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scenarioTemplateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ScenarioTemplateId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Request to permanently delete a deprecated template
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DeleteTemplateRequest
-{
-
-    /// <summary>
-    /// Template ID to delete
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scenarioTemplateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1684,12 +1661,6 @@ public partial class PositionUpdateResponse
 {
 
     /// <summary>
-    /// Whether the position update was processed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("acknowledged")]
-    public bool Acknowledged { get; set; } = default!;
-
-    /// <summary>
     /// POIs triggered by proximity to the new position
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("triggeredPois")]
@@ -1715,14 +1686,6 @@ public partial class PositionUpdateResponse
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LeaveGardenResponse
 {
-
-    /// <summary>
-    /// Account that left the garden
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// Total duration of the garden session in seconds
@@ -1789,14 +1752,6 @@ public partial class PoiInteractionResponse
 {
 
     /// <summary>
-    /// POI that was interacted with
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("poiId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid PoiId { get; set; } = default!;
-
-    /// <summary>
     /// Interaction outcome
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("result")]
@@ -1843,20 +1798,6 @@ public partial class PoiInteractionResponse
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeclinePoiResponse
 {
-
-    /// <summary>
-    /// POI that was declined
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("poiId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid PoiId { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the decline was processed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("acknowledged")]
-    public bool Acknowledged { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1963,14 +1904,6 @@ public partial class ScenarioCompletionResponse
 {
 
     /// <summary>
-    /// Completed scenario instance ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scenarioInstanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ScenarioInstanceId { get; set; } = default!;
-
-    /// <summary>
     /// Growth awarded per domain
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("growthAwarded")]
@@ -2004,14 +1937,6 @@ public partial class ScenarioCompletionResponse
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AbandonScenarioResponse
 {
-
-    /// <summary>
-    /// Abandoned scenario instance ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scenarioInstanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ScenarioInstanceId { get; set; } = default!;
 
     /// <summary>
     /// Partial growth awarded based on time spent

@@ -19,10 +19,14 @@ x-service-configuration:
       type: integer
       description: Maximum entries returned per rank query
       default: 1000
+      minimum: 1
+      maximum: 10000
       env: LEADERBOARD_MAX_ENTRIES_PER_QUERY
     # Score Update Configuration
     ScoreUpdateBatchSize:
       type: integer
       description: Maximum scores to process in a single batch
       default: 1000
+      minimum: 1
+      maximum: 10000
       env: LEADERBOARD_SCORE_UPDATE_BATCH_SIZE
