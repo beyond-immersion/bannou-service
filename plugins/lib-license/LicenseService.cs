@@ -1614,7 +1614,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Check LP balance via currency client (owner-type-aware)
-        double? currentLp = null;
+        int? currentLp = null;
         bool? lpSufficient = null;
 
         // LP check is best-effort and advisory only.
@@ -1635,7 +1635,7 @@ public partial class LicenseService : ILicenseService
                 // Sum all balances as a simple LP approximation
                 // The contract template defines which specific currency to deduct
                 var totalBalance = walletResponse.Balances.Sum(b => b.Amount);
-                currentLp = totalBalance;
+                currentLp = (int)totalBalance;
                 lpSufficient = totalBalance >= definition.LpCost;
             }
             catch (Exception ex)

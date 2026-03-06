@@ -2,6 +2,10 @@ openapi: 3.0.4
 info:
   title: Mapping Service Events
   description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: mapping-events.yaml
+
     Event models for Mapping service RabbitMQ pub/sub via MassTransit.
 
     The Mapping service publishes events when map data changes.
@@ -24,48 +28,48 @@ info:
   x-event-subscriptions:
     # The mapping service dynamically subscribes to ingest topics per-channel.
     # This cannot be expressed statically - handled in MappingServiceEvents.cs
-    - topic: map.ingest.*
-      event: MapIngestEvent
-      description: Dynamic subscription per-channel for authority event publishing
+  - topic: map.ingest.*
+    event: MapIngestEvent
+    description: Dynamic subscription per-channel for authority event publishing
 
   x-event-publications:
     # Map channel lifecycle events (auto-generated from x-lifecycle)
-    - topic: mapping.channel.created
-      event: MappingChannelCreatedEvent
-      description: Published when a new map channel is created
-    - topic: mapping.channel.updated
-      event: MappingChannelUpdatedEvent
-      description: Published when a map channel is updated
-    - topic: mapping.channel.deleted
-      event: MappingChannelDeletedEvent
-      description: Published when a map channel is deleted
+  - topic: mapping.channel.created
+    event: MappingChannelCreatedEvent
+    description: Published when a new map channel is created
+  - topic: mapping.channel.updated
+    event: MappingChannelUpdatedEvent
+    description: Published when a map channel is updated
+  - topic: mapping.channel.deleted
+    event: MappingChannelDeletedEvent
+    description: Published when a map channel is deleted
 
     # Map data events (published dynamically per region/kind)
-    - topic: map.{regionId}.{kind}.updated
-      event: MapUpdatedEvent
-      description: Published when map data is updated
-    - topic: map.{regionId}.{kind}.snapshot
-      event: MapSnapshotEvent
-      description: Published when a full snapshot is available
-    - topic: map.{regionId}.{kind}.objects.changed
-      event: MapObjectsChangedEvent
-      description: Published when map objects are created/updated/deleted
+  - topic: map.{regionId}.{kind}.updated
+    event: MapUpdatedEvent
+    description: Published when map data is updated
+  - topic: map.{regionId}.{kind}.snapshot
+    event: MapSnapshotEvent
+    description: Published when a full snapshot is available
+  - topic: map.{regionId}.{kind}.objects.changed
+    event: MapObjectsChangedEvent
+    description: Published when map objects are created/updated/deleted
 
     # Warning events
-    - topic: map.warnings.unauthorized-publish
-      event: MapUnauthorizedPublishWarning
-      description: Published when non-authority attempts to publish
+  - topic: map.warnings.unauthorized-publish
+    event: MapUnauthorizedPublishWarning
+    description: Published when non-authority attempts to publish
 
     # Authority lifecycle events
-    - topic: mapping.authority.granted
-      event: MappingAuthorityGrantedEvent
-      description: Published when authority is granted over a channel
-    - topic: mapping.authority.released
-      event: MappingAuthorityReleasedEvent
-      description: Published when authority is explicitly released
-    - topic: mapping.authority.expired
-      event: MappingAuthorityExpiredEvent
-      description: Published when authority expires (detected during validation)
+  - topic: mapping.authority.granted
+    event: MappingAuthorityGrantedEvent
+    description: Published when authority is granted over a channel
+  - topic: mapping.authority.released
+    event: MappingAuthorityReleasedEvent
+    description: Published when authority is explicitly released
+  - topic: mapping.authority.expired
+    event: MappingAuthorityExpiredEvent
+    description: Published when authority expires (detected during validation)
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/mapping-lifecycle-events.yaml
@@ -73,16 +77,18 @@ x-lifecycle:
   topic_prefix: mapping
   MappingChannel:
     model:
-      channelId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the channel (region+kind)" }
-      regionId: { type: string, format: uuid, required: true, description: "Region this channel serves" }
-      kind: { $ref: 'mapping-api.yaml#/components/schemas/MapKind', required: true, description: "Map kind" }
-      authorityAppId: { type: string, nullable: true, description: "App ID of current authority (null if unassigned)" }
-      authorityToken: { type: string, nullable: true, description: "Current authority token (null if unassigned)" }
-      authorityExpiresAt: { type: string, format: date-time, nullable: true, description: "When current authority expires" }
-      nonAuthorityHandling: { $ref: 'mapping-api.yaml#/components/schemas/NonAuthorityHandlingMode', required: true, description: "How to handle non-authority publishes" }
-      version: { type: integer, format: int64, required: true, description: "Current version number" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the channel was created" }
-      updatedAt: { type: string, format: date-time, required: true, description: "When the channel was last updated" }
+      channelId: {type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the channel
+          (region+kind)"}
+      regionId: {type: string, format: uuid, required: true, description: "Region this channel serves"}
+      kind: {$ref: '#/components/schemas/MapKind', required: true, description: "Map kind"}
+      authorityAppId: {type: string, nullable: true, description: "App ID of current authority (null if unassigned)"}
+      authorityToken: {type: string, nullable: true, description: "Current authority token (null if unassigned)"}
+      authorityExpiresAt: {type: string, format: date-time, nullable: true, description: "When current authority expires"}
+      nonAuthorityHandling: {$ref: '../mapping-api.yaml#/components/schemas/NonAuthorityHandlingMode', required: true, 
+          description: "How to handle non-authority publishes"}
+      version: {type: integer, format: int64, required: true, description: "Current version number"}
+      createdAt: {type: string, format: date-time, required: true, description: "When the channel was created"}
+      updatedAt: {type: string, format: date-time, required: true, description: "When the channel was last updated"}
 
 paths: {}
 
@@ -97,9 +103,9 @@ components:
         lib-mapping validates authority and broadcasts to consumers.
         Published to: map.ingest.{channelId}
       required:
-        - authorityToken
-        - timestamp
-        - payloads
+      - authorityToken
+      - timestamp
+      - payloads
       properties:
         authorityToken:
           type: string
@@ -122,7 +128,7 @@ components:
       additionalProperties: false
       description: A single payload in an ingest event
       required:
-        - objectType
+      - objectType
       properties:
         objectId:
           type: string
@@ -136,16 +142,16 @@ components:
           description: Publisher-defined type
         action:
           allOf:
-          - $ref: 'mapping-api.yaml#/components/schemas/ObjectAction'
+          - $ref: '../mapping-api.yaml#/components/schemas/ObjectAction'
           description: Type of change (defaults to Updated if not specified)
         position:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          - $ref: '#/components/schemas/Position3D'
           description: Position for point objects
           nullable: true
         bounds:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Bounds'
+          - $ref: '#/components/schemas/Bounds'
           description: Bounding box for area objects
           nullable: true
         data:
@@ -162,10 +168,10 @@ components:
         Published when map layer data changes.
         Topic: map.{regionId}.{kind}.updated
       required:
-        - eventId
-        - timestamp
-        - regionId
-        - kind
+      - eventId
+      - timestamp
+      - regionId
+      - kind
       properties:
         eventId:
           type: string
@@ -180,7 +186,7 @@ components:
           format: uuid
           description: Region containing this map data
         kind:
-          $ref: 'mapping-api.yaml#/components/schemas/MapKind'
+          $ref: '#/components/schemas/MapKind'
           description: Map kind
         channelId:
           type: string
@@ -189,7 +195,7 @@ components:
           nullable: true
         bounds:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Bounds'
+          - $ref: '#/components/schemas/Bounds'
           description: Affected area (null means entire region)
           nullable: true
         version:
@@ -199,7 +205,7 @@ components:
           nullable: true
         deltaType:
           allOf:
-          - $ref: 'mapping-api.yaml#/components/schemas/DeltaType'
+          - $ref: '../mapping-api.yaml#/components/schemas/DeltaType'
           nullable: true
           description: Whether this is incremental or full
         sourceAppId:
@@ -225,11 +231,11 @@ components:
         Published when a full snapshot is available.
         Topic: map.{regionId}.{kind}.snapshot
       required:
-        - eventId
-        - timestamp
-        - regionId
-        - kind
-        - version
+      - eventId
+      - timestamp
+      - regionId
+      - kind
+      - version
       properties:
         eventId:
           type: string
@@ -244,7 +250,7 @@ components:
           format: uuid
           description: Region this snapshot covers
         kind:
-          $ref: 'mapping-api.yaml#/components/schemas/MapKind'
+          $ref: '#/components/schemas/MapKind'
           description: Map kind
         channelId:
           type: string
@@ -261,7 +267,7 @@ components:
           nullable: true
         bounds:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Bounds'
+          - $ref: '#/components/schemas/Bounds'
           description: Bounds of snapshot (null means full region)
           nullable: true
         payloadRef:
@@ -272,7 +278,7 @@ components:
         objects:
           type: array
           items:
-            $ref: 'mapping-api.yaml#/components/schemas/MapObject'
+            $ref: '#/components/schemas/MapObject'
           description: Inline objects (for small snapshots)
           nullable: true
 
@@ -283,11 +289,11 @@ components:
         Published when metadata objects change in a map.
         Topic: map.{regionId}.{kind}.objects.changed
       required:
-        - eventId
-        - timestamp
-        - regionId
-        - kind
-        - changes
+      - eventId
+      - timestamp
+      - regionId
+      - kind
+      - changes
       properties:
         eventId:
           type: string
@@ -302,7 +308,7 @@ components:
           format: uuid
           description: Region containing these objects
         kind:
-          $ref: 'mapping-api.yaml#/components/schemas/MapKind'
+          $ref: '#/components/schemas/MapKind'
           description: Map kind
         channelId:
           type: string
@@ -330,15 +336,15 @@ components:
       additionalProperties: false
       description: A single object change in an event
       required:
-        - objectId
-        - action
+      - objectId
+      - action
       properties:
         objectId:
           type: string
           format: uuid
           description: ID of the changed object
         action:
-          $ref: 'mapping-api.yaml#/components/schemas/ObjectAction'
+          $ref: '../mapping-api.yaml#/components/schemas/ObjectAction'
           description: Type of change
         objectType:
           type: string
@@ -347,12 +353,12 @@ components:
           nullable: true
         position:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          - $ref: '#/components/schemas/Position3D'
           description: Object position (for created/updated)
           nullable: true
         bounds:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Bounds'
+          - $ref: '#/components/schemas/Bounds'
           description: Object bounds (for created/updated)
           nullable: true
         data:
@@ -374,11 +380,11 @@ components:
         Published when a non-authority attempts to publish.
         Topic: map.warnings.unauthorized-publish
       required:
-        - eventId
-        - timestamp
-        - channelId
-        - attemptedPublisher
-        - handlingMode
+      - eventId
+      - timestamp
+      - channelId
+      - attemptedPublisher
+      - handlingMode
       properties:
         eventId:
           type: string
@@ -399,7 +405,7 @@ components:
           nullable: true
         kind:
           allOf:
-          - $ref: 'mapping-api.yaml#/components/schemas/MapKind'
+          - $ref: '#/components/schemas/MapKind'
           description: Map kind of the channel
           nullable: true
         attemptedPublisher:
@@ -413,7 +419,7 @@ components:
           description: App-id that currently has authority
           nullable: true
         handlingMode:
-          $ref: 'mapping-api.yaml#/components/schemas/NonAuthorityHandlingMode'
+          $ref: '../mapping-api.yaml#/components/schemas/NonAuthorityHandlingMode'
           description: How the attempt was handled
         publishAccepted:
           type: boolean
@@ -432,12 +438,12 @@ components:
         Published when authority is granted over a mapping channel.
         Topic: mapping.authority.granted
       required:
-        - eventId
-        - timestamp
-        - channelId
-        - regionId
-        - kind
-        - authorityAppId
+      - eventId
+      - timestamp
+      - channelId
+      - regionId
+      - kind
+      - authorityAppId
       properties:
         eventId:
           type: string
@@ -456,7 +462,7 @@ components:
           format: uuid
           description: Region of the channel
         kind:
-          $ref: 'mapping-api.yaml#/components/schemas/MapKind'
+          $ref: '#/components/schemas/MapKind'
           description: Map kind of the channel
         authorityAppId:
           type: string
@@ -478,10 +484,10 @@ components:
         Published when authority is explicitly released over a mapping channel.
         Topic: mapping.authority.released
       required:
-        - eventId
-        - timestamp
-        - channelId
-        - authorityAppId
+      - eventId
+      - timestamp
+      - channelId
+      - authorityAppId
       properties:
         eventId:
           type: string
@@ -502,7 +508,7 @@ components:
           nullable: true
         kind:
           allOf:
-          - $ref: 'mapping-api.yaml#/components/schemas/MapKind'
+          - $ref: '#/components/schemas/MapKind'
           description: Map kind of the channel
           nullable: true
         authorityAppId:
@@ -518,10 +524,10 @@ components:
         Published when authority expires (detected during validation).
         Topic: mapping.authority.expired
       required:
-        - eventId
-        - timestamp
-        - channelId
-        - expiredAt
+      - eventId
+      - timestamp
+      - channelId
+      - expiredAt
       properties:
         eventId:
           type: string
@@ -542,7 +548,7 @@ components:
           nullable: true
         kind:
           allOf:
-          - $ref: 'mapping-api.yaml#/components/schemas/MapKind'
+          - $ref: '#/components/schemas/MapKind'
           description: Map kind of the channel
           nullable: true
         expiredAuthorityAppId:
@@ -554,3 +560,130 @@ components:
           type: string
           format: date-time
           description: When the authority actually expired
+    Bounds:
+      type: object
+      additionalProperties: false
+      description: Axis-aligned bounding box as min/max Position3D corners in world coordinates (meters, Y-up, 
+        right-handed). Preferred for spatial queries and operations where corners are treated as points (e.g., mapping 
+        spatial indexing, affordance queries).
+      required:
+      - min
+      - max
+      properties:
+        min:
+          $ref: '#/components/schemas/Position3D'
+          description: Minimum corner (lowest x, y, z values)
+        max:
+          $ref: '#/components/schemas/Position3D'
+          description: Maximum corner (highest x, y, z values)
+
+    # ==========================================================================
+    # Archive Base Types
+    # ==========================================================================
+
+    MapKind:
+      type: string
+      description: The category of spatial data this map contains. Different kinds have different update frequencies, 
+        storage models, and TTLs.
+      enum:
+        # Static (rarely changes, durable)
+      - Terrain
+      - StaticGeometry
+      - Navigation
+        # Semi-static (changes on authoring, not runtime)
+      - Resources
+      - SpawnPoints
+      - PointsOfInterest
+        # Dynamic (changes at runtime, cached)
+      - DynamicObjects
+      - Hazards
+      - WeatherEffects
+      - Ownership
+        # Ephemeral (short-lived, high-frequency)
+      - CombatEffects
+      - VisualEffects
+
+    MapObject:
+      type: object
+      description: A stored map object with full metadata
+      additionalProperties: false
+      required:
+      - objectId
+      - regionId
+      - kind
+      - objectType
+      - version
+      - createdAt
+      - updatedAt
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: Unique identifier for this object
+        regionId:
+          type: string
+          format: uuid
+          description: Region this object belongs to
+        kind:
+          $ref: '#/components/schemas/MapKind'
+          description: Map kind this object is stored under
+        objectType:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Publisher-defined type
+        position:
+          $ref: '#/components/schemas/Position3D'
+          description: Position for point objects
+          nullable: true
+        bounds:
+          $ref: '#/components/schemas/Bounds'
+          description: Bounding box for area objects
+          nullable: true
+        data:
+          type: object
+          additionalProperties: true
+          description: >-
+            Game-specific spatial object data.
+            No Bannou plugin reads specific keys from this field by convention.
+          nullable: true
+        version:
+          type: integer
+          format: int64
+          description: Monotonic version for ordering
+        createdAt:
+          type: string
+          format: date-time
+          description: When the object was first created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the object was last updated
+
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: Position in world coordinates (meters, Y-up, right-handed)
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate in world space (meters)
+        y:
+          type: number
+          format: float
+          description: Y coordinate (up axis) in world space (meters)
+        z:
+          type: number
+          format: float
+          description: Z coordinate in world space (meters)
+
+x-inlined-types:
+- Bounds
+- MapKind
+- MapObject
+- Position3D

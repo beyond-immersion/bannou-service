@@ -21,17 +21,23 @@ x-service-configuration:
     # Authority Management
     AuthorityTimeoutSeconds:
       type: integer
+      minimum: 5
+      maximum: 3600
       description: Time in seconds before authority expires without heartbeat
       default: 60
       env: MAPPING_AUTHORITY_TIMEOUT_SECONDS
     AuthorityGracePeriodSeconds:
       type: integer
+      minimum: 0
+      maximum: 3600
       description: Grace period in seconds after missed heartbeat before authority released
       default: 30
       env: MAPPING_AUTHORITY_GRACE_PERIOD_SECONDS
     # Spatial Indexing
     DefaultSpatialCellSize:
       type: number
+      minimum: 1.0
+      maximum: 10000.0
       description: Size of spatial index cells in world units (default 64)
       default: 64.0
       env: MAPPING_SPATIAL_CELL_SIZE
@@ -39,11 +45,15 @@ x-service-configuration:
     # Query Limits
     MaxObjectsPerQuery:
       type: integer
+      minimum: 1
+      maximum: 100000
       description: Maximum objects returned in a single query
       default: 5000
       env: MAPPING_MAX_OBJECTS_PER_QUERY
     MaxPayloadsPerPublish:
       type: integer
+      minimum: 1
+      maximum: 10000
       description: Maximum payloads in single publish or ingest event
       default: 100
       env: MAPPING_MAX_PAYLOADS_PER_PUBLISH
@@ -51,23 +61,124 @@ x-service-configuration:
     # Affordance System
     AffordanceCacheTimeoutSeconds:
       type: integer
+      minimum: 0
+      maximum: 86400
       description: Default TTL for cached affordance query results
       default: 60
       env: MAPPING_AFFORDANCE_CACHE_TIMEOUT_SECONDS
     MaxAffordanceCandidates:
       type: integer
+      minimum: 1
+      maximum: 100000
       description: Maximum candidate points to evaluate in affordance queries
       default: 1000
       env: MAPPING_MAX_AFFORDANCE_CANDIDATES
     AffordanceExclusionToleranceUnits:
       type: number
+      minimum: 0.0
+      maximum: 1000.0
       description: Distance tolerance in world units for position exclusion matching in affordance queries
       default: 1.0
       env: MAPPING_AFFORDANCE_EXCLUSION_TOLERANCE_UNITS
 
+    # Affordance Scoring Weights
+    AffordanceBaseScore:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      description: Base score for all affordance evaluations before modifiers
+      default: 0.5
+      env: MAPPING_AFFORDANCE_BASE_SCORE
+    AffordanceCoverRatingWeight:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      description: Weight multiplier for cover_rating contribution to ambush/shelter/defensible scoring
+      default: 0.3
+      env: MAPPING_AFFORDANCE_COVER_RATING_WEIGHT
+    AffordanceElevationDivisor:
+      type: number
+      minimum: 1.0
+      maximum: 10000.0
+      description: Divisor for normalizing elevation values in vista/dramatic-reveal scoring
+      default: 100.0
+      env: MAPPING_AFFORDANCE_ELEVATION_DIVISOR
+    AffordanceElevationMaxContribution:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      description: Maximum score contribution from elevation in vista/dramatic-reveal scoring
+      default: 0.3
+      env: MAPPING_AFFORDANCE_ELEVATION_MAX_CONTRIBUTION
+    AffordanceSightlinesMultiplier:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      description: Per-sightline score multiplier for ambush/vista scoring
+      default: 0.05
+      env: MAPPING_AFFORDANCE_SIGHTLINES_MULTIPLIER
+    AffordanceSightlinesMaxContribution:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      description: Maximum score contribution from sightlines in ambush/vista scoring
+      default: 0.2
+      env: MAPPING_AFFORDANCE_SIGHTLINES_MAX_CONTRIBUTION
+    AffordanceSizeTinyMultiplier:
+      type: number
+      minimum: 0.0
+      maximum: 5.0
+      description: Score multiplier for tiny-sized actors in shelter/ambush scoring
+      default: 1.2
+      env: MAPPING_AFFORDANCE_SIZE_TINY_MULTIPLIER
+    AffordanceSizeSmallMultiplier:
+      type: number
+      minimum: 0.0
+      maximum: 5.0
+      description: Score multiplier for small-sized actors in shelter/ambush scoring
+      default: 1.1
+      env: MAPPING_AFFORDANCE_SIZE_SMALL_MULTIPLIER
+    AffordanceSizeMediumMultiplier:
+      type: number
+      minimum: 0.0
+      maximum: 5.0
+      description: Score multiplier for medium-sized actors in shelter/ambush scoring
+      default: 1.0
+      env: MAPPING_AFFORDANCE_SIZE_MEDIUM_MULTIPLIER
+    AffordanceSizeLargeMultiplier:
+      type: number
+      minimum: 0.0
+      maximum: 5.0
+      description: Score multiplier for large-sized actors in shelter/ambush scoring
+      default: 0.9
+      env: MAPPING_AFFORDANCE_SIZE_LARGE_MULTIPLIER
+    AffordanceSizeHugeMultiplier:
+      type: number
+      minimum: 0.0
+      maximum: 5.0
+      description: Score multiplier for huge-sized actors in shelter/ambush scoring
+      default: 0.8
+      env: MAPPING_AFFORDANCE_SIZE_HUGE_MULTIPLIER
+    AffordanceStealthRatingMultiplier:
+      type: number
+      minimum: 0.0
+      maximum: 5.0
+      description: Multiplier applied to actor stealth rating for ambush scoring boost
+      default: 0.2
+      env: MAPPING_AFFORDANCE_STEALTH_RATING_MULTIPLIER
+    AffordancePreferenceBoost:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      description: Score boost per matching preference key in custom affordance scoring
+      default: 0.1
+      env: MAPPING_AFFORDANCE_PREFERENCE_BOOST
+
     # Large Payload Handling
     InlinePayloadMaxBytes:
       type: integer
+      minimum: 1024
+      maximum: 10485760
       description: Payloads larger than this are stored via lib-asset reference
       default: 65536
       env: MAPPING_INLINE_PAYLOAD_MAX_BYTES
@@ -75,6 +186,8 @@ x-service-configuration:
     # Authoring
     MaxCheckoutDurationSeconds:
       type: integer
+      minimum: 60
+      maximum: 86400
       description: Maximum duration for authoring checkout locks
       default: 1800
       env: MAPPING_MAX_CHECKOUT_DURATION_SECONDS
@@ -82,6 +195,8 @@ x-service-configuration:
     # Layer Storage
     DefaultLayerCacheTtlSeconds:
       type: integer
+      minimum: 0
+      maximum: 604800
       description: Default TTL for cached layer data (ephemeral kinds)
       default: 3600
       env: MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS
@@ -89,11 +204,15 @@ x-service-configuration:
     # Event Aggregation
     EventAggregationWindowMs:
       type: integer
+      minimum: 0
+      maximum: 10000
       description: Window in milliseconds for batching rapid updates into single event (0 = disabled)
       default: 100
       env: MAPPING_EVENT_AGGREGATION_WINDOW_MS
     MaxBufferFlushRetries:
       type: integer
+      minimum: 0
+      maximum: 100
       description: Maximum retry attempts for flushing spatial change buffers before discarding changes
       default: 3
       env: MAPPING_MAX_BUFFER_FLUSH_RETRIES
@@ -101,61 +220,85 @@ x-service-configuration:
     # Per-Kind TTL Settings (in seconds, 0 = use default, -1 = no TTL)
     TtlTerrain:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for terrain layer data (-1 = no TTL, durable)
       default: -1
       env: MAPPING_TTL_TERRAIN
     TtlStaticGeometry:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for static geometry layer data (-1 = no TTL, durable)
       default: -1
       env: MAPPING_TTL_STATIC_GEOMETRY
     TtlNavigation:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for navigation layer data (-1 = no TTL, durable)
       default: -1
       env: MAPPING_TTL_NAVIGATION
     TtlResources:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for resources layer data
       default: 3600
       env: MAPPING_TTL_RESOURCES
     TtlSpawnPoints:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for spawn points layer data
       default: 3600
       env: MAPPING_TTL_SPAWN_POINTS
     TtlPointsOfInterest:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for points of interest layer data
       default: 3600
       env: MAPPING_TTL_POINTS_OF_INTEREST
     TtlDynamicObjects:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for dynamic objects layer data
       default: 3600
       env: MAPPING_TTL_DYNAMIC_OBJECTS
     TtlHazards:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for hazards layer data (short-lived)
       default: 300
       env: MAPPING_TTL_HAZARDS
     TtlWeatherEffects:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for weather effects layer data
       default: 600
       env: MAPPING_TTL_WEATHER_EFFECTS
     TtlOwnership:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for ownership layer data (-1 = no TTL, durable)
       default: -1
       env: MAPPING_TTL_OWNERSHIP
     TtlCombatEffects:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for combat effects layer data (very short-lived, ephemeral)
       default: 30
       env: MAPPING_TTL_COMBAT_EFFECTS
     TtlVisualEffects:
       type: integer
+      minimum: -1
+      maximum: 604800
       description: TTL for visual effects layer data (short-lived, ephemeral)
       default: 60
       env: MAPPING_TTL_VISUAL_EFFECTS
@@ -163,6 +306,8 @@ x-service-configuration:
     # Spatial Query Configuration
     MaxSpatialQueryResults:
       type: integer
+      minimum: 1
+      maximum: 100000
       description: Maximum results returned for spatial queries (bounding box, etc)
       default: 5
       env: MAPPING_MAX_SPATIAL_QUERY_RESULTS

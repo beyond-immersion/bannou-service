@@ -56,7 +56,7 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Authority released successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReleaseAuthorityResponse>> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Maintain authority over channel
@@ -213,7 +213,7 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Checkout released</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthoringReleaseResponse>> ReleaseAuthoringAsync(AuthoringReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ReleaseAuthoringAsync(AuthoringReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Create a map definition template
@@ -276,7 +276,7 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Definition deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteDefinitionResponse>> DeleteDefinitionAsync(DeleteDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteDefinitionAsync(DeleteDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -389,7 +389,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <returns>Authority released successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("mapping/release-authority")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReleaseAuthorityResponse>> ReleaseAuthority([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ReleaseAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ReleaseAuthority([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ReleaseAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
@@ -400,8 +400,8 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         try
         {
 
-            var (statusCode, result) = await _implementation.ReleaseAuthorityAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode, result);
+            var statusCode = await _implementation.ReleaseAuthorityAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
@@ -942,7 +942,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <returns>Checkout released</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("mapping/authoring/release")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthoringReleaseResponse>> ReleaseAuthoring([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AuthoringReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ReleaseAuthoring([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AuthoringReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
@@ -953,8 +953,8 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         try
         {
 
-            var (statusCode, result) = await _implementation.ReleaseAuthoringAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode, result);
+            var statusCode = await _implementation.ReleaseAuthoringAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
@@ -1185,7 +1185,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <returns>Definition deleted</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("mapping/definition/delete")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteDefinitionResponse>> DeleteDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
@@ -1196,8 +1196,8 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         try
         {
 
-            var (statusCode, result) = await _implementation.DeleteDefinitionAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode, result);
+            var statusCode = await _implementation.DeleteDefinitionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {

@@ -84,36 +84,38 @@ paths:
         ,\n                \"allowedOwnerTypes\"\n            ],\n            \"properties\": {\n                \"gameServiceId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Game service this board template belongs to\"\n                },\n                \"name\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Display name for the board template\"\
-        \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Human-readable description of this board template\"\
-        \n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n             \
-        \       \"minimum\": 1,\n                    \"maximum\": 50,\n                    \"description\": \"Width of the
-        board grid (columns)\"\n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"maximum\": 50,\n                    \"description\"\
-        : \"Height of the board grid (rows)\"\n                },\n                \"startingNodes\": {\n                \
-        \    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GridPosition\"\
-        \n                    },\n                    \"minItems\": 1,\n                    \"description\": \"Grid positions
-        where unlocking can begin without adjacency\"\n                },\n                \"boardContractTemplateId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Contract template that controls unlock behavior (LP deduction, ability grants)\"\n                },\n       \
-        \         \"adjacencyMode\": {\n                    \"allOf\": [\n                        {\n                    \
-        \        \"$ref\": \"#/$defs/AdjacencyMode\"\n                        }\n                    ],\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Grid traversal mode. Defaults to eight_way if not
-        specified.\"\n                },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"object\"\n                    },\n      \
-        \              \"minItems\": 1,\n                    \"description\": \"Owner types allowed to create boards from
-        this template. Each must map to a supported container owner type (e.g., character, account, location, guild).\"\n\
-        \                }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n  \
-        \          \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
-        \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
-        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
-        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
-        \n                }\n            }\n        },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Grid traversal adjacency mode for a board template.\\n- four_way: Orthogonal only
-        (up, down, left, right)\\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\"\
-        : [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n        }\n    }\n}"
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 200,\n                    \"description\": \"Display name for the board template\"\n                },\n       \
+        \         \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Human-readable description of this board template\"\n                },\n\
+        \                \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
+        \                    \"maximum\": 50,\n                    \"description\": \"Width of the board grid (columns)\"\n\
+        \                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n             \
+        \       \"minimum\": 1,\n                    \"maximum\": 50,\n                    \"description\": \"Height of the
+        board grid (rows)\"\n                },\n                \"startingNodes\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GridPosition\"\n                \
+        \    },\n                    \"minItems\": 1,\n                    \"description\": \"Grid positions where unlocking
+        can begin without adjacency\"\n                },\n                \"boardContractTemplateId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Contract
+        template that controls unlock behavior (LP deduction, ability grants)\"\n                },\n                \"adjacencyMode\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AdjacencyMode\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Grid traversal mode. Defaults to EightWay if not specified.\"\n                },\n         \
+        \       \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
+        \                     \"type\": \"object\"\n                    },\n                    \"minItems\": 1,\n       \
+        \             \"description\": \"Owner types allowed to create boards from this template. Each must map to a supported
+        container owner type (e.g., character, account, location, guild).\"\n                }\n            }\n        },\n\
+        \        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position on the
+        board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
+        \        \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Vertical grid
+        coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\n-
+        FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\n\"\
+        ,\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Board template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -149,13 +151,14 @@ paths:
         \    },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
         on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
         \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
-        adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
-        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n              \
-        \  \"EightWay\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Vertical grid
+        coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\n-
+        FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\n\"\
+        ,\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new board template\",\n    \"description\": \"Create a board template
         with grid dimensions, starting nodes, adjacency mode,\\nand a reference to the contract template that controls unlock
         behavior.\\nBoard templates are scoped to a game service.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n\
@@ -226,13 +229,14 @@ paths:
         \    },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
         on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
         \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
-        adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
-        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n              \
-        \  \"EightWay\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Vertical grid
+        coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\n-
+        FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\n\"\
+        ,\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a board template by ID\",\n    \"description\": \"Retrieves a board
         template by its unique identifier.\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getBoardTemplate\"\n}"
@@ -314,13 +318,14 @@ paths:
         \    }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"\
         A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
-        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
-        adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
-        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n              \
-        \  \"EightWay\"\n            ]\n        }\n    }\n}"
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                   \
+        \ \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\
+        n- FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\\
+        n\",\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n       \
+        \ }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List board templates for a game service\",\n    \"description\": \"Paginated
         list of board templates filtered by game service ID.\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"listBoardTemplates\"\n}"
@@ -402,13 +407,14 @@ paths:
         \    },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
         on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
         \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
-        adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
-        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n              \
-        \  \"EightWay\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Vertical grid
+        coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\n-
+        FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\n\"\
+        ,\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a board template\",\n    \"description\": \"Update mutable fields
         of a board template. Grid dimensions, starting nodes,\\nand contract template are immutable after creation.\\n\",\n\
         \    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateBoardTemplate\"\
@@ -484,13 +490,14 @@ paths:
         \    },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
         on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
         \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
-        adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
-        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n              \
-        \  \"EightWay\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Vertical grid
+        coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\n-
+        FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\n\"\
+        ,\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete a board template\",\n    \"description\": \"Delete a board template.
         Blocked if active board instances exist\\nthat reference this template.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteBoardTemplate\"\n}"
@@ -535,28 +542,29 @@ paths:
         \   \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"description\": \"Board template to add this definition
         to\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n               \
-        \     \"maxLength\": 64,\n                    \"description\": \"Unique license code within this board template\"\n\
-        \                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/GridPosition\",\n  \
-        \                  \"description\": \"Grid position for this license node\"\n                },\n                \"\
-        lpCost\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                   \
-        \ \"description\": \"License Point cost to unlock this node\"\n                },\n                \"itemTemplateId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Item template created when this license is unlocked\"\n                },\n                \"prerequisites\"\
-        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        License codes that must be unlocked before this one (non-adjacent requirements)\"\n                },\n          \
-        \      \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Human-readable description of what this license grants\"\n                },\n\
-        \                \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
-        \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific metadata
-        for this license node. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
-        \            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
-        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        \     \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Unique license
+        code within this board template\"\n                },\n                \"position\": {\n                    \"$ref\"\
+        : \"#/$defs/GridPosition\",\n                    \"description\": \"Grid position for this license node\"\n      \
+        \          },\n                \"lpCost\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"License Point cost to unlock this node\"\n                },\n      \
+        \          \"itemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Item template created when this license is unlocked\"\n                },\n\
+        \                \"prerequisites\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
+        : true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"License codes that must be unlocked before this one (non-adjacent requirements)\"\
+        \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Human-readable description of what this license
+        grants\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n       \
+        \             \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
+        : \"Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n \
+        \           \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
+        \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
+        minimum\": 0,\n                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n              \
+        \  },\n                \"y\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n           \
+        \ }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LicenseDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"LicenseDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"License definition with all fields\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -587,9 +595,10 @@ paths:
         object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
         \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
-        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
-        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
-        \n                }\n            }\n        }\n    }\n}"
+        minimum\": 0,\n                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n              \
+        \  },\n                \"y\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n           \
+        \ }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Add a license definition to a board template\",\n    \"description\": \"\
         Add a license definition (node) to a board template at a specific grid position.\\nEach definition has a unique code
         within the template, a grid position, an LP cost,\\nand a reference to the item template that is created when the
@@ -659,9 +668,10 @@ paths:
         object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
         \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
-        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
-        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
-        \n                }\n            }\n        }\n    }\n}"
+        minimum\": 0,\n                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n              \
+        \  },\n                \"y\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n           \
+        \ }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a license definition\",\n    \"description\": \"Get a license definition
         by board template ID and license code.\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getLicenseDefinition\"\n}"
@@ -735,9 +745,10 @@ paths:
         object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
         \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
-        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
-        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
-        \n                }\n            }\n        }\n    }\n}"
+        minimum\": 0,\n                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n              \
+        \  },\n                \"y\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n           \
+        \ }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all license definitions for a board template\",\n    \"description\"\
         : \"Returns the full grid layout of all license definitions for a board template.\",\n    \"tags\": [\n        \"\
         Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listLicenseDefinitions\"\n}"
@@ -816,9 +827,10 @@ paths:
         object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
         \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
-        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
-        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
-        \n                }\n            }\n        }\n    }\n}"
+        minimum\": 0,\n                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n              \
+        \  },\n                \"y\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n           \
+        \ }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a license definition\",\n    \"description\": \"Update mutable fields
         of a license definition. Position and code are immutable\\nafter creation.\\n\",\n    \"tags\": [\n        \"Definition\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateLicenseDefinition\"\n}"
@@ -889,9 +901,10 @@ paths:
         object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
         \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
-        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
-        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
-        \n                }\n            }\n        }\n    }\n}"
+        minimum\": 0,\n                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n              \
+        \  },\n                \"y\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n           \
+        \ }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Remove a license definition from a board template\",\n    \"description\"\
         : \"Remove a license definition from a board template. Blocked if any board\\ninstances have this license unlocked.\\\
         n\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"removeLicenseDefinition\"\
@@ -1214,10 +1227,10 @@ paths:
         \     }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\":
         \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
-        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                   \
+        \ \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Unlock a license on a board\",\n    \"description\": \"The core operation.
         Validates adjacency and prerequisites, creates a contract\\ninstance from the board template's contract template,
         executes the unlock\\nmilestone (LP deduction, ability grants via prebound APIs), then creates an\\nitem instance
@@ -1271,7 +1284,7 @@ paths:
         : \"Whether all non-adjacent prerequisites are unlocked\"\n                },\n                \"lpSufficient\": {\n\
         \                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Whether the owner has enough LP. Null if LP check is not applicable for this owner type.\"\n                },\n\
-        \                \"currentLp\": {\n                    \"type\": \"number\",\n                    \"nullable\": true,\n\
+        \                \"currentLp\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Current LP balance of the owner (null if balance check failed or not applicable)\"\
         \n                },\n                \"requiredLp\": {\n                    \"type\": \"integer\",\n            \
         \        \"description\": \"LP cost for this license\"\n                }\n            }\n        }\n    }\n}"
@@ -1359,13 +1372,14 @@ paths:
         \           \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
         \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
-        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
-        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
-        \n                }\n            }\n        },\n        \"LicenseStatus\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Unlock status of a license node on a board.\\n- locked: Not adjacent to any unlocked
-        node (cannot be unlocked)\\n- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\\n-
-        unlocked: Already unlocked (item placed at this position)\\n\",\n            \"enum\": [\n                \"Locked\"\
-        ,\n                \"Unlockable\",\n                \"Unlocked\"\n            ]\n        }\n    }\n}"
+        minimum\": 0,\n                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n              \
+        \  },\n                \"y\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n           \
+        \ }\n        },\n        \"LicenseStatus\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Unlock status of a license node on a board.\\n- Locked: Not adjacent to any unlocked node (cannot be unlocked)\\n-
+        Unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\\n- Unlocked: Already unlocked (item
+        placed at this position)\\n\",\n            \"enum\": [\n                \"Locked\",\n                \"Unlockable\"\
+        ,\n                \"Unlocked\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get full board state\",\n    \"description\": \"Get the full board state:
         all defined license positions with unlock status\\n(unlocked, locked, unlockable) and adjacency info. Primary endpoint
         for\\nclient UI rendering.\\n\",\n    \"tags\": [\n        \"Gameplay\"\n    ],\n    \"deprecated\": false,\n    \"\
@@ -1406,37 +1420,38 @@ paths:
         \            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"uuid\",\n                    \"description\": \"Board template to seed with definitions\"\
         \n                },\n                \"definitions\": {\n                    \"type\": \"array\",\n             \
-        \       \"items\": {\n                        \"$ref\": \"#/$defs/AddLicenseDefinitionRequest\"\n                \
-        \    },\n                    \"description\": \"License definitions to add (boardTemplateId in each is ignored, uses
-        top-level)\"\n                }\n            }\n        },\n        \"AddLicenseDefinitionRequest\": {\n         \
-        \   \"type\": \"object\",\n            \"description\": \"Request to add a license definition to a board template\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"boardTemplateId\"\
+        \       \"minItems\": 1,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AddLicenseDefinitionRequest\"\
+        \n                    },\n                    \"description\": \"License definitions to add (boardTemplateId in each
+        is ignored, uses top-level)\"\n                }\n            }\n        },\n        \"AddLicenseDefinitionRequest\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Request to add a license definition to a board
+        template\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"boardTemplateId\"\
         ,\n                \"code\",\n                \"position\",\n                \"lpCost\",\n                \"itemTemplateId\"\
         \n            ],\n            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Board template to
         add this definition to\"\n                },\n                \"code\": {\n                    \"type\": \"string\"\
-        ,\n                    \"maxLength\": 64,\n                    \"description\": \"Unique license code within this
-        board template\"\n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/GridPosition\"\
-        ,\n                    \"description\": \"Grid position for this license node\"\n                },\n            \
-        \    \"lpCost\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n            \
-        \        \"description\": \"License Point cost to unlock this node\"\n                },\n                \"itemTemplateId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Item template created when this license is unlocked\"\n                },\n                \"prerequisites\"\
-        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        License codes that must be unlocked before this one (non-adjacent requirements)\"\n                },\n          \
-        \      \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Human-readable description of what this license grants\"\n                },\n\
-        \                \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
-        \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific metadata
-        for this license node. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
-        \            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
-        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Unique license code within this board template\"\n                },\n                \"position\": {\n      \
+        \              \"$ref\": \"#/$defs/GridPosition\",\n                    \"description\": \"Grid position for this
+        license node\"\n                },\n                \"lpCost\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"minimum\": 0,\n                    \"description\": \"License Point cost to unlock this node\"\
+        \n                },\n                \"itemTemplateId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"Item template created when this license
+        is unlocked\"\n                },\n                \"prerequisites\": {\n                    \"type\": \"array\",\n\
+        \                    \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"License codes that must be unlocked before this one
+        (non-adjacent requirements)\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
+        of what this license grants\"\n                },\n                \"metadata\": {\n                    \"type\":
+        \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n      \
+        \              \"description\": \"Game-specific metadata for this license node. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                }\n            }\n        },\n        \"GridPosition\": {\n    \
+        \        \"type\": \"object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n  \
+        \          \"additionalProperties\": false,\n            \"required\": [\n                \"x\",\n               \
+        \ \"y\"\n            ],\n            \"properties\": {\n                \"x\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Horizontal grid coordinate
         (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        \               \"minimum\": 0,\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedBoardTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"SeedBoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of bulk seeding a board template\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1476,9 +1491,10 @@ paths:
         \            \"type\": \"object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n\
         \            \"additionalProperties\": false,\n            \"required\": [\n                \"x\",\n             \
         \   \"y\"\n            ],\n            \"properties\": {\n                \"x\": {\n                    \"type\":
-        \"integer\",\n                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n               \
-        \ },\n                \"y\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        }\n    }\n}"
+        \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"minimum\": 0,\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Bulk seed a board template with license definitions\",\n    \"description\"\
         : \"Bulk seed a board template with license definitions from a JSON payload.\\nTwo-pass: creates definitions, then
         resolves prerequisite references.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n\
@@ -1568,9 +1584,7 @@ paths:
         destroying their inventory containers and all contained license items.
         This endpoint is designed for internal service-to-service calls during
         cascading resource cleanup.
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1614,8 +1628,8 @@ components:
       type: string
       description: |
         Grid traversal adjacency mode for a board template.
-        - four_way: Orthogonal only (up, down, left, right)
-        - eight_way: Orthogonal + diagonal (all 8 surrounding cells)
+        - FourWay: Orthogonal only (up, down, left, right)
+        - EightWay: Orthogonal + diagonal (all 8 surrounding cells)
       enum:
       - FourWay
       - EightWay
@@ -1623,9 +1637,9 @@ components:
       type: string
       description: |
         Unlock status of a license node on a board.
-        - locked: Not adjacent to any unlocked node (cannot be unlocked)
-        - unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
-        - unlocked: Already unlocked (item placed at this position)
+        - Locked: Not adjacent to any unlocked node (cannot be unlocked)
+        - Unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
+        - Unlocked: Already unlocked (item placed at this position)
       enum:
       - Locked
       - Unlockable
@@ -1634,13 +1648,13 @@ components:
       type: string
       description: |
         Reason why a license unlock attempt failed.
-        - not_adjacent: No adjacent unlocked license and not a starting node
-        - insufficient_lp: Character does not have enough LP for the cost
-        - prerequisites_not_met: Required non-adjacent licenses are not unlocked
-        - contract_failed: Contract execution failed during unlock milestone
-        - already_unlocked: License is already unlocked on this board
-        - board_not_found: Board instance does not exist
-        - license_not_found: License definition does not exist on this board template
+        - NotAdjacent: No adjacent unlocked license and not a starting node
+        - InsufficientLp: Owner does not have enough LP for the cost
+        - PrerequisitesNotMet: Required non-adjacent licenses are not unlocked
+        - ContractFailed: Contract execution failed during unlock milestone
+        - AlreadyUnlocked: License is already unlocked on this board
+        - BoardNotFound: Board instance does not exist
+        - LicenseNotFound: License definition does not exist on this board template
       enum:
       - NotAdjacent
       - InsufficientLp
@@ -1659,9 +1673,11 @@ components:
       properties:
         x:
           type: integer
+          minimum: 0
           description: Horizontal grid coordinate (zero-indexed)
         y:
           type: integer
+          minimum: 0
           description: Vertical grid coordinate (zero-indexed)
     BoardNodeState:
       type: object
@@ -1730,6 +1746,8 @@ components:
           description: Game service this board template belongs to
         name:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Display name for the board template
         description:
           type: string
@@ -1759,7 +1777,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/AdjacencyMode'
           nullable: true
-          description: Grid traversal mode. Defaults to eight_way if not specified.
+          description: Grid traversal mode. Defaults to EightWay if not specified.
         allowedOwnerTypes:
           type: array
           items:
@@ -1941,6 +1959,7 @@ components:
           description: Board template to seed with definitions
         definitions:
           type: array
+          minItems: 1
           items:
             $ref: '#/components/schemas/AddLicenseDefinitionRequest'
           description: License definitions to add (boardTemplateId in each is ignored, uses top-level)
@@ -1982,6 +2001,7 @@ components:
           description: Board template to add this definition to
         code:
           type: string
+          minLength: 1
           maxLength: 64
           description: Unique license code within this board template
         position:
@@ -2372,7 +2392,7 @@ components:
           nullable: true
           description: Whether the owner has enough LP. Null if LP check is not applicable for this owner type.
         currentLp:
-          type: number
+          type: integer
           nullable: true
           description: Current LP balance of the owner (null if balance check failed or not applicable)
         requiredLp:

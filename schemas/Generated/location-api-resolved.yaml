@@ -1868,7 +1868,8 @@ components:
     BoundingBox3D:
       type: object
       additionalProperties: false
-      description: Axis-aligned bounding box in world coordinates (meters, Y-up, right-handed)
+      description: Axis-aligned bounding box as flat fields in world coordinates (meters, Y-up, right-handed). Preferred
+        for simple spatial containment checks where individual axis access is common (e.g., location bounds).
       required:
       - minX
       - minY
@@ -1901,10 +1902,6 @@ components:
           type: number
           format: float
           description: Maximum Z bound in world space
-
-    # ==========================================================================
-    # Archive Base Types
-    # ==========================================================================
 
     Position3D:
       type: object

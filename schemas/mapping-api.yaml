@@ -82,10 +82,6 @@ paths:
       responses:
         '200':
           description: Authority released successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReleaseAuthorityResponse'
         '403':
           description: Not the current authority
 
@@ -393,10 +389,6 @@ paths:
       responses:
         '200':
           description: Checkout released
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthoringReleaseResponse'
 
   /mapping/definition/create:
     post:
@@ -524,10 +516,6 @@ paths:
       responses:
         '200':
           description: Definition deleted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeleteDefinitionResponse'
         '404':
           description: Definition not found
         '409':
@@ -538,9 +526,7 @@ components:
     # ========== ENUMS ==========
     MapKind:
       type: string
-      description: |
-        The category of spatial data this map contains.
-        Different kinds have different update frequencies, storage models, and TTLs.
+      description: The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.
       enum:
         # Static (rarely changes, durable)
       - Terrain
@@ -570,9 +556,7 @@ components:
 
     AuthorityTakeoverMode:
       type: string
-      description: |
-        Policy for handling authority takeover when creating a channel that
-        already has expired authority. Controls what happens to existing data.
+      description: Policy for handling authority takeover when creating a channel that already has expired authority. Controls what happens to existing data.
       enum:
       - PreserveAndDiff
       - Reset
@@ -581,9 +565,7 @@ components:
 
     AffordanceType:
       type: string
-      description: |
-        Well-known affordance types with predefined scoring logic.
-        Use 'custom' for novel affordance definitions.
+      description: Well-known affordance types with predefined scoring logic. Use Custom for novel affordance definitions.
       enum:
       - Ambush
       - Shelter
@@ -631,49 +613,24 @@ components:
       - Updated
       - Deleted
 
-    # ========== SPATIAL PRIMITIVES ==========
-    Position3D:
-      type: object
-      description: A point in 3D space
-      required:
-      - x
-      - y
-      - z
-      properties:
-        x:
-          type: number
-          format: double
-          description: X coordinate (typically east-west)
-        y:
-          type: number
-          format: double
-          description: Y coordinate (typically up-down / elevation)
-        z:
-          type: number
-          format: double
-          description: Z coordinate (typically north-south)
+    StorageMode:
+      type: string
+      description: How layer data should be stored
+      enum:
+      - Durable
+      - Cached
+      - Ephemeral
+      default: Cached
 
-    Bounds:
-      type: object
-      description: An axis-aligned bounding box in 3D space
-      required:
-      - min
-      - max
-      properties:
-        min:
-          $ref: '#/components/schemas/Position3D'
-          description: Minimum corner (lowest x, y, z values)
-        max:
-          $ref: '#/components/schemas/Position3D'
-          description: Maximum corner (highest x, y, z values)
+    # ========== SPATIAL PRIMITIVES ==========
+    # Position3D and Bounds are defined in common-api.yaml
+    # All references below use $ref to common-api directly
 
     # ========== PAYLOAD TYPES ==========
     MapPayload:
       type: object
-      description: |
-        Schema-less payload. Only envelope fields are validated.
-        The 'data' field can contain ANYTHING the publisher wants.
-        lib-mapping does not validate contents - only publisher and consumer care.
+      description: Schema-less payload. Only envelope fields are validated. The data field can contain anything the publisher wants. lib-mapping does not validate contents.
+      additionalProperties: false
       required:
       - objectType
       properties:
@@ -681,15 +638,18 @@ components:
           type: string
           format: uuid
           description: Unique ID for this object (generated if not provided)
+          nullable: true
         objectType:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Publisher-defined type (used for indexing and filtering)
         position:
-          $ref: '#/components/schemas/Position3D'
+          $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Position for point objects
           nullable: true
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Bounds for area objects
           nullable: true
         data:
@@ -703,11 +663,13 @@ components:
     MapObject:
       type: object
       description: A stored map object with full metadata
+      additionalProperties: false
       required:
       - objectId
       - regionId
       - kind
       - objectType
+      - version
       - createdAt
       - updatedAt
       properties:
@@ -724,13 +686,15 @@ components:
           description: Map kind this object is stored under
         objectType:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Publisher-defined type
         position:
-          $ref: '#/components/schemas/Position3D'
+          $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Position for point objects
           nullable: true
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Bounding box for area objects
           nullable: true
         data:
@@ -756,6 +720,7 @@ components:
     ObjectChange:
       type: object
       description: A single change to a map object
+      additionalProperties: false
       required:
       - objectId
       - action
@@ -769,14 +734,16 @@ components:
           description: Type of change
         objectType:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Object type (required for created)
           nullable: true
         position:
-          $ref: '#/components/schemas/Position3D'
+          $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Object position (for create/update)
           nullable: true
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Object bounds (for create/update)
           nullable: true
         data:
@@ -791,6 +758,7 @@ components:
     AuthorityGrant:
       type: object
       description: Granted authority over a map channel
+      additionalProperties: false
       required:
       - channelId
       - authorityToken
@@ -805,9 +773,11 @@ components:
           description: The channel (region+kind) you have authority over
         authorityToken:
           type: string
+          minLength: 1
           description: Opaque token proving your authority (include in publishes)
         ingestTopic:
           type: string
+          minLength: 1
           description: Topic for direct lib-messaging publishes (map.ingest.{channelId})
         expiresAt:
           type: string
@@ -824,6 +794,7 @@ components:
     NonAuthorityAlertConfig:
       type: object
       description: Configuration for non-authority publish alerts
+      additionalProperties: false
       properties:
         enabled:
           type: boolean
@@ -831,6 +802,7 @@ components:
           description: Whether to emit warning events
         alertTopic:
           type: string
+          maxLength: 512
           description: Custom topic for warnings (default map.warnings.unauthorized-publish)
           nullable: true
         includePayloadSummary:
@@ -840,15 +812,15 @@ components:
 
     ActorCapabilities:
       type: object
-      description: |
-        Actor-specific capabilities that affect affordance evaluation.
-        Same location may afford different actions to different actor types.
+      description: Actor-specific capabilities that affect affordance evaluation. Same location may afford different actions to different actor types.
+      additionalProperties: false
       properties:
         size:
           $ref: '#/components/schemas/ActorSize'
           description: Affects cover requirements and passage width
         height:
           type: number
+          minimum: 0
           description: Actor height in meters (affects cover, sightlines)
           nullable: true
         canClimb:
@@ -865,10 +837,12 @@ components:
           description: Includes aerial positions
         perceptionRange:
           type: number
+          minimum: 0
           description: Affects sightline distance requirements
           nullable: true
         movementSpeed:
           type: number
+          minimum: 0
           description: Affects escape route viability calculations
           nullable: true
         stealthRating:
@@ -882,9 +856,11 @@ components:
     CustomAffordance:
       type: object
       description: Custom affordance definition for novel scenarios
+      additionalProperties: false
       properties:
         description:
           type: string
+          maxLength: 1024
           description: Human-readable description of this affordance
           nullable: true
         requires:
@@ -913,6 +889,7 @@ components:
     CreateChannelRequest:
       type: object
       description: Request to create a new map channel
+      additionalProperties: false
       required:
       - regionId
       - kind
@@ -920,6 +897,8 @@ components:
       properties:
         sourceAppId:
           type: string
+          minLength: 1
+          maxLength: 256
           description: App-id of the caller taking authority (used for event metadata)
         regionId:
           type: string
@@ -933,11 +912,7 @@ components:
           description: How to handle non-authority publishes
         takeoverMode:
           $ref: '#/components/schemas/AuthorityTakeoverMode'
-          description: |
-            Policy for authority takeover when channel exists with expired authority.
-            preserve_and_diff (default): Keep existing data, new authority sends updates.
-            reset: Clear all channel data before new authority takes over.
-            require_consume: New authority must call RequestSnapshot before publishing.
+          description: Policy for authority takeover when channel exists with expired authority
         alertConfig:
           $ref: '#/components/schemas/NonAuthorityAlertConfig'
           description: Configuration for non-authority publish alerts
@@ -952,6 +927,7 @@ components:
     ReleaseAuthorityRequest:
       type: object
       description: Request to release authority over a channel
+      additionalProperties: false
       required:
       - channelId
       - authorityToken
@@ -962,19 +938,13 @@ components:
           description: Channel to release
         authorityToken:
           type: string
+          minLength: 1
           description: Current authority token
-
-    ReleaseAuthorityResponse:
-      type: object
-      description: Response to authority release
-      properties:
-        released:
-          type: boolean
-          description: Whether authority was successfully released
 
     AuthorityHeartbeatRequest:
       type: object
       description: Request to maintain authority
+      additionalProperties: false
       required:
       - channelId
       - authorityToken
@@ -985,28 +955,31 @@ components:
           description: Channel to heartbeat
         authorityToken:
           type: string
+          minLength: 1
           description: Current authority token
 
     AuthorityHeartbeatResponse:
       type: object
       description: Response to authority heartbeat
+      additionalProperties: false
+      required:
+      - expiresAt
       properties:
-        valid:
-          type: boolean
-          description: Whether your authority is still valid
         expiresAt:
           type: string
           format: date-time
           description: Updated expiration time
         warning:
           type: string
-          description: Optional warning (e.g., "authority expiring soon")
+          maxLength: 512
+          description: Optional warning (e.g., authority expiring soon, increase heartbeat frequency)
           nullable: true
 
     # ========== RUNTIME REQUEST/RESPONSE ==========
     PublishMapUpdateRequest:
       type: object
       description: Request to publish map data update
+      additionalProperties: false
       required:
       - channelId
       - authorityToken
@@ -1018,13 +991,15 @@ components:
           description: Channel to publish to
         authorityToken:
           type: string
+          minLength: 1
           description: Authority token for validation
         sourceAppId:
           type: string
+          maxLength: 256
           description: App-id of caller (for warnings on non-authority attempts)
           nullable: true
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Affected area (null means entire region)
           nullable: true
         deltaType:
@@ -1035,28 +1010,31 @@ components:
           description: The payload to publish
         payloadAssetRef:
           type: string
+          maxLength: 1024
           description: For large payloads, lib-asset reference instead of inline
           nullable: true
 
     PublishMapUpdateResponse:
       type: object
       description: Response to publish request
+      additionalProperties: false
+      required:
+      - version
       properties:
-        accepted:
-          type: boolean
-          description: Whether the update was accepted
         version:
           type: integer
           format: int64
           description: Assigned version number
         warning:
           type: string
+          maxLength: 512
           description: Optional warning message
           nullable: true
 
     PublishObjectChangesRequest:
       type: object
       description: Request to publish object changes (batch)
+      additionalProperties: false
       required:
       - channelId
       - authorityToken
@@ -1068,13 +1046,16 @@ components:
           description: Channel to publish to
         authorityToken:
           type: string
+          minLength: 1
           description: Authority token for validation
         sourceAppId:
           type: string
+          maxLength: 256
           description: App-id of caller (for warnings on non-authority attempts)
           nullable: true
         changes:
           type: array
+          minItems: 1
           maxItems: 100
           items:
             $ref: '#/components/schemas/ObjectChange'
@@ -1083,15 +1064,19 @@ components:
     PublishObjectChangesResponse:
       type: object
       description: Response to object changes publish
+      additionalProperties: false
+      required:
+      - acceptedCount
+      - rejectedCount
+      - version
       properties:
-        accepted:
-          type: boolean
-          description: Whether the changes were accepted
         acceptedCount:
           type: integer
+          minimum: 0
           description: Number of changes accepted
         rejectedCount:
           type: integer
+          minimum: 0
           description: Number of changes rejected
         version:
           type: integer
@@ -1099,12 +1084,14 @@ components:
           description: Assigned version number
         warning:
           type: string
+          maxLength: 512
           description: Optional warning message
           nullable: true
 
     RequestSnapshotRequest:
       type: object
       description: Request for full snapshot
+      additionalProperties: false
       required:
       - regionId
       properties:
@@ -1119,24 +1106,23 @@ components:
           description: Which kinds to include (default all)
           nullable: true
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Optional bounds filter
           nullable: true
         authorityToken:
           type: string
-          description: |
-            Optional authority token. If provided and valid, clears the
-            RequiresConsumeBeforePublish flag for require_consume takeover mode.
+          minLength: 1
+          description: Optional authority token to clear RequiresConsumeBeforePublish flag for require_consume takeover mode
           nullable: true
 
     RequestSnapshotResponse:
       type: object
       description: Snapshot response
+      additionalProperties: false
+      required:
+      - objects
+      - version
       properties:
-        regionId:
-          type: string
-          format: uuid
-          description: Region ID
         objects:
           type: array
           items:
@@ -1144,7 +1130,8 @@ components:
           description: All objects in snapshot
         payloadRef:
           type: string
-          description: For large snapshots, lib-asset reference
+          maxLength: 1024
+          description: For large snapshots, lib-asset reference (objects will be empty when this is set)
           nullable: true
         version:
           type: integer
@@ -1155,6 +1142,7 @@ components:
     QueryPointRequest:
       type: object
       description: Query map data at a point
+      additionalProperties: false
       required:
       - regionId
       - position
@@ -1164,7 +1152,7 @@ components:
           format: uuid
           description: Region to query
         position:
-          $ref: '#/components/schemas/Position3D'
+          $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Point to query at
         kinds:
           type: array
@@ -1174,29 +1162,27 @@ components:
           nullable: true
         radius:
           type: number
+          minimum: 0
           description: Include objects within this radius
           nullable: true
 
     QueryPointResponse:
       type: object
       description: Point query results
+      additionalProperties: false
+      required:
+      - objects
       properties:
         objects:
           type: array
           items:
             $ref: '#/components/schemas/MapObject'
           description: Objects at/near the point
-        position:
-          $ref: '#/components/schemas/Position3D'
-          description: Queried position
-        radius:
-          type: number
-          description: Applied radius filter
-          nullable: true
 
     QueryBoundsRequest:
       type: object
       description: Query map data within bounds
+      additionalProperties: false
       required:
       - regionId
       - bounds
@@ -1206,7 +1192,7 @@ components:
           format: uuid
           description: Region to query
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Bounding box to query
         kinds:
           type: array
@@ -1216,6 +1202,7 @@ components:
           nullable: true
         maxObjects:
           type: integer
+          minimum: 1
           default: 500
           maximum: 5000
           description: Maximum objects to return
@@ -1223,22 +1210,24 @@ components:
     QueryBoundsResponse:
       type: object
       description: Bounds query results
+      additionalProperties: false
+      required:
+      - objects
+      - truncated
       properties:
         objects:
           type: array
           items:
             $ref: '#/components/schemas/MapObject'
           description: Objects within bounds
-        bounds:
-          $ref: '#/components/schemas/Bounds'
-          description: Queried bounds
         truncated:
           type: boolean
-          description: Whether results were truncated
+          description: Whether results were truncated by maxObjects limit
 
     QueryObjectsByTypeRequest:
       type: object
       description: Query objects by type
+      additionalProperties: false
       required:
       - regionId
       - objectType
@@ -1249,13 +1238,16 @@ components:
           description: Region to query
         objectType:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Object type to filter by
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Optional bounds filter
           nullable: true
         maxObjects:
           type: integer
+          minimum: 1
           default: 500
           maximum: 5000
           description: Maximum objects to return
@@ -1263,23 +1255,25 @@ components:
     QueryObjectsByTypeResponse:
       type: object
       description: Object type query results
+      additionalProperties: false
+      required:
+      - objects
+      - truncated
       properties:
         objects:
           type: array
           items:
             $ref: '#/components/schemas/MapObject'
           description: Matching objects
-        objectType:
-          type: string
-          description: Queried object type
         truncated:
           type: boolean
-          description: Whether results were truncated
+          description: Whether results were truncated by maxObjects limit
 
     # ========== AFFORDANCE REQUEST/RESPONSE ==========
     AffordanceQueryRequest:
       type: object
       description: Query for locations that afford a specific action
+      additionalProperties: false
       required:
       - regionId
       - affordanceType
@@ -1293,14 +1287,15 @@ components:
           description: Type of affordance to search for
         customAffordance:
           $ref: '#/components/schemas/CustomAffordance'
-          description: Custom affordance definition (when affordanceType=custom)
+          description: Custom affordance definition (when affordanceType=Custom)
           nullable: true
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Optional bounds to search within
           nullable: true
         maxResults:
           type: integer
+          minimum: 1
           default: 10
           maximum: 100
           description: Maximum locations to return
@@ -1312,13 +1307,14 @@ components:
           description: Minimum affordance score to include
         participantCount:
           type: integer
+          minimum: 1
           description: Expected participants (affects space requirements)
           nullable: true
         excludePositions:
           type: array
           items:
-            $ref: '#/components/schemas/Position3D'
-          description: Positions to exclude (e.g., player's current location)
+            $ref: 'common-api.yaml#/components/schemas/Position3D'
+          description: Positions to exclude (e.g., player current location)
           nullable: true
         actorCapabilities:
           $ref: '#/components/schemas/ActorCapabilities'
@@ -1331,18 +1327,22 @@ components:
           type: integer
           minimum: 0
           maximum: 3600
-          description: Max age of cached results (for cached/aggressive_cache)
+          description: Max age of cached results (for Cached/AggressiveCache)
           nullable: true
 
     AffordanceLocation:
       type: object
       description: A location that affords the requested action
+      additionalProperties: false
+      required:
+      - position
+      - score
       properties:
         position:
-          $ref: '#/components/schemas/Position3D'
+          $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Location position
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Area bounds if affordance spans an area
           nullable: true
         score:
@@ -1365,47 +1365,24 @@ components:
           description: Map objects contributing to this affordance
           nullable: true
 
-    AffordanceQueryMetadata:
-      type: object
-      description: Metadata about the affordance query execution
-      properties:
-        kindsSearched:
-          type: array
-          items:
-            type: string
-          description: Map kinds that were queried
-          nullable: true
-        objectsEvaluated:
-          type: integer
-          description: Number of candidate objects evaluated
-        candidatesGenerated:
-          type: integer
-          description: Number of candidate positions generated
-        searchDurationMs:
-          type: integer
-          description: Query execution time in milliseconds
-        cacheHit:
-          type: boolean
-          description: Whether results came from cache
-
     AffordanceQueryResponse:
       type: object
       description: Affordance query results
+      additionalProperties: false
+      required:
+      - locations
       properties:
         locations:
           type: array
           items:
             $ref: '#/components/schemas/AffordanceLocation'
           description: Scored locations (highest score first)
-        queryMetadata:
-          $ref: '#/components/schemas/AffordanceQueryMetadata'
-          description: Metadata about query execution (optional)
-          nullable: true
 
     # ========== AUTHORING REQUEST/RESPONSE ==========
     AuthoringCheckoutRequest:
       type: object
       description: Request to checkout for authoring
+      additionalProperties: false
       required:
       - regionId
       - kind
@@ -1420,11 +1397,14 @@ components:
           description: Map kind to checkout
         editorId:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Identifier for the editor/user
 
     AuthoringCheckoutResponse:
       type: object
       description: Checkout response
+      additionalProperties: false
       properties:
         authorityToken:
           type: string
@@ -1448,6 +1428,7 @@ components:
     AuthoringCommitRequest:
       type: object
       description: Request to commit authoring changes
+      additionalProperties: false
       required:
       - regionId
       - kind
@@ -1462,25 +1443,30 @@ components:
           description: Map kind being edited
         authorityToken:
           type: string
+          minLength: 1
           description: Checkout authority token
         commitMessage:
           type: string
+          maxLength: 1024
           description: Optional commit message for history
           nullable: true
 
     AuthoringCommitResponse:
       type: object
       description: Commit response
+      additionalProperties: false
+      required:
+      - version
       properties:
         version:
           type: integer
           format: int64
           description: Committed version number
-          nullable: true
 
     AuthoringReleaseRequest:
       type: object
       description: Request to release authoring checkout
+      additionalProperties: false
       required:
       - regionId
       - kind
@@ -1495,20 +1481,14 @@ components:
           description: Map kind being edited
         authorityToken:
           type: string
+          minLength: 1
           description: Checkout authority token
-
-    AuthoringReleaseResponse:
-      type: object
-      description: Release response
-      properties:
-        released:
-          type: boolean
-          description: Whether checkout was released
 
     # ========== MAP DEFINITION MODELS ==========
     MapDefinition:
       type: object
       description: A map definition template that describes the structure of a region
+      additionalProperties: false
       required:
       - definitionId
       - name
@@ -1520,9 +1500,12 @@ components:
           description: Unique identifier for this definition
         name:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Human-readable name
         description:
           type: string
+          maxLength: 2048
           description: Description of the map template
           nullable: true
         layers:
@@ -1532,7 +1515,7 @@ components:
           description: Layer configurations for this map
           nullable: true
         defaultBounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Default bounds for regions using this definition
           nullable: true
         metadata:
@@ -1555,6 +1538,7 @@ components:
     LayerDefinition:
       type: object
       description: Configuration for a specific layer within a map definition
+      additionalProperties: false
       required:
       - kind
       properties:
@@ -1562,13 +1546,12 @@ components:
           $ref: '#/components/schemas/MapKind'
           description: The layer kind
         storageMode:
-          type: string
-          enum: [Durable, Cached, Ephemeral]
-          default: Cached
+          $ref: '#/components/schemas/StorageMode'
           description: How this layer's data should be stored
         ttlSeconds:
           type: integer
-          description: TTL for cached/ephemeral data (0 = no TTL)
+          minimum: 0
+          description: TTL for cached/ephemeral data (0 = use default from config)
           nullable: true
         defaultNonAuthorityHandling:
           $ref: '#/components/schemas/NonAuthorityHandlingMode'
@@ -1576,20 +1559,25 @@ components:
         cellSize:
           type: number
           format: double
+          minimum: 1
           description: Spatial cell size for indexing (default from config if not set)
           nullable: true
 
     CreateDefinitionRequest:
       type: object
       description: Request to create a map definition
+      additionalProperties: false
       required:
       - name
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Human-readable name
         description:
           type: string
+          maxLength: 2048
           description: Description of the map template
           nullable: true
         layers:
@@ -1599,7 +1587,7 @@ components:
           description: Layer configurations
           nullable: true
         defaultBounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Default bounds for regions using this definition
           nullable: true
         metadata:
@@ -1613,6 +1601,7 @@ components:
     GetDefinitionRequest:
       type: object
       description: Request to get a map definition
+      additionalProperties: false
       required:
       - definitionId
       properties:
@@ -1624,23 +1613,32 @@ components:
     ListDefinitionsRequest:
       type: object
       description: Request to list map definitions
+      additionalProperties: false
       properties:
         nameFilter:
           type: string
+          maxLength: 256
           description: Filter by name (partial match)
           nullable: true
         offset:
           type: integer
+          minimum: 0
           default: 0
           description: Pagination offset
         limit:
           type: integer
+          minimum: 1
+          maximum: 200
           default: 50
           description: Max results to return
 
     ListDefinitionsResponse:
       type: object
       description: Response containing list of map definitions
+      additionalProperties: false
+      required:
+      - definitions
+      - total
       properties:
         definitions:
           type: array
@@ -1649,17 +1647,13 @@ components:
           description: List of definitions
         total:
           type: integer
+          minimum: 0
           description: Total count matching filter
-        offset:
-          type: integer
-          description: Current offset
-        limit:
-          type: integer
-          description: Results limit used
 
     UpdateDefinitionRequest:
       type: object
       description: Request to update a map definition
+      additionalProperties: false
       required:
       - definitionId
       properties:
@@ -1669,10 +1663,13 @@ components:
           description: Definition ID to update
         name:
           type: string
+          minLength: 1
+          maxLength: 256
           description: New name (optional)
           nullable: true
         description:
           type: string
+          maxLength: 2048
           description: New description (optional)
           nullable: true
         layers:
@@ -1682,7 +1679,7 @@ components:
           description: New layer configurations (replaces existing)
           nullable: true
         defaultBounds:
-          $ref: '#/components/schemas/Bounds'
+          $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: New default bounds
           nullable: true
         metadata:
@@ -1696,6 +1693,7 @@ components:
     DeleteDefinitionRequest:
       type: object
       description: Request to delete a map definition
+      additionalProperties: false
       required:
       - definitionId
       properties:
@@ -1703,11 +1701,3 @@ components:
           type: string
           format: uuid
           description: Definition ID to delete
-
-    DeleteDefinitionResponse:
-      type: object
-      description: Response to delete request
-      properties:
-        deleted:
-          type: boolean
-          description: Whether the definition was deleted

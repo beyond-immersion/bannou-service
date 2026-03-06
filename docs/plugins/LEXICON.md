@@ -77,15 +77,18 @@ An entry is anything that can be known about. Entries are not limited to physica
 
 ```
 LexiconEntry:
-  entryCode:       string        # Unique identifier (opaque string, not enum)
+  entryCode:       string        # Unique identifier (opaque string, not enum — Category B per T14 test 1)
   gameServiceId:   Guid          # Scope to a specific game service
   displayKey:      string        # Localization key for display name
   categoryCode:    string        # Primary category this entry belongs to
   entryType:       string        # "species", "object", "material", "phenomenon",
-                                 # "individual", "behavior", "concept" (opaque, extensible)
-  sourceType:      string?       # Optional: cross-reference to source service entity type
-  sourceId:        string?       # Optional: cross-reference to source service entity ID
+                                 # "individual", "behavior", "concept" (opaque, extensible — Category B per T14 test 1)
+  sourceType:      string?       # Optional: cross-reference to source service entity type (see DC#1)
+  sourceId:        string?       # Optional: cross-reference to source service entity ID (see DC#2)
   discoveryLevels: int           # How many progressive tiers of information exist (1-10)
+  isDeprecated:    bool          # Category A deprecation (T31): entry codes stored by Collection, Hearsay, Disposition
+  deprecatedAt:    DateTime?     # When deprecation occurred (null if not deprecated)
+  deprecationReason: string?     # Why deprecated (mandatory for Category A)
   createdAt:       DateTime
 ```
 
@@ -224,11 +227,18 @@ LexiconStrategy:
   gameServiceId:   Guid
   displayKey:      string
   appliesTo:       string        # Trait code or category code this strategy counters
-  appliesToType:   string        # "trait" or "category"
+  appliesToType:   AppliesToType  # Trait or Category (service-specific enum)
   effectiveness:   float         # 0.0-1.0 base effectiveness
-  preconditions:   object?       # What the actor needs for this strategy to be viable
-                                 # e.g., {"requires_nearby": "climbable_surface"}
+  preconditions:   StrategyPrecondition[]?  # Typed preconditions (FOUNDATION TENETS: no metadata bags)
   discoveryTier:   int           # At what discovery level of the target this strategy is known
+
+AppliesToType:
+  enum: [Trait, Category]        # Service-specific enum (PascalCase)
+
+StrategyPrecondition:
+  preconditionType:  string      # "requires_nearby", "requires_capability", "requires_item" (opaque, extensible)
+  targetCode:        string      # What is required (e.g., "climbable_surface", "combat_skill")
+  description:       string?     # Optional human-readable description
 ```
 
 **Inheritance through categories**: Strategies attached to a category apply to all entries in that category and its descendants:
@@ -237,23 +247,27 @@ LexiconStrategy:
 strategies:
   - strategyCode: "kill"
     appliesTo: "animal"
-    appliesToType: "category"
+    appliesToType: Category
     effectiveness: 0.8
-    preconditions: {"requires": "combat_capability"}
+    preconditions:
+      - preconditionType: "requires_capability"
+        targetCode: "combat_capability"
     discoveryTier: 1         # You know you can fight animals immediately
 
   - strategyCode: "make_loud_noise"
     appliesTo: "noise_averse"
-    appliesToType: "trait"
+    appliesToType: Trait
     effectiveness: 0.6
     preconditions: null       # No equipment needed
     discoveryTier: 2         # Takes some experience to learn
 
   - strategyCode: "climb_to_escape"
     appliesTo: "ground_bound"
-    appliesToType: "trait"
+    appliesToType: Trait
     effectiveness: 0.9
-    preconditions: {"requires_nearby": "climbable_surface"}
+    preconditions:
+      - preconditionType: "requires_nearby"
+        targetCode: "climbable_surface"
     discoveryTier: 3         # Requires understanding of the creature's limitations
 ```
 
@@ -720,12 +734,7 @@ The system doesn't distinguish between honest teaching and lies at the transmiss
 | lib-state (`IDistributedLockProvider`) | Distributed locks for entry mutations and bulk seeding operations |
 | lib-messaging (`IMessageBus`) | Publishing entry change events, trait update events, association events, error event publication |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1). Lexicon entries that cross-reference game entities register references. |
-
-### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
-
-| Dependency | Usage | Behavior When Missing |
-|------------|-------|-----------------------|
-| lib-collection (`ICollectionClient`) | Querying discovery levels to gate variable provider output | All Lexicon data returned ungated (full knowledge). Discovery-based filtering requires Collection. |
+| lib-collection (`ICollectionClient`) | Querying discovery levels to gate variable provider output (L2). Collection is a hard dependency per SERVICE-HIERARCHY: L4 requires all L2 services running. |
 
 ---
 
@@ -791,17 +800,22 @@ The system doesn't distinguish between honest teaching and lies at the transmiss
 
 ### Published Events
 
+**Lifecycle events** (entry, category, strategy) MUST use `x-lifecycle` with `topic_prefix: lexicon` in `lexicon-events.yaml` for auto-generation per SCHEMA-RULES. Custom events (trait.added/removed, association.created/deleted, category.reparented) remain manually defined.
+
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `lexicon.entry.created` | `LexiconEntryCreatedEvent` | New entry registered. Includes entry code, type, category. |
-| `lexicon.entry.updated` | `LexiconEntryUpdatedEvent` | Entry metadata changed (category reassignment, display key update). |
-| `lexicon.entry.deleted` | `LexiconEntryDeletedEvent` | Entry removed. Cascades: associated traits, associations, and strategy links removed. |
+| `lexicon.entry.created` | `LexiconEntryCreatedEvent` | (x-lifecycle) New entry registered. Includes entry code, type, category. |
+| `lexicon.entry.updated` | `LexiconEntryUpdatedEvent` | (x-lifecycle) Entry metadata changed, category reassignment, or deprecation state changed. |
+| `lexicon.entry.deleted` | `LexiconEntryDeletedEvent` | (x-lifecycle) Entry removed after deprecation. Cascades: associated traits, associations, and strategy links removed. |
 | `lexicon.trait.added` | `LexiconTraitAddedEvent` | Trait assigned to an entry. Includes scope information. |
 | `lexicon.trait.removed` | `LexiconTraitRemovedEvent` | Trait removed from an entry. |
 | `lexicon.association.created` | `LexiconAssociationCreatedEvent` | Association created between two entries. Includes type, strength in both directions. |
 | `lexicon.association.deleted` | `LexiconAssociationDeletedEvent` | Association removed. |
 | `lexicon.strategy.created` | `LexiconStrategyCreatedEvent` | New strategy defined. |
+| `lexicon.strategy.deleted` | `LexiconStrategyDeletedEvent` | Strategy removed. |
 | `lexicon.category.created` | `LexiconCategoryCreatedEvent` | New category added to taxonomy. |
+| `lexicon.category.updated` | `LexiconCategoryUpdatedEvent` | Category metadata changed (display key) or deprecation state changed. |
+| `lexicon.category.deleted` | `LexiconCategoryDeletedEvent` | Category removed (requires deprecation first). Entries reassigned to parent category. |
 | `lexicon.category.reparented` | `LexiconCategoryReparentedEvent` | Category moved in hierarchy. Triggers trait inheritance recalculation for all entries in the subtree. |
 
 ### Consumed Events
@@ -812,9 +826,15 @@ The system doesn't distinguish between honest teaching and lies at the transmiss
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
+**Lexicon as dependent** (cleans up when upstream resources are deleted):
+
 | Target Resource | Source Type | On Delete | Cleanup Endpoint |
 |----------------|-------------|-----------|-----------------|
 | game-service | lexicon | CASCADE | `/lexicon/cleanup-by-game-service` |
+
+**Lexicon entries as resources** (other services register references to entry codes via lib-resource):
+
+Lexicon entries are referenced persistently by Collection (L2, discovery levels), Hearsay (L4, beliefs), Disposition (L4, feelings), and Obligation (L4, cost modifiers). Per T28, these dependent services must declare `x-references` targeting `lexicon-entry` resource type and implement cleanup callbacks via `ISeededResourceProvider`. The `DeleteEntry` flow calls `ExecuteCleanupAsync` via lib-resource before deletion to trigger these callbacks.
 
 ---
 
@@ -845,13 +865,14 @@ The system doesn't distinguish between honest teaching and lies at the transmiss
 | `IEventConsumer` | Collection discovery advancement event subscription |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 | `IResourceClient` | Reference tracking, cleanup callbacks (L1) |
-| `IServiceProvider` | Runtime resolution of soft L4 dependency (Collection) |
+| `ICollectionClient` | Collection discovery level queries for variable provider gating (L2, hard dependency) |
+| `ITelemetryProvider` | Telemetry span creation for async method instrumentation (L0) |
 
 ---
 
 ## API Endpoints (Implementation Notes)
 
-### Entry Management (6 endpoints)
+### Entry Management (9 endpoints)
 
 - **CreateEntry** (`/lexicon/entry/create`): Registers a new concept in the ontology. Validates category exists. Validates entry code uniqueness within game service scope. If `sourceType` and `sourceId` are provided, registers a reference with lib-resource. Publishes `entry.created` event.
 
@@ -859,9 +880,13 @@ The system doesn't distinguish between honest teaching and lies at the transmiss
 
 - **UpdateEntry** (`/lexicon/entry/update`): Updates entry metadata (display key, category reassignment, discovery levels). Category reassignment triggers trait inheritance recalculation. Acquires distributed lock.
 
-- **DeleteEntry** (`/lexicon/entry/delete`): Removes entry and cascades: removes all direct traits, all associations, all strategy links. Does NOT remove category-scoped traits (those belong to the category, not the entry). Publishes `entry.deleted` event. Executes resource cleanup if source reference exists.
+- **DeprecateEntry** (`/lexicon/entry/deprecate`): Category A deprecation (T31). Sets `isDeprecated`, `deprecatedAt`, `deprecationReason`. Idempotent: returns OK if already deprecated. Publishes `entry.updated` event with `changedFields` containing deprecation fields. Deprecated entries are excluded from query results by default and rejected when referenced by new associations or traits.
 
-- **QueryEntries** (`/lexicon/entry/query`): Paginated query. Filters by game service, entry type, category (with optional descendant inclusion), trait presence, and association presence. Supports text search on entry codes and display keys.
+- **UndeprecateEntry** (`/lexicon/entry/undeprecate`): Reverses deprecation (Category A allows undeprecation). Idempotent: returns OK if not deprecated.
+
+- **DeleteEntry** (`/lexicon/entry/delete`): Requires `isDeprecated == true` (rejects with BadRequest otherwise). Removes entry and cascades: removes all direct traits, all associations, all strategy links. Does NOT remove category-scoped traits (those belong to the category, not the entry). Calls `ExecuteCleanupAsync` via lib-resource to trigger dependent service cleanup (Collection, Hearsay, Disposition). Publishes `entry.deleted` event. Executes resource cleanup if source reference exists.
+
+- **QueryEntries** (`/lexicon/entry/query`): Paginated query. Filters by game service, entry type, category (with optional descendant inclusion), trait presence, and association presence. Supports text search on entry codes and display keys. Supports `includeDeprecated` parameter (default: false).
 
 - **QueryByTraits** (`/lexicon/entry/query-by-traits`): Reverse trait lookup: "What entries have these traits?" Accepts a list of trait codes and returns entries matching all (AND) or any (OR) of them, ranked by match percentage. This is the "I see something with four legs, fur, and long teeth -- what could it be?" query.
 
@@ -895,11 +920,11 @@ The system doesn't distinguish between honest teaching and lies at the transmiss
 
 ### Strategy Management (3 endpoints)
 
-- **CreateStrategy** (`/lexicon/strategy/create`): Defines a new countermeasure strategy. Links it to a trait code or category code with an effectiveness rating and optional preconditions. Publishes `strategy.created` event.
+- **CreateStrategy** (`/lexicon/strategy/create`): Defines a new countermeasure strategy. Links it to a trait code or category code (via `AppliesToType` enum) with an effectiveness rating and optional typed preconditions (`StrategyPrecondition[]`). Publishes `strategy.created` event.
 
 - **QueryStrategies** (`/lexicon/strategy/query`): Returns strategies applicable to an entry. Computes from the entry's traits and category chain -- strategies attached to any trait the entry has (directly or inherited) or any category in its ancestor chain. Sorted by effectiveness descending.
 
-- **DeleteStrategy** (`/lexicon/strategy/delete`): Removes a strategy definition.
+- **DeleteStrategy** (`/lexicon/strategy/delete`): Removes a strategy definition. Publishes `strategy.deleted` event.
 
 ### Seeding (2 endpoints)
 
@@ -1258,7 +1283,7 @@ Hearsay (I've HEARD wolves breathe fire)─┘
 
 4. **Associations are always bidirectional in storage but asymmetric in strength**: Creating wolf ↔ witch association stores one record with two strength values. Querying from wolf's perspective returns the witch with strengthA. Querying from witch's perspective returns the wolf with strengthB. The strengths may differ dramatically (wolf→witch: 0.3, witch→wolf: 1.0).
 
-5. **Discovery gating is optional**: When Collection is unavailable (disabled or not integrated), the Lexicon variable provider returns ungated data (all tiers visible). Discovery-based progressive reveal requires Collection, but Lexicon functions as a complete knowledge base without it.
+5. **Discovery gating is always active**: Collection (L2) is a hard dependency. The variable provider always gates Lexicon output by the character's Collection discovery level. Characters with no discovery record for an entry see no data for that entry.
 
 6. **Strategies do not dictate behavior**: Lexicon strategies are INFORMATION, not commands. They tell GOAP "climbing is 90% effective against ground-bound creatures" but GOAP still decides based on personality, drive urgency, available resources, and current world state. A brave character may choose to fight despite climbing being more effective. A character with no climbing skill may not be able to execute the strategy at all.
 
@@ -1270,6 +1295,14 @@ Hearsay (I've HEARD wolves breathe fire)─┘
 
 10. **Bulk seeding is idempotent**: Re-seeding with the same data does not create duplicates. Existing entries are updated, new entries are created. This supports iterative world-building during development.
 
+11. **Traits and strategies do not have deprecation**: Per T31 decision tree, traits are sub-entity components of entries (no persistent external references) and strategies are not referenced by ID in other services' persistent storage. Both use immediate delete. If Obligation later stores strategy codes persistently, strategies should be revisited for Category A deprecation.
+
+12. **No client events**: Lexicon is internal-only, never internet-facing. All data reaches clients through the Actor variable provider, not direct WebSocket push. No `lexicon-client-events.yaml` is needed.
+
+13. **All endpoints use `x-permissions: []`**: Service-to-service only. No endpoint is reachable via WebSocket. Consistent with other internal-only L4 services (Seed, Collection, Transit).
+
+14. **Manifest cache invalidation is event-driven**: Manifest cache entries in Redis are invalidated by subscribing to Lexicon's own published events (entry/trait/category/strategy mutations). This ensures cross-node cache consistency in multi-instance deployments -- a mutation on Node A invalidates caches on Node B via the broadcast event.
+
 ### Design Considerations (Requires Planning)
 
 1. **Scale of the knowledge graph**: A rich game world could have thousands of entries with dozens of traits each. The manifest computation (traversing category chains, collecting inherited traits, computing applicable strategies) must be efficient. The caching strategy (pre-computed manifests in Redis) mitigates this, but invalidation patterns need careful design -- a category reparent could invalidate hundreds of manifests.
@@ -1278,7 +1311,7 @@ Hearsay (I've HEARD wolves breathe fire)─┘
 
 3. **Discovery advancement triggers**: Collection's `AdvanceDiscovery` tracks THAT discovery advanced, but WHAT triggers advancement needs coordination. Options: direct observation (seeing a wolf), study (examining a wolf corpse), teaching (another character explains wolves), reading (finding a bestiary entry). Each trigger type might advance discovery differently. The exact trigger mechanisms need design.
 
-4. **Strategy precondition evaluation**: Strategy preconditions like `{"requires_nearby": "climbable_surface"}` need to be evaluated against the current world state. The Lexicon variable provider can report strategies, but evaluating preconditions requires querying Mapping or environment state. The boundary between "Lexicon reports strategy viability" and "Actor evaluates strategy preconditions" needs clarification.
+4. **Strategy precondition evaluation**: Strategy preconditions are now typed (`StrategyPrecondition[]` with `preconditionType` + `targetCode`), but evaluating them against the current world state still requires querying Mapping or environment state. The Lexicon variable provider can report strategies and their preconditions, but the boundary between "Lexicon reports strategy viability" and "Actor evaluates strategy preconditions" needs clarification.
 
 5. **Hearsay belief overlay**: The variable provider needs to composite Lexicon ground truth with Hearsay beliefs. When a character believes wolves breathe fire (Hearsay) but Lexicon says they don't, should the provider return the Hearsay version (what the character believes) or the Lexicon version (what's actually true)? Probably the Hearsay version for behavior (characters act on beliefs) with a separate "ground truth" query for game master/god-level queries. This needs design.
 
@@ -1293,6 +1326,24 @@ Hearsay (I've HEARD wolves breathe fire)─┘
 10. **Inference confidence decay**: Hypothesized traits inherited through associations have computed confidence values (association_strength * trait_confidence). But what happens when the source knowledge is itself a hypothesis? If Kael HYPOTHESIZES that steel is malleable (confidence 0.8, inferred from iron), and then INFERS that damascus steel is also malleable (confidence 0.8 * 0.7 = 0.56, inferred from steel), confidence degrades through the chain. The maximum inference chain length and confidence floor need design to prevent NPCs from generating low-confidence hypotheses about distantly related entries.
 
 11. **Hearsay-Lexicon provider composition order**: The variable provider composites Lexicon ground truth, Collection discovery gating, and Hearsay beliefs. The composition order matters: should confirmed Lexicon traits override contradicting Hearsay beliefs, or should Hearsay override Lexicon (because characters act on beliefs, not truth)? The current proposal says Hearsay overrides for behavior and Lexicon provides ground truth for god-level queries, but this means the `${lexicon.*}` namespace might return subjectively wrong data. The alternative is separate namespaces: `${lexicon.*}` for ground truth and `${knowledge.*}` for the composited character perspective. This needs design.
+
+12. **`sourceType` typing**: Should `sourceType` on entries be `EntityType` enum (if all valid values are Bannou entity types — T14 test 4), a Lexicon-specific enum (if non-entity source types like "phenomenon" or "concept" exist), or remain an opaque string (if the set is truly open-ended and game-configurable)? The answer depends on whether entries can cross-reference non-entity concepts. If all source references are to L2 entities (Species, Item, Location), `EntityType` is correct per T14. If non-entity sources exist, a Lexicon-specific enum or opaque string is needed.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06: sourceType typing — T14 test 4 vs non-entity sources -->
+
+13. **`sourceId` typing**: Should `sourceId` be `Guid?` (per T25 — Bannou entity IDs are always GUIDs) or `string?` (if some source references use non-GUID identifiers like Lexicon entry codes)? If all source references are to Guid-identified Bannou entities, `sourceId` must be `Guid?` per T25. If cross-referencing Lexicon entries by code is a valid use case, `string?` is needed with a T25 exception comment.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06: sourceId typing — depends on sourceType resolution -->
+
+14. **`metadata: object?` on LexiconAssociation**: T29 prohibits metadata bags as cross-service data contracts, but is ambiguous on same-service metadata where the service itself reads keys. Options: (a) remove the field entirely and model any type-specific data as explicit schema fields, (b) keep as client-only pass-through with required T29 description, (c) define typed variants per association type code. Decision depends on whether Lexicon's own code (variable provider) needs to inspect association metadata keys.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06: association metadata — T29 same-service ambiguity -->
+
+15. **Category deprecation**: T31's decision tree asks about "OTHER services/entities" storing the entity's ID. Category codes are stored by entries and traits within Lexicon itself, but no external service stores category codes persistently. This makes the T31 test ambiguous for categories. Options: (a) Category A deprecation (treating entries as "other entities" relative to categories), (b) no deprecation with "must be empty or deprecated" delete guards, (c) reparent-on-delete only (current quirk #9 behavior). Current design uses deprecation for consistency with entries.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06: category deprecation — T31 "other services" test ambiguity -->
+
+16. **`discoveryLevels` naming**: The entry field `discoveryLevels` (total tier count) is inconsistent with `discoveryTier` (specific tier) on child entities. Renaming to `maxDiscoveryTier` would improve consistency but is a naming preference, not a tenet requirement. T16 does not settle property name semantics beyond format conventions.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06: discoveryLevels rename to maxDiscoveryTier -->
+
+17. **Compression callback**: Should Lexicon provide a `x-compression-callback` for character archives? Lexicon is global reference data, not per-character data. Collection owns per-character discovery state. The question is whether "what this character knew" (derived from Collection discovery levels + Lexicon queries) is meaningful for the content flywheel. Likely answer: no — Collection handles per-character archival. But not mechanically mandated by any tenet.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06: compression callback — global reference data vs per-character archival -->
 
 ---
 

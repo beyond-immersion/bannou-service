@@ -262,7 +262,7 @@ public static class StateStoreDefinitions
     public const string LicenseBoardCache = "license-board-cache";
     /// <summary>Board template definitions with grid layout and contract references</summary>
     public const string LicenseBoardTemplates = "license-board-templates";
-    /// <summary>Character board instances linking characters to board templates</summary>
+    /// <summary>Board instances linking owners (polymorphic entity) to board templates</summary>
     public const string LicenseBoards = "license-boards";
     /// <summary>License definitions (nodes) per board template with grid positions</summary>
     public const string LicenseDefinitions = "license-definitions";
@@ -809,7 +809,7 @@ public static class StateStoreDefinitions
             [LeaderboardSeason] = new StoreMetadata("Leaderboard", "Season history and archives", "mysql"),
             [LicenseBoardCache] = new StoreMetadata("License", "Board state cache (unlocked license positions per board)", "redis"),
             [LicenseBoardTemplates] = new StoreMetadata("License", "Board template definitions with grid layout and contract references", "mysql"),
-            [LicenseBoards] = new StoreMetadata("License", "Character board instances linking characters to board templates", "mysql"),
+            [LicenseBoards] = new StoreMetadata("License", "Board instances linking owners (polymorphic entity) to board templates", "mysql"),
             [LicenseDefinitions] = new StoreMetadata("License", "License definitions (nodes) per board template with grid positions", "mysql"),
             [LicenseLock] = new StoreMetadata("License", "Distributed locks for board mutations and unlock operations", "redis"),
             [LocationCache] = new StoreMetadata("Location", "Location lookup cache for frequently-accessed locations", "redis"),

@@ -55,156 +55,273 @@ public class MappingServiceConfiguration : BaseServiceConfiguration
     /// Time in seconds before authority expires without heartbeat
     /// Environment variable: MAPPING_AUTHORITY_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 3600)]
     public int AuthorityTimeoutSeconds { get; set; } = 60;
 
     /// <summary>
     /// Grace period in seconds after missed heartbeat before authority released
     /// Environment variable: MAPPING_AUTHORITY_GRACE_PERIOD_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 3600)]
     public int AuthorityGracePeriodSeconds { get; set; } = 30;
 
     /// <summary>
     /// Size of spatial index cells in world units (default 64)
     /// Environment variable: MAPPING_SPATIAL_CELL_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1.0, Maximum = 10000.0)]
     public double DefaultSpatialCellSize { get; set; } = 64.0;
 
     /// <summary>
     /// Maximum objects returned in a single query
     /// Environment variable: MAPPING_MAX_OBJECTS_PER_QUERY
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100000)]
     public int MaxObjectsPerQuery { get; set; } = 5000;
 
     /// <summary>
     /// Maximum payloads in single publish or ingest event
     /// Environment variable: MAPPING_MAX_PAYLOADS_PER_PUBLISH
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MaxPayloadsPerPublish { get; set; } = 100;
 
     /// <summary>
     /// Default TTL for cached affordance query results
     /// Environment variable: MAPPING_AFFORDANCE_CACHE_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 86400)]
     public int AffordanceCacheTimeoutSeconds { get; set; } = 60;
 
     /// <summary>
     /// Maximum candidate points to evaluate in affordance queries
     /// Environment variable: MAPPING_MAX_AFFORDANCE_CANDIDATES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100000)]
     public int MaxAffordanceCandidates { get; set; } = 1000;
 
     /// <summary>
     /// Distance tolerance in world units for position exclusion matching in affordance queries
     /// Environment variable: MAPPING_AFFORDANCE_EXCLUSION_TOLERANCE_UNITS
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1000.0)]
     public double AffordanceExclusionToleranceUnits { get; set; } = 1.0;
+
+    /// <summary>
+    /// Base score for all affordance evaluations before modifiers
+    /// Environment variable: MAPPING_AFFORDANCE_BASE_SCORE
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double AffordanceBaseScore { get; set; } = 0.5;
+
+    /// <summary>
+    /// Weight multiplier for cover_rating contribution to ambush/shelter/defensible scoring
+    /// Environment variable: MAPPING_AFFORDANCE_COVER_RATING_WEIGHT
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double AffordanceCoverRatingWeight { get; set; } = 0.3;
+
+    /// <summary>
+    /// Divisor for normalizing elevation values in vista/dramatic-reveal scoring
+    /// Environment variable: MAPPING_AFFORDANCE_ELEVATION_DIVISOR
+    /// </summary>
+    [ConfigRange(Minimum = 1.0, Maximum = 10000.0)]
+    public double AffordanceElevationDivisor { get; set; } = 100.0;
+
+    /// <summary>
+    /// Maximum score contribution from elevation in vista/dramatic-reveal scoring
+    /// Environment variable: MAPPING_AFFORDANCE_ELEVATION_MAX_CONTRIBUTION
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double AffordanceElevationMaxContribution { get; set; } = 0.3;
+
+    /// <summary>
+    /// Per-sightline score multiplier for ambush/vista scoring
+    /// Environment variable: MAPPING_AFFORDANCE_SIGHTLINES_MULTIPLIER
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double AffordanceSightlinesMultiplier { get; set; } = 0.05;
+
+    /// <summary>
+    /// Maximum score contribution from sightlines in ambush/vista scoring
+    /// Environment variable: MAPPING_AFFORDANCE_SIGHTLINES_MAX_CONTRIBUTION
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double AffordanceSightlinesMaxContribution { get; set; } = 0.2;
+
+    /// <summary>
+    /// Score multiplier for tiny-sized actors in shelter/ambush scoring
+    /// Environment variable: MAPPING_AFFORDANCE_SIZE_TINY_MULTIPLIER
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 5.0)]
+    public double AffordanceSizeTinyMultiplier { get; set; } = 1.2;
+
+    /// <summary>
+    /// Score multiplier for small-sized actors in shelter/ambush scoring
+    /// Environment variable: MAPPING_AFFORDANCE_SIZE_SMALL_MULTIPLIER
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 5.0)]
+    public double AffordanceSizeSmallMultiplier { get; set; } = 1.1;
+
+    /// <summary>
+    /// Score multiplier for medium-sized actors in shelter/ambush scoring
+    /// Environment variable: MAPPING_AFFORDANCE_SIZE_MEDIUM_MULTIPLIER
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 5.0)]
+    public double AffordanceSizeMediumMultiplier { get; set; } = 1.0;
+
+    /// <summary>
+    /// Score multiplier for large-sized actors in shelter/ambush scoring
+    /// Environment variable: MAPPING_AFFORDANCE_SIZE_LARGE_MULTIPLIER
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 5.0)]
+    public double AffordanceSizeLargeMultiplier { get; set; } = 0.9;
+
+    /// <summary>
+    /// Score multiplier for huge-sized actors in shelter/ambush scoring
+    /// Environment variable: MAPPING_AFFORDANCE_SIZE_HUGE_MULTIPLIER
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 5.0)]
+    public double AffordanceSizeHugeMultiplier { get; set; } = 0.8;
+
+    /// <summary>
+    /// Multiplier applied to actor stealth rating for ambush scoring boost
+    /// Environment variable: MAPPING_AFFORDANCE_STEALTH_RATING_MULTIPLIER
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 5.0)]
+    public double AffordanceStealthRatingMultiplier { get; set; } = 0.2;
+
+    /// <summary>
+    /// Score boost per matching preference key in custom affordance scoring
+    /// Environment variable: MAPPING_AFFORDANCE_PREFERENCE_BOOST
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double AffordancePreferenceBoost { get; set; } = 0.1;
 
     /// <summary>
     /// Payloads larger than this are stored via lib-asset reference
     /// Environment variable: MAPPING_INLINE_PAYLOAD_MAX_BYTES
     /// </summary>
+    [ConfigRange(Minimum = 1024, Maximum = 10485760)]
     public int InlinePayloadMaxBytes { get; set; } = 65536;
 
     /// <summary>
     /// Maximum duration for authoring checkout locks
     /// Environment variable: MAPPING_MAX_CHECKOUT_DURATION_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 86400)]
     public int MaxCheckoutDurationSeconds { get; set; } = 1800;
 
     /// <summary>
     /// Default TTL for cached layer data (ephemeral kinds)
     /// Environment variable: MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 604800)]
     public int DefaultLayerCacheTtlSeconds { get; set; } = 3600;
 
     /// <summary>
     /// Window in milliseconds for batching rapid updates into single event (0 = disabled)
     /// Environment variable: MAPPING_EVENT_AGGREGATION_WINDOW_MS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 10000)]
     public int EventAggregationWindowMs { get; set; } = 100;
 
     /// <summary>
     /// Maximum retry attempts for flushing spatial change buffers before discarding changes
     /// Environment variable: MAPPING_MAX_BUFFER_FLUSH_RETRIES
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 100)]
     public int MaxBufferFlushRetries { get; set; } = 3;
 
     /// <summary>
     /// TTL for terrain layer data (-1 = no TTL, durable)
     /// Environment variable: MAPPING_TTL_TERRAIN
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlTerrain { get; set; } = -1;
 
     /// <summary>
     /// TTL for static geometry layer data (-1 = no TTL, durable)
     /// Environment variable: MAPPING_TTL_STATIC_GEOMETRY
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlStaticGeometry { get; set; } = -1;
 
     /// <summary>
     /// TTL for navigation layer data (-1 = no TTL, durable)
     /// Environment variable: MAPPING_TTL_NAVIGATION
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlNavigation { get; set; } = -1;
 
     /// <summary>
     /// TTL for resources layer data
     /// Environment variable: MAPPING_TTL_RESOURCES
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlResources { get; set; } = 3600;
 
     /// <summary>
     /// TTL for spawn points layer data
     /// Environment variable: MAPPING_TTL_SPAWN_POINTS
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlSpawnPoints { get; set; } = 3600;
 
     /// <summary>
     /// TTL for points of interest layer data
     /// Environment variable: MAPPING_TTL_POINTS_OF_INTEREST
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlPointsOfInterest { get; set; } = 3600;
 
     /// <summary>
     /// TTL for dynamic objects layer data
     /// Environment variable: MAPPING_TTL_DYNAMIC_OBJECTS
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlDynamicObjects { get; set; } = 3600;
 
     /// <summary>
     /// TTL for hazards layer data (short-lived)
     /// Environment variable: MAPPING_TTL_HAZARDS
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlHazards { get; set; } = 300;
 
     /// <summary>
     /// TTL for weather effects layer data
     /// Environment variable: MAPPING_TTL_WEATHER_EFFECTS
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlWeatherEffects { get; set; } = 600;
 
     /// <summary>
     /// TTL for ownership layer data (-1 = no TTL, durable)
     /// Environment variable: MAPPING_TTL_OWNERSHIP
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlOwnership { get; set; } = -1;
 
     /// <summary>
     /// TTL for combat effects layer data (very short-lived, ephemeral)
     /// Environment variable: MAPPING_TTL_COMBAT_EFFECTS
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlCombatEffects { get; set; } = 30;
 
     /// <summary>
     /// TTL for visual effects layer data (short-lived, ephemeral)
     /// Environment variable: MAPPING_TTL_VISUAL_EFFECTS
     /// </summary>
+    [ConfigRange(Minimum = -1, Maximum = 604800)]
     public int TtlVisualEffects { get; set; } = 60;
 
     /// <summary>
     /// Maximum results returned for spatial queries (bounding box, etc)
     /// Environment variable: MAPPING_MAX_SPATIAL_QUERY_RESULTS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100000)]
     public int MaxSpatialQueryResults { get; set; } = 5;
 
 }

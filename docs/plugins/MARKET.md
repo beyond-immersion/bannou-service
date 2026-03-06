@@ -156,9 +156,9 @@ VendorCatalog
     +--> Owned by a Character (NPC) -- via characterId
     +--> Scoped to a Realm
     +--> Catalog type determines pricing behavior
-    |       +--> static: prices fixed at creation
-    |       +--> dynamic: prices adjust by formula
-    |       +--> personality_driven: Actor GOAP sets prices
+    |       +--> Static: prices fixed at creation
+    |       +--> Dynamic: prices adjust by formula
+    |       +--> PersonalityDriven: Actor GOAP sets prices
     |
     +--> Contains VendorItems
             |
@@ -253,7 +253,7 @@ PriceHistoryEntry:
     marketDefinitionId: uuid # Which market
     periodStart: timestamp  # Time bucket start
     periodEnd: timestamp    # Time bucket end
-    granularity: enum       # hour | day | week
+    granularity: enum       # Hour | Day | Week
     averagePrice: decimal   # Mean sale price in the period
     medianPrice: decimal    # Median sale price
     minPrice: decimal       # Lowest sale price
@@ -342,7 +342,7 @@ Paginated queries by marketId, status, category, price range, seller use `IJsonQ
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `vendor:{vendorId}` | `VendorCatalogModel` | Primary lookup by vendor ID. Stores NPC character reference, realm, catalog type (static/dynamic/personality_driven), restock config, wallet reference, status. |
+| `vendor:{vendorId}` | `VendorCatalogModel` | Primary lookup by vendor ID. Stores NPC character reference, realm, catalog type (Static/Dynamic/PersonalityDriven), restock config, wallet reference, status. |
 | `vendor-char:{characterId}` | `VendorCatalogModel` | Vendor lookup by owning NPC character |
 
 ### Vendor Stock Store
@@ -394,16 +394,16 @@ Every polymorphic "type" or "kind" field in the Market domain falls into one of 
 
 | Field | Model(s) | Cat | Values / Source | Rationale |
 |-------|----------|-----|-----------------|-----------|
-| `MarketEntityType` | `AuctionListingModel` (seller), `AuctionBidModel` (bidder), settlement (buyer) | A | `character`, `guild`, `npc`, `system` | Identifies what kind of entity is transacting. Shared enum across seller/bidder/buyer roles; maps to first-class Bannou entity types. |
-| `catalogType` | `VendorCatalogModel` | C | `static`, `dynamic`, `personality_driven` | Finite pricing modes the vendor subsystem implements. Service-owned enum (`CatalogType`). |
+| `MarketEntityType` | `AuctionListingModel` (seller), `AuctionBidModel` (bidder), settlement (buyer) | A | *(see DC#9 below)* | Identifies what kind of entity is transacting. Needs T14 classification resolution -- see Design Considerations. |
+| `catalogType` | `VendorCatalogModel` | C | `Static`, `Dynamic`, `PersonalityDriven` | Finite pricing modes the vendor subsystem implements. Service-owned enum (`CatalogType`). |
 | `ListingStatus` | `AuctionListingModel` | C | `Active`, `Sold`, `Cancelled`, `Expired` | Finite auction lifecycle states. Service-owned enum (`ListingStatus`). |
-| `MarketDefinitionStatus` | `MarketDefinitionModel` | C | *(to be defined during schema creation)* | Finite market lifecycle states. Service-owned enum. |
-| `VendorStatus` | `VendorCatalogModel` | C | *(to be defined during schema creation)* | Finite vendor lifecycle states. Service-owned enum. |
-| `BidStatus` | `AuctionBidModel` | C | *(to be defined during schema creation)* | Finite bid lifecycle states. Service-owned enum. |
-| `PriceGranularity` | `PriceHistoryEntryModel` | C | `hour`, `day`, `week` | Finite time-bucket sizes for price aggregation. Service-owned enum (`PriceGranularity`). |
-| `AuctionSortOrder` | Auction search request | C | `price_asc`, `price_desc`, `time_remaining`, `bid_count` | Finite sort modes for listing queries. Service-owned enum (`AuctionSortOrder`). |
-| `PriceTrend` | Variable provider output | C | `up`, `down`, `stable` | Finite trend directions for NPC GOAP consumption. Service-owned enum (`PriceTrend`). |
-| `SupplySignal` | Variable provider output | C | `scarce`, `normal`, `abundant` | Finite supply indicators for NPC GOAP consumption. Service-owned enum (`SupplySignal`). |
+| `MarketDefinitionStatus` | `MarketDefinitionModel` | C | `Active`, `Suspended`, `Closed` | Finite market lifecycle states. Service-owned enum. |
+| `VendorStatus` | `VendorCatalogModel` | C | `Open`, `Closed`, `Suspended` | Finite vendor lifecycle states. Service-owned enum. |
+| `BidStatus` | `AuctionBidModel` | C | `Active`, `Outbid`, `Won`, `Released`, `Expired` | Finite bid lifecycle states. Service-owned enum. |
+| `PriceGranularity` | `PriceHistoryEntryModel` | C | `Hour`, `Day`, `Week` | Finite time-bucket sizes for price aggregation. Service-owned enum (`PriceGranularity`). |
+| `AuctionSortOrder` | Auction search request | C | `PriceAscending`, `PriceDescending`, `TimeRemaining`, `BidCount` | Finite sort modes for listing queries. Service-owned enum (`AuctionSortOrder`). |
+| `PriceTrend` | Variable provider output | C | `Up`, `Down`, `Stable` | Finite trend directions for NPC GOAP consumption. Service-owned enum (`PriceTrend`). |
+| `SupplySignal` | Variable provider output | C | `Scarce`, `Normal`, `Abundant` | Finite supply indicators for NPC GOAP consumption. Service-owned enum (`SupplySignal`). |
 
 **Category key**: **A** = Entity Reference (`EntityType` enum or entity-identifying enum), **B** = Content Code (opaque string, game-configurable), **C** = System State (service-owned enum, finite).
 
@@ -425,10 +425,19 @@ Every polymorphic "type" or "kind" field in the Market domain falls into one of 
 | `market.vendor.restocked` | `MarketVendorRestockedEvent` | Vendor stock replenished (background or manual) |
 | `market.vendor.price-changed` | `MarketVendorPriceChangedEvent` | Vendor adjusted item price (dynamic/personality-driven) |
 | `market.price.changed` | `MarketPriceChangedEvent` | Rolling average price shifted beyond threshold |
-| `market-definition.created` | `MarketDefinitionCreatedEvent` | Market definition created (x-lifecycle auto-generated) |
-| `market-definition.updated` | `MarketDefinitionUpdatedEvent` | Market definition updated (x-lifecycle auto-generated) |
-| `market-definition.deleted` | `MarketDefinitionDeletedEvent` | Market definition deleted (x-lifecycle auto-generated) |
+| `market.definition.created` | `MarketDefinitionCreatedEvent` | Market definition created (x-lifecycle auto-generated, `topic_prefix: market`) |
+| `market.definition.updated` | `MarketDefinitionUpdatedEvent` | Market definition updated (x-lifecycle auto-generated, `topic_prefix: market`) |
+| `market.definition.deleted` | `MarketDefinitionDeletedEvent` | Market definition deleted (x-lifecycle auto-generated, `topic_prefix: market`) |
+| `market.vendor.created` | `MarketVendorCreatedEvent` | Vendor catalog created (x-lifecycle auto-generated, `topic_prefix: market`) |
+| `market.vendor.updated` | `MarketVendorUpdatedEvent` | Vendor catalog updated (x-lifecycle auto-generated, `topic_prefix: market`) |
+| `market.vendor.deleted` | `MarketVendorDeletedEvent` | Vendor catalog deleted (x-lifecycle auto-generated, `topic_prefix: market`) |
 | `market.settlement.failed` | `MarketSettlementFailedEvent` | Settlement worker failed to settle a listing (error event) |
+
+**x-lifecycle entities** (in `market-events.yaml`, with `topic_prefix: market`):
+- **MarketDefinition**: `marketId`, `gameServiceId`, `code`, `name`, `realmId`, `locationId`, `status`, `listingFee`, `transactionFeeRate`, `supportedCurrencies`
+- **VendorCatalog** (as `MarketVendor`): `vendorId`, `characterId`, `gameServiceId`, `realmId`, `catalogType`, `status`, `walletId`
+
+Listings use custom events (not x-lifecycle) because listing lifecycle transitions carry domain-specific semantics (sold vs expired vs cancelled with escrow/fee context) that don't fit the standard lifecycle payload.
 
 ### Consumed Events
 
@@ -436,13 +445,25 @@ Every polymorphic "type" or "kind" field in the Market domain falls into one of 
 |-------|---------|--------|
 | `currency.hold.expired` | `HandleHoldExpiredAsync` | If hold was for an active bid, release the bid record and update listing. Currency hold expiration acts as bid timeout. |
 
+**x-event-subscriptions** (for `market-events.yaml`):
+```yaml
+x-event-subscriptions:
+  - topic: currency.hold.expired
+    event: CurrencyHoldExpiredEvent
+    handler: HandleHoldExpired
+```
+
+**x-event-publications**: All 17 published events above (6 x-lifecycle + 11 custom) must be listed in the `x-event-publications` block in `market-events.yaml`.
+
 ### Resource Cleanup (T28)
 
-| Target Resource | Source Type | On Delete | Cleanup Endpoint |
-|----------------|-------------|-----------|-----------------|
-| character | market | CASCADE | `/market/cleanup-by-character` |
-| realm | market | CASCADE | `/market/cleanup-by-realm` |
-| game-service | market | CASCADE | `/market/cleanup-by-game-service` |
+| Target Resource | Source Type | Field | On Delete | Cleanup Endpoint | Payload Template |
+|----------------|-------------|-------|-----------|-----------------|------------------|
+| character | market | characterId | CASCADE | `/market/cleanup-by-character` | `{"characterId": "{{resourceId}}"}` |
+| realm | market | realmId | CASCADE | `/market/cleanup-by-realm` | `{"realmId": "{{resourceId}}"}` |
+| game-service | market | gameServiceId | CASCADE | `/market/cleanup-by-game-service` | `{"gameServiceId": "{{resourceId}}"}` |
+
+Item templates are Category B (no delete endpoint). Market does not register item template references with lib-resource. If item template safe deletion is implemented in the future, Market cleanup callbacks should be added.
 
 ---
 
@@ -469,8 +490,9 @@ Every polymorphic "type" or "kind" field in the Market domain falls into one of 
 | `MaxBidsPerBidder` | `MARKET_MAX_BIDS_PER_BIDDER` | `100` | Maximum concurrent active bids per bidder entity |
 | `BidHoldDurationDays` | `MARKET_BID_HOLD_DURATION_DAYS` | `3` | Duration of currency hold for bid reservation |
 | `DistributedLockTimeoutSeconds` | `MARKET_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for distributed lock acquisition |
-| `VendorWalletOwnerType` | `MARKET_VENDOR_WALLET_OWNER_TYPE` | `vendor` | Owner type string used when creating vendor currency wallets |
 | `DefaultBuybackMultiplier` | `MARKET_DEFAULT_BUYBACK_MULTIPLIER` | `0.25` | Default fraction of base price vendors offer for buyback (25%) |
+
+**Removed**: `VendorWalletOwnerType` -- Currency's wallet API uses `EntityType` enum, not free-form strings. Vendor wallets should use the appropriate `EntityType` value (likely `Character`, since vendor NPCs are characters). See DC#11.
 
 ---
 
@@ -490,6 +512,7 @@ Every polymorphic "type" or "kind" field in the Market domain falls into one of 
 | `IResourceClient` | Reference tracking, cleanup callbacks (L1 hard) |
 | `ICharacterClient` | Vendor NPC existence validation (L2 hard) |
 | `ILocationClient` | Market location validation (L2 hard) |
+| `ITelemetryProvider` | Telemetry span creation for all async methods (L0) |
 | `IServiceProvider` | Runtime resolution of soft L4 dependencies (Escrow, Analytics) |
 
 ### Background Workers
@@ -507,7 +530,7 @@ All workers acquire distributed locks before processing to ensure multi-instance
 | Factory | Namespace | Data Source | Registration |
 |---------|-----------|-------------|--------------|
 | `MarketCatalogVariableProviderFactory` | `${market.*}` | Vendor's own catalog stock levels, recent sales velocity, current pricing, buyback availability | `IVariableProviderFactory` (DI singleton) |
-| `MarketPriceVariableProviderFactory` | `${market.price.*}` | Price history for items in a realm -- average, trend direction, supply/demand signals | `IVariableProviderFactory` (DI singleton) |
+| `MarketPriceVariableProviderFactory` | `${market-price.*}` | Price history for items in a realm -- average, trend direction, supply/demand signals | `IVariableProviderFactory` (DI singleton) |
 
 **`${market.*}` variables** (vendor-scoped, for NPC merchant GOAP):
 - `${market.my_stock.{templateCode}}` -- current stock level for an item
@@ -517,11 +540,11 @@ All workers acquire distributed locks before processing to ensure multi-instance
 - `${market.my_price.{templateCode}}` -- current price set for an item
 - `${market.competitor_price.{templateCode}}` -- average price at other vendors in same location
 
-**`${market.price.*}` variables** (realm-scoped, for any economic NPC GOAP):
-- `${market.price.average.{templateCode}}` -- rolling average price
-- `${market.price.trend.{templateCode}}` -- price trend direction (up/down/stable)
-- `${market.price.volume.{templateCode}}` -- recent transaction volume
-- `${market.price.supply.{templateCode}}` -- supply signal (scarce/normal/abundant based on listing count)
+**`${market-price.*}` variables** (realm-scoped, for any economic NPC GOAP):
+- `${market-price.average.{templateCode}}` -- rolling average price
+- `${market-price.trend.{templateCode}}` -- price trend direction (Up/Down/Stable)
+- `${market-price.volume.{templateCode}}` -- recent transaction volume
+- `${market-price.supply.{templateCode}}` -- supply signal (Scarce/Normal/Abundant based on listing count)
 
 ---
 
@@ -529,24 +552,28 @@ All workers acquire distributed locks before processing to ensure multi-instance
 
 ### Market Definition Management (5 endpoints)
 
-All endpoints require `developer` role.
+All endpoints: `x-permissions: [{role: developer}]`.
 
-- **Create** (`/market/definition/create`): Validates game service existence. Validates code uniqueness per game service. Validates location existence if locationId provided (L2 hard). Saves definition with fee config and supported currencies. Publishes `market-definition.created`.
+- **Create** (`/market/definition/create`): Validates game service existence. Validates code uniqueness per game service. Validates location existence if locationId provided (L2 hard). Saves definition with fee config and supported currencies. Publishes `market.definition.created`.
 - **Get** (`/market/definition/get`): Load from MySQL by marketId. 404 if not found.
 - **GetByCode** (`/market/definition/get-by-code`): JSON query by gameServiceId + code. 404 if not found.
 - **List** (`/market/definition/list`): Paged JSON query with required gameServiceId filter, optional realmId, status, and locationId filters.
-- **Update** (`/market/definition/update`): Acquires distributed lock. Partial update -- fee rates, name, description, status, supported currencies. Publishes `market-definition.updated`.
+- **Update** (`/market/definition/update`): Acquires distributed lock. Partial update -- fee rates, name, description, status, supported currencies. Publishes `market.definition.updated`.
 
 ### Auction House Operations (6 endpoints)
 
+All endpoints: `x-permissions: []` (service-to-service only -- called by game engine/Actor, not directly by WebSocket clients). See DC#10 if player-facing access is needed.
+
 - **CreateListing** (`/market/auction/create`): Validates item exists, is tradeable (soulbound check), and seller owns it. Validates seller hasn't exceeded `MaxActiveListingsPerSeller`. Calculates listing fee. Deducts listing fee (Currency debit -- sink, not to market). Creates escrow for item custody. Moves item to escrow. Saves listing record. Publishes `market.listing.created`. Returns listing with escrow details.
-- **Search** (`/market/auction/search`): Paged JSON query on `market-listings` with filters: realmId (required), marketId (optional), category, search text (item name), price range (min/max), quality/rarity, sort order (price_asc, price_desc, time_remaining, bid_count). Returns listing summaries with current bid info.
+- **Search** (`/market/auction/search`): Paged JSON query on `market-listings` with filters: realmId (required), marketId (optional), category, search text (item name), price range (min/max), quality/rarity, sort order (PriceAscending, PriceDescending, TimeRemaining, BidCount). Returns listing summaries with current bid info.
 - **PlaceBid** (`/market/auction/bid`): Idempotency-protected. Validates listing is Active and not expired. Validates bid >= startPrice (first bid) or >= currentBid * (1 + MinBidIncrementRate). Validates bidder != seller. Acquires listing lock. Creates currency hold for bid amount. If outbidding: releases previous bidder's hold. Updates listing (currentBid, currentBidderId, bidCount). Saves bid record. Publishes `market.bid.placed`.
 - **Buyout** (`/market/auction/buyout`): Validates listing has buyout price and is Active. Acquires listing lock. Debits buyer's wallet for buyout amount. Calculates and deducts transaction fee (sink). Credits seller's wallet (net = buyout - fee, bypassEarnCap=true). Releases item from escrow to buyer's inventory. Releases all active bid holds for other bidders. Sets listing status to Sold. Records price history datapoint. Publishes `market.auction.sold`.
 - **Cancel** (`/market/auction/cancel`): Validates listing is Active and has no bids (returns 422 if bids exist). Acquires listing lock. Releases item from escrow to seller. Sets status to Cancelled. Listing fee NOT refunded. Publishes `market.listing.cancelled`.
 - **GetListing** (`/market/auction/get`): Load listing by listingId. Returns full listing details with bid history summary (count, highest, bid timestamps).
 
 ### Vendor Operations (7 endpoints)
+
+CreateVendor/UpdateVendor: `x-permissions: [{role: developer}]`. GetVendor/GetVendorByCharacter/GetCatalog/Buy/Sell: `x-permissions: []` (service-to-service only). See DC#10 if player-facing access is needed.
 
 - **CreateVendor** (`/market/vendor/create`): Validates game service and realm. Validates character existence (L2 hard). Creates vendor currency wallet via `ICurrencyClient` (owner = vendorId, ownerType = vendor). Saves catalog model. Returns vendor with empty stock list.
 - **GetVendor** (`/market/vendor/get`): Load vendor by vendorId. Enriches with current stock summary from Redis.
@@ -558,20 +585,24 @@ All endpoints require `developer` role.
 
 ### Vendor Stock Management (4 endpoints)
 
-All endpoints require `developer` or `authenticated` role (NPC Actor calls these).
+All endpoints: `x-permissions: []` (service-to-service only -- called by NPC Actor GOAP action handlers and game engine, not directly by WebSocket clients).
 
-- **SetStock** (`/market/vendor/stock/set`): Sets stock entry for a template -- prices, max stock, current stock, buyback config, requirements. Creates if new, updates if existing.
+- **SetStock** (`/market/vendor/stock/set`): Acquires stock lock (`stock:{vendorId}:{templateId}`). Sets stock entry for a template -- prices, max stock, current stock, buyback config, requirements. Creates if new, updates if existing.
 - **UpdatePrice** (`/market/vendor/stock/update-price`): Updates price for a specific stock entry. Used by personality-driven vendors via Actor GOAP. Publishes `market.vendor.price-changed`.
 - **Restock** (`/market/vendor/stock/restock`): Manually restock a specific item to maxStock (or specified quantity). Publishes `market.vendor.restocked`.
 - **RemoveStock** (`/market/vendor/stock/remove`): Removes a stock entry from the vendor catalog entirely.
 
 ### Price Analytics (3 endpoints)
 
+All endpoints: `x-permissions: []` (service-to-service only -- consumed by NPC GOAP, divine actors, and admin tooling).
+
 - **GetAveragePrice** (`/market/price/average`): Returns rolling average, min, max, median, volume for a template in a realm over a specified period. Reads from aggregated price history.
 - **GetPriceHistory** (`/market/price/history`): Returns time-bucketed price data points for a template in a realm at specified granularity (hour/day/week). Paginated. Used by NPC GOAP and admin dashboards.
 - **GetMarketStats** (`/market/stats`): Aggregate market health metrics for a market definition -- total active listings, total volume, average listing duration, sell-through rate, top traded items.
 
 ### Cleanup Endpoints (3 endpoints)
+
+All endpoints: `x-permissions: []` (service-to-service only -- called by lib-resource cleanup callbacks).
 
 Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
@@ -696,7 +727,7 @@ NPC Vendor Economic Cycle
         |                           |-- Credit vendor ---->|
         |                           |-- Create item ------>|
         |                           |-- Decrement stock    |
-        |<-- item + receipt --------|                      |
+        |<-- itemInstanceId --------|                      |
         |                            |                      |
   [Price aggregation worker runs]   |                      |
         |                           |-- Update price hist  |
@@ -719,28 +750,32 @@ NPC Vendor Economic Cycle
 
 ## Tenet Compliance Notes
 
-### T25: String Fields Requiring Enum Definitions
+### T25: String Fields Requiring Enum Definitions (PascalCase)
 
-When creating `market-api.yaml`, the following fields described as strings in this document MUST be defined as proper enum types in the schema:
+When creating `market-api.yaml`, the following fields MUST be defined as proper enum types with PascalCase values:
 
 | Field | Used In | Values | Required Enum |
 |-------|---------|--------|---------------|
-| Catalog type | `VendorCatalogModel` | `static`, `dynamic`, `personality_driven` | `CatalogType` |
+| Catalog type | `VendorCatalogModel` | `Static`, `Dynamic`, `PersonalityDriven` | `CatalogType` |
 | Listing status | `AuctionListingModel` | `Active`, `Sold`, `Cancelled`, `Expired` | `ListingStatus` |
-| Market definition status | `MarketDefinitionModel` | *(not enumerated -- define during schema creation)* | `MarketDefinitionStatus` |
-| Vendor status | `VendorCatalogModel` | *(not enumerated -- define during schema creation)* | `VendorStatus` |
-| Price history granularity | `PriceHistoryEntryModel` | `hour`, `day`, `week` | `PriceGranularity` |
-| Search sort order | Auction search request | `price_asc`, `price_desc`, `time_remaining`, `bid_count` | `AuctionSortOrder` |
-| Seller type | `AuctionListingModel` | `character`, `guild`, `npc`, `system` | `MarketEntityType` (shared with bidder/buyer) |
-| Price trend | Variable provider | `up`, `down`, `stable` | `PriceTrend` |
-| Supply signal | Variable provider | `scarce`, `normal`, `abundant` | `SupplySignal` |
-| Bid status | `AuctionBidModel` | *(not enumerated -- define during schema creation)* | `BidStatus` |
+| Market definition status | `MarketDefinitionModel` | `Active`, `Suspended`, `Closed` | `MarketDefinitionStatus` |
+| Vendor status | `VendorCatalogModel` | `Open`, `Closed`, `Suspended` | `VendorStatus` |
+| Price history granularity | `PriceHistoryEntryModel` | `Hour`, `Day`, `Week` | `PriceGranularity` |
+| Search sort order | Auction search request | `PriceAscending`, `PriceDescending`, `TimeRemaining`, `BidCount` | `AuctionSortOrder` |
+| Seller/bidder/buyer type | `AuctionListingModel`, `AuctionBidModel` | *(see DC#9)* | `MarketEntityType` or `$ref: EntityType` |
+| Price trend | Variable provider | `Up`, `Down`, `Stable` | `PriceTrend` |
+| Supply signal | Variable provider | `Scarce`, `Normal`, `Abundant` | `SupplySignal` |
+| Bid status | `AuctionBidModel` | `Active`, `Outbid`, `Won`, `Released`, `Expired` | `BidStatus` |
 
 ### T4 / T2: Dependency Classification (Corrected)
 
 Character (L2) and Location (L2) were originally listed as soft dependencies with graceful degradation. Per T4 and SERVICE-HIERARCHY.md: when L4 is enabled, ALL of L2 must be running. L2 dependencies MUST be hard (constructor injection, crash at startup if missing). These have been moved to the hard dependencies table in this document.
 
 Only Escrow (L4) and Analytics (L4) remain as soft dependencies, which is correct -- L4-to-L4 dependencies require graceful degradation.
+
+### T31: Deprecation Lifecycle
+
+MarketDefinition is a configuration entity (per T31: "You update or remove configuration, you don't deprecate it"). Active listings, vendors, and price history referencing a deleted definition are cleaned up via cascade on deletion. No deprecation/undeprecation endpoints needed. Listings use custom lifecycle events (not x-lifecycle) because their transitions carry domain-specific semantics (sold vs expired vs cancelled). VendorCatalog uses x-lifecycle for standard CRUD events.
 
 ### T28: Resource Cleanup (Compliant)
 
@@ -751,6 +786,10 @@ This document correctly defines cleanup endpoints for character, realm, and game
 All consumed events flow in the correct direction: Market (L4) subscribes to `currency.hold.expired` from Currency (L2). Higher-layer consuming lower-layer events is the correct T27 pattern.
 
 All published events are consumed by same-layer or observing services (Analytics L4, divine actors via events). No lower-layer services are listed as consumers.
+
+### T16: Event Topic Naming (Pattern C)
+
+Market is a multi-entity service. All event topics use Pattern C (`market.{entity}.{action}`). The `x-lifecycle` block uses `topic_prefix: market` to generate correct Pattern C topics for `MarketDefinition` and `VendorCatalog` entities.
 
 ### Endpoint Count
 
@@ -810,7 +849,7 @@ Before lib-market implementation:
 ### Phase 5: Variable Provider Integration
 
 - Implement `MarketCatalogVariableProviderFactory` for `${market.*}` vendor GOAP variables
-- Implement `MarketPriceVariableProviderFactory` for `${market.price.*}` economic GOAP variables
+- Implement `MarketPriceVariableProviderFactory` for `${market-price.*}` economic GOAP variables
 - Register factories as `IVariableProviderFactory` singletons
 - Test with sample ABML vendor behaviors
 
@@ -890,8 +929,27 @@ Before lib-market implementation:
 
 8. **Market definition immutability for active listings**: Changing fee rates on a market definition while listings are active creates ambiguity about which rate applies at settlement. Option A: new rates apply only to new listings. Option B: settlement uses the rate at listing creation (stored on the listing). Recommend Option B (store fee rate snapshot on listing creation).
 
+9. **MarketEntityType T14 classification** *(from audit)*: The `MarketEntityType` enum identifies seller/bidder/buyer entity types with values `Character`, `Guild`, `Npc`, `System`. Per T14 decision tree: `Npc` is not a distinct EntityType in Bannou (NPCs are Characters). `System` exists in EntityType but `Npc` does not. Options: (a) Use `$ref: EntityType` and represent NPCs as `Character` -- cleanest T14 answer. (b) Keep a service-specific `MarketParticipantType` enum because the `Npc` distinction is functionally meaningful (e.g., fee exemptions, stock behavior) -- this is a T14 Test 3 exception (non-entity role) that must be explicitly justified.
+
+10. **x-permissions for player-facing endpoints** *(from audit)*: Currently all auction/vendor/price endpoints are specified as `x-permissions: []` (service-to-service only). If any endpoints should be directly accessible via WebSocket (player browsing auctions, placing bids from game client), those endpoints must use `x-permissions: [{role: user}]` and per T32 must accept `webSocketSessionId` instead of entity IDs for caller identity (resolved to account/character server-side). The current spec assumes all player actions flow through game engine/Actor -- if direct WebSocket access is needed, this must be revisited.
+
+11. **Vendor wallet EntityType** *(from audit)*: Currency's wallet API uses `EntityType` enum for `ownerType`. The removed `VendorWalletOwnerType` config used string `"vendor"` which is not a valid EntityType. Options: (a) Use `EntityType.Character` since vendor NPCs are characters. (b) Add a `Vendor` value to EntityType if vendors need distinct wallet identity. This ties to DC#9 -- if NPCs are just Characters, their wallets use `EntityType.Character`.
+
+12. **`requirementsMet` trust boundary** *(from audit)*: The vendor Buy endpoint accepts `requirementsMet: boolean` in the request -- a caller-attestation pattern where lib-market trusts the caller's requirement validation. This is a design choice, not a tenet violation: Market is game-agnostic and cannot validate arbitrary requirements (level, reputation, faction standing). Options: (a) Keep as-is -- caller attests, Market records. (b) Remove the field entirely -- caller is responsible for gating before calling Buy. (c) Implement a `IRequirementProviderFactory` pattern where requirement plugins register and Market validates server-side. If kept, the field should be `required: true` with no default.
+
 ---
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.*
+| Issue | Title | Status | Relevance |
+|-------|-------|--------|-----------|
+| [#427](https://github.com/beyond-immersion/bannou-service/issues/427) | Market: Marketplace orchestration service | Open | Primary implementation tracking issue |
+| [#153](https://github.com/beyond-immersion/bannou-service/issues/153) | Escrow: Asset movement (deposit/release/refund) | Open | **Phase 0 blocker** -- auction item custody requires Escrow asset movement |
+| [#222](https://github.com/beyond-immersion/bannou-service/issues/222) | Escrow: Contract integration | Open | **Phase 0 blocker** -- conditional releases for auction settlement |
+| [#428](https://github.com/beyond-immersion/bannou-service/issues/428) | Market: Vendor negotiation API | Open | Extension -- personality-driven haggling |
+| [#429](https://github.com/beyond-immersion/bannou-service/issues/429) | Market: Cross-market price arbitrage detection | Open | Extension -- NPC trade opportunity events |
+| [#147](https://github.com/beyond-immersion/bannou-service/issues/147) | Relationship: Variable Provider Factory | Open | Required for NPC social bond awareness in vendor GOAP |
+| [#478](https://github.com/beyond-immersion/bannou-service/issues/478) | Market: Client events for auction/vendor updates | Open | Extension -- WebSocket push for outbid notifications |
+| [#556](https://github.com/beyond-immersion/bannou-service/issues/556) | Market: Auction sniping protection | Open | Extension -- bid-driven duration extension |
+
+See also [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.

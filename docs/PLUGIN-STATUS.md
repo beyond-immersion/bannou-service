@@ -91,8 +91,8 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Faction](#faction-status) | L4 | 85% | 0 | All 31 endpoints done. L4-audited (2026-03-06): T8 filler removed (5 responses), T31 deprecation lifecycle (triple-field, idempotent, delete guard, includeDeprecated), T21 collection growth configurable, event schemas flattened. Obligation integration missing. |
 | [Gardener](#gardener-status) | L4 | 65% | 0 | Void garden works (23 endpoints). L4-audited (2026-03-06): T8 filler removed (6 responses), T31 Category B (delete endpoint removed, idempotent deprecation, includeDeprecated), T21 GameType configurable, T26 Guid.Empty sentinel eliminated, event schemas flattened, lifecycle topic prefix added. Broader garden concept unimplemented. No client events, no divine actors. |
 | [Leaderboard](#leaderboard-status) | L4 | 85% | 0 | Production-hardened. T29/T8/T5/T25 compliant, typed scoreType/ratingType, lifecycle events, NRT-clean schemas. IncludeArchived stub, batch UpdateMode ignored, 6 design decisions deferred. |
-| [Lexicon](#lexicon-status) | L4 | 0% | 0 | Pre-implementation. Structured world knowledge ontology and concept decomposition spec. No schema, no code. |
-| [License](#license-status) | L4 | 93% | 0 | Feature-complete. 14-step unlock saga, adjacency validation, board cloning. Only respec pending. |
+| [Lexicon](#lexicon-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): deep dive hardened — T31 Category A deprecation (triple-field, 3 new endpoints), T29 typed StrategyPrecondition (replaced object? preconditions), T4 ICollectionClient hard dependency, T30 ITelemetryProvider, T5 x-lifecycle events annotated, T28 bidirectional resource cleanup documented. 6 design decisions deferred (AUDIT:NEEDS_DESIGN). No schema, no code. |
+| [License](#license-status) | L4 | 95% | 0 | L4-hardened. Zero code tenet violations. Schema validation constraints, PascalCase enum fixes, x-permissions corrected, currentLp type fixed. 59 tests, 0 warnings. Only respec pending (#356). |
 | [Mapping](#mapping-status) | L4 | 80% | 2 | Spatial indexing works. Version counter race, non-atomic index ops. N+1 query pattern. |
 | [Matchmaking](#matchmaking-status) | L4 | 73% | 1 | Core loop works. Queue stats all zeros, tournament stub, reconnect shortcut bug. |
 | [Music](#music-status) | L4 | 88% | 0 | Full composition pipeline. Storyteller + MusicTheory SDKs. Custom style persistence missing. |
@@ -110,8 +110,8 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Disposition](#disposition-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): targetType→$ref:EntityType, targetId→Guid (no "self" sentinel), IRelationshipClient→hard dep, typed SynthesisBreakdown (T29), DriveOriginType PascalCase enum, T16 past-tense topics, x-permissions all 17 endpoints, x-event-publications, x-resource-mapping, compression priority 40→20, guilt-as-composite-feeling (GH#410), seed.phase.changed subscription (GH#497), hearsay deferred to Phase 4+. No schema, no code. |
 | [Dungeon](#dungeon-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): T29 personalityType→DungeonCoreModel (not seed metadata), T4 IItemClient/IInventoryClient→hard deps, T16 Pattern A topics (trap-triggered, layout-changed, phase-changed), DungeonStatus enum added, game-service cleanup target, ITelemetryProvider in DI, domain management permissions, config validation constraints, GrowthContributionDebounceMs config, T31 no-deprecation classification, inhabitant durability note, DC#3 resolved (#422). 10 design considerations remain, 7 missing GH issues. No schema, no code. |
 | [Hearsay](#hearsay-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): T25 BeliefDomain+SourceChannel enums (not strings), T25 subjectEntityId→Guid (no composite GUID-in-string), T16 PascalCase enum values, factual event topic fix (encounter.recorded not character-encounter.created), Obligation→Soft Dependencies, ITelemetryProvider in DI, x-archive-type noted, Phase 1 prerequisites (state-stores.yaml, variable-providers.yaml). 9 design considerations (3 from audit). No schema, no code. |
-| [Loot](#loot-status) | L4 | 0% | 0 | Pre-implementation. Loot table management and generation spec. No schema, no code. |
-| [Market](#market-status) | L4 | 0% | 0 | Pre-implementation. Marketplace orchestration (auctions + NPC vendors) spec. No schema, no code. |
+| [Loot](#loot-status) | L4 | 0% | 0 | Pre-implementation. Deep dive audited and hardened (tenet-compliant event topics, PascalCase enums, typed models, x-permissions, dependency classification). No schema, no code. |
+| [Market](#market-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): Pattern C topics, PascalCase enums, x-lifecycle (MarketDefinition + VendorCatalog), x-permissions on all 6 groups, T31 configuration entity, T9 stock locking, T8 filler removed, T25 enum definitions, T30 ITelemetryProvider, namespace overlap fixed (market-price), x-references with field+payloadTemplate. 4 design decisions deferred. No schema, no code. |
 | [Organization](#organization-status) | L4 | 0% | 0 | Pre-implementation. Legal entity management spec. No schema, no code. |
 | [Procedural](#procedural-status) | L4 | 0% | 0 | Pre-implementation. Houdini-based procedural 3D asset generation spec. No schema, no code. |
 | [Showtime](#showtime-status) | L4 | 0% | 0 | Pre-implementation. In-game streaming metagame spec. No schema, no code. |
@@ -1811,7 +1811,27 @@ gh issue list --search "Leaderboard:" --state open
 
 ### Production Readiness: 0%
 
-Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a structured world knowledge ontology that defines what things ARE in decomposed, queryable characteristics -- the missing NPC world-knowledge layer. Four interconnected pillars: **entries** (things that can be known about: species, objects, phenomena, individuals), **traits** (decomposed observable characteristics: four_legged, pack_hunter, fur), **categories** (hierarchical classification: canine < quadruped_mammal < mammal < animal), and **associations** (bidirectional concept links with asymmetric strength and discovery-tier gating). Also defines **strategies** (trait/category-derived implications for GOAP: "ways to escape a wolf"). Part of a three-service knowledge stack: Lexicon (ground truth) + Collection (discovery tracking) + Hearsay (subjective belief). Discovery-gated via Collection's `discoveryLevels` -- a character only accesses Lexicon data matching their discovery tier for that entry. Specifies 23 planned endpoints, 3 state stores, 5+ published events, 2+ consumed events, 1 variable provider namespace (`${lexicon.*}`), and a 7-phase implementation plan (Phase 0 requires only existing Collection and Actor services). No endpoints, no generated code, no service implementation exists.
+Pre-implementation. L4-audited (2026-03-06) against SCHEMA-RULES and all developer tenets. The deep dive is a detailed architectural specification for a structured world knowledge ontology — the missing NPC world-knowledge layer. Four interconnected pillars: **entries** (things that can be known), **traits** (decomposed observable characteristics), **categories** (hierarchical classification), and **associations** (bidirectional concept links with discovery-tier gating). Also defines **strategies** (trait/category-derived implications for GOAP). Part of a three-service knowledge stack: Lexicon (ground truth) + Collection (discovery tracking) + Hearsay (subjective belief). Specifies 26 planned endpoints (was 23, +3 from T31 deprecation), 3 state stores, 8+ published events, 2+ consumed events, 1 variable provider namespace (`${lexicon.*}`), and a 7-phase implementation plan.
+
+**Audit fixes applied to deep dive**:
+- **T31**: Category A deprecation lifecycle added to LexiconEntry (isDeprecated/deprecatedAt/deprecationReason fields, DeprecateEntry/UndeprecateEntry/updated DeleteEntry endpoints, includeDeprecated query parameter)
+- **T29**: Replaced `preconditions: object?` with typed `StrategyPrecondition[]?` model (Lexicon reads precondition keys = violates metadata bag contract)
+- **T25**: Added `AppliesToType` enum (PascalCase: Trait, Category) replacing raw string
+- **T4**: ICollectionClient moved from soft to hard dependency (Collection is L2 since hierarchy v2.6)
+- **T30**: ITelemetryProvider added to DI services table
+- **T5/T7**: x-lifecycle requirement annotated on all CRUD published events; missing events added (strategy.deleted, category.updated, category.deleted)
+- **T28**: Bidirectional resource cleanup documented (Lexicon as resource target and cleanup implementor)
+- **Quirks #11-14 added**: Trait/strategy no-deprecation rationale, no client events, all endpoints x-permissions: [], manifest cache invalidation pattern
+
+**6 design decisions deferred** (marked AUDIT:NEEDS_DESIGN in deep dive DC#12-17):
+- DC#12: sourceType typing (string vs enum — depends on whether non-service sources exist)
+- DC#13: sourceId typing (string vs Guid — depends on whether non-Guid sources exist)
+- DC#14: metadata: object? on associations (T29 ambiguous for same-service opaque pass-through)
+- DC#15: Category deprecation (T31 ambiguous for same-service sub-entities)
+- DC#16: discoveryLevels rename to match Bannou naming conventions
+- DC#17: Compression callback (whether Lexicon data participates in lib-resource compression)
+
+No schema, no generated code, no service implementation exists.
 
 ### Bug Count: 0
 
@@ -1841,9 +1861,9 @@ gh issue list --search "Lexicon:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [LICENSE.md](plugins/LICENSE.md)
 
-### Production Readiness: 93%
+### Production Readiness: 95%
 
-Feature-complete with zero stubs and zero bugs. All 20 endpoints are fully implemented including the sophisticated 14-step unlock flow with saga compensation, distributed locking, adjacency validation, contract integration for LP deduction, board cloning for NPC tooling, and cleanup via lib-resource. Seven configuration properties are all wired. The only identified gap is a single potential extension (board reset/respec) which requires game design decisions rather than engineering work.
+L4-hardened (2026-03-06). Zero code tenet violations across all manual source files. Full audit: schema NRT validation constraints added (config min/max, GridPosition bounds, code/name minLength, seed minItems), PascalCase enum descriptions, defaultAdjacencyMode default fixed to EightWay, cleanup-by-owner x-permissions corrected to [] (service-to-service), currentLp type fixed from number to integer, state-store purpose text corrected for polymorphic ownership, stale comment fixed. 59 tests passing, 0 warnings. Only extension remaining is board reset/respec (#356, needs game design).
 
 ### Bug Count: 0
 
@@ -2409,7 +2429,7 @@ gh issue list --search "Dungeon:" --state open
 
 ### Production Readiness: 0%
 
-Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A comprehensive architectural specification for a loot table management and generation service with hierarchical weighted tables, three generation tiers (lightweight preview, standard instance, enriched with affixes), five distribution modes (personal, need/greed, round-robin, free-for-all, leader-assign), pity counter system, context-sensitive modifiers, sub-table composition, and integration with the content flywheel for archive-seeded dynamic tables. No endpoints, no generated code, no service implementation exists.
+Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. Deep dive specification has been audited and hardened for tenet compliance: event topics converted to Pattern C (`loot.table.created`, `loot.pity.triggered`), all enum values converted to PascalCase (`GenerationTier`, `EntryType`, `RollMode`, `DistributionMode`, `PityCounterScope`, `QuantityCurve`, `NeedGreedDeclaration`), untyped `object` fields replaced with typed models (`map<string, double>`, `LootItemOverrides`), `decimal` types corrected to `double`, x-permissions declared on all endpoint groups, hard/soft dependency classification corrected (Currency and Character moved to hard L2 deps), consumed event corrected from `item-template.deprecated` to `item-template.updated`, Tier 3 affix flow updated per T29 (lib-affix owns its own state), and 19 design considerations documented for implementation-time decisions. No endpoints, no generated code, no service implementation exists.
 
 ### Bug Count: 0
 
@@ -2441,7 +2461,7 @@ gh issue list --search "Loot:" --state open
 
 ### Production Readiness: 0%
 
-Entirely pre-implementation. The deep dive explicitly states "No schema, no code" and "Everything is unimplemented." A marketplace orchestration service with two subsystems (auction houses and NPC vendor catalogs), 28 planned endpoints across 6 groups, 14 published events, 1 consumed event, 9 state stores, 22 configuration properties, 3 background workers, and 2 Variable Provider Factories. Depends on lib-escrow completing asset movement operations (Phase 0 prerequisite).
+Entirely pre-implementation. L4-audited (2026-03-06): deep dive specification hardened through 3 parallel audit agents (schema rules, all tenets, GitHub issues) plus a validation agent for mechanical tenet application. 14 tenet-mandated fixes applied: T16 Pattern C event topics (`market.definition.*` not `market-definition.*`, `topic_prefix: market` on x-lifecycle), T25 PascalCase enum values across all 10 enum types (CatalogType, ListingStatus, MarketDefinitionStatus, VendorStatus, BidStatus, PriceGranularity, AuctionSortOrder, PriceTrend, SupplySignal + sort order values), T31 MarketDefinition classified as configuration entity (no deprecation), T8 filler removed from vendor buy response (`item + receipt` → `itemInstanceId`), T9 distributed lock added to SetStock endpoint, T30 ITelemetryProvider added to DI services, variable provider namespace overlap fixed (`${market.price.*}` → `${market-price.*}`), x-lifecycle specification added for MarketDefinition and VendorCatalog entities, x-event-subscriptions/publications declared, x-permissions specified on all 6 endpoint groups, x-references corrected with `field` and `payloadTemplate` columns, vendor lifecycle events added (3 x-lifecycle events). T21 VendorWalletOwnerType config removed (Currency uses EntityType enum). 4 design decisions deferred (DC#9-12: MarketEntityType T14 classification, player-facing x-permissions, vendor wallet EntityType, requirementsMet trust boundary). Two subsystems (auction houses + NPC vendor catalogs), 28 planned endpoints, 17 published events (6 x-lifecycle + 11 custom), 1 consumed event, 9 state stores, 21 configuration properties, 3 background workers, 2 Variable Provider Factories. Phase 0 blocked on lib-escrow asset movement (#153, #222). No schema, no generated code, no service implementation.
 
 ### Bug Count: 0
 
@@ -2455,9 +2475,28 @@ No implementation exists to have bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Bidding & Settlement (Phase 2)** | Implement bid placement with Currency hold reservation, outbid flow, buyout, and the MarketSettlementService background worker for expired auction settlement. | No issue |
-| 2 | **Variable Provider Integration (Phase 5)** | Implement `${market.*}` and `${market.price.*}` ABML variable namespaces enabling NPC vendors to make autonomous GOAP-driven pricing and restocking decisions. | No issue |
-| 3 | **Vendor Negotiation API** | Expose a `/market/vendor/negotiate` endpoint for dynamic haggling where the vendor's ABML behavior decides to accept, counter-offer, or refuse buyer proposals. | No issue |
+| 1 | **Bidding & Settlement (Phase 2)** | Implement bid placement with Currency hold reservation, outbid flow, buyout, and the MarketSettlementService background worker for expired auction settlement. | [#427](https://github.com/beyond-immersion/bannou-service/issues/427) |
+| 2 | **Variable Provider Integration (Phase 5)** | Implement `${market.*}` and `${market-price.*}` ABML variable namespaces enabling NPC vendors to make autonomous GOAP-driven pricing and restocking decisions. | [#427](https://github.com/beyond-immersion/bannou-service/issues/427) |
+| 3 | **Vendor Negotiation API** | Expose a `/market/vendor/negotiate` endpoint for dynamic haggling where the vendor's ABML behavior decides to accept, counter-offer, or refuse buyer proposals. | [#428](https://github.com/beyond-immersion/bannou-service/issues/428) |
+
+### L4 Audit Changes (2026-03-06)
+
+| Change | Category | Description |
+|--------|----------|-------------|
+| T16 Pattern C topics | Spec | `market-definition.*` → `market.definition.*`; `topic_prefix: market` on x-lifecycle |
+| T25 PascalCase enums | Spec | All 10 enum types: `static`→`Static`, `dynamic`→`Dynamic`, `personality_driven`→`PersonalityDriven`, etc. |
+| T31 configuration entity | Spec | MarketDefinition classified as configuration (no deprecation lifecycle) |
+| T8 filler removed | Spec | Vendor buy response: `item + receipt` → `itemInstanceId` |
+| T9 distributed lock | Spec | SetStock endpoint: lock acquisition on `stock:{vendorId}:{templateId}` |
+| T30 telemetry | Spec | ITelemetryProvider added to DI services table |
+| Namespace overlap | Spec | `${market.price.*}` → `${market-price.*}` (avoids prefix collision with `${market.*}`) |
+| x-lifecycle | Spec | MarketDefinition + VendorCatalog entities with model fields specified |
+| x-event-subscriptions | Spec | `currency.hold.expired` consumption declared |
+| x-permissions | Spec | All 6 endpoint groups: developer, service-to-service, or mixed |
+| x-references | Spec | Added `field` and `payloadTemplate` columns to cleanup table |
+| T21 config removed | Spec | `VendorWalletOwnerType` removed (Currency uses EntityType enum) |
+| Vendor lifecycle events | Spec | 3 x-lifecycle events added (created/updated/deleted) |
+| Design decisions | Spec | DC#9-12 added for genuine design choices requiring human judgment |
 
 ### GH Issues
 

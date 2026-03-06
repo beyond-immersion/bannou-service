@@ -624,9 +624,7 @@ paths:
         destroying their inventory containers and all contained license items.
         This endpoint is designed for internal service-to-service calls during
         cascading resource cleanup.
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -651,8 +649,8 @@ components:
       type: string
       description: |
         Grid traversal adjacency mode for a board template.
-        - four_way: Orthogonal only (up, down, left, right)
-        - eight_way: Orthogonal + diagonal (all 8 surrounding cells)
+        - FourWay: Orthogonal only (up, down, left, right)
+        - EightWay: Orthogonal + diagonal (all 8 surrounding cells)
       enum:
       - FourWay
       - EightWay
@@ -661,9 +659,9 @@ components:
       type: string
       description: |
         Unlock status of a license node on a board.
-        - locked: Not adjacent to any unlocked node (cannot be unlocked)
-        - unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
-        - unlocked: Already unlocked (item placed at this position)
+        - Locked: Not adjacent to any unlocked node (cannot be unlocked)
+        - Unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
+        - Unlocked: Already unlocked (item placed at this position)
       enum:
       - Locked
       - Unlockable
@@ -673,13 +671,13 @@ components:
       type: string
       description: |
         Reason why a license unlock attempt failed.
-        - not_adjacent: No adjacent unlocked license and not a starting node
-        - insufficient_lp: Character does not have enough LP for the cost
-        - prerequisites_not_met: Required non-adjacent licenses are not unlocked
-        - contract_failed: Contract execution failed during unlock milestone
-        - already_unlocked: License is already unlocked on this board
-        - board_not_found: Board instance does not exist
-        - license_not_found: License definition does not exist on this board template
+        - NotAdjacent: No adjacent unlocked license and not a starting node
+        - InsufficientLp: Owner does not have enough LP for the cost
+        - PrerequisitesNotMet: Required non-adjacent licenses are not unlocked
+        - ContractFailed: Contract execution failed during unlock milestone
+        - AlreadyUnlocked: License is already unlocked on this board
+        - BoardNotFound: Board instance does not exist
+        - LicenseNotFound: License definition does not exist on this board template
       enum:
       - NotAdjacent
       - InsufficientLp
@@ -703,9 +701,11 @@ components:
       properties:
         x:
           type: integer
+          minimum: 0
           description: Horizontal grid coordinate (zero-indexed)
         y:
           type: integer
+          minimum: 0
           description: Vertical grid coordinate (zero-indexed)
 
     BoardNodeState:
@@ -779,6 +779,8 @@ components:
           description: Game service this board template belongs to
         name:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Display name for the board template
         description:
           type: string
@@ -808,7 +810,7 @@ components:
           allOf:
             - $ref: '#/components/schemas/AdjacencyMode'
           nullable: true
-          description: Grid traversal mode. Defaults to eight_way if not specified.
+          description: Grid traversal mode. Defaults to EightWay if not specified.
         allowedOwnerTypes:
           type: array
           items:
@@ -996,6 +998,7 @@ components:
           description: Board template to seed with definitions
         definitions:
           type: array
+          minItems: 1
           items:
             $ref: '#/components/schemas/AddLicenseDefinitionRequest'
           description: License definitions to add (boardTemplateId in each is ignored, uses top-level)
@@ -1043,6 +1046,7 @@ components:
           description: Board template to add this definition to
         code:
           type: string
+          minLength: 1
           maxLength: 64
           description: Unique license code within this board template
         position:
@@ -1453,7 +1457,7 @@ components:
           nullable: true
           description: Whether the owner has enough LP. Null if LP check is not applicable for this owner type.
         currentLp:
-          type: number
+          type: integer
           nullable: true
           description: Current LP balance of the owner (null if balance check failed or not applicable)
         requiredLp:

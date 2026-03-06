@@ -37,7 +37,7 @@ public partial interface IMappingService : IBannouService
         /// <summary>
         /// ReleaseAuthority operation
         /// </summary>
-        Task<(StatusCodes, ReleaseAuthorityResponse?)> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<StatusCodes> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// AuthorityHeartbeat operation
@@ -92,7 +92,7 @@ public partial interface IMappingService : IBannouService
         /// <summary>
         /// ReleaseAuthoring operation
         /// </summary>
-        Task<(StatusCodes, AuthoringReleaseResponse?)> ReleaseAuthoringAsync(AuthoringReleaseRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<StatusCodes> ReleaseAuthoringAsync(AuthoringReleaseRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// CreateDefinition operation
@@ -117,6 +117,6 @@ public partial interface IMappingService : IBannouService
         /// <summary>
         /// DeleteDefinition operation
         /// </summary>
-        Task<(StatusCodes, DeleteDefinitionResponse?)> DeleteDefinitionAsync(DeleteDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<StatusCodes> DeleteDefinitionAsync(DeleteDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

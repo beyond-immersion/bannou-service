@@ -393,7 +393,7 @@ public partial class MappingService : IMappingService
                 Timestamp = DateTimeOffset.UtcNow,
                 ChannelId = channelId,
                 RegionId = body.RegionId,
-                Kind = body.Kind.ToString(),
+                Kind = body.Kind,
                 AuthorityAppId = body.SourceAppId,
                 ExpiresAt = expiresAt,
                 IsNewChannel = existingChannel == null
@@ -415,7 +415,7 @@ public partial class MappingService : IMappingService
     }
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, ReleaseAuthorityResponse?)> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Releasing authority for channel {ChannelId}", body.ChannelId);
 
@@ -424,7 +424,7 @@ public partial class MappingService : IMappingService
             if (!valid || tokenChannelId != body.ChannelId)
             {
                 _logger.LogWarning("Invalid authority token for channel {ChannelId}", body.ChannelId);
-                return (StatusCodes.Unauthorized, null);
+                return StatusCodes.Unauthorized;
             }
 
             var authorityKey = BuildAuthorityKey(body.ChannelId);
@@ -434,7 +434,7 @@ public partial class MappingService : IMappingService
             if (authority == null || authority.AuthorityToken != body.AuthorityToken)
             {
                 _logger.LogWarning("Authority token mismatch for channel {ChannelId}", body.ChannelId);
-                return (StatusCodes.Unauthorized, null);
+                return StatusCodes.Unauthorized;
             }
 
             // Delete authority record
@@ -457,12 +457,12 @@ public partial class MappingService : IMappingService
                 Timestamp = DateTimeOffset.UtcNow,
                 ChannelId = body.ChannelId,
                 RegionId = channel?.RegionId,
-                Kind = channel?.Kind.ToString(),
+                Kind = channel?.Kind,
                 AuthorityAppId = authority.AuthorityAppId
             }, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Released authority for channel {ChannelId}", body.ChannelId);
-            return (StatusCodes.OK, new ReleaseAuthorityResponse { Released = true });
+            return StatusCodes.OK;
         }
     }
 
@@ -513,7 +513,6 @@ public partial class MappingService : IMappingService
 
             return (StatusCodes.OK, new AuthorityHeartbeatResponse
             {
-                Valid = true,
                 ExpiresAt = newExpiresAt,
                 Warning = warning
             });
@@ -562,9 +561,7 @@ public partial class MappingService : IMappingService
 
         return (StatusCodes.OK, new PublishMapUpdateResponse
         {
-            Accepted = true,
             Version = version,
-            Warning = null
         });
     }
 
@@ -611,14 +608,10 @@ public partial class MappingService : IMappingService
                     changeEvents.Add(new ObjectChangeEvent
                     {
                         ObjectId = change.ObjectId,
-                        Action = MapObjectActionToEventAction(change.Action),
+                        Action = change.Action,
                         ObjectType = change.ObjectType,
-                        Position = change.Position != null ? new EventPosition3D { X = change.Position.X, Y = change.Position.Y, Z = change.Position.Z } : null,
-                        Bounds = change.Bounds != null ? new EventBounds
-                        {
-                            Min = new EventPosition3D { X = change.Bounds.Min.X, Y = change.Bounds.Min.Y, Z = change.Bounds.Min.Z },
-                            Max = new EventPosition3D { X = change.Bounds.Max.X, Y = change.Bounds.Max.Y, Z = change.Bounds.Max.Z }
-                        } : null,
+                        Position = ToCommonPosition(change.Position),
+                        Bounds = ToCommonBounds(change.Bounds),
                         Data = change.Data
                     });
                 }
@@ -645,7 +638,6 @@ public partial class MappingService : IMappingService
 
         return (StatusCodes.OK, new PublishObjectChangesResponse
         {
-            Accepted = acceptedCount > 0,
             AcceptedCount = acceptedCount,
             RejectedCount = rejectedCount,
             Version = version
@@ -710,7 +702,7 @@ public partial class MappingService : IMappingService
             Timestamp = DateTimeOffset.UtcNow,
             ChannelId = channel.ChannelId,
             RegionId = channel.RegionId,
-            Kind = channel.Kind.ToString(),
+            Kind = channel.Kind,
             AttemptedPublisher = "unknown",
             CurrentAuthority = null,
             HandlingMode = channel.NonAuthorityHandling,
@@ -778,7 +770,6 @@ public partial class MappingService : IMappingService
                     // Return ref without inline objects
                     return (StatusCodes.OK, new RequestSnapshotResponse
                     {
-                        RegionId = body.RegionId,
                         Objects = new List<MapObject>(), // Empty - use payloadRef
                         PayloadRef = payloadRef,
                         Version = maxVersion
@@ -791,7 +782,6 @@ public partial class MappingService : IMappingService
 
             return (StatusCodes.OK, new RequestSnapshotResponse
             {
-                RegionId = body.RegionId,
                 Objects = objects,
                 PayloadRef = payloadRef,
                 Version = maxVersion
@@ -864,8 +854,6 @@ public partial class MappingService : IMappingService
         return (StatusCodes.OK, new QueryPointResponse
         {
             Objects = objects,
-            Position = body.Position,
-            Radius = radius
         });
     }
 
@@ -900,7 +888,6 @@ public partial class MappingService : IMappingService
         return (StatusCodes.OK, new QueryBoundsResponse
         {
             Objects = objects,
-            Bounds = body.Bounds,
             Truncated = truncated
         });
     }
@@ -950,7 +937,6 @@ public partial class MappingService : IMappingService
         return (StatusCodes.OK, new QueryObjectsByTypeResponse
         {
             Objects = objects,
-            ObjectType = body.ObjectType,
             Truncated = truncated
         });
     }
@@ -968,23 +954,6 @@ public partial class MappingService : IMappingService
             if (cachedResult != null)
             {
                 stopwatch.Stop();
-                // Preserve original query stats from cached result, update cache-specific fields
-                if (cachedResult.QueryMetadata != null)
-                {
-                    cachedResult.QueryMetadata.SearchDurationMs = (int)stopwatch.ElapsedMilliseconds;
-                    cachedResult.QueryMetadata.CacheHit = true;
-                }
-                else
-                {
-                    cachedResult.QueryMetadata = new AffordanceQueryMetadata
-                    {
-                        KindsSearched = new List<string>(),
-                        ObjectsEvaluated = 0,
-                        CandidatesGenerated = 0,
-                        SearchDurationMs = (int)stopwatch.ElapsedMilliseconds,
-                        CacheHit = true
-                    };
-                }
                 return (StatusCodes.OK, cachedResult);
             }
         }
@@ -1051,14 +1020,6 @@ public partial class MappingService : IMappingService
         var response = new AffordanceQueryResponse
         {
             Locations = results,
-            QueryMetadata = new AffordanceQueryMetadata
-            {
-                KindsSearched = kindsToSearch.Select(k => k.ToString()).ToList(),
-                ObjectsEvaluated = objectsEvaluated,
-                CandidatesGenerated = candidatesGenerated,
-                SearchDurationMs = (int)stopwatch.ElapsedMilliseconds,
-                CacheHit = false
-            }
         };
 
         // Cache result if allowed
@@ -1160,7 +1121,7 @@ public partial class MappingService : IMappingService
     }
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, AuthoringReleaseResponse?)> ReleaseAuthoringAsync(AuthoringReleaseRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> ReleaseAuthoringAsync(AuthoringReleaseRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Releasing authoring checkout - region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
@@ -1171,7 +1132,7 @@ public partial class MappingService : IMappingService
         if (checkout == null || checkout.AuthorityToken != body.AuthorityToken)
         {
             _logger.LogWarning("Invalid authority token for authoring release on region {RegionId}", body.RegionId);
-            return (StatusCodes.Unauthorized, null);
+            return StatusCodes.Unauthorized;
         }
 
         await _checkoutStore
@@ -1180,7 +1141,7 @@ public partial class MappingService : IMappingService
         _logger.LogInformation("Released authoring checkout for region {RegionId}, kind {Kind}",
             body.RegionId, body.Kind);
 
-        return (StatusCodes.OK, new AuthoringReleaseResponse { Released = true });
+        return StatusCodes.OK;
     }
 
     #endregion
@@ -1299,8 +1260,6 @@ public partial class MappingService : IMappingService
         {
             Definitions = definitions,
             Total = total,
-            Offset = body.Offset,
-            Limit = body.Limit
         });
     }
 
@@ -1350,7 +1309,7 @@ public partial class MappingService : IMappingService
     }
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, DeleteDefinitionResponse?)> DeleteDefinitionAsync(DeleteDefinitionRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> DeleteDefinitionAsync(DeleteDefinitionRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Deleting map definition: {DefinitionId}", body.DefinitionId);
 
@@ -1360,7 +1319,7 @@ public partial class MappingService : IMappingService
         if (record == null)
         {
             _logger.LogDebug("Map definition {DefinitionId} not found for deletion", body.DefinitionId);
-            return (StatusCodes.NotFound, null);
+            return StatusCodes.NotFound;
         }
 
         // Delete the definition
@@ -1376,7 +1335,7 @@ public partial class MappingService : IMappingService
 
         _logger.LogInformation("Deleted map definition {DefinitionId}", body.DefinitionId);
 
-        return (StatusCodes.OK, new DeleteDefinitionResponse { Deleted = true });
+        return StatusCodes.OK;
     }
 
     private static MapDefinition MapRecordToDefinition(DefinitionRecord record)
@@ -1448,7 +1407,7 @@ public partial class MappingService : IMappingService
                 Timestamp = DateTimeOffset.UtcNow,
                 ChannelId = channelId,
                 RegionId = channel.RegionId,
-                Kind = channel.Kind.ToString(),
+                Kind = channel.Kind,
                 ExpiredAuthorityAppId = authority.AuthorityAppId,
                 ExpiredAt = authority.ExpiresAt
             });
@@ -1489,9 +1448,7 @@ public partial class MappingService : IMappingService
                 _logger.LogInformation("Published despite lacking authority (accept_and_alert mode) for channel {ChannelId}", channel.ChannelId);
                 return (StatusCodes.OK, new PublishMapUpdateResponse
                 {
-                    Accepted = true,
                     Version = version,
-                    Warning = null
                 });
 
             default:
@@ -1509,7 +1466,7 @@ public partial class MappingService : IMappingService
 
         foreach (var payload in payloads)
         {
-            var objectId = payload.ObjectId != Guid.Empty ? payload.ObjectId : Guid.NewGuid();
+            var objectId = payload.ObjectId ?? Guid.NewGuid();
 
             var mapObject = new MapObject
             {
@@ -2139,7 +2096,7 @@ public partial class MappingService : IMappingService
             Timestamp = DateTimeOffset.UtcNow,
             ChannelId = channel.ChannelId,
             RegionId = channel.RegionId,
-            Kind = channel.Kind.ToString(),
+            Kind = channel.Kind,
             NonAuthorityHandling = channel.NonAuthorityHandling,
             Version = channel.Version,
             CreatedAt = channel.CreatedAt,
@@ -2159,13 +2116,9 @@ public partial class MappingService : IMappingService
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RegionId = channel.RegionId,
-            Kind = channel.Kind.ToString(),
+            Kind = channel.Kind,
             ChannelId = channel.ChannelId,
-            Bounds = bounds != null ? new EventBounds
-            {
-                Min = new EventPosition3D { X = bounds.Min.X, Y = bounds.Min.Y, Z = bounds.Min.Z },
-                Max = new EventPosition3D { X = bounds.Max.X, Y = bounds.Max.Y, Z = bounds.Max.Z }
-            } : null,
+            Bounds = bounds,
             Version = version,
             DeltaType = deltaType,
             SourceAppId = sourceAppId,
@@ -2231,7 +2184,7 @@ public partial class MappingService : IMappingService
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RegionId = channel.RegionId,
-            Kind = channel.Kind.ToString(),
+            Kind = channel.Kind,
             ChannelId = channel.ChannelId,
             Version = version,
             SourceAppId = sourceAppId,
@@ -2256,7 +2209,7 @@ public partial class MappingService : IMappingService
             Timestamp = DateTimeOffset.UtcNow,
             ChannelId = channel.ChannelId,
             RegionId = channel.RegionId,
-            Kind = channel.Kind.ToString(),
+            Kind = channel.Kind,
             AttemptedPublisher = attemptedPublisher ?? "unknown",
             CurrentAuthority = null,
             HandlingMode = channel.NonAuthorityHandling,
@@ -2341,20 +2294,20 @@ public partial class MappingService : IMappingService
                 var objectId = payload.ObjectId ?? Guid.NewGuid();
                 var position = payload.Position != null
                     ? new Position3D { X = payload.Position.X, Y = payload.Position.Y, Z = payload.Position.Z }
-                    : null;
+                    : (Position3D?)null;
                 var bounds = payload.Bounds != null
                     ? new Bounds
                     {
                         Min = new Position3D { X = payload.Bounds.Min.X, Y = payload.Bounds.Min.Y, Z = payload.Bounds.Min.Z },
                         Max = new Position3D { X = payload.Bounds.Max.X, Y = payload.Bounds.Max.Y, Z = payload.Bounds.Max.Z }
                     }
-                    : null;
+                    : (Bounds?)null;
 
                 var change = new ObjectChange
                 {
                     ObjectId = objectId,
                     ObjectType = payload.ObjectType,
-                    Action = MapIngestActionToObjectAction(payload.Action),
+                    Action = payload.Action,
                     Position = position,
                     Bounds = bounds,
                     Data = payload.Data
@@ -2366,10 +2319,10 @@ public partial class MappingService : IMappingService
                     changes.Add(new ObjectChangeEvent
                     {
                         ObjectId = objectId,
-                        Action = MapIngestActionToEventAction(payload.Action),
+                        Action = payload.Action,
                         ObjectType = payload.ObjectType,
-                        Position = payload.Position,
-                        Bounds = payload.Bounds,
+                        Position = position,
+                        Bounds = bounds,
                         Data = payload.Data
                     });
                 }
@@ -2440,20 +2393,20 @@ public partial class MappingService : IMappingService
             var objectId = payload.ObjectId ?? Guid.NewGuid();
             var position = payload.Position != null
                 ? new Position3D { X = payload.Position.X, Y = payload.Position.Y, Z = payload.Position.Z }
-                : null;
+                : (Position3D?)null;
             var bounds = payload.Bounds != null
                 ? new Bounds
                 {
                     Min = new Position3D { X = payload.Bounds.Min.X, Y = payload.Bounds.Min.Y, Z = payload.Bounds.Min.Z },
                     Max = new Position3D { X = payload.Bounds.Max.X, Y = payload.Bounds.Max.Y, Z = payload.Bounds.Max.Z }
                 }
-                : null;
+                : (Bounds?)null;
 
             var change = new ObjectChange
             {
                 ObjectId = objectId,
                 ObjectType = payload.ObjectType,
-                Action = MapIngestActionToObjectAction(payload.Action),
+                Action = payload.Action,
                 Position = position,
                 Bounds = bounds,
                 Data = payload.Data
@@ -2465,7 +2418,7 @@ public partial class MappingService : IMappingService
                 changes.Add(new ObjectChangeEvent
                 {
                     ObjectId = objectId,
-                    Action = MapIngestActionToEventAction(payload.Action),
+                    Action = payload.Action,
                     ObjectType = payload.ObjectType,
                     Position = payload.Position,
                     Bounds = payload.Bounds,
@@ -2497,7 +2450,7 @@ public partial class MappingService : IMappingService
             Timestamp = DateTimeOffset.UtcNow,
             ChannelId = channel.ChannelId,
             RegionId = channel.RegionId,
-            Kind = channel.Kind.ToString(),
+            Kind = channel.Kind,
             AttemptedPublisher = "unknown",
             CurrentAuthority = null,
             HandlingMode = channel.NonAuthorityHandling,
@@ -2509,38 +2462,6 @@ public partial class MappingService : IMappingService
         await _messageBus.TryPublishAsync(topic, warning, cancellationToken: cancellationToken);
     }
 
-    private static ObjectAction MapIngestActionToObjectAction(IngestPayloadAction action)
-    {
-        return action switch
-        {
-            IngestPayloadAction.Create => ObjectAction.Created,
-            IngestPayloadAction.Update => ObjectAction.Updated,
-            IngestPayloadAction.Delete => ObjectAction.Deleted,
-            _ => ObjectAction.Updated
-        };
-    }
-
-    private static ObjectChangeEventAction MapIngestActionToEventAction(IngestPayloadAction action)
-    {
-        return action switch
-        {
-            IngestPayloadAction.Create => ObjectChangeEventAction.Created,
-            IngestPayloadAction.Update => ObjectChangeEventAction.Updated,
-            IngestPayloadAction.Delete => ObjectChangeEventAction.Deleted,
-            _ => ObjectChangeEventAction.Updated
-        };
-    }
-
-    private static ObjectChangeEventAction MapObjectActionToEventAction(ObjectAction action)
-    {
-        return action switch
-        {
-            ObjectAction.Created => ObjectChangeEventAction.Created,
-            ObjectAction.Updated => ObjectChangeEventAction.Updated,
-            ObjectAction.Deleted => ObjectChangeEventAction.Deleted,
-            _ => ObjectChangeEventAction.Updated
-        };
-    }
 
     #endregion
 

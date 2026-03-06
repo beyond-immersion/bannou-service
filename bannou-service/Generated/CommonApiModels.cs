@@ -287,7 +287,7 @@ public partial class Position3D
 }
 
 /// <summary>
-/// Axis-aligned bounding box in world coordinates (meters, Y-up, right-handed)
+/// Axis-aligned bounding box as flat fields in world coordinates (meters, Y-up, right-handed). Preferred for simple spatial containment checks where individual axis access is common (e.g., location bounds).
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BoundingBox3D
@@ -328,6 +328,29 @@ public partial class BoundingBox3D
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxZ")]
     public float MaxZ { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Axis-aligned bounding box as min/max Position3D corners in world coordinates (meters, Y-up, right-handed). Preferred for spatial queries and operations where corners are treated as points (e.g., mapping spatial indexing, affordance queries).
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Bounds
+{
+
+    /// <summary>
+    /// Minimum corner (lowest x, y, z values)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("min")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public Position3D Min { get; set; } = new Position3D();
+
+    /// <summary>
+    /// Maximum corner (highest x, y, z values)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("max")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public Position3D Max { get; set; } = new Position3D();
 
 }
 

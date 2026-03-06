@@ -49,17 +49,15 @@ public sealed class MappingProxy
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing ReleaseAuthorityResponse on success.</returns>
-    public Task<ApiResponse<ReleaseAuthorityResponse>> ReleaseAuthorityAsync(
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task ReleaseAuthorityEventAsync(
         ReleaseAuthorityRequest request,
         ushort channel = 0,
-        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<ReleaseAuthorityRequest, ReleaseAuthorityResponse>(
-            "/mapping/release-authority", request, channel, timeout, cancellationToken);
+        return _client.SendEventAsync<ReleaseAuthorityRequest>(
+            "/mapping/release-authority", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -247,17 +245,15 @@ public sealed class MappingProxy
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing AuthoringReleaseResponse on success.</returns>
-    public Task<ApiResponse<AuthoringReleaseResponse>> ReleaseAuthoringAsync(
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task ReleaseAuthoringEventAsync(
         AuthoringReleaseRequest request,
         ushort channel = 0,
-        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<AuthoringReleaseRequest, AuthoringReleaseResponse>(
-            "/mapping/authoring/release", request, channel, timeout, cancellationToken);
+        return _client.SendEventAsync<AuthoringReleaseRequest>(
+            "/mapping/authoring/release", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -337,16 +333,14 @@ public sealed class MappingProxy
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing DeleteDefinitionResponse on success.</returns>
-    public Task<ApiResponse<DeleteDefinitionResponse>> DeleteDefinitionAsync(
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task DeleteDefinitionEventAsync(
         DeleteDefinitionRequest request,
         ushort channel = 0,
-        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<DeleteDefinitionRequest, DeleteDefinitionResponse>(
-            "/mapping/definition/delete", request, channel, timeout, cancellationToken);
+        return _client.SendEventAsync<DeleteDefinitionRequest>(
+            "/mapping/definition/delete", request, channel, cancellationToken);
     }
 }

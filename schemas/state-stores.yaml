@@ -975,7 +975,7 @@ x-state-stores:
   license-boards:
     backend: mysql
     service: License
-    purpose: Character board instances linking characters to board templates
+    purpose: Board instances linking owners (polymorphic entity) to board templates
 
   license-board-cache:
     backend: redis

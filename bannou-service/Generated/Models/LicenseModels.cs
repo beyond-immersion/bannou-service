@@ -32,8 +32,8 @@ using System = global::System;
 
 /// <summary>
 /// Grid traversal adjacency mode for a board template.
-/// <br/>- four_way: Orthogonal only (up, down, left, right)
-/// <br/>- eight_way: Orthogonal + diagonal (all 8 surrounding cells)
+/// <br/>- FourWay: Orthogonal only (up, down, left, right)
+/// <br/>- EightWay: Orthogonal + diagonal (all 8 surrounding cells)
 /// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -52,9 +52,9 @@ public enum AdjacencyMode
 
 /// <summary>
 /// Unlock status of a license node on a board.
-/// <br/>- locked: Not adjacent to any unlocked node (cannot be unlocked)
-/// <br/>- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
-/// <br/>- unlocked: Already unlocked (item placed at this position)
+/// <br/>- Locked: Not adjacent to any unlocked node (cannot be unlocked)
+/// <br/>- Unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
+/// <br/>- Unlocked: Already unlocked (item placed at this position)
 /// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -76,13 +76,13 @@ public enum LicenseStatus
 
 /// <summary>
 /// Reason why a license unlock attempt failed.
-/// <br/>- not_adjacent: No adjacent unlocked license and not a starting node
-/// <br/>- insufficient_lp: Character does not have enough LP for the cost
-/// <br/>- prerequisites_not_met: Required non-adjacent licenses are not unlocked
-/// <br/>- contract_failed: Contract execution failed during unlock milestone
-/// <br/>- already_unlocked: License is already unlocked on this board
-/// <br/>- board_not_found: Board instance does not exist
-/// <br/>- license_not_found: License definition does not exist on this board template
+/// <br/>- NotAdjacent: No adjacent unlocked license and not a starting node
+/// <br/>- InsufficientLp: Owner does not have enough LP for the cost
+/// <br/>- PrerequisitesNotMet: Required non-adjacent licenses are not unlocked
+/// <br/>- ContractFailed: Contract execution failed during unlock milestone
+/// <br/>- AlreadyUnlocked: License is already unlocked on this board
+/// <br/>- BoardNotFound: Board instance does not exist
+/// <br/>- LicenseNotFound: License definition does not exist on this board template
 /// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -125,12 +125,14 @@ public partial class GridPosition
     /// Horizontal grid coordinate (zero-indexed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("x")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int X { get; set; } = default!;
 
     /// <summary>
     /// Vertical grid coordinate (zero-indexed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("y")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Y { get; set; } = default!;
 
 }
@@ -226,8 +228,9 @@ public partial class CreateBoardTemplateRequest
     /// Display name for the board template
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -268,7 +271,7 @@ public partial class CreateBoardTemplateRequest
     public System.Guid BoardContractTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Grid traversal mode. Defaults to eight_way if not specified.
+    /// Grid traversal mode. Defaults to EightWay if not specified.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("adjacencyMode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
@@ -548,6 +551,7 @@ public partial class SeedBoardTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("definitions")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
     public System.Collections.Generic.ICollection<AddLicenseDefinitionRequest> Definitions { get; set; } = new System.Collections.ObjectModel.Collection<AddLicenseDefinitionRequest>();
 
 }
@@ -602,9 +606,9 @@ public partial class AddLicenseDefinitionRequest
     /// Unique license code within this board template
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string Code { get; set; } = default!;
 
     /// <summary>
@@ -1210,7 +1214,7 @@ public partial class CheckUnlockableResponse
     /// Current LP balance of the owner (null if balance check failed or not applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentLp")]
-    public double? CurrentLp { get; set; } = default!;
+    public int? CurrentLp { get; set; } = default!;
 
     /// <summary>
     /// LP cost for this license

@@ -55,36 +55,42 @@ public class LicenseServiceConfiguration : BaseServiceConfiguration
     /// Maximum number of active boards a single owner entity can have
     /// Environment variable: LICENSE_MAX_BOARDS_PER_OWNER
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
     public int MaxBoardsPerOwner { get; set; } = 10;
 
     /// <summary>
     /// Maximum license definitions per board template
     /// Environment variable: LICENSE_MAX_DEFINITIONS_PER_BOARD
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MaxDefinitionsPerBoard { get; set; } = 200;
 
     /// <summary>
     /// Distributed lock TTL for board mutations in seconds
     /// Environment variable: LICENSE_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int LockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Redis TTL for board state cache in seconds
     /// Environment variable: LICENSE_BOARD_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 86400)]
     public int BoardCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
-    /// Default page size for paginated queries (min 1, max 100)
+    /// Default page size for paginated queries
     /// Environment variable: LICENSE_DEFAULT_PAGE_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int DefaultPageSize { get; set; } = 20;
 
     /// <summary>
     /// Maximum retry attempts for optimistic concurrency conflicts
     /// Environment variable: LICENSE_MAX_CONCURRENCY_RETRIES
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 10)]
     public int MaxConcurrencyRetries { get; set; } = 3;
 
     /// <summary>

@@ -43,6 +43,8 @@ public partial class LicenseController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Display name for the board template"
                 },
                 "description": {
@@ -82,7 +84,7 @@ public partial class LicenseController
                         }
                     ],
                     "nullable": true,
-                    "description": "Grid traversal mode. Defaults to eight_way if not specified."
+                    "description": "Grid traversal mode. Defaults to EightWay if not specified."
                 },
                 "allowedOwnerTypes": {
                     "type": "array",
@@ -105,17 +107,19 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
         },
         "AdjacencyMode": {
             "type": "string",
-            "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
+            "description": "Grid traversal adjacency mode for a board template.\n- FourWay: Orthogonal only (up, down, left, right)\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
                 "FourWay",
                 "EightWay"
@@ -226,17 +230,19 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
         },
         "AdjacencyMode": {
             "type": "string",
-            "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
+            "description": "Grid traversal adjacency mode for a board template.\n- FourWay: Orthogonal only (up, down, left, right)\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
                 "FourWay",
                 "EightWay"
@@ -427,17 +433,19 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
         },
         "AdjacencyMode": {
             "type": "string",
-            "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
+            "description": "Grid traversal adjacency mode for a board template.\n- FourWay: Orthogonal only (up, down, left, right)\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
                 "FourWay",
                 "EightWay"
@@ -667,17 +675,19 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
         },
         "AdjacencyMode": {
             "type": "string",
-            "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
+            "description": "Grid traversal adjacency mode for a board template.\ n- FourWay: Orthogonal only (up, down, left, right)\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
                 "FourWay",
                 "EightWay"
@@ -892,17 +902,19 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
         },
         "AdjacencyMode": {
             "type": "string",
-            "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
+            "description": "Grid traversal adjacency mode for a board template.\n- FourWay: Orthogonal only (up, down, left, right)\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
                 "FourWay",
                 "EightWay"
@@ -1093,17 +1105,19 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
         },
         "AdjacencyMode": {
             "type": "string",
-            "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
+            "description": "Grid traversal adjacency mode for a board template.\n- FourWay: Orthogonal only (up, down, left, right)\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
                 "FourWay",
                 "EightWay"
@@ -1193,6 +1207,7 @@ public partial class LicenseController
                 },
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 64,
                     "description": "Unique license code within this board template"
                 },
@@ -1242,10 +1257,12 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
@@ -1337,10 +1354,12 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
@@ -1517,10 +1536,12 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
@@ -1715,10 +1736,12 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
@@ -1920,10 +1943,12 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
@@ -2100,10 +2125,12 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
@@ -2881,10 +2908,12 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
@@ -3012,7 +3041,7 @@ public partial class LicenseController
                     "description": "Whether the owner has enough LP. Null if LP check is not applicable for this owner type."
                 },
                 "currentLp": {
-                    "type": "number",
+                    "type": "integer",
                     "nullable": true,
                     "description": "Current LP balance of the owner (null if balance check failed or not applicable)"
                 },
@@ -3232,17 +3261,19 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
         },
         "LicenseStatus": {
             "type": "string",
-            "description": "Unlock status of a license node on a board.\n- locked: Not adjacent to any unlocked node (cannot be unlocked)\n- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\n- unlocked: Already unlocked (item placed at this position)\n",
+            "description": "Unlock status of a license node on a board.\n- Locked: Not adjacent to any unlocked node (cannot be unlocked)\n- Unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\n- Unlocked: Already unlocked (item placed at this position)\n",
             "enum": [
                 "Locked",
                 "Unlockable",
@@ -3330,6 +3361,7 @@ public partial class LicenseController
                 },
                 "definitions": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                         "$ref": "#/$defs/AddLicenseDefinitionRequest"
                     },
@@ -3356,6 +3388,7 @@ public partial class LicenseController
                 },
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 64,
                     "description": "Unique license code within this board template"
                 },
@@ -3405,10 +3438,12 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }
@@ -3528,10 +3563,12 @@ public partial class LicenseController
             "properties": {
                 "x": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Horizontal grid coordinate (zero-indexed)"
                 },
                 "y": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Vertical grid coordinate (zero-indexed)"
                 }
             }

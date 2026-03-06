@@ -99,7 +99,7 @@ LootTable:
 
   # Roll Configuration
   rollCount: RollRange         # How many times to roll on this table
-  rollMode: RollMode           # independent | sequential | pick_unique
+  rollMode: RollMode           # Independent | Sequential | PickUnique
   guaranteedEntries: [Guid]    # Entry IDs that always drop (bypass rolling)
 
   # Entries
@@ -120,7 +120,7 @@ LootTable:
 
 1. **Roll count is a range** (`{min: 1, max: 3}`), not a fixed number. The actual roll count is determined at generation time, influenced by context modifiers (party size, luck, source tier). This enables "more kills = more rolls" and "bigger party = more drops" without separate tables.
 
-2. **Roll modes control duplicate behavior**: `independent` allows the same entry to be selected multiple times (3 rolls might all produce iron ore). `sequential` treats the table as an ordered list (first roll picks from full pool, second from remaining, etc.). `pick_unique` ensures no entry is selected twice per generation event.
+2. **Roll modes control duplicate behavior**: `Independent` allows the same entry to be selected multiple times (3 rolls might all produce iron ore). `Sequential` treats the table as an ordered list (first roll picks from full pool, second from remaining, etc.). `PickUnique` ensures no entry is selected twice per generation event.
 
 3. **Guaranteed entries bypass rolling entirely**: They always appear in the output regardless of weight calculations. Used for quest items that must drop, material fragments that always result from destruction, and currency amounts that accompany every kill.
 
@@ -136,7 +136,7 @@ LootEntry:
   tableId: Guid                # Parent table
 
   # What drops
-  entryType: EntryType         # item | currency | sub_table | nothing
+  entryType: EntryType         # Item | Currency | SubTable | Nothing
   itemTemplateId: Guid?        # For item entries
   itemTemplateCode: string?    # Alternative: resolve by code at generation time
   currencyDefinitionId: Guid?  # For currency entries
@@ -144,27 +144,27 @@ LootEntry:
 
   # Probability
   weight: int                  # Base weight for weighted random selection (1000 typical)
-  weightTagModifiers: object   # Per-context-tag weight multipliers
-  dropChance: decimal?         # Optional flat probability override (0.0-1.0)
+  weightTagModifiers: map<string, double>  # Per-context-tag weight multipliers
+  dropChance: double?           # Optional flat probability override (0.0-1.0)
 
   # Quantity
   quantity: QuantityRange      # {min: 1, max: 5} -- rolled uniformly
-  quantityCurve: string?       # Optional curve type: "linear", "bell", "exponential_decay"
+  quantityCurve: QuantityCurve? # Optional curve type: Linear, Bell, ExponentialDecay
 
   # Generation Tier
-  generationTier: int          # 1=lightweight (ref only), 2=standard (instance), 3=enriched (instance+affixes)
+  generationTier: GenerationTier  # Lightweight (ref only), Standard (instance), Enriched (instance+affixes)
 
   # Affix Generation (Tier 3 only)
   affixContext: AffixContext?   # itemLevel range, rarity, influences, weight modifiers
   affixSetOverride: [Guid]?    # Fixed affix definitions (unique/legendary items)
 
   # Item Overrides
-  itemOverrides: object?       # Partial overrides applied to created instances (customStats, metadata, quality)
+  itemOverrides: LootItemOverrides?  # Partial overrides applied to created instances (customStats, quality)
 
   # Pity Configuration
   pityEnabled: bool            # Track failure counter for this entry
   pityThreshold: int?          # Guaranteed drop after N failures (e.g., 50)
-  pityCounterScope: string     # "entity" (per character), "realm", "global"
+  pityCounterScope: PityCounterScope  # Entity (per character), Realm, Global
 
   # Requirements
   requiredItemLevel: int?      # Minimum source level to appear in pool
@@ -184,7 +184,7 @@ LootEntry:
 
 3. **Drop chance vs. weight**: Most entries use `weight` for weighted random selection within the pool. `dropChance` is an optional override for entries that should have a flat independent probability regardless of pool composition -- "1% chance to drop this legendary, completely independent of other rolls." When `dropChance` is set, the entry is rolled separately (as a Bernoulli trial) before the weighted pool selection.
 
-4. **Quantity curves shape distribution**: `linear` gives uniform distribution between min and max. `bell` (normal distribution centered on midpoint) makes average quantities most common. `exponential_decay` makes minimum quantities most common with rare large drops. Games tune the "feel" of loot through curves without changing the actual min/max.
+4. **Quantity curves shape distribution**: `Linear` gives uniform distribution between min and max. `Bell` (normal distribution centered on midpoint) makes average quantities most common. `ExponentialDecay` makes minimum quantities most common with rare large drops. Games tune the "feel" of loot through curves without changing the actual min/max.
 
 5. **Affix context for Tier 3 generation**: When an entry is Tier 3 (enriched), the `affixContext` tells lib-affix how to generate modifiers. The `itemLevel` range is rolled from the source's level; the `rarity` might be overridden for legendary drops. This decouples loot table design from affix system details -- the table author says "generate a rare weapon with level 60-70 affixes" and lib-affix handles the rest.
 
@@ -208,12 +208,12 @@ LootGenerationContext:
   contextTags: [string]        # Tags that modify weights (e.g., "boss", "dungeon", "blessed", "first_kill")
 
   # Numeric modifiers
-  luckModifier: decimal        # Multiplicative luck factor (1.0 = normal, 2.0 = double luck)
-  quantityModifier: decimal    # Multiplicative quantity factor (1.0 = normal)
-  qualityModifier: decimal     # Multiplicative quality factor (affects Tier 3 affix generation)
+  luckModifier: double          # Multiplicative luck factor (1.0 = normal, 2.0 = double luck)
+  quantityModifier: double     # Multiplicative quantity factor (1.0 = normal)
+  qualityModifier: double      # Multiplicative quality factor (affects Tier 3 affix generation)
 
   # Distribution
-  distributionMode: string?    # "personal" | "need_greed" | "round_robin" | "free_for_all"
+  distributionMode: DistributionMode?  # Personal | NeedGreed | RoundRobin | FreeForAll | LeaderAssign
   partyMembers: [PartyMember]? # For group distribution (entityId, entityType, level, role)
 
   # Target
@@ -221,7 +221,7 @@ LootGenerationContext:
   targetWalletId: Guid?        # Where to credit currency drops (null = return without crediting)
 
   # Overrides
-  overrideWeightModifiers: object? # Additional weight modifiers applied on top of entry defaults
+  overrideWeightModifiers: map<string, double>? # Additional weight modifiers applied on top of entry defaults
   forceEntryIds: [Guid]?       # Force specific entries to drop (testing, divine intervention)
 ```
 
@@ -241,11 +241,11 @@ When loot is generated for a group, the distribution mode determines who gets wh
 
 | Mode | Behavior | Use Case |
 |------|----------|----------|
-| **personal** | Each party member gets an independent roll on the table. Items are placed directly in their container. No contention. | Modern MMO personal loot. Every player sees their own drops. Scales linearly with party size. |
-| **need_greed** | One set of loot is generated. Each item is offered to all eligible party members. Members declare "need" (I want this for use) or "greed" (I want this for profit) or "pass". Need > Greed > Pass. Ties broken randomly. | Traditional MMO group loot. Creates social dynamics around loot distribution. |
-| **round_robin** | One set of loot is generated. Items are assigned to party members in rotation order. Each member gets roughly equal count. | Fair distribution without decision overhead. Good for farming groups. |
-| **free_for_all** | One set of loot is generated and placed in a shared container. First to claim gets it. | Competitive loot. Creates urgency and conflict. Used for PvP scenarios and NPC scavenging. |
-| **leader_assign** | One set of loot is generated. Party leader receives all items and distributes manually. | Guild raids, managed groups. Trust-based distribution. |
+| **Personal** | Each party member gets an independent roll on the table. Items are placed directly in their container. No contention. | Modern MMO personal loot. Every player sees their own drops. Scales linearly with party size. |
+| **NeedGreed** | One set of loot is generated. Each item is offered to all eligible party members. Members declare "Need" (I want this for use) or "Greed" (I want this for profit) or "Pass". Need > Greed > Pass. Ties broken randomly. | Traditional MMO group loot. Creates social dynamics around loot distribution. |
+| **RoundRobin** | One set of loot is generated. Items are assigned to party members in rotation order. Each member gets roughly equal count. | Fair distribution without decision overhead. Good for farming groups. |
+| **FreeForAll** | One set of loot is generated and placed in a shared container. First to claim gets it. | Competitive loot. Creates urgency and conflict. Used for PvP scenarios and NPC scavenging. |
+| **LeaderAssign** | One set of loot is generated. Party leader receives all items and distributes manually. | Guild raids, managed groups. Trust-based distribution. |
 
 **Distribution is orchestration, not generation**: lib-loot generates the items first, then distributes them according to the mode. The generation step is identical regardless of mode. Distribution only affects WHERE the generated items are placed and WHO receives them.
 
@@ -265,10 +265,10 @@ Table: "wolf_alpha_drops" (rollCount: {min: 2, max: 4})
   Entry: -> "crafting_reagents_uncommon" (sub-table) weight: 200
 
 Table: "enchanted_items_t3" (rollCount: {min: 1, max: 1})
-  Entry: enchanted_ring     weight: 300   generationTier: 3
-  Entry: enchanted_amulet   weight: 300   generationTier: 3
-  Entry: enchanted_weapon   weight: 200   generationTier: 3
-  Entry: enchanted_armor    weight: 200   generationTier: 3
+  Entry: enchanted_ring     weight: 300   generationTier: Enriched
+  Entry: enchanted_amulet   weight: 300   generationTier: Enriched
+  Entry: enchanted_weapon   weight: 200   generationTier: Enriched
+  Entry: enchanted_armor    weight: 200   generationTier: Enriched
 ```
 
 **Maximum nesting depth** is configurable (`MaxSubTableDepth`, default: 5) to prevent infinite recursion. Circular references are detected at table creation/update time and rejected.
@@ -329,15 +329,15 @@ NPC GOAP decisions:                  |
 | lib-inventory (`IInventoryClient`) | Placing generated items into target containers, creating temporary loot containers (L2) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence for table scoping (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1) |
+| lib-currency (`ICurrencyClient`) | Currency entry drops: credit wallets for gold/material currency drops (L2) |
+| lib-character (`ICharacterClient`) | Claimant validation for pity counter scoping and distribution eligibility (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
-| lib-affix (`IAffixClient`) | Tier 3 generation: request affix set generation for enriched drops | Tier 3 entries fall back to Tier 2 (items created without affixes); warning logged. Template `customStats`/`instanceMetadata` still applied from `itemOverrides`. |
-| lib-currency (`ICurrencyClient`) | Currency entry drops: credit wallets for gold/material currency drops | Currency entries skipped; warning logged. Items still generated normally. |
+| lib-affix (`IAffixClient`) | Tier 3 generation: request affix set generation for enriched drops | Tier 3 entries fall back to Tier 2 (items created without affixes); warning logged. Template `customStats` still applied from `itemOverrides`. |
 | lib-analytics (`IAnalyticsClient`) | Publishing loot generation statistics for economy monitoring and divine observation | Statistics not collected; generation works normally. |
-| lib-character (`ICharacterClient`) | Claimant validation for pity counter scoping and distribution eligibility | Pity counters use entityId directly without validation; distribution skips eligibility checks. |
 
 ---
 
@@ -414,15 +414,15 @@ Every polymorphic "type" or "kind" field in the Loot domain falls into one of th
 
 | Field | Model(s) | Cat | Values / Source | Rationale |
 |-------|----------|-----|-----------------|-----------|
-| `entryType` | `LootEntry` | C | `item`, `currency`, `sub_table`, `nothing` | Finite entry kinds that the generation engine switches on. Service-owned enum (`EntryType`). |
-| `rollMode` | `LootTable` | C | `independent`, `sequential`, `pick_unique` | Finite pool-selection modes that govern duplicate behavior. Service-owned enum (`RollMode`). |
+| `entryType` | `LootEntry` | C | `Item`, `Currency`, `SubTable`, `Nothing` | Finite entry kinds that the generation engine switches on. Service-owned enum (`EntryType`). |
+| `rollMode` | `LootTable` | C | `Independent`, `Sequential`, `PickUnique` | Finite pool-selection modes that govern duplicate behavior. Service-owned enum (`RollMode`). |
 | `category` | `LootTable` | B | `"creature"`, `"chest"`, `"quest"`, `"world_event"`, ... | Broad table classification. Opaque string so games can invent new source categories without schema changes. |
 | `sourceType` | `LootGenerationContext` | B | `"creature"`, `"chest"`, `"quest_reward"`, `"world_event"`, `"divine_gift"`, ... | What produced the loot. Opaque string; new source types are added per game without schema changes. |
 | `claimantType` | `LootGenerationContext` | B | `"character"`, `"party"`, `"npc"`, ... | Who is claiming. Opaque string to allow future claimant kinds (guilds, dungeon cores, etc.) without schema changes. |
-| `distributionMode` | `LootGenerationContext` | C | `personal`, `need_greed`, `round_robin`, `free_for_all`, `leader_assign` | Finite distribution strategies the service implements. Service-owned enum (`DistributionMode`). |
-| `pityCounterScope` | `LootEntry` | C | `"entity"`, `"realm"`, `"global"` | Finite scoping modes for pity counters. Service-owned enum (`PityCounterScope`). |
-| `quantityCurve` | `LootEntry` | C | `"linear"`, `"bell"`, `"exponential_decay"` | Finite distribution curve shapes the generation engine implements. Service-owned enum (`QuantityCurve`). |
-| `generationTier` | `LootEntry` | C | `1` (ref only), `2` (instance), `3` (enriched + affixes) | Finite tier levels determining generation complexity. Integer enum with fixed semantics. |
+| `distributionMode` | `LootGenerationContext` | C | `Personal`, `NeedGreed`, `RoundRobin`, `FreeForAll`, `LeaderAssign` | Finite distribution strategies the service implements. Service-owned enum (`DistributionMode`). |
+| `pityCounterScope` | `LootEntry` | C | `Entity`, `Realm`, `Global` | Finite scoping modes for pity counters. Service-owned enum (`PityCounterScope`). |
+| `quantityCurve` | `LootEntry` | C | `Linear`, `Bell`, `ExponentialDecay` | Finite distribution curve shapes the generation engine implements. Service-owned enum (`QuantityCurve`). |
+| `generationTier` | `LootEntry` | C | `Lightweight` (ref only), `Standard` (instance), `Enriched` (enriched + affixes) | Finite tier levels determining generation complexity. Service-owned enum (`GenerationTier`). |
 | `displayRarity` | `LootEntry` | B | `"common"`, `"uncommon"`, `"rare"`, ... | Preview rarity label. Opaque string matching lib-item's rarity vocabulary; games define their own rarity tiers. |
 
 **Category key**: **A** = Entity Reference (`EntityType` enum), **B** = Content Code (opaque string, game-configurable), **C** = System State (service-owned enum, finite).
@@ -431,24 +431,26 @@ Every polymorphic "type" or "kind" field in the Loot domain falls into one of th
 
 ## Events
 
+**Topic prefix**: `loot` (all topics use `loot.{entity}.{action}` pattern per QUALITY TENETS naming conventions)
+
 ### Published Events
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `loot-table.created` | `LootTableCreatedEvent` | Table definition created (lifecycle) |
-| `loot-table.updated` | `LootTableUpdatedEvent` | Table definition updated (lifecycle); includes `ChangedFields`. Covers deprecation state changes (changedFields contains `isDeprecated`, `deprecatedAt`, `deprecationReason`) |
+| `loot.table.created` | `LootTableCreatedEvent` | Table definition created (x-lifecycle) |
+| `loot.table.updated` | `LootTableUpdatedEvent` | Table definition updated (x-lifecycle); includes `ChangedFields`. Covers deprecation state changes (changedFields contains `isDeprecated`, `deprecatedAt`, `deprecationReason`) |
 | `loot.generated` | `LootGeneratedEvent` | Loot generated from a table (batch: includes all rolled entries, created items, currency amounts) |
 | `loot.distributed` | `LootDistributedEvent` | Generated loot distributed to recipients (includes distribution mode and per-recipient assignments) |
 | `loot.claimed` | `LootClaimedEvent` | Individual item claimed from a free-for-all or need/greed context |
 | `loot.expired` | `LootExpiredEvent` | Unclaimed loot context TTL expired; items destroyed |
-| `loot.pity-triggered` | `LootPityTriggeredEvent` | Pity counter reached threshold; guaranteed drop issued |
-| `loot.pity-reset` | `LootPityResetEvent` | Pity counter reset (entry dropped naturally before threshold) |
+| `loot.pity.triggered` | `LootPityTriggeredEvent` | Pity counter reached threshold; guaranteed drop issued |
+| `loot.pity.reset` | `LootPityResetEvent` | Pity counter reset (entry dropped naturally before threshold) |
 
 ### Consumed Events
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `item-template.deprecated` | `HandleItemTemplateDeprecatedAsync` | Scan tables for entries referencing the deprecated template; log warning. Do NOT automatically disable entries (the template's `migrationTargetId` may handle transition). |
+| `item-template.updated` | `HandleItemTemplateUpdatedAsync` | Check `changedFields` for deprecation state changes; if deprecated, scan tables for entries referencing the template and log warning. Do NOT automatically disable entries (the template's `migrationTargetId` may handle transition). |
 
 ### Resource Cleanup (T28)
 
@@ -468,9 +470,9 @@ Every polymorphic "type" or "kind" field in the Loot domain falls into one of th
 | `MaxEntriesPerTable` | `LOOT_MAX_ENTRIES_PER_TABLE` | `200` | Safety limit for entries per table |
 | `MaxTablesPerGameService` | `LOOT_MAX_TABLES_PER_GAME_SERVICE` | `10000` | Safety limit for table count per game service |
 | `DefaultWeight` | `LOOT_DEFAULT_WEIGHT` | `1000` | Default weight for new entries |
-| `DefaultGenerationTier` | `LOOT_DEFAULT_GENERATION_TIER` | `2` | Default generation tier for new entries |
+| `DefaultGenerationTier` | `LOOT_DEFAULT_GENERATION_TIER` | `Standard` | Default generation tier for new entries (enum: Lightweight=1, Standard=2, Enriched=3) |
 | `DefaultRollCount` | `LOOT_DEFAULT_ROLL_COUNT` | `1` | Default roll count (both min and max) when not specified |
-| `DefaultRollMode` | `LOOT_DEFAULT_ROLL_MODE` | `independent` | Default roll mode for new tables |
+| `DefaultRollMode` | `LOOT_DEFAULT_ROLL_MODE` | `Independent` | Default roll mode for new tables |
 | `UnclaimedLootTtlSeconds` | `LOOT_UNCLAIMED_LOOT_TTL_SECONDS` | `300` | TTL for unclaimed loot containers (5 min) |
 | `PityCounterTtlSeconds` | `LOOT_PITY_COUNTER_TTL_SECONDS` | `604800` | TTL for pity failure counters (7 days) |
 | `GenerationEventBatchMaxSize` | `LOOT_GENERATION_EVENT_BATCH_MAX_SIZE` | `100` | Max items per batched generation event |
@@ -495,7 +497,11 @@ Every polymorphic "type" or "kind" field in the Loot domain falls into one of th
 | `IInventoryClient` | Container placement for generated items (L2 hard) |
 | `IGameServiceClient` | Game service validation (L2 hard) |
 | `IResourceClient` | Reference tracking, cleanup callbacks (L1 hard) |
-| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Affix, Currency, Analytics, Character) |
+| `ICurrencyClient` | Currency entry credit operations (L2 hard) |
+| `ICharacterClient` | Claimant validation for distribution eligibility (L2 hard) |
+| `ITelemetryProvider` | Telemetry span creation for all async methods (L0) |
+| `IEventConsumer` | Event handler registration for consumed events (L0) |
+| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Affix, Analytics) |
 
 ### Background Workers
 
@@ -526,23 +532,25 @@ Every polymorphic "type" or "kind" field in the Loot domain falls into one of th
 
 ### Table Management (7 endpoints)
 
-All endpoints require `developer` role.
+All endpoints require `developer` role. `x-permissions: [{ state: any, role: developer }]`
 
-- **CreateTable** (`/loot/table/create`): Validates game service existence. Validates code uniqueness per game service. Enforces `MaxTablesPerGameService`. Validates entries: sub-table references exist and don't create cycles (BFS cycle detection), item template IDs or codes resolve, entry weights > 0. Saves to MySQL. Populates cache. Publishes `loot-table.created`.
+- **CreateTable** (`/loot/table/create`): Validates game service existence. Validates code uniqueness per game service. Enforces `MaxTablesPerGameService`. Validates entries: sub-table references exist and don't create cycles (BFS cycle detection), item template IDs or codes resolve, entry weights > 0. Saves to MySQL. Populates cache. Publishes `loot.table.created`.
 
 - **GetTable** (`/loot/table/get`): Cache read-through (Redis -> MySQL -> populate cache). Supports lookup by tableId or by gameServiceId + code.
 
 - **ListTables** (`/loot/table/list`): Paged JSON query with required gameServiceId filter. Optional filters: category, tags (any match), isActive, includeDeprecated (boolean, default: false). Returns table summaries (no entry details -- use GetTable for full definition).
 
-- **UpdateTable** (`/loot/table/update`): Acquires distributed lock. Partial update. **Cannot change**: code, gameServiceId (identity-level). Entry additions/removals/modifications are part of the update payload. Re-validates cycle detection on sub-table changes. Invalidates cache. Publishes `loot-table.updated` with `changedFields`.
+- **UpdateTable** (`/loot/table/update`): Acquires distributed lock. Partial update. **Cannot change**: code, gameServiceId (identity-level). Entry additions/removals/modifications are part of the update payload. Re-validates cycle detection on sub-table changes. Invalidates cache. Publishes `loot.table.updated` with `changedFields`.
 
-- **DeprecateTable** (`/loot/table/deprecate`): Marks deprecated with triple-field semantics: sets `isDeprecated: true`, records `deprecatedAt` timestamp, and stores the caller-provided `deprecationReason`. Idempotent -- returns OK if already deprecated (caller's intent is satisfied). Optional `migrationTargetCode` for directing future generation to a replacement table. Existing references from other tables (as sub-tables) are NOT automatically updated -- they continue referencing the deprecated table (which still functions but logs deprecation warnings during generation). Invalidates cache. Publishes `loot-table.updated` with changedFields containing deprecation fields.
+- **DeprecateTable** (`/loot/table/deprecate`): Marks deprecated with triple-field semantics: sets `isDeprecated: true`, records `deprecatedAt` timestamp, and stores the caller-provided `deprecationReason`. Idempotent -- returns OK if already deprecated (caller's intent is satisfied). Optional `migrationTargetCode` for directing future generation to a replacement table. Existing references from other tables (as sub-tables) are NOT automatically updated -- they continue referencing the deprecated table (which still functions but logs deprecation warnings during generation). Invalidates cache. Publishes `loot.table.updated` with changedFields containing deprecation fields.
 
 - **SeedTables** (`/loot/table/seed`): Bulk creation, skipping tables whose code already exists (idempotent). Validates game service once. Validates all sub-table references within the batch (entries can reference other tables in the same batch). Returns created/skipped counts. Populates cache for all created tables.
 
 - **PreviewTable** (`/loot/table/preview`): Returns a human-readable breakdown of a table's structure: entries with display names, effective weights at a specified source level, probability percentages, sub-table expansion (recursive), and pity thresholds. Does NOT generate anything. Used for game design tooling, bestiary tooltips, and NPC GOAP planning (Tier 1 evaluation).
 
 ### Generation (4 endpoints)
+
+`x-permissions: []` (service-to-service only, not exposed to WebSocket clients)
 
 - **Generate** (`/loot/generate`): The core generation endpoint. Takes tableId (or code) + `LootGenerationContext`. Executes the full generation pipeline (see detailed flow below). Returns `LootGenerationResult` containing: generated items (with instance IDs if Tier 2/3), currency amounts, distribution assignments (if party), generation ID for history lookup. Publishes `loot.generated`.
 
@@ -581,7 +589,7 @@ GenerateAsync(tableId, context)
     |       +-- Build effective pool:
     |       |   +-- Filter: entry.requiredItemLevel <= context.sourceLevel
     |       |   +-- Filter: entry.requiredContextTags subset of context.contextTags
-    |       |   +-- Exclude: already-selected entries if rollMode=pick_unique
+    |       |   +-- Exclude: already-selected entries if rollMode=PickUnique
     |       |   +-- For each remaining:
     |       |       +-- effectiveWeight = entry.weight
     |       |       +-- Apply weightTagModifiers for matching context tags
@@ -596,10 +604,10 @@ GenerateAsync(tableId, context)
     |       |
     |       +-- Weighted random selection from pool
     |       +-- For each selected entry:
-    |           +-- If entryType=nothing: skip (dilution entry)
-    |           +-- If entryType=sub_table: recursively generate from sub-table
-    |           +-- If entryType=item: generate item (see step 6)
-    |           +-- If entryType=currency: generate currency (see step 7)
+    |           +-- If entryType=Nothing: skip (dilution entry)
+    |           +-- If entryType=SubTable: recursively generate from sub-table
+    |           +-- If entryType=Item: generate item (see step 6)
+    |           +-- If entryType=Currency: generate currency (see step 7)
     |           +-- Update pity counters for all eligible-but-not-selected entries
     |           +-- Reset pity counter for selected entry
     |
@@ -607,28 +615,28 @@ GenerateAsync(tableId, context)
     |       +-- Roll quantity from entry.quantity range using quantityCurve
     |       +-- Apply context.quantityModifier
     |       |
-    |       +-- If generationTier=1: return template reference only
-    |       +-- If generationTier=2: call IItemClient.CreateItemInstanceAsync
+    |       +-- If generationTier=Lightweight: return template reference only
+    |       +-- If generationTier=Standard: call IItemClient.CreateItemInstanceAsync
     |       |   +-- Apply entry.itemOverrides (customStats, metadata)
     |       |   +-- Set originType="loot", originId=generationId
     |       |   +-- Place in targetContainerId if provided
-    |       +-- If generationTier=3: call IAffixClient (soft)
+    |       +-- If generationTier=Enriched: call IAffixClient (soft)
     |           +-- Generate affix set using entry.affixContext
     |           +-- If affixSetOverride: use fixed definitions instead
-    |           +-- Write affix metadata to item instance
+    |           +-- lib-affix stores affix data in its own state store, keyed by item instance ID (per FOUNDATION TENETS — no metadata bag contracts)
     |           +-- Fall back to Tier 2 if lib-affix unavailable
     |
     +-- 7. Generate currency entries
     |       +-- Roll quantity from entry.quantity range
-    |       +-- Call ICurrencyClient.CreditAsync (soft)
-    |       +-- If lib-currency unavailable: include in result but mark as uncredited
+    |       +-- Call ICurrencyClient.CreditAsync (hard L2 dep)
+    |       +-- Failure is an unexpected error (ApiException catch per IMPLEMENTATION TENETS)
     |
     +-- 8. Distribution (if partyMembers provided)
-    |       +-- personal: duplicate generation per member (each gets independent rolls)
-    |       +-- need_greed: create loot context, await declarations
-    |       +-- round_robin: assign items to members in rotation
-    |       +-- free_for_all: create shared loot container with TTL
-    |       +-- leader_assign: place all items in leader's container
+    |       +-- Personal: duplicate generation per member (each gets independent rolls)
+    |       +-- NeedGreed: create loot context, await declarations
+    |       +-- RoundRobin: assign items to members in rotation
+    |       +-- FreeForAll: create shared loot container with TTL
+    |       +-- LeaderAssign: place all items in leader's container
     |       +-- Publish loot.distributed
     |
     +-- 9. Record history
@@ -645,13 +653,17 @@ GenerateAsync(tableId, context)
 
 ### Distribution (3 endpoints)
 
-- **DeclareNeedGreed** (`/loot/distribution/declare`): For need/greed distribution. Takes contextId, itemInstanceId, declaration (need/greed/pass). Validates context exists and hasn't expired. Validates declarer is in the party. Records declaration. When all party members have declared (or `NeedGreedTimeoutSeconds` expires), resolves winner and distributes. Publishes `loot.claimed` for each resolved item.
+`x-permissions: []` (service-to-service only, not exposed to WebSocket clients)
+
+- **DeclareNeedGreed** (`/loot/distribution/declare`): For need/greed distribution. Takes contextId, itemInstanceId, declaration (`NeedGreedDeclaration` enum: `Need`, `Greed`, `Pass`). Validates context exists and hasn't expired. Validates declarer is in the party. Records declaration. When all party members have declared (or `NeedGreedTimeoutSeconds` expires), resolves winner and distributes. Publishes `loot.claimed` for each resolved item.
 
 - **ClaimItem** (`/loot/distribution/claim`): For free-for-all distribution. Takes contextId, itemInstanceId. Acquires context lock. Validates context exists, item is unclaimed, claimant is eligible. Moves item from shared container to claimant's container. Publishes `loot.claimed`.
 
 - **GetContext** (`/loot/distribution/context`): Returns active loot context details -- items available, declarations received, time remaining, distribution mode. Used by UI to display loot rolls and by NPC GOAP to evaluate claiming decisions.
 
 ### Query (3 endpoints)
+
+`x-permissions: []` (service-to-service only, not exposed to WebSocket clients)
 
 - **GetGenerationHistory** (`/loot/history/get`): Load generation record by generationId. Returns full details: table used, context, entries rolled, items created.
 
@@ -660,6 +672,8 @@ GenerateAsync(tableId, context)
 - **GetDropRates** (`/loot/rates/get`): Computed endpoint. Takes tableId + context (without generating). Returns effective drop rates for all entries given the context's modifiers -- useful for game design validation ("what are the actual odds of this legendary dropping from this boss with this party composition?").
 
 ### Cleanup (2 endpoints)
+
+`x-permissions: []` (service-to-service only, called by lib-resource cleanup callbacks)
 
 Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
@@ -741,7 +755,7 @@ Loot Generation Pipeline
        |      +-- Roll: 0.847 -> MISS
        |      +-- Increment pity counter (now 34/50)
        |
-       +-- Weighted pool (3 rolls, independent mode):
+       +-- Weighted pool (3 rolls, Independent mode):
        |      +-- Pool:
        |      |   wolf_pelt:    800 * boss_tag(0.5) = 400
        |      |   wolf_fang:    600 * boss_tag(1.0) = 600
@@ -762,13 +776,13 @@ Loot Generation Pipeline
        |      |   +-- Call IAffixClient.GenerateAffixSet(
        |      |   |     class="weapon", iLvl=45, rarity="rare",
        |      |   |     qualityModifier=1.2)
-       |      |   +-- Write affixes to item instance
+       |      |   +-- lib-affix stores affixes in own state (keyed by instance ID)
        |      |
        |      +-- Roll 3: 234 -> wolf_pelt (Tier 2)
        |          +-- Quantity: range(1,2), linear -> 1
        |          +-- CreateItemInstance(wolf_pelt_template, qty:1)
        |
-       +-- Distribution: personal (solo kill)
+       +-- Distribution: Personal (solo kill)
        |   +-- All items placed in targetContainerId
        |
        +-- Record history
@@ -795,7 +809,7 @@ Pity System Flow
        +-- FORCE SELECT (bypasses all weighted rolling)
        +-- Generate legendary_fang (Tier 3, enriched)
        +-- Reset counter to 0
-       +-- Publish loot.pity-triggered
+       +-- Publish loot.pity.triggered
        |
        +-- NOTE: divine actor alternative
            +-- At counter=40, a watching god might:
@@ -810,7 +824,7 @@ Pity System Flow
 Need/Greed Distribution
 ==========================
 
-  Party of 3 kills boss -> Generate with distributionMode="need_greed"
+  Party of 3 kills boss -> Generate with distributionMode=NeedGreed
        |
        +-- Items generated: [enchanted_sword, healing_potion x3, 100 gold]
        |
@@ -818,15 +832,15 @@ Need/Greed Distribution
        |
        +-- All 3 members notified (via client events, future)
        |
-       +-- Member A: DeclareNeedGreed(sword=NEED, potion=GREED)
-       +-- Member B: DeclareNeedGreed(sword=NEED, potion=NEED)
-       +-- Member C: DeclareNeedGreed(sword=PASS, potion=GREED)
+       +-- Member A: DeclareNeedGreed(sword=Need, potion=Greed)
+       +-- Member B: DeclareNeedGreed(sword=Need, potion=Need)
+       +-- Member C: DeclareNeedGreed(sword=Pass, potion=Greed)
        |
        +-- [Timeout or all declared]
        |
        +-- Resolve:
-       |   +-- sword: NEED from A and B -> random between A and B -> A wins
-       |   +-- potion: NEED from B > GREED from A,C -> B gets potion
+       |   +-- sword: Need from A and B -> random between A and B -> A wins
+       |   +-- potion: Need from B > Greed from A,C -> B gets potion
        |   +-- gold: split evenly (33g each, 1g lost to rounding)
        |
        +-- Move sword to A's inventory
@@ -875,7 +889,7 @@ Before lib-loot implementation:
 - Implement `affixContext` pass-through to `IAffixClient.GenerateAffixSet`
 - Implement `affixSetOverride` for fixed-definition legendary/unique items
 - Implement graceful fallback to Tier 2 when lib-affix unavailable
-- Implement currency drop generation via lib-currency (soft)
+- Implement currency drop generation via lib-currency (hard L2 dep)
 
 ### Phase 4: Distribution
 
@@ -956,19 +970,17 @@ Before lib-loot implementation:
 
 3. **Pity counters are per-entity, not per-party**: In group content, each party member has their own pity counter. If Member A has 49/50 pity progress on a rare drop and Member B kills the boss, Member A's counter still increments. This means pity is individual progress, not shared group progress. Games wanting shared pity should use divine intervention (force-generate for the "unluckiest" party member).
 
-4. **Currency drops are best-effort**: If lib-currency is unavailable (soft dependency), currency entries appear in the generation result with `credited: false`. The caller is responsible for retrying or crediting manually. This prevents currency drops from blocking item generation.
+4. **Need/greed auto-resolves on timeout**: If not all party members declare within `NeedGreedTimeoutSeconds`, undeclared members are treated as "greed" for all remaining items. This prevents indefinite blocking by AFK party members.
 
-5. **Need/greed auto-resolves on timeout**: If not all party members declare within `NeedGreedTimeoutSeconds`, undeclared members are treated as "greed" for all remaining items. This prevents indefinite blocking by AFK party members.
+5. **Tier 3 fallback is silent**: When lib-affix is unavailable, Tier 3 entries fall back to Tier 2 (items created without affixes) with a warning log. The generation result includes `affixed: false` for these items. Callers that require affixed items must check this flag. The fallback is silent to avoid failing the entire generation for a soft dependency.
 
-6. **Tier 3 fallback is silent**: When lib-affix is unavailable, Tier 3 entries fall back to Tier 2 (items created without affixes) with a warning log. The generation result includes `affixed: false` for these items. Callers that require affixed items must check this flag. The fallback is silent to avoid failing the entire generation for a soft dependency.
+6. **"Nothing" entries are valid and useful**: An entry with `entryType: Nothing` represents "no drop." It participates in weighted selection, diluting the pool. A table with 900 weight of Nothing and 100 weight of items produces items only 10% of the time. This is the standard mechanism for "empty rolls" without separate probability configuration.
 
-7. **"Nothing" entries are valid and useful**: An entry with `entryType: nothing` represents "no drop." It participates in weighted selection, diluting the pool. A table with 900 weight of "nothing" and 100 weight of items produces items only 10% of the time. This is the standard mechanism for "empty rolls" without separate probability configuration.
+7. **Guaranteed entries ignore context**: Entries in the `guaranteedEntries` list are always generated regardless of source level, context tags, or weight modifiers. They are not filtered or weighted -- they simply always appear. Pity counters are not affected by guaranteed drops (they track weighted pool performance, not guaranteed output).
 
-8. **Guaranteed entries ignore context**: Entries in the `guaranteedEntries` list are always generated regardless of source level, context tags, or weight modifiers. They are not filtered or weighted -- they simply always appear. Pity counters are not affected by guaranteed drops (they track weighted pool performance, not guaranteed output).
+8. **Generation history is append-only with pruning**: History records are never updated after creation. The `LootHistoryPruneService` deletes records older than `LootHistoryRetentionDays`. For long-term analytics, consumers should subscribe to `loot.generated` events and maintain their own aggregated data (this is lib-analytics' role).
 
-9. **Generation history is append-only with pruning**: History records are never updated after creation. The `LootHistoryPruneService` deletes records older than `LootHistoryRetentionDays`. For long-term analytics, consumers should subscribe to `loot.generated` events and maintain their own aggregated data (this is lib-analytics' role).
-
-10. **Distribution modes are advisory for personal loot**: In "personal" mode, each party member gets independent rolls on the table. The items are placed directly in each member's container. There is no contention and no "fairness" guarantee -- one member might get 3 rares while another gets only commons. This is intentional; personal loot removes social friction at the cost of perceived fairness.
+9. **Distribution modes are advisory for personal loot**: In "personal" mode, each party member gets independent rolls on the table. The items are placed directly in each member's container. There is no contention and no "fairness" guarantee -- one member might get 3 rares while another gets only commons. This is intentional; personal loot removes social friction at the cost of perceived fairness.
 
 ### Design Considerations (Requires Planning)
 
@@ -988,7 +1000,27 @@ Before lib-loot implementation:
 
 8. **Interaction with lib-save-load**: When saving game state, active loot contexts (unclaimed piles) should be persisted. On load, these contexts should be restored with updated TTLs. lib-save-load would need to serialize and restore the Redis-based context store. Consider: should active loot contexts be excluded from saves (loot is ephemeral) or included (preserving the world state)?
 
-9. **L2 dependencies classified as soft violate SERVICE-HIERARCHY.md**: lib-currency (L2) and lib-character (L2) are listed as soft dependencies with graceful degradation. Per SERVICE-HIERARCHY.md, L4 services MUST use constructor injection (hard dependency) for all L0/L1/L2 dependencies — graceful degradation for guaranteed-available layers is explicitly forbidden because it hides deployment configuration errors. When implemented, both should be constructor-injected hard dependencies. The "currency drops are best-effort" design (Intentional Quirk #4) must be revisited: if lib-currency is guaranteed available, currency drops should never fail due to missing dependency. Similarly, claimant validation should always use lib-character directly rather than degrading gracefully.
+9. **T31 deprecation category classification**: Loot tables need a definitive Category A vs Category B classification (per IMPLEMENTATION TENETS deprecation lifecycle). Category A (definitions where instances don't persist independently) allows deprecate + undeprecate + delete. Category B (definitions where instances persist independently) allows deprecate only — no undeprecate, no delete. Active loot contexts reference tables briefly during generation, but generation results become independent items via lib-item. Determine which category applies; this affects whether undeprecate/delete endpoints exist.
+
+10. **T8 filler assessment for generation responses**: The `LootGenerationResult` includes `generationTier` and `distributionMode`. Per IMPLEMENTATION TENETS, echoed request fields are forbidden in responses. However, these may represent computed/effective values rather than echoes (e.g., `generationTier` per entry varies within a single generation, `distributionMode` may be resolved from defaults). Determine whether these are request echoes (remove) or result-specific data (keep).
+
+11. **lib-resource registration for item template references**: Loot table entries reference item templates by ID. When an item template is deleted via lib-resource cascading cleanup, should lib-loot register as a reference holder (via `x-references`) to participate in cleanup? Or is the consumed `item-template.updated` event sufficient? The current approach (event-based warning) doesn't prevent orphaned references — lib-resource integration would enforce CASCADE/RESTRICT/DETACH policies.
+
+12. **Realm cleanup appropriateness**: The cleanup table lists `realm | loot | CASCADE` but loot tables are game-service-scoped, not realm-scoped. Only pity counters and active contexts might be realm-scoped. Determine whether realm cleanup is needed at all, or whether it should be limited to realm-scoped pity counter cleanup only.
+
+13. **isActive vs isDeprecated redundancy**: The `LootTable` model has both `isActive: bool` and `isDeprecated: bool`. Per IMPLEMENTATION TENETS, deprecation state should be the authoritative lifecycle control. Determine whether `isActive` serves a distinct purpose (e.g., temporary deactivation without deprecation) or is redundant with deprecation. If distinct, document the semantic difference clearly.
+
+14. **Validation constraint specifics**: The schema needs specific validation constraints (`minimum`, `maximum`, `minLength`, `maxLength`, `pattern`) on all fields per SCHEMA-RULES. Determine appropriate bounds for: weight (minimum 1?), rollCount ranges, pityThreshold, quantity ranges, code patterns, tag lengths, etc.
+
+15. **PartyMember, RollRange, QuantityRange type definitions**: These inline types need full model definitions with proper field types and descriptions. `PartyMember` needs entityId (Guid), entityType, level (int), role (string?). `RollRange` and `QuantityRange` need min (int) and max (int) with appropriate validation constraints.
+
+16. **AffixContext ownership**: The `AffixContext` type is used by lib-loot but describes data consumed by lib-affix. Determine whether this is a loot-owned type (with fields that map to lib-affix's API) or whether lib-affix should define this type and lib-loot should reference it via `$ref`. Per FOUNDATION TENETS, each service owns its own domain data.
+
+17. **Variable provider registration in variable-providers.yaml**: The `${loot.*}` variable namespace should be registered in the shared `variable-providers.yaml` (or equivalent registration mechanism) so that the Actor runtime knows about it. Determine the registration mechanism and document it.
+
+18. **claimantType: string vs EntityType enum**: The `claimantType` field is currently an opaque string (Category B in type classification). Per IMPLEMENTATION TENETS type safety rules, if the valid set is known and finite within the service's domain (character, party, npc), it may warrant a service-owned enum. However, the doc notes future claimant kinds (guilds, dungeon cores) — determine whether this warrants an enum with planned expansion or remains an opaque string.
+
+19. **Event model naming after Pattern C topic conversion**: With topics now using Pattern C (`loot.table.created`, `loot.pity.triggered`), verify that event model class names follow the `{Entity}{Action}Event` naming convention per QUALITY TENETS. Current names like `LootTableCreatedEvent` and `LootPityTriggeredEvent` appear correct, but confirm all models align after the topic rename.
 
 ---
 

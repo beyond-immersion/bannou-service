@@ -169,7 +169,7 @@ components:
     BoundingBox3D:
       type: object
       additionalProperties: false
-      description: Axis-aligned bounding box in world coordinates (meters, Y-up, right-handed)
+      description: Axis-aligned bounding box as flat fields in world coordinates (meters, Y-up, right-handed). Preferred for simple spatial containment checks where individual axis access is common (e.g., location bounds).
       required:
         - minX
         - minY
@@ -202,6 +202,21 @@ components:
           type: number
           format: float
           description: Maximum Z bound in world space
+
+    Bounds:
+      type: object
+      additionalProperties: false
+      description: Axis-aligned bounding box as min/max Position3D corners in world coordinates (meters, Y-up, right-handed). Preferred for spatial queries and operations where corners are treated as points (e.g., mapping spatial indexing, affordance queries).
+      required:
+        - min
+        - max
+      properties:
+        min:
+          $ref: '#/components/schemas/Position3D'
+          description: Minimum corner (lowest x, y, z values)
+        max:
+          $ref: '#/components/schemas/Position3D'
+          description: Maximum corner (highest x, y, z values)
 
     # ==========================================================================
     # Archive Base Types

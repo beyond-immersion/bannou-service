@@ -32,159 +32,6 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// A point in 3D space (event version)
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class EventPosition3D
-{
-
-    /// <summary>
-    /// X coordinate
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("x")]
-    public double X { get; set; } = default!;
-
-    /// <summary>
-    /// Y coordinate
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("y")]
-    public double Y { get; set; } = default!;
-
-    /// <summary>
-    /// Z coordinate
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("z")]
-    public double Z { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// An axis-aligned bounding box in 3D space (event version)
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class EventBounds
-{
-
-    /// <summary>
-    /// Minimum corner
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("min")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public EventPosition3D Min { get; set; } = new EventPosition3D();
-
-    /// <summary>
-    /// Maximum corner
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("max")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public EventPosition3D Max { get; set; } = new EventPosition3D();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// A map object in an event
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class EventMapObject
-{
-
-    /// <summary>
-    /// Unique identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("objectId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ObjectId { get; set; } = default!;
-
-    /// <summary>
-    /// Region this object belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("regionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RegionId { get; set; } = default!;
-
-    /// <summary>
-    /// Map kind
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("kind")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Kind { get; set; } = default!;
-
-    /// <summary>
-    /// Publisher-defined type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("objectType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ObjectType { get; set; } = default!;
-
-    /// <summary>
-    /// Position for point objects
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("position")]
-    public EventPosition3D? Position { get; set; } = default!;
-
-    /// <summary>
-    /// Bounding box for area objects
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
-    public EventBounds? Bounds { get; set; } = default!;
-
-    /// <summary>
-    /// Schema-less object data (publisher-defined)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("data")]
-    public object? Data { get; set; } = default!;
-
-    /// <summary>
-    /// Object version
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public long Version { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
 /// Event published by authority to ingest topic for high-throughput updates.
 /// <br/>lib-mapping validates authority and broadcasts to consumers.
 /// <br/>Published to: map.ingest.{channelId}
@@ -198,8 +45,9 @@ public partial class MapIngestEvent
     /// Token proving authority over this channel
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authorityToken")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string AuthorityToken { get; set; } = default!;
 
     /// <summary>
@@ -218,18 +66,6 @@ public partial class MapIngestEvent
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<IngestPayload> Payloads { get; set; } = new System.Collections.ObjectModel.Collection<IngestPayload>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -250,46 +86,35 @@ public partial class IngestPayload
     /// Publisher-defined type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("objectType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string ObjectType { get; set; } = default!;
 
     /// <summary>
-    /// Type of change
+    /// Type of change (defaults to Updated if not specified)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("action")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public IngestPayloadAction Action { get; set; } = BeyondImmersion.BannouService.Events.IngestPayloadAction.Update;
+    public ObjectAction Action { get; set; } = default!;
 
     /// <summary>
     /// Position for point objects
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
-    public EventPosition3D? Position { get; set; } = default!;
+    public Position3D? Position { get; set; } = default!;
 
     /// <summary>
     /// Bounding box for area objects
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
-    public EventBounds? Bounds { get; set; } = default!;
+    public Bounds? Bounds { get; set; } = default!;
 
     /// <summary>
     /// Schema-less object data (publisher-defined)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     public object? Data { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -327,12 +152,13 @@ public partial class MapUpdatedEvent
     public System.Guid RegionId { get; set; } = default!;
 
     /// <summary>
-    /// Map kind (terrain, static_geometry, etc.)
+    /// Map kind
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("kind")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Kind { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MapKind Kind { get; set; } = default!;
 
     /// <summary>
     /// Channel that published this update
@@ -344,7 +170,7 @@ public partial class MapUpdatedEvent
     /// Affected area (null means entire region)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
-    public EventBounds? Bounds { get; set; } = default!;
+    public Bounds? Bounds { get; set; } = default!;
 
     /// <summary>
     /// Monotonic version for ordering
@@ -363,6 +189,7 @@ public partial class MapUpdatedEvent
     /// App-id of publisher
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceAppId")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? SourceAppId { get; set; } = default!;
 
     /// <summary>
@@ -375,19 +202,8 @@ public partial class MapUpdatedEvent
     /// Asset reference for large payloads
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payloadRef")]
+    [System.ComponentModel.DataAnnotations.StringLength(2000)]
     public string? PayloadRef { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -430,7 +246,8 @@ public partial class MapSnapshotEvent
     [System.Text.Json.Serialization.JsonPropertyName("kind")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Kind { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MapKind Kind { get; set; } = default!;
 
     /// <summary>
     /// Channel that owns this data
@@ -454,31 +271,20 @@ public partial class MapSnapshotEvent
     /// Bounds of snapshot (null means full region)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
-    public EventBounds? Bounds { get; set; } = default!;
+    public Bounds? Bounds { get; set; } = default!;
 
     /// <summary>
     /// Asset reference for snapshot data (large payloads)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payloadRef")]
+    [System.ComponentModel.DataAnnotations.StringLength(2000)]
     public string? PayloadRef { get; set; } = default!;
 
     /// <summary>
     /// Inline objects (for small snapshots)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("objects")]
-    public System.Collections.Generic.ICollection<EventMapObject>? Objects { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public System.Collections.Generic.ICollection<MapObject>? Objects { get; set; } = default!;
 
 }
 
@@ -521,7 +327,8 @@ public partial class MapObjectsChangedEvent
     [System.Text.Json.Serialization.JsonPropertyName("kind")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Kind { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MapKind Kind { get; set; } = default!;
 
     /// <summary>
     /// Channel that published these changes
@@ -539,6 +346,7 @@ public partial class MapObjectsChangedEvent
     /// App-id of authority that published these changes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceAppId")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? SourceAppId { get; set; } = default!;
 
     /// <summary>
@@ -548,18 +356,6 @@ public partial class MapObjectsChangedEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ObjectChangeEvent> Changes { get; set; } = new System.Collections.ObjectModel.Collection<ObjectChangeEvent>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -585,25 +381,26 @@ public partial class ObjectChangeEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ObjectChangeEventAction Action { get; set; } = default!;
+    public ObjectAction Action { get; set; } = default!;
 
     /// <summary>
     /// Object type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("objectType")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string? ObjectType { get; set; } = default!;
 
     /// <summary>
     /// Object position (for created/updated)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
-    public EventPosition3D? Position { get; set; } = default!;
+    public Position3D? Position { get; set; } = default!;
 
     /// <summary>
     /// Object bounds (for created/updated)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
-    public EventBounds? Bounds { get; set; } = default!;
+    public Bounds? Bounds { get; set; } = default!;
 
     /// <summary>
     /// Object data (for created/updated)
@@ -617,18 +414,6 @@ public partial class ObjectChangeEvent
     [System.Text.Json.Serialization.JsonPropertyName("previousVersion")]
     public long? PreviousVersion { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -639,6 +424,14 @@ public partial class ObjectChangeEvent
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MapUnauthorizedPublishWarning
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// When the attempt occurred
@@ -666,20 +459,23 @@ public partial class MapUnauthorizedPublishWarning
     /// Map kind of the channel
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("kind")]
-    public string? Kind { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MapKind? Kind { get; set; } = default!;
 
     /// <summary>
     /// App-id that tried to publish
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("attemptedPublisher")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string AttemptedPublisher { get; set; } = default!;
 
     /// <summary>
     /// App-id that currently has authority
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentAuthority")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? CurrentAuthority { get; set; } = default!;
 
     /// <summary>
@@ -701,86 +497,8 @@ public partial class MapUnauthorizedPublishWarning
     /// Truncated payload (if includePayloadSummary enabled)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payloadSummary")]
+    [System.ComponentModel.DataAnnotations.StringLength(2000)]
     public string? PayloadSummary { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Published when a consumer needs a full snapshot.
-/// <br/>The authority responds with a MapSnapshotEvent.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MapSnapshotRequestedEvent
-{
-
-    /// <summary>
-    /// Unique event identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the request was made
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// App-id of requester
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("requesterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string RequesterId { get; set; } = default!;
-
-    /// <summary>
-    /// Region to snapshot
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("regionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RegionId { get; set; } = default!;
-
-    /// <summary>
-    /// Which kinds to snapshot (null means all)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("kinds")]
-    public System.Collections.Generic.ICollection<string>? Kinds { get; set; } = default!;
-
-    /// <summary>
-    /// Optional bounds filter
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
-    public EventBounds? Bounds { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -831,14 +549,16 @@ public partial class MappingAuthorityGrantedEvent
     [System.Text.Json.Serialization.JsonPropertyName("kind")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Kind { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MapKind Kind { get; set; } = default!;
 
     /// <summary>
     /// App-id that was granted authority
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authorityAppId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string AuthorityAppId { get; set; } = default!;
 
     /// <summary>
@@ -852,18 +572,6 @@ public partial class MappingAuthorityGrantedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isNewChannel")]
     public bool IsNewChannel { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -910,27 +618,17 @@ public partial class MappingAuthorityReleasedEvent
     /// Map kind of the channel
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("kind")]
-    public string? Kind { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MapKind? Kind { get; set; } = default!;
 
     /// <summary>
     /// App-id that released authority
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authorityAppId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string AuthorityAppId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -977,12 +675,14 @@ public partial class MappingAuthorityExpiredEvent
     /// Map kind of the channel
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("kind")]
-    public string? Kind { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MapKind? Kind { get; set; } = default!;
 
     /// <summary>
     /// App-id whose authority expired
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expiredAuthorityAppId")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? ExpiredAuthorityAppId { get; set; } = default!;
 
     /// <summary>
@@ -993,53 +693,7 @@ public partial class MappingAuthorityExpiredEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset ExpiredAt { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum IngestPayloadAction
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"create")]
-    Create = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"update")]
-    Update = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"delete")]
-    Delete = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ObjectChangeEventAction
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"created")]
-    Created = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"updated")]
-    Updated = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"deleted")]
-    Deleted = 2,
-
-}
-#pragma warning restore CS1591
 
 
 

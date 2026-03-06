@@ -103,7 +103,7 @@ This document lists all state store components used in Bannou.
 | `leaderboard-season` | MySQL | Leaderboard | Season history and archives |
 | `license-board-cache` | Redis | License | Board state cache (unlocked license positions per board) |
 | `license-board-templates` | MySQL | License | Board template definitions with grid layout and contract references |
-| `license-boards` | MySQL | License | Character board instances linking characters to board templates |
+| `license-boards` | MySQL | License | Board instances linking owners (polymorphic entity) to board templates |
 | `license-definitions` | MySQL | License | License definitions (nodes) per board template with grid positions |
 | `license-lock` | Redis | License | Distributed locks for board mutations and unlock operations |
 | `location-cache` | Redis | Location | Location lookup cache for frequently-accessed locations |
