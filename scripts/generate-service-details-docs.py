@@ -181,7 +181,7 @@ def scan_api_schemas(schemas_dir: Path) -> dict:
     return schemas
 
 
-def generate_markdown(services: dict, schemas: dict) -> str:
+def generate_markdown(services: dict, schemas: dict, maps_dir: Path) -> str:
     """Generate markdown documentation from deep dives with optional schema data."""
     lines = [
         "# Generated Service Details Reference",
@@ -203,19 +203,26 @@ def generate_markdown(services: dict, schemas: dict) -> str:
 
         # Build metadata line based on whether a schema exists
         schema = schemas.get(service_key)
+        map_file = service_key.upper() + '.md'
+        has_map = (maps_dir / map_file).exists()
+
         if schema:
             total_endpoints += schema['endpoint_count']
-            lines.append(
+            meta = (
                 f"**Version**: {schema['version']} | "
                 f"**Schema**: `schemas/{schema['source_file']}` | "
                 f"**Endpoints**: {schema['endpoint_count']} | "
                 f"**Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})"
             )
         else:
-            lines.append(
+            meta = (
                 f"**Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})"
             )
 
+        if has_map:
+            meta += f" | **Map**: [docs/maps/{map_file}](maps/{map_file})"
+
+        lines.append(meta)
         lines.append("")
         lines.append(svc['overview'])
         lines.append("")
@@ -236,7 +243,7 @@ def generate_markdown(services: dict, schemas: dict) -> str:
     return '\n'.join(lines)
 
 
-def generate_layer_markdown(layer: str, services: dict, schemas: dict) -> str:
+def generate_layer_markdown(layer: str, services: dict, schemas: dict, maps_dir: Path) -> str:
     """Generate markdown for a single layer's services."""
     display = LAYER_DISPLAY.get(layer, layer)
     lines = [
@@ -262,19 +269,26 @@ def generate_layer_markdown(layer: str, services: dict, schemas: dict) -> str:
         lines.append("")
 
         schema = schemas.get(service_key)
+        map_file = service_key.upper() + '.md'
+        has_map = (maps_dir / map_file).exists()
+
         if schema:
             total_endpoints += schema['endpoint_count']
-            lines.append(
+            meta = (
                 f"**Version**: {schema['version']} | "
                 f"**Schema**: `schemas/{schema['source_file']}` | "
                 f"**Endpoints**: {schema['endpoint_count']} | "
                 f"**Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})"
             )
         else:
-            lines.append(
+            meta = (
                 f"**Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})"
             )
 
+        if has_map:
+            meta += f" | **Map**: [docs/maps/{map_file}](maps/{map_file})"
+
+        lines.append(meta)
         lines.append("")
         lines.append(svc['overview'])
         lines.append("")
@@ -299,6 +313,7 @@ def main():
     repo_root = script_dir.parent
     schemas_dir = repo_root / 'schemas'
     plugins_dir = repo_root / 'docs' / 'plugins'
+    maps_dir = repo_root / 'docs' / 'maps'
 
     # Deep dives are the primary source of truth
     services = scan_deep_dives(plugins_dir)
@@ -310,7 +325,7 @@ def main():
     schemas = scan_api_schemas(schemas_dir)
 
     # Generate combined markdown (backward compatibility)
-    markdown = generate_markdown(services, schemas)
+    markdown = generate_markdown(services, schemas, maps_dir)
 
     total_endpoints = sum(s['endpoint_count'] for s in schemas.values() if s.get('endpoint_count'))
 
@@ -327,7 +342,7 @@ def main():
         if not layer_services:
             continue
 
-        layer_markdown = generate_layer_markdown(layer, services, schemas)
+        layer_markdown = generate_layer_markdown(layer, services, schemas, maps_dir)
         layer_file = repo_root / 'docs' / filename
         with open(layer_file, 'w') as f:
             f.write(layer_markdown)

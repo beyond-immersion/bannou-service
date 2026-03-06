@@ -235,7 +235,7 @@ public sealed class DelegateBehaviorLayer : BehaviorLayerBase
             displayName,
             category,
             priority,
-            (_, _) => ValueTask.FromResult(emissionList));
+            async (_, _) => { await Task.CompletedTask; return emissionList; });
     }
 }
 
@@ -270,16 +270,18 @@ public sealed class ModelBehaviorLayer : BehaviorLayerBase
     }
 
     /// <inheritdoc/>
-    protected override ValueTask<IReadOnlyList<IntentEmission>> EvaluateCoreAsync(
+    protected override async ValueTask<IReadOnlyList<IntentEmission>> EvaluateCoreAsync(
         BehaviorEvaluationContext context,
         CancellationToken ct)
     {
         if (_modelEvaluator == null)
         {
-            return ValueTask.FromResult<IReadOnlyList<IntentEmission>>(Array.Empty<IntentEmission>());
+            await Task.CompletedTask;
+            return Array.Empty<IntentEmission>();
         }
 
         var result = _modelEvaluator(context);
-        return ValueTask.FromResult(result);
+        await Task.CompletedTask;
+        return result;
     }
 }

@@ -24,7 +24,7 @@ public sealed class AttackEmitter : BaseIntentEmitter
     public override string ActionName => "attack";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -37,11 +37,12 @@ public sealed class AttackEmitter : BaseIntentEmitter
         var channel = context.Archetype?.HasChannel("combat") == true ? "combat" : "action";
         var intent = $"attack_{attackType}";
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             intent,
             Math.Clamp(urgency, 0f, 1f),
-            target));
+            target);
     }
 }
 
@@ -61,7 +62,7 @@ public sealed class BlockEmitter : BaseIntentEmitter
     public override string ActionName => "block";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -72,10 +73,11 @@ public sealed class BlockEmitter : BaseIntentEmitter
         var channel = context.Archetype?.HasChannel("combat") == true ? "combat" : "action";
         var intent = $"block_{direction}";
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             intent,
-            Math.Clamp(urgency, 0f, 1f)));
+            Math.Clamp(urgency, 0f, 1f));
     }
 }
 
@@ -95,7 +97,7 @@ public sealed class DodgeEmitter : BaseIntentEmitter
     public override string ActionName => "dodge";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -119,6 +121,7 @@ public sealed class DodgeEmitter : BaseIntentEmitter
             emissions.Add(new IntentEmission(movementChannel, $"dodge_{direction}", Math.Clamp(urgency, 0f, 1f)));
         }
 
-        return ValueTask.FromResult<IReadOnlyList<IntentEmission>>(emissions);
+        await Task.CompletedTask;
+        return emissions;
     }
 }

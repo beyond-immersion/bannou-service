@@ -4,7 +4,7 @@
 > **Schema**: schemas/behavior-api.yaml
 > **Version**: 3.0.0
 > **Layer**: GameFeatures
-> **State Stores**: behavior-statestore (Redis)
+> **State Store**: behavior-statestore (Redis), agent-memories (Redis, shared with lib-actor)
 
 ---
 
@@ -18,13 +18,16 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for behavior metadata, bundle membership, GOAP metadata |
-| lib-messaging (`IMessageBus`) | Publishing behavior lifecycle events, compilation failure events, GOAP plan events, cinematic extension events; error event publishing |
-| lib-asset (`IAssetClient`) | Storing and retrieving compiled bytecode via pre-signed URLs |
-| `IHttpClientFactory` | HTTP client for asset upload operations |
-| bannou-service (ABML Parser: `DocumentParser`) | YAML-to-AST parsing of ABML documents |
-| bannou-service (ABML Documents) | `AbmlDocument`, `Flow`, `ActionNode` and subtypes for AST representation |
-| bannou-service (Runtime types) | `BehaviorOpcode`, `BehaviorModel`, `BehaviorModelInterpreter`, `BehaviorModelType`, `IntentChannel` |
+| lib-state (`IStateStoreFactory`) | Redis persistence for behavior metadata, bundle membership, GOAP metadata (via `BehaviorBundleManager`) |
+| lib-messaging (`IMessageBus`) | Publishing behavior lifecycle events, compilation failure events, GOAP plan events; error event publishing |
+| lib-asset (`IAssetClient`) | Storing and retrieving compiled bytecode via pre-signed URLs (soft L3 dependency — resolved via `GetService<T>()` with graceful degradation) |
+| `IHttpClientFactory` | HTTP client for asset upload/download operations |
+| `ITelemetryProvider` | Span instrumentation for async methods |
+| behavior-compiler SDK (`DocumentParser`) | YAML-to-AST parsing of ABML documents (from `sdks/behavior-compiler/`) |
+| behavior-compiler SDK (`BehaviorCompiler`) | Multi-phase ABML-to-bytecode compilation pipeline (from `sdks/behavior-compiler/`) |
+| behavior-compiler SDK (`GoapPlanner`) | A* search for GOAP planning (from `sdks/behavior-compiler/`) |
+| behavior-compiler SDK (Runtime types) | `BehaviorModel`, `BehaviorModelInterpreter`, `BehaviorModelType`, `IntentChannel`, `BehaviorOpcode` |
+| bannou-service (Cognition types) | `CognitionConstants`, `IMemoryStore`, `IActionHandler`, cognition pipeline infrastructure |
 
 ---
 
@@ -32,8 +35,8 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-actor | Consumes compiled behavior bytecode for NPC brain execution; uses GOAP planner for action selection |
-| lib-character | References behavior metadata for character enrichment |
+| lib-actor | Consumes shared behavior compiler types (from bannou-service) for NPC brain execution; uses GOAP planner for action selection. Does NOT use `IBehaviorClient` — compiler types are shared code, not service-to-service calls |
+| lib-puppetmaster | Subscribes to `behavior.updated` events for hot-reload of runtime-loaded behaviors; implements `IBehaviorDocumentProvider` which loads behaviors via lib-asset |
 
 ---
 
@@ -70,7 +73,7 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 | `behavior.bundle.deleted` | `BehaviorBundleDeletedEvent` | Bundle deleted (lifecycle) - **schema-defined but not yet published by code** |
 | `behavior.compilation-failed` | `BehaviorCompilationFailedEvent` | ABML compilation fails (monitoring/alerting) |
 | `behavior.goap.plan-generated` | `GoapPlanGeneratedEvent` | GOAP planner generates new plan |
-| `character.cinematic-extension` | `CinematicExtensionAvailableEvent` | Cinematic extension available for injection at continuation point - **schema-defined but not yet published by code** |
+| `behavior.cinematic-extension` | `CinematicExtensionAvailableEvent` | Cinematic extension available for injection at continuation point - **schema-defined but not yet published by code** |
 
 ### Consumed Events
 
@@ -128,14 +131,15 @@ This plugin does not consume external events (confirmed by `x-event-subscription
 | `BehaviorServiceConfiguration` | Singleton | All 33 config properties (urgency, attention, memory, compiler) |
 | `IStateStoreFactory` | Singleton | Access to behavior-statestore (used by BehaviorBundleManager and ActorLocalMemoryStore) |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IAssetClient` | Singleton | Asset service integration for bytecode storage (registered centrally by PluginLoader) |
+| `IServiceProvider` | Singleton | Service provider for resolving optional L3 dependencies (IAssetClient) at method scope |
 | `IHttpClientFactory` | Singleton | HTTP client for asset upload operations |
+| `ITelemetryProvider` | Singleton | Span instrumentation for async methods (T30 compliance) |
 | `IEventConsumer` | Scoped | Event consumer registration (no subscriptions - handler call is a no-op) |
 | `IGoapPlanner` (via `GoapPlanner`) | Singleton | A* search for GOAP planning (thread-safe, stateless) |
 | `BehaviorCompiler` | Singleton | ABML-to-bytecode compilation pipeline (thread-safe, stateless) |
 | `SemanticAnalyzer` | Per-use (internal to compiler) | Pre-compilation validation pass (uses `IResourceTemplateRegistry` when available) |
 | `IBehaviorBundleManager` | Scoped | Bundle creation, membership tracking, and GOAP metadata caching |
-| `BehaviorModelCache` | Singleton (in-memory) | Per-character interpreter caching with variant fallback chains (ConcurrentDictionary) |
+| `BehaviorModelCache` | Not DI-registered | Per-character interpreter caching with variant fallback chains (ConcurrentDictionary). Used by `BehaviorEvaluatorBase` subclasses but NOT registered in `BehaviorServicePlugin.ConfigureServices()` — must be manually instantiated |
 | `IMemoryStore` (via `ActorLocalMemoryStore`) | Singleton | Keyword-based memory storage and retrieval (uses `agent-memories` store) |
 | `CognitionConstants` | Static | Configurable cognition pipeline thresholds (initialized from config at startup) |
 | `IBehaviorModelInterpreterFactory` | Singleton | Runtime execution of compiled behavior models |
@@ -158,19 +162,19 @@ BehaviorService itself is **Scoped** (per-request). Most helper services are **S
 
 ### ABML Operations (2 endpoints)
 
-- **CompileAbmlBehavior** (`/compile`): Accepts ABML YAML string with optional compilation options (debug info, optimizations, skip semantic analysis, model ID, max constants/strings). Invokes the multi-phase compiler pipeline: YAML parsing via `DocumentParser`, semantic analysis (unless skipped), variable registration from context block, flow compilation with action compiler registry, bytecode emission with label patching. On success: returns compiled bytecode (base64), model metadata (inputs, outputs, continuation points, debug line map), and bytecode size. On failure: returns error list with messages and optional line numbers. Publishes `behavior.compilation-failed` event on compilation errors (note: `ContentHash` field in event schema is defined but never populated by the code). Stores compiled behavior metadata in state store. For successful compilation: publishes `behavior.created` or `behavior.updated` lifecycle event.
+- **CompileAbmlBehavior** (`/compile`): Accepts ABML YAML string with optional compilation options (`enableOptimizations`, `cacheCompiledResult`, `strictValidation`, `culturalAdaptations`, `goapIntegration`). Invokes the multi-phase compiler pipeline: YAML parsing via `DocumentParser`, semantic analysis (when `strictValidation` is true), flow compilation with action compiler registry, bytecode emission with label patching. On success with caching enabled: stores bytecode as asset via lib-asset (soft L3 dependency), records metadata in `BehaviorBundleManager`, extracts and caches GOAP metadata from document, publishes `behavior.created` or `behavior.updated` lifecycle event. On failure: publishes `behavior.compilation-failed` event (note: `ContentHash` field in event schema is defined but never populated by the code). Returns compiled bytecode size, behavior ID (SHA256 hash of bytecode), and compilation time.
 
 - **ValidateAbml** (`/validate`): Validates ABML YAML by running the full compilation pipeline (including bytecode emission) then discarding the bytecode and returning only the error/success status. Despite the "validate-only" intent, calls `_compiler.CompileYaml()` which performs the same multi-phase pipeline as `/compile`. Returns validation result with `isValid` flag and error list (undefined flows, empty conditionals, invalid continuation points, type mismatches). Semantic warnings (unreachable code, unused flows, etc.) are propagated via `result.Warnings` when `StrictMode=true` enables semantic analysis. When `StrictMode=false` (default), semantic analysis is skipped entirely and no warnings are produced. Does not modify state or publish events.
 
 ### Cache Operations (2 endpoints)
 
-- **GetCachedBehavior** (`/cache/get`): Retrieves previously compiled behavior metadata and bytecode by behavior ID. Looks up behavior metadata from state store using configured key prefix. If found, retrieves the compiled bytecode asset via mesh invocation to the asset service. Returns the full compiled model with metadata, bytecode (base64), and bundle membership information.
+- **GetCachedBehavior** (`/cache/get`): Retrieves previously compiled behavior bytecode by behavior ID. Resolves `IAssetClient` via soft L3 dependency pattern (returns `ServiceUnavailable` if Asset service not loaded). Requests asset from lib-asset, downloads bytecode from pre-signed URL, returns compiled model with bytecode (base64). Falls back to providing download URL if bytecode download fails.
 
-- **InvalidateCachedBehavior** (`/cache/invalidate`): Invalidates cached behavior by ID. Removes the behavior metadata entry from the state store. Invalidates any in-memory `BehaviorModelCache` entries referencing this behavior. Publishes `behavior.deleted` lifecycle event. Returns confirmation of invalidation.
+- **InvalidateCachedBehavior** (`/cache/invalidate`): Invalidates cached behavior by ID. Removes behavior metadata and GOAP metadata from state store via `BehaviorBundleManager`. Deletes the asset from lib-asset (if available). Publishes `behavior.deleted` lifecycle event. Note: does NOT invalidate in-memory `BehaviorModelCache` entries — the cache is not referenced by `BehaviorService`; it is only used by `BehaviorEvaluatorBase` subclasses.
 
 ### GOAP Operations (2 endpoints)
 
-- **GenerateGoapPlan** (`/goap/plan`): Accepts a goal definition (ID, name, priority, conditions), current world state (key-value pairs), available actions (ID, name, preconditions, effects, cost), and optional planning options (urgency for automatic parameter selection, or explicit max depth/timeout/max nodes/heuristic weight). Converts request data to runtime types via `GoapMetadataConverter`. If urgency is provided, maps to tiered `PlanningOptions` via `UrgencyBasedPlanningOptions.FromUrgency()` (low < 0.3: depth 10, 100ms, 1000 nodes; medium 0.3-0.7: depth 6, 50ms, 500 nodes; high > 0.7: depth 3, 20ms, 200 nodes). Invokes `GoapPlanner.PlanAsync` with A* search. On success: returns ordered action sequence, total cost, nodes expanded, planning time in ms, initial state, expected final state. On failure (no plan found): returns null with planning diagnostics. Publishes `behavior.goap.plan-generated` event with plan metadata. Stores GOAP metadata in state store for debugging.
+- **GenerateGoapPlan** (`/goap/plan`): Requires `behaviorId` to retrieve pre-cached GOAP metadata from compiled behaviors. Accepts a goal definition and current world state. Actions come from cached GOAP metadata (extracted during compilation), not from the request. Uses optional planning options (max depth/timeout/max nodes) or `PlanningOptions.Default` when not specified. Invokes `GoapPlanner.PlanAsync` with A* search. On success: returns ordered action sequence, total cost, nodes expanded, planning time in ms. On failure (no plan found): returns OK with failure reason and zeroed stats. Publishes `behavior.goap.plan-generated` event on success only.
 
 - **ValidateGoapPlan** (`/goap/validate-plan`): Validates an existing plan against updated world state. Accepts the plan (goal, action sequence), current action index, current world state, and optional active goals list for priority checking. Checks: plan completion, goal already satisfied, current action preconditions still valid, higher-priority goals now actionable. Returns `PlanValidationResult` with validity flag, `ReplanReason` (None, PreconditionInvalidated, ActionFailed, BetterGoalAvailable, PlanCompleted, GoalAlreadySatisfied, SuboptimalPlan), `ValidationSuggestion` (Continue, Replan, Abort), invalidated action index, and optional better goal reference.
 
@@ -475,6 +479,12 @@ Memory Relevance Scoring (Keyword-Based)
 
 6. **Bundle lifecycle events not published**: The `x-lifecycle` schema defines `BehaviorBundleCreatedEvent`, `BehaviorBundleUpdatedEvent`, and `BehaviorBundleDeletedEvent` (auto-generated to `BehaviorLifecycleEvents.cs`), but `BehaviorBundleManager` never calls `_messageBus.TryPublishAsync()` for these events. The bundle manager handles state store operations for membership tracking but does not publish lifecycle events when bundles are created, updated, or deleted.
 
+7. **Behavior Stack system (not DI-registered)**: Complete behavior stacking subsystem exists in `Stack/` directory (`BehaviorStack.cs`, `BehaviorStackRegistry.cs`, `IntentStackMerger.cs`, `SituationalTriggerManager.cs`) with interfaces defined in `bannou-service/Behavior/IBehaviorStack.cs`. Implements multi-layer intent composition with category-based priority. Code is complete but none of the types are registered in `BehaviorServicePlugin.ConfigureServices()`, making the entire subsystem inactive.
+
+8. **Cutscene Coordination system (not DI-registered)**: Server-side cutscene orchestration subsystem in `Coordination/` directory (`CutsceneCoordinator.cs`, `CutsceneSession.cs`, `SyncPointManager.cs`, `InputWindowManager.cs`). Manages master timeline, sync points for multi-entity coordination, and player input windows during cinematics. Code is complete but `CutsceneCoordinator` is not registered in DI, so it's only usable if manually instantiated.
+
+9. **Document Merger (not DI-registered)**: `Compiler/DocumentMerger.cs` provides ABML document composition (merging multiple behavior documents). Exists as code but not registered in DI.
+
 ---
 
 ## Potential Extensions
@@ -490,6 +500,14 @@ Memory Relevance Scoring (Keyword-Based)
 5. **Parallel plan evaluation**: For NPCs with multiple active goals, run A* searches concurrently using the thread-safe `GoapPlanner` (all state is method-local). Currently goals are evaluated sequentially in validation.
 
 6. **Compilation caching by content hash**: Use the `contentHash` field from `BehaviorCompilationFailedEvent` to implement deduplication - skip recompilation of identical ABML content that has already been compiled successfully.
+
+7. **Bytecode version contract** (Issue #158): Formal versioning for bytecode format to ensure server-compiled bytecode and client SDK interpreters stay compatible across deployments.
+
+8. **GOAP WorldState external data** (Issue #148): `GoapWorldStateProvider` pattern for injecting external service data into GOAP planning world state, enabling richer NPC decision-making.
+
+9. **ABML template inheritance** (Issue #384): `extends` and `abstract` keywords for behavior documents, enabling hierarchical behavior composition without copy-paste.
+
+10. **ABML economic action handlers** (Issue #428): Purpose-built ABML actions for economic operations (currency transfer, item creation, escrow management) following the same template-based pattern as `emit_event`.
 
 ---
 
@@ -533,6 +551,8 @@ No bugs identified.
 
 11. **Array literals unsupported outside 'in' operator**: Standalone array literals in bytecode (`var arr = [1, 2, 3]`) are not supported. The compiler emits an error: "Array literals are only supported with the 'in' operator in bytecode." Dynamic collections require cloud-side execution.
 
+12. **ControlGateManager uses in-memory-only state**: `ControlGateManager` (Singleton) stores entity control gates in a `ConcurrentDictionary` with no distributed backing. In multi-instance deployments, control state is node-local — an entity in a cinematic on Node A appears as "Behavior" (default) on Node B. Currently acceptable because the cinematic coordination system (`CinematicRunner`, `BehaviorOutputMask`) is not wired into any API endpoint. When cinematics become active, the gate store must be backed by Redis via lib-state.
+
 12. **VmConfig hardcoded limits not configurable**: Several VM limits are hardcoded in `VmConfig.cs` and not exposed via service configuration: MaxRegisters (256), MaxInstructions (65536), MaxJumpOffset (65535), MaxFunctionArgs (16), MaxNestingDepth (100). Only MaxConstants and MaxStrings are configurable.
 
 13. **GOAP planner returns null silently for multiple failure modes**: `PlanAsync` returns `null` without indicating cause when: (a) no actions available, (b) timeout exceeded, (c) cancellation requested, (d) node limit reached without finding goal. Callers cannot distinguish between "no valid plan exists" and "ran out of resources."
@@ -547,7 +567,7 @@ No bugs identified.
 
 18. **GOAP failure response discards actual search effort**: In `GenerateGoapPlanAsync`, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up."
 
-19. **IAssetClient is constructor-injected (hard dependency on L3)**: Per SERVICE-HIERARCHY.md, L4 services should use `GetService<T>()` with null checks for L3 dependencies (graceful degradation if L3 is missing). BehaviorService constructor-injects `IAssetClient` (L3 AppFeatures), which means the service crashes at startup if Asset is not loaded. In practice, Behavior cannot function without Asset (bytecode storage is fundamental), so this behaves correctly in typical deployments but violates the hierarchy's soft-dependency pattern for L3.
+19. **IAssetClient uses soft L3 dependency pattern**: BehaviorService and BehaviorBundleManager resolve `IAssetClient` via `IServiceProvider.GetService<IAssetClient>()` with graceful degradation (null check + reduced functionality) per SERVICE-HIERARCHY.md L3 soft dependency rules. When Asset service is not loaded, cache operations return `ServiceUnavailable` and bundle creation skips asset upload. Compilation and GOAP planning work independently of Asset availability.
 
 20. **Generic service call actions are forbidden**: The SemanticAnalyzer blocks `service_call`, `api_call`, `http_call`, `mesh_call`, and `invoke_service` domain actions at compile time with `SemanticErrorKind.ForbiddenDomainAction`. The IntentEmitterRegistry also rejects these at runtime as defense-in-depth. All service interactions must use purpose-built actions (e.g., `load_snapshot`, `actor_command`, `spawn_watcher`). See issue #296.
 

@@ -441,13 +441,13 @@ public sealed class EntityResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_SelfWithEmptyGuid_ReturnsNull()
+    public async Task ResolveAsync_SelfWithNullGuid_ReturnsNull()
     {
         // Arrange
         var bindings = CutsceneBindings.Empty;
         var context = new EntityResolutionContext
         {
-            RequestingEntity = Guid.Empty
+            RequestingEntity = null
         };
 
         // Act

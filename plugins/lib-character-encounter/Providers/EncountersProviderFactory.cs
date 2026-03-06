@@ -20,15 +20,20 @@ public sealed class EncountersProviderFactory : IVariableProviderFactory
 {
     private readonly IEncounterDataCache _cache;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly CharacterEncounterServiceConfiguration _configuration;
 
     /// <summary>
     /// Creates a new encounters provider factory.
     /// </summary>
-    public EncountersProviderFactory(IEncounterDataCache cache, ITelemetryProvider telemetryProvider)
+    public EncountersProviderFactory(
+        IEncounterDataCache cache,
+        ITelemetryProvider telemetryProvider,
+        CharacterEncounterServiceConfiguration configuration)
     {
         _cache = cache;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
+        _configuration = configuration;
     }
 
     /// <inheritdoc/>
@@ -47,6 +52,9 @@ public sealed class EncountersProviderFactory : IVariableProviderFactory
         // Note: sentiment, hasMet, and pairEncounters are loaded on-demand via the cache
         // For now, we just load the basic encounter list for the provider
         var encounters = await _cache.GetEncountersOrLoadAsync(characterId.Value, ct);
-        return new EncountersProvider(encounters);
+        return new EncountersProvider(
+            encounters,
+            grudgeThreshold: _configuration.GrudgeSentimentThreshold,
+            allyThreshold: _configuration.AllySentimentThreshold);
     }
 }

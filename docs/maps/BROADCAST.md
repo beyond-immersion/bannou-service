@@ -14,9 +14,9 @@
 |-------|-------|
 | Plugin | lib-broadcast |
 | Layer | L3 AppFeatures |
-| Endpoints | 22 |
+| Endpoints | 22 (19 generated + 3 x-controller-only) |
 | State Stores | broadcast-platforms (MySQL), broadcast-sessions (Redis), broadcast-sentiment-buffer (Redis), broadcast-outputs (Redis), broadcast-cameras (Redis), broadcast-lock (Redis) |
-| Events Published | 10 (broadcast.platform-link.created/updated/deleted, broadcast.platform-session.created/updated/deleted, broadcast.broadcast-output.created/updated/deleted, broadcast.audience.pulse) |
+| Events Published | 10 (broadcast.platform-link.created/updated/deleted, broadcast.platform-session.created/updated/deleted, broadcast.output.created/updated/deleted, broadcast.audience.pulse) |
 | Events Consumed | 4 (voice.room.broadcast.approved, voice.room.broadcast.stopped, voice.participant.muted, session.disconnected) |
 | Client Events | 5 (broadcast.output.started/stopped/source-changed, broadcast.session.started/ended) |
 | Background Services | 6 |
@@ -45,6 +45,7 @@
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `sent:{platformSessionId}:{sequence}` | `BufferedSentimentEntry` | Individual sentiment entries awaiting batch publication. TTL = 2x pulse interval. |
+| `webhook-rate:{platformSessionId}` | `string` (counter) | Defense-in-depth rate limit counter for webhook events per platform session. Atomic INCR with 60s TTL. Checked before sentiment processing in all webhook handlers. |
 
 **Store**: `broadcast-outputs` (Backend: Redis)
 
@@ -100,9 +101,9 @@
 | `broadcast.platform-session.created` | `PlatformSessionCreatedEvent` | Session started |
 | `broadcast.platform-session.updated` | `PlatformSessionUpdatedEvent` | Session associated with in-game session or viewer count update |
 | `broadcast.platform-session.deleted` | `PlatformSessionDeletedEvent` | Session stopped or disconnect cleanup |
-| `broadcast.broadcast-output.created` | `BroadcastOutputCreatedEvent` | Broadcast started (camera, game audio, or voice room) |
-| `broadcast.broadcast-output.updated` | `BroadcastOutputUpdatedEvent` | Broadcast config changed or fallback cascade triggered |
-| `broadcast.broadcast-output.deleted` | `BroadcastOutputDeletedEvent` | Broadcast stopped or account cleanup |
+| `broadcast.output.created` | `OutputCreatedEvent` | Broadcast started (camera, game audio, or voice room) |
+| `broadcast.output.updated` | `OutputUpdatedEvent` | Broadcast config changed or fallback cascade triggered |
+| `broadcast.output.deleted` | `OutputDeletedEvent` | Broadcast stopped or account cleanup |
 | `broadcast.audience.pulse` | `BroadcastAudiencePulseEvent` | SentimentBatchPublisher drains buffer (every SentimentPulseIntervalSeconds) |
 
 ---
@@ -125,7 +126,7 @@ All consumed voice event models are redefined inline in `broadcast-events.yaml` 
 | Service | Role |
 |---------|------|
 | `ILogger<BroadcastService>` | Structured logging |
-| `BroadcastServiceConfiguration` | Typed configuration access (37 properties) |
+| `BroadcastServiceConfiguration` | Typed configuration access (36 properties) |
 | `IStateStoreFactory` | State store access (6 stores) |
 | `IMessageBus` | Event publishing |
 | `IDistributedLockProvider` | Distributed lock acquisition |
@@ -137,35 +138,38 @@ All consumed voice event models are redefined inline in `broadcast-events.yaml` 
 | `IBroadcastCoordinator` | FFmpeg process supervision -- local process cache, NOT authoritative (Redis is truth). Startup reconciliation, fallback cascade, RTMP validation via FFprobe. |
 | `ISentimentProcessor` | Raw platform events to sentiment category + intensity. Manages tracked viewer mapping in Redis. |
 | `IPlatformWebhookHandler` | Platform-specific webhook HMAC/token validation and event routing |
+| `IClientEventPublisher` | WebSocket client event publishing (5 client events: output started/stopped/source-changed, session started/ended) |
 
 ---
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| LinkPlatform | POST /broadcast/platform/link | user | platform (Custom only) | broadcast.platform-link.created (Custom only) |
-| PlatformCallback | POST /broadcast/platform/callback | user | platform, platform-account | broadcast.platform-link.created |
-| UnlinkPlatform | POST /broadcast/platform/unlink | user | platform, platform-account, sess, sess-account, tracking | broadcast.platform-link.deleted, broadcast.platform-session.deleted |
-| ListPlatforms | POST /broadcast/platform/list | user | - | - |
-| StartSession | POST /broadcast/session/start | user | sess, sess-account | broadcast.platform-session.created |
-| StopSession | POST /broadcast/session/stop | user | sess, sess-account, tracking | broadcast.platform-session.deleted |
-| AssociateSession | POST /broadcast/session/associate | user | sess, sess-account | broadcast.platform-session.updated |
-| GetSessionStatus | POST /broadcast/session/status | user | - | - |
-| ListSessions | POST /broadcast/session/list | user | - | - |
-| AnnounceCamera | POST /broadcast/camera/announce | admin | cam | - |
-| RetireCamera | POST /broadcast/camera/retire | admin | cam | broadcast.broadcast-output.updated |
-| StartOutput | POST /broadcast/output/start | admin | out | broadcast.broadcast-output.created |
-| StopOutput | POST /broadcast/output/stop | admin | out | broadcast.broadcast-output.deleted |
-| UpdateOutput | POST /broadcast/output/update | admin | out | broadcast.broadcast-output.updated |
-| GetOutputStatus | POST /broadcast/output/status | admin | - | - |
-| ListOutputs | POST /broadcast/output/list | admin | - | - |
-| WebhookTwitch | POST /broadcast/webhook/twitch | [] | sent | - |
-| WebhookYouTube | POST /broadcast/webhook/youtube | [] | sent | - |
-| WebhookCustom | POST /broadcast/webhook/custom | [] | sent | - |
-| GetLatestPulse | POST /broadcast/admin/pulse/latest | developer | - | - |
-| TestSentiment | POST /broadcast/admin/sentiment/test | developer | - | - |
-| CleanupByAccount | POST /broadcast/cleanup-by-account | [] | platform, sess, out, tracking | broadcast.platform-link.deleted, broadcast.platform-session.deleted, broadcast.broadcast-output.deleted |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| LinkPlatform | POST /broadcast/platform/link | generated | user | platform (Custom only) | broadcast.platform-link.created (Custom only) |
+| PlatformCallback | POST /broadcast/platform/callback | generated | user | platform, platform-account | broadcast.platform-link.created |
+| UnlinkPlatform | POST /broadcast/platform/unlink | generated | user | platform, platform-account, sess, sess-account, tracking | broadcast.platform-link.deleted, broadcast.platform-session.deleted |
+| ListPlatforms | POST /broadcast/platform/list | generated | user | - | - |
+| StartSession | POST /broadcast/session/start | generated | user | sess, sess-account | broadcast.platform-session.created |
+| StopSession | POST /broadcast/session/stop | generated | user | sess, sess-account, tracking | broadcast.platform-session.deleted |
+| AssociateSession | POST /broadcast/session/associate | generated | user | sess, sess-account | broadcast.platform-session.updated |
+| GetSessionStatus | POST /broadcast/session/status | generated | user | - | - |
+| ListSessions | POST /broadcast/session/list | generated | user | - | - |
+| AnnounceCamera | POST /broadcast/camera/announce | generated | admin | cam | - |
+| RetireCamera | POST /broadcast/camera/retire | generated | admin | cam | broadcast.output.updated |
+| StartOutput | POST /broadcast/output/start | generated | admin | out | broadcast.output.created |
+| StopOutput | POST /broadcast/output/stop | generated | admin | out | broadcast.output.deleted |
+| UpdateOutput | POST /broadcast/output/update | generated | admin | out | broadcast.output.updated |
+| GetOutputStatus | POST /broadcast/output/status | generated | admin | - | - |
+| ListOutputs | POST /broadcast/output/list | generated | admin | - | - |
+| WebhookTwitch | POST /broadcast/webhook/twitch | x-controller-only | [] | sent | - |
+| WebhookYouTube | POST /broadcast/webhook/youtube | x-controller-only | [] | sent | - |
+| WebhookCustom | POST /broadcast/webhook/custom | x-controller-only | [] | sent | - |
+| GetLatestPulse | POST /broadcast/admin/pulse/latest | generated | developer | - | - |
+| TestSentiment | POST /broadcast/admin/sentiment/test | generated | developer | - | - |
+| CleanupByAccount | POST /broadcast/cleanup-by-account | generated | [] | platform, sess, out, tracking | broadcast.platform-link.deleted, broadcast.platform-session.deleted, broadcast.output.deleted |
+
+> **T32 note**: All user-facing endpoints (`Roles: [user]`) must NOT accept `accountId` in request bodies. The schema must use `webSocketSessionId` and resolve account server-side. The pseudo-code below uses `accountId` as shorthand for session-resolved identity.
 
 ---
 
@@ -335,7 +339,7 @@ DELETE cameraStore:cam:{cameraId}
 // If any active broadcast uses this camera, trigger fallback cascade
 FOREACH broadcast using this camera
   // Signal IBroadcastCoordinator to cascade to fallback source
-  PUBLISH broadcast.broadcast-output.updated { broadcastId, changedFields: ["videoSource"] }
+  PUBLISH broadcast.output.updated { broadcastId, changedFields: ["videoSource"] }
   PUSH account(initiatorAccountId) BroadcastOutputSourceChangedClientEvent { broadcastId, newSource }
 RETURN (200, CameraRetireResponse)
 ```
@@ -364,7 +368,7 @@ LOCK lockStore:broadcast:lock:broadcast:{broadcastId}
   // Encrypt RTMP URL for storage
   // Start FFmpeg process via IBroadcastCoordinator
   WRITE broadcastStore:out:{broadcastId}              <- BroadcastModel { sourceType, encryptedRtmpUrl, owningInstanceId, ffmpegPid, state: Active, fallbackConfig }
-PUBLISH broadcast.broadcast-output.created { broadcastId, sourceType, maskedRtmpUrl }
+PUBLISH broadcast.output.created { broadcastId, sourceType, maskedRtmpUrl }
 PUSH account(initiatorAccountId) BroadcastOutputStartedClientEvent { broadcastId, sourceType }
 RETURN (200, OutputStartResponse { broadcastId })
 ```
@@ -378,7 +382,7 @@ LOCK lockStore:broadcast:lock:broadcast:{broadcastId}
                                                       -> 409 if fails
   // Kill FFmpeg process via IBroadcastCoordinator
   DELETE broadcastStore:out:{broadcastId}
-PUBLISH broadcast.broadcast-output.deleted { broadcastId }
+PUBLISH broadcast.output.deleted { broadcastId }
 PUSH account(initiatorAccountId) BroadcastOutputStoppedClientEvent { broadcastId, duration }
 RETURN (200, OutputStopResponse)
 ```
@@ -396,7 +400,7 @@ LOCK lockStore:broadcast:lock:broadcast:{broadcastId}
   // Encrypt new RTMP URL if changed
   ETAG-WRITE broadcastStore:out:{broadcastId}         <- updated broadcast
                                                       -> 409 if ETag mismatch
-PUBLISH broadcast.broadcast-output.updated { broadcastId, changedFields }
+PUBLISH broadcast.output.updated { broadcastId, changedFields }
 RETURN (200, OutputUpdateResponse)
 ```
 
@@ -433,6 +437,14 @@ IF type == "webhook_callback_verification"
 IF type == "stream.offline"
   // Trigger session stop for this broadcaster internally
 
+// Defense-in-depth rate limiting (Redis atomic counter, 60s TTL per session)
+// Primary burst protection is architectural: sentiment buffer TTL + max batch size cap
+var rateLimitKey = $"webhook-rate:{platformSessionId}"
+var currentCount = INCR sentimentBuffer:rateLimitKey (TTL: 60s)
+IF currentCount > config.WebhookMaxEventsPerSessionPerMinute
+  LOG Debug "Webhook rate limit exceeded for session {PlatformSessionId}: {Count}/{Max}"
+  RETURN (200, WebhookResponse)  // Always 200 to platform (per Twitch/YouTube webhook contracts)
+
 IF type == "channel.subscribe" OR "channel.raid"
   CALL _sentimentProcessor.ProcessSubscriptionEventAsync(platformSessionId, eventData)
   // Writes BufferedSentimentEntry to sentimentBuffer:sent:{platformSessionId}:{sequence}
@@ -450,6 +462,13 @@ POST /broadcast/webhook/youtube | Roles: [] | x-controller-only: true
 ```
 // YouTube verification token validation in generated controller
 // IPlatformWebhookHandler.ValidateYouTubeTokenAsync         -> 401 if invalid
+
+// Defense-in-depth rate limiting (Redis atomic counter, 60s TTL per session)
+var rateLimitKey = $"webhook-rate:{platformSessionId}"
+var currentCount = INCR sentimentBuffer:rateLimitKey (TTL: 60s)
+IF currentCount > config.WebhookMaxEventsPerSessionPerMinute
+  LOG Debug "Webhook rate limit exceeded for session {PlatformSessionId}: {Count}/{Max}"
+  RETURN (200, WebhookResponse)  // Always 200 to platform (per webhook contracts)
 
 IF type == "liveChatMessage"
   CALL _sentimentProcessor.ProcessChatMessageAsync(platformSessionId, messageText, senderId, memberStatus)
@@ -469,6 +488,14 @@ POST /broadcast/webhook/custom | Roles: [] | x-controller-only: true
 ```
 // Configurable HMAC validation in generated controller
 // IPlatformWebhookHandler.ValidateCustomSignatureAsync      -> 401 if invalid
+
+// Defense-in-depth rate limiting (Redis atomic counter, 60s TTL per session)
+var rateLimitKey = $"webhook-rate:{platformSessionId}"
+var currentCount = INCR sentimentBuffer:rateLimitKey (TTL: 60s)
+IF currentCount > config.WebhookMaxEventsPerSessionPerMinute
+  LOG Debug "Webhook rate limit exceeded for session {PlatformSessionId}: {Count}/{Max}"
+  RETURN (200, WebhookResponse)  // Always 200 to platform (per webhook contracts)
+
 CALL _sentimentProcessor.ProcessGenericWebhookAsync(platformSessionId, body)
 RETURN (200, WebhookResponse)
 ```
@@ -503,7 +530,7 @@ FOREACH broadcast in results
   LOCK lockStore:broadcast:lock:broadcast:{broadcastId}
     // Kill FFmpeg via IBroadcastCoordinator
     DELETE broadcastStore:out:{broadcastId}
-    PUBLISH broadcast.broadcast-output.deleted { broadcastId }
+    PUBLISH broadcast.output.deleted { broadcastId }
 
 // 2. Stop active platform session
 READ sessionStore:sess-account:{accountId}
@@ -522,6 +549,93 @@ FOREACH link in results
 
 RETURN (200, CleanupResponse)
 // Idempotent -- returns 200 even if nothing to clean up
+```
+
+---
+
+## Event Handlers
+
+### HandleVoiceBroadcastApprovedAsync
+Topic: `voice.room.broadcast.approved` | Source: lib-voice (L3, soft)
+
+```
+// All voice room participants have consented to broadcasting
+IF NOT config.OutputEnabled                           -> no-op
+IF NOT config.BroadcastEnabled                        -> no-op
+
+// Validate RTMP URL via FFprobe
+CALL _broadcastCoordinator.ValidateRtmpUrlAsync(body.rtmpDestinationUrl, config.RtmpProbeTimeoutSeconds)
+  IF fails                                            -> no-op (log error)
+
+// Check concurrent output limit
+COUNT broadcastStore WHERE $.state == Active
+IF count >= config.MaxConcurrentOutputs               -> no-op (log warning)
+
+broadcastId = new Guid
+
+LOCK lockStore:broadcast:lock:broadcast:{broadcastId}
+  IF fails                                            -> no-op (log warning)
+
+  // Resolve IVoiceClient (soft L3 dependency)
+  voiceClient = _serviceProvider.GetService<IVoiceClient>()
+  IF null                                             -> no-op (log error, voice unavailable)
+
+  CALL voiceClient.GetRoomAsync(body.roomId)
+  IF not found                                        -> no-op (log error)
+
+  // Encrypt RTMP URL, start FFmpeg with RTP audio input from room
+  CALL _broadcastCoordinator.StartBroadcastAsync(broadcastId, model)
+  WRITE broadcastStore:out:{broadcastId}              <- BroadcastModel { sourceType: VoiceRoom, sourceId: roomId, encryptedRtmpUrl, owningInstanceId, state: Active }
+PUBLISH broadcast.output.created { broadcastId, sourceType: VoiceRoom, maskedRtmpUrl }
+```
+
+### HandleVoiceBroadcastStoppedAsync
+Topic: `voice.room.broadcast.stopped` | Source: lib-voice (L3, soft)
+
+```
+// Consent revoked, room closed, or manual stop from voice side
+QUERY broadcastStore WHERE $.sourceType == VoiceRoom AND $.sourceId == body.roomId AND $.state == Active
+IF no results                                         -> no-op (log debug)
+
+broadcastId = results[0].broadcastId
+
+LOCK lockStore:broadcast:lock:broadcast:{broadcastId}
+  IF fails                                            -> no-op (log warning)
+  CALL _broadcastCoordinator.StopBroadcastAsync(broadcastId)
+  DELETE broadcastStore:out:{broadcastId}
+PUBLISH broadcast.output.deleted { broadcastId }
+```
+
+### HandleVoiceParticipantMutedAsync
+Topic: `voice.participant.muted` | Source: lib-voice (L3, soft)
+
+```
+// Participant muted/unmuted in a voice room being broadcast
+QUERY broadcastStore WHERE $.sourceType == VoiceRoom AND $.sourceId == body.roomId AND $.state == Active
+IF no results                                         -> no-op (log debug)
+
+broadcastId = results[0].broadcastId
+
+// Signal IBroadcastCoordinator to update FFmpeg audio mixing
+// Muted participant's RTP stream excluded/included in the mix
+CALL _broadcastCoordinator.UpdateParticipantMuteStateAsync(broadcastId, body.participantSessionId, body.isMuted)
+// Transient state -- no Redis write, no event published
+```
+
+### HandleSessionDisconnectedAsync
+Topic: `session.disconnected` | Source: lib-connect (L1, hard)
+
+```
+// WebSocket client disconnected -- accelerated cleanup (T28-compliant: sessions have TTL safety net)
+READ sessionStore:sess-account:{accountId}
+IF null                                               -> no-op (no platform session for this account)
+IF session.state != Active                            -> no-op
+
+// Delete all tracking ID mappings (prefix scan sess-tracking:{platformSessionId}:*)
+DELETE sessionStore:sess:{platformSessionId}
+DELETE sessionStore:sess-account:{accountId}
+PUBLISH broadcast.platform-session.deleted { platformSessionId, duration, peakViewerCount }
+// No client event push -- client is already disconnected
 ```
 
 ---
@@ -556,14 +670,30 @@ LOCK lockStore:broadcast:lock:webhook-manager (TTL: config.WebhookManagerLockTim
 
   QUERY platformStore WHERE $.platform == Twitch
   FOREACH link in results
-    // Check EventSub subscription status via Twitch API
-    // Create/renew if expired or missing
+    TRY
+      // Check EventSub subscription status via Twitch API
+      //   If subscription exists and is active -> no-op
+      //   If subscription missing or expired -> create new subscription
+      //   If subscription in "webhook_callback_verification_pending" -> log, await next cycle
+    CATCH rate limit (HTTP 429)
+      // Log warning with Retry-After header value, BREAK Twitch loop
+      // Remaining links retry next cycle (periodic execution is built-in retry)
+    CATCH API error (5xx, timeout, network failure)
+      // Log warning per-link, CONTINUE to next link
+      // Transient failures are self-healing: next cycle retries
 
   QUERY platformStore WHERE $.platform == YouTube
   FOREACH link in results
-    // Check push subscription via YouTube API
-    // Re-subscribe if expired or missing
+    TRY
+      // Check push subscription via YouTube API
+      // Re-subscribe if expired or missing
+    CATCH rate limit (HTTP 429)
+      // Log warning, BREAK YouTube loop (respect rate limit)
+    CATCH API error (5xx, timeout, network failure)
+      // Log warning per-link, CONTINUE to next link
 ```
+
+**Error handling rationale**: Per-link try-catch ensures one failed platform call doesn't block remaining links. Rate limit responses (HTTP 429) halt the current platform's loop entirely to respect the platform's backpressure — remaining links retry next cycle. The periodic execution model (default 3600s) provides built-in retry for all transient failures. The singleton lock TTL (`WebhookManagerLockTimeoutSeconds`, default 300s) is configured shorter than the renewal interval to prevent subscription expiration during instance crashes — a crashed instance's lock expires, and another instance picks up webhook management within the lock TTL.
 
 ### SentimentBatchPublisher
 **Interval**: `config.SentimentPulseIntervalSeconds` (15s)
@@ -615,10 +745,10 @@ FOREACH broadcastId in IBroadcastCoordinator.LocalBroadcastIds
     IF health.isDown AND config.OutputRestartOnFailure
       // Restart FFmpeg
       WRITE broadcastStore:out:{broadcastId}          <- updated health
-      PUBLISH broadcast.broadcast-output.updated { broadcastId, changedFields: ["health"] }
+      PUBLISH broadcast.output.updated { broadcastId, changedFields: ["health"] }
     IF health.videoSourceChanged
       WRITE broadcastStore:out:{broadcastId}          <- updated currentVideoSource
-      PUBLISH broadcast.broadcast-output.updated { broadcastId, changedFields: ["videoSource"] }
+      PUBLISH broadcast.output.updated { broadcastId, changedFields: ["videoSource"] }
       PUSH account(initiatorAccountId) BroadcastOutputSourceChangedClientEvent { broadcastId, newSource }
 
 // Detect stale broadcasts from crashed instances
@@ -626,7 +756,7 @@ QUERY broadcastStore WHERE $.state == Active AND $.owningInstanceId != thisInsta
 FOREACH staleCandidate in results
   // If owning instance appears crashed (mesh health check)
   WRITE broadcastStore:out:{broadcastId}              <- state: Failed
-  PUBLISH broadcast.broadcast-output.updated { broadcastId, changedFields: ["state"] }
+  PUBLISH broadcast.output.updated { broadcastId, changedFields: ["state"] }
 ```
 
 ### AutoBroadcastStarter
@@ -643,5 +773,42 @@ READ cameraStore:cam:{config.AutoBroadcastCameraId}
 
 // Inline OutputStart logic (validate RTMP, start FFmpeg, write to Redis)
 WRITE broadcastStore:out:{broadcastId}                <- BroadcastModel
-PUBLISH broadcast.broadcast-output.created { broadcastId, sourceType: Camera }
+PUBLISH broadcast.output.created { broadcastId, sourceType: Camera }
 ```
+
+---
+
+## Non-Standard Implementation Patterns
+
+### Plugin Lifecycle
+
+#### OnStartAsync
+
+```
+// TokenEncryptionKey validation (required when platform linking is enabled)
+IF config.TwitchClientId is NOT null OR config.YouTubeClientId is NOT null
+  IF config.TokenEncryptionKey is null OR config.TokenEncryptionKey.Length < 32
+    THROW InvalidOperationException "BROADCAST_TOKEN_ENCRYPTION_KEY must be >= 32 chars when platform linking is enabled"
+```
+
+#### OnRunningAsync (IBroadcastCoordinator startup reconciliation)
+
+```
+// Read all active broadcasts from Redis (authoritative state)
+QUERY broadcastStore WHERE $.state == Active
+FOREACH broadcast in results
+  IF broadcast.owningInstanceId == thisInstanceId
+    // This instance crashed and restarted -- attempt to rebuild FFmpeg process
+    CALL _broadcastCoordinator.RebuildOrRestartAsync(broadcast)
+    IF failed
+      WRITE broadcastStore:out:{broadcastId}          <- state: Failed
+      PUBLISH broadcast.output.updated { broadcastId, changedFields: ["state"] }
+  ELSE
+    // Owned by different instance -- skip
+    // BroadcastHealthMonitor detects stale records from crashed instances
+    SKIP
+```
+
+### x-controller-only Webhook Endpoints
+
+The three webhook endpoints (`WebhookTwitch`, `WebhookYouTube`, `WebhookCustom`) are declared `x-controller-only: true` in the schema. They require raw `HttpContext` access for platform-specific signature validation (Twitch HMAC-SHA256, YouTube verification token, custom HMAC) before model binding. The `IPlatformWebhookHandler` service performs validation at the controller level; the service body receives pre-validated payloads. These endpoints carry `x-permissions: []` (not exposed to WebSocket clients) and are internet-facing via NGINX — a justified T15 exception for platform callbacks.

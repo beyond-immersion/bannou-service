@@ -25,7 +25,7 @@ public sealed class EmoteEmitter : BaseIntentEmitter
     public override string ActionName => "emote";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -41,18 +41,21 @@ public sealed class EmoteEmitter : BaseIntentEmitter
             if (context.Archetype?.HasChannel("stance") == true || context.Archetype?.HasChannel("alert") == true)
             {
                 var fallbackChannel = context.Archetype?.HasChannel("stance") == true ? "stance" : "alert";
-                return ValueTask.FromResult(SingleEmission(
+                await Task.CompletedTask;
+                return SingleEmission(
                     fallbackChannel,
                     $"emote_{emotion}",
-                    Math.Clamp(urgency, 0f, 1f)));
+                    Math.Clamp(urgency, 0f, 1f));
             }
 
-            return ValueTask.FromResult(NoEmission());
+            await Task.CompletedTask;
+            return NoEmission();
         }
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             "expression",
             emotion,
-            Math.Clamp(urgency, 0f, 1f)));
+            Math.Clamp(urgency, 0f, 1f));
     }
 }

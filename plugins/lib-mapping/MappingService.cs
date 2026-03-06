@@ -1837,7 +1837,8 @@ public partial class MappingService : IMappingService
         {
             var uploadRequest = new UploadRequest
             {
-                Owner = "mapping",
+                OwnerType = AssetOwnerType.Service,
+                OwnerId = "mapping",
                 Filename = filename,
                 Size = data.Length,
                 ContentType = MapDataContentType,

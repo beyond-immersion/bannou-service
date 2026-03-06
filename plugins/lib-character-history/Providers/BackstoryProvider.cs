@@ -1,7 +1,7 @@
 // =============================================================================
 // Backstory Variable Provider
 // Provides backstory data for ABML expressions via ${backstory.*} paths.
-// Owned by lib-character-history per service hierarchy (L3).
+// Owned by lib-character-history per service hierarchy (L4).
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
@@ -118,7 +118,7 @@ public sealed class BackstoryProvider : IVariableProvider
             "strength" => element.Strength,
             "type" or "elementtype" => element.ElementType.ToString().ToLowerInvariant(),
             "relatedentityid" => element.RelatedEntityId?.ToString(),
-            "relatedentitytype" => element.RelatedEntityType,
+            "relatedentitytype" => element.RelatedEntityType?.ToString().ToLowerInvariant(),
             _ => null
         };
     }

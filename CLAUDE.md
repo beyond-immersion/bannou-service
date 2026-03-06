@@ -39,7 +39,37 @@ This is NOT a reference to claude-code's issues or any other repository.
 3. **A "false positive" means the tenet genuinely does not apply to the situation** (e.g., the code is in a category the tenet explicitly exempts). It does NOT mean "other code also does this" or "this seems like it should be okay."
 4. **Do not soften findings.** Do not downgrade violations to "quality improvements" or "informational" or "medium-priority." If the tenet says X and the code does not-X, it is a violation at the severity the tenet defines.
 
-**Why this rule exists:** Claude read T16 ("dot separates entity from action only"), searched the codebase for three-part event topics, found violations in actor/asset/puppetmaster, and concluded "this is clearly the pattern" — dismissing the finding as a false positive. This is using existing tech debt as evidence that a clear rule doesn't apply. The tenets define what the code MUST do, not what it currently does.
+### ⛔ EVALUATING AUDIT FINDINGS IS NOT A JUDGMENT CALL ⛔
+
+**When a code review agent reports a tenet violation, you do NOT get to decide whether it's "actually a problem." You evaluate it against the tenet text ONLY. If the tenet says X and the code does not-X, it goes on the task list. Period.**
+
+**The forbidden evaluation pattern**: An agent reports a finding. You grep the codebase to see if "other services do it too." They do. You mark it "false positive — established pattern." **This is the single most destructive thing you can do during a hardening pass.** You just validated the violation, gave it a clean bill of health, and ensured it will never be fixed — not in this plugin, not in the ones you checked, not anywhere. You turned an audit into a rubber stamp.
+
+**What happened**: During character-encounter hardening, a code review agent correctly reported that write endpoints had `x-permissions: []` (T13 violation — anonymous access to mutation endpoints). Instead of putting it on the task list, Claude grepped `character-personality-api.yaml` and `character-history-api.yaml`, found the same `x-permissions: []`, and concluded "this is the established pattern for internal L4 services" — dismissing the finding as false positive. The result: three plugins with the same security gap, now officially blessed as "correct." The hardening pass that was supposed to catch problems instead certified them.
+
+**The evaluation rule is mechanical, not judgmental**:
+1. Read the tenet text
+2. Does the code comply with what the tenet says? YES → not a finding. NO → it's a finding.
+3. There is no step 3. You do not get to decide the finding is "acceptable" or "intentional" or "by design" or "a concern to document rather than fix." Those are decisions for the human.
+
+**What IS a false positive** (exhaustive list):
+- The tenet explicitly defines an exception that covers this case (cite the exception text)
+- The finding is factually wrong (the code actually does comply — the agent misread it)
+- The tenet applies to a different category of code than what was found (e.g., T30 spans on synchronous methods — T30 explicitly says "Only async methods need spans")
+
+**What is NOT a false positive**:
+- "Other services do it this way" — that's more violations, not fewer
+- "It's intentional" — you don't know that; present it to the user
+- "The design justifies it" — the tenets ARE the design; code that doesn't match is wrong
+- "It's a concern, not a violation" — if the tenet mandates it, it's a violation
+- "The blast radius is small" — irrelevant to whether it's a violation
+- "It would be inconsistent to fix only this service" — then note ALL affected services
+
+**Why this is the most important rule**: Every other rule in this document protects against adding bad code. This rule protects against **certifying existing bad code as correct**. A missed violation is bad; a missed violation stamped "false positive" is catastrophic, because it immunizes the violation against future audits. When the next hardening pass finds the same issue, it will see your "false positive" evaluation and skip it again. The violation becomes permanent.
+
+**Incident log** (add new incidents here):
+1. T16 three-part event topics: Grepped actor/asset/puppetmaster, found same pattern, dismissed as "established." Result: topic naming violations in 3+ services blessed as correct.
+2. T13 x-permissions on L4 write endpoints: Grepped character-personality and character-history, found same `[]`, dismissed as "established pattern for internal L4 services." Result: security gap in 3+ services blessed as correct.
 
 ---
 
@@ -178,11 +208,32 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ---
 
+## ⛔ BACKGROUND AGENT POLLING IS FORBIDDEN ⛔
+
+**When you launch background agents (`run_in_background: true`), you are FINISHED until they complete. Period.**
+
+**Rules:**
+1. After launching background agents, tell the user what you launched and END YOUR RESPONSE
+2. Do NOT attempt to `resume` agents — you will be notified automatically when they complete
+3. Do NOT read agent output files to "check progress"
+4. Do NOT call `tail` on agent output files
+5. Do NOT attempt any action related to the agents until you receive a `<task-notification>` with `status: completed`
+6. When you receive completion notifications, THEN resume agents to get their results
+7. If the user messages you while agents are running, respond to the user — do NOT use it as an excuse to poll agents
+
+**What "wait" means**: Literally do nothing. Say "waiting for agents to complete" and stop generating output. The next thing you do related to agents is AFTER a completion notification arrives.
+
+**Why this rule exists**: Claude once burned 10+ rounds of context repeatedly attempting to resume still-running agents, ignoring both system errors AND explicit user instructions to stop. Every failed resume attempt wastes context and produces nothing. The automatic notification system works — trust it.
+
+---
+
 ## Core Architecture Reference
 
 @docs/BANNOU-DESIGN.md
 
 **Key Points**: All generated files are in `plugins/lib-{service}/Generated/`. Manual files are: `{Service}Service.cs` (business logic), `{Service}ServiceModels.cs` (internal data models), and `{Service}ServiceEvents.cs` (event handlers). Request/response models are generated into `bannou-service/Generated/Models/` — use `make print-models PLUGIN="service"` to inspect them instead of reading generated files directly.
+
+**Implementation Maps**: Every service has an implementation map at `docs/maps/{SERVICE}.md` containing the detailed method-by-method pseudocode, state store key patterns, dependency tables, event inventories, DI service lists, and complete endpoint indexes with routes, roles, mutations, and published events. Deep dives (`docs/plugins/{SERVICE}.md`) provide high-level context (overview, design considerations, quirks, work tracking); implementation maps provide the detailed "what does each method do" specification. **When investigating a specific plugin's behavior, always read its implementation map** — the deep dive alone does not contain endpoint details, dependency tables, or method logic.
 
 @docs/reference/SERVICE-HIERARCHY.md
 
@@ -244,7 +295,8 @@ These documents provide the high-level architectural north-star context for the 
 
 | Agent Mission | Must Read Before Starting |
 |---------------|--------------------------|
-| **Investigation** (understanding services, tracing dependencies, exploring architecture) | The layer-specific service details files: `docs/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FEATURES-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md` |
+| **Investigation** (understanding services, tracing dependencies, exploring architecture) | The layer-specific service details files: `docs/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FEATURES-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md`. For specific plugin investigation, also read `docs/maps/{SERVICE}.md` (implementation map) for endpoint details, dependencies, events, and method pseudocode. |
+| **Plugin work** (auditing, mapping, testing, implementing, or maintaining a specific plugin) | The plugin's deep dive `docs/plugins/{SERVICE}.md` AND its implementation map `docs/maps/{SERVICE}.md`. The deep dive provides context, quirks, and design rationale; the map provides method-level detail, state key patterns, dependency tables, and event inventories. **Always read both.** |
 | **Code auditing** (reviewing implementations, checking tenet compliance, finding violations) | ALL tenet files in `docs/reference/tenets/`: `FOUNDATION.md`, `IMPLEMENTATION-BEHAVIOR.md`, `IMPLEMENTATION-DATA.md`, `QUALITY.md`, `TESTING-PATTERNS.md` |
 | **Schema auditing** (reviewing OpenAPI schemas, checking schema rules, validating schema design) | `docs/reference/SCHEMA-RULES.md` |
 | **High-level vision** (evaluating how services serve gameplay, cross-cutting feature planning, content flywheel analysis) | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode) |
@@ -254,10 +306,12 @@ These documents provide the high-level architectural north-star context for the 
 2. Agents may need multiple orientations (e.g., an agent auditing code for tenet compliance while investigating service dependencies would read both the tenet files AND the service details files)
 3. The agent's prompt should specify which documents to read -- do not rely on the agent discovering them on its own
 4. For investigation agents, also include `docs/reference/SERVICE-HIERARCHY.md` when the task involves dependency analysis or layer validation
+5. For ANY agent working on a specific plugin (audit, map, test, implement, maintain), ALWAYS include both `docs/plugins/{SERVICE}.md` (deep dive) and `docs/maps/{SERVICE}.md` (implementation map) in the agent's reading list
 
 **Other Planning References**:
 
 - **Plan Example**: `docs/reference/PLAN-EXAMPLE.md` - A preserved real implementation plan (Seed service) showing the expected structure, detail level, and patterns for planning a new Bannou service. Read this when creating implementation plans for new services or major features to match the established planning format.
+- **Implementation Maps**: `docs/maps/{SERVICE}.md` - Method-by-method specifications for each plugin. Contains pseudocode, state store key patterns, dependency tables, event inventories, DI service lists, and full endpoint indexes. Every implemented service has one. **Do not confuse with deep dives** (`docs/plugins/{SERVICE}.md`) — deep dives are high-level context; maps are detailed specifications.
 
 **Auto-Generated References** (regenerate with `make generate-docs`):
 
@@ -371,20 +425,6 @@ These documents provide the high-level architectural north-star context for the 
 **Available Makefile Commands**:
 Reference the Makefile in the repository root for all available commands and established patterns.
 
-### Prefer .env Files Over Other Configuration
-**MANDATORY**: In our containerization workflow, always prefer .env files over other configuration methods:
-- **Use**: .env files for environment configuration
-- **Avoid**: appsettings.json, Config.json, hardcoded configuration
-- **Principle**: Container-first configuration management
-
-### Schema-First Development & Architecture (MANDATORY)
-**Follow these loaded reference documents TO THE LETTER:**
-- **T1 (Schema-First)** in `TENETS.md` — generated file structure, cardinal rules, generation workflow
-- **`SCHEMA-RULES.md`** — enum consolidation, `$ref` resolution, `servers` URL, validation keywords, NRT compliance (read before touching ANY schema)
-- **`BANNOU-DESIGN.md`** — architecture patterns (tuple returns, infrastructure libs, generated clients, controller=wrapper)
-
-These documents are loaded as `@references` above and are authoritative. Do not deviate from them.
-
 ### Shared Class Architecture (MANDATORY)
 **For classes shared across multiple services, follow the established pattern:**
 
@@ -459,9 +499,6 @@ make inspect-list PKG="RabbitMQ.Client"
 - Changed multiple schema files for `foo` → run `cd scripts && ./generate-service.sh foo`
 - Changed `schemas/common-*.yaml` or multiple services → run `scripts/generate-all-services.sh`
 
-### Code Quality Requirements
-**Follow the QUALITY TENETS in `docs/reference/tenets/QUALITY.md` to the letter** — covers XML documentation (T19), warning suppression (T22), naming conventions (T16), logging standards (T10), and test integrity (T12).
-
 ### Testing Strategy
 **Claude's testing responsibilities**: WRITE all tests, but only RUN unit tests.
 
@@ -480,7 +517,6 @@ make inspect-list PKG="RabbitMQ.Client"
 **Local Development with .env Files**:
 - **Primary Configuration**: Use `.env` file in repository root for all environment variables
 - **Service Prefix**: Use `BANNOU_` prefix for service-specific variables (e.g., `BANNOU_HTTP_Web_Host_Port=5012`)
-- **Non-Prefixed Support**: Maintain backwards compatibility with non-prefixed variables
 - **Configuration Loading**: System automatically loads .env files from current or parent directories
 
 **Environment Variable Patterns**:
@@ -504,12 +540,6 @@ BANNOU_JWT_AUDIENCE=bannou-api-dev
 - **DotNetEnv Integration**: Automatic .env file loading via DotNetEnv package (3.1.1)
 - **Service-Specific Binding**: `[ServiceConfiguration(envPrefix: "BANNOU_")]` attribute on configuration classes
 - **Hierarchy**: .env files checked in current directory, then parent directory
-- **Fallback**: Non-prefixed variables maintained for backwards compatibility
-
-Configuration classes are generated in `Generated/` from schema - never edit manually.
-
-### **MANDATORY**: Complex Service Implementation
-**When implementing complex service patterns or debugging service issues**, you MUST reference the detailed development procedures documentation for complete infrastructure lib patterns, service client examples, event publishing patterns, and architectural implementation details.
 
 ### Infrastructure Libs & Service Discovery
 **Follow `BANNOU-DESIGN.md` (loaded as `@reference` above) for all infrastructure patterns** — lib-state (StateStoreDefinitions, IStateStoreFactory), lib-messaging (IMessageBus), lib-mesh (generated clients, YARP routing), assembly loading, service discovery, and the omnipotent routing model. Those are the authoritative examples.
@@ -524,9 +554,6 @@ Configuration classes are generated in `Generated/` from schema - never edit man
 **🔧 In Development**: ABML YAML Parser, Character Agent Services, Cross-service event integration
 
 ## Troubleshooting Reference
-
-### **MANDATORY**: Complex Troubleshooting  
-**When encountering complex issues beyond these basics**, you MUST reference the detailed development procedures documentation in the knowledge base.
 
 ### Common Issues
 - **Generated file errors**: Fix underlying schema, never edit generated files directly

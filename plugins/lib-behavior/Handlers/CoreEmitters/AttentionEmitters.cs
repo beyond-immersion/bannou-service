@@ -24,7 +24,7 @@ public sealed class LookAtEmitter : BaseIntentEmitter
     public override string ActionName => "look_at";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -36,12 +36,13 @@ public sealed class LookAtEmitter : BaseIntentEmitter
         // Attention channel is standard across most archetypes
         var channel = context.Archetype?.HasChannel("attention") == true ? "attention" : "alert";
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             "look_at",
             Math.Clamp(urgency, 0f, 1f),
             target,
-            position));
+            position);
     }
 }
 
@@ -60,7 +61,7 @@ public sealed class TrackEmitter : BaseIntentEmitter
     public override string ActionName => "track";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -70,10 +71,11 @@ public sealed class TrackEmitter : BaseIntentEmitter
 
         var channel = context.Archetype?.HasChannel("attention") == true ? "attention" : "alert";
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             "track",
             Math.Clamp(urgency, 0f, 1f),
-            target));
+            target);
     }
 }

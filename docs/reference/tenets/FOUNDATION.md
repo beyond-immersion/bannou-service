@@ -391,6 +391,7 @@ Bannou uses POST-only APIs because each endpoint maps to a fixed 16-byte GUID fo
 | Website | All `/website/*` | Public website, SEO, caching |
 | Auth | `/auth/oauth/{provider}/init`, `/auth/oauth/{provider}/callback` | OAuth redirect flow |
 | Connect | `/connect` (GET) | WebSocket upgrade handshake |
+| Documentation | `/documentation/view/{slug}`, `/documentation/raw/{slug}` (GET) | Browser-rendered markdown-to-HTML for knowledge base |
 
 ---
 

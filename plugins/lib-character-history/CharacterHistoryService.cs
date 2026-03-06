@@ -128,7 +128,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// </summary>
     public async Task<(StatusCodes, HistoricalParticipation?)> RecordParticipationAsync(RecordParticipationRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Recording participation for character {CharacterId} in event {EventId}",
+        _logger.LogDebug("Recording participation for character {CharacterId} in event {EventId}",
             body.CharacterId, body.EventId);
 
         // Check for existing participation - schema documents 409 Conflict for duplicates
@@ -184,7 +184,10 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             CharacterId = body.CharacterId,
             HistoricalEventId = body.EventId,
             ParticipationId = participationId,
-            Role = body.Role
+            Role = body.Role,
+            HistoricalEventName = body.EventName,
+            EventCategory = body.EventCategory,
+            Significance = body.Significance
         }, cancellationToken: cancellationToken);
 
         // Register character reference with lib-resource for cleanup coordination
@@ -202,7 +205,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// </summary>
     public async Task<(StatusCodes, ParticipationListResponse?)> GetParticipationAsync(GetParticipationRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting participation for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Getting participation for character {CharacterId}", body.CharacterId);
 
         {
             var conditions = BuildParticipationQueryConditions(
@@ -242,7 +245,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// </summary>
     public async Task<(StatusCodes, ParticipationListResponse?)> GetEventParticipantsAsync(GetEventParticipantsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting participants for event {EventId}", body.EventId);
+        _logger.LogDebug("Getting participants for event {EventId}", body.EventId);
 
         {
             var conditions = BuildParticipationQueryConditions(
@@ -281,7 +284,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// </summary>
     public async Task<StatusCodes> DeleteParticipationAsync(DeleteParticipationRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting participation {ParticipationId}", body.ParticipationId);
+        _logger.LogDebug("Deleting participation {ParticipationId}", body.ParticipationId);
 
         // First get the record to know the keys for index cleanup
         var data = await _participationHelper.GetRecordAsync(body.ParticipationId.ToString(), cancellationToken);
@@ -331,7 +334,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// </summary>
     public async Task<(StatusCodes, BackstoryResponse?)> GetBackstoryAsync(GetBackstoryRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting backstory for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Getting backstory for character {CharacterId}", body.CharacterId);
 
         {
             var data = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
@@ -356,7 +359,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             var response = new BackstoryResponse
             {
-                CharacterId = body.CharacterId,
                 Elements = elements,
                 CreatedAt = TimestampHelper.FromUnixSeconds(data.CreatedAtUnix),
                 UpdatedAt = data.UpdatedAtUnix != data.CreatedAtUnix
@@ -373,7 +375,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// </summary>
     public async Task<(StatusCodes, BackstoryResponse?)> SetBackstoryAsync(SetBackstoryRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Setting backstory for character {CharacterId}, replaceExisting={ReplaceExisting}",
+        _logger.LogDebug("Setting backstory for character {CharacterId}, replaceExisting={ReplaceExisting}",
             body.CharacterId, body.ReplaceExisting);
 
         var elementDataList = body.Elements.Select(MapToBackstoryElementData).ToList();
@@ -441,7 +443,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         var response = new BackstoryResponse
         {
-            CharacterId = body.CharacterId,
             Elements = result.Backstory.Elements.Select(MapToBackstoryElement).ToList(),
             CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
             UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
@@ -485,7 +486,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// </summary>
     public async Task<(StatusCodes, BackstoryResponse?)> AddBackstoryElementAsync(AddBackstoryElementRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Adding backstory element for character {CharacterId}, type {ElementType}",
+        _logger.LogDebug("Adding backstory element for character {CharacterId}, type {ElementType}",
             body.CharacterId, body.Element.ElementType);
 
         var elementData = MapToBackstoryElementData(body.Element);
@@ -523,7 +524,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         var response = new BackstoryResponse
         {
-            CharacterId = body.CharacterId,
             Elements = result.Backstory.Elements.Select(MapToBackstoryElement).ToList(),
             CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
             UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
@@ -567,7 +567,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// </summary>
     public async Task<StatusCodes> DeleteBackstoryAsync(DeleteBackstoryRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting backstory for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Deleting backstory for character {CharacterId}", body.CharacterId);
 
         {
             // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
@@ -610,7 +610,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// </summary>
     public async Task<(StatusCodes, DeleteAllHistoryResponse?)> DeleteAllHistoryAsync(DeleteAllHistoryRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting all history for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Deleting all history for character {CharacterId}", body.CharacterId);
 
         {
             // Get all participations first to unregister their character references
@@ -673,7 +673,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             return (StatusCodes.OK, new DeleteAllHistoryResponse
             {
-                CharacterId = body.CharacterId,
                 ParticipationsDeleted = participationsDeleted,
                 BackstoryDeleted = backstoryDeleted
             });
@@ -685,7 +684,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// </summary>
     public async Task<(StatusCodes, HistorySummaryResponse?)> SummarizeHistoryAsync(SummarizeHistoryRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Summarizing history for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Summarizing history for character {CharacterId}", body.CharacterId);
 
         {
             var keyBackstoryPoints = new List<string>();
@@ -735,7 +734,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             var response = new HistorySummaryResponse
             {
-                CharacterId = body.CharacterId,
                 KeyBackstoryPoints = keyBackstoryPoints,
                 MajorLifeEvents = majorLifeEvents
             };
@@ -942,7 +940,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             {
                 backstoryResponse = new BackstoryResponse
                 {
-                    CharacterId = body.CharacterId,
                     Elements = backstoryData.Elements.Select(MapToBackstoryElement).ToList(),
                     CreatedAt = TimestampHelper.FromUnixSeconds(backstoryData.CreatedAtUnix),
                     UpdatedAt = backstoryData.UpdatedAtUnix != backstoryData.CreatedAtUnix
@@ -956,8 +953,8 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 new SummarizeHistoryRequest
                 {
                     CharacterId = body.CharacterId,
-                    MaxBackstoryPoints = 10,
-                    MaxLifeEvents = 10
+                    MaxBackstoryPoints = _configuration.MaxCompressBackstoryPoints,
+                    MaxLifeEvents = _configuration.MaxCompressLifeEvents
                 },
                 cancellationToken);
 
@@ -993,7 +990,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         RestoreFromArchiveRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Restoring history data from archive for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Restoring history data from archive for character {CharacterId}", body.CharacterId);
 
         var participationsRestored = 0;
         var backstoryRestored = false;
@@ -1010,18 +1007,11 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to decompress archive data for character {CharacterId}", body.CharacterId);
-            return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
-            {
-                CharacterId = body.CharacterId,
-                ParticipationsRestored = 0,
-                BackstoryRestored = false,
-                Success = false,
-                ErrorMessage = $"Invalid archive data: {ex.Message}"
-            });
+            return (StatusCodes.BadRequest, null);
         }
 
         // Restore participations if present in archive
-        if (archiveData.HasParticipations && archiveData.Participations.Count > 0)
+        if (archiveData.HasParticipations && archiveData.Participations is { Count: > 0 })
         {
             foreach (var participation in archiveData.Participations)
             {
@@ -1097,10 +1087,8 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         return (StatusCodes.OK, new RestoreFromArchiveResponse
         {
-            CharacterId = body.CharacterId,
             ParticipationsRestored = participationsRestored,
-            BackstoryRestored = backstoryRestored,
-            Success = true
+            BackstoryRestored = backstoryRestored
         });
     }
 

@@ -32,6 +32,12 @@ Species has no Category A (entity reference) fields -- species are referenced by
 | lib-character | Uses `ISpeciesClient` for species validation during character creation |
 | lib-realm | Uses `ISpeciesClient` for species-realm migration during realm merge (list by realm, add/remove from realm) |
 | lib-transit | Uses `ISpeciesClient.GetSpeciesAsync` for species lookup during journey speed calculations |
+| lib-ethology | Uses `ISpeciesClient` for archetype validation; subscribes to `species.deprecated`/`species.deleted` events for cleanup. Provides the `${nature.*}` variable namespace to Actor (L2) via `NatureProviderFactory`, exposing species-level behavioral baselines built on species code lookups |
+| lib-character-lifecycle | Uses `ISpeciesClient` for lifecycle template resolution — species determines longevity ranges, stage boundaries, fertility windows, and heritable trait definitions (not yet implemented) |
+
+### Architectural Role in the NPC Intelligence Stack
+
+Species provides the biological identity that higher-layer services build on. Ethology (L4) uses species codes to define behavioral archetypes — structured behavioral baselines exposed as the `${nature.*}` variable namespace to the Actor behavior system. Character-Lifecycle (L4) uses species data to determine lifecycle templates (aging stages, fertility, longevity, heritable traits). Species itself is deliberately game-agnostic: `traitModifiers` and `metadata` are untyped `object?` fields that no Bannou plugin reads by convention (per T29). Higher-layer services that need structured species data own it in their own state stores — Ethology owns behavioral archetypes, Character-Lifecycle owns lifecycle templates.
 
 ---
 
@@ -121,7 +127,7 @@ State Store Layout
 
 ## Stubs & Unimplemented Features
 
-1. **No event consumption**: The service registers `IEventConsumer` but has no event handlers. Future: could listen for realm deletion events to cascade species removal.
+1. **No realm deletion cleanup via lib-resource**: When a realm is deleted, species that reference that realm retain the stale GUID in their `RealmIds` list. The intended workflow is deprecate → merge → delete, where the merge step migrates species to the target realm. Species (along with Location and Character) should register **RESTRICT** references with lib-resource when associating with a realm, ensuring that attempting to delete a realm with remaining species is blocked. This replaces the earlier event-subscription approach.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/369 -->
 
 ---
@@ -130,10 +136,6 @@ State Store Layout
 
 1. **Species inheritance**: Parent species with trait modifier inheritance for subspecies.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/370 -->
-2. **Lifecycle stages**: Age-based lifecycle stages (child, adolescent, adult, elder) with trait modifiers per stage.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/371 -->
-3. **Population tracking**: Track active character counts per species per realm for game balance analytics.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/372 -->
 
 ---
 

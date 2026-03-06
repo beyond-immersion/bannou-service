@@ -17,6 +17,7 @@ public class BehaviorBundleManagerTests
 {
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IAssetClient> _mockAssetClient;
+    private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<ILogger<BehaviorBundleManager>> _mockLogger;
     private readonly Mock<IStateStore<BehaviorMetadata>> _mockMetadataStore;
     private readonly Mock<IStateStore<BundleMembership>> _mockMembershipStore;
@@ -28,6 +29,10 @@ public class BehaviorBundleManagerTests
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockAssetClient = new Mock<IAssetClient>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockServiceProvider
+            .Setup(sp => sp.GetService(typeof(IAssetClient)))
+            .Returns(_mockAssetClient.Object);
         _mockLogger = new Mock<ILogger<BehaviorBundleManager>>();
         _mockMetadataStore = new Mock<IStateStore<BehaviorMetadata>>();
         _mockMembershipStore = new Mock<IStateStore<BundleMembership>>();
@@ -52,7 +57,7 @@ public class BehaviorBundleManagerTests
     private BehaviorBundleManager CreateManager() =>
         new BehaviorBundleManager(
             _mockStateStoreFactory.Object,
-            _mockAssetClient.Object,
+            _mockServiceProvider.Object,
             _configuration,
             _mockLogger.Object,
             _mockTelemetryProvider.Object);

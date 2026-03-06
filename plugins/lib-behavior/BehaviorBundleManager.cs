@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -21,7 +22,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     /// <summary>State store for cached GOAP metadata records keyed by behavior ID.</summary>
     private readonly IStateStore<CachedGoapMetadata> _goapMetadataStore;
 
-    private readonly IAssetClient _assetClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly BehaviorServiceConfiguration _configuration;
     private readonly ILogger<BehaviorBundleManager> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -32,13 +33,13 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     /// Initializes a new instance of the <see cref="BehaviorBundleManager"/> class.
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for persistence.</param>
-    /// <param name="assetClient">Asset client for bundle operations.</param>
+    /// <param name="serviceProvider">Service provider for resolving optional L3 dependencies.</param>
     /// <param name="configuration">Behavior service configuration.</param>
     /// <param name="logger">Logger for structured logging.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public BehaviorBundleManager(
         IStateStoreFactory stateStoreFactory,
-        IAssetClient assetClient,
+        IServiceProvider serviceProvider,
         BehaviorServiceConfiguration configuration,
         ILogger<BehaviorBundleManager> logger,
         ITelemetryProvider telemetryProvider)
@@ -46,7 +47,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         _metadataStore = stateStoreFactory.GetStore<BehaviorMetadata>(StateStoreDefinitions.Behavior);
         _membershipStore = stateStoreFactory.GetStore<BundleMembership>(StateStoreDefinitions.Behavior);
         _goapMetadataStore = stateStoreFactory.GetStore<CachedGoapMetadata>(StateStoreDefinitions.Behavior);
-        _assetClient = assetClient;
+        _serviceProvider = serviceProvider;
         _configuration = configuration;
         _logger = logger;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
@@ -186,9 +187,17 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         // Create asset bundle from all behavior assets
         var assetIds = membership.BehaviorAssetIds.Values.ToList();
 
+        // L3 soft dependency — Asset service may not be enabled
+        var assetClient = _serviceProvider.GetService<IAssetClient>();
+        if (assetClient == null)
+        {
+            _logger.LogDebug("Asset service not enabled, cannot create asset bundle for {BundleId}", bundleId);
+            return null;
+        }
+
         try
         {
-            var response = await _assetClient.CreateBundleAsync(
+            var response = await assetClient.CreateBundleAsync(
                 new CreateBundleRequest
                 {
                     BundleId = $"behavior-bundle-{bundleId}",

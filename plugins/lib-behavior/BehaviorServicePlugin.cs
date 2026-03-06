@@ -44,9 +44,6 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
         // Register behavior model interpreter factory for runtime execution
         services.AddSingleton<IBehaviorModelInterpreterFactory, BehaviorModelInterpreterFactory>();
 
-        // NOTE: IAssetClient is registered centrally by PluginLoader as Singleton.
-        // Plugins must NOT re-register clients - they override the central Singleton registration.
-
         // Register bundle manager for efficient behavior grouping and storage
         services.AddScoped<IBehaviorBundleManager, BehaviorBundleManager>();
 

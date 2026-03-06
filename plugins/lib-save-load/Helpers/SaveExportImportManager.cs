@@ -182,7 +182,8 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             // Upload archive to asset service
             var uploadRequest = new UploadRequest
             {
-                Owner = "save-load",
+                OwnerType = AssetOwnerType.Service,
+                OwnerId = "save-load",
                 Filename = $"export_{body.GameId}_{body.OwnerId}_{DateTimeOffset.UtcNow:yyyyMMddHHmmss}.zip",
                 ContentType = "application/zip",
                 Size = archiveData.Length,

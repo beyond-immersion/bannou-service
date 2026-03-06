@@ -670,10 +670,11 @@ public class SceneServiceTests
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             SceneId = Guid.NewGuid(),
-            CheckedOutBy = "user-123",
+            CheckedOutByType = SceneEditorType.Session,
+            CheckedOutById = "user-123",
             ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
         };
-        Assert.Equal("user-123", evt.CheckedOutBy);
+        Assert.Equal("user-123", evt.CheckedOutById);
         Assert.True(evt.ExpiresAt > DateTimeOffset.UtcNow);
     }
 
@@ -685,7 +686,8 @@ public class SceneServiceTests
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             SceneId = Guid.NewGuid(),
-            CommittedBy = "user-123",
+            CommittedByType = SceneEditorType.Session,
+            CommittedById = "user-123",
             Version = "1.0.2"
         };
         Assert.Equal("1.0.2", evt.Version);

@@ -25,7 +25,7 @@ public sealed class WalkToEmitter : BaseIntentEmitter
     public override string ActionName => "walk_to";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -37,12 +37,13 @@ public sealed class WalkToEmitter : BaseIntentEmitter
         // Determine the channel based on archetype (default to movement)
         var channel = context.Archetype?.HasChannel("movement") == true ? "movement" : "locomotion";
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             "walk",
             Math.Clamp(urgency, 0f, 1f),
             targetEntity,
-            targetPos));
+            targetPos);
     }
 }
 
@@ -61,7 +62,7 @@ public sealed class RunToEmitter : BaseIntentEmitter
     public override string ActionName => "run_to";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -72,12 +73,13 @@ public sealed class RunToEmitter : BaseIntentEmitter
 
         var channel = context.Archetype?.HasChannel("movement") == true ? "movement" : "locomotion";
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             "run",
             Math.Clamp(urgency, 0f, 1f),
             targetEntity,
-            targetPos));
+            targetPos);
     }
 }
 
@@ -97,7 +99,7 @@ public sealed class StopEmitter : BaseIntentEmitter
     public override string ActionName => "stop";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -105,9 +107,10 @@ public sealed class StopEmitter : BaseIntentEmitter
         var urgency = GetOptionalFloat(parameters, "urgency", 0.8f);
         var channel = context.Archetype?.HasChannel("movement") == true ? "movement" : "locomotion";
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             "stop",
-            Math.Clamp(urgency, 0f, 1f)));
+            Math.Clamp(urgency, 0f, 1f));
     }
 }

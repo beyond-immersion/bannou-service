@@ -20,7 +20,8 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-mesh | Consumes `bannou.full-service-mappings` events for dynamic service routing |
-| lib-actor | Uses processing pool acquire/release for NPC brain worker containers |
+| lib-actor | **Planned**: Will use processing pool for auto-scaled NPC brain worker containers via `IActorPoolScaleListener` DI pattern (see [#318](https://github.com/beyond-immersion/bannou-service/issues/318)). Currently manages its own pool nodes independently. |
+| lib-procedural | Uses processing pool acquire/release for Houdini worker containers (hard dependency on `IOrchestratorClient`) |
 | All services | Receive routing updates published by orchestrator after topology changes |
 
 ---
@@ -264,14 +265,16 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
 - **Idle timeout enforcement**: Background cleanup for pool workers that have been available beyond `IdleTimeoutMinutes`.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
+- **Actor pool auto-scale integration**: Implement `IActorPoolScaleListener` (DI Listener interface defined in `bannou-service/Providers/`) so Orchestrator can react to Actor pool capacity exhaustion and underutilization events. This is the most north-star-critical gap — 100K+ concurrent NPCs depends on auto-scaling. Requires #550 (auto-scaling background service) as a prerequisite.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/318 -->
 
 - **Deploy validation**: Pre-flight checks before deployment (disk space, network reachability, image pull verification).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/551 -->
-- **Blue-green deployment**: Deploy new topology alongside old, switch routing atomically, then teardown old.
+- **Blue-green deployment**: Deploy new topology alongside old, switch routing atomically, then teardown old. Should be co-designed with canary deployments (#553) — both require changes to the routing model and share infrastructure for traffic splitting.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/552 -->
-- **Canary deployments**: Route percentage of traffic to new version, monitor health, then promote or rollback.
+- **Canary deployments**: Route percentage of traffic to new version, monitor health, then promote or rollback. Requires changes to `FullServiceMappingsEvent.Mappings` (currently 1:1 `serviceName → appId`) which affects lib-mesh (L0). Must be co-designed with blue-green (#552).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/553 -->
-- **Processing pool priority queue**: Currently FIFO; could use priority field from acquire requests.
+- **Processing pool priority queue**: Currently FIFO; could use priority field from acquire requests. Dependent on #252 (queue implementation) which is itself deferred pending auto-scaling (#550).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/554 -->
 
 - **Auto-detection of configuration changes per backend**: The `POST /orchestrator/config/notify-change` endpoint provides a manual trigger for `ConfigurationChangedEvent`, but auto-detecting config changes per backend (K8s ConfigMap watches, Portainer webhooks, Docker label-based detection) is a design question. Most deployments don't have live config update detection, and the manual endpoint covers all backends. The consumer side (plugins reacting to `changedKeys` prefixes to request restarts) is also unimplemented.

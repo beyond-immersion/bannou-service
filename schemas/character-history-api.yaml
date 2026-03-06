@@ -463,6 +463,8 @@ components:
           description: ID of the historical event
         eventName:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Name of the event (for display and summarization)
         eventCategory:
           $ref: '#/components/schemas/EventCategory'
@@ -536,7 +538,7 @@ components:
           nullable: true
           description: Optional related entity (location, organization, character)
         relatedEntityType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Type of the related entity (if any)
 
@@ -545,13 +547,9 @@ components:
       description: Complete backstory data for a character
       additionalProperties: false
       required:
-      - characterId
       - elements
+      - createdAt
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character this backstory belongs to
         elements:
           type: array
           items:
@@ -560,7 +558,6 @@ components:
         createdAt:
           type: string
           format: date-time
-          nullable: true
           description: When this backstory was first created
         updatedAt:
           type: string
@@ -816,6 +813,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         participations:
           type: array
@@ -843,14 +842,9 @@ components:
       description: Result of deleting all history data
       additionalProperties: false
       required:
-      - characterId
       - participationsDeleted
       - backstoryDeleted
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character whose history was deleted
         participationsDeleted:
           type: integer
           description: Number of participation records deleted
@@ -863,14 +857,9 @@ components:
       description: Generated text summaries for character compression
       additionalProperties: false
       required:
-      - characterId
       - keyBackstoryPoints
       - majorLifeEvents
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character summarized
         keyBackstoryPoints:
           type: array
           items:
@@ -926,9 +915,10 @@ components:
           description: Whether historical participations exist
         participations:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/HistoricalParticipation'
-          description: Historical event participations (empty if hasParticipations=false)
+          description: Historical event participations (null if hasParticipations=false)
         hasBackstory:
           type: boolean
           description: Whether backstory elements exist
@@ -955,6 +945,7 @@ components:
           description: ID of the character to restore data for
         data:
           type: string
+          minLength: 1
           description: Base64-encoded gzipped CharacterHistoryArchive JSON
 
     RestoreFromArchiveResponse:
@@ -962,25 +953,12 @@ components:
       description: Result of restoration from archive
       additionalProperties: false
       required:
-      - characterId
       - participationsRestored
       - backstoryRestored
-      - success
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character data was restored for
         participationsRestored:
           type: integer
           description: Number of participation records restored
         backstoryRestored:
           type: boolean
           description: Whether backstory was restored
-        success:
-          type: boolean
-          description: Whether restoration completed successfully
-        errorMessage:
-          type: string
-          nullable: true
-          description: Error details if restoration failed

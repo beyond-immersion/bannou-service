@@ -17,18 +17,34 @@ x-service-configuration:
     # Cache Configuration
     BackstoryCacheTtlSeconds:
       type: integer
+      minimum: 1
       description: TTL in seconds for backstory cache entries. Backstory data is nearly immutable, so longer TTLs are appropriate.
       default: 600
       env: CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS
     # Element Limits
     MaxBackstoryElements:
       type: integer
+      minimum: 1
       description: Maximum number of backstory elements allowed per character. Prevents unbounded growth from repeated AddBackstoryElement or SetBackstory calls. Returns BadRequest when limit would be exceeded.
       default: 100
       env: CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS
+    # Compression Limits
+    MaxCompressBackstoryPoints:
+      type: integer
+      minimum: 1
+      description: Maximum number of backstory points to include in compression archive summaries. Controls narrative fidelity vs archive size during character archival.
+      default: 10
+      env: CHARACTER_HISTORY_MAX_COMPRESS_BACKSTORY_POINTS
+    MaxCompressLifeEvents:
+      type: integer
+      minimum: 1
+      description: Maximum number of life events to include in compression archive summaries. Controls narrative fidelity vs archive size during character archival.
+      default: 10
+      env: CHARACTER_HISTORY_MAX_COMPRESS_LIFE_EVENTS
     # Concurrency Control
     IndexLockTimeoutSeconds:
       type: integer
+      minimum: 1
       description: Timeout in seconds for distributed locks during index and backstory write operations. Matches established patterns in Currency, Inventory, and Contract services.
       default: 15
       env: CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS

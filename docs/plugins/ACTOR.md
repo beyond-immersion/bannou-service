@@ -4,7 +4,7 @@
 > **Schema**: schemas/actor-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
-> **State Stores**: actor-templates (Redis), actor-state (Redis), actor-pool-nodes (Redis), actor-assignments (Redis)
+> **State Store**: actor-templates (Redis), actor-state (Redis), actor-pool-nodes (Redis), actor-assignments (Redis)
 > **Implementation Map**: [docs/maps/ACTOR.md](../maps/ACTOR.md)
 
 ---

@@ -36,7 +36,7 @@ public sealed class CinematicRunner : IDisposable
     private readonly ILogger<CinematicRunner>? _logger;
     private readonly ITelemetryProvider? _telemetryProvider;
 
-    private string _cinematicId = string.Empty;
+    private string? _cinematicId;
     private HashSet<Guid> _controlledEntities = new();
     private IReadOnlySet<string>? _allowBehaviorChannels;
     private CinematicRunnerState _state;
@@ -75,7 +75,7 @@ public sealed class CinematicRunner : IDisposable
     /// <summary>
     /// Gets the cinematic ID.
     /// </summary>
-    public string CinematicId => _cinematicId;
+    public string? CinematicId => _cinematicId;
 
     /// <summary>
     /// Gets the entities currently under cinematic control.
@@ -276,9 +276,9 @@ public sealed class CinematicRunner : IDisposable
 
         _state = CinematicRunnerState.Completed;
 
-        // Raise completed event
+        // Raise completed event (cinematicId is always set when running)
         CinematicCompleted?.Invoke(this, new CinematicCompletedEventArgs(
-            _cinematicId,
+            _cinematicId ?? throw new InvalidOperationException("CinematicId not set"),
             _controlledEntities.ToList().AsReadOnly(),
             effectiveHandoff));
 
@@ -319,9 +319,9 @@ public sealed class CinematicRunner : IDisposable
 
         _state = CinematicRunnerState.Completed;
 
-        // Raise completed event with abort indication
+        // Raise completed event with abort indication (cinematicId is always set when running)
         CinematicCompleted?.Invoke(this, new CinematicCompletedEventArgs(
-            _cinematicId,
+            _cinematicId ?? throw new InvalidOperationException("CinematicId not set"),
             _controlledEntities.ToList().AsReadOnly(),
             handoff,
             wasAborted: true));
@@ -335,7 +335,7 @@ public sealed class CinematicRunner : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         _interpreter.Reset();
-        _cinematicId = string.Empty;
+        _cinematicId = null;
         _controlledEntities.Clear();
         _allowBehaviorChannels = null;
         _entityFinalStates.Clear();
@@ -369,10 +369,10 @@ public sealed class CinematicRunner : IDisposable
             await _stateSync.SyncStateAsync(entityId, entityHandoff.FinalState, entityHandoff, ct);
         }
 
-        // Raise control returned event
+        // Raise control returned event (cinematicId is always set when running)
         ControlReturned?.Invoke(this, new ControlReturnedEventArgs(
             entityId,
-            _cinematicId,
+            _cinematicId ?? throw new InvalidOperationException("CinematicId not set"),
             entityHandoff));
     }
 

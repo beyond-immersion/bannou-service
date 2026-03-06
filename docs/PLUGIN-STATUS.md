@@ -1,6 +1,6 @@
 # Plugin Production Readiness Status
 
-> **Last Updated**: 2026-03-03
+> **Last Updated**: 2026-03-05
 > **Scope**: All Bannou service plugins
 
 ---
@@ -79,9 +79,9 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Agency](#agency-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-03): 5 critical schema/tenet findings, 16 warnings, 7/9 design considerations resolved. No schema, no code. |
 | [Achievement](#achievement-status) | L4 | 90% | 1 | Production-hardened. T25/T29/T31/T8/T6/T26/T30/T17 compliant, typed fields, client events, Category B deprecation. 1 T16 Pattern A topic bug. Xbox/PS stubs remain. |
 | [Analytics](#analytics-status) | L4 | 88% | 0 | Production-hardened. T8/T10/T29/T0/T5 compliant, NRT-clean schemas, validation bounds on all properties. Glicko-2, event ingestion, summaries, controller history. Rating decay missing. |
-| [Behavior](#behavior-status) | L4 | 80% | 0 | ABML compiler + GOAP planner work. 6 stubs: cinematics, bundles, embeddings. |
-| [Character Encounter](#character-encounter-status) | L4 | 88% | 0 | Feature-complete. Encounters, perspectives, decay, sentiment, pruning. Index growth concerns. |
-| [Character History](#character-history-status) | L4 | 90% | 0 | Feature-complete. Participations, backstory, summarization, compression. Minor typing gaps. |
+| [Behavior](#behavior-status) | L4 | 88% | 0 | L3-hardened. T23/T4/T26/T8 audit fixes, 929 tests. IAssetClient soft dependency, async emitters, sentinel elimination. 6 stubs remain. |
+| [Character Encounter](#character-encounter-status) | L4 | 92% | 0 | Production-hardened. T8/T21/T25 compliant, NRT-clean schemas, validation bounds on all properties. ETag retry configurable, event outcome typed. Index growth concerns remain. |
+| [Character History](#character-history-status) | L4 | 95% | 0 | Feature-complete. Participations, backstory, summarization, compression. Hardened: T8 filler removed, EntityType enum, enriched events, expanded tests. |
 | [Character Lifecycle](#character-lifecycle-status) | L4 | 0% | 0 | Pre-implementation. Generational cycle orchestration and genetic heritage spec. No schema, no code. |
 | [Character Personality](#character-personality-status) | L4 | 90% | 0 | Full evolution pipeline. Both variable providers work. Combat style transitions limited. |
 | [Divine](#divine-status) | L4 | 25% | 0 | Aspirational. All 22 endpoints return NotImplemented. Detailed plan exists, zero code. |
@@ -104,7 +104,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Status](#status-status) | L4 | 78% | 0 | All 16 endpoints done. Dual-source effects query. Blocked on Item decay system (#407). |
 | [Storyline](#storyline-status) | L4 | 55% | 0 | SDK wrapper works for MVP. 3/15 endpoints done. No iterative composition or event integration. |
 | [Affix](#affix-status) | L4 | 0% | 0 | Pre-implementation. Spec L4-audited: Pattern C topics, Category B deprecation, T31 instance guard, typed spawnTagModifiers, hard IInventoryClient, orphan reconciliation worker, x-permissions on all groups. No schema, no code. |
-| [Arbitration](#arbitration-status) | L4 | 0% | 0 | Pre-implementation. Dispute resolution orchestration spec. No schema, no code. |
+| [Arbitration](#arbitration-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-05): 6 critical spec violations found and fixed in-document, schema creation guidance added, work tracking with 6 related GH issues, 4 resource cleanup targets. 8 design considerations remain. 2 unmet prerequisites (Faction sovereignty, Obligation multi-channel). No schema, no code. |
 | [Craft](#craft-status) | L4 | 0% | 0 | Pre-implementation. Recipe-based crafting orchestration spec. No schema, no code. |
 | [Disposition](#disposition-status) | L4 | 0% | 0 | Pre-implementation. Emotional synthesis and aspirational drive spec. No schema, no code. |
 | [Dungeon](#dungeon-status) | L4 | 0% | 0 | Pre-implementation. Dungeon-as-actor lifecycle orchestration spec. No schema, no code. |
@@ -1295,9 +1295,9 @@ gh issue list --search "Analytics:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [BEHAVIOR.md](plugins/BEHAVIOR.md)
 
-### Production Readiness: 80%
+### Production Readiness: 88%
 
-Core systems are substantial and functional: a multi-phase ABML compiler producing stack-based bytecode (30+ opcodes), A*-based GOAP planner with urgency-tiered parameters, 5-stage cognition pipeline, keyword-based memory store, behavior model caching with variant fallback chains, streaming composition with continuation points, and comprehensive domain action handlers. All 33 configuration properties are wired. No bugs. However, 6 stubs remain: bundle lifecycle events never published, cinematic extension delivery unimplemented, embedding-based memory store is future, GOAP plan persistence has no retrieval endpoint, compiler optimizations are placeholder, and bundle management lifecycle is partial. IAssetClient hard dependency violates the L3 soft-dependency pattern.
+L3-hardened. Multi-phase ABML compiler producing stack-based bytecode (30+ opcodes), A*-based GOAP planner with urgency-tiered parameters, 5-stage cognition pipeline, keyword-based memory store, behavior model caching with variant fallback chains, streaming composition with continuation points, and comprehensive domain action handlers (actor_command, actor_query, load_snapshot, emit_event, watcher management). All 33 configuration properties wired and validated. 929 tests, 0 warnings. Audit fixes: T23-compliant async patterns across all emitters and layers, T4 soft L3 dependency for IAssetClient, T26 sentinel elimination (Guid.Empty, string.Empty), T8 filler response field removal, schema validation keywords added, inline enums extracted to named schemas, event topic namespace corrected (behavior.cinematic-extension). 6 stubs remain: cinematic extension delivery, bundle lifecycle events, embedding memory store, GOAP plan persistence, compiler optimizations, and bundle management lifecycle.
 
 ### Bug Count: 0
 
@@ -1311,9 +1311,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Cinematic extension delivery** | `CinematicExtensionAvailableEvent` and streaming composition opcodes exist but no code publishes the event or implements extension attachment. Critical for the Combat Dream vision of real-time choreographed cinematics. | No issue |
-| 2 | **Embedding-based memory store** | `IMemoryStore` interface supports swappable implementations, but only keyword-based matching exists. Semantic similarity via vector embeddings would improve NPC memory relevance at 100k+ scale. | No issue |
-| 3 | **Bundle lifecycle events** | Three lifecycle events (created, updated, deleted) are schema-defined and auto-generated but never published by `BehaviorBundleManager`. Breaks event-driven architecture for bundle consumers. | No issue |
+| 1 | **Cinematic extension delivery** | `CinematicExtensionAvailableEvent` and streaming composition opcodes exist but no code publishes the event or implements extension attachment. Critical for the Combat Dream vision of real-time choreographed cinematics. | [#573](https://github.com/beyond-immersion/bannou-service/issues/573) |
+| 2 | **GOAP planning failure diagnostics** | `PlanAsync` returns null without indicating cause (timeout vs no path vs node limit). Failure response discards actual search metrics. PlanResult wrapper needed. | [#575](https://github.com/beyond-immersion/bannou-service/issues/575) |
+| 3 | **Bundle lifecycle events** | Three lifecycle events (created, updated, deleted) are schema-defined and auto-generated but never published by `BehaviorBundleManager`. Breaks event-driven architecture for bundle consumers. | [#571](https://github.com/beyond-immersion/bannou-service/issues/571) |
 
 ### GH Issues
 
@@ -1327,9 +1327,9 @@ gh issue list --search "Behavior:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [CHARACTER-ENCOUNTER.md](plugins/CHARACTER-ENCOUNTER.md)
 
-### Production Readiness: 88%
+### Production Readiness: 92%
 
-Feature-complete with no stubs remaining and all 22 configuration properties wired. Encounter recording with duplicate detection, multi-participant perspective system, time-based memory decay (lazy and scheduled modes), weighted sentiment aggregation, configurable encounter type management, automatic pruning, compression support, Variable Provider Factory for `${encounters.*}`, and cache invalidation on all write paths. Three former bugs have been fixed. Remaining concerns are architectural: no transactionality across multi-write recording operations, lazy decay write amplification on read paths, and unbounded global character index growth.
+Production-hardened with no stubs remaining and all 23 configuration properties wired (including ETagRetryMaxAttempts). T8 filler removal (echoed request fields, success booleans, error messages removed from 5 response types), T21 configurable ETag retry attempts (was hardcoded to 3), T25 event outcome typed as EncounterOutcome enum (was string), null-forgiving operator elimination, and validation bounds on all schema properties. Encounter recording with duplicate detection, multi-participant perspective system, time-based memory decay (lazy and scheduled modes), weighted sentiment aggregation, configurable encounter type management, automatic pruning, compression support, Variable Provider Factory for `${encounters.*}`, and cache invalidation on all write paths. Remaining concerns are architectural: no transactionality across multi-write recording operations, lazy decay write amplification on read paths, and unbounded global character index growth.
 
 ### Bug Count: 0
 
@@ -1359,9 +1359,9 @@ gh issue list --search "Character Encounter:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [CHARACTER-HISTORY.md](plugins/CHARACTER-HISTORY.md)
 
-### Production Readiness: 90%
+### Production Readiness: 95%
 
-Feature-complete with no stubs, no bugs, and all configuration properties wired. Participation tracking with dual-indexed CRUD, backstory management with merge semantics, template-based text summarization, compression/restoration support, ABML variable provider factory for `${backstory.*}` expressions, and distributed locking for all write operations. The only extension is batch reference unregistration (blocked on lib-resource), and two design considerations remain (untyped metadata as `object?`, and AddBackstoryElement lacking event distinction between add vs update).
+Feature-complete with no stubs, no bugs, and all configuration properties wired with validation constraints. Participation tracking with dual-indexed CRUD, backstory management with merge semantics, template-based text summarization, compression/restoration support, ABML variable provider factory for `${backstory.*}` expressions, and distributed locking for all write operations. Hardened: T8 filler properties removed from 4 response schemas, `relatedEntityType` upgraded from string to `EntityType` enum (T25), `CharacterParticipationRecordedEvent` enriched with consumer-needed fields (`historicalEventName`, `eventCategory`, `significance`), entry-point logging downgraded to Debug (T10), error returns use null payload (T7), configuration properties have `minimum: 1` validation, NRT compliance fixed across schemas, event assertions use capture pattern, and 4 new tests added (38 total). The only extension is batch reference unregistration (blocked on lib-resource).
 
 ### Bug Count: 0
 
@@ -1377,7 +1377,6 @@ No known bugs.
 |---|-------------|-------------|-------|
 | 1 | **Batch reference unregistration in DeleteAll** | Currently makes N individual `UnregisterReferenceAsync` API calls before bulk deletion. Blocked on lib-resource batch unregister endpoint. | [#351](https://github.com/beyond-immersion/bannou-service/issues/351) |
 | 2 | **Typed metadata schema** | Participation metadata accepts any JSON structure via `object?`. No schema validation. Systemic issue affecting 14+ services; violates T25 type safety. | [#308](https://github.com/beyond-immersion/bannou-service/issues/308) |
-| 3 | **AddBackstoryElement event distinction** | AddBackstoryElement with the same type+key silently replaces the existing element. No event distinguishes "added new" from "updated existing." | [#311](https://github.com/beyond-immersion/bannou-service/issues/311) |
 
 ### GH Issues
 
@@ -2171,7 +2170,21 @@ gh issue list --search "Affix:" --state open
 
 ### Production Readiness: 0%
 
-Entirely pre-implementation. The deep dive explicitly states "No schema, no code" and "Everything is unimplemented." A detailed architectural specification describing a dispute resolution orchestration layer (like Quest over Contract), with 23 planned endpoints across 6 groups, 14 published events, 6 consumed events, 6 state stores, and a 6-phase implementation plan. Depends on prerequisites that do not yet exist (Faction sovereignty `authorityLevel` field, Obligation multi-channel costs). No schema file, no generated code, and no service implementation exist.
+Entirely pre-implementation. L4-audited (2026-03-05): 6 critical spec violations found and all fixed in-document. Deep dive describes a dispute resolution orchestration layer (like Quest over Contract) with 25 planned endpoints (8 case + 3 evidence + 4 arbiter + 4 ruling + 2 jurisdiction + 4 cleanup), 17 published events (3 x-lifecycle + 14 domain-specific), 6 consumed events, 6 state stores, and a 6-phase plan. Well-designed orchestration patterns (correct T27/T28 compliance, no accountId, comprehensive locking). Schema creation guidance section added with all tenet-compliant requirements. 8 design considerations remain open (evidence model, household split boundary, sovereignty transfer, deadline granularity, multi-game portability). 2 unmet prerequisites with no GH tracking issues.
+
+**Audit fixes applied:**
+1. Faction moved from hard to soft dependency (L4→L4 per SERVICE-HIERARCHY.md)
+2. Governance parameters clarified as genuinely opaque pass-through (T29 compliant); timeline computation derives from Contract milestone deadlines, not governance parameter inspection
+3. All 6 enums (14+ values) fixed to PascalCase
+4. Event topic `divine_requested` → `divine-requested` (kebab-case)
+5. Event topic `arbitration.service.confirmed` → `arbitration.notice.confirmed` (disambiguated)
+6. x-lifecycle added for ArbitrationCase entity; flat event structure mandated (Quest pattern)
+7. Resource cleanup expanded to 4 targets (added faction, location)
+8. Broken planning doc reference removed
+9. Work tracking populated with 6 related GH issues
+10. EntityType committed (removed "or string" hedge)
+
+**Prerequisites (both unmet, neither has a GH issue):** Faction sovereignty (`authorityLevel` field, governance data, delegation, `QueryGovernanceData`) and Obligation multi-channel costs (legal/social/personal tagging).
 
 ### Bug Count: 0
 
@@ -2185,11 +2198,13 @@ No implementation exists to have bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Faction Sovereignty (Phase 0 prerequisite)** | Add `authorityLevel` enum to Faction for jurisdiction determination -- without this, Arbitration cannot function at all. | No issue |
-| 2 | **Core Arbitration Infrastructure (Phase 2)** | Create schemas, generate code, implement case management CRUD with jurisdiction resolution and contract template integration. | No issue |
+| 1 | **Faction Sovereignty (Phase 0 prerequisite)** | Add `authorityLevel` enum to Faction for jurisdiction determination -- without this, Arbitration cannot function at all. No GH issue tracks this critical prerequisite. | No issue |
+| 2 | **Core Arbitration Infrastructure (Phase 2)** | Create schemas, generate code, implement case management CRUD with jurisdiction resolution and contract template integration. No master tracking issue exists. | No issue |
 | 3 | **Precedent System** | Accumulated rulings per case type form case law that NPC arbiters reference in cognition, creating emergent legal tradition and content flywheel material. | No issue |
 
 ### GH Issues
+
+Related open issues (no Arbitration-specific issues exist yet): #435 (sovereignty transfer), #436 (household split), #410 (Second Thoughts prerequisites), #362 (seed bond dissolution), #560 (contract hierarchy violation), #153 (escrow integration).
 
 ```bash
 gh issue list --search "Arbitration:" --state open

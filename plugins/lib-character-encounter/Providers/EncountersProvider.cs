@@ -1,7 +1,7 @@
 // =============================================================================
 // Encounters Variable Provider
 // Provides encounter data for ABML expressions via ${encounters.*} paths.
-// Owned by lib-character-encounter per service hierarchy (L3).
+// Owned by lib-character-encounter per service hierarchy (L4).
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
@@ -18,8 +18,8 @@ namespace BeyondImmersion.BannouService.CharacterEncounter.Providers;
 /// <list type="bullet">
 /// <item>${encounters.recent} - List of recent encounters</item>
 /// <item>${encounters.count} - Total encounter count</item>
-/// <item>${encounters.grudges} - Characters with sentiment less than -0.5</item>
-/// <item>${encounters.allies} - Characters with sentiment greater than 0.5</item>
+/// <item>${encounters.grudges} - Characters with sentiment below configured grudge threshold</item>
+/// <item>${encounters.allies} - Characters with sentiment above configured ally threshold</item>
 /// <item>${encounters.has_met.{characterId}} - Whether met a specific character</item>
 /// <item>${encounters.sentiment.{characterId}} - Sentiment toward specific character</item>
 /// <item>${encounters.last_context.{characterId}} - Last encounter context with character</item>
@@ -38,6 +38,8 @@ public sealed class EncountersProvider : IVariableProvider
     private readonly Dictionary<Guid, SentimentResponse> _sentiments;
     private readonly Dictionary<Guid, HasMetResponse> _hasMet;
     private readonly Dictionary<Guid, EncounterListResponse> _pairEncounters;
+    private readonly float _grudgeThreshold;
+    private readonly float _allyThreshold;
 
     /// <inheritdoc/>
     public string Name => VariableProviderDefinitions.Encounters;
@@ -49,16 +51,22 @@ public sealed class EncountersProvider : IVariableProvider
     /// <param name="sentiments">Pre-loaded sentiment data toward known characters.</param>
     /// <param name="hasMet">Pre-loaded has-met data for known characters.</param>
     /// <param name="pairEncounters">Pre-loaded pair encounter data for known characters.</param>
+    /// <param name="grudgeThreshold">Sentiment threshold below which characters are considered grudges.</param>
+    /// <param name="allyThreshold">Sentiment threshold above which characters are considered allies.</param>
     public EncountersProvider(
         EncounterListResponse? encounters,
         Dictionary<Guid, SentimentResponse>? sentiments = null,
         Dictionary<Guid, HasMetResponse>? hasMet = null,
-        Dictionary<Guid, EncounterListResponse>? pairEncounters = null)
+        Dictionary<Guid, EncounterListResponse>? pairEncounters = null,
+        float grudgeThreshold = -0.5f,
+        float allyThreshold = 0.5f)
     {
         _encounters = encounters;
         _sentiments = sentiments ?? new Dictionary<Guid, SentimentResponse>();
         _hasMet = hasMet ?? new Dictionary<Guid, HasMetResponse>();
         _pairEncounters = pairEncounters ?? new Dictionary<Guid, EncounterListResponse>();
+        _grudgeThreshold = grudgeThreshold;
+        _allyThreshold = allyThreshold;
     }
 
     /// <inheritdoc/>
@@ -136,7 +144,7 @@ public sealed class EncountersProvider : IVariableProvider
             if (firstSegment.Equals("dominant_emotion", StringComparison.OrdinalIgnoreCase))
             {
                 return _sentiments.TryGetValue(characterId, out var sentiment)
-                    ? sentiment.DominantEmotion?.ToString()
+                    ? sentiment.DominantEmotion
                     : null;
             }
         }
@@ -203,7 +211,7 @@ public sealed class EncountersProvider : IVariableProvider
             {
                 ["encounter_id"] = e.Encounter.EncounterId.ToString(),
                 ["type"] = e.Encounter.EncounterTypeCode,
-                ["outcome"] = e.Encounter.Outcome.ToString(),
+                ["outcome"] = e.Encounter.Outcome,
                 ["context"] = e.Encounter.Context,
                 ["timestamp"] = e.Encounter.Timestamp.ToString("O"),
                 ["participant_count"] = e.Encounter.ParticipantIds.Count
@@ -212,35 +220,35 @@ public sealed class EncountersProvider : IVariableProvider
     }
 
     /// <summary>
-    /// Gets characters with strongly negative sentiment (less than -0.5).
+    /// Gets characters with strongly negative sentiment (below configured grudge threshold).
     /// </summary>
     private List<Dictionary<string, object?>> GetGrudges()
     {
         return _sentiments
-            .Where(kv => kv.Value.Sentiment < -0.5f)
+            .Where(kv => kv.Value.Sentiment < _grudgeThreshold)
             .Select(kv => new Dictionary<string, object?>
             {
                 ["character_id"] = kv.Key.ToString(),
                 ["sentiment"] = kv.Value.Sentiment,
                 ["encounter_count"] = kv.Value.EncounterCount,
-                ["dominant_emotion"] = kv.Value.DominantEmotion?.ToString()
+                ["dominant_emotion"] = kv.Value.DominantEmotion
             })
             .ToList();
     }
 
     /// <summary>
-    /// Gets characters with strongly positive sentiment (greater than 0.5).
+    /// Gets characters with strongly positive sentiment (above configured ally threshold).
     /// </summary>
     private List<Dictionary<string, object?>> GetAllies()
     {
         return _sentiments
-            .Where(kv => kv.Value.Sentiment > 0.5f)
+            .Where(kv => kv.Value.Sentiment > _allyThreshold)
             .Select(kv => new Dictionary<string, object?>
             {
                 ["character_id"] = kv.Key.ToString(),
                 ["sentiment"] = kv.Value.Sentiment,
                 ["encounter_count"] = kv.Value.EncounterCount,
-                ["dominant_emotion"] = kv.Value.DominantEmotion?.ToString()
+                ["dominant_emotion"] = kv.Value.DominantEmotion
             })
             .ToList();
     }
@@ -262,7 +270,7 @@ public sealed class EncountersProvider : IVariableProvider
     /// <summary>
     /// Gets the emotional impact of the most recent encounter with a specific character.
     /// </summary>
-    private string? GetLastEmotion(Guid characterId)
+    private object? GetLastEmotion(Guid characterId)
     {
         if (!_pairEncounters.TryGetValue(characterId, out var encounters))
             return null;
@@ -279,6 +287,6 @@ public sealed class EncountersProvider : IVariableProvider
         // we'll return the first perspective's emotional impact as a reasonable default
         return lastEncounter.Perspectives
             ?.FirstOrDefault()
-            ?.EmotionalImpact.ToString();
+            ?.EmotionalImpact;
     }
 }

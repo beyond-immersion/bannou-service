@@ -96,23 +96,18 @@ None identified.
 
 ## Potential Extensions
 
-1. **Subscription tiers**: Support multiple subscription levels (free, premium, enterprise) with different access grants and feature flags.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/511 -->
-
-2. **Usage-based expiration**: Track API call counts or usage metrics and expire when quota exhausted.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/512 -->
-
-3. **Batch subscription management**: Admin endpoint for bulk-creating subscriptions (e.g., game launch grants, promotional campaigns).
+1. **Batch subscription management**: Admin endpoint for bulk-creating subscriptions (e.g., game launch grants, promotional campaigns).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/513 -->
 
-4. **Subscription history**: Immutable audit trail of all state transitions with timestamps and actor IDs.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/514 -->
-
-5. **Subscription transfer**: Allow transferring subscriptions between accounts (gift/resale scenarios).
+2. **Subscription transfer**: Allow transferring subscriptions between accounts (gift/resale scenarios).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/515 -->
 
-6. **Proration support**: Handle mid-cycle upgrades/downgrades with prorated billing periods.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/516 -->
+### Closed Extensions (Resolved by Architecture)
+
+- **Subscription tiers** (#511): Tiers map to Permission states via `UpdateSessionState`. Subscription optionally carries a `tier` string field; Permission's existing `service × state × role → endpoints` matrix handles differentiated access. No Subscription redesign needed.
+- **Usage-based expiration** (#512): Usage metering/quotas belong in Connect middleware or a dedicated metering service, not in an access-control primitive.
+- **Subscription history** (#514): Analytics (L4) is the canonical event aggregation service. Subscription already publishes `subscription.updated` events for every state change — Analytics consumes these for audit trails.
+- **Proration support** (#516): Billing/monetary concern belonging in Currency (L2) or external billing integration, not in access-control.
 
 ---
 
@@ -152,6 +147,10 @@ None identified.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/517 -->
 2. **No subscription deletion endpoint**: There is no endpoint to permanently delete subscription records. The indexes grow indefinitely with cancelled/expired entries. This may be intentional (audit trail) but should be documented as a design decision.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/518 -->
+3. **Account deletion does not cascade to subscriptions**: When an account is deleted, subscription records persist as orphans. Per T28, Account has a privacy exception (no lib-resource tracking), but subscriptions are persistent MySQL data that won't expire naturally. Unlimited-duration subscriptions persist forever. The recommended approach is Account calling Subscription directly during deletion (L1→L2, valid direction).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/566 -->
+4. **GameService deletion does not cascade to subscriptions**: When a GameService is deleted, subscription records referencing that `serviceId` persist as orphans. No lib-resource reference registration exists. This is a standard T28 case — Subscription should register references with lib-resource and implement `ISeededResourceProvider` for cleanup callbacks.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/567 -->
 
 ---
 

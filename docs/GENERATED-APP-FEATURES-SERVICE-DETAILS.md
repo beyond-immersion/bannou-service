@@ -7,25 +7,25 @@ Services in the **App Features (L3)** layer.
 
 ## Asset {#asset}
 
-**Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/ASSET.md](plugins/ASSET.md)
+**Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/ASSET.md](plugins/ASSET.md) | **Map**: [docs/maps/ASSET.md](maps/ASSET.md)
 
 The Asset service (L3 AppFeatures) provides storage, versioning, and distribution of large binary assets (textures, audio, 3D models) using MinIO/S3-compatible object storage. Issues pre-signed URLs so clients upload/download directly to the storage backend, never routing raw asset data through the WebSocket gateway. Also manages bundles (grouped assets in a custom `.bannou` format with LZ4 compression), metabundles (merged super-bundles), and a distributed processor pool for content-type-specific transcoding. Used by lib-behavior, lib-save-load, lib-mapping, and lib-documentation for binary storage needs.
 
 ## Documentation {#documentation}
 
-**Version**: 1.0.0 | **Schema**: `schemas/documentation-api.yaml` | **Endpoints**: 27 | **Deep Dive**: [docs/plugins/DOCUMENTATION.md](plugins/DOCUMENTATION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/documentation-api.yaml` | **Endpoints**: 27 | **Deep Dive**: [docs/plugins/DOCUMENTATION.md](plugins/DOCUMENTATION.md) | **Map**: [docs/maps/DOCUMENTATION.md](maps/DOCUMENTATION.md)
 
 Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, OpenAI function calling, Claude tool use) with full-text search, natural language query, and voice-friendly summaries. Manages documentation within namespaces, supporting manual CRUD and automated git repository synchronization (git-bound namespaces reject mutations, enforcing git as single source of truth). Features browser-facing GET endpoints that render markdown to HTML (unusual exception to Bannou's POST-only pattern). Three background services handle index rebuilding, periodic repository sync, and trashcan purge.
 
 ## Orchestrator {#orchestrator}
 
-**Version**: 3.0.0 | **Schema**: `schemas/orchestrator-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/ORCHESTRATOR.md](plugins/ORCHESTRATOR.md)
+**Version**: 3.0.0 | **Schema**: `schemas/orchestrator-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/ORCHESTRATOR.md](plugins/ORCHESTRATOR.md) | **Map**: [docs/maps/ORCHESTRATOR.md](maps/ORCHESTRATOR.md)
 
 Central intelligence (L3 AppFeatures) for Bannou environment management and service orchestration. Manages distributed service deployments including preset-based topologies, live topology updates, processing pools for on-demand worker containers (used by lib-actor for NPC brains), service health monitoring via heartbeats, versioned deployment configurations with rollback, and service-to-app-id routing broadcasts consumed by lib-mesh. Features a pluggable backend architecture supporting Docker Compose, Docker Swarm, Portainer, and Kubernetes. Operates in a secure mode making it inaccessible via WebSocket (admin-only service-to-service calls).
 
 ## Voice {#voice}
 
-**Version**: 2.0.0 | **Schema**: `schemas/voice-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/VOICE.md](plugins/VOICE.md)
+**Version**: 2.0.0 | **Schema**: `schemas/voice-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/VOICE.md](plugins/VOICE.md) | **Map**: [docs/maps/VOICE.md](maps/VOICE.md)
 
 Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a platform primitive: P2P mesh topology for small groups, Kamailio/RTPEngine-based SFU for larger rooms, automatic tier upgrade, WebRTC SDP signaling, broadcast consent flows for streaming integration, and participant TTL enforcement via background worker. Agnostic to games, sessions, and subscriptions -- voice rooms are generic containers identified by Connect/Auth session IDs. Part of a planned three-service stack (voice, broadcast, showtime) where each delivers value independently; voice provides audio infrastructure while higher layers decide when and why to use it. Moved from L4 to L3 to eliminate a hierarchy violation where GameSession (L2) previously depended on Voice (L4) for room lifecycle.
 

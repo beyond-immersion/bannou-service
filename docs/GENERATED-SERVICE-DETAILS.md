@@ -7,37 +7,37 @@ This document provides a compact reference of all Bannou services.
 
 ## Account {#account}
 
-**Version**: 2.0.0 | **Schema**: `schemas/account-api.yaml` | **Endpoints**: 18 | **Deep Dive**: [docs/plugins/ACCOUNT.md](plugins/ACCOUNT.md)
+**Version**: 2.0.0 | **Schema**: `schemas/account-api.yaml` | **Endpoints**: 18 | **Deep Dive**: [docs/plugins/ACCOUNT.md](plugins/ACCOUNT.md) | **Map**: [docs/maps/ACCOUNT.md](maps/ACCOUNT.md)
 
 The Account plugin is an internal-only CRUD service (L1 AppFoundation) for managing user accounts. It is never exposed directly to the internet -- all external account operations go through the Auth service, which calls Account via lib-mesh. Handles account creation, lookup (by ID, email, or OAuth provider), updates, soft-deletion, and authentication method management (linking/unlinking OAuth providers). Email is optional -- accounts created via OAuth or Steam may have no email address, identified solely by their linked authentication methods.
 
 ## Achievement {#achievement}
 
-**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/ACHIEVEMENT.md](plugins/ACHIEVEMENT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/ACHIEVEMENT.md](plugins/ACHIEVEMENT.md) | **Map**: [docs/maps/ACHIEVEMENT.md](maps/ACHIEVEMENT.md)
 
 The Achievement plugin (L4 GameFeatures) provides a multi-entity achievement and trophy system with progressive/binary unlock types, prerequisite chains, rarity calculations, and platform synchronization (Steam, Xbox, PlayStation). Achievements are scoped to game services, support event-driven auto-unlock from Analytics and Leaderboard events, and include a background service for periodic rarity recalculation.
 
 ## Actor {#actor}
 
-**Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/ACTOR.md](plugins/ACTOR.md)
+**Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/ACTOR.md](plugins/ACTOR.md) | **Map**: [docs/maps/ACTOR.md](maps/ACTOR.md)
 
 Distributed actor management and execution (L2 GameFoundation) for NPC brains, event coordinators, and long-running behavior loops. Actors output behavioral state (feelings, goals, memories) to characters -- not directly visible to players. Supports multiple deployment modes (local, pool-per-type, shared-pool, auto-scale), ABML behavior document execution with hot-reload, GOAP planning integration, bounded perception queues with urgency filtering, and dynamic character binding (actors can start without a character and bind to one at runtime, transitioning from event brain to character brain mode without relaunch). Receives data from L4 services (personality, encounters, history) via the Variable Provider Factory pattern without depending on them.
 
 ## Affix {#affix}
 
-**Deep Dive**: [docs/plugins/AFFIX.md](plugins/AFFIX.md)
+**Deep Dive**: [docs/plugins/AFFIX.md](plugins/AFFIX.md) | **Map**: [docs/maps/AFFIX.md](maps/AFFIX.md)
 
 Item modifier definition, instance management, and stat computation service (L4 GameFeatures). Owns two layers of data: **definitions** (modifier templates with tiers, mod groups, spawn weights, stat grants) and **instances** (per-item applied modifier state stored in Affix's own state store). Any system that needs to answer "what modifiers does this item have?" or "what is this item worth?" queries lib-affix's typed API. Game-agnostic (PoE-style prefix/suffix tiers, Diablo-style legendary affixes, or simple "quality stars" are all valid configurations). Internal-only, never internet-facing.
 
 ## Agency {#agency}
 
-**Deep Dive**: [docs/plugins/AGENCY.md](plugins/AGENCY.md)
+**Deep Dive**: [docs/plugins/AGENCY.md](plugins/AGENCY.md) | **Map**: [docs/maps/AGENCY.md](maps/AGENCY.md)
 
 The Agency service (L4 GameFeatures) manages the guardian spirit's progressive agency system -- the bridge between Seed's abstract capability data and the client's concrete UX module rendering. It answers the question: "Given this guardian spirit's accumulated experience, what can the player perceive and do?" Game-agnostic: domain codes, modules, and influence types are registered per game service, not hardcoded. Internal-only, never internet-facing.
 
 ## Analytics {#analytics}
 
-**Version**: 1.0.0 | **Schema**: `schemas/analytics-api.yaml` | **Endpoints**: 9 | **Deep Dive**: [docs/plugins/ANALYTICS.md](plugins/ANALYTICS.md)
+**Version**: 1.0.0 | **Schema**: `schemas/analytics-api.yaml` | **Endpoints**: 9 | **Deep Dive**: [docs/plugins/ANALYTICS.md](plugins/ANALYTICS.md) | **Map**: [docs/maps/ANALYTICS.md](maps/ANALYTICS.md)
 
 The Analytics plugin (L4 GameFeatures) is the central event aggregation point for all game-related statistics. Handles event ingestion, entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. Publishes score updates and milestone events consumed by Achievement and Leaderboard for downstream processing. Subscribes to game session lifecycle and character/realm history events for automatic ingestion. Unlike typical L4 services, Analytics only observes via event subscriptions -- it does not invoke L2/L4 service APIs and should not be called by L1/L2/L3 services.
 
@@ -49,13 +49,13 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 
 ## Asset {#asset}
 
-**Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/ASSET.md](plugins/ASSET.md)
+**Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/ASSET.md](plugins/ASSET.md) | **Map**: [docs/maps/ASSET.md](maps/ASSET.md)
 
 The Asset service (L3 AppFeatures) provides storage, versioning, and distribution of large binary assets (textures, audio, 3D models) using MinIO/S3-compatible object storage. Issues pre-signed URLs so clients upload/download directly to the storage backend, never routing raw asset data through the WebSocket gateway. Also manages bundles (grouped assets in a custom `.bannou` format with LZ4 compression), metabundles (merged super-bundles), and a distributed processor pool for content-type-specific transcoding. Used by lib-behavior, lib-save-load, lib-mapping, and lib-documentation for binary storage needs.
 
 ## Auth {#auth}
 
-**Version**: 4.0.0 | **Schema**: `schemas/auth-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/AUTH.md](plugins/AUTH.md)
+**Version**: 4.0.0 | **Schema**: `schemas/auth-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/AUTH.md](plugins/AUTH.md) | **Map**: [docs/maps/AUTH.md](maps/AUTH.md)
 
 The Auth plugin is the internet-facing authentication and session management service (L1 AppFoundation). Handles email/password login, OAuth provider integration (Discord, Google, Twitch), Steam session ticket verification, JWT token generation/validation, password reset flows, TOTP-based MFA, and session lifecycle management. It is the primary gateway between external users and the internal service mesh -- after authenticating, clients receive a JWT and a WebSocket connect URL to establish persistent connections via lib-connect.
 
@@ -67,13 +67,13 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 
 ## Broadcast {#broadcast}
 
-**Deep Dive**: [docs/plugins/BROADCAST.md](plugins/BROADCAST.md)
+**Deep Dive**: [docs/plugins/BROADCAST.md](plugins/BROADCAST.md) | **Map**: [docs/maps/BROADCAST.md](maps/BROADCAST.md)
 
 Platform streaming integration and RTMP output management service (L3 AppFeatures) for linking external streaming platforms (Twitch, YouTube, custom RTMP), ingesting real audience data, and broadcasting server-side content. The bridge between Bannou's internal world and external streaming platforms -- everything that touches a third-party streaming service goes through lib-broadcast. Game-agnostic: which platforms are enabled and how sentiment categories map to game emotions are configured via environment variables and API calls. Internal-only for sentiment/broadcast management; webhook endpoints are internet-facing for platform callbacks (justified T15 exception -- platform callbacks, not browser-facing).
 
 ## Character {#character}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/CHARACTER.md](plugins/CHARACTER.md)
+**Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/CHARACTER.md](plugins/CHARACTER.md) | **Map**: [docs/maps/CHARACTER.md](maps/CHARACTER.md)
 
 The Character service (L2 GameFoundation) manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from lib-relationship), and compression/archival for dead characters via lib-resource. Per the service hierarchy, Character cannot depend on L4 services (personality, history, encounters) -- callers needing that data should aggregate from L4 services directly.
 
@@ -105,25 +105,25 @@ Machine-readable personality traits and combat preferences (L4 GameFeatures) for
 
 ## Chat {#chat}
 
-**Version**: 1.0.0 | **Schema**: `schemas/chat-api.yaml` | **Endpoints**: 32 | **Deep Dive**: [docs/plugins/CHAT.md](plugins/CHAT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/chat-api.yaml` | **Endpoints**: 32 | **Deep Dive**: [docs/plugins/CHAT.md](plugins/CHAT.md) | **Map**: [docs/maps/CHAT.md](maps/CHAT.md)
 
 The Chat service (L1 AppFoundation) provides universal typed message channel primitives for real-time communication. Room types determine valid message formats (text, sentiment, emoji, custom-validated payloads), with rooms optionally governed by Contract instances for lifecycle management. Supports ephemeral (Redis TTL) and persistent (MySQL) message storage, participant moderation (kick/ban/mute), rate limiting via atomic Redis counters, typing indicators via Redis sorted set with server-side expiry, and automatic idle room cleanup. Three built-in room types (text, sentiment, emoji) are registered on startup. Internal-only, never internet-facing.
 
 ## Collection {#collection}
 
-**Version**: 1.0.0 | **Schema**: `schemas/collection-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/COLLECTION.md](plugins/COLLECTION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/collection-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/COLLECTION.md](plugins/COLLECTION.md) | **Map**: [docs/maps/COLLECTION.md](maps/COLLECTION.md)
 
 The Collection service (L2 GameFoundation) manages universal content unlock and archive systems for collectible content: voice galleries, scene archives, music libraries, bestiaries, recipe books, and custom types. Follows the "items in inventories" pattern: entry templates define what can be collected, collection instances create inventory containers per owner, and granting an entry creates an item instance in that container. Unlike License (which orchestrates contracts for LP deduction), Collection uses direct grants without contract delegation. Features dynamic content selection based on unlocked entries and area theme configurations. Collection types are opaque strings (not enums), allowing new types without schema changes. Dispatches unlock notifications to registered `ICollectionUnlockListener` implementations via DI for guaranteed in-process delivery (e.g., Seed growth pipeline). Internal-only, never internet-facing.
 
 ## Connect {#connect}
 
-**Version**: 2.0.0 | **Schema**: `schemas/connect-api.yaml` | **Endpoints**: 7 | **Deep Dive**: [docs/plugins/CONNECT.md](plugins/CONNECT.md)
+**Version**: 2.0.0 | **Schema**: `schemas/connect-api.yaml` | **Endpoints**: 7 | **Deep Dive**: [docs/plugins/CONNECT.md](plugins/CONNECT.md) | **Map**: [docs/maps/CONNECT.md](maps/CONNECT.md)
 
 WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary message routing between game clients and backend services. Manages persistent connections with client-salted GUID generation for cross-session security, three connection modes (external, relayed, internal), session shortcuts for game-specific flows, reconnection windows, per-session RabbitMQ subscriptions for server-to-client event delivery, and multi-node broadcast relay via a WebSocket mesh between Connect instances. Internet-facing (the primary client entry point alongside Auth). Registered as Singleton (unusual for Bannou) because it maintains in-memory connection state.
 
 ## Contract {#contract}
 
-**Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml` | **Endpoints**: 31 | **Deep Dive**: [docs/plugins/CONTRACT.md](plugins/CONTRACT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml` | **Endpoints**: 31 | **Deep Dive**: [docs/plugins/CONTRACT.md](plugins/CONTRACT.md) | **Map**: [docs/maps/CONTRACT.md](maps/CONTRACT.md)
 
 Binding agreement management (L1 AppFoundation) between entities with milestone-based progression, consent flows, and prebound API execution on state transitions. Contracts are reactive: external systems report condition fulfillment via API calls; contracts store state, emit events, and execute callbacks. Templates define structure (party roles, milestones, terms, enforcement mode); instances track consent, sequential progression, and breach handling. Used as infrastructure by lib-quest (quest objectives map to contract milestones) and lib-escrow (asset-backed contracts via guardian locking).
 
@@ -135,7 +135,7 @@ Recipe-based crafting orchestration service (L4 GameFeatures) for production wor
 
 ## Currency {#currency}
 
-**Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Endpoints**: 33 | **Deep Dive**: [docs/plugins/CURRENCY.md](plugins/CURRENCY.md)
+**Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Endpoints**: 33 | **Deep Dive**: [docs/plugins/CURRENCY.md](plugins/CURRENCY.md) | **Map**: [docs/maps/CURRENCY.md](maps/CURRENCY.md)
 
 Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features a background autogain worker for passive income and transaction history with configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
 
@@ -163,7 +163,7 @@ Pantheon management service (L4 GameFeatures) for deity entities, divinity econo
 
 ## Documentation {#documentation}
 
-**Version**: 1.0.0 | **Schema**: `schemas/documentation-api.yaml` | **Endpoints**: 27 | **Deep Dive**: [docs/plugins/DOCUMENTATION.md](plugins/DOCUMENTATION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/documentation-api.yaml` | **Endpoints**: 27 | **Deep Dive**: [docs/plugins/DOCUMENTATION.md](plugins/DOCUMENTATION.md) | **Map**: [docs/maps/DOCUMENTATION.md](maps/DOCUMENTATION.md)
 
 Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, OpenAI function calling, Claude tool use) with full-text search, natural language query, and voice-friendly summaries. Manages documentation within namespaces, supporting manual CRUD and automated git repository synchronization (git-bound namespaces reject mutations, enforcing git as single source of truth). Features browser-facing GET endpoints that render markdown to HTML (unusual exception to Bannou's POST-only pattern). Three background services handle index rebuilding, periodic repository sync, and trashcan purge.
 
@@ -199,13 +199,13 @@ The Faction service (L4 GameFeatures) models factions as seed-based living entit
 
 ## Game Service {#game-service}
 
-**Version**: 1.0.0 | **Schema**: `schemas/game-service-api.yaml` | **Endpoints**: 5 | **Deep Dive**: [docs/plugins/GAME-SERVICE.md](plugins/GAME-SERVICE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/game-service-api.yaml` | **Endpoints**: 5 | **Deep Dive**: [docs/plugins/GAME-SERVICE.md](plugins/GAME-SERVICE.md) | **Map**: [docs/maps/GAME-SERVICE.md](maps/GAME-SERVICE.md)
 
 The Game Service is a minimal registry (L2 GameFoundation) that maintains a catalog of available games/applications (e.g., Arcadia, Fantasia) that users can subscribe to. Provides simple CRUD operations for managing service definitions, with stub-name-based lookup for human-friendly identifiers. Internal-only, never internet-facing. Referenced by nearly all L2/L4 services for game-scoping operations.
 
 ## Game Session {#game-session}
 
-**Version**: 2.0.0 | **Schema**: `schemas/game-session-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/GAME-SESSION.md](plugins/GAME-SESSION.md)
+**Version**: 2.0.0 | **Schema**: `schemas/game-session-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/GAME-SESSION.md](plugins/GAME-SESSION.md) | **Map**: [docs/maps/GAME-SESSION.md](maps/GAME-SESSION.md)
 
 Multiplayer session container primitive (L2 GameFoundation) with subscription-driven shortcut publishing for basic game access. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission for `in_game` state tracking and Subscription for account eligibility. Publishes WebSocket shortcuts to connected clients for one-click game join, lifecycle events for session state changes, and supports per-game horizontal scaling via `SupportedGameServices` partitioning.
 
@@ -225,13 +225,13 @@ Social information propagation and belief formation service (L4 GameFeatures) fo
 
 ## Inventory {#inventory}
 
-**Version**: 1.0.0 | **Schema**: `schemas/inventory-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/INVENTORY.md](plugins/INVENTORY.md)
+**Version**: 1.0.0 | **Schema**: `schemas/inventory-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/INVENTORY.md](plugins/INVENTORY.md) | **Map**: [docs/maps/INVENTORY.md](maps/INVENTORY.md)
 
 Container and item placement management (L2 GameFoundation) for games. Handles container lifecycle (CRUD), item movement between containers, stacking operations (split/merge), and inventory queries. Does NOT handle item definitions or instances directly -- delegates to lib-item for all item-level operations. Supports multiple constraint models (slot-only, weight-only, grid, volumetric, unlimited), category restrictions, and nesting depth limits. Designed as the placement layer that orchestrates lib-item.
 
 ## Item {#item}
 
-**Version**: 1.0.0 | **Schema**: `schemas/item-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/ITEM.md](plugins/ITEM.md)
+**Version**: 1.0.0 | **Schema**: `schemas/item-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/ITEM.md](plugins/ITEM.md) | **Map**: [docs/maps/ITEM.md](maps/ITEM.md)
 
 Dual-model item management (L2 GameFoundation) with templates (definitions/prototypes) and instances (individual occurrences). Templates define item properties (code, game scope, quantity model, stats, effects, rarity); instances represent actual items in the game world with quantity, durability, custom stats, and binding state. Supports multiple quantity models (discrete stacks, continuous weights, unique items). Designed to pair with lib-inventory for container placement management.
 
@@ -255,7 +255,7 @@ The License service (L4 GameFeatures) provides grid-based progression boards (sk
 
 ## Location {#location}
 
-**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 25 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 25 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md) | **Map**: [docs/maps/LOCATION.md](maps/LOCATION.md)
 
 Hierarchical location management (L2 GameFoundation) for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation, circular reference prevention, cascading depth updates, code-based lookups, and bulk seeding with two-pass parent resolution.
 
@@ -285,13 +285,13 @@ Ticket-based matchmaking (L4 GameFeatures) with skill windows, query matching, p
 
 ## Mesh {#mesh}
 
-**Version**: 1.0.0 | **Schema**: `schemas/mesh-api.yaml` | **Endpoints**: 8 | **Deep Dive**: [docs/plugins/MESH.md](plugins/MESH.md)
+**Version**: 1.0.0 | **Schema**: `schemas/mesh-api.yaml` | **Endpoints**: 8 | **Deep Dive**: [docs/plugins/MESH.md](plugins/MESH.md) | **Map**: [docs/maps/MESH.md](maps/MESH.md)
 
 Native service mesh (L0 Infrastructure) providing direct in-process service-to-service calls with YARP-based HTTP routing and Redis-backed service discovery. Provides endpoint registration with TTL-based health tracking, configurable load balancing, a distributed per-appId circuit breaker, and retry logic with exponential backoff. Includes proactive health checking with automatic deregistration and event-driven auto-registration from Orchestrator heartbeats for zero-configuration discovery.
 
 ## Messaging {#messaging}
 
-**Version**: 1.0.0 | **Schema**: `schemas/messaging-api.yaml` | **Endpoints**: 4 | **Deep Dive**: [docs/plugins/MESSAGING.md](plugins/MESSAGING.md)
+**Version**: 1.0.0 | **Schema**: `schemas/messaging-api.yaml` | **Endpoints**: 4 | **Deep Dive**: [docs/plugins/MESSAGING.md](plugins/MESSAGING.md) | **Map**: [docs/maps/MESSAGING.md](maps/MESSAGING.md)
 
 The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrastructure for Bannou. Operates in a dual role: as the `IMessageBus`/`IMessageSubscriber` infrastructure library used by all services for event publishing and subscription, and as an HTTP API providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, and aggressive retry buffering with crash-fast philosophy for unrecoverable failures.
 
@@ -309,7 +309,7 @@ Contract-aware obligation tracking for NPC cognition (L4 GameFeatures), bridging
 
 ## Orchestrator {#orchestrator}
 
-**Version**: 3.0.0 | **Schema**: `schemas/orchestrator-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/ORCHESTRATOR.md](plugins/ORCHESTRATOR.md)
+**Version**: 3.0.0 | **Schema**: `schemas/orchestrator-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/ORCHESTRATOR.md](plugins/ORCHESTRATOR.md) | **Map**: [docs/maps/ORCHESTRATOR.md](maps/ORCHESTRATOR.md)
 
 Central intelligence (L3 AppFeatures) for Bannou environment management and service orchestration. Manages distributed service deployments including preset-based topologies, live topology updates, processing pools for on-demand worker containers (used by lib-actor for NPC brains), service health monitoring via heartbeats, versioned deployment configurations with rollback, and service-to-app-id routing broadcasts consumed by lib-mesh. Features a pluggable backend architecture supporting Docker Compose, Docker Swarm, Portainer, and Kubernetes. Operates in a secure mode making it inaccessible via WebSocket (admin-only service-to-service calls).
 
@@ -321,7 +321,7 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 ## Permission {#permission}
 
-**Version**: 3.0.0 | **Schema**: `schemas/permission-api.yaml` | **Endpoints**: 8 | **Deep Dive**: [docs/plugins/PERMISSION.md](plugins/PERMISSION.md)
+**Version**: 3.0.0 | **Schema**: `schemas/permission-api.yaml` | **Endpoints**: 8 | **Deep Dive**: [docs/plugins/PERMISSION.md](plugins/PERMISSION.md) | **Map**: [docs/maps/PERMISSION.md](maps/PERMISSION.md)
 
 Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via the Connect service's per-session RabbitMQ queues.
 
@@ -339,7 +339,7 @@ The Puppetmaster service (L4 GameFeatures) orchestrates dynamic behaviors, regio
 
 ## Quest {#quest}
 
-**Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md)
+**Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md) | **Map**: [docs/maps/QUEST.md](maps/QUEST.md)
 
 The Quest service (L2 GameFoundation) provides objective-based gameplay progression as a thin orchestration layer over lib-contract. Translates game-flavored quest semantics (objectives, rewards, quest givers) into Contract infrastructure (milestones, prebound APIs, parties), leveraging Contract's state machine and cleanup orchestration while presenting a player-friendly API. Agnostic to prerequisite sources: L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` for validation without Quest depending on them. Exposes quest data to the Actor service via the Variable Provider Factory pattern for ABML behavior expressions.
 
@@ -347,7 +347,7 @@ The Quest service (L2 GameFoundation) provides objective-based gameplay progress
 
 ## Realm {#realm}
 
-**Version**: 1.0.0 | **Schema**: `schemas/realm-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/REALM.md](plugins/REALM.md)
+**Version**: 1.0.0 | **Schema**: `schemas/realm-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/REALM.md](plugins/REALM.md) | **Map**: [docs/maps/REALM.md](maps/REALM.md)
 
 The Realm service (L2 GameFoundation) manages top-level persistent worlds in the Arcadia game system. Realms are peer worlds (e.g., Omega, Arcadia, Fantasia) with no hierarchical relationships between them. Each realm operates as an independent world with distinct species populations and cultural contexts. Provides CRUD with deprecation lifecycle and seed-from-configuration support. Internal-only.
 
@@ -359,7 +359,7 @@ Historical event participation and lore management (L4 GameFeatures) for realms.
 
 ## Relationship {#relationship}
 
-**Version**: 2.0.0 | **Schema**: `schemas/relationship-api.yaml` | **Endpoints**: 21 | **Deep Dive**: [docs/plugins/RELATIONSHIP.md](plugins/RELATIONSHIP.md)
+**Version**: 2.0.0 | **Schema**: `schemas/relationship-api.yaml` | **Endpoints**: 21 | **Deep Dive**: [docs/plugins/RELATIONSHIP.md](plugins/RELATIONSHIP.md) | **Map**: [docs/maps/RELATIONSHIP.md](maps/RELATIONSHIP.md)
 
 A unified relationship management service (L2 GameFoundation) combining entity-to-entity relationships (character friendships, alliances, rivalries) with hierarchical relationship type taxonomy definitions. Supports bidirectional uniqueness enforcement, polymorphic entity types, soft-deletion with recreate capability, type deprecation with merge, and bulk seeding. Used by the Character service for inter-character bonds and family tree categorization, and by the Storyline service for narrative generation. Consolidated from the former separate relationship and relationship-type plugins.
 
@@ -379,7 +379,7 @@ The `${relationship.*}` ABML variable namespace is implemented via `Relationship
 
 ## Resource {#resource}
 
-**Version**: 1.0.0 | **Schema**: `schemas/resource-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/RESOURCE.md](plugins/RESOURCE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/resource-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/RESOURCE.md](plugins/RESOURCE.md) | **Map**: [docs/maps/RESOURCE.md](maps/RESOURCE.md)
 
 Resource reference tracking, lifecycle management, and hierarchical compression service (L1 AppFoundation) for foundational resources. Enables safe deletion of L2 resources by tracking references from higher-layer consumers (L2/L3/L4) without hierarchy violations, coordinates cleanup callbacks with CASCADE/RESTRICT/DETACH policies, and centralizes compression of resources and their dependents into unified MySQL-backed archives. Placed at L1 so all layers can use it; uses opaque string identifiers for resource/source types to avoid coupling to higher layers. Widely integrated: 13 services use generated reference tracking, 11 services register compression callbacks, and 20 services total inject `IResourceClient`.
 
@@ -397,7 +397,7 @@ Hierarchical composition storage (L4 GameFeatures) for game worlds. Stores scene
 
 ## Seed {#seed}
 
-**Version**: 1.0.0 | **Schema**: `schemas/seed-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/SEED.md](plugins/SEED.md)
+**Version**: 1.0.0 | **Schema**: `schemas/seed-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/SEED.md](plugins/SEED.md) | **Map**: [docs/maps/SEED.md](maps/SEED.md)
 
 Generic progressive growth primitive (L2 GameFoundation) for game entities. Seeds start empty and grow by accumulating metadata across named domains, progressively gaining capabilities at configurable thresholds. Seeds are polymorphically owned (accounts, actors, realms, characters, relationships) and agnostic to what they represent -- guardian spirits, dungeon cores, combat archetypes, crafting specializations, and governance roles are all equally valid seed types. Seed types are string codes (not enums), allowing new types without schema changes. Each seed type defines its own growth phase labels, capability computation rules, and bond semantics. Consumers register seed types via API, contribute growth via the record API or DI provider listeners (e.g., Collection→Seed pipeline), and query capability manifests to gate actions.
 
@@ -409,13 +409,13 @@ In-game streaming metagame service (L4 GameFeatures) for simulated audience pool
 
 ## Species {#species}
 
-**Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/SPECIES.md](plugins/SPECIES.md)
+**Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/SPECIES.md](plugins/SPECIES.md) | **Map**: [docs/maps/SPECIES.md](maps/SPECIES.md)
 
 Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. Manages playable and NPC races with trait modifiers, realm-specific availability, and a full deprecation lifecycle (deprecate, merge, delete). Species are globally defined but assigned to specific realms, enabling different worlds to offer different playable options. Supports bulk seeding from configuration and cross-service character reference checking to prevent orphaned data.
 
 ## State {#state}
 
-**Version**: 1.0.0 | **Schema**: `schemas/state-api.yaml` | **Endpoints**: 9 | **Deep Dive**: [docs/plugins/STATE.md](plugins/STATE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/state-api.yaml` | **Endpoints**: 9 | **Deep Dive**: [docs/plugins/STATE.md](plugins/STATE.md) | **Map**: [docs/maps/STATE.md](maps/STATE.md)
 
 The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports four backends (Redis for ephemeral/session data, MySQL for durable/queryable data, SQLite for self-hosted durable storage, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Interface Hierarchy section for the full interface tree and backend support matrix.
 
@@ -433,7 +433,7 @@ The Storyline service (L4 GameFeatures) wraps the `storyline-theory` and `storyl
 
 ## Subscription {#subscription}
 
-**Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml` | **Endpoints**: 7 | **Deep Dive**: [docs/plugins/SUBSCRIPTION.md](plugins/SUBSCRIPTION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml` | **Endpoints**: 7 | **Deep Dive**: [docs/plugins/SUBSCRIPTION.md](plugins/SUBSCRIPTION.md) | **Map**: [docs/maps/SUBSCRIPTION.md](maps/SUBSCRIPTION.md)
 
 The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing, and pushes `subscription.status_changed` client events to connected players via WebSocket account-session routing. Includes a background expiration worker that periodically deactivates expired subscriptions. Internal-only, serves as the canonical source for subscription state.
 
@@ -441,7 +441,7 @@ Client events are routed via `IEntitySessionRegistry.PublishToEntitySessionsAsyn
 
 ## Telemetry {#telemetry}
 
-**Version**: 1.0.0 | **Schema**: `schemas/telemetry-api.yaml` | **Endpoints**: 2 | **Deep Dive**: [docs/plugins/TELEMETRY.md](plugins/TELEMETRY.md)
+**Version**: 1.0.0 | **Schema**: `schemas/telemetry-api.yaml` | **Endpoints**: 2 | **Deep Dive**: [docs/plugins/TELEMETRY.md](plugins/TELEMETRY.md) | **Map**: [docs/maps/TELEMETRY.md](maps/TELEMETRY.md)
 
 The Telemetry service (L0 Infrastructure, optional) provides unified observability infrastructure for Bannou using OpenTelemetry standards. Operates in a dual role: as the `ITelemetryProvider` interface that lib-state, lib-messaging, and lib-mesh use for instrumentation, and as an HTTP API providing health and status endpoints. Unique among Bannou services: uses no state stores and publishes no events. When disabled, other L0 services receive a `NullTelemetryProvider` (all methods are no-ops).
 
@@ -453,7 +453,7 @@ The Trade service (L4 GameFeatures) is the economic logistics and supply orchest
 
 ## Transit {#transit}
 
-**Version**: 1.0.0 | **Schema**: `schemas/transit-api.yaml` | **Endpoints**: 33 | **Deep Dive**: [docs/plugins/TRANSIT.md](plugins/TRANSIT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/transit-api.yaml` | **Endpoints**: 33 | **Deep Dive**: [docs/plugins/TRANSIT.md](plugins/TRANSIT.md) | **Map**: [docs/maps/TRANSIT.md](maps/TRANSIT.md)
 
 The Transit service (L2 GameFoundation) is the geographic connectivity and movement primitive for Bannou. It completes the spatial model by adding **edges** (connections between locations) to Location's **nodes** (the hierarchical place tree), then provides a type registry for **how** things move (transit modes) and temporal tracking for **when** they arrive (journeys computed against Worldstate's game clock). Transit is to movement what Seed is to growth and Collection is to unlocks -- a generic, reusable primitive that higher-layer services orchestrate for domain-specific purposes. Internal-only, never internet-facing.
 
@@ -465,7 +465,7 @@ The Utility service (L4 GameFeatures) manages infrastructure networks that conti
 
 ## Voice {#voice}
 
-**Version**: 2.0.0 | **Schema**: `schemas/voice-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/VOICE.md](plugins/VOICE.md)
+**Version**: 2.0.0 | **Schema**: `schemas/voice-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/VOICE.md](plugins/VOICE.md) | **Map**: [docs/maps/VOICE.md](maps/VOICE.md)
 
 Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a platform primitive: P2P mesh topology for small groups, Kamailio/RTPEngine-based SFU for larger rooms, automatic tier upgrade, WebRTC SDP signaling, broadcast consent flows for streaming integration, and participant TTL enforcement via background worker. Agnostic to games, sessions, and subscriptions -- voice rooms are generic containers identified by Connect/Auth session IDs. Part of a planned three-service stack (voice, broadcast, showtime) where each delivers value independently; voice provides audio infrastructure while higher layers decide when and why to use it. Moved from L4 to L3 to eliminate a hierarchy violation where GameSession (L2) previously depended on Voice (L4) for room lifecycle.
 
@@ -483,7 +483,7 @@ Time-based automated production service (L4 GameFeatures) for continuous backgro
 
 ## Worldstate {#worldstate}
 
-**Version**: 1.0.0 | **Schema**: `schemas/worldstate-api.yaml` | **Endpoints**: 18 | **Deep Dive**: [docs/plugins/WORLDSTATE.md](plugins/WORLDSTATE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/worldstate-api.yaml` | **Endpoints**: 18 | **Deep Dive**: [docs/plugins/WORLDSTATE.md](plugins/WORLDSTATE.md) | **Map**: [docs/maps/WORLDSTATE.md](maps/WORLDSTATE.md)
 
 Per-realm game time authority, calendar system, and temporal event broadcasting service (L2 GameFoundation). Maps real-world time to configurable game-time progression with per-realm time ratios, calendar templates (configurable days, months, seasons, years), and day-period cycles. Publishes boundary events at game-time transitions consumed by other services for time-aligned processing, and provides the `${world.*}` variable namespace to the Actor behavior system via the Variable Provider Factory pattern. Also provides a time-elapsed query API for lazy evaluation patterns (computing game-time duration between two real timestamps accounting for ratio changes and pauses). Game-agnostic: calendar structures, time ratios, and day-period definitions are configured per game service. Internal-only, never internet-facing.
 

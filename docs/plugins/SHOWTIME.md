@@ -105,7 +105,7 @@ High-level hype trains generate events that feed the content flywheel:
 
 Simulated audience members behave predictably within their personality parameters. Real-derived audience members inherit the genuine unpredictability of human behavior -- unexpected excitement, inexplicable departures, returning after long absences. The game NEVER reveals which audience members are real. Keen players may develop theories, and that speculation IS the metagame.
 
-When lib-broadcast (L3) publishes `stream.audience.pulse` events, lib-showtime translates them into audience member state changes:
+When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtime translates them into audience member state changes:
 
 ### Translation Rules
 
@@ -242,8 +242,8 @@ When lib-broadcast (L3) publishes `stream.audience.pulse` events, lib-showtime t
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `stream.audience.pulse` | `HandleSentimentPulseAsync` | Translate real audience sentiment into real-derived audience members, feed hype train calculations. (Soft -- no-op if lib-broadcast absent) |
-| `stream.platform.session.started` | `HandlePlatformSessionStartedAsync` | If associated with an in-game session, start real audience blending. (Soft -- no-op if lib-broadcast absent) |
+| `broadcast.audience.pulse` | `HandleSentimentPulseAsync` | Translate real audience sentiment into real-derived audience members, feed hype train calculations. (Soft -- no-op if lib-broadcast absent) |
+| `broadcast.platform-session.created` | `HandlePlatformSessionStartedAsync` | If associated with an in-game session, start real audience blending. (Soft -- no-op if lib-broadcast absent) |
 | `voice.room.created` | `HandleVoiceRoomCreatedAsync` | Track voice room creation for audience context ("streamer is in a voice room with N participants"). (Soft -- no-op if lib-voice absent) |
 | `voice.participant.joined` | `HandleVoiceParticipantJoinedAsync` | Adjust audience behavior based on voice room size (more participants = more dynamic content). (Soft -- no-op if lib-voice absent) |
 | `voice.participant.left` | `HandleVoiceParticipantLeftAsync` | Adjust audience behavior based on voice room size. (Soft -- no-op if lib-voice absent) |

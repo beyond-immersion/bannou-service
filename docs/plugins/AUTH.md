@@ -7,6 +7,8 @@
 > **State Store**: auth-statestore (Redis), edge-revocation-statestore (Redis)
 > **Implementation Map**: [docs/maps/AUTH.md](../maps/AUTH.md)
 
+---
+
 ## Overview
 
 The Auth plugin is the internet-facing authentication and session management service (L1 AppFoundation). Handles email/password login, OAuth provider integration (Discord, Google, Twitch), Steam session ticket verification, JWT token generation/validation, password reset flows, TOTP-based MFA, and session lifecycle management. It is the primary gateway between external users and the internal service mesh -- after authenticating, clients receive a JWT and a WebSocket connect URL to establish persistent connections via lib-connect.

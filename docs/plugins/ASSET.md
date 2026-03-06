@@ -27,6 +27,7 @@ The Asset service (L3 AppFeatures) provides storage, versioning, and distributio
 | lib-save-load | Stores versioned game save data, handles export/import/migration/cleanup via `IAssetClient` |
 | sdk: asset-loader-server (`BannouMeshAssetSource`) | Server-side asset loading via mesh invocation |
 | sdk: asset-loader-client (`BannouWebSocketAssetSource`) | Client-side asset loading via WebSocket protocol |
+| lib-procedural (planned) | Will store HDA templates and retrieve generated geometry assets via `IAssetClient` |
 
 No external services subscribe to asset events; all event consumption is internal.
 
@@ -43,7 +44,7 @@ No external services subscribe to asset events; all event consumption is interna
 | `compression` | C (System State/Mode) | `CompressionType` enum (`lz4`, `lzma`, `none`) | Algorithm selection for bundle compression; system infrastructure choice |
 | `format` | C (System State/Mode) | `BundleFormat` enum (`bannou`, `zip`) | Wire format for bundle download; system transport choice |
 | `realm` | B (Game Content Type) | Opaque string (`GameRealm`) | Realm stub name (e.g., `"shared"`, `"realm-1"`); references Realm service data, not a fixed enum |
-| `owner` (events) | -- (Polymorphic identifier) | Plain string | Dual-purpose: accountId (UUID) for user uploads, service name string for service uploads; not a type field per se |
+| `owner` (events) | -- (Polymorphic identifier) | Plain string | Dual-purpose: accountId (UUID) for user uploads, service name string for service uploads; not a type field per se. Deviates from T14 polymorphic pattern (`ownerType` + `ownerId`) because Asset predates the convention and upload ownership is event-only metadata (not used for queries or referential integrity). Tracked for future cleanup. |
 
 **Notes**:
 - Asset service has no `EntityType` enum fields (Category A). Ownership is tracked via plain string `owner` fields rather than typed entity references.
@@ -195,6 +196,16 @@ Client                    Asset Service                     MinIO Storage
 
 ---
 
+## Background Workers
+
+| Worker | Purpose | Key Configuration |
+|--------|---------|-------------------|
+| `AssetProcessingWorker` | Polls for queued processing jobs, dispatches to content-type-specific processors (texture, model, audio) | `ProcessingQueueCheckIntervalSeconds`, `ProcessingBatchIntervalSeconds`, `ProcessorMaxConcurrentJobs` |
+| Bundle Cleanup Worker | Purges soft-deleted bundles past retention window from Redis metadata and MinIO storage | `BundleCleanupIntervalMinutes`, `DeletedBundleRetentionDays` |
+| ZIP Cache Cleanup Worker | Removes expired ZIP conversion cache entries | `ZipCacheCleanupIntervalMinutes`, `ZipCacheTtlHours` |
+
+---
+
 ## Stubs & Unimplemented Features
 
 1. **Texture and Model Processors**: `TextureProcessor` and `ModelProcessor` are registered but contain minimal implementations (validation only, no actual format conversion or optimization). The `AudioProcessor` with FFmpeg integration is the only fully functional processor.
@@ -221,6 +232,8 @@ Client                    Asset Service                     MinIO Storage
 
 5. **Bundle diffing**: When updating bundles, only changed assets could be uploaded as a delta, reducing bandwidth for incremental content updates.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/526 -->
+
+6. **Internal tag hierarchy**: If hierarchical tag relationships are needed for smart bundling or query expansion (e.g., searching `furniture` finds `picture_frame`), Asset could implement a lightweight parent/child tag table in its own Redis state store. Asset (L3) cannot depend on lib-relationship (L2) for this — see [closed #117](https://github.com/beyond-immersion/bannou-service/issues/117). For hierarchical composition of assets, the Scene service (L4) already provides node trees with recursive resolution.
 
 ---
 
@@ -272,4 +285,6 @@ Client                    Asset Service                     MinIO Storage
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-*(No completed items.)*
+### Resolved
+- **Bundle cleanup workers implemented**: The `BundleCleanupIntervalMinutes` and `ZipCacheCleanupIntervalMinutes` configuration properties drive active cleanup workers. The Asset portion of [#156](https://github.com/beyond-immersion/bannou-service/issues/156) (item #1: "no cleanup task") is resolved.
+- **#117 closed**: Tag hierarchy integration with lib-relationship was a hierarchy violation (L3 → L2). Closed with design alternatives noted in Potential Extensions #6.

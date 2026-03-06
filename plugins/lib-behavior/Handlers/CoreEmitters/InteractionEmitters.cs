@@ -24,7 +24,7 @@ public sealed class UseEmitter : BaseIntentEmitter
     public override string ActionName => "use";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -37,11 +37,12 @@ public sealed class UseEmitter : BaseIntentEmitter
         var channel = context.Archetype?.HasChannel("interaction") == true ? "interaction" : "action";
         var intent = string.IsNullOrEmpty(item) ? "use" : $"use_{item}";
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             intent,
             Math.Clamp(urgency, 0f, 1f),
-            target));
+            target);
     }
 }
 
@@ -60,7 +61,7 @@ public sealed class PickUpEmitter : BaseIntentEmitter
     public override string ActionName => "pick_up";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -70,11 +71,12 @@ public sealed class PickUpEmitter : BaseIntentEmitter
 
         var channel = context.Archetype?.HasChannel("interaction") == true ? "interaction" : "action";
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             "pick_up",
             Math.Clamp(urgency, 0f, 1f),
-            target));
+            target);
     }
 }
 
@@ -93,7 +95,7 @@ public sealed class TalkToEmitter : BaseIntentEmitter
     public override string ActionName => "talk_to";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -114,6 +116,7 @@ public sealed class TalkToEmitter : BaseIntentEmitter
             emissions.Add(new IntentEmission("attention", "look_at", Math.Clamp(urgency, 0f, 1f), target));
         }
 
-        return ValueTask.FromResult<IReadOnlyList<IntentEmission>>(emissions);
+        await Task.CompletedTask;
+        return emissions;
     }
 }

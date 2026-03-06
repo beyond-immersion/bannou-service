@@ -136,6 +136,18 @@ public class CharacterHistoryServiceTests
         _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((HistoryIndexData?)null);
 
+        // Capture published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
         // Act
         var (status, result) = await service.RecordParticipationAsync(request, CancellationToken.None);
 
@@ -156,11 +168,17 @@ public class CharacterHistoryServiceTests
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        // Verify event was published
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "character-history.participation.recorded",
-            It.IsAny<CharacterParticipationRecordedEvent>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        // Assert captured event
+        Assert.Equal("character-history.participation.recorded", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<CharacterParticipationRecordedEvent>(capturedEvent);
+        Assert.Equal(characterId, typedEvent.CharacterId);
+        Assert.Equal(eventId, typedEvent.HistoricalEventId);
+        Assert.Equal(result.ParticipationId, typedEvent.ParticipationId);
+        Assert.Equal(ParticipationRole.Combatant, typedEvent.Role);
+        Assert.Equal("The Great Battle", typedEvent.HistoricalEventName);
+        Assert.Equal(EventCategory.War, typedEvent.EventCategory);
+        Assert.Equal(0.8f, typedEvent.Significance);
     }
 
     [Fact]
@@ -492,6 +510,18 @@ public class CharacterHistoryServiceTests
         _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((BackstoryData?)null);
 
+        // Capture published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
         // Act
         var (status, result) = await service.SetBackstoryAsync(request, CancellationToken.None);
 
@@ -501,11 +531,12 @@ public class CharacterHistoryServiceTests
         Assert.Single(result.Elements);
         Assert.Equal("homeland", result.Elements.First().Key);
 
-        // Verify backstory.created event was published (new backstory)
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "character-history.backstory.created",
-            It.IsAny<CharacterBackstoryCreatedEvent>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        // Assert captured event
+        Assert.Equal("character-history.backstory.created", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<CharacterBackstoryCreatedEvent>(capturedEvent);
+        Assert.Equal(characterId, typedEvent.CharacterId);
+        Assert.Equal(1, typedEvent.ElementCount);
     }
 
     [Fact]
@@ -535,6 +566,18 @@ public class CharacterHistoryServiceTests
         _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingBackstory);
 
+        // Capture published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
         var request = new SetBackstoryRequest
         {
             CharacterId = characterId,
@@ -557,11 +600,12 @@ public class CharacterHistoryServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
 
-        // Verify backstory.updated event was published (existing backstory)
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "character-history.backstory.updated",
-            It.IsAny<CharacterBackstoryUpdatedEvent>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        // Assert captured event
+        Assert.Equal("character-history.backstory.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<CharacterBackstoryUpdatedEvent>(capturedEvent);
+        Assert.Equal(characterId, typedEvent.CharacterId);
+        Assert.False(typedEvent.ReplaceExisting);
     }
 
     #endregion
@@ -804,6 +848,18 @@ public class CharacterHistoryServiceTests
         _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingBackstory);
 
+        // Capture published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
         var request = new DeleteBackstoryRequest { CharacterId = characterId };
 
         // Act
@@ -814,10 +870,11 @@ public class CharacterHistoryServiceTests
 
         _mockBackstoryStore.Verify(s => s.DeleteAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()), Times.Once);
 
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "character-history.backstory.deleted",
-            It.IsAny<CharacterBackstoryDeletedEvent>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        // Assert captured event
+        Assert.Equal("character-history.backstory.deleted", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<CharacterBackstoryDeletedEvent>(capturedEvent);
+        Assert.Equal(characterId, typedEvent.CharacterId);
     }
 
     [Fact]
@@ -1075,6 +1132,238 @@ public class CharacterHistoryServiceTests
 
     #endregion
 
+    #region SummarizeHistory Tests
+
+    [Fact]
+    public async Task SummarizeHistoryAsync_WithData_ReturnsKeyPointsAndLifeEvents()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var backstoryData = new BackstoryData
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElementData>
+            {
+                new BackstoryElementData
+                {
+                    ElementType = BackstoryElementType.Origin,
+                    Key = "homeland",
+                    Value = "Northlands",
+                    Strength = 0.9f
+                },
+                new BackstoryElementData
+                {
+                    ElementType = BackstoryElementType.Training,
+                    Key = "trained_by",
+                    Value = "Knights Guild",
+                    Strength = 0.7f
+                }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(backstoryData);
+
+        // DualIndexHelper uses "participation-index-{key}" for primary index lookups
+        var participationId = Guid.NewGuid();
+        var indexData = new HistoryIndexData
+        {
+            EntityId = characterId.ToString(),
+            RecordIds = new List<string> { participationId.ToString() }
+        };
+        _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(indexData);
+        _mockParticipationStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ParticipationData>
+            {
+                { $"participation-{participationId}", new ParticipationData
+                    {
+                        ParticipationId = participationId,
+                        CharacterId = characterId,
+                        EventId = Guid.NewGuid(),
+                        EventName = "Battle of Stormgate",
+                        EventCategory = EventCategory.War,
+                        Role = ParticipationRole.Hero,
+                        EventDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
+                        Significance = 0.95f,
+                        CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                    }
+                }
+            });
+
+        var request = new SummarizeHistoryRequest
+        {
+            CharacterId = characterId,
+            MaxBackstoryPoints = 5,
+            MaxLifeEvents = 10
+        };
+
+        // Act
+        var (status, response) = await service.SummarizeHistoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotEmpty(response.KeyBackstoryPoints);
+        Assert.NotEmpty(response.MajorLifeEvents);
+        Assert.Equal(2, response.KeyBackstoryPoints.Count);
+        Assert.Single(response.MajorLifeEvents);
+    }
+
+    [Fact]
+    public async Task SummarizeHistoryAsync_WithNoData_ReturnsEmptyLists()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BackstoryData?)null);
+
+        // DualIndexHelper uses "participation-index-{key}" for primary index lookups
+        _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+
+        var request = new SummarizeHistoryRequest
+        {
+            CharacterId = characterId,
+            MaxBackstoryPoints = 5,
+            MaxLifeEvents = 10
+        };
+
+        // Act
+        var (status, response) = await service.SummarizeHistoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.KeyBackstoryPoints);
+        Assert.Empty(response.MajorLifeEvents);
+    }
+
+    #endregion
+
+    #region DeleteAllHistory Tests
+
+    [Fact]
+    public async Task DeleteAllHistoryAsync_WithData_DeletesAndPublishesEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var participationId = Guid.NewGuid();
+        var indexData = new HistoryIndexData
+        {
+            EntityId = characterId.ToString(),
+            RecordIds = new List<string> { participationId.ToString() }
+        };
+
+        // DualIndexHelper uses "participation-index-{key}" for primary index lookups
+        _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(indexData);
+        _mockIndexStore.Setup(s => s.GetWithETagAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((indexData, "etag-1"));
+        _mockParticipationStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ParticipationData>
+            {
+                { $"participation-{participationId}", new ParticipationData
+                    {
+                        ParticipationId = participationId,
+                        CharacterId = characterId,
+                        EventId = Guid.NewGuid(),
+                        EventName = "Battle",
+                        EventCategory = EventCategory.War,
+                        Role = ParticipationRole.Hero,
+                        EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                        Significance = 0.9f,
+                        CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                    }
+                }
+            });
+        // Secondary index bulk lookup for RemoveAllByPrimaryKeyAsync
+        _mockIndexStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, HistoryIndexData>());
+        // Bulk delete for records and indices
+        _mockParticipationStore.Setup(s => s.DeleteBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BackstoryData
+            {
+                CharacterId = characterId,
+                Elements = new List<BackstoryElementData>(),
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            });
+
+        // Capture published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        var request = new DeleteAllHistoryRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.DeleteAllHistoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.ParticipationsDeleted);
+        Assert.True(response.BackstoryDeleted);
+
+        // Assert captured event
+        Assert.Equal("character-history.deleted", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<CharacterHistoryDeletedEvent>(capturedEvent);
+        Assert.Equal(characterId, typedEvent.CharacterId);
+        Assert.Equal(1, typedEvent.ParticipationsDeleted);
+        Assert.True(typedEvent.BackstoryDeleted);
+    }
+
+    [Fact]
+    public async Task DeleteAllHistoryAsync_WithNoData_ReturnsZeroCounts()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        // DualIndexHelper uses "participation-index-{key}" for primary index lookups
+        _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+        _mockIndexStore.Setup(s => s.GetWithETagAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((HistoryIndexData?)null, (string?)null));
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BackstoryData?)null);
+
+        SetupDefaultMessageBus();
+
+        var request = new DeleteAllHistoryRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.DeleteAllHistoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.ParticipationsDeleted);
+        Assert.False(response.BackstoryDeleted);
+    }
+
+    #endregion
+
     #region GetCompressData Tests
 
     [Fact]
@@ -1143,6 +1432,7 @@ public class CharacterHistoryServiceTests
         Assert.NotNull(response);
         Assert.Equal(characterId, response.CharacterId);
         Assert.True(response.HasParticipations);
+        Assert.NotNull(response.Participations);
         Assert.Single(response.Participations);
         Assert.True(response.HasBackstory);
         Assert.NotNull(response.Backstory);
@@ -1195,6 +1485,7 @@ public class CharacterHistoryServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.True(response.HasParticipations);
+        Assert.NotNull(response.Participations);
         Assert.Single(response.Participations);
         Assert.False(response.HasBackstory);
         Assert.Null(response.Backstory);
@@ -1239,6 +1530,7 @@ public class CharacterHistoryServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.False(response.HasParticipations);
+        Assert.NotNull(response.Participations);
         Assert.Empty(response.Participations);
         Assert.True(response.HasBackstory);
         Assert.NotNull(response.Backstory);
@@ -1324,7 +1616,6 @@ public class CharacterHistoryServiceTests
             HasBackstory = true,
             Backstory = new BackstoryResponse
             {
-                CharacterId = characterId,
                 Elements = new List<BackstoryElement>
                 {
                     new BackstoryElement
@@ -1362,11 +1653,8 @@ public class CharacterHistoryServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(characterId, response.CharacterId);
         Assert.Equal(1, response.ParticipationsRestored);
         Assert.True(response.BackstoryRestored);
-        Assert.True(response.Success);
-        Assert.Null(response.ErrorMessage);
     }
 
     [Fact]
@@ -1427,7 +1715,6 @@ public class CharacterHistoryServiceTests
         Assert.NotNull(response);
         Assert.Equal(1, response.ParticipationsRestored);
         Assert.False(response.BackstoryRestored);
-        Assert.True(response.Success);
     }
 
     [Fact]
@@ -1448,12 +1735,7 @@ public class CharacterHistoryServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Equal(0, response.ParticipationsRestored);
-        Assert.False(response.BackstoryRestored);
-        Assert.NotNull(response.ErrorMessage);
-        Assert.Contains("Invalid archive data", response.ErrorMessage);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -1476,9 +1758,7 @@ public class CharacterHistoryServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.NotNull(response.ErrorMessage);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -1502,7 +1782,6 @@ public class CharacterHistoryServiceTests
             HasBackstory = true,
             Backstory = new BackstoryResponse
             {
-                CharacterId = characterId,
                 Elements = new List<BackstoryElement>
                 {
                     new BackstoryElement

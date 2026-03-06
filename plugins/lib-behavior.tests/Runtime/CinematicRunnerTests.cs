@@ -397,7 +397,7 @@ public sealed class CinematicRunnerTests
 
         // Assert
         Assert.Equal(CinematicRunnerState.Idle, controller.State);
-        Assert.Empty(controller.CinematicId);
+        Assert.Null(controller.CinematicId);
         Assert.Empty(controller.ControlledEntities);
     }
 

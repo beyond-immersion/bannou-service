@@ -1,11 +1,10 @@
 # Worldstate Plugin Deep Dive
 
 > **Plugin**: lib-worldstate
-> **Schema**: `schemas/worldstate-api.yaml`
+> **Schema**: schemas/worldstate-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
 > **State Store**: worldstate-realm-clock (Redis), worldstate-calendar (MySQL), worldstate-ratio-history (MySQL), worldstate-lock (Redis)
-> **Status**: Fully implemented.
 > **Implementation Map**: [docs/maps/WORLDSTATE.md](../maps/WORLDSTATE.md)
 
 ---
@@ -418,6 +417,7 @@ flows:
 ### Intentional Quirks (Documented Behavior)
 
 1. **ABML behavior namespace cleanup needed**: Several example behavior files reference variables under the `${world.*}` namespace that do NOT belong to worldstate: `${world.weather.temperature}` and `${world.weather.raining}` (these are `${environment.*}` variables from lib-environment L4), and `${world.patrol_routes[...]}` (operational data, not temporal). These example files predate the final namespace design and need updating. The `${world.*}` namespace owned by worldstate is strictly temporal: time, calendar, and season data.
+<!-- AUDIT:TRACKED:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/568 -->
 
 2. **Realm clocks are independent**: Two realms running on the same server can be in different seasons, years, or even different calendar systems entirely. There is no global game time. This is intentional -- Arcadia, Fantasia, and Omega are peer worlds that may have different temporal scales.
 

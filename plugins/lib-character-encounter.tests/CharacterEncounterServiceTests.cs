@@ -249,7 +249,18 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         Assert.Equal(100, config.MaxBatchSize);
         Assert.Equal(1.0, config.DefaultMemoryStrength, 3);
         Assert.Equal(0.2, config.MemoryRefreshBoost, 3);
+        Assert.Equal(0.2, config.SentimentShiftPositive, 3);
+        Assert.Equal(-0.2, config.SentimentShiftNegative, 3);
+        Assert.Equal(0.1, config.SentimentShiftMemorable, 3);
+        Assert.Equal(0.3, config.SentimentShiftTransformative, 3);
         Assert.True(config.SeedBuiltInTypesOnStartup);
+        Assert.Equal(5, config.EncounterCacheTtlMinutes);
+        Assert.Equal(50, config.EncounterCacheMaxResultsPerQuery);
+        Assert.Equal(20, config.MaxParticipantsPerEncounter);
+        Assert.Equal(3, config.ETagRetryMaxAttempts);
+        Assert.Equal(5, config.DuplicateTimestampToleranceMinutes);
+        Assert.Equal(-0.5, config.GrudgeSentimentThreshold, 3);
+        Assert.Equal(0.5, config.AllySentimentThreshold, 3);
     }
 
     #endregion
@@ -669,7 +680,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         Assert.NotNull(capturedEvent);
         Assert.Equal("encounter.recorded", capturedTopic);
         Assert.Equal("COMBAT", capturedEvent.EncounterTypeCode);
-        Assert.Equal("Negative", capturedEvent.Outcome);
+        Assert.Equal(EncounterOutcome.Negative, capturedEvent.Outcome);
         Assert.Contains(charA, capturedEvent.ParticipantIds);
         Assert.Contains(charB, capturedEvent.ParticipantIds);
     }
@@ -2257,11 +2268,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
-        Assert.Equal(characterId, response.CharacterId);
         Assert.Equal(1, response.EncountersRestored);
         Assert.Equal(1, response.PerspectivesRestored);
-        Assert.Null(response.ErrorMessage);
     }
 
     [Fact]
@@ -2337,7 +2345,6 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal(0, response.EncountersRestored); // Skipped existing
         Assert.Equal(1, response.PerspectivesRestored); // Still restored
     }
@@ -2358,14 +2365,9 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         // Act
         var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
 
-        // Assert
+        // Assert - T8: null payload for errors
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Equal(0, response.EncountersRestored);
-        Assert.Equal(0, response.PerspectivesRestored);
-        Assert.NotNull(response.ErrorMessage);
-        Assert.Contains("Invalid archive data", response.ErrorMessage);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -2385,11 +2387,9 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         // Act
         var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
 
-        // Assert
+        // Assert - T8: null payload for errors
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.NotNull(response.ErrorMessage);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -2425,7 +2425,6 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal(0, response.EncountersRestored);
         Assert.Equal(0, response.PerspectivesRestored);
     }
@@ -2509,7 +2508,6 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal(1, response.EncountersRestored);
         Assert.Equal(1, response.PerspectivesRestored); // Only own perspective restored
     }

@@ -24,6 +24,8 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | lib-gardener (L4) | Creates `guardian` seeds for player accounts, contributes growth via `ISeedClient`, queries capability manifests for UX module gating, manages seed bonds as the pair system; implements `ISeedEvolutionListener` for phase change notifications |
 | lib-faction (L4) | Creates faction seeds, contributes growth via `ISeedClient`, implements `ISeedEvolutionListener` for faction capability progression |
 | lib-status (L4) | Calls `ISeedClient` for seed-derived capability queries; implements `ISeedEvolutionListener` for capability change notifications |
+| lib-divine (L4, planned) | Will create deity domain power seeds, contribute growth via `ISeedClient`, and tie divinity generation to domain seed depth. Currently fully stubbed. |
+| lib-agency (L4, planned) | Will read guardian spirit seed capability depths to compute UX fidelity manifests (progressive agency). Pre-implementation, no schema exists yet. |
 | Dungeon plugin (planned, L4) | Will create `dungeon_core` and `dungeon_master` seeds for actor/character entities |
 
 ---
@@ -164,11 +166,20 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 - **No cleanup of associated data on archive**: `ArchiveSeedAsync` sets the seed's status to `Archived` but does not clean up growth data (`growth:{seedId}`), capability cache (`cap:{seedId}`), or bond data (`bond:{bondId}`). Archived seeds retain all associated state indefinitely. A cleanup strategy is needed -- either immediate deletion, a background retention worker, or integration with lib-resource for compression.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/366 -->
 
-- **Decay worker uses real-time, should use game-time**: The decay background worker (`SeedDecayWorkerService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a world with a 24:1 game-time ratio, decay applied per real-time cycle is 24x slower than intended per game-day. Guardian spirits, dungeon cores, faction seeds, and all other seed types evolve in the simulated world's time. When Worldstate (L2) is implemented, the decay worker must call `GetElapsedGameTime` to compute game-days elapsed since last decay cycle, then apply `GrowthDecayRatePerDay` against game-days rather than real-days. The `DecayWorkerIntervalSeconds` config remains the real-time check frequency; the decay amount per cycle is computed from game-time elapsed.
-<!-- AUDIT:BLOCKED:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/434 -->
+- **Decay worker uses real-time, should use game-time**: The decay background worker (`SeedDecayWorkerService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a world with a 24:1 game-time ratio, decay applied per real-time cycle is 24x slower than intended per game-day. Guardian spirits, dungeon cores, faction seeds, and all other seed types evolve in the simulated world's time. When Worldstate (L2) is implemented, the decay worker must call `GetElapsedGameTime` to compute game-days elapsed since last decay cycle, then apply `GrowthDecayRatePerDay` against game-days rather than real-days. The `DecayWorkerIntervalSeconds` config remains the real-time check frequency; the decay amount per cycle is computed from game-time elapsed. See [#545](https://github.com/beyond-immersion/bannou-service/issues/545) for the broader cross-service migration plan (covers both Currency autogain and Seed decay).
+<!-- AUDIT:BLOCKED:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/545 -->
+
+- **Realm association for game-time decay**: Seeds will gain a nullable `realmId` field set at creation time, making realm association explicit for game-time decay calculations. When null and `AutoAssociateRealm` config is true (default), realm is inferred from owner type (character → character's realm, realm-owned → the realm itself, actor → bound character's realm). When null and config is false, the seed has no decay. This ensures guardian spirit seeds (account-owned, no realm) naturally avoid decay, while character-owned and realm-owned seeds can be tied to specific realm timelines. A character in Realm A could have a seed explicitly tied to Realm B's time (e.g., a dungeon master bonded to a dungeon in a different realm). See [#545](https://github.com/beyond-immersion/bannou-service/issues/545) for implementation details.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/545 -->
 
 ---
 
 ## Work Tracking
 
-- [#434](https://github.com/beyond-immersion/bannou-service/issues/434) - Seed decay worker must transition from real-time to game-time via Worldstate (blocked by Worldstate implementation)
+- [#362](https://github.com/beyond-immersion/bannou-service/issues/362) - Bond dissolution endpoint design (triaged: cancel + dissolve flows, permanent bonds unbreakable)
+- [#366](https://github.com/beyond-immersion/bannou-service/issues/366) - Archived seed data cleanup strategy (depends on #362 for bond dissolution during archive)
+- [#354](https://github.com/beyond-immersion/bannou-service/issues/354) - Cross-seed-type growth transfer matrix (creative game design decisions needed, not blocking)
+- [#374](https://github.com/beyond-immersion/bannou-service/issues/374) - Seed type merge endpoint (creative game design decisions needed, not blocking)
+- [#437](https://github.com/beyond-immersion/bannou-service/issues/437) - Seed owner type promotion / re-parenting for dungeon Pattern A (depends on #436 household split)
+- [#497](https://github.com/beyond-immersion/bannou-service/issues/497) - Client events for guardian spirit progression via Entity Session Registry (depends on #426)
+- [#545](https://github.com/beyond-immersion/bannou-service/issues/545) - Currency/Seed background workers game-time migration via Worldstate (blocked by Worldstate; includes RealmId design for realm association)

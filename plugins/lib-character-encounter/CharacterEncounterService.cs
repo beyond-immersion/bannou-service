@@ -536,7 +536,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             Timestamp = now,
             EncounterId = encounterId,
             EncounterTypeCode = body.EncounterTypeCode.ToUpperInvariant(),
-            Outcome = body.Outcome.ToString(),
+            Outcome = body.Outcome,
             RealmId = body.RealmId,
             LocationId = body.LocationId,
             ParticipantIds = participantIds,
@@ -971,12 +971,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
         var sentiments = results
             .Where(r => r.status == StatusCodes.OK && r.sentiment != null)
-            .Select(r => r.sentiment!)
+            .Select(r => r.sentiment)
+            .OfType<SentimentResponse>()
             .ToList();
 
         return (StatusCodes.OK, new BatchSentimentResponse
         {
-            CharacterId = body.CharacterId,
             Sentiments = sentiments
         });
     }
@@ -1204,7 +1204,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
         return (StatusCodes.OK, new DeleteEncounterResponse
         {
-            EncounterId = body.EncounterId,
             PerspectivesDeleted = perspectivesDeleted
         });
     }
@@ -1294,7 +1293,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
             return (StatusCodes.OK, new DeleteByCharacterResponse
             {
-                CharacterId = body.CharacterId,
                 EncountersDeleted = encountersDeleted,
                 PerspectivesDeleted = perspectivesDeleted
             });
@@ -1315,8 +1313,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return (StatusCodes.OK, new DecayMemoriesResponse
             {
                 PerspectivesProcessed = 0,
-                MemoriesFaded = 0,
-                DryRun = body.DryRun
+                MemoriesFaded = 0
             });
         }
 
@@ -1399,8 +1396,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         return (StatusCodes.OK, new DecayMemoriesResponse
         {
             PerspectivesProcessed = perspectivesProcessed,
-            MemoriesFaded = memoriesFaded,
-            DryRun = dryRun
+            MemoriesFaded = memoriesFaded
         });
     }
 
@@ -1530,14 +1526,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to decompress archive data for character {CharacterId}", body.CharacterId);
-            return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
-            {
-                CharacterId = body.CharacterId,
-                EncountersRestored = 0,
-                PerspectivesRestored = 0,
-                Success = false,
-                ErrorMessage = $"Invalid archive data: {ex.Message}"
-            });
+            return (StatusCodes.BadRequest, null);
         }
 
         // Restore encounters and perspectives
@@ -1629,10 +1618,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
         return (StatusCodes.OK, new RestoreFromArchiveResponse
         {
-            CharacterId = body.CharacterId,
             EncountersRestored = encountersRestored,
-            PerspectivesRestored = perspectivesRestored,
-            Success = true
+            PerspectivesRestored = perspectivesRestored
         });
     }
 
@@ -1835,7 +1822,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var indexStore = _characterIndexStore;
         var key = $"{CHAR_INDEX_PREFIX}{characterId}";
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
             var isNewCharacter = index == null;
@@ -1865,8 +1852,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to add perspective {PerspectiveId} to character index {CharacterId} after 3 attempts",
-            perspectiveId, characterId);
+        _logger.LogWarning("Failed to add perspective {PerspectiveId} to character index {CharacterId} after {MaxAttempts} attempts",
+            perspectiveId, characterId, _configuration.ETagRetryMaxAttempts);
     }
 
     private async Task AddToGlobalCharacterIndexAsync(Guid characterId, CancellationToken cancellationToken)
@@ -1874,7 +1861,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToGlobalCharacterIndexAsync");
         var globalIndexStore = _globalCharacterIndexStore;
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (globalIndex, etag) = await globalIndexStore.GetWithETagAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken);
             globalIndex ??= new GlobalCharacterIndexData();
@@ -1895,7 +1882,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to add character {CharacterId} to global character index after 3 attempts", characterId);
+        _logger.LogWarning("Failed to add character {CharacterId} to global character index after {MaxAttempts} attempts", characterId, _configuration.ETagRetryMaxAttempts);
     }
 
     private async Task RemoveFromCharacterIndexAsync(Guid characterId, Guid perspectiveId, CancellationToken cancellationToken)
@@ -1904,7 +1891,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var indexStore = _characterIndexStore;
         var key = $"{CHAR_INDEX_PREFIX}{characterId}";
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
             if (index == null)
@@ -1932,8 +1919,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to remove perspective {PerspectiveId} from character index {CharacterId} after 3 attempts",
-            perspectiveId, characterId);
+        _logger.LogWarning("Failed to remove perspective {PerspectiveId} from character index {CharacterId} after {MaxAttempts} attempts",
+            perspectiveId, characterId, _configuration.ETagRetryMaxAttempts);
     }
 
     private async Task RemoveFromGlobalCharacterIndexAsync(Guid characterId, CancellationToken cancellationToken)
@@ -1941,7 +1928,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromGlobalCharacterIndexAsync");
         var globalIndexStore = _globalCharacterIndexStore;
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (globalIndex, etag) = await globalIndexStore.GetWithETagAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken);
             if (globalIndex == null)
@@ -1962,7 +1949,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to remove character {CharacterId} from global character index after 3 attempts", characterId);
+        _logger.LogWarning("Failed to remove character {CharacterId} from global character index after {MaxAttempts} attempts", characterId, _configuration.ETagRetryMaxAttempts);
     }
 
     private async Task AddToCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
@@ -1970,7 +1957,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToCustomTypeIndexAsync");
         var indexStore = _customTypeIndexStore;
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(CUSTOM_TYPE_INDEX_KEY, cancellationToken);
             index ??= new CustomTypeIndexData();
@@ -1991,7 +1978,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to add type code {TypeCode} to custom type index after 3 attempts", typeCode);
+        _logger.LogWarning("Failed to add type code {TypeCode} to custom type index after {MaxAttempts} attempts", typeCode, _configuration.ETagRetryMaxAttempts);
     }
 
     private async Task RemoveFromCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
@@ -1999,7 +1986,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromCustomTypeIndexAsync");
         var indexStore = _customTypeIndexStore;
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(CUSTOM_TYPE_INDEX_KEY, cancellationToken);
             if (index == null)
@@ -2020,7 +2007,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to remove type code {TypeCode} from custom type index after 3 attempts", typeCode);
+        _logger.LogWarning("Failed to remove type code {TypeCode} from custom type index after {MaxAttempts} attempts", typeCode, _configuration.ETagRetryMaxAttempts);
     }
 
     /// <summary>
@@ -2033,7 +2020,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var indexStore = _typeEncounterIndexStore;
         var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
             index ??= new TypeEncounterIndexData { TypeCode = typeCode };
@@ -2055,8 +2042,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to add encounter {EncounterId} to type-encounter index {TypeCode} after 3 attempts",
-            encounterId, typeCode);
+        _logger.LogWarning("Failed to add encounter {EncounterId} to type-encounter index {TypeCode} after {MaxAttempts} attempts",
+            encounterId, typeCode, _configuration.ETagRetryMaxAttempts);
     }
 
     /// <summary>
@@ -2069,7 +2056,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var indexStore = _typeEncounterIndexStore;
         var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
             if (index == null)
@@ -2091,8 +2078,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to remove encounter {EncounterId} from type-encounter index {TypeCode} after 3 attempts",
-            encounterId, typeCode);
+        _logger.LogWarning("Failed to remove encounter {EncounterId} from type-encounter index {TypeCode} after {MaxAttempts} attempts",
+            encounterId, typeCode, _configuration.ETagRetryMaxAttempts);
     }
 
     /// <summary>
@@ -2272,7 +2259,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 var charA = participantIds[i] < participantIds[j] ? participantIds[i] : participantIds[j];
                 var charB = participantIds[i] < participantIds[j] ? participantIds[j] : participantIds[i];
 
-                for (var attempt = 0; attempt < 3; attempt++)
+                for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
                 {
                     var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
                     index ??= new PairIndexData { CharacterIdA = charA, CharacterIdB = charB };
@@ -2309,7 +2296,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 var pairKey = GetPairKey(participantIds[i], participantIds[j]);
                 var key = $"{PAIR_INDEX_PREFIX}{pairKey}";
 
-                for (var attempt = 0; attempt < 3; attempt++)
+                for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
                 {
                     var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
                     if (index == null)
@@ -2340,7 +2327,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var indexStore = _locationIndexStore;
         var key = $"{LOCATION_INDEX_PREFIX}{locationId}";
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
             index ??= new LocationIndexData { LocationId = locationId };
@@ -2362,8 +2349,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to add encounter {EncounterId} to location index {LocationId} after 3 attempts",
-            encounterId, locationId);
+        _logger.LogWarning("Failed to add encounter {EncounterId} to location index {LocationId} after {MaxAttempts} attempts",
+            encounterId, locationId, _configuration.ETagRetryMaxAttempts);
     }
 
     private async Task RemoveFromLocationIndexAsync(Guid locationId, Guid encounterId, CancellationToken cancellationToken)
@@ -2372,7 +2359,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var indexStore = _locationIndexStore;
         var key = $"{LOCATION_INDEX_PREFIX}{locationId}";
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
             if (index == null)
@@ -2394,8 +2381,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to remove encounter {EncounterId} from location index {LocationId} after 3 attempts",
-            encounterId, locationId);
+        _logger.LogWarning("Failed to remove encounter {EncounterId} from location index {LocationId} after {MaxAttempts} attempts",
+            encounterId, locationId, _configuration.ETagRetryMaxAttempts);
     }
 
     // ============================================================================
@@ -2408,7 +2395,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var indexStore = _encounterPerspectiveIndexStore;
         var key = $"{ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}";
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
             index ??= new EncounterPerspectiveIndexData { EncounterId = encounterId };
@@ -2429,8 +2416,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to add perspective {PerspectiveId} to encounter perspective index {EncounterId} after 3 attempts",
-            perspectiveId, encounterId);
+        _logger.LogWarning("Failed to add perspective {PerspectiveId} to encounter perspective index {EncounterId} after {MaxAttempts} attempts",
+            perspectiveId, encounterId, _configuration.ETagRetryMaxAttempts);
     }
 
     private async Task RemoveFromEncounterPerspectiveIndexAsync(Guid encounterId, Guid perspectiveId, CancellationToken cancellationToken)
@@ -2439,7 +2426,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var indexStore = _encounterPerspectiveIndexStore;
         var key = $"{ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}";
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
             if (index == null) return;
@@ -2465,8 +2452,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        _logger.LogWarning("Failed to remove perspective {PerspectiveId} from encounter perspective index {EncounterId} after 3 attempts",
-            perspectiveId, encounterId);
+        _logger.LogWarning("Failed to remove perspective {PerspectiveId} from encounter perspective index {EncounterId} after {MaxAttempts} attempts",
+            perspectiveId, encounterId, _configuration.ETagRetryMaxAttempts);
     }
 
     private async Task DeleteEncounterPerspectiveIndexAsync(Guid encounterId, CancellationToken cancellationToken)
@@ -2510,7 +2497,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         if (!_configuration.MemoryDecayEnabled || _configuration.MemoryDecayMode != MemoryDecayMode.Lazy)
         {
             // No decay needed - just return values
-            return bulkResult.Values.Where(p => p != null).ToList()!;
+            return bulkResult.Values.Where(p => p != null).Cast<PerspectiveData>().ToList();
         }
 
         // Separate perspectives needing decay from those that don't

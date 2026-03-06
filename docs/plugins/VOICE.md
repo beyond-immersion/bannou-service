@@ -7,6 +7,8 @@
 > **State Store**: voice-statestore (Redis), voice-lock (Redis)
 > **Implementation Map**: [docs/maps/VOICE.md](../maps/VOICE.md)
 
+---
+
 ## Overview
 
 Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a platform primitive: P2P mesh topology for small groups, Kamailio/RTPEngine-based SFU for larger rooms, automatic tier upgrade, WebRTC SDP signaling, broadcast consent flows for streaming integration, and participant TTL enforcement via background worker. Agnostic to games, sessions, and subscriptions -- voice rooms are generic containers identified by Connect/Auth session IDs. Part of a planned three-service stack (voice, broadcast, showtime) where each delivers value independently; voice provides audio infrastructure while higher layers decide when and why to use it. Moved from L4 to L3 to eliminate a hierarchy violation where GameSession (L2) previously depended on Voice (L4) for room lifecycle.
@@ -59,7 +61,7 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
     |  Soft depends on: lib-voice (L3) for audio source      |
     +------------------------+-------------------------------+
                              |
-               stream.audience.pulse events
+               broadcast.audience.pulse events
                (sentiment arrays, no PII)
                              |
                              v
@@ -277,7 +279,7 @@ Each participant calls /voice/room/broadcast/consent
                                             |
                                             v
                                       Stop FFmpeg process
-                                      Publish stream.broadcast.stopped -> Offline
+                                      Publish broadcast.broadcast-output.updated -> Offline
 ```
 
 ### Deployment Modes
@@ -315,7 +317,7 @@ SHOWTIME_SERVICE_ENABLED=true
 3. **VoiceRoomStateClientEvent**: Defined in `voice-client-events.yaml`. Now published by `HandleSessionReconnectedAsync` for reconnection state restoration. Not yet published during normal join flow (still returns state via JoinVoiceRoomResponse).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/396 -->
 
-4. **lib-broadcast integration**: lib-broadcast does not exist yet. When implemented, it will subscribe to `voice.broadcast.approved` and `voice.broadcast.stopped` to manage RTMP output. The RTP audio endpoint metadata in the broadcast approved event enables this integration. **Voice's integration surface is complete** — all three broadcast events (`approved`, `declined`, `stopped`) are published with correct typed models. No voice code changes needed; blocked on lib-broadcast service implementation.
+4. **lib-broadcast integration**: lib-broadcast does not exist yet. When implemented, it will subscribe to `voice.broadcast.approved` and `voice.broadcast.stopped` to manage RTMP output. The RTP audio endpoint metadata in the broadcast approved event enables this integration. **Voice's integration surface is complete for launch** — all three broadcast events (`approved`, `declined`, `stopped`) are published with correct typed models. No voice code changes needed for initial integration; blocked on lib-broadcast service implementation. Note: Broadcast Phase 4 (mute-aware audio mixing) will need mute state synchronization events from Voice — tracked by #402.
 <!-- AUDIT:BLOCKED:2026-03-01 -->
 
 5. **lib-showtime integration**: lib-showtime does not exist yet. When implemented, it will subscribe to voice room lifecycle events and orchestrate the game-session-to-voice-room lifecycle that previously lived in GameSession (L2). **Voice's integration surface is complete** — all four lifecycle events (`voice.room.created`, `voice.room.deleted`, `voice.peer.joined`, `voice.peer.left`) are published with correct typed models. No voice code changes needed; blocked on lib-showtime service implementation.
@@ -349,7 +351,8 @@ SHOWTIME_SERVICE_ENABLED=true
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **RTPEngine cookie mismatch correctness bug**: The RTPEngine UDP client uses raw UDP with bencode encoding. Cookie mismatch responses (stale data from previous timed-out requests) are logged but used anyway, meaning the service can act on wrong response data. The triage on #404 confirms this is a correctness bug requiring a loop-receive until the correct cookie arrives or timeout expires, discarding mismatched responses.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/404 -->
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -371,7 +374,7 @@ None identified.
 
 ### Design Considerations (Requires Planning)
 
-1. **RTPEngine UDP protocol**: Uses raw UDP with bencode encoding. No connection state, no retries on packet loss. `_sendLock` prevents concurrent sends but lost responses are not retried - the operation simply times out. Additionally, cookie mismatch responses (stale data from previous timed-out requests) are logged but used anyway -- a correctness bug.
+1. **RTPEngine UDP retry strategy**: Beyond the cookie mismatch bug (see Bugs #1), the RTPEngine UDP client has no retry logic for lost responses — the operation simply times out. A retry strategy with exponential backoff is needed for production reliability.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/404 -->
 
 2. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.

@@ -270,7 +270,7 @@ public sealed class EntityResolver : IEntityResolver
         switch (normalizedName)
         {
             case "self":
-                if (context.RequestingEntity.HasValue && context.RequestingEntity.Value != Guid.Empty)
+                if (context.RequestingEntity.HasValue)
                 {
                     return EntityReference.FromId(context.RequestingEntity.Value);
                 }
@@ -327,10 +327,10 @@ public sealed class EntityResolver : IEntityResolver
         if (value is EntityReference reference)
             return reference;
 
-        if (value is Guid guid && guid != Guid.Empty)
+        if (value is Guid guid)
             return EntityReference.FromId(guid);
 
-        if (value is string str && Guid.TryParse(str, out var parsed) && parsed != Guid.Empty)
+        if (value is string str && Guid.TryParse(str, out var parsed))
             return EntityReference.FromId(parsed);
 
         // Handle dictionary with id field (common pattern)

@@ -204,6 +204,7 @@ public interface IControlGate
     /// Returns control to the default source (behavior).
     /// </summary>
     /// <param name="handoff">Handoff protocol.</param>
+    /// <returns>A task that completes when control is returned.</returns>
     Task ReturnControlAsync(ControlHandoff handoff);
 
     /// <summary>

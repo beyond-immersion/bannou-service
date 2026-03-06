@@ -14,6 +14,12 @@ namespace BeyondImmersion.BannouService.Behavior.Control;
 /// <summary>
 /// Thread-safe manager for entity control gates.
 /// </summary>
+/// <remarks>
+/// IMPLEMENTATION TENETS: This uses in-memory ConcurrentDictionary as sole store.
+/// In multi-instance deployments, control state is node-local (not shared).
+/// When cinematic coordination becomes active, this must be backed by lib-state (Redis)
+/// to ensure control gates are visible across all nodes.
+/// </remarks>
 public sealed class ControlGateManager : IControlGateRegistry
 {
     private readonly ConcurrentDictionary<Guid, IControlGate> _gates;
@@ -140,6 +146,7 @@ public sealed class ControlGateManager : IControlGateRegistry
     /// </summary>
     /// <param name="entityIds">The entities to release.</param>
     /// <param name="handoff">The handoff protocol.</param>
+    /// <returns>A task that completes when all entities have been released.</returns>
     public async Task ReturnCinematicControlAsync(
         IEnumerable<Guid> entityIds,
         ControlHandoff handoff)

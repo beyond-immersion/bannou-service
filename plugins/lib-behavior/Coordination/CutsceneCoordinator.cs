@@ -233,7 +233,7 @@ public static class CutsceneCoordinatorExtensions
 
         var session = await coordinator.CreateSessionAsync(
             sessionId,
-            controller.CinematicId,
+            controller.CinematicId ?? throw new InvalidOperationException("Controller has no CinematicId"),
             controller.ControlledEntities.ToList(),
             effectiveOptions,
             ct);

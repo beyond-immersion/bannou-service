@@ -69,8 +69,8 @@ components:
           type: string
           description: Type code of the encounter (e.g., COMBAT, TRADE)
         outcome:
-          type: string
-          description: Outcome of the encounter (POSITIVE, NEGATIVE, etc.)
+          $ref: 'character-encounter-api.yaml#/components/schemas/EncounterOutcome'
+          description: Outcome of the encounter
         realmId:
           type: string
           format: uuid
@@ -85,6 +85,7 @@ components:
           items:
             type: string
             format: uuid
+          maxItems: 100
           description: All character IDs involved in the encounter
         context:
           type: string
@@ -132,14 +133,20 @@ components:
         previousStrength:
           type: number
           format: float
+          minimum: 0.0
+          maximum: 1.0
           description: Memory strength before decay
         newStrength:
           type: number
           format: float
+          minimum: 0.0
+          maximum: 1.0
           description: Memory strength after decay
         fadeThreshold:
           type: number
           format: float
+          minimum: 0.0
+          maximum: 1.0
           description: The threshold below which memories are considered faded
 
     EncounterMemoryRefreshedEvent:
@@ -185,10 +192,14 @@ components:
         previousStrength:
           type: number
           format: float
+          minimum: 0.0
+          maximum: 1.0
           description: Memory strength before refresh
         newStrength:
           type: number
           format: float
+          minimum: 0.0
+          maximum: 1.0
           description: Memory strength after refresh
 
     EncounterPerspectiveUpdatedEvent:
@@ -237,11 +248,15 @@ components:
         previousSentimentShift:
           type: number
           format: float
+          minimum: -1.0
+          maximum: 1.0
           nullable: true
           description: Previous sentiment shift (if changed)
         newSentimentShift:
           type: number
           format: float
+          minimum: -1.0
+          maximum: 1.0
           nullable: true
           description: New sentiment shift (if changed)
 
@@ -273,9 +288,11 @@ components:
           items:
             type: string
             format: uuid
+          maxItems: 100
           description: Character IDs that were involved in the encounter
         perspectivesDeleted:
           type: integer
+          minimum: 0
           description: Number of perspectives deleted with the encounter
         deletedByCharacterCleanup:
           type: boolean

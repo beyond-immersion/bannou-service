@@ -1,11 +1,10 @@
 # Transit Plugin Deep Dive
 
 > **Plugin**: lib-transit
-> **Schema**: `schemas/transit-api.yaml`
+> **Schema**: schemas/transit-api.yaml
 > **Version**: 1.0.0
-> **State Store**: transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis), transit-lock (Redis)
 > **Layer**: GameFoundation
-> **Status**: Fully implemented.
+> **State Store**: transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis), transit-lock (Redis)
 > **Implementation Map**: [docs/maps/TRANSIT.md](../maps/TRANSIT.md)
 
 ---
@@ -348,6 +347,16 @@ teleportation, fast-travel, or narrative skip.
 
 No stubs remain. All 33 endpoints are fully implemented with no `NotImplemented` returns or TODO markers. Background workers (Seasonal Connection Worker, Journey Archival Worker) are implemented. The `ITransitCostModifierProvider` interface exists in `bannou-service/Providers/`. Variable provider factory (`TransitVariableProviderFactory`) is implemented.
 
+### Client Events
+
+Three client events are defined in `schemas/transit-client-events.yaml` (see [implementation map](../maps/TRANSIT.md) for full event schemas):
+
+| Client Event | Entity Mapping | Trigger |
+|-------------|----------------|---------|
+| `TransitJourneyUpdatedClientEvent` | `("character", characterId)` via Gardener registration | Journey depart, waypoint, arrive, interrupt, resume, abandon — single event with `JourneyStatus` discriminator |
+| `TransitDiscoveryRevealedClientEvent` | `("character", characterId)` via Gardener registration | Connection discovered by entity — personal notification only |
+| `TransitConnectionStatusChangedClientEvent` | `("realm", realmId)` via Agency registration | Road closures, blockades, seasonal changes — broadcast to all players in realm |
+
 ---
 
 ## Potential Extensions
@@ -355,14 +364,14 @@ No stubs remain. All 33 endpoints are fully implemented with no `NotImplemented`
 1. **Caravan formations (Phase 2)**: Multiple entities traveling together as a group. Group speed = slowest member. Group risk = reduced (safety in numbers). Caravan as an entity type for journeys, with member tracking and formation bonuses. Faction merchant guilds could manage NPC caravans. **Promoted to Phase 2** -- the data model already accommodates this via `entityType: "caravan"` and `partySize`, but Phase 2 needs: a `partyMembers: [uuid]` field on `TransitJourney` for tracking individual members, batch departure/advance for all party members, and a party leader concept for GOAP decisions. The `validEntityTypes` restriction on modes already supports caravan-only modes (e.g., `wagon` with `validEntityTypes: ["caravan", "army"]`).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/524 -->
 
-2. **Fatigue and rest**: Long journeys accumulate fatigue. After a configurable threshold, the entity must rest (journey auto-pauses at next waypoint). Rest duration depends on mode and entity stamina. Creates natural stopping points at inns and camps.
+2. **Fatigue and rest**: Long journeys accumulate fatigue based on per-mode `fatigueRatePerGameHour`. Transit passively tracks accumulated fatigue on journeys and publishes threshold events — it does NOT auto-pause or add a "resting" journey status (per Resolved Decision #2: no autonomous progression). The Actor/L4 layer decides when and where to rest. Fatigue thresholds come from an L4 DI provider (`IFatigueThresholdProvider`), following the established `ITransitCostModifierProvider` pattern — different entities have different stamina. Rest duration and behavior are entirely outside Transit's scope.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/527 -->
 
 3. **Mount bonding**: Integration with Relationship (L2) for character-mount relationships. A well-bonded mount has higher effective speed and lower fatigue. Bond strength grows with travel distance. Follows the existing Relationship entity-to-entity model.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/533 -->
 
-4. **Transit fares**: Monetary cost for using certain transit modes or connections. Ferries, toll roads, carriage services, and teleportation portals could have a fare. Two options: (a) Transit stores fare data per-connection/mode and calls Currency (L2) during `journey/depart` to debit the fare -- feasible since both are L2. (b) Fares are purely a Trade (L4) concern that wraps Transit journeys with economic logic. Option (a) keeps fare enforcement at the primitive level (NPCs can't cheat tolls), while (b) keeps Transit purely about movement physics. **Open design question**: should Transit know about money, or should fares be an L4 overlay?
-<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/535 -->
+4. ~~**Transit fares**~~: **Resolved** -- see Resolved Design Decision #9. Transit remains a pure movement primitive; fares are owned by Trade (L4).
+<!-- AUDIT:RESOLVED:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/535 -->
 
 
 ---
@@ -382,6 +391,8 @@ None currently known.
 3. **Journey archival is lazy, not event-driven**: Completed journeys are moved from Redis to MySQL by the `JourneyArchivalWorker` on a periodic timer (`JourneyArchivalWorkerIntervalSeconds`, default 300s). This means recently completed journeys remain in Redis for up to 5 minutes before archival. Queries for historical journeys should check both active (`journey/get`) and archived (`journey/query-archive`) stores.
 
 4. **Discovery is per-entity, not per-account**: Connection discovery (`transit-discovery` store) is tracked per entity, meaning each character on an account discovers connections independently. There is no account-level discovery sharing. This is consistent with Transit being a game-primitive — account-level features would be an L4 concern.
+
+5. **Mid-journey seasonal closure**: When a season changes and a connection closes for the new season, the Seasonal Connection Worker publishes warnings but does NOT interrupt travelers already in transit on that connection. The game/Actor layer decides how to handle entities caught by seasonal closure (e.g., the actor might choose to press on, turn back, or wait). This is consistent with the declarative lifecycle pattern — Transit does not autonomously alter journey state.
 
 ---
 
@@ -678,6 +689,10 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 6. **Transit and Mapping relationship**: Complementary, not overlapping. Mapping is continuous spatial data ("where exactly am I"), Transit is discrete connectivity ("how do I get from town A to town B"). No integration needed beyond both referencing Location entities.
 
 7. **Cross-realm connections**: Fully supported at the platform level. Connections store `fromRealmId` and `toRealmId` (derived from their endpoint locations), with a convenience `crossRealm` flag. Route calculation merges per-realm graphs when origin and destination are in different realms. Games control cross-realm travel by policy: Arcadia's realms are intentionally isolated (no cross-realm connections are ever created), but other games on the platform may freely connect locations across realms. The platform provides the primitive; game design decides whether to use it.
+
+8. **One active journey per entity**: An entity may have at most one active journey (status `preparing`, `in_transit`, `at_waypoint`, or `interrupted`) at any time. Creating a new journey while one is active returns `Conflict`. Games needing parallel movement (e.g., a character riding a ship while the ship follows its own route) model this via separate entity types — the ship has its own journey, the character is a passenger (tracked via `partySize` or the ship's own entity record). This keeps the journey state machine simple and prevents ambiguous "current location" semantics.
+
+9. **Transit fares**: No. Transit is a pure movement primitive. Monetary costs for transit modes and connections (tolls, fares, carriage fees, teleportation costs) are owned by Trade (L4), which wraps transit journeys with economic logic. Trade's deep dive already models `totalTransitCost` in `ShipmentFinancialSummary` and treats transit cost as one of four economic factors. "NPCs can't cheat tolls" is enforced behaviorally — guard NPCs at waypoints interrupt journeys via the existing interruption mechanism, without Transit needing to know about currency. Keeping Transit decoupled from Currency avoids cross-service atomicity complexity (Currency debit + journey save = two-phase commit) for no meaningful benefit. See [#535](https://github.com/beyond-immersion/bannou-service/issues/535).
 
 ---
 

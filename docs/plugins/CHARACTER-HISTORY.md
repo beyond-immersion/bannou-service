@@ -257,7 +257,6 @@ None.
 1. ~~**Metadata stored as `object?`**~~: **Resolved** - Participation metadata is client-only opaque data. No Bannou plugin reads specific keys by convention. Schema descriptions updated per FOUNDATION TENETS (T29).
 
 2. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/311 -->
 
 ---
 
@@ -265,5 +264,5 @@ None.
 
 ### Pending Design Review
 - **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for DeleteAll (blocked on lib-resource batch unregister endpoint; O(N) API calls for N participations)
-- **2026-02-06**: [#311](https://github.com/beyond-immersion/bannou-service/issues/311) - AddBackstoryElement event does not distinguish element added vs updated (need to survey consumers for actual requirement)
+- ~~**2026-02-06**: [#311](https://github.com/beyond-immersion/bannou-service/issues/311) - AddBackstoryElement event does not distinguish element added vs updated~~ **Closed**: Existing upsert semantics are sufficient; event consumers don't need the distinction
 - ~~**2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas~~ **Resolved**: Metadata is client-only opaque data; descriptions updated to clarify no plugin reads specific keys

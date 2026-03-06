@@ -8,6 +8,8 @@ using BeyondImmersion.BannouService.Behavior.Goap;
 using Xunit;
 
 using InternalGoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
+using SdkReplanReason = BeyondImmersion.Bannou.BehaviorCompiler.Goap.ReplanReason;
+using SdkValidationSuggestion = BeyondImmersion.Bannou.BehaviorCompiler.Goap.ValidationSuggestion;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Goap;
 
@@ -639,8 +641,8 @@ public class GoapPlannerTests
 
         // Assert
         Assert.True(result.IsValid);
-        Assert.Equal(ReplanReason.None, result.Reason);
-        Assert.Equal(ValidationSuggestion.Continue, result.Suggestion);
+        Assert.Equal(SdkReplanReason.None, result.Reason);
+        Assert.Equal(SdkValidationSuggestion.Continue, result.Suggestion);
     }
 
     [Fact]
@@ -674,8 +676,8 @@ public class GoapPlannerTests
 
         // Assert
         Assert.True(result.IsValid);
-        Assert.Equal(ReplanReason.PlanCompleted, result.Reason);
-        Assert.Equal(ValidationSuggestion.Abort, result.Suggestion);
+        Assert.Equal(SdkReplanReason.PlanCompleted, result.Reason);
+        Assert.Equal(SdkValidationSuggestion.Abort, result.Suggestion);
     }
 
     [Fact]
@@ -709,8 +711,8 @@ public class GoapPlannerTests
 
         // Assert
         Assert.True(result.IsValid);
-        Assert.Equal(ReplanReason.GoalAlreadySatisfied, result.Reason);
-        Assert.Equal(ValidationSuggestion.Abort, result.Suggestion);
+        Assert.Equal(SdkReplanReason.GoalAlreadySatisfied, result.Reason);
+        Assert.Equal(SdkValidationSuggestion.Abort, result.Suggestion);
     }
 
     [Fact]
@@ -744,8 +746,8 @@ public class GoapPlannerTests
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Equal(ReplanReason.PreconditionInvalidated, result.Reason);
-        Assert.Equal(ValidationSuggestion.Replan, result.Suggestion);
+        Assert.Equal(SdkReplanReason.PreconditionInvalidated, result.Reason);
+        Assert.Equal(SdkValidationSuggestion.Replan, result.Suggestion);
     }
 
     [Fact]
@@ -788,8 +790,8 @@ public class GoapPlannerTests
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Equal(ReplanReason.BetterGoalAvailable, result.Reason);
-        Assert.Equal(ValidationSuggestion.Replan, result.Suggestion);
+        Assert.Equal(SdkReplanReason.BetterGoalAvailable, result.Reason);
+        Assert.Equal(SdkValidationSuggestion.Replan, result.Suggestion);
         Assert.Equal(highPriorityGoal, result.BetterGoal);
     }
 

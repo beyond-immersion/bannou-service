@@ -9,48 +9,6 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 namespace BeyondImmersion.BannouService.Behavior;
 
 /// <summary>
-/// Category of behavior layer in the stack.
-/// </summary>
-/// <remarks>
-/// <para>
-/// Categories provide semantic grouping for behaviors. Within a category,
-/// layers are ordered by priority. Layers can be added/removed per category.
-/// </para>
-/// </remarks>
-public enum BehaviorCategory
-{
-    /// <summary>
-    /// Fundamental behaviors shared by entity type (e.g., humanoid-base).
-    /// Lowest priority - always present but easily overridden.
-    /// </summary>
-    Base = 0,
-
-    /// <summary>
-    /// Cultural and regional behaviors (e.g., medieval-european).
-    /// Influences speech patterns, gestures, social norms.
-    /// </summary>
-    Cultural = 1,
-
-    /// <summary>
-    /// Role-based behaviors (e.g., guard-patrol, merchant-trading).
-    /// Defines primary occupation and default activities.
-    /// </summary>
-    Professional = 2,
-
-    /// <summary>
-    /// Individual personality traits (e.g., afraid-of-spiders, cheerful).
-    /// Personal quirks and emotional tendencies.
-    /// </summary>
-    Personal = 3,
-
-    /// <summary>
-    /// Situational and temporary behaviors (e.g., combat-mode, fleeing).
-    /// Highest priority - triggered by events or GOAP planning.
-    /// </summary>
-    Situational = 4
-}
-
-/// <summary>
 /// A contribution from a behavior layer to an intent channel.
 /// </summary>
 /// <param name="LayerId">The layer that produced this contribution.</param>

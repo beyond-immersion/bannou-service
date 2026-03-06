@@ -6,7 +6,7 @@
 > **State Store**: arbitration-cases (MySQL), arbitration-rulings (MySQL), arbitration-evidence (MySQL), arbitration-arbiters (Redis), arbitration-cache (Redis), arbitration-lock (Redis) — all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
-> **Planning**: [MORALITY-SYSTEM-NEXT-STEPS.md](../planning/MORALITY-SYSTEM-NEXT-STEPS.md)
+> **Planning**: *(Originally referenced MORALITY-SYSTEM-NEXT-STEPS.md; superseded by this deep dive and #410)*
 
 ## Overview
 
@@ -25,7 +25,6 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 | lib-messaging (`IMessageBus`) | Publishing case lifecycle events, ruling events, enforcement events |
 | lib-messaging (`IEventConsumer`) | Registering handlers for contract milestone completions and faction governance changes |
 | lib-contract (`IContractClient`) | Creating arbitration contracts from procedural templates, milestone tracking, prebound API execution (L1) |
-| lib-faction (`IFactionClient`) | Jurisdiction determination, sovereignty resolution, governance data queries, territory control queries (L4 -- see note) |
 | lib-relationship (`IRelationshipClient`) | Executing relationship status changes from rulings (married -> divorced, member -> exiled) (L2) |
 | lib-character (`ICharacterClient`) | Validating character existence for party roles, custody assignment (L2) |
 | lib-game-service (`IGameServiceClient`) | Validating game service scope (L2) |
@@ -35,12 +34,11 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 | lib-inventory (`IInventoryClient`) | Identifying shared assets for division (L2) |
 | lib-seed (`ISeedClient`) | Seed bond dissolution, sovereignty capability checks (L2) |
 
-**Note on Faction dependency**: Faction is L4, same layer as Arbitration. L4-to-L4 dependencies must handle graceful degradation per the service hierarchy. However, Arbitration is fundamentally meaningless without Faction (no jurisdiction = no arbitration). This is a hard dependency in practice, documented as such. If Faction is disabled, Arbitration should also be disabled. This is analogous to how Quest is meaningless without Contract -- the orchestration layer requires its substrate.
-
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
+| lib-faction (`IFactionClient`) | Jurisdiction determination, sovereignty resolution, governance data queries, territory control queries (L4) | All jurisdiction-dependent endpoints return error explaining Faction is required. Arbitration is functionally inoperable without Faction but must use soft dependency per SERVICE-HIERARCHY.md (L4→L4 requires graceful degradation). Deployment note: if Faction is disabled, Arbitration should also be disabled. |
 | lib-escrow (`IEscrowClient`) | Asset division when rulings involve property | Asset division unavailable; rulings limited to non-asset consequences (relationship changes, fines, exile) |
 | lib-obligation (`IObligationClient`) | Creating ongoing obligation contracts from rulings (alimony, probation) | Ongoing obligations not created; ruling is one-time consequence only |
 | lib-puppetmaster (`IPuppetmasterClient`) | Divine arbiter requests, regional watcher notification | Divine arbitration unavailable; falls back to mortal arbiter only |
@@ -73,7 +71,7 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `ruling:{rulingId}` | `ArbitrationRulingModel` | Primary lookup by ruling ID. Stores case reference, arbiter reference, ruling type (petitioner_favored, respondent_favored, split, dismissed), consequence manifest (list of consequence actions with downstream service references), reasoning text (optional -- NPC arbiters may produce reasoning from cognition), issuance timestamp, appeal deadline. |
+| `ruling:{rulingId}` | `ArbitrationRulingModel` | Primary lookup by ruling ID. Stores case reference, arbiter reference, ruling type (PetitionerFavored, RespondentFavored, Split, Dismissed), consequence manifest (list of consequence actions with downstream service references), reasoning text (optional, nullable -- NPC arbiters may produce reasoning from cognition), issuance timestamp, appeal deadline. |
 
 ### Evidence Store
 **Store**: `arbitration-evidence` (Backend: MySQL)
@@ -114,11 +112,11 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
 | `caseType` | B (Content Code) | Opaque string | Game-configurable dispute types (dissolution, trade_dispute, succession_contest, criminal, property, etc.). Procedural templates are defined per case type by sovereign governance data. Extensible without schema changes. |
-| `entityType` (on petitioner/respondent) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the type of party in a dispute (character, organization, faction). All valid values are first-class Bannou entities. |
-| `rulingType` | C (System State) | Service-specific enum | Finite set of ruling outcomes (petitioner_favored, respondent_favored, split, dismissed). System-owned; determines consequence execution logic. |
-| `evidenceType` | C (System State) | Service-specific enum | Finite set of evidence categories (testimony, document, witness, physical). System-owned; affects evidence relevance scoring. |
-| `status` (on case) | C (System State) | Service-specific enum | Finite set of case lifecycle states (filed, awaiting_arbiter, hearing, deliberation, ruled, appealed, closed). System-owned state machine managed via contract milestones. |
-| `arbiterSelectionMode` | C (System State) | Service-specific enum | Finite set of arbiter selection strategies (faction_leader, appointed_official, divine_arbiter, peer_panel). System-owned; determines how arbiters are assigned from governance data. |
+| `entityType` (on petitioner/respondent) | A (Entity Reference) | `EntityType` enum (`$ref: common-api.yaml`) | Identifies the type of party in a dispute (Character, Organization, Faction). All valid values are first-class Bannou entities. |
+| `rulingType` | C (System State) | Service-specific enum | Finite set of ruling outcomes (PetitionerFavored, RespondentFavored, Split, Dismissed). System-owned; determines consequence execution logic. |
+| `evidenceType` | C (System State) | Service-specific enum | Finite set of evidence categories (Testimony, Document, Witness, Physical). System-owned; affects evidence relevance scoring. |
+| `status` (on case) | C (System State) | Service-specific enum | Finite set of case lifecycle states (Filed, AwaitingArbiter, Hearing, Deliberation, Ruled, Appealed, Closed). System-owned state machine managed via contract milestones. |
+| `arbiterSelectionMode` | C (System State) | Service-specific enum | Finite set of arbiter selection strategies (FactionLeader, AppointedOfficial, DivineArbiter, PeerPanel). System-owned; determines how arbiters are assigned from governance data. |
 
 ---
 
@@ -126,13 +124,22 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 
 ### Published Events
 
+**Lifecycle events** (auto-generated via `x-lifecycle` in `arbitration-events.yaml`):
+
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `arbitration.case.filed` | `ArbitrationCaseFiledEvent` | New case created and jurisdiction accepted |
-| `arbitration.case.updated` | `ArbitrationCaseUpdatedEvent` | Case metadata updated |
+| `arbitration.case.created` | `ArbitrationCaseCreatedEvent` | x-lifecycle: case record created |
+| `arbitration.case.updated` | `ArbitrationCaseUpdatedEvent` | x-lifecycle: case metadata updated |
+| `arbitration.case.deleted` | `ArbitrationCaseDeletedEvent` | x-lifecycle: case record deleted (cleanup only) |
+
+**Domain-specific events** (manually defined, flat structure — follow Quest pattern, NOT Divine's `allOf` pattern):
+
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `arbitration.case.filed` | `ArbitrationCaseFiledEvent` | New case created and jurisdiction accepted (published alongside lifecycle created event) |
 | `arbitration.case.closed` | `ArbitrationCaseClosedEvent` | Case reached terminal state (fulfilled, dismissed, or withdrawn) |
 | `arbitration.case.defaulted` | `ArbitrationCaseDefaultedEvent` | Respondent failed to respond within deadline |
-| `arbitration.service.confirmed` | `ArbitrationServiceConfirmedEvent` | Respondent formally notified of proceedings |
+| `arbitration.notice.confirmed` | `ArbitrationNoticeConfirmedEvent` | Respondent formally notified of proceedings (legal service of process) |
 | `arbitration.evidence.submitted` | `ArbitrationEvidenceSubmittedEvent` | Evidence item submitted by a party |
 | `arbitration.hearing.completed` | `ArbitrationHearingCompletedEvent` | Hearing milestone reached (if applicable) |
 | `arbitration.ruling.issued` | `ArbitrationRulingIssuedEvent` | Arbiter issues ruling with consequence manifest |
@@ -140,7 +147,7 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 | `arbitration.ruling.enforced` | `ArbitrationRulingEnforcedEvent` | Ruling consequences fully executed and verified |
 | `arbitration.arbiter.assigned` | `ArbitrationArbiterAssignedEvent` | Arbiter assigned to case |
 | `arbitration.arbiter.recused` | `ArbitrationArbiterRecusedEvent` | Arbiter removed from case (conflict of interest, corruption detected) |
-| `arbitration.case.divine_requested` | `ArbitrationDivineRequestedEvent` | Party requests divine arbiter intervention |
+| `arbitration.case.divine-requested` | `ArbitrationDivineRequestedEvent` | Party requests divine arbiter intervention |
 | `arbitration.jurisdiction.challenged` | `ArbitrationJurisdictionChallengedEvent` | Party challenges the determined jurisdiction |
 
 ### Consumed Events
@@ -160,6 +167,14 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 |----------------|-------------|-----------|-----------------|
 | character | arbitration | CASCADE | `/arbitration/cleanup-by-character` |
 | realm | arbitration | CASCADE | `/arbitration/cleanup-by-realm` |
+| faction | arbitration | CASCADE | `/arbitration/cleanup-by-faction` |
+| location | arbitration | CASCADE | `/arbitration/cleanup-by-location` |
+
+**Cleanup details**:
+- **character**: Closes or withdraws active cases where the character is a party. Archives evidence. Preserves rulings for historical record.
+- **realm**: Closes all active cases within the realm. Archives case data.
+- **faction**: Active cases referencing the deleted faction as sovereign have their jurisdiction invalidated. Cases in terminal states are preserved; active cases are closed with a jurisdiction-void reason.
+- **location**: Active cases filed at the deleted location have their jurisdiction invalidated. Cases in terminal states are preserved; active cases are closed with a jurisdiction-void reason.
 
 ### DI Listener Patterns
 
@@ -195,12 +210,11 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 |---------|------|
 | `ILogger<ArbitrationService>` | Structured logging |
 | `ArbitrationServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates 6 stores) |
+| `IStateStoreFactory` | State store access (creates 6 stores — constructor parameter only, not stored as field) |
 | `IMessageBus` | Event publishing |
 | `IEventConsumer` | Contract and faction event subscriptions |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 | `IContractClient` | Arbitration contract lifecycle -- creation from template, milestone tracking (L1) |
-| `IFactionClient` | Jurisdiction resolution, sovereignty queries, governance data (L4) |
 | `IRelationshipClient` | Relationship status changes from rulings (L2) |
 | `ICharacterClient` | Character validation for party roles (L2) |
 | `IGameServiceClient` | Game service scope validation (L2) |
@@ -209,7 +223,7 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 | `ICurrencyClient` | Monetary penalties from rulings (L2) |
 | `IInventoryClient` | Shared asset identification for division (L2) |
 | `ISeedClient` | Seed bond dissolution, sovereignty capability checks (L2) |
-| `IServiceProvider` | Runtime resolution of soft L4 dependencies |
+| `IServiceProvider` | Runtime resolution of soft L4 dependencies (IFactionClient, IEscrowClient, IObligationClient, IPuppetmasterClient, IStatusClient, IOrganizationClient) |
 
 ### Background Workers
 
@@ -225,7 +239,7 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 
 All endpoints require `developer` role.
 
-- **FileCase** (`/arbitration/case/file`): Validates game service and party existence. Resolves jurisdiction: queries Faction for sovereign at location, retrieves governance data for case type. Validates sovereign has governance data for this case type (rejects if no procedural template exists). Creates Contract instance from procedural template code via `IContractClient`, passing governance parameters to `SetTemplateValues`. Acquires distributed lock on case creation. Saves case record under ID, code, and contract lookup keys. Publishes `arbitration.case.filed`. Returns case ID and procedural timeline (computed from governance parameters).
+- **FileCase** (`/arbitration/case/file`): Validates game service and party existence. Resolves jurisdiction: queries Faction for sovereign at location, retrieves governance data for case type. Validates sovereign has governance data for this case type (rejects if no procedural template exists — checks for existence of governance data, not its contents). Creates Contract instance from procedural template code via `IContractClient`, passing governance data blob unchanged to `SetTemplateValues`. Acquires distributed lock on case creation. Saves case record under ID, code, and contract lookup keys. Publishes `arbitration.case.filed`. Returns case ID and procedural timeline (derived from the created Contract instance's milestone deadlines, not from reading governance parameters directly).
 
 - **GetCase** (`/arbitration/case/get`): Load from MySQL by caseId. Enriches with current contract milestone status via `IContractClient`.
 
@@ -239,7 +253,7 @@ All endpoints require `developer` role.
 
 - **ChallengeJurisdiction** (`/arbitration/case/challenge-jurisdiction`): Party-initiated. Records the challenge with reasoning. Arbiter (or higher sovereign) evaluates. May reassign jurisdiction or dismiss challenge. Publishes `arbitration.jurisdiction.challenged`.
 
-- **GetTimeline** (`/arbitration/case/get-timeline`): Returns computed timeline for a case: deadline dates for each milestone, current phase, days remaining. Computed from governance parameters and case filing date.
+- **GetTimeline** (`/arbitration/case/get-timeline`): Returns computed timeline for a case: deadline dates for each milestone, current phase, days remaining. Derived from the Contract instance's milestone deadlines (Contract interprets the governance parameters via the template; Arbitration reads only the resulting milestone structure).
 
 ### Evidence Management (3 endpoints)
 
@@ -251,7 +265,7 @@ All endpoints require `developer` role.
 
 ### Arbiter Management (4 endpoints)
 
-- **AssignArbiter** (`/arbitration/arbiter/assign`): Resolves arbiter selection mode from governance data. For `faction_leader` mode: queries faction for current leader. For `appointed_official` mode: queries governance data for designated arbiter. For `divine_arbiter` mode: publishes `arbitration.case.divine_requested` and sets timeout. Validates arbiter caseload below `MaxActiveCasesPerArbiter`. Updates arbiter assignment on case. Publishes `arbitration.arbiter.assigned`.
+- **AssignArbiter** (`/arbitration/arbiter/assign`): Resolves arbiter selection mode from governance data. For `FactionLeader` mode: queries faction for current leader. For `AppointedOfficial` mode: queries governance data for designated arbiter. For `DivineArbiter` mode: publishes `arbitration.case.divine-requested` and sets timeout. Validates arbiter caseload below `MaxActiveCasesPerArbiter`. Updates arbiter assignment on case. Publishes `arbitration.arbiter.assigned`.
 
 - **RecuseArbiter** (`/arbitration/arbiter/recuse`): Removes arbiter from case with reasoning (conflict of interest, corruption detected via obligation violation). Triggers re-assignment. Publishes `arbitration.arbiter.recused`.
 
@@ -275,12 +289,14 @@ All endpoints require `developer` role.
 
 - **GetJurisdictionHierarchy** (`/arbitration/jurisdiction/get-hierarchy`): Given a location, returns the full sovereignty hierarchy: immediate controlling faction, delegated authorities, sovereign, realm baseline. Useful for understanding the legal landscape at a location.
 
-### Cleanup Endpoints (2 endpoints)
+### Cleanup Endpoints (4 endpoints)
 
 Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 - **CleanupByCharacter** (`/arbitration/cleanup-by-character`): Closes or withdraws active cases where the character is a party. Archives evidence. Preserves rulings for historical record.
 - **CleanupByRealm** (`/arbitration/cleanup-by-realm`): Closes all active cases within the realm. Archives case data.
+- **CleanupByFaction** (`/arbitration/cleanup-by-faction`): Invalidates jurisdiction for active cases referencing the deleted faction as sovereign. Closes active cases with jurisdiction-void reason. Preserves terminal cases.
+- **CleanupByLocation** (`/arbitration/cleanup-by-location`): Invalidates jurisdiction for active cases filed at the deleted location. Closes active cases with jurisdiction-void reason. Preserves terminal cases.
 
 ---
 
@@ -696,7 +712,7 @@ Arbitration does not contain case-type-specific logic. All case behavior comes f
        defaultAssetDivision: "equal",
        appealWindowDays: 14,
        requiresHearing: false,
-       defaultOnNoResponse: "petitioner_favored"
+       defaultOnNoResponse: "PetitionerFavored"
      }
    }
         │
@@ -715,21 +731,23 @@ Arbitration does not contain case-type-specific logic. All case behavior comes f
 
 ### Governance Parameters
 
-Governance parameters are template-specific key-value pairs that configure how the procedural template behaves for this jurisdiction. They are passed to Contract's `SetTemplateValues` API, which merges them into the template's configurable slots.
+Governance parameters are an opaque blob owned by Faction's governance data and interpreted solely by Contract templates. **lib-arbitration does not read, validate, or interpret governance parameters** — it receives the governance data from Faction and passes it unchanged to Contract's `SetTemplateValues` API. This is a genuine opaque pass-through, not a cross-service data contract (per FOUNDATION TENETS, No Metadata Bag Contracts).
+
+The parameter names and types below are **documentation for template authors** — they describe what game-specific contract templates expect to find in the governance data configured on sovereign factions at deployment time. They are NOT fields in Arbitration's schema:
 
 | Parameter | Type | Used By | Description |
 |-----------|------|---------|-------------|
 | `waitingPeriodDays` | int | dissolution | Mandatory waiting period before ruling can be issued |
-| `defaultAssetDivision` | string | dissolution | Division rule for shared assets: `equal`, `petitioner_favored`, `respondent_favored`, `arbiter_discretion` |
+| `defaultAssetDivision` | string | dissolution | Division rule for shared assets (e.g., `Equal`, `PetitionerFavored`) |
 | `appealWindowDays` | int | all | Days after ruling before it becomes final |
 | `requiresHearing` | bool | all | Whether an in-person hearing milestone is included |
-| `defaultOnNoResponse` | string | all | Behavior on respondent default: `petitioner_favored`, `dismiss`, `continue` |
+| `defaultOnNoResponse` | string | all | Behavior on respondent default (e.g., `PetitionerFavored`, `Dismiss`) |
 | `maxEvidenceItems` | int | all | Evidence submission limit per party |
 | `sentencingRequired` | bool | criminal | Whether a separate sentencing milestone follows the guilty ruling |
 | `custodyEvaluationRequired` | bool | dissolution, custody | Whether a custody evaluation milestone is included |
 | `exileTerritory` | string | exile | Territory from which the subject is exiled (location code) |
 
-These parameters are opaque to lib-arbitration -- it passes them through to Contract. The contract template interprets them via its milestone configuration and prebound API parameters.
+**Schema implication**: The governance data field on Arbitration's case model (if stored for reference) is `object?` — client-only metadata that the service stores and returns unchanged. Arbitration never inspects its structure.
 
 ### Example Procedural Templates
 
@@ -831,7 +849,7 @@ For cases involving sovereignty disputes or where mortal authority is contested,
 Case filed with divine arbitration request
         │
         ▼
-lib-arbitration publishes arbitration.case.divine_requested event
+lib-arbitration publishes arbitration.case.divine-requested event
         │
         ▼
 Regional watcher (via Puppetmaster) perceives the request
@@ -860,11 +878,11 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 
 1. **Case type is opaque string**: Not an enum. Follows the same extensibility pattern as seed type codes, collection type codes, violation type codes. New case types require only a contract template and a faction governance entry. lib-arbitration stores whatever case type string is provided.
 
-2. **Governance parameters are opaque key-value pairs**: lib-arbitration does not interpret governance parameters. It passes them through to Contract's `SetTemplateValues`. The contract template is responsible for interpreting them. This means lib-arbitration doesn't need code changes for new parameter types.
+2. **Governance parameters are genuinely opaque pass-through**: lib-arbitration receives governance data from Faction and passes it unchanged to Contract's `SetTemplateValues`. It never reads, validates, or branches on specific parameter keys. The contract template is solely responsible for interpreting them. This means lib-arbitration doesn't need code changes for new parameter types, and the governance data field is `object?` in the schema (per FOUNDATION TENETS, No Metadata Bag Contracts — this is legitimate opaque pass-through, not a cross-service data contract).
 
 3. **Arbitration does not adjudicate**: The service tracks the process, not the decision. The arbiter (an NPC, a faction leader, a god actor) makes the ruling through their own cognition pipeline or via API call. lib-arbitration accepts the ruling and executes its consequences.
 
-4. **Default proceedings favor the petitioner**: When the respondent fails to respond, the default behavior is configurable via governance parameters. The default default (meta-default) is `petitioner_favored`, which matches real-world legal systems where failure to appear typically results in a default judgment.
+4. **Default proceedings favor the petitioner**: When the respondent fails to respond, the default behavior is configurable via governance parameters. The default default (meta-default) is `PetitionerFavored`, which matches real-world legal systems where failure to appear typically results in a default judgment.
 
 5. **Appeal resets to evidence phase**: An appeal is not a separate case -- it restarts the same case at the evidence phase with a higher authority arbiter. This simplifies the state machine (no separate appeal lifecycle) while allowing full re-adjudication.
 
@@ -882,7 +900,7 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 
 3. **NPC arbiter cognition**: NPC arbiters need behavior documents that support case evaluation -- reviewing evidence, weighing arguments, considering precedent. This is an ABML behavior authoring task. The arbiter actor receives case perceptions and must produce a ruling action.
 
-4. **Divine arbiter coordination**: The flow where a divine actor accepts or ignores an arbitration request requires Puppetmaster integration. The regional watcher actor must have a perception handler for `arbitration.case.divine_requested` events and an action handler for issuing rulings via the Arbitration API.
+4. **Divine arbiter coordination**: The flow where a divine actor accepts or ignores an arbitration request requires Puppetmaster integration. The regional watcher actor must have a perception handler for `arbitration.case.divine-requested` events and an action handler for issuing rulings via the Arbitration API.
 
 5. **Deadline enforcement model**: The deadline worker checks for expired milestones periodically. This means deadlines are enforced with up to `DefaultDeadlineCheckIntervalMinutes` latency. For time-sensitive proceedings (criminal cases, emergency exile), the worker may need shorter intervals. This is configurable per deployment but not per case.
 
@@ -894,6 +912,68 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 
 ---
 
+## Schema Creation Guidance (L4 Audit Notes, 2026-03-05)
+
+When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitration-configuration.yaml`, follow these requirements identified during the L4 audit:
+
+### API Schema (`arbitration-api.yaml`)
+- `x-service-layer: GameFeatures` at root level
+- `servers: [{ url: http://localhost:5012 }]`
+- Schema Modification Gate in `info.description`
+- `x-permissions: ['developer']` on all endpoints
+- `x-references` block for all 4 resource cleanup targets (character, realm, faction, location) with `sourceType: arbitration`
+- Consider `x-compression-callback` for character archival (case participation history)
+- All service-specific enums (`ArbitrationRulingType`, `ArbitrationEvidenceType`, `ArbitrationCaseStatus`, `ArbiterSelectionMode`) defined here, referenced via `$ref` from events
+- `entityType` on petitioner/respondent uses `$ref: 'common-api.yaml#/components/schemas/EntityType'`
+- Ruling `reasoning` field: `nullable: true` (not `required: false` with non-nullable type)
+- Evidence `content` field: must be a typed model (per evidence type or discriminated union), NOT `additionalProperties: true`
+- Governance data on case model: `object?` (genuine opaque pass-through)
+
+### Events Schema (`arbitration-events.yaml`)
+- `x-lifecycle` for `ArbitrationCase` entity (generates created/updated/deleted lifecycle events)
+- `x-event-subscriptions` for all 6 consumed events (contract milestones, faction territory)
+- `x-event-publications` for all domain-specific events
+- **Flat event structure** (inline `eventId`/`timestamp`) — follow Quest's pattern, NOT Divine's `allOf` with `BaseServiceEvent`
+- All event topic strings use kebab-case (no underscores)
+
+### Configuration Schema (`arbitration-configuration.yaml`)
+- `x-service-configuration` with `envPrefix: ARBITRATION`
+- All integer properties need `minimum: 1` validation bounds
+- `QueryPageSize` needs `maximum` cap (e.g., 100)
+- `CaseCodePrefix` needs `minLength: 1`, `maxLength: 10`
+- Drop redundant `Default` prefix from deadline worker config names (e.g., `DeadlineCheckIntervalMinutes` instead of `DefaultDeadlineCheckIntervalMinutes`)
+
+### Implementation Notes
+- Helper service decomposition recommended for the 14 constructor dependencies: consider `JurisdictionResolver` (Faction + Location + cache), `ConsequenceExecutor` (Relationship + Currency + Escrow + Obligation + Status), reducing constructor to ~8 parameters
+- `IStateStoreFactory` is constructor parameter only — resolve 6 stores in constructor, store as `readonly` fields, do not store factory as field
+- `IFactionClient` resolved via `IServiceProvider` (soft L4 dependency), not constructor injection
+
+---
+
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. Prerequisites (Faction sovereignty, Obligation multi-channel costs) must be completed first. See [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning) and [Obligation deep dive Design Considerations](OBLIGATION.md#design-considerations-requires-planning) for the dependency chain.*
+Plugin is in pre-implementation phase. Prerequisites must be completed before schema creation can begin. Deep dive L4-audited (2026-03-05): all spec violations fixed in-document.
+
+### Prerequisites (blocking — no GH issues exist yet)
+
+| Prerequisite | Blocker For | Reference |
+|-------------|-------------|-----------|
+| **Faction sovereignty** (`authorityLevel` field, governance data model, delegation, `QueryGovernanceData`) | All of Arbitration (no jurisdiction without sovereignty) | [Faction deep dive DC #6](FACTION.md#design-considerations-requires-planning) |
+| **Obligation multi-channel costs** (legal/social/personal authority tagging) | Phase 1, ruling consequence distinction | [Obligation deep dive DCs](OBLIGATION.md#design-considerations-requires-planning) |
+
+### Related Open Issues
+
+| Issue | Relevance |
+|-------|-----------|
+| [#435](https://github.com/beyond-immersion/bannou-service/issues/435) | Sovereignty transfer consequences — affects active case continuity during jurisdiction changes |
+| [#436](https://github.com/beyond-immersion/bannou-service/issues/436) | Household split mechanic — blocks dissolution case type (Phase 5), cross-references DC #7 |
+| [#410](https://github.com/beyond-immersion/bannou-service/issues/410) | Second Thoughts / Obligation + Faction — parent design issue for both prerequisites |
+| [#362](https://github.com/beyond-immersion/bannou-service/issues/362) | Seed bond dissolution endpoint — needed for ruling consequences that dissolve seed bonds |
+| [#560](https://github.com/beyond-immersion/bannou-service/issues/560) | Contract ILocationClient hierarchy violation — affects handler pattern Arbitration relies on |
+| [#153](https://github.com/beyond-immersion/bannou-service/issues/153) | Escrow asset transfer integration — affects asset division capability |
+
+### Issues To Create
+
+- Faction sovereignty prerequisite tracking issue (P0 blocker)
+- Obligation multi-channel costs prerequisite tracking issue (P1 blocker)
+- Arbitration master implementation tracking issue (Phases 2-6)

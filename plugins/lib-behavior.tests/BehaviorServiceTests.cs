@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -29,6 +30,7 @@ public class BehaviorServiceTests
     private readonly Mock<IGoapPlanner> _mockGoapPlanner;
     private readonly BehaviorCompiler _compiler;
     private readonly Mock<IAssetClient> _mockAssetClient;
+    private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IBehaviorBundleManager> _mockBundleManager;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
@@ -42,6 +44,9 @@ public class BehaviorServiceTests
         _mockGoapPlanner = new Mock<IGoapPlanner>();
         _compiler = new BehaviorCompiler();
         _mockAssetClient = new Mock<IAssetClient>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockServiceProvider.Setup(sp => sp.GetService(typeof(IAssetClient)))
+            .Returns(_mockAssetClient.Object);
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockBundleManager = new Mock<IBehaviorBundleManager>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
@@ -75,7 +80,7 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            AgentId = "agent-1",
+            AgentId = Guid.NewGuid(),
             BehaviorId = string.Empty,
             Goal = new ApiGoapGoal
             {
@@ -105,7 +110,7 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            AgentId = "agent-1",
+            AgentId = Guid.NewGuid(),
             BehaviorId = "nonexistent-behavior",
             Goal = new ApiGoapGoal
             {
@@ -142,7 +147,7 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            AgentId = "agent-1",
+            AgentId = Guid.NewGuid(),
             BehaviorId = "behavior-123",
             Goal = new ApiGoapGoal
             {
@@ -200,7 +205,7 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            AgentId = "agent-1",
+            AgentId = Guid.NewGuid(),
             BehaviorId = "behavior-123",
             Goal = new ApiGoapGoal
             {
@@ -269,7 +274,7 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            AgentId = "agent-1",
+            AgentId = Guid.NewGuid(),
             BehaviorId = "behavior-123",
             Goal = new ApiGoapGoal
             {
@@ -333,7 +338,7 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            AgentId = "agent-1",
+            AgentId = Guid.NewGuid(),
             BehaviorId = "behavior-123",
             Goal = new ApiGoapGoal
             {
@@ -373,7 +378,7 @@ public class BehaviorServiceTests
             _mockEventConsumer.Object,
             _mockGoapPlanner.Object,
             _compiler,
-            _mockAssetClient.Object,
+            _mockServiceProvider.Object,
             _mockHttpClientFactory.Object,
             _mockBundleManager.Object,
             _mockTelemetryProvider.Object);

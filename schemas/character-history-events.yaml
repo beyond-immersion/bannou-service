@@ -51,6 +51,9 @@ components:
         - historicalEventId
         - participationId
         - role
+        - historicalEventName
+        - eventCategory
+        - significance
       properties:
         eventId:
           type: string
@@ -75,11 +78,25 @@ components:
         role:
           $ref: 'character-history-api.yaml#/components/schemas/ParticipationRole'
           description: Role the character played in the event
+        historicalEventName:
+          type: string
+          description: Name of the historical event
+        eventCategory:
+          $ref: 'character-history-api.yaml#/components/schemas/EventCategory'
+          description: Category of the historical event
+        significance:
+          type: number
+          format: float
+          description: How significant this event was for the character (0.0 to 1.0)
 
     CharacterParticipationDeletedEvent:
       type: object
       additionalProperties: false
       description: Published when a character's participation record is deleted
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-history
       required:
         - eventId
         - timestamp
@@ -151,6 +168,7 @@ components:
         - timestamp
         - characterId
         - elementCount
+        - replaceExisting
       properties:
         eventId:
           type: string
@@ -169,13 +187,16 @@ components:
           description: Current number of backstory elements
         replaceExisting:
           type: boolean
-          nullable: true
           description: Whether existing elements were replaced
 
     CharacterBackstoryDeletedEvent:
       type: object
       additionalProperties: false
       description: Published when a character's backstory is deleted
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-history
       required:
         - eventId
         - timestamp
@@ -198,6 +219,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when all history data for a character is deleted
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-history
       required:
         - eventId
         - timestamp

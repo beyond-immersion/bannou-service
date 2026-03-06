@@ -24,7 +24,7 @@ public sealed class SpeakEmitter : BaseIntentEmitter
     public override string ActionName => "speak";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -41,10 +41,11 @@ public sealed class SpeakEmitter : BaseIntentEmitter
                     ? "social"
                     : "feedback"; // Fallback for objects
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             $"speak_{volume}",
-            Math.Clamp(urgency, 0f, 1f)));
+            Math.Clamp(urgency, 0f, 1f));
     }
 }
 
@@ -64,7 +65,7 @@ public sealed class ShoutEmitter : BaseIntentEmitter
     public override string ActionName => "shout";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -80,9 +81,10 @@ public sealed class ShoutEmitter : BaseIntentEmitter
                     ? "social"
                     : "signals"; // Fallback for vehicles
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             $"shout_{alertType}",
-            Math.Clamp(urgency, 0f, 1f)));
+            Math.Clamp(urgency, 0f, 1f));
     }
 }

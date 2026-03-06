@@ -55,10 +55,10 @@ public class BehaviorMetadata
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Category of the behavior (e.g., professional, cultural).
+    /// Category of the behavior (e.g., Professional, Cultural).
     /// </summary>
     [JsonPropertyName("category")]
-    public string? Category { get; set; }
+    public BehaviorCategory? Category { get; set; }
 
     /// <summary>
     /// Asset service ID where bytecode is stored.

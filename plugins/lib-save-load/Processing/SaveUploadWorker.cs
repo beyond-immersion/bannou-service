@@ -201,7 +201,8 @@ public class SaveUploadWorker : BackgroundService
         // PendingUploadEntry.OwnerType is now enum, OwnerId/SlotId are Guid - convert to strings
         var uploadRequest = new UploadRequest
         {
-            Owner = $"{entry.OwnerType}:{entry.OwnerId}",
+            OwnerType = AssetOwnerType.Service,
+            OwnerId = $"save-load:{entry.OwnerType}:{entry.OwnerId}",
             ContentType = "application/octet-stream",
             Filename = $"{_configuration.AssetBucket}/save_{entry.SlotId}_{entry.VersionNumber}.dat",
             Size = entry.CompressedSizeBytes,

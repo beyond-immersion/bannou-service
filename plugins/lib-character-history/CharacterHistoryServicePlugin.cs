@@ -41,7 +41,7 @@ public class CharacterHistoryServicePlugin : BaseBannouPlugin
         services.AddSingleton<IBackstoryCache, BackstoryCache>();
 
         // Register variable provider factory for Actor to discover via DI
-        // Enables dependency inversion: Actor (L2) consumes providers without knowing about CharacterHistory (L3)
+        // Enables dependency inversion: Actor (L2) consumes providers without knowing about CharacterHistory (L4)
         services.AddSingleton<IVariableProviderFactory, BackstoryProviderFactory>();
 
         Logger?.LogDebug("Service dependencies configured");

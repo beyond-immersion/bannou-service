@@ -2070,6 +2070,18 @@ public partial class OrchestratorService : IOrchestratorService
             "Configuration rolled back from version {OldVersion} to version {NewVersion} (restored from v{RestoredVersion}). Reason: {Reason}. Changed keys: {ChangedCount}",
             currentVersion, newVersion, targetVersion, body.Reason, changedKeys.Count);
 
+        // Publish ConfigurationChangedEvent so running containers can self-evaluate restart need
+        if (changedKeys.Count > 0)
+        {
+            await _messageBus.TryPublishAsync("bannou.configuration-events", new ConfigurationChangedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ConfigVersion = newVersion,
+                ChangedKeys = changedKeys
+            });
+        }
+
         return (StatusCodes.OK, new ConfigRollbackResponse
         {
             PreviousVersion = currentVersion,

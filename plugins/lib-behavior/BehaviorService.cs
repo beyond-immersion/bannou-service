@@ -41,14 +41,14 @@ public partial class BehaviorService : IBehaviorService
 
     // Event topics
     private const string COMPILATION_FAILED_TOPIC = "behavior.compilation-failed";
-    private const string GOAP_PLAN_GENERATED_TOPIC = "behavior.goap.plan-generated";
+    private const string GOAP_PLAN_GENERATED_TOPIC = "behavior.goap-plan-generated";
 
     private readonly ILogger<BehaviorService> _logger;
     private readonly BehaviorServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
     private readonly IGoapPlanner _goapPlanner;
     private readonly BehaviorCompiler _compiler;
-    private readonly IAssetClient _assetClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IBehaviorBundleManager _bundleManager;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -62,7 +62,7 @@ public partial class BehaviorService : IBehaviorService
     /// <param name="eventConsumer">Event consumer for registering handlers.</param>
     /// <param name="goapPlanner">GOAP planner for generating action plans.</param>
     /// <param name="compiler">ABML behavior compiler.</param>
-    /// <param name="assetClient">Asset service client for storing compiled models.</param>
+    /// <param name="serviceProvider">Service provider for resolving optional L3 dependencies.</param>
     /// <param name="httpClientFactory">HTTP client factory for asset uploads.</param>
     /// <param name="bundleManager">Bundle manager for efficient behavior grouping.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
@@ -73,7 +73,7 @@ public partial class BehaviorService : IBehaviorService
         IEventConsumer eventConsumer,
         IGoapPlanner goapPlanner,
         BehaviorCompiler compiler,
-        IAssetClient assetClient,
+        IServiceProvider serviceProvider,
         IHttpClientFactory httpClientFactory,
         IBehaviorBundleManager bundleManager,
         ITelemetryProvider telemetryProvider)
@@ -83,7 +83,7 @@ public partial class BehaviorService : IBehaviorService
         _messageBus = messageBus;
         _goapPlanner = goapPlanner;
         _compiler = compiler;
-        _assetClient = assetClient;
+        _serviceProvider = serviceProvider;
         _httpClientFactory = httpClientFactory;
         _bundleManager = bundleManager;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
@@ -150,8 +150,7 @@ public partial class BehaviorService : IBehaviorService
             ? body.BehaviorName
             : behaviorId;
 
-        // Map category to string (BehaviorCategory is nullable - use null-conditional)
-        var category = body.BehaviorCategory?.ToString().ToLowerInvariant();
+        var category = body.BehaviorCategory;
 
         // Store the compiled model as an asset if caching is enabled
         string? assetId = null;
@@ -227,9 +226,7 @@ public partial class BehaviorService : IBehaviorService
             CompilationTimeMs = (int)stopwatch.ElapsedMilliseconds,
             // assetId is null only when caching is explicitly disabled; otherwise storage failure returns error above
             AssetId = assetId,
-            BundleId = body.BundleId,
-            IsUpdate = isUpdate,
-            Warnings = new List<string>()
+            IsUpdate = isUpdate
         });
     }
 
@@ -239,7 +236,7 @@ public partial class BehaviorService : IBehaviorService
     private async Task PublishBehaviorEventAsync(
         string behaviorId,
         string name,
-        string? category,
+        BehaviorCategory? category,
         string? bundleId,
         string assetId,
         int bytecodeSize,
@@ -257,8 +254,8 @@ public partial class BehaviorService : IBehaviorService
                 Timestamp = now,
                 BehaviorId = behaviorId,
                 Name = name,
-                // Category is required - use "uncategorized" as fallback when not specified
-                Category = category ?? "uncategorized",
+                // Lifecycle event Category is string; enum serialized at event boundary
+                Category = category?.ToString() ?? "uncategorized",
                 // BundleId is nullable - behaviors don't require bundling
                 BundleId = bundleId,
                 AssetId = assetId,
@@ -279,8 +276,8 @@ public partial class BehaviorService : IBehaviorService
                 Timestamp = now,
                 BehaviorId = behaviorId,
                 Name = name,
-                // Category is required - use "uncategorized" as fallback when not specified
-                Category = category ?? "uncategorized",
+                // Lifecycle event Category is string; enum serialized at event boundary
+                Category = category?.ToString() ?? "uncategorized",
                 // BundleId is nullable - behaviors don't require bundling
                 BundleId = bundleId,
                 AssetId = assetId,
@@ -425,6 +422,14 @@ public partial class BehaviorService : IBehaviorService
         using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorService.StoreCompiledModelAsync");
         try
         {
+            // L3 soft dependency — Asset service may not be enabled
+            var assetClient = _serviceProvider.GetService<IAssetClient>();
+            if (assetClient == null)
+            {
+                _logger.LogDebug("Asset service not enabled, skipping behavior storage");
+                return null;
+            }
+
             // Request an upload URL from the asset service
             var uploadRequest = new UploadRequest
             {
@@ -438,7 +443,7 @@ public partial class BehaviorService : IBehaviorService
                 }
             };
 
-            var uploadResponse = await _assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
+            var uploadResponse = await assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
 
             // Upload the bytecode to the presigned URL
             using var httpClient = _httpClientFactory.CreateClient();
@@ -461,7 +466,7 @@ public partial class BehaviorService : IBehaviorService
                 UploadId = uploadResponse.UploadId
             };
 
-            var assetMetadata = await _assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
+            var assetMetadata = await assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
 
             _logger.LogDebug(
                 "Stored compiled behavior {BehaviorId} as asset {AssetId}",
@@ -485,12 +490,12 @@ public partial class BehaviorService : IBehaviorService
     /// <param name="body">The validation request containing ABML YAML content.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Validation result with errors and warnings.</returns>
-    public Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(ValidateAbmlRequest body, CancellationToken cancellationToken = default)
+    public async Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(ValidateAbmlRequest body, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(body.AbmlContent))
         {
             _logger.LogWarning("ABML validation rejected: content is empty or whitespace");
-            return Task.FromResult<(StatusCodes, ValidateAbmlResponse?)>((StatusCodes.BadRequest, null));
+            return (StatusCodes.BadRequest, null);
         }
 
         _logger.LogDebug("Validating ABML ({ContentLength} bytes)", body.AbmlContent.Length);
@@ -511,17 +516,18 @@ public partial class BehaviorService : IBehaviorService
             {
                 Type = ValidationErrorType.Semantic,
                 Message = e.Message,
-                LineNumber = e.Line ?? 0
+                LineNumber = e.Line
             })
             .ToList();
 
-        return Task.FromResult<(StatusCodes, ValidateAbmlResponse?)>((StatusCodes.OK, new ValidateAbmlResponse
+        await Task.CompletedTask;
+        return (StatusCodes.OK, new ValidateAbmlResponse
         {
             IsValid = result.Success,
             ValidationErrors = validationErrors,
             SemanticWarnings = result.Warnings.Select(w => w.Message).ToList(),
             SchemaVersion = "1.0"
-        }));
+        });
     }
 
     /// <summary>
@@ -539,6 +545,14 @@ public partial class BehaviorService : IBehaviorService
 
         _logger.LogDebug("Retrieving cached behavior: {BehaviorId}", body.BehaviorId);
 
+        // L3 soft dependency — Asset service may not be enabled
+        var assetClient = _serviceProvider.GetService<IAssetClient>();
+        if (assetClient == null)
+        {
+            _logger.LogDebug("Asset service not enabled, cannot retrieve cached behaviors");
+            return (StatusCodes.ServiceUnavailable, null);
+        }
+
         // Retrieve the asset from lib-asset
         var assetRequest = new GetAssetRequest
         {
@@ -549,7 +563,7 @@ public partial class BehaviorService : IBehaviorService
         AssetWithDownloadUrl asset;
         try
         {
-            asset = await _assetClient.GetAssetAsync(assetRequest, cancellationToken);
+            asset = await assetClient.GetAssetAsync(assetRequest, cancellationToken);
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
@@ -604,9 +618,7 @@ public partial class BehaviorService : IBehaviorService
             {
                 BehaviorTree = behaviorTreeData,
                 ContextSchema = new ContextSchemaData()
-            },
-            CacheTimestamp = DateTimeOffset.UtcNow, // Asset service doesn't provide timestamp
-            CacheHit = true
+            }
         });
     }
 
@@ -629,10 +641,19 @@ public partial class BehaviorService : IBehaviorService
 
         _logger.LogDebug("Invalidating cached behavior: {BehaviorId}", body.BehaviorId);
 
+        // L3 soft dependency — Asset service may not be enabled
+        var assetClient = _serviceProvider.GetService<IAssetClient>();
+
         // Try to get metadata from bundle manager first
         var metadata = await _bundleManager.GetMetadataAsync(body.BehaviorId, cancellationToken);
         if (metadata == null)
         {
+            if (assetClient == null)
+            {
+                _logger.LogDebug("Asset service not enabled and no metadata found for {BehaviorId}", body.BehaviorId);
+                return StatusCodes.NotFound;
+            }
+
             // Fall back to checking asset service directly
             var assetRequest = new GetAssetRequest
             {
@@ -642,7 +663,7 @@ public partial class BehaviorService : IBehaviorService
 
             try
             {
-                await _assetClient.GetAssetAsync(assetRequest, cancellationToken);
+                await assetClient.GetAssetAsync(assetRequest, cancellationToken);
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
@@ -667,24 +688,27 @@ public partial class BehaviorService : IBehaviorService
             }
         }
 
-        // Delete the asset from storage
-        var deleteRequest = new DeleteAssetRequest
+        // Delete the asset from storage (if Asset service is available)
+        if (assetClient != null)
         {
-            AssetId = body.BehaviorId
-        };
+            var deleteRequest = new DeleteAssetRequest
+            {
+                AssetId = body.BehaviorId
+            };
 
-        try
-        {
-            await _assetClient.DeleteAssetAsync(deleteRequest, cancellationToken);
-            _logger.LogInformation(
-                "Behavior {BehaviorId} deleted from asset storage",
-                body.BehaviorId);
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            _logger.LogDebug(
-                "Behavior {BehaviorId} not found in asset storage (may have been deleted already)",
-                body.BehaviorId);
+            try
+            {
+                await assetClient.DeleteAssetAsync(deleteRequest, cancellationToken);
+                _logger.LogInformation(
+                    "Behavior {BehaviorId} deleted from asset storage",
+                    body.BehaviorId);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogDebug(
+                    "Behavior {BehaviorId} not found in asset storage (may have been deleted already)",
+                    body.BehaviorId);
+            }
         }
 
         return StatusCodes.OK;
@@ -706,8 +730,8 @@ public partial class BehaviorService : IBehaviorService
             Timestamp = now,
             BehaviorId = metadata.BehaviorId,
             Name = metadata.Name,
-            // Category is required - use "uncategorized" as fallback when not specified
-            Category = metadata.Category ?? "uncategorized",
+            // Lifecycle event Category is string; enum serialized at event boundary
+            Category = metadata.Category?.ToString() ?? "uncategorized",
             // BundleId is nullable - behaviors don't require bundling
             BundleId = metadata.BundleId,
             AssetId = metadata.AssetId,
@@ -773,8 +797,8 @@ public partial class BehaviorService : IBehaviorService
             return (StatusCodes.OK, new GoapPlanResponse
             {
                 FailureReason = "No GOAP actions available in the compiled behavior",
-                PlanningTimeMs = 0,
-                NodesExpanded = 0
+                PlanningTimeMs = null,
+                NodesExpanded = null
             });
         }
 
@@ -807,8 +831,8 @@ public partial class BehaviorService : IBehaviorService
             return (StatusCodes.OK, new GoapPlanResponse
             {
                 FailureReason = "No valid plan found - goal may be unreachable from current state",
-                PlanningTimeMs = 0,
-                NodesExpanded = 0
+                PlanningTimeMs = null,
+                NodesExpanded = null
             });
         }
 
@@ -1022,34 +1046,21 @@ public partial class BehaviorService : IBehaviorService
     }
 
     /// <summary>
-    /// Converts an internal ReplanReason to the API enum.
+    /// Converts an internal (SDK) ReplanReason to the API ReplanReason.
+    /// Both enums share the same values; cast by underlying int.
     /// </summary>
-    private static ValidateGoapPlanResponseReason ConvertToApiReplanReason(ReplanReason reason)
+    private static Behavior.ReplanReason ConvertToApiReplanReason(BeyondImmersion.Bannou.BehaviorCompiler.Goap.ReplanReason reason)
     {
-        return reason switch
-        {
-            ReplanReason.None => ValidateGoapPlanResponseReason.None,
-            ReplanReason.PreconditionInvalidated => ValidateGoapPlanResponseReason.PreconditionInvalidated,
-            ReplanReason.ActionFailed => ValidateGoapPlanResponseReason.ActionFailed,
-            ReplanReason.BetterGoalAvailable => ValidateGoapPlanResponseReason.BetterGoalAvailable,
-            ReplanReason.PlanCompleted => ValidateGoapPlanResponseReason.PlanCompleted,
-            ReplanReason.GoalAlreadySatisfied => ValidateGoapPlanResponseReason.GoalAlreadySatisfied,
-            _ => ValidateGoapPlanResponseReason.None
-        };
+        return (Behavior.ReplanReason)(int)reason;
     }
 
     /// <summary>
-    /// Converts an internal ValidationSuggestion to the API enum.
+    /// Converts an internal (SDK) ValidationSuggestion to the API ValidationSuggestion.
+    /// Both enums share the same values; cast by underlying int.
     /// </summary>
-    private static ValidateGoapPlanResponseSuggestedAction ConvertToApiSuggestion(ValidationSuggestion suggestion)
+    private static Behavior.ValidationSuggestion ConvertToApiSuggestion(BeyondImmersion.Bannou.BehaviorCompiler.Goap.ValidationSuggestion suggestion)
     {
-        return suggestion switch
-        {
-            ValidationSuggestion.Continue => ValidateGoapPlanResponseSuggestedAction.Continue,
-            ValidationSuggestion.Replan => ValidateGoapPlanResponseSuggestedAction.Replan,
-            ValidationSuggestion.Abort => ValidateGoapPlanResponseSuggestedAction.Abort,
-            _ => ValidateGoapPlanResponseSuggestedAction.Continue
-        };
+        return (Behavior.ValidationSuggestion)(int)suggestion;
     }
 
     #endregion

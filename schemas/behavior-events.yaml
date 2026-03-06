@@ -28,8 +28,18 @@ info:
     - topic: behavior.deleted
       event: BehaviorDeletedEvent
       description: Published when a behavior is deleted/invalidated
+    # Bundle lifecycle events (auto-generated from x-lifecycle, currently not published - stub)
+    - topic: behavior-bundle.created
+      event: BehaviorBundleCreatedEvent
+      description: Published when a new behavior bundle is created
+    - topic: behavior-bundle.updated
+      event: BehaviorBundleUpdatedEvent
+      description: Published when a behavior bundle is updated
+    - topic: behavior-bundle.deleted
+      event: BehaviorBundleDeletedEvent
+      description: Published when a behavior bundle is deleted
     # Cinematic streaming events
-    - topic: character.cinematic-extension
+    - topic: behavior.cinematic-extension
       event: CinematicExtensionAvailableEvent
       description: Published when a cinematic extension is available for injection at a continuation point
     # Compilation failure events
@@ -37,7 +47,7 @@ info:
       event: BehaviorCompilationFailedEvent
       description: Published when ABML compilation fails (for monitoring/alerting)
     # GOAP planning events
-    - topic: behavior.goap.plan-generated
+    - topic: behavior.goap-plan-generated
       event: GoapPlanGeneratedEvent
       description: Published when GOAP planner generates a new plan
 
@@ -82,6 +92,7 @@ components:
   schemas:
     CinematicExtensionAvailableEvent:
       type: object
+      additionalProperties: false
       description: Event published when a cinematic extension is available for injection at a continuation point.
       required:
         - eventId
@@ -126,6 +137,7 @@ components:
 
     BehaviorCompilationFailedEvent:
       type: object
+      additionalProperties: false
       description: Event published when ABML compilation fails. Used for monitoring and alerting.
       required:
         - eventId
@@ -161,6 +173,7 @@ components:
 
     GoapPlanGeneratedEvent:
       type: object
+      additionalProperties: false
       description: Event published when the GOAP planner generates a new plan. Useful for debugging and analytics.
       required:
         - eventId
@@ -178,6 +191,7 @@ components:
           description: When the event was generated.
         actorId:
           type: string
+          format: uuid
           nullable: true
           description: Actor that requested the plan (if applicable).
         goalId:

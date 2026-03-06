@@ -40,7 +40,7 @@ public sealed class EmitIntentEmitter : BaseIntentEmitter
     public override string ActionName => "emit_intent";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
@@ -59,18 +59,20 @@ public sealed class EmitIntentEmitter : BaseIntentEmitter
             if (fallbackChannel == null)
             {
                 // Silently drop emission for unsupported channels
-                return ValueTask.FromResult(NoEmission());
+                await Task.CompletedTask;
+                return NoEmission();
             }
 
             channel = fallbackChannel;
         }
 
-        return ValueTask.FromResult(SingleEmission(
+        await Task.CompletedTask;
+        return SingleEmission(
             channel,
             intent,
             Math.Clamp(urgency, 0f, 1f),
             target,
-            position));
+            position);
     }
 
     /// <summary>
@@ -126,14 +128,15 @@ public sealed class MultiEmitEmitter : BaseIntentEmitter
     public override string ActionName => "multi_emit";
 
     /// <inheritdoc/>
-    public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
+    public override async ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(
         IReadOnlyDictionary<string, object> parameters,
         IntentEmissionContext context,
         CancellationToken ct)
     {
         if (!parameters.TryGetValue("emissions", out var emissionsObj))
         {
-            return ValueTask.FromResult(NoEmission());
+            await Task.CompletedTask;
+            return NoEmission();
         }
 
         var emissions = new List<IntentEmission>();
@@ -178,7 +181,8 @@ public sealed class MultiEmitEmitter : BaseIntentEmitter
             }
         }
 
-        return ValueTask.FromResult<IReadOnlyList<IntentEmission>>(emissions);
+        await Task.CompletedTask;
+        return emissions;
     }
 }
 

@@ -26,6 +26,21 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.CharacterEncounter;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -71,12 +86,13 @@ public partial class EncounterRecordedEvent
     public string EncounterTypeCode { get; set; } = default!;
 
     /// <summary>
-    /// Outcome of the encounter (POSITIVE, NEGATIVE, etc.)
+    /// Outcome of the encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("outcome")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Outcome { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EncounterOutcome Outcome { get; set; } = default!;
 
     /// <summary>
     /// Realm where the encounter occurred
@@ -98,6 +114,7 @@ public partial class EncounterRecordedEvent
     [System.Text.Json.Serialization.JsonPropertyName("participantIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<System.Guid> ParticipantIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
@@ -167,18 +184,21 @@ public partial class EncounterMemoryFadedEvent
     /// Memory strength before decay
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousStrength")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
     public float PreviousStrength { get; set; } = default!;
 
     /// <summary>
     /// Memory strength after decay
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newStrength")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
     public float NewStrength { get; set; } = default!;
 
     /// <summary>
     /// The threshold below which memories are considered faded
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fadeThreshold")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
     public float FadeThreshold { get; set; } = default!;
 
 }
@@ -234,12 +254,14 @@ public partial class EncounterMemoryRefreshedEvent
     /// Memory strength before refresh
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousStrength")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
     public float PreviousStrength { get; set; } = default!;
 
     /// <summary>
     /// Memory strength after refresh
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newStrength")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
     public float NewStrength { get; set; } = default!;
 
 }
@@ -309,12 +331,14 @@ public partial class EncounterPerspectiveUpdatedEvent
     /// Previous sentiment shift (if changed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousSentimentShift")]
+    [System.ComponentModel.DataAnnotations.Range(-1.0F, 1.0F)]
     public float? PreviousSentimentShift { get; set; } = default!;
 
     /// <summary>
     /// New sentiment shift (if changed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newSentimentShift")]
+    [System.ComponentModel.DataAnnotations.Range(-1.0F, 1.0F)]
     public float? NewSentimentShift { get; set; } = default!;
 
 }
@@ -356,12 +380,14 @@ public partial class EncounterDeletedEvent
     [System.Text.Json.Serialization.JsonPropertyName("participantIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<System.Guid> ParticipantIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
     /// Number of perspectives deleted with the encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("perspectivesDeleted")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int PerspectivesDeleted { get; set; } = default!;
 
     /// <summary>

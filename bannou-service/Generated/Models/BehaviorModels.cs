@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Behavior;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Behavior;
 
@@ -41,7 +56,7 @@ public partial class GetCachedBehaviorRequest
     /// Unique identifier for the cached behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
@@ -58,7 +73,7 @@ public partial class InvalidateCacheRequest
     /// Unique identifier for the cached behavior to invalidate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
@@ -75,7 +90,7 @@ public partial class CompileBehaviorRequest
     /// Raw ABML YAML content to compile
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("abmlContent")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string AbmlContent { get; set; } = default!;
 
@@ -94,7 +109,7 @@ public partial class CompileBehaviorRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorCategory")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CompileBehaviorRequestBehaviorCategory? BehaviorCategory { get; set; } = default!;
+    public BehaviorCategory? BehaviorCategory { get; set; } = default!;
 
     /// <summary>
     /// Optional bundle identifier for grouping related behaviors.
@@ -105,12 +120,6 @@ public partial class CompileBehaviorRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     public string? BundleId { get; set; } = default!;
-
-    /// <summary>
-    /// Character context for context variable resolution during compilation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterContext")]
-    public CharacterContext? CharacterContext { get; set; } = default!;
 
     /// <summary>
     /// Options controlling the compilation process
@@ -131,7 +140,7 @@ public partial class ValidateAbmlRequest
     /// Raw ABML YAML content to validate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("abmlContent")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string AbmlContent { get; set; } = default!;
 
@@ -154,7 +163,7 @@ public partial class CompileBehaviorResponse
     /// Unique identifier for the compiled behavior (content-addressable hash)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
@@ -174,6 +183,7 @@ public partial class CompileBehaviorResponse
     /// Time taken to compile the behavior in milliseconds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compilationTimeMs")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int CompilationTimeMs { get; set; } = default!;
 
     /// <summary>
@@ -183,22 +193,10 @@ public partial class CompileBehaviorResponse
     public string? AssetId { get; set; } = default!;
 
     /// <summary>
-    /// Bundle ID if the behavior was added to a bundle. Null if not bundled.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    public string? BundleId { get; set; } = default!;
-
-    /// <summary>
     /// True if this replaced an existing behavior with the same content hash
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isUpdate")]
     public bool IsUpdate { get; set; } = default!;
-
-    /// <summary>
-    /// Non-fatal warnings during compilation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("warnings")]
-    public System.Collections.Generic.ICollection<string>? Warnings { get; set; } = default!;
 
 }
 
@@ -246,7 +244,7 @@ public partial class CachedBehaviorResponse
     /// Unique identifier for the cached behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
@@ -257,75 +255,6 @@ public partial class CachedBehaviorResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public CompiledBehavior CompiledBehavior { get; set; } = new CompiledBehavior();
-
-    /// <summary>
-    /// When the behavior was cached
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cacheTimestamp")]
-    public System.DateTimeOffset? CacheTimestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this was a cache hit or miss
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cacheHit")]
-    public bool CacheHit { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Context information about a character for behavior resolution
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CharacterContext
-{
-
-    /// <summary>
-    /// Unique identifier for the NPC
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("npcId")]
-    public string? NpcId { get; set; } = default!;
-
-    /// <summary>
-    /// Cultural background identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("culture")]
-    public string? Culture { get; set; } = default!;
-
-    /// <summary>
-    /// Character profession identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("profession")]
-    public string? Profession { get; set; } = default!;
-
-    /// <summary>
-    /// Character statistics and attributes
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("stats")]
-    public System.Collections.Generic.IDictionary<string, double>? Stats { get; set; } = default!;
-
-    /// <summary>
-    /// Character skill levels
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("skills")]
-    public System.Collections.Generic.IDictionary<string, double>? Skills { get; set; } = default!;
-
-    /// <summary>
-    /// Current location information for the character
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("location")]
-    public Location? Location { get; set; } = default!;
-
-    /// <summary>
-    /// Relationship values with other characters
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("relationships")]
-    public System.Collections.Generic.IDictionary<string, double>? Relationships { get; set; } = default!;
-
-    /// <summary>
-    /// Relevant world state information
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("worldState")]
-    public object? WorldState { get; set; } = default!;
 
 }
 
@@ -346,6 +275,7 @@ public partial class BehaviorTreeData
     /// Size of the bytecode in bytes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bytecodeSize")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int BytecodeSize { get; set; } = default!;
 
     /// <summary>
@@ -357,7 +287,12 @@ public partial class BehaviorTreeData
 }
 
 /// <summary>
-/// Schema defining required context variables for behavior execution
+/// Schema defining required context variables for behavior execution.
+/// <br/>Structure is compiler-generated from ABML context declarations.
+/// <br/>Keys are variable names, values describe expected types and sources.
+/// <br/>No Bannou service reads specific keys by convention (T29 compliant) —
+/// <br/>this schema is consumed by the ActorRunner interpreter at runtime.
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContextSchemaData
@@ -369,9 +304,9 @@ public partial class ContextSchemaData
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -417,60 +352,6 @@ public partial class CompiledBehavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("executionMetadata")]
     public ExecutionMetadata? ExecutionMetadata { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Character location information including current position, region, and 3D coordinates
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Location
-{
-
-    /// <summary>
-    /// Current location name or identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("current")]
-    public string? Current { get; set; } = default!;
-
-    /// <summary>
-    /// Region or zone the character is in
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("region")]
-    public string? Region { get; set; } = default!;
-
-    /// <summary>
-    /// 3D spatial coordinates of the character's position in the game world
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("coordinates")]
-    public Coordinates? Coordinates { get; set; } = default!;
-
-}
-
-/// <summary>
-/// 3D spatial coordinates representing a position in the game world
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Coordinates
-{
-
-    /// <summary>
-    /// X coordinate position
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("x")]
-    public double X { get; set; } = default!;
-
-    /// <summary>
-    /// Y coordinate position
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("y")]
-    public double Y { get; set; } = default!;
-
-    /// <summary>
-    /// Z coordinate position
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("z")]
-    public double Z { get; set; } = default!;
 
 }
 
@@ -556,7 +437,7 @@ public partial class GoapPlanRequest
     /// Unique identifier for the agent requesting the plan
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("agentId")]
-    public string? AgentId { get; set; } = default!;
+    public System.Guid? AgentId { get; set; } = default!;
 
     /// <summary>
     /// The goal to achieve through planning
@@ -567,7 +448,10 @@ public partial class GoapPlanRequest
     public GoapGoal Goal { get; set; } = new GoapGoal();
 
     /// <summary>
-    /// Current world state as key-value pairs
+    /// Planner-owned dynamic world state bag for GOAP A* search.
+    /// <br/>Keys are arbitrary world state variable names, values are current state.
+    /// <br/>No Bannou service reads specific keys by convention (T29 compliant).
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("worldState")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -578,7 +462,7 @@ public partial class GoapPlanRequest
     /// ID of compiled behavior containing GOAP actions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
@@ -604,16 +488,18 @@ public partial class GoapPlanResponse
     public GoapPlanResult? Plan { get; set; } = default!;
 
     /// <summary>
-    /// Time spent planning in milliseconds
+    /// Time spent planning in milliseconds. Null when planner did not run.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("planningTimeMs")]
-    public int PlanningTimeMs { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? PlanningTimeMs { get; set; } = default!;
 
     /// <summary>
-    /// Number of nodes expanded during A* search
+    /// Number of nodes expanded during A* search. Null when planner did not run.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodesExpanded")]
-    public int NodesExpanded { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? NodesExpanded { get; set; } = default!;
 
     /// <summary>
     /// Reason for planning failure if unsuccessful
@@ -650,6 +536,7 @@ public partial class GoapPlanResult
     /// Total cost of all actions in the plan
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCost")]
+    [System.ComponentModel.DataAnnotations.Range(0F, float.MaxValue)]
     public float TotalCost { get; set; } = default!;
 
 }
@@ -665,7 +552,7 @@ public partial class PlannedActionResponse
     /// ID of the action (flow name)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActionId { get; set; } = default!;
 
@@ -673,12 +560,14 @@ public partial class PlannedActionResponse
     /// Position in the plan sequence
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("index")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Index { get; set; } = default!;
 
     /// <summary>
     /// Cost of this action
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cost")]
+    [System.ComponentModel.DataAnnotations.Range(0F, float.MaxValue)]
     public float Cost { get; set; } = default!;
 
 }
@@ -702,10 +591,14 @@ public partial class ValidateGoapPlanRequest
     /// Index of the action currently being executed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentActionIndex")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int CurrentActionIndex { get; set; } = default!;
 
     /// <summary>
-    /// Current world state
+    /// Planner-owned dynamic world state bag for plan validation.
+    /// <br/>Keys are arbitrary world state variable names, values are current state.
+    /// <br/>No Bannou service reads specific keys by convention (T29 compliant).
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("worldState")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -740,7 +633,7 @@ public partial class ValidateGoapPlanResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ValidateGoapPlanResponseReason Reason { get; set; } = default!;
+    public ReplanReason Reason { get; set; } = default!;
 
     /// <summary>
     /// Suggested action based on validation
@@ -749,13 +642,13 @@ public partial class ValidateGoapPlanResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ValidateGoapPlanResponseSuggestedAction SuggestedAction { get; set; } = default!;
+    public ValidationSuggestion SuggestedAction { get; set; } = default!;
 
     /// <summary>
-    /// Index where plan became invalid (if applicable)
+    /// Index where plan became invalid. Null when plan is valid.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("invalidatedAtIndex")]
-    public int InvalidatedAtIndex { get; set; } = default!;
+    public int? InvalidatedAtIndex { get; set; } = default!;
 
     /// <summary>
     /// Additional details about the validation result. Null when no additional context is needed.
@@ -776,18 +669,21 @@ public partial class GoapPlanningOptions
     /// Maximum plan depth (number of actions)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxDepth")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int MaxDepth { get; set; } = 10;
 
     /// <summary>
     /// Maximum nodes to expand during search
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxNodes")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int MaxNodes { get; set; } = 1000;
 
     /// <summary>
     /// Planning timeout in milliseconds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timeoutMs")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int TimeoutMs { get; set; } = 100;
 
 }
@@ -856,16 +752,18 @@ public partial class ValidationError
     public string Message { get; set; } = default!;
 
     /// <summary>
-    /// Line number where the error occurred (if applicable)
+    /// Line number where the error occurred. Null if not applicable.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lineNumber")]
-    public int LineNumber { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int? LineNumber { get; set; } = default!;
 
     /// <summary>
-    /// Column number where the error occurred (if applicable)
+    /// Column number where the error occurred. Null if not applicable.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("columnNumber")]
-    public int ColumnNumber { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int? ColumnNumber { get; set; } = default!;
 
     /// <summary>
     /// YAML path to the problematic element
@@ -875,35 +773,41 @@ public partial class ValidationError
 
 }
 
+/// <summary>
+/// Category for organizing behaviors
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CompileBehaviorRequestBehaviorCategory
+public enum BehaviorCategory
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"base")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Base")]
     Base = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cultural")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cultural")]
     Cultural = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"professional")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Professional")]
     Professional = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"personal")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Personal")]
     Personal = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"situational")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Situational")]
     Situational = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ambient")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Ambient")]
     Ambient = 5,
 
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Reason for GOAP plan validation result
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ValidateGoapPlanResponseReason
+public enum ReplanReason
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"None")]
@@ -930,9 +834,12 @@ public enum ValidateGoapPlanResponseReason
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Suggested action based on GOAP plan validation
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ValidateGoapPlanResponseSuggestedAction
+public enum ValidationSuggestion
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"Continue")]
@@ -947,24 +854,27 @@ public enum ValidateGoapPlanResponseSuggestedAction
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Type of ABML validation error
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ValidationErrorType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"syntax")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Syntax")]
     Syntax = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"semantic")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Semantic")]
     Semantic = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"schema")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Schema")]
     Schema = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"context")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Context")]
     Context = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"service_dependency")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ServiceDependency")]
     ServiceDependency = 4,
 
 }

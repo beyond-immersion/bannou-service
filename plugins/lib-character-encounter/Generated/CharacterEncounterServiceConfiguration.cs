@@ -93,84 +93,98 @@ public class CharacterEncounterServiceConfiguration : BaseServiceConfiguration
     /// Hours between decay checks (used for calculating decay amount)
     /// Environment variable: CHARACTER_ENCOUNTER_MEMORY_DECAY_INTERVAL_HOURS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 8760)]
     public int MemoryDecayIntervalHours { get; set; } = 24;
 
     /// <summary>
     /// Memory strength reduction per decay interval (0.0-1.0)
     /// Environment variable: CHARACTER_ENCOUNTER_MEMORY_DECAY_RATE
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
     public double MemoryDecayRate { get; set; } = 0.05;
 
     /// <summary>
     /// Memory strength below which encounters are considered forgotten (0.0-1.0)
     /// Environment variable: CHARACTER_ENCOUNTER_MEMORY_FADE_THRESHOLD
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
     public double MemoryFadeThreshold { get; set; } = 0.1;
 
     /// <summary>
     /// Maximum encounters stored per character before oldest are pruned
     /// Environment variable: CHARACTER_ENCOUNTER_MAX_PER_CHARACTER
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 100000)]
     public int MaxEncountersPerCharacter { get; set; } = 1000;
 
     /// <summary>
     /// Maximum encounters stored per character pair before oldest are pruned
     /// Environment variable: CHARACTER_ENCOUNTER_MAX_PER_PAIR
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MaxEncountersPerPair { get; set; } = 100;
 
     /// <summary>
     /// Default page size for query results
     /// Environment variable: CHARACTER_ENCOUNTER_DEFAULT_PAGE_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int DefaultPageSize { get; set; } = 20;
 
     /// <summary>
     /// Maximum allowed page size for query results
     /// Environment variable: CHARACTER_ENCOUNTER_MAX_PAGE_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
     public int MaxPageSize { get; set; } = 100;
 
     /// <summary>
     /// Maximum items in bulk operations (batch-get, etc.)
     /// Environment variable: CHARACTER_ENCOUNTER_MAX_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
     public int MaxBatchSize { get; set; } = 100;
 
     /// <summary>
     /// Default initial memory strength for new perspectives (0.0-1.0)
     /// Environment variable: CHARACTER_ENCOUNTER_DEFAULT_MEMORY_STRENGTH
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
     public double DefaultMemoryStrength { get; set; } = 1.0;
 
     /// <summary>
     /// Default memory strength boost when refreshing (0.0-1.0)
     /// Environment variable: CHARACTER_ENCOUNTER_MEMORY_REFRESH_BOOST
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
     public double MemoryRefreshBoost { get; set; } = 0.2;
 
     /// <summary>
     /// Default sentiment shift for positive encounter outcomes
     /// Environment variable: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_POSITIVE
     /// </summary>
+    [ConfigRange(Minimum = -1.0, Maximum = 1.0)]
     public double SentimentShiftPositive { get; set; } = 0.2;
 
     /// <summary>
     /// Default sentiment shift for negative encounter outcomes (should be negative)
     /// Environment variable: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_NEGATIVE
     /// </summary>
+    [ConfigRange(Minimum = -1.0, Maximum = 1.0)]
     public double SentimentShiftNegative { get; set; } = -0.2;
 
     /// <summary>
     /// Default sentiment shift for memorable encounter outcomes
     /// Environment variable: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_MEMORABLE
     /// </summary>
+    [ConfigRange(Minimum = -1.0, Maximum = 1.0)]
     public double SentimentShiftMemorable { get; set; } = 0.1;
 
     /// <summary>
     /// Default sentiment shift for transformative encounter outcomes
     /// Environment variable: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_TRANSFORMATIVE
     /// </summary>
+    [ConfigRange(Minimum = -1.0, Maximum = 1.0)]
     public double SentimentShiftTransformative { get; set; } = 0.3;
 
     /// <summary>
@@ -199,6 +213,27 @@ public class CharacterEncounterServiceConfiguration : BaseServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 2, Maximum = 100)]
     public int MaxParticipantsPerEncounter { get; set; } = 20;
+
+    /// <summary>
+    /// Maximum retry attempts for ETag-based optimistic concurrency conflicts
+    /// Environment variable: CHARACTER_ENCOUNTER_ETAG_RETRY_MAX_ATTEMPTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int ETagRetryMaxAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// Sentiment threshold below which characters are considered grudges for ABML variable providers (negative value)
+    /// Environment variable: CHARACTER_ENCOUNTER_GRUDGE_SENTIMENT_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = -1.0, Maximum = 0.0)]
+    public double GrudgeSentimentThreshold { get; set; } = -0.5;
+
+    /// <summary>
+    /// Sentiment threshold above which characters are considered allies for ABML variable providers
+    /// Environment variable: CHARACTER_ENCOUNTER_ALLY_SENTIMENT_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double AllySentimentThreshold { get; set; } = 0.5;
 
     /// <summary>
     /// Time window in minutes for duplicate encounter detection. Encounters with the same participants, type, and timestamp within this window are considered duplicates.

@@ -935,7 +935,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, _) = await service.EnterScenarioAsync(
             new EnterScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
             CancellationToken.None);
@@ -955,7 +955,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, _) = await service.EnterScenarioAsync(
             new EnterScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
             CancellationToken.None);
@@ -978,7 +978,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, _) = await service.EnterScenarioAsync(
             new EnterScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
             CancellationToken.None);
@@ -1005,7 +1005,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, _) = await service.EnterScenarioAsync(
             new EnterScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
             CancellationToken.None);
@@ -1037,7 +1037,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, response) = await service.EnterScenarioAsync(
             new EnterScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
             CancellationToken.None);
@@ -1077,7 +1077,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, response) = await service.CompleteScenarioAsync(
             new CompleteScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 ScenarioInstanceId = scenarioId
             },
             CancellationToken.None);
@@ -1114,7 +1114,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             "gardener.scenario.completed",
             It.Is<GardenerScenarioCompletedEvent>(e =>
                 e.ScenarioInstanceId == scenarioId &&
-                e.AccountId == _testAccountId),
+                e.WebSocketSessionId == _testSessionId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1129,7 +1129,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, _) = await service.CompleteScenarioAsync(
             new CompleteScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 ScenarioInstanceId = Guid.NewGuid() // Different ID
             },
             CancellationToken.None);
@@ -1145,7 +1145,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, _) = await service.CompleteScenarioAsync(
             new CompleteScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 ScenarioInstanceId = Guid.NewGuid()
             },
             CancellationToken.None);
@@ -1176,7 +1176,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, response) = await service.AbandonScenarioAsync(
             new AbandonScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 ScenarioInstanceId = scenarioId
             },
             CancellationToken.None);
@@ -1199,7 +1199,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             "gardener.scenario.abandoned",
             It.Is<GardenerScenarioAbandonedEvent>(e =>
                 e.ScenarioInstanceId == scenarioId &&
-                e.AccountId == _testAccountId),
+                e.WebSocketSessionId == _testSessionId),
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Tracking set updated
@@ -1251,7 +1251,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, response) = await service.ChainScenarioAsync(
             new ChainScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 CurrentScenarioInstanceId = currentScenarioId,
                 TargetTemplateId = targetTemplateId
             },
@@ -1301,7 +1301,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, _) = await service.ChainScenarioAsync(
             new ChainScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 CurrentScenarioInstanceId = currentScenario.ScenarioInstanceId,
                 TargetTemplateId = targetTemplateId
             },
@@ -1341,7 +1341,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, _) = await service.ChainScenarioAsync(
             new ChainScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 CurrentScenarioInstanceId = currentScenario.ScenarioInstanceId,
                 TargetTemplateId = targetTemplateId
             },
@@ -1671,7 +1671,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             "gardener.bond.entered-together",
             It.Is<GardenerBondEnteredTogetherEvent>(e =>
                 e.BondId == bondId &&
-                e.Participants.Count == 2),
+                e.ParticipantSessionIds.Count == 2),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

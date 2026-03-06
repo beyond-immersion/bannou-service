@@ -19,6 +19,7 @@ public class TelemetryServiceTests
     private readonly TelemetryServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IServiceProvider> _mockServiceProvider;
 
     public TelemetryServiceTests()
     {
@@ -26,6 +27,7 @@ public class TelemetryServiceTests
         _configuration = new TelemetryServiceConfiguration();
         _appConfiguration = new AppConfiguration();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
     }
 
     private TelemetryService CreateService()
@@ -34,7 +36,8 @@ public class TelemetryServiceTests
             _mockLogger.Object,
             _configuration,
             _appConfiguration,
-            _mockTelemetryProvider.Object);
+            _mockTelemetryProvider.Object,
+            _mockServiceProvider.Object);
     }
 
     #region Constructor Validation

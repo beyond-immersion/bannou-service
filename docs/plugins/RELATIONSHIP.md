@@ -4,7 +4,7 @@
 > **Schema**: schemas/relationship-api.yaml
 > **Version**: 2.0.0
 > **Layer**: GameFoundation
-> **State Stores**: relationship-statestore (MySQL), relationship-type-statestore (MySQL), relationship-lock (Redis)
+> **State Store**: relationship-statestore (MySQL), relationship-type-statestore (MySQL), relationship-lock (Redis)
 > **Implementation Map**: [docs/maps/RELATIONSHIP.md](../maps/RELATIONSHIP.md)
 
 ---

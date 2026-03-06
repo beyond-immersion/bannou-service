@@ -55,18 +55,35 @@ public class CharacterHistoryServiceConfiguration : BaseServiceConfiguration
     /// TTL in seconds for backstory cache entries. Backstory data is nearly immutable, so longer TTLs are appropriate.
     /// Environment variable: CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int BackstoryCacheTtlSeconds { get; set; } = 600;
 
     /// <summary>
     /// Maximum number of backstory elements allowed per character. Prevents unbounded growth from repeated AddBackstoryElement or SetBackstory calls. Returns BadRequest when limit would be exceeded.
     /// Environment variable: CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxBackstoryElements { get; set; } = 100;
+
+    /// <summary>
+    /// Maximum number of backstory points to include in compression archive summaries. Controls narrative fidelity vs archive size during character archival.
+    /// Environment variable: CHARACTER_HISTORY_MAX_COMPRESS_BACKSTORY_POINTS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int MaxCompressBackstoryPoints { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum number of life events to include in compression archive summaries. Controls narrative fidelity vs archive size during character archival.
+    /// Environment variable: CHARACTER_HISTORY_MAX_COMPRESS_LIFE_EVENTS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int MaxCompressLifeEvents { get; set; } = 10;
 
     /// <summary>
     /// Timeout in seconds for distributed locks during index and backstory write operations. Matches established patterns in Currency, Inventory, and Contract services.
     /// Environment variable: CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int IndexLockTimeoutSeconds { get; set; } = 15;
 
 }

@@ -11,20 +11,6 @@
 
 The Analytics plugin (L4 GameFeatures) is the central event aggregation point for all game-related statistics. Handles event ingestion, entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. Publishes score updates and milestone events consumed by Achievement and Leaderboard for downstream processing. Subscribes to game session lifecycle and character/realm history events for automatic ingestion. Unlike typical L4 services, Analytics only observes via event subscriptions -- it does not invoke L2/L4 service APIs and should not be called by L1/L2/L3 services.
 
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (IStateStoreFactory) | Event buffer, entity summaries, skill ratings, controller history, session mappings, game service/realm/character caches |
-| lib-state (IDistributedLockProvider) | Distributed locks for buffer flush (prevents duplicate processing across instances) and rating updates (serializes per game+type) |
-| lib-messaging (IMessageBus) | Publishing score/rating/milestone events and error events |
-| lib-game-service (IGameServiceClient) | Resolving game type strings to game service IDs for event keying |
-| lib-game-session (IGameSessionClient) | Resolving session IDs to game types (fallback when no cached mapping exists) |
-| lib-realm (IRealmClient) | Resolving realm IDs to game service IDs for character/realm history events |
-| lib-character (ICharacterClient) | Resolving character IDs to realm IDs for character history events |
-
-> **Refactoring Consideration**: This plugin injects 4 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -35,23 +21,7 @@ The Analytics plugin (L4 GameFeatures) is the central event aggregation point fo
 | lib-leaderboard | Subscribes to `analytics.rating.updated` to update skill rating leaderboards |
 | lib-divine | Subscribes to `analytics.score.updated` for divine intervention triggers (stub) |
 
-## State Storage
-
-**Redis stores** handle event buffering, session mappings, and resolution caches. The service validates the summary store is Redis at runtime via `EnsureSummaryStoreRedisAsync()` for buffer operations. **MySQL stores** provide server-side filtering, sorting, and pagination: `analytics-summary-data` for entity summaries, `analytics-history-data` for controller possession history with configurable retention.
-
-| Key Pattern | Store | Purpose |
-|-------------|-------|---------|
-| `{gameServiceId}:{entityType}:{entityId}` | analytics-summary-data (MySQL) | Entity summary aggregations (event counts, aggregates, timestamps) |
-| `analytics-event-buffer-entry:{eventId}` | analytics-summary (Redis) | Individual buffered event entries awaiting flush |
-| `analytics-event-buffer-index` | analytics-summary (Redis) | Sorted set of buffered event keys (scored by timestamp) |
-| `analytics-session-mapping:{sessionId}` | analytics-summary (Redis) | Game session to game service ID cache (TTL: SessionMappingTtlSeconds) |
-| `analytics-game-service-cache:{stubName}` | analytics-summary (Redis) | Game type stub to service ID cache (TTL: ResolutionCacheTtlSeconds) |
-| `analytics-realm-game-service-cache:{realmId}` | analytics-summary (Redis) | Realm to game service ID cache (TTL: ResolutionCacheTtlSeconds) |
-| `analytics-character-realm-cache:{characterId}` | analytics-summary (Redis) | Character to realm ID cache (TTL: ResolutionCacheTtlSeconds) |
-| `{gameServiceId}:{ratingType}:{entityType}:{entityId}` | analytics-rating (Redis) | Glicko-2 skill rating data per entity per rating type |
-| `{gameServiceId}:controller:{accountId}:{timestamp:o}` | analytics-history-data (MySQL) | Individual controller history events |
-
-### Type Field Classification
+## Type Field Classification
 
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
@@ -63,37 +33,6 @@ The Analytics plugin (L4 GameFeatures) is the central event aggregation point fo
 | `milestoneType` (on `AnalyticsMilestoneReachedEvent`) | B (Game Content Type) | Opaque string | Type of milestone reached (e.g., `"total_kills"`, `"games_played"`). Published when a score crosses a configured threshold. Vocabulary matches aggregated event types. |
 | `action` | C (System State/Mode) | `ControllerAction` enum | Controller possession action (`possess`, `release`). Binary state tracking whether control was taken or relinquished. |
 | `metadata` (on `IngestEventRequest`) | -- (Client Metadata) | `object` (`additionalProperties: true`) | Opaque client-provided event context. Analytics stores and returns this data without inspecting its structure, per T29 (No Metadata Bag Contracts). |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `analytics.score.updated` | `AnalyticsScoreUpdatedEvent` | During buffer flush, for each event with non-zero value |
-| `analytics.rating.updated` | `AnalyticsRatingUpdatedEvent` | After all players' Glicko-2 ratings are saved (batch publish) |
-| `analytics.milestone.reached` | `AnalyticsMilestoneReachedEvent` | When a score crosses a milestone threshold |
-| `analytics.controller.recorded` | `AnalyticsControllerRecordedEvent` | After a controller possession/release event is saved |
-
-### Consumed Events
-
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `game-session.action.performed` | `HandleGameActionPerformedAsync` | Resolves game service via session mapping, buffers action event |
-| `game-session.created` | `HandleGameSessionCreatedAsync` | Saves session-to-gameService mapping, buffers creation event |
-| `game-session.deleted` | `HandleGameSessionDeletedAsync` | Removes session mapping, buffers deletion event |
-| `character-history.participation.recorded` | `HandleCharacterParticipationRecordedAsync` | Resolves game service via character->realm->gameService chain, buffers event |
-| `character-history.backstory.created` | `HandleCharacterBackstoryCreatedAsync` | Resolves game service via character->realm->gameService chain, buffers event |
-| `character-history.backstory.updated` | `HandleCharacterBackstoryUpdatedAsync` | Resolves game service via character->realm->gameService chain, buffers event |
-| `realm-history.participation.recorded` | `HandleRealmParticipationRecordedAsync` | Resolves game service via realm lookup, buffers event |
-| `realm-history.lore.created` | `HandleRealmLoreCreatedAsync` | Resolves game service via realm lookup, buffers event |
-| `realm-history.lore.updated` | `HandleRealmLoreUpdatedAsync` | Resolves game service via realm lookup, buffers event |
-| `character.updated` | `HandleCharacterUpdatedForCacheInvalidationAsync` | Invalidates character-to-realm resolution cache |
-| `realm.updated` | `HandleRealmUpdatedForCacheInvalidationAsync` | Invalidates realm-to-gameService resolution cache |
-
-All history event handlers follow the fail-fast pattern: if game service resolution fails (realm/character not found, service unavailable), the event is dropped with error logging and an error event published via `TryPublishErrorAsync`. Events are never buffered with incorrect game service IDs.
 
 ## Configuration
 
@@ -118,40 +57,6 @@ All history event handlers follow the fail-fast pattern: if game service resolut
 | `ControllerHistoryRetentionDays` | `ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS` | 90 | Days to retain controller history records (0 = indefinite) |
 | `ControllerHistoryCleanupBatchSize` | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE` | 5000 | Maximum records to delete per cleanup invocation |
 | `ControllerHistoryCleanupSubBatchSize` | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE` | 100 | Records to delete per iteration within a cleanup batch |
-
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ILogger<AnalyticsService>` | Structured logging |
-| `AnalyticsServiceConfiguration` | Typed config access |
-| `IStateStoreFactory` | Multi-store access (summary, rating, history) |
-| `IDistributedLockProvider` | Flush lock and rating update lock coordination |
-| `IMessageBus` | Event publishing and error reporting |
-| `IGameServiceClient` | Game type to service ID resolution |
-| `IGameSessionClient` | Session ID to game type resolution (fallback) |
-| `IRealmClient` | Realm ID to game service ID resolution (for history events) |
-| `ICharacterClient` | Character ID to realm ID resolution (for history events) |
-| `ITelemetryProvider` | Distributed tracing spans on async operations |
-| `IEventConsumer` | Registers handlers for 11 consumed event types |
-
-## API Endpoints (Implementation Notes)
-
-### Event Ingestion (`/analytics/event/ingest`, `/analytics/event/ingest-batch`)
-
-Events are buffered in Redis using a two-part structure: individual event entries keyed by `analytics-event-buffer-entry:{eventId}`, and a sorted set `analytics-event-buffer-index` scored by event timestamp in milliseconds. Flush is triggered when either: (a) the sorted set size reaches `EventBufferSize`, or (b) the oldest entry is older than `EventBufferFlushIntervalSeconds`. A distributed lock prevents concurrent flush from multiple instances. The flush processes events in batches grouped by entity, updating each entity's summary with optimistic concurrency (ETag-based `TrySaveAsync`). On ETag conflict, the batch for that entity is skipped (will be retried next flush).
-
-### Entity Summary (`/analytics/summary/get`, `/analytics/summary/query`)
-
-Get returns a single entity's aggregated statistics by composite key from the MySQL `analytics-summary-data` store. Query uses MySQL JSON functions via `JsonQueryPagedAsync` for server-side filtering (gameServiceId, entityType, eventType existence, minEvents), sorting, and pagination. Supported sort fields: `totalevents`, `firsteventat`, `lasteventat`, `eventcount` (case-insensitive). This avoids loading all summaries into memory.
-
-### Skill Rating (`/analytics/rating/get`, `/analytics/rating/update`)
-
-Get returns the current Glicko-2 rating or default values if no rating exists (not 404). Update takes a match with 2+ results, acquires a distributed lock on the game+ratingType combination, loads current ratings, snapshots pre-match values, calculates all Glicko-2 updates using original opponent ratings (order-independent), saves all ratings, then publishes `analytics.rating.updated` per player. Returns Conflict if the lock cannot be acquired (another update for the same game+type is in progress).
-
-### Controller History (`/analytics/controller-history/record`, `/analytics/controller-history/query`, `/analytics/controller-history/cleanup`)
-
-Records are stored in the MySQL `analytics-history-data` store. Query uses MySQL JSON functions via `JsonQueryPagedAsync` for server-side filtering (gameServiceId, accountId, targetEntityId, targetEntityType, time range), sorting by timestamp descending, and limit. Cleanup endpoint (admin-only) deletes records older than `ControllerHistoryRetentionDays` (default 90 days) in batches, with dry-run preview support.
 
 ## Visual Aid
 
@@ -218,7 +123,9 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 ### Bugs (Fix Immediately)
 
-None currently identified.
+1. **`QueryControllerHistory` ignores `Offset` parameter**: The `QueryControllerHistoryAsync` method accepts an `Offset` field on the request but hardcodes `0` as the offset argument to `JsonQueryPagedAsync`. Callers expecting pagination beyond the first page will always receive the same results.
+
+2. **`IngestEvent` drops `SessionId` from request**: When building a `BufferedAnalyticsEvent` in `IngestEventAsync` and `IngestEventBatchAsync`, the `SessionId` field from the request body is never assigned to the buffered event. Event handlers (e.g., `HandleGameSessionCreatedAsync`) correctly set `SessionId`, but the direct API ingestion path loses it. The `SessionId` value propagates into `AnalyticsScoreUpdatedEvent` during flush, so downstream consumers (Achievement, Leaderboard) receive `null` for API-ingested events.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -235,6 +142,8 @@ None currently identified.
 1. **`string.Empty` default for internal POCO string fields** - `BufferedAnalyticsEvent.EventType`, `GameSessionMappingData.GameType`, and `SkillRatingData.RatingType` use `= string.Empty` defaults. While not a T25 violation (these are strings, not enums), empty strings could mask bugs. Consider using nullable strings with validation at ingestion boundaries.
 
 2. **No automatic controller history cleanup** - The `CleanupControllerHistory` endpoint exists but must be called manually (e.g., via scheduled cron job or orchestrator task). There is no background service that automatically purges expired records. For production deployments, consider adding a periodic cleanup task or documenting the requirement for external scheduling.
+
+3. **Constructor injects 4 service clients individually** - The constructor takes `IGameServiceClient`, `IGameSessionClient`, `IRealmClient`, and `ICharacterClient` as separate parameters. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 
 ## Work Tracking
 
