@@ -156,11 +156,8 @@ public partial class EscrowService
             }).ToList();
         }
 
-        var requiredConsents = body.RequiredConsentsForRelease ?? -1;
-        if (requiredConsents == -1)
-        {
-            requiredConsents = partyModels.Count(p => p.ConsentRequired);
-        }
+        var requiredConsents = body.RequiredConsentsForRelease
+            ?? partyModels.Count(p => p.ConsentRequired);
 
         var agreementModel = new EscrowAgreementModel
         {

@@ -612,7 +612,7 @@ public class TelemetryProviderTests
         public Task<string> SaveAsync(string key, TestModel value, StateOptions? options = null, CancellationToken cancellationToken = default)
             => Task.FromResult("etag-1");
 
-        public Task<string?> TrySaveAsync(string key, TestModel value, string etag, CancellationToken cancellationToken = default)
+        public Task<string?> TrySaveAsync(string key, TestModel value, string etag, StateOptions? options = null, CancellationToken cancellationToken = default)
             => Task.FromResult<string?>("etag-2");
 
         public Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default)

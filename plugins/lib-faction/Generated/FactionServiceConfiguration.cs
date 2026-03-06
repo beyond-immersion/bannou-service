@@ -55,7 +55,15 @@ public class FactionServiceConfiguration : BaseServiceConfiguration
     /// Which seed type code this service manages for faction growth
     /// Environment variable: FACTION_SEED_TYPE_CODE
     /// </summary>
+    [ConfigStringLength(MinLength = 1, MaxLength = 128)]
     public string SeedTypeCode { get; set; } = "faction";
+
+    /// <summary>
+    /// Growth amount contributed to faction seed when a collection entry is unlocked by a faction member
+    /// Environment variable: FACTION_COLLECTION_GROWTH_AMOUNT
+    /// </summary>
+    [ConfigRange(Minimum = 0.0)]
+    public float CollectionGrowthAmount { get; set; } = 1.0f;
 
     /// <summary>
     /// Default role assigned to new members when no role is specified

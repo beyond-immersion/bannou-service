@@ -86,7 +86,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             .ReturnsAsync("etag");
         // TrySaveAsync for optimistic concurrency - returns new etag on success
         _mockAgreementStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<EscrowAgreementModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<EscrowAgreementModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
         _mockTokenStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<TokenHashModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -144,7 +144,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         Assert.Equal(ReleaseMode.ServiceOnly, config.DefaultReleaseMode);
         Assert.Equal(RefundMode.Immediate, config.DefaultRefundMode);
         Assert.Equal(300, config.ConfirmationTimeoutSeconds);
-        Assert.Equal("auto_confirm", config.ConfirmationTimeoutBehavior);
+        Assert.Equal(ConfirmationTimeoutBehavior.AutoConfirm, config.ConfirmationTimeoutBehavior);
         Assert.Equal(30, config.ConfirmationTimeoutCheckIntervalSeconds);
         Assert.Equal(100, config.ConfirmationTimeoutBatchSize);
     }
@@ -502,8 +502,8 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
 
         PartyPendingCount? savedCount = null;
         _mockPartyPendingStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<PartyPendingCount>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback<string, PartyPendingCount, string, CancellationToken>((_, c, _, _) => savedCount = c)
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<PartyPendingCount>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, PartyPendingCount, string, StateOptions?, CancellationToken>((_, c, _, _, _) => savedCount = c)
             .ReturnsAsync("new-etag");
 
         // Act
@@ -994,7 +994,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.ConsentRecorded);
+        Assert.NotNull(response.Escrow);
     }
 
     [Fact]
@@ -1523,7 +1523,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             Consents = new List<EscrowConsentModel>(),
             CreatedAt = DateTimeOffset.UtcNow,
             ExpiresAt = DateTimeOffset.UtcNow.AddDays(7),
-            RequiredConsentsForRelease = -1
+            RequiredConsentsForRelease = null
         };
     }
 

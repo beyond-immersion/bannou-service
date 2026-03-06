@@ -27,10 +27,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
     /// </summary>
     private int BatchSize => _configuration.ConfirmationTimeoutBatchSize;
 
-    /// <summary>
-    /// Startup delay before first check to allow other services to start.
-    /// </summary>
-    private static readonly TimeSpan StartupDelay = TimeSpan.FromSeconds(15);
+    // Startup delay read from configuration in ExecuteAsync
 
     public EscrowConfirmationTimeoutService(
         IServiceProvider serviceProvider,
@@ -53,7 +50,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         // Wait a bit before first check to allow other services to start
         try
         {
-            await Task.Delay(StartupDelay, stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.ConfirmationStartupDelaySeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -203,7 +200,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         }
 
         // Parse the configured behavior
-        var behavior = ParseConfirmationTimeoutBehavior(_configuration.ConfirmationTimeoutBehavior);
+        var behavior = _configuration.ConfirmationTimeoutBehavior;
 
         _logger.LogInformation("Processing expired confirmation for escrow {EscrowId}, behavior: {Behavior}",
             agreement.EscrowId, behavior);
@@ -474,8 +471,8 @@ public class EscrowConfirmationTimeoutService : BackgroundService
             EventId = Guid.NewGuid(),
             Timestamp = now,
             EscrowId = agreement.EscrowId,
-            DisputedBy = Guid.Empty, // System-initiated dispute
-            DisputedByType = EntityType.System,
+            DisputedBy = null, // System-initiated dispute
+            DisputedByType = null,
             Reason = "Confirmation timeout expired",
             DisputedAt = now
         };
@@ -510,17 +507,4 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         await statusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
     }
 
-    /// <summary>
-    /// Parses the configuration string to ConfirmationTimeoutBehavior enum.
-    /// </summary>
-    private static ConfirmationTimeoutBehavior ParseConfirmationTimeoutBehavior(string value)
-    {
-        return value?.ToLowerInvariant() switch
-        {
-            "auto_confirm" => ConfirmationTimeoutBehavior.AutoConfirm,
-            "dispute" => ConfirmationTimeoutBehavior.Dispute,
-            "refund" => ConfirmationTimeoutBehavior.Refund,
-            _ => ConfirmationTimeoutBehavior.AutoConfirm
-        };
-    }
 }

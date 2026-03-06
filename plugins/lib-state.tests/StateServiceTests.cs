@@ -191,12 +191,12 @@ public class StateServiceTests
             StoreName = "test-store",
             Key = "test-key",
             Value = new { Name = "Test" },
-            Options = new BeyondImmersion.BannouService.State.StateOptions { Etag = "old-etag" }
+            Etag = "old-etag"
         };
 
         _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
-        _mockStateStore.Setup(s => s.TrySaveAsync("test-key", It.IsAny<object>(), "old-etag", It.IsAny<CancellationToken>()))
+        _mockStateStore.Setup(s => s.TrySaveAsync("test-key", It.IsAny<object>(), "old-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -217,12 +217,12 @@ public class StateServiceTests
             StoreName = "test-store",
             Key = "test-key",
             Value = new { Name = "Test" },
-            Options = new BeyondImmersion.BannouService.State.StateOptions { Etag = "matching-etag" }
+            Etag = "matching-etag"
         };
 
         _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
-        _mockStateStore.Setup(s => s.TrySaveAsync("test-key", It.IsAny<object>(), "matching-etag", It.IsAny<CancellationToken>()))
+        _mockStateStore.Setup(s => s.TrySaveAsync("test-key", It.IsAny<object>(), "matching-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag-456");
 
         // Act

@@ -299,6 +299,8 @@ components:
           description: Unique identifier for the norm definition
         violationType:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Violation type code (e.g., "theft", "deception")
         basePenalty:
           type: number
@@ -340,6 +342,8 @@ components:
           description: Norm definition that was updated
         violationType:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Violation type code of the updated norm
         basePenalty:
           type: number
@@ -384,6 +388,8 @@ components:
           description: Norm definition that was deleted
         violationType:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Violation type code of the deleted norm
 
     # --- Realm Baseline Events ---

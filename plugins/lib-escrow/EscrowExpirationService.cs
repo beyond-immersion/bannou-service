@@ -33,10 +33,7 @@ public class EscrowExpirationService : BackgroundService
     /// </summary>
     private int BatchSize => _configuration.ExpirationBatchSize;
 
-    /// <summary>
-    /// Startup delay before first check to allow other services to start.
-    /// </summary>
-    private static readonly TimeSpan StartupDelay = TimeSpan.FromSeconds(20);
+    // Startup delay read from configuration in ExecuteAsync
 
     /// <summary>
     /// Statuses that can transition to Expired (non-terminal, pre-release states).
@@ -67,13 +64,14 @@ public class EscrowExpirationService : BackgroundService
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowExpirationService.ExecuteAsync");
         _logger.LogInformation("Escrow expiration service starting, check interval: {Interval}, grace period: {GracePeriod}",
             CheckInterval, GracePeriod);
 
         // Wait a bit before first check to allow other services to start
         try
         {
-            await Task.Delay(StartupDelay, stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.ExpirationStartupDelaySeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -374,16 +372,16 @@ public class EscrowExpirationService : BackgroundService
     /// <summary>
     /// Parses an ISO 8601 duration string to a TimeSpan.
     /// </summary>
-    private static TimeSpan ParseDuration(string duration)
+    private static TimeSpan ParseDuration(string isoDuration)
     {
         try
         {
-            return XmlConvert.ToTimeSpan(duration);
+            return XmlConvert.ToTimeSpan(isoDuration);
         }
-        catch
+        catch (FormatException ex)
         {
-            // Default to 1 minute if parsing fails
-            return TimeSpan.FromMinutes(1);
+            throw new InvalidOperationException(
+                $"Invalid ISO 8601 duration in configuration: '{isoDuration}'", ex);
         }
     }
 }

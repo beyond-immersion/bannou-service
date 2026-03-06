@@ -22,8 +22,18 @@ x-service-configuration:
     SeedTypeCode:
       type: string
       env: FACTION_SEED_TYPE_CODE
+      minLength: 1
+      maxLength: 128
       default: faction
       description: Which seed type code this service manages for faction growth
+
+    CollectionGrowthAmount:
+      type: number
+      format: float
+      env: FACTION_COLLECTION_GROWTH_AMOUNT
+      minimum: 0.0
+      default: 1.0
+      description: Growth amount contributed to faction seed when a collection entry is unlocked by a faction member
 
     # =========================================================================
     # Membership Defaults

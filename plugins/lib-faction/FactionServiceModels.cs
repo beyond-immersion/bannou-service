@@ -57,6 +57,12 @@ internal class FactionModel
     /// <summary>Current member count (denormalized).</summary>
     public int MemberCount { get; set; }
 
+    /// <summary>When the faction was deprecated (null if not deprecated).</summary>
+    public DateTimeOffset? DeprecatedAt { get; set; }
+
+    /// <summary>Reason for deprecation (null if not deprecated).</summary>
+    public string? DeprecationReason { get; set; }
+
     /// <summary>When the faction was created.</summary>
     public DateTimeOffset CreatedAt { get; set; }
 

@@ -2695,6 +2695,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
                 SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
                 It.IsAny<SubscriberSessionsModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag1");
 
@@ -3059,6 +3060,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
                 SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
                 It.IsAny<SubscriberSessionsModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag1");
 
@@ -3179,6 +3181,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
                 SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
                 It.IsAny<SubscriberSessionsModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag1");
 
@@ -3273,6 +3276,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
                 SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
                 It.IsAny<SubscriberSessionsModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag1");
 
@@ -3346,6 +3350,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
                 SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
                 It.IsAny<SubscriberSessionsModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag1");
 
@@ -3358,6 +3363,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
             It.IsAny<SubscriberSessionsModel>(),
             It.IsAny<string>(),
+            It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - NO shortcut published because autoLobbyEnabled is false
@@ -3394,6 +3400,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
                 SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
                 It.IsAny<SubscriberSessionsModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag1");
 
@@ -3452,6 +3459,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
                 SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
                 It.IsAny<SubscriberSessionsModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag1");
 
@@ -3527,6 +3535,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
                 SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
                 It.IsAny<SubscriberSessionsModel>(),
                 It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag1");
 

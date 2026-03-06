@@ -141,6 +141,8 @@ public partial class FactionService : IFactionService
         Status = model.Status,
         CurrentPhase = model.CurrentPhase,
         MemberCount = model.MemberCount,
+        DeprecatedAt = model.DeprecatedAt,
+        DeprecationReason = model.DeprecationReason,
         CreatedAt = model.CreatedAt,
         UpdatedAt = model.UpdatedAt,
     };
@@ -496,6 +498,10 @@ public partial class FactionService : IFactionService
         if (body.IsRealmBaseline.HasValue)
             conditions.Add(new QueryCondition { Path = "$.IsRealmBaseline", Operator = QueryOperator.Equals, Value = body.IsRealmBaseline.Value.ToString().ToLowerInvariant() });
 
+        // Exclude deprecated factions by default (per IMPLEMENTATION TENETS deprecation lifecycle)
+        if (!body.IncludeDeprecated)
+            conditions.Add(new QueryCondition { Path = "$.DeprecatedAt", Operator = QueryOperator.NotExists });
+
         var offset = 0;
         if (!string.IsNullOrEmpty(body.Cursor) && int.TryParse(body.Cursor, out var parsedOffset))
         {
@@ -593,15 +599,20 @@ public partial class FactionService : IFactionService
 
         var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
         if (model == null) return (StatusCodes.NotFound, null);
+        // Dissolved factions cannot be deprecated (terminal state)
+        if (model.Status == FactionStatus.Dissolved) return (StatusCodes.Conflict, null);
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (deprecate) is already satisfied
         if (model.Status == FactionStatus.Deprecated) return (StatusCodes.OK, MapToResponse(model));
 
         model.Status = FactionStatus.Deprecated;
+        model.DeprecatedAt = DateTimeOffset.UtcNow;
+        model.DeprecationReason = body.DeprecationReason;
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _factionStore.SaveAsync(FactionKey(model.FactionId), model, cancellationToken: cancellationToken);
         await _factionStore.SaveAsync(FactionCodeKey(model.GameServiceId, model.Code), model, cancellationToken: cancellationToken);
 
-        await PublishUpdatedEventAsync(model, new[] { "status" }, cancellationToken);
+        await PublishUpdatedEventAsync(model, new[] { "status", "deprecatedAt", "deprecationReason" }, cancellationToken);
 
         _logger.LogInformation("Deprecated faction {FactionId}", body.FactionId);
         return (StatusCodes.OK, MapToResponse(model));
@@ -624,16 +635,20 @@ public partial class FactionService : IFactionService
 
         var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
         if (model == null) return (StatusCodes.NotFound, null);
+        // Dissolved factions cannot be undeprecated (terminal state)
+        if (model.Status == FactionStatus.Dissolved) return (StatusCodes.Conflict, null);
         // Idempotent per IMPLEMENTATION TENETS — caller's intent (undeprecate) is already satisfied
         if (model.Status != FactionStatus.Deprecated) return (StatusCodes.OK, MapToResponse(model));
 
         model.Status = FactionStatus.Active;
+        model.DeprecatedAt = null;
+        model.DeprecationReason = null;
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _factionStore.SaveAsync(FactionKey(model.FactionId), model, cancellationToken: cancellationToken);
         await _factionStore.SaveAsync(FactionCodeKey(model.GameServiceId, model.Code), model, cancellationToken: cancellationToken);
 
-        await PublishUpdatedEventAsync(model, new[] { "status" }, cancellationToken);
+        await PublishUpdatedEventAsync(model, new[] { "status", "deprecatedAt", "deprecationReason" }, cancellationToken);
 
         _logger.LogInformation("Undeprecated faction {FactionId}", body.FactionId);
         return (StatusCodes.OK, MapToResponse(model));
@@ -656,6 +671,8 @@ public partial class FactionService : IFactionService
 
         var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
         if (model == null) return StatusCodes.NotFound;
+        // Category A deprecation lifecycle: must be deprecated before deletion (per IMPLEMENTATION TENETS)
+        if (!model.DeprecatedAt.HasValue) return StatusCodes.BadRequest;
 
         // Cascade: remove all members (paginated to handle large factions)
         var memberConditions = new List<QueryCondition>
@@ -1177,7 +1194,6 @@ public partial class FactionService : IFactionService
 
         return (StatusCodes.OK, new ListMembershipsByCharacterResponse
         {
-            CharacterId = body.CharacterId,
             Memberships = entries,
         });
     }
@@ -1245,8 +1261,6 @@ public partial class FactionService : IFactionService
 
         return (StatusCodes.OK, new CheckMembershipResponse
         {
-            FactionId = body.FactionId,
-            CharacterId = body.CharacterId,
             IsMember = member != null,
             Role = member?.Role,
         });
@@ -1718,9 +1732,6 @@ public partial class FactionService : IFactionService
             {
                 return (StatusCodes.OK, new QueryApplicableNormsResponse
                 {
-                    CharacterId = body.CharacterId,
-                    RealmId = body.RealmId,
-                    LocationId = body.LocationId,
                     ApplicableNorms = cached.ApplicableNorms.Select(n => new ApplicableNormEntry
                     {
                         NormId = n.NormId,
@@ -1930,9 +1941,6 @@ public partial class FactionService : IFactionService
 
         return (StatusCodes.OK, new QueryApplicableNormsResponse
         {
-            CharacterId = body.CharacterId,
-            RealmId = body.RealmId,
-            LocationId = body.LocationId,
             ApplicableNorms = applicableNorms.Select(n => new ApplicableNormEntry
             {
                 NormId = n.NormId,
@@ -1991,7 +1999,6 @@ public partial class FactionService : IFactionService
         return (StatusCodes.OK, new CleanupByCharacterResponse
         {
             MembershipsRemoved = membershipsRemoved,
-            Success = true,
         });
     }
 
@@ -2047,7 +2054,6 @@ public partial class FactionService : IFactionService
             MembershipsRemoved = membershipsRemoved,
             TerritoryClaimsRemoved = claimsRemoved,
             NormsRemoved = normsRemoved,
-            Success = true,
         });
     }
 
@@ -2073,7 +2079,6 @@ public partial class FactionService : IFactionService
         return (StatusCodes.OK, new CleanupByLocationResponse
         {
             ClaimsRemoved = claimsRemoved,
-            Success = true,
         });
     }
 
@@ -2127,7 +2132,7 @@ public partial class FactionService : IFactionService
             return (StatusCodes.BadRequest, null);
         }
 
-        bool membershipsRestored = false;
+        int membershipsRestoredCount = 0;
         if (archive.Memberships != null && archive.Memberships.Count > 0)
         {
             foreach (var membership in archive.Memberships)
@@ -2185,19 +2190,17 @@ public partial class FactionService : IFactionService
                     _logger.LogWarning(ex, "Failed to register resource reference during archive restore for character {CharacterId} in faction {FactionId}",
                         body.CharacterId, membership.FactionId);
                 }
-            }
 
-            membershipsRestored = true;
+                membershipsRestoredCount++;
+            }
         }
 
-        _logger.LogInformation("Restored faction data for character {CharacterId}, memberships restored: {Restored}",
-            body.CharacterId, membershipsRestored);
+        _logger.LogInformation("Restored faction data for character {CharacterId}, memberships restored: {Count}",
+            body.CharacterId, membershipsRestoredCount);
 
         return (StatusCodes.OK, new RestoreFromArchiveResponse
         {
-            CharacterId = body.CharacterId,
-            MembershipsRestored = membershipsRestored,
-            Success = true,
+            MembershipsRestoredCount = membershipsRestoredCount,
         });
     }
 }

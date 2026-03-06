@@ -54,7 +54,7 @@ internal class EscrowAgreementModel
     public Guid? BoundContractId { get; set; }
     public List<EscrowConsentModel>? Consents { get; set; }
     public EscrowStatus Status { get; set; } = EscrowStatus.PendingDeposits;
-    public int RequiredConsentsForRelease { get; set; } = -1;
+    public int? RequiredConsentsForRelease { get; set; }
     public DateTimeOffset? LastValidatedAt { get; set; }
     public List<ValidationFailureModel>? ValidationFailures { get; set; }
     public DateTimeOffset CreatedAt { get; set; }

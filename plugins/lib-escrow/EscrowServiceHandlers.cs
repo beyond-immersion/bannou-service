@@ -22,10 +22,7 @@ public partial class EscrowService
         {
             _logger.LogWarning("Handler for asset type {AssetType} already registered by plugin {PluginId}",
                 body.AssetType, existing.PluginId);
-            return (StatusCodes.BadRequest, new RegisterHandlerResponse
-            {
-                Registered = false
-            });
+            return (StatusCodes.BadRequest, null);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -47,10 +44,7 @@ public partial class EscrowService
         _logger.LogInformation("Registered handler for asset type {AssetType} from plugin {PluginId}",
             body.AssetType, body.PluginId);
 
-        return (StatusCodes.OK, new RegisterHandlerResponse
-        {
-            Registered = true
-        });
+        return (StatusCodes.OK, new RegisterHandlerResponse());
     }
 
     /// <summary>
@@ -95,28 +89,19 @@ public partial class EscrowService
 
         if (existing == null)
         {
-            return (StatusCodes.NotFound, new DeregisterHandlerResponse
-            {
-                Deregistered = false
-            });
+            return (StatusCodes.NotFound, null);
         }
 
         if (existing.BuiltIn)
         {
             _logger.LogWarning("Cannot deregister built-in handler for asset type {AssetType}", body.AssetType);
-            return (StatusCodes.BadRequest, new DeregisterHandlerResponse
-            {
-                Deregistered = false
-            });
+            return (StatusCodes.BadRequest, null);
         }
 
         await _handlerStore.DeleteAsync(handlerKey, cancellationToken);
 
         _logger.LogInformation("Deregistered handler for asset type {AssetType}", body.AssetType);
 
-        return (StatusCodes.OK, new DeregisterHandlerResponse
-        {
-            Deregistered = true
-        });
+        return (StatusCodes.OK, new DeregisterHandlerResponse());
     }
 }

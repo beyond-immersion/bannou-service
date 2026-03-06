@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Faction;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Faction;
 
@@ -241,6 +256,19 @@ public partial class FactionResponse
     public string? CurrentPhase { get; set; } = default!;
 
     /// <summary>
+    /// When this faction was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(1024)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
     /// Current number of members in this faction
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("memberCount")]
@@ -409,6 +437,12 @@ public partial class ListFactionsRequest
     public bool? IsRealmBaseline { get; set; } = default!;
 
     /// <summary>
+    /// Whether to include deprecated factions in results
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
+    public bool IncludeDeprecated { get; set; } = false;
+
+    /// <summary>
     /// Pagination cursor from a previous response
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cursor")]
@@ -506,6 +540,15 @@ public partial class DeprecateFactionRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid FactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (audit context for Category A entities)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(1024, MinimumLength = 1)]
+    public string DeprecationReason { get; set; } = default!;
 
 }
 
@@ -899,14 +942,6 @@ public partial class ListMembershipsByCharacterResponse
 {
 
     /// <summary>
-    /// Character these memberships belong to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
     /// All faction memberships for the character
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("memberships")]
@@ -935,16 +970,18 @@ public partial class CharacterMembershipEntry
     /// Display name of the faction
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("factionName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
     public string FactionName { get; set; } = default!;
 
     /// <summary>
     /// Unique code of the faction
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("factionCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string FactionCode { get; set; } = default!;
 
     /// <summary>
@@ -1031,22 +1068,6 @@ public partial class CheckMembershipRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CheckMembershipResponse
 {
-
-    /// <summary>
-    /// Faction that was checked
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("factionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid FactionId { get; set; } = default!;
-
-    /// <summary>
-    /// Character that was checked
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
 
     /// <summary>
     /// Whether the character is a member
@@ -1613,8 +1634,9 @@ public partial class ApplicableNormEntry
     /// Display name of the owning faction
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("factionName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
     public string FactionName { get; set; } = default!;
 
     /// <summary>
@@ -1728,28 +1750,6 @@ public partial class QueryApplicableNormsResponse
 {
 
     /// <summary>
-    /// Character norms were resolved for
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Realm used for baseline resolution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Location used for territory resolution (null if not provided)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
-    public System.Guid? LocationId { get; set; } = default!;
-
-    /// <summary>
     /// All applicable norms from all resolution layers
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("applicableNorms")]
@@ -1817,12 +1817,6 @@ public partial class CleanupByCharacterResponse
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int MembershipsRemoved { get; set; } = default!;
 
-    /// <summary>
-    /// Whether cleanup completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -1877,12 +1871,6 @@ public partial class CleanupByRealmResponse
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int NormsRemoved { get; set; } = default!;
 
-    /// <summary>
-    /// Whether cleanup completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -1915,12 +1903,6 @@ public partial class CleanupByLocationResponse
     [System.Text.Json.Serialization.JsonPropertyName("claimsRemoved")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int ClaimsRemoved { get; set; } = default!;
-
-    /// <summary>
-    /// Whether cleanup completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
 }
 
@@ -1999,7 +1981,7 @@ public partial class RestoreFromArchiveRequest
     /// Base64-encoded gzipped FactionArchive JSON
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Data { get; set; } = default!;
 
@@ -2013,24 +1995,11 @@ public partial class RestoreFromArchiveResponse
 {
 
     /// <summary>
-    /// Character data was restored for
+    /// Number of faction memberships restored from archive
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Whether faction memberships were restored
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("membershipsRestored")]
-    public bool MembershipsRestored { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the restoration completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("membershipsRestoredCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int MembershipsRestoredCount { get; set; } = default!;
 
 }
 

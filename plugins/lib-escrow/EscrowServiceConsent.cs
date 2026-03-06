@@ -126,12 +126,8 @@ public partial class EscrowService
                     var releaseConsentCount = agreementModel.Consents
                         .Count(c => c.ConsentType == EscrowConsentType.Release);
 
-                    var requiredConsents = agreementModel.RequiredConsentsForRelease;
-                    if (requiredConsents == -1)
-                    {
-                        requiredConsents = agreementModel.Parties?
-                            .Count(p => p.ConsentRequired) ?? 0;
-                    }
+                    var requiredConsents = agreementModel.RequiredConsentsForRelease
+                        ?? agreementModel.Parties?.Count(p => p.ConsentRequired) ?? 0;
 
                     if (releaseConsentCount >= requiredConsents)
                     {
@@ -221,7 +217,8 @@ public partial class EscrowService
                 PartyType = body.PartyType,
                 ConsentType = body.ConsentType,
                 ConsentsReceived = agreementModel.Consents?.Count(c => c.ConsentType == EscrowConsentType.Release) ?? 0,
-                ConsentsRequired = agreementModel.RequiredConsentsForRelease,
+                ConsentsRequired = agreementModel.RequiredConsentsForRelease
+                    ?? agreementModel.Parties?.Count(p => p.ConsentRequired) ?? 0,
                 ConsentedAt = now
             };
             await _messageBus.TryPublishAsync(EscrowTopics.EscrowConsentReceived, consentEvent, cancellationToken);
@@ -275,7 +272,6 @@ public partial class EscrowService
             return (StatusCodes.OK, new ConsentResponse
             {
                 Escrow = MapToApiModel(agreementModel),
-                ConsentRecorded = true,
                 Triggered = triggered,
                 NewStatus = newStatus
             });
@@ -325,12 +321,8 @@ public partial class EscrowService
         var releaseConsents = agreementModel.Consents?
             .Count(c => c.ConsentType == EscrowConsentType.Release) ?? 0;
 
-        var requiredConsents = agreementModel.RequiredConsentsForRelease;
-        if (requiredConsents == -1)
-        {
-            requiredConsents = agreementModel.Parties?
-                .Count(p => p.ConsentRequired) ?? 0;
-        }
+        var requiredConsents = agreementModel.RequiredConsentsForRelease
+            ?? agreementModel.Parties?.Count(p => p.ConsentRequired) ?? 0;
 
         var hasRefundConsent = agreementModel.Consents?
             .Any(c => c.ConsentType == EscrowConsentType.Refund) ?? false;

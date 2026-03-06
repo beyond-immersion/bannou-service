@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Escrow;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Escrow;
 
@@ -648,18 +663,6 @@ public partial class EscrowAgreement
     [System.Text.Json.Serialization.JsonPropertyName("confirmationDeadline")]
     public System.DateTimeOffset? ConfirmationDeadline { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -766,18 +769,6 @@ public partial class EscrowParty
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("releaseTokenUsedAt")]
     public System.DateTimeOffset? ReleaseTokenUsedAt { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -910,18 +901,6 @@ public partial class EscrowAsset
     [System.Text.Json.Serialization.JsonPropertyName("sourceContainerId")]
     public System.Guid? SourceContainerId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -958,18 +937,6 @@ public partial class EscrowAssetBundle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("estimatedValue")]
     public double? EstimatedValue { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1022,18 +989,6 @@ public partial class ExpectedDeposit
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fulfilled")]
     public bool Fulfilled { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1107,18 +1062,6 @@ public partial class EscrowDeposit
     [System.Text.Json.Serialization.JsonRequired]
     public string IdempotencyKey { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1164,18 +1107,6 @@ public partial class ReleaseAllocation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("destinationContainerId")]
     public System.Guid? DestinationContainerId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1231,18 +1162,6 @@ public partial class EscrowConsent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("notes")]
     public string? Notes { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1310,18 +1229,6 @@ public partial class ValidationFailure
     [System.Text.Json.Serialization.JsonPropertyName("details")]
     public object? Details { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1384,18 +1291,6 @@ public partial class AssetHandlerInfo
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ValidateEndpoint { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1525,18 +1420,6 @@ public partial class CreateEscrowRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string IdempotencyKey { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1596,18 +1479,6 @@ public partial class CreateEscrowPartyInput
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
     public System.Guid? ContainerId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1653,18 +1524,6 @@ public partial class ExpectedDepositInput
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("depositDeadline")]
     public System.DateTimeOffset? DepositDeadline { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1774,18 +1633,6 @@ public partial class EscrowAssetInput
     [System.Text.Json.Serialization.JsonPropertyName("customAssetData")]
     public object? CustomAssetData { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1832,18 +1679,6 @@ public partial class ReleaseAllocationInput
     [System.Text.Json.Serialization.JsonPropertyName("destinationContainerId")]
     public System.Guid? DestinationContainerId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1868,18 +1703,6 @@ public partial class CreateEscrowResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<PartyToken> DepositTokens { get; set; } = new System.Collections.ObjectModel.Collection<PartyToken>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1915,18 +1738,6 @@ public partial class PartyToken
     [System.Text.Json.Serialization.JsonRequired]
     public string Token { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1944,18 +1755,6 @@ public partial class GetEscrowRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EscrowId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1972,18 +1771,6 @@ public partial class GetEscrowResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public EscrowAgreement Escrow { get; set; } = new EscrowAgreement();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2050,18 +1837,6 @@ public partial class ListEscrowsRequest
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
     public int? Offset { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2084,18 +1859,6 @@ public partial class ListEscrowsResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2140,18 +1903,6 @@ public partial class GetMyTokenRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public TokenType TokenType { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2178,18 +1929,6 @@ public partial class GetMyTokenResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tokenUsedAt")]
     public System.DateTimeOffset? TokenUsedAt { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2247,18 +1986,6 @@ public partial class DepositRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string IdempotencyKey { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2287,18 +2014,6 @@ public partial class EscrowAssetBundleInput
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("estimatedValue")]
     public double? EstimatedValue { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2338,18 +2053,6 @@ public partial class DepositResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<PartyToken> ReleaseTokens { get; set; } = new System.Collections.ObjectModel.Collection<PartyToken>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2393,18 +2096,6 @@ public partial class ValidateDepositRequest
     [System.Text.Json.Serialization.JsonRequired]
     public EscrowAssetBundleInput Assets { get; set; } = new EscrowAssetBundleInput();
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2435,18 +2126,6 @@ public partial class ValidateDepositResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Warnings { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2481,18 +2160,6 @@ public partial class GetDepositStatusRequest
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType PartyType { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2536,18 +2203,6 @@ public partial class GetDepositStatusResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("depositDeadline")]
     public System.DateTimeOffset? DepositDeadline { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2612,18 +2267,6 @@ public partial class ConsentRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string IdempotencyKey { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2656,18 +2299,6 @@ public partial class ConsentResponse
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EscrowStatus NewStatus { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2684,18 +2315,6 @@ public partial class GetConsentStatusRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EscrowId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2737,18 +2356,6 @@ public partial class GetConsentStatusResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("canRefund")]
     public bool CanRefund { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2801,18 +2408,6 @@ public partial class PartyConsentStatus
     [System.Text.Json.Serialization.JsonPropertyName("consentedAt")]
     public System.DateTimeOffset? ConsentedAt { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2850,18 +2445,6 @@ public partial class ReleaseRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string IdempotencyKey { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2895,18 +2478,6 @@ public partial class ReleaseResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ReleaseResult> Releases { get; set; } = new System.Collections.ObjectModel.Collection<ReleaseResult>();
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2935,18 +2506,6 @@ public partial class FinalizerResult
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     public string? Error { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2982,18 +2541,6 @@ public partial class ReleaseResult
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     public string? Error { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -3032,18 +2579,6 @@ public partial class RefundRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string IdempotencyKey { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -3068,18 +2603,6 @@ public partial class RefundResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<RefundResult> Refunds { get; set; } = new System.Collections.ObjectModel.Collection<RefundResult>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -3116,18 +2639,6 @@ public partial class RefundResult
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     public string? Error { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -3159,18 +2670,6 @@ public partial class CancelRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string IdempotencyKey { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -3195,18 +2694,6 @@ public partial class CancelResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<RefundResult> Refunds { get; set; } = new System.Collections.ObjectModel.Collection<RefundResult>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -3264,18 +2751,6 @@ public partial class DisputeRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string IdempotencyKey { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -3292,18 +2767,6 @@ public partial class DisputeResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public EscrowAgreement Escrow { get; set; } = new EscrowAgreement();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -3510,18 +2973,6 @@ public partial class ResolveRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string IdempotencyKey { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -3556,18 +3007,6 @@ public partial class SplitAllocation
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<EscrowAssetInput> Assets { get; set; } = new System.Collections.ObjectModel.Collection<EscrowAssetInput>();
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -3592,18 +3031,6 @@ public partial class ResolveResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<TransferResult> Transfers { get; set; } = new System.Collections.ObjectModel.Collection<TransferResult>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -3639,18 +3066,6 @@ public partial class TransferResult
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     public string? Error { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -3706,18 +3121,6 @@ public partial class VerifyConditionRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string IdempotencyKey { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -3741,18 +3144,6 @@ public partial class VerifyConditionResponse
     [System.Text.Json.Serialization.JsonPropertyName("triggered")]
     public bool Triggered { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -3769,18 +3160,6 @@ public partial class ValidateEscrowRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EscrowId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -3812,18 +3191,6 @@ public partial class ValidateEscrowResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public EscrowAgreement Escrow { get; set; } = new EscrowAgreement();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -3873,18 +3240,6 @@ public partial class ReaffirmRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string IdempotencyKey { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -3907,18 +3262,6 @@ public partial class ReaffirmResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allReaffirmed")]
     public bool AllReaffirmed { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -3977,18 +3320,6 @@ public partial class RegisterHandlerRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string ValidateEndpoint { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -3998,18 +3329,6 @@ public partial class RegisterHandlerRequest
 public partial class RegisterHandlerResponse
 {
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -4018,18 +3337,6 @@ public partial class RegisterHandlerResponse
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListHandlersRequest
 {
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -4048,18 +3355,6 @@ public partial class ListHandlersResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<AssetHandlerInfo> Handlers { get; set; } = new System.Collections.ObjectModel.Collection<AssetHandlerInfo>();
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -4077,18 +3372,6 @@ public partial class DeregisterHandlerRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string AssetType { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -4097,18 +3380,6 @@ public partial class DeregisterHandlerRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeregisterHandlerResponse
 {
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 

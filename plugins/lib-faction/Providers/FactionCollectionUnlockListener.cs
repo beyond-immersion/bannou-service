@@ -124,8 +124,8 @@ public class FactionCollectionUnlockListener : ICollectionUnlockListener
                 var domain = tag.Length > "faction:".Length
                     ? tag["faction:".Length..]
                     : "general";
-                // Base growth amount per collection unlock contribution
-                growthEntries[domain] = growthEntries.GetValueOrDefault(domain, 0f) + 1.0f;
+                // Growth amount per collection unlock, from configuration
+                growthEntries[domain] = growthEntries.GetValueOrDefault(domain, 0f) + _configuration.CollectionGrowthAmount;
             }
 
             try

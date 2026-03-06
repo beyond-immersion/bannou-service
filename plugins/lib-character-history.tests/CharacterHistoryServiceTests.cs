@@ -1112,7 +1112,7 @@ public class CharacterHistoryServiceTests
             .ReturnsAsync((HistoryIndexData?)null);
         _mockIndexStore.Setup(s => s.GetWithETagAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(((HistoryIndexData?)null, (string?)null));
-        _mockIndexStore.Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<HistoryIndexData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<HistoryIndexData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
     }
 

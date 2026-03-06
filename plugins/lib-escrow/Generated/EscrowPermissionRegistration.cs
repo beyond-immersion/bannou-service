@@ -47,21 +47,6 @@ public static class EscrowPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/escrow/create",
-            Method = ServiceEndpointMethod.Post,
-            Description = "createEscrow",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/escrow/get",
             Method = ServiceEndpointMethod.Post,
             Description = "getEscrow",
@@ -167,51 +152,6 @@ public static class EscrowPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/escrow/release",
-            Method = ServiceEndpointMethod.Post,
-            Description = "release",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/escrow/refund",
-            Method = ServiceEndpointMethod.Post,
-            Description = "refund",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/escrow/cancel",
-            Method = ServiceEndpointMethod.Post,
-            Description = "cancel",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/escrow/dispute",
             Method = ServiceEndpointMethod.Post,
             Description = "dispute",
@@ -257,51 +197,6 @@ public static class EscrowPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/escrow/resolve",
-            Method = ServiceEndpointMethod.Post,
-            Description = "resolve",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/escrow/verify-condition",
-            Method = ServiceEndpointMethod.Post,
-            Description = "verifyCondition",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/escrow/validate",
-            Method = ServiceEndpointMethod.Post,
-            Description = "validateEscrow",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/escrow/reaffirm",
             Method = ServiceEndpointMethod.Post,
             Description = "reaffirm",
@@ -310,51 +205,6 @@ public static class EscrowPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/escrow/handler/register",
-            Method = ServiceEndpointMethod.Post,
-            Description = "registerHandler",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/escrow/handler/list",
-            Method = ServiceEndpointMethod.Post,
-            Description = "listHandlers",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/escrow/handler/deregister",
-            Method = ServiceEndpointMethod.Post,
-            Description = "deregisterHandler",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
