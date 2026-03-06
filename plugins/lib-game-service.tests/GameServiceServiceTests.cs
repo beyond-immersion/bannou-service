@@ -119,7 +119,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid>(), "etag-1"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Act
@@ -156,7 +156,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid>(), "etag-1"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Act
@@ -275,7 +275,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid>(), "etag-1"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Act
@@ -308,7 +308,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid>(), "etag-1"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Act
@@ -816,7 +816,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid> { serviceId }, "etag-1"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Act
@@ -856,7 +856,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid> { serviceId }, "etag-1"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Act
@@ -1013,7 +1013,7 @@ public class GameServiceServiceTests
 
         // Verify service was NOT deleted (cleanup failed)
         _mockModelStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -1051,7 +1051,7 @@ public class GameServiceServiceTests
 
         // Verify service was NOT deleted
         _mockModelStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -1095,7 +1095,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid> { serviceId }, "etag-1"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Capture the published event
@@ -1182,7 +1182,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid> { serviceId }, "etag-1"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Act
@@ -1264,7 +1264,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid>(), "etag-1"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Capture the published event

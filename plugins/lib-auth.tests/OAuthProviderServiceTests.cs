@@ -850,7 +850,7 @@ public class OAuthProviderServiceTests : IDisposable
         _mockListStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(linkKeys);
 
-        _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         _mockListStore.Setup(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()))
@@ -883,8 +883,8 @@ public class OAuthProviderServiceTests : IDisposable
         await _service.CleanupOAuthLinksForAccountAsync(accountId);
 
         // Assert - No deletions should occur
-        _mockStringStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _mockListStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockStringStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockListStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

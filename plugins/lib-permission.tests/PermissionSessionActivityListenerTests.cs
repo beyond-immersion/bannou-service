@@ -108,13 +108,13 @@ public class PermissionSessionActivityListenerTests
         // Default cacheable store behaviors
         _mockCacheableStore.Setup(s => s.AddToSetAsync<string>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _mockCacheableStore.Setup(s => s.RemoveFromSetAsync<string>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.RemoveFromSetAsync<string>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _mockCacheableStore.Setup(s => s.SetContainsAsync<string>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.SetContainsAsync<string>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
-        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
-        _mockCacheableStore.Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0L);
 
         // Default message bus behavior
@@ -291,7 +291,7 @@ public class PermissionSessionActivityListenerTests
             It.Is<string>(k => k.Contains("states")),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
-        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         var expectedStatesKey = $"permission:session:{sessionIdStr}:states";
@@ -324,7 +324,7 @@ public class PermissionSessionActivityListenerTests
         var reconnectionWindow = TimeSpan.FromSeconds(120);
 
         // Set up for HandleSessionDisconnectedAsync
-        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         var expectedStatesKey = $"permission:session:{sessionIdStr}:states";
@@ -349,7 +349,7 @@ public class PermissionSessionActivityListenerTests
         var sessionId = Guid.NewGuid();
 
         // Set up for HandleSessionDisconnectedAsync
-        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -377,7 +377,7 @@ public class PermissionSessionActivityListenerTests
         var sessionId = Guid.NewGuid();
 
         // Set up for HandleSessionDisconnectedAsync
-        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -411,14 +411,14 @@ public class PermissionSessionActivityListenerTests
         // Setup session states so RecompileSessionPermissionsAsync proceeds past null check
         _mockDictStringStore.Setup(s => s.GetAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
 
         // Make GetSetAsync<string>(REGISTERED_SERVICES_KEY) throw to simulate failure during recompilation.
         // This exception is caught by the try-catch in RecompileSessionPermissionsAsync.
         _mockCacheableStore.Setup(s => s.GetSetAsync<string>(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Redis connection lost during reconnection"));
 
         // Act — should NOT throw (exception caught internally by RecompileSessionPermissionsAsync)
@@ -494,7 +494,7 @@ public class PermissionSessionActivityListenerTests
         var permissionsKey = $"permission:session:{sessionIdStr}:permissions";
 
         // Set up for HandleSessionDisconnectedAsync to succeed
-        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // First ExpireAsync (states key) throws — sequence matters
@@ -544,7 +544,7 @@ public class PermissionSessionActivityListenerTests
         var permissionsKey = $"permission:session:{sessionIdStr}:permissions";
 
         // Set up for HandleSessionDisconnectedAsync to succeed
-        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Track which keys had ExpireAsync called with the reconnection window TTL
@@ -590,7 +590,7 @@ public class PermissionSessionActivityListenerTests
         var reconnectionWindow = TimeSpan.FromSeconds(120);
 
         // Set up for HandleSessionDisconnectedAsync to succeed
-        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act — should complete without throwing despite reconnectable + window

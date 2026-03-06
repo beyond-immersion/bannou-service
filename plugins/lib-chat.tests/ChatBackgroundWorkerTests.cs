@@ -180,7 +180,7 @@ public class ChatBackgroundWorkerTests
 
         mockBanStore.Verify(s => s.DeleteAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -876,7 +876,7 @@ public class ChatBackgroundWorkerTests
 
         // Assert - invalid entry skipped entirely (no remove, no publish)
         mockParticipantStore.Verify(s => s.SortedSetRemoveAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
         mockEntityRegistry.Verify(r => r.PublishToEntitySessionsAsync(
             It.IsAny<string>(),
             It.IsAny<Guid>(),
@@ -924,7 +924,7 @@ public class ChatBackgroundWorkerTests
 
         // Assert - invalid GUID entry skipped (no remove, no publish)
         mockParticipantStore.Verify(s => s.SortedSetRemoveAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
         mockEntityRegistry.Verify(r => r.PublishToEntitySessionsAsync(
             It.IsAny<string>(),
             It.IsAny<Guid>(),

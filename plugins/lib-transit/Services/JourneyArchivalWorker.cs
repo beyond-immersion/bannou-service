@@ -445,7 +445,7 @@ public class JourneyArchivalWorker : BackgroundService
             }
 
             var result = await journeyIndexStore.TrySaveAsync(
-                TransitService.JOURNEY_INDEX_KEY, updatedIndex, etag, cancellationToken);
+                TransitService.JOURNEY_INDEX_KEY, updatedIndex, etag, cancellationToken: cancellationToken);
             if (result != null)
             {
                 _logger.LogDebug("Cleaned {Count} entries from journey index", currentIndex.Count - updatedIndex.Count);

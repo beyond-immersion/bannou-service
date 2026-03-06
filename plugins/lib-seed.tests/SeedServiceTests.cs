@@ -4192,7 +4192,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // No recomputation should occur (no phases or capability rules changed)
         _mockCapabilitiesStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
 
         // Event should have empty changedFields
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -4514,7 +4514,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Bond store should NOT be read or written
         _mockBondStore.Verify(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
         _mockBondStore.Verify(s => s.SaveAsync(
             It.IsAny<string>(), It.IsAny<SeedBondModel>(),
             It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);

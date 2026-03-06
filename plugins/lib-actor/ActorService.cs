@@ -354,7 +354,7 @@ public partial class ActorService : IActorService
         // Save updates with optimistic concurrency
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await templateStore.TrySaveAsync(body.TemplateId.ToString(), existing, etag ?? string.Empty, cancellationToken);
+        var newEtag = await templateStore.TrySaveAsync(body.TemplateId.ToString(), existing, etag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for actor template {TemplateId}", body.TemplateId);

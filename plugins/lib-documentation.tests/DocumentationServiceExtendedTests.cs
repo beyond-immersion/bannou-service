@@ -303,7 +303,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(documentId.ToString());
 
         _mockDocumentStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(storedDoc);
 
         // Act
@@ -394,7 +394,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(new List<Guid> { suggestedDocId });
 
         _mockDocumentStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(suggestedDoc);
 
         // Act
@@ -427,7 +427,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(new List<Guid> { suggestedDocId });
 
         _mockDocumentStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(suggestedDoc);
 
         // Act
@@ -459,7 +459,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(new List<Guid> { suggestedDocId });
 
         _mockDocumentStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(suggestedDoc);
 
         // Act
@@ -527,7 +527,7 @@ public class DocumentationServiceExtendedTests
 
         // Namespace docs index
         _mockGuidSetStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<Guid>());
 
         // Capture state store save
@@ -636,7 +636,7 @@ public class DocumentationServiceExtendedTests
         };
 
         _mockTrashStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((DocumentationService.TrashedDocument?)null);
 
         // Act
@@ -798,7 +798,7 @@ public class DocumentationServiceExtendedTests
 
         // Namespace docs index
         _mockGuidSetStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<Guid> { docId1 });
 
         // Capture the trashed document
@@ -845,7 +845,7 @@ public class DocumentationServiceExtendedTests
         };
 
         _mockDocumentStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((DocumentationService.StoredDocument?)null);
 
         // Act
@@ -891,7 +891,7 @@ public class DocumentationServiceExtendedTests
 
         // Namespace docs index
         _mockGuidSetStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<Guid>());
 
         // Act
@@ -1531,7 +1531,7 @@ public class DocumentationServiceExtendedTests
         };
 
         _mockArchiveStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((DocumentationArchive?)null);
 
         // Act
@@ -1673,7 +1673,7 @@ public class DocumentationServiceExtendedTests
         };
 
         _mockArchiveStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((DocumentationArchive?)null);
 
         // Act
@@ -1733,12 +1733,12 @@ public class DocumentationServiceExtendedTests
 
         // Registry store for SaveBindingAsync
         _mockRegistryStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { TEST_NAMESPACE });
 
         // Namespace docs for delete orphans
         _mockGuidSetStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((HashSet<Guid>?)null);
 
         // Act
@@ -1778,7 +1778,7 @@ public class DocumentationServiceExtendedTests
 
         // Registry store for SaveBindingAsync
         _mockRegistryStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { TEST_NAMESPACE });
 
         // Act

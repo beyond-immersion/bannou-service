@@ -1313,7 +1313,7 @@ public partial class AccountService : IAccountService
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await _accountStore.TrySaveAsync(
-            accountKey, account, etag ?? string.Empty, cancellationToken);
+            accountKey, account, etag ?? string.Empty, cancellationToken: cancellationToken);
 
         if (newEtag == null)
         {

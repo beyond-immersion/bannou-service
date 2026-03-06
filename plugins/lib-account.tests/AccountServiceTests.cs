@@ -1666,7 +1666,7 @@ public class AccountServiceTests
                 It.IsAny<string>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, AccountModel, string, CancellationToken>(
+            .Callback<string, AccountModel, string, StateOptions?, CancellationToken>(
                 (key, account, etag, ct) => savedAccount = account)
             .ReturnsAsync("etag-1");
 
@@ -1848,7 +1848,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         _mockAuthMethodsStore
@@ -1903,8 +1903,8 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
-            .Callback<string, AccountModel, string, CancellationToken>(
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, StateOptions?, CancellationToken>(
                 (key, model, etag, ct) => savedAccount = model)
             .ReturnsAsync("etag-1");
 
@@ -2010,7 +2010,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -2051,7 +2051,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         _mockAuthMethodsStore
@@ -2101,7 +2101,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         _mockAuthMethodsStore
@@ -2160,8 +2160,8 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
-            .Callback<string, AccountModel, string, CancellationToken>(
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, StateOptions?, CancellationToken>(
                 (key, model, etag, ct) => savedAccount = model)
             .ReturnsAsync("etag-1");
 
@@ -2254,7 +2254,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -2288,7 +2288,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         _mockAuthMethodsStore
@@ -2331,7 +2331,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         _mockAuthMethodsStore
@@ -2763,7 +2763,7 @@ public class AccountServiceTests
                 $"auth-methods-{accountId}",
                 It.IsAny<List<AuthMethodInfo>>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         // No existing provider index
@@ -3016,7 +3016,7 @@ public class AccountServiceTests
                 $"auth-methods-{accountId}",
                 It.IsAny<List<AuthMethodInfo>>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         // Provider index points to a deleted account
@@ -3081,7 +3081,7 @@ public class AccountServiceTests
                 $"auth-methods-{accountId}",
                 It.IsAny<List<AuthMethodInfo>>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -3140,7 +3140,7 @@ public class AccountServiceTests
                 $"auth-methods-{accountId}",
                 It.IsAny<List<AuthMethodInfo>>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         // Act
@@ -3337,7 +3337,7 @@ public class AccountServiceTests
                 $"auth-methods-{accountId}",
                 It.IsAny<List<AuthMethodInfo>>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         // Act
@@ -3388,7 +3388,7 @@ public class AccountServiceTests
                 $"auth-methods-{accountId}",
                 It.IsAny<List<AuthMethodInfo>>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null); // Conflict
 
         // Act
@@ -3431,7 +3431,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         _mockAuthMethodsStore
@@ -3601,7 +3601,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -3645,8 +3645,8 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
-            .Callback<string, AccountModel, string, CancellationToken>(
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, StateOptions?, CancellationToken>(
                 (key, model, etag, ct) => savedAccount = model)
             .ReturnsAsync("etag-1");
 
@@ -3768,7 +3768,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -3860,7 +3860,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -3898,8 +3898,8 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
-            .Callback<string, AccountModel, string, CancellationToken>(
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, StateOptions?, CancellationToken>(
                 (key, model, etag, ct) => savedAccount = model)
             .ReturnsAsync("etag-1");
 
@@ -3998,7 +3998,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -4047,8 +4047,8 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
-            .Callback<string, AccountModel, string, CancellationToken>(
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, StateOptions?, CancellationToken>(
                 (key, model, etag, ct) => savedAccount = model)
             .ReturnsAsync("etag-1");
 
@@ -4311,7 +4311,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -4364,7 +4364,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         _mockAuthMethodsStore
@@ -4631,7 +4631,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         _mockAuthMethodsStore
@@ -4690,7 +4690,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         _mockAuthMethodsStore
@@ -4761,7 +4761,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         _mockAuthMethodsStore
@@ -4836,7 +4836,7 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         _mockAuthMethodsStore
@@ -5409,8 +5409,8 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
-            .Callback<string, AccountModel, string, CancellationToken>(
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, StateOptions?, CancellationToken>(
                 (_, model, _, _) => savedAccount = model)
             .ReturnsAsync("etag-1");
 
@@ -5488,8 +5488,8 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
-            .Callback<string, AccountModel, string, CancellationToken>(
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, StateOptions?, CancellationToken>(
                 (_, model, _, _) => savedAccount = model)
             .ReturnsAsync("etag-1");
 
@@ -5558,8 +5558,8 @@ public class AccountServiceTests
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 "etag-0",
-                It.IsAny<CancellationToken>()))
-            .Callback<string, AccountModel, string, CancellationToken>(
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, StateOptions?, CancellationToken>(
                 (_, model, _, _) => savedAccount = model)
             .ReturnsAsync("etag-1");
 

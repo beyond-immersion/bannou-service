@@ -540,7 +540,7 @@ public class AssetServiceTests
 
         // Setup for indexing (mock GetWithETagAsync)
         _mockIndexStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string>(), (string?)null));
 
         // Act
@@ -631,7 +631,7 @@ public class AssetServiceTests
             .ReturnsAsync(true);
 
         _mockIndexStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string>(), (string?)null));
 
         // Act
@@ -1397,7 +1397,7 @@ public class AssetServiceTests
 
         // Verify asset record was NOT deleted (only deleted version)
         _mockAssetStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -1467,7 +1467,7 @@ public class AssetServiceTests
 
         // Verify asset record was deleted
         _mockAssetStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -2883,7 +2883,7 @@ public class AssetServiceTests
         var request = new UpdateBundleRequest { BundleId = "missing-bundle" };
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((BundleMetadata?)null, (string?)null));
 
         // Act
@@ -2904,7 +2904,7 @@ public class AssetServiceTests
         var deletedBundle = CreateTestBundle("deleted-bundle", lifecycleStatus: BundleLifecycleStatus.Deleted);
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((deletedBundle, "etag-1"));
 
         // Act
@@ -2931,11 +2931,11 @@ public class AssetServiceTests
         existingBundle.Name = "Old Name";
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingBundle, "etag-1"));
 
         _mockBundleStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Capture published event
@@ -2986,7 +2986,7 @@ public class AssetServiceTests
         };
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingBundle, "etag-1"));
 
         // Act
@@ -3013,12 +3013,12 @@ public class AssetServiceTests
         var existingBundle = CreateTestBundle("test-bundle");
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingBundle, "etag-1"));
 
         // Simulate ETag mismatch (concurrent modification)
         _mockBundleStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -3045,13 +3045,13 @@ public class AssetServiceTests
         };
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingBundle, "etag-1"));
 
         BundleMetadata? savedBundle = null;
         _mockBundleStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
-            .Callback<string, BundleMetadata, string, CancellationToken>((_, bundle, _, _) => savedBundle = bundle)
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, BundleMetadata, string, StateOptions?, CancellationToken>((_, bundle, _, _) => savedBundle = bundle)
             .ReturnsAsync("etag-2");
 
         // Act
@@ -3093,7 +3093,7 @@ public class AssetServiceTests
         var request = new DeleteBundleRequest { BundleId = "missing-bundle" };
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((BundleMetadata?)null, (string?)null));
 
         // Act
@@ -3120,11 +3120,11 @@ public class AssetServiceTests
         var existingBundle = CreateTestBundle("test-bundle");
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingBundle, "etag-1"));
 
         _mockBundleStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Capture published event
@@ -3172,7 +3172,7 @@ public class AssetServiceTests
         var existingBundle = CreateTestBundle("test-bundle");
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingBundle, "etag-1"));
 
         _mockStorageProvider
@@ -3198,7 +3198,7 @@ public class AssetServiceTests
 
         // Verify metadata was deleted
         _mockBundleStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -3212,12 +3212,12 @@ public class AssetServiceTests
         var existingBundle = CreateTestBundle("test-bundle");
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingBundle, "etag-1"));
 
         // Simulate concurrent modification
         _mockBundleStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -3243,7 +3243,7 @@ public class AssetServiceTests
         var existingBundle = CreateTestBundle("test-bundle");
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingBundle, "etag-1"));
 
         // Storage deletion fails
@@ -3261,7 +3261,7 @@ public class AssetServiceTests
 
         // Verify metadata was still deleted despite storage failure
         _mockBundleStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -3292,7 +3292,7 @@ public class AssetServiceTests
         var request = new RestoreBundleRequest { BundleId = "missing-bundle" };
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((BundleMetadata?)null, (string?)null));
 
         // Act
@@ -3313,7 +3313,7 @@ public class AssetServiceTests
         var activeBundle = CreateTestBundle("active-bundle");
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((activeBundle, "etag-1"));
 
         // Act
@@ -3340,11 +3340,11 @@ public class AssetServiceTests
         deletedBundle.MetadataVersion = 3;
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((deletedBundle, "etag-1"));
 
         _mockBundleStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Capture event
@@ -3387,11 +3387,11 @@ public class AssetServiceTests
         deletedBundle.DeletedAt = DateTimeOffset.UtcNow.AddDays(-1);
 
         _mockBundleStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((deletedBundle, "etag-1"));
 
         _mockBundleStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -3431,7 +3431,7 @@ public class AssetServiceTests
         var request = new QueryBundlesRequest { OwnerId = "test-owner" };
 
         _mockCacheableBundleStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -3463,7 +3463,7 @@ public class AssetServiceTests
         };
 
         _mockCacheableBundleStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "bundle-1", "bundle-2" });
 
         _mockCacheableBundleStore
@@ -3504,7 +3504,7 @@ public class AssetServiceTests
         };
 
         _mockCacheableBundleStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "bundle-1", "bundle-2" });
 
         _mockCacheableBundleStore
@@ -3547,7 +3547,7 @@ public class AssetServiceTests
         };
 
         _mockCacheableBundleStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "bundle-1", "bundle-2" });
 
         _mockCacheableBundleStore
@@ -3630,7 +3630,7 @@ public class AssetServiceTests
             .ReturnsAsync(existingBundle);
 
         _mockVersionStore
-            .Setup(s => s.GetSetAsync<int>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<int>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<int> { 1, 2, 3 });
 
         var v1 = new StoredBundleVersionRecord
@@ -3705,7 +3705,7 @@ public class AssetServiceTests
             .ReturnsAsync(existingBundle);
 
         _mockVersionStore
-            .Setup(s => s.GetSetAsync<int>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<int>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<int> { 1, 2, 3, 4, 5 });
 
         var v4 = new StoredBundleVersionRecord

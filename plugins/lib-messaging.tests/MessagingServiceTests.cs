@@ -72,7 +72,7 @@ public class MessagingServiceTests : IDisposable
         _mockSubscriptionStore
             .Setup(x => x.GetSetAsync<ExternalSubscriptionData>(
                 It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ExternalSubscriptionData>());
 
         _mockSubscriptionStore
@@ -804,7 +804,7 @@ public class MessagingServiceTests : IDisposable
 
         _mockSubscriptionStore
             .Setup(x => x.GetSetAsync<ExternalSubscriptionData>(
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ExternalSubscriptionData> { sub1, sub2 });
 
         _mockHttpClientFactory
@@ -845,7 +845,7 @@ public class MessagingServiceTests : IDisposable
 
         _mockSubscriptionStore
             .Setup(x => x.GetSetAsync<ExternalSubscriptionData>(
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ExternalSubscriptionData> { sub });
 
         _mockHttpClientFactory
@@ -907,7 +907,7 @@ public class MessagingServiceTests : IDisposable
 
         _mockSubscriptionStore
             .Setup(x => x.GetSetAsync<ExternalSubscriptionData>(
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ExternalSubscriptionData> { persistedSub });
 
         // Act

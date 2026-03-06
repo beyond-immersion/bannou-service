@@ -390,7 +390,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync((existingQueue, "etag-0"));
 
         _mockQueueStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<QueueModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<QueueModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         // Act
@@ -406,7 +406,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             QUEUE_PREFIX + TEST_QUEUE_ID,
             It.Is<QueueModel>(q => q.DisplayName == "Updated Queue Name"),
             "etag-0",
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

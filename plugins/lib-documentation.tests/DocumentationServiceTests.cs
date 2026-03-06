@@ -457,7 +457,7 @@ public class DocumentationServiceTests
             .ReturnsAsync((RepositoryBinding?)null);
 
         _mockRegistryStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((HashSet<string>?)null);
 
         // Act
@@ -567,12 +567,12 @@ public class DocumentationServiceTests
             .ReturnsAsync(existingBinding);
 
         _mockRegistryStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { TEST_NAMESPACE });
 
         // Mock the HashSet<Guid> store for namespace docs (returns null = no docs to delete)
         _mockGuidSetStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((HashSet<Guid>?)null);
 
         // Act
@@ -688,11 +688,11 @@ public class DocumentationServiceTests
         };
 
         _mockRegistryStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { "namespace-1", "namespace-2" });
 
         _mockBindingStore.SetupSequence(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(binding1)
             .ReturnsAsync(binding2);
 
@@ -717,7 +717,7 @@ public class DocumentationServiceTests
         };
 
         _mockRegistryStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((HashSet<string>?)null);
 
         // Act

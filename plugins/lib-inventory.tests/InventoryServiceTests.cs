@@ -129,7 +129,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Callback<string, ContainerModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
         _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -160,7 +160,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Callback<string, ContainerModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
         _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -186,7 +186,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Callback<string, ContainerModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
         _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -208,7 +208,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
         _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -244,7 +244,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Callback<string, ContainerModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
         _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         var request = CreateValidContainerRequest();
@@ -290,7 +290,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         // Arrange
         var service = CreateService();
         _mockContainerStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ContainerModel?)null);
 
         var request = CreateValidContainerRequest();
@@ -415,7 +415,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Callback<string, ContainerModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
         _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -441,7 +441,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Callback<string, ContainerModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
         _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -494,7 +494,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         // Arrange
         var service = CreateService();
         _mockContainerStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ContainerModel?)null);
 
         var request = new GetContainerRequest { ContainerId = Guid.NewGuid() };
@@ -605,7 +605,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var ownerId = Guid.NewGuid();
 
         _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
         _mockContainerStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -696,7 +696,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         // Arrange
         var service = CreateService();
         _mockContainerStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ContainerModel?)null);
 
         var request = new UpdateContainerRequest { ContainerId = Guid.NewGuid(), MaxSlots = 10 };
@@ -812,7 +812,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
         _mockContainerStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockItemClient
             .Setup(c => c.ListItemsByContainerAsync(It.IsAny<ListItemsByContainerRequest>(), It.IsAny<CancellationToken>()))
@@ -822,7 +822,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
                 TotalCount = 0
             });
         _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         var request = new DeleteContainerRequest
@@ -889,7 +889,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
         _mockContainerStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockItemClient
             .Setup(c => c.ListItemsByContainerAsync(It.IsAny<ListItemsByContainerRequest>(), It.IsAny<CancellationToken>()))
@@ -905,7 +905,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Setup(c => c.DestroyItemInstanceAsync(It.IsAny<DestroyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DestroyItemInstanceResponse { TemplateId = Guid.NewGuid() });
         _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         var request = new DeleteContainerRequest
@@ -932,7 +932,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         // Arrange
         var service = CreateService();
         _mockContainerStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ContainerModel?)null);
 
         var request = new DeleteContainerRequest { ContainerId = Guid.NewGuid(), ItemHandling = ItemHandling.Error };
@@ -1363,7 +1363,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         // Arrange
         var service = CreateService();
         _mockContainerStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ContainerModel?)null);
 
         var request = new AddItemRequest { InstanceId = Guid.NewGuid(), ContainerId = Guid.NewGuid() };
@@ -3659,7 +3659,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Setup(s => s.GetAsync($"cont:{targetContainerId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(targetModel);
         _mockContainerStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockContainerStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -3688,7 +3688,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 1 });
 
         _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         var request = new DeleteContainerRequest

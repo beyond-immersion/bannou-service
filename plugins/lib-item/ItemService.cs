@@ -198,7 +198,7 @@ public partial class ItemService : IItemService
         // Claim the code index key atomically (prevents TOCTOU race on code uniqueness)
         // GetWithETagAsync returns null etag when key doesn't exist; TrySaveAsync treats
         // empty string as "no existing version" for new entries (will never execute for updates)
-        var claimResult = await _templateStringStore.TrySaveAsync(codeKey, templateId.ToString(), codeEtag ?? string.Empty, cancellationToken);
+        var claimResult = await _templateStringStore.TrySaveAsync(codeKey, templateId.ToString(), codeEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (claimResult == null)
         {
             _logger.LogWarning("Item template code claimed concurrently: {Code} for game {GameId}", body.Code, body.GameId);
@@ -1218,7 +1218,7 @@ public partial class ItemService : IItemService
                 $"{INST_PREFIX}{body.InstanceId}",
                 currentInstance,
                 etag ?? string.Empty,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             if (saveResult is null)
             {
@@ -1341,7 +1341,7 @@ public partial class ItemService : IItemService
                         $"{INST_PREFIX}{body.InstanceId}",
                         latestInstance,
                         latestEtag ?? string.Empty,
-                        cancellationToken);
+                        cancellationToken: cancellationToken);
 
                     await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
                 }

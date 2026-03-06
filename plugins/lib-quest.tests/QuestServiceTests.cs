@@ -421,7 +421,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var existingModel = CreateTestDefinitionModel(definitionId);
 
         _mockDefinitionStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingModel, "etag123"));
 
         _mockDefinitionStore
@@ -457,7 +457,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var definitionId = Guid.NewGuid();
 
         _mockDefinitionStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((QuestDefinitionModel?)null, (string?)null));
 
         var request = new UpdateQuestDefinitionRequest
@@ -494,7 +494,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(new List<QuestDefinitionModel> { existingModel });
 
         _mockDefinitionStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingModel, "etag123"));
 
         _mockDefinitionStore
@@ -652,7 +652,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Setup: character index ETag-based write (UpdateCharacterIndexAsync uses GetWithETagAsync + TrySaveAsync)
         _mockCharacterIndex
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((CharacterQuestIndex?)null, (string?)null));
         _mockCharacterIndex
             .Setup(s => s.TrySaveAsync(
@@ -849,7 +849,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Setup: quest instance exists - service uses GetWithETagAsync for direct key lookup
         _mockInstanceStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag123"));
 
         _mockInstanceStore
@@ -875,7 +875,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             ActiveQuestIds = new List<Guid> { instanceId }
         };
         _mockCharacterIndex
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((characterIndex, "etag123"));
         _mockCharacterIndex
             .Setup(s => s.TrySaveAsync(
@@ -921,7 +921,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Setup: quest instance not found - service uses GetWithETagAsync for direct key lookup
         _mockInstanceStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((QuestInstanceModel?)null, (string?)null));
 
         var request = new AbandonQuestRequest
@@ -950,7 +950,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Setup: quest instance exists but not active - service uses GetWithETagAsync
         _mockInstanceStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag123"));
 
         var request = new AbandonQuestRequest
@@ -1219,7 +1219,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Setup: progress exists
         _mockProgressStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((progress, "etag123"));
 
         _mockProgressStore
@@ -1277,7 +1277,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(instance);
 
         _mockProgressStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((progress, "etag123"));
 
         _mockProgressStore
@@ -1387,7 +1387,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Setup: objective progress not found
         _mockProgressStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((ObjectiveProgressModel?)null, (string?)null));
 
         var request = new ReportProgressRequest
@@ -1435,7 +1435,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(instance);
 
         _mockProgressStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((progress, "etag123"));
 
         var request = new ReportProgressRequest
@@ -1488,7 +1488,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(instance);
 
         _mockProgressStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((progress, "etag123"));
 
         _mockProgressStore
@@ -1658,7 +1658,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(new List<QuestInstanceModel> { instance });
 
         _mockInstanceStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag123"));
 
         _mockInstanceStore
@@ -1686,7 +1686,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             CompletedQuestCodes = new List<string>()
         };
         _mockCharacterIndex
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((characterIndex, "etag123"));
         _mockCharacterIndex
             .Setup(s => s.TrySaveAsync(
@@ -1728,7 +1728,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(new List<QuestInstanceModel> { instance });
 
         _mockInstanceStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag123"));
 
         _mockInstanceStore
@@ -1747,7 +1747,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             ActiveQuestIds = new List<Guid> { instanceId }
         };
         _mockCharacterIndex
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((characterIndex, "etag123"));
         _mockCharacterIndex
             .Setup(s => s.TrySaveAsync(
@@ -1793,7 +1793,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(new List<QuestInstanceModel> { instance });
 
         _mockInstanceStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag123"));
 
         _mockInstanceStore
@@ -1812,7 +1812,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             ActiveQuestIds = new List<Guid> { instanceId }
         };
         _mockCharacterIndex
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((characterIndex, "etag123"));
         _mockCharacterIndex
             .Setup(s => s.TrySaveAsync(
@@ -1891,7 +1891,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(new List<QuestInstanceModel> { instance });
 
         _mockInstanceStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag123"));
 
         _mockInstanceStore
@@ -1919,7 +1919,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             CompletedQuestCodes = new List<string>()
         };
         _mockCharacterIndex
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((characterIndex, "etag123"));
         _mockCharacterIndex
             .Setup(s => s.TrySaveAsync(
@@ -1975,7 +1975,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(new List<QuestInstanceModel> { instance });
 
         _mockProgressStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((progress, "etag123"));
 
         _mockProgressStore
@@ -2679,7 +2679,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         instance.Status = QuestStatus.Active;
 
         _mockInstanceStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag123"));
 
         var request = new AbandonQuestRequest
@@ -2707,7 +2707,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         instance.Status = QuestStatus.Active;
 
         _mockInstanceStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag123"));
 
         _mockInstanceStore
@@ -2726,7 +2726,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(new ContractInstanceResponse { ContractId = instance.ContractInstanceId });
 
         _mockCharacterIndex
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new CharacterQuestIndex
             {
                 CharacterId = characterId,
@@ -2825,7 +2825,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(instance);
 
         _mockProgressStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((ObjectiveProgressModel?)null, (string?)null));
 
         var request = new ForceCompleteObjectiveRequest
@@ -2870,7 +2870,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(instance);
 
         _mockProgressStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((progress, "etag123"));
 
         var request = new ForceCompleteObjectiveRequest
@@ -2950,7 +2950,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(instance);
 
         _mockProgressStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((progress, "etag123"));
 
         var request = new ReportProgressRequest
@@ -2999,7 +2999,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(instance);
 
         _mockProgressStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((progress, "etag123"));
 
         _mockProgressStore
@@ -3079,7 +3079,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(instance);
 
         _mockProgressStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((progress, "etag123"));
 
         _mockProgressStore
@@ -3186,7 +3186,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(new List<QuestInstanceModel> { instance });
 
         _mockInstanceStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag123"));
 
         _mockInstanceStore
@@ -3214,7 +3214,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             CompletedQuestCodes = new List<string>()
         };
         _mockCharacterIndex
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((characterIndex, "etag123"));
         _mockCharacterIndex
             .Setup(s => s.TrySaveAsync(

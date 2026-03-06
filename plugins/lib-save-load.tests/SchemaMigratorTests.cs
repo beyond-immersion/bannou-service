@@ -292,7 +292,7 @@ public class SchemaMigratorTests
 
         _schemaStoreMock.Setup(s => s.GetAsync(
                 It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((SaveSchemaDefinition?)null);
 
         var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);

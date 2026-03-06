@@ -1231,7 +1231,7 @@ public partial class RealmService : IRealmService
 
                             existingModel.UpdatedAt = DateTimeOffset.UtcNow;
                             var saved = await _realmStore.TrySaveAsync(realmKey, existingModel,
-                                etag ?? string.Empty, cancellationToken);
+                                etag ?? string.Empty, cancellationToken: cancellationToken);
 
                             if (saved != null)
                             {

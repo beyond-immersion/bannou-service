@@ -524,7 +524,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockRealmStore
             .Setup(s => s.TrySaveAsync(
                 It.IsAny<string>(), It.IsAny<RealmModel>(),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
         // Act
@@ -565,7 +565,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
 
         // Verify no save or event publishing occurred
         _mockRealmStore.Verify(s => s.TrySaveAsync(
-            It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -587,7 +587,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockRealmStore
             .Setup(s => s.TrySaveAsync(
                 It.IsAny<string>(), It.IsAny<RealmModel>(),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
         // Act
@@ -645,7 +645,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
 
         // Verify no delete occurred
         _mockRealmStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -741,7 +741,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockRealmStore
             .Setup(s => s.TrySaveAsync(
                 It.IsAny<string>(), It.IsAny<RealmModel>(),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
         // Act
@@ -818,7 +818,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockRealmStore
             .Setup(s => s.TrySaveAsync(
                 It.IsAny<string>(), It.IsAny<RealmModel>(),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-etag");
 
         // Act
@@ -899,7 +899,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("list-etag-2");
 
         // Capture published event
@@ -1020,7 +1020,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("list-etag-2");
 
         // Act
@@ -1065,7 +1065,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, List<Guid>, string, CancellationToken>((_, list, _, _) => savedList = list)
             .ReturnsAsync("list-etag-2");
 
@@ -1110,7 +1110,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("list-etag-2");
 
         // Capture worldstate client call
@@ -1163,7 +1163,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("list-etag-2");
 
         // Worldstate client throws ApiException
@@ -1942,7 +1942,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(((List<Guid>?)new List<Guid> { sourceId }, "list-etag"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("list-etag-2");
 
         // Act
@@ -2029,7 +2029,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("list-etag-2");
 
         // Act
@@ -2082,7 +2082,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
 
         // Verify no save was attempted
         _mockRealmStore.Verify(s => s.TrySaveAsync(
-            It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -2127,7 +2127,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockRealmStore
             .Setup(s => s.TrySaveAsync(
                 $"{REALM_KEY_PREFIX}{existingId}", It.IsAny<RealmModel>(), "mock-etag", It.IsAny<CancellationToken>()))
-            .Callback<string, RealmModel, string, CancellationToken>((_, m, _, _) => savedModel = m)
+            .Callback<string, RealmModel, string, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("new-etag");
 
         // Act
@@ -2195,7 +2195,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
 
         // Verify no save was attempted (no changes to persist)
         _mockRealmStore.Verify(s => s.TrySaveAsync(
-            It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -2233,7 +2233,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // TrySaveAsync always returns null (ETag conflict)
         _mockRealmStore
             .Setup(s => s.TrySaveAsync(
-                It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -2303,7 +2303,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
         _mockListStore
-            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("list-etag-2");
 
         // Act

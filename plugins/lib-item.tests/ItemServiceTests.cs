@@ -95,7 +95,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("cache-etag");
         _mockTemplateCacheStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         _mockInstanceCacheStore
@@ -105,7 +105,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("cache-etag");
         _mockInstanceCacheStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         // Default GetBulkAsync returns empty dict (cache miss) so tests fall through to persistent store
         _mockInstanceCacheStore
@@ -122,7 +122,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Default GetWithETagAsync for optimistic concurrency in list operations
         _mockTemplateStringStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((string?)null, (string?)null));
         _mockTemplateStringStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -132,7 +132,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync("etag");
 
         _mockInstanceStringStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((string?)null, (string?)null));
         _mockInstanceStringStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -1506,7 +1506,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         string? deletedKey = null;
         _mockInstanceStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, CancellationToken>((k, _) => deletedKey = k)
             .ReturnsAsync(true);
 
@@ -1574,7 +1574,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
         _mockInstanceStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var request = new DestroyItemInstanceRequest
@@ -2230,7 +2230,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Instance store for deletion
         _mockInstanceStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var capturedEvents = new List<(string Topic, object Event)>();
@@ -2506,7 +2506,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             });
 
         _mockInstanceStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -2752,7 +2752,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             });
 
         _mockInstanceStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -2830,7 +2830,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             });
 
         _mockInstanceStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -3226,7 +3226,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             });
 
         _mockInstanceStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -3335,7 +3335,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<string, string, string, CancellationToken>((_, _, _, _) =>
+            .Returns<string, string, string, StateOptions?, CancellationToken>((_, _, _, _, _) =>
             {
                 gameIndexCallCount++;
                 // First attempt conflicts, second succeeds
@@ -3425,7 +3425,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
         _mockInstanceStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Container index has only this one instance
@@ -3440,7 +3440,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         var deletedKeys = new List<string>();
         _mockInstanceStringStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, CancellationToken>((k, _) => deletedKeys.Add(k))
             .ReturnsAsync(true);
 
@@ -3484,7 +3484,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
         _mockInstanceStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Container index has two instances
@@ -3498,7 +3498,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.GetWithETagAsync($"inst-template:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((BannouJson.Serialize(new List<string> { instanceId.ToString() }), "etag-t"));
         _mockInstanceStringStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Container index TrySaveAsync: first call conflicts, second succeeds
@@ -3510,7 +3510,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
                 It.IsAny<string>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<string, string, string, CancellationToken>((_, _, _, _) =>
+            .Returns<string, string, string, StateOptions?, CancellationToken>((_, _, _, _, _) =>
             {
                 containerSaveCount++;
                 return Task.FromResult<string?>(containerSaveCount > 1 ? "etag-new" : null);
@@ -3749,7 +3749,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Verify instance was NOT deleted or modified (no consumption on contract failure)
         _mockInstanceStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _mockInstanceStore.Verify(
             s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
@@ -3818,7 +3818,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // DestroyAlways only applies at milestone failure (step 7)
         Assert.Equal(StatusCodes.BadRequest, status);
         _mockInstanceStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

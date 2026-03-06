@@ -1292,7 +1292,7 @@ public partial class SaveLoadService : ISaveLoadService
         targetVersion.UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE;
 
         // Save updated manifest with optimistic concurrency
-        var newEtag = await _versionStore.TrySaveAsync(targetVersion.GetStateKey(), targetVersion, versionEtag ?? string.Empty, cancellationToken);
+        var newEtag = await _versionStore.TrySaveAsync(targetVersion.GetStateKey(), targetVersion, versionEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogDebug("Concurrent modification detected for version {Version} in slot {SlotId}",

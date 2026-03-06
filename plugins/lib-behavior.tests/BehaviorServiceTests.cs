@@ -104,7 +104,7 @@ public class BehaviorServiceTests
     {
         // Arrange
         _mockBundleManager
-            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((CachedGoapMetadata?)null);
 
         var service = CreateService();
@@ -141,7 +141,7 @@ public class BehaviorServiceTests
         };
 
         _mockBundleManager
-            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(cachedMetadata);
 
         var service = CreateService();
@@ -189,7 +189,7 @@ public class BehaviorServiceTests
         };
 
         _mockBundleManager
-            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(cachedMetadata);
 
         // Planner returns null (no plan found)
@@ -247,7 +247,7 @@ public class BehaviorServiceTests
         };
 
         _mockBundleManager
-            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(cachedMetadata);
 
         // Create a mock plan result
@@ -320,7 +320,7 @@ public class BehaviorServiceTests
         };
 
         _mockBundleManager
-            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(cachedMetadata);
 
         PlanningOptions? capturedOptions = null;

@@ -141,7 +141,7 @@ public class ActorServiceAdditionalTests
         _mockTemplateStore.Setup(s => s.GetWithETagAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existing, "etag-1"));
         _mockTemplateStore.Setup(s => s.TrySaveAsync(
-                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<CancellationToken>()))
+                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var request = new UpdateActorTemplateRequest
@@ -171,7 +171,7 @@ public class ActorServiceAdditionalTests
         _mockTemplateStore.Setup(s => s.GetWithETagAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existing, "etag-1"));
         _mockTemplateStore.Setup(s => s.TrySaveAsync(
-                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<CancellationToken>()))
+                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Capture the published event to verify changedFields
@@ -219,7 +219,7 @@ public class ActorServiceAdditionalTests
 
         // Simulate concurrent modification by returning null from TrySaveAsync
         _mockTemplateStore.Setup(s => s.TrySaveAsync(
-                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<CancellationToken>()))
+                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         var request = new UpdateActorTemplateRequest
@@ -271,7 +271,7 @@ public class ActorServiceAdditionalTests
         _mockTemplateStore.Setup(s => s.GetWithETagAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existing, "etag-1"));
         _mockTemplateStore.Setup(s => s.TrySaveAsync(
-                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<CancellationToken>()))
+                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Request with same behaviorRef as existing (no actual changes)
@@ -300,7 +300,7 @@ public class ActorServiceAdditionalTests
         _mockTemplateStore.Setup(s => s.GetWithETagAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existing, "etag-1"));
         _mockTemplateStore.Setup(s => s.TrySaveAsync(
-                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<CancellationToken>()))
+                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Capture the event
@@ -348,7 +348,7 @@ public class ActorServiceAdditionalTests
         _mockTemplateStore.Setup(s => s.GetWithETagAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existing, "etag-1"));
         _mockTemplateStore.Setup(s => s.TrySaveAsync(
-                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<CancellationToken>()))
+                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         ActorTemplateUpdatedEvent? capturedEvent = null;
@@ -387,7 +387,7 @@ public class ActorServiceAdditionalTests
         _mockTemplateStore.Setup(s => s.GetWithETagAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existing, "etag-1"));
         _mockTemplateStore.Setup(s => s.TrySaveAsync(
-                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<CancellationToken>()))
+                templateId.ToString(), It.IsAny<ActorTemplateData>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var request = new UpdateActorTemplateRequest
@@ -425,7 +425,7 @@ public class ActorServiceAdditionalTests
         // Setup index store for UpdateTemplateIndexAsync
         _mockIndexStore.Setup(s => s.GetWithETagAsync("_all_template_ids", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { templateId.ToString() }, "idx-etag"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("idx-etag-2");
 
         var request = new DeleteActorTemplateRequest
@@ -489,7 +489,7 @@ public class ActorServiceAdditionalTests
         // Setup index store for UpdateTemplateIndexAsync
         _mockIndexStore.Setup(s => s.GetWithETagAsync("_all_template_ids", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { templateId.ToString() }, "idx-etag"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("idx-etag-2");
 
         var request = new DeleteActorTemplateRequest
@@ -531,7 +531,7 @@ public class ActorServiceAdditionalTests
         // Setup index store
         _mockIndexStore.Setup(s => s.GetWithETagAsync("_all_template_ids", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { templateId.ToString() }, "idx-etag"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("idx-etag-2");
 
         var request = new DeleteActorTemplateRequest
@@ -578,7 +578,7 @@ public class ActorServiceAdditionalTests
         // Setup index store
         _mockIndexStore.Setup(s => s.GetWithETagAsync("_all_template_ids", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { templateId.ToString() }, "idx-etag"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("idx-etag-2");
 
         var request = new DeleteActorTemplateRequest
@@ -610,7 +610,7 @@ public class ActorServiceAdditionalTests
         // Setup index store
         _mockIndexStore.Setup(s => s.GetWithETagAsync("_all_template_ids", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { templateId.ToString() }, "idx-etag"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("idx-etag-2");
 
         // Capture the published event
@@ -665,7 +665,7 @@ public class ActorServiceAdditionalTests
         // Setup index store
         _mockIndexStore.Setup(s => s.GetWithETagAsync("_all_template_ids", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { templateId.ToString() }, "idx-etag"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("idx-etag-2");
 
         ActorTemplateDeletedEvent? capturedEvent = null;
@@ -708,7 +708,7 @@ public class ActorServiceAdditionalTests
         // Setup index store
         _mockIndexStore.Setup(s => s.GetWithETagAsync("_all_template_ids", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<string> { templateId.ToString() }, "idx-etag"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("_all_template_ids", It.IsAny<List<string>>(), "idx-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("idx-etag-2");
 
         var request = new DeleteActorTemplateRequest

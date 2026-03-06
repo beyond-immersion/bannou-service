@@ -121,16 +121,16 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Default delete behavior
         _mockTemplateStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockCollectionStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockCollectionCache
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockAreaContentStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Default query behavior (empty results)
@@ -293,7 +293,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .ReturnsAsync((cache ?? CreateTestCache(collection.CollectionId), "etag-1"));
 
         _mockCollectionCache
-            .Setup(s => s.TrySaveAsync($"cache:{collection.CollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"cache:{collection.CollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Templates for milestone check
@@ -1314,7 +1314,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Cache operations
         _mockCollectionCache
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((CollectionCacheModel?)null, (string?)null));
 
         // Template query for milestones
@@ -1869,7 +1869,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .Setup(s => s.GetWithETagAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((cache, "etag-1"));
         _mockCollectionCache
-            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var service = CreateService();
@@ -2019,7 +2019,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .Setup(s => s.GetWithETagAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((cache, "etag-1"));
         _mockCollectionCache
-            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
         _mockTemplateStore
             .Setup(s => s.GetAsync(
@@ -2121,12 +2121,12 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Assert - both collection instances deleted (by ID and by owner key = 4 deletes)
         _mockCollectionStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Exactly(4));
 
         // Assert - both cache entries deleted
         _mockCollectionCache.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Exactly(2));
     }
 
@@ -2159,7 +2159,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Assert - collection instance deleted
         _mockCollectionStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Exactly(2));
     }
 
@@ -2189,7 +2189,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _mockCollectionStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -2225,7 +2225,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .ReturnsAsync((CreateTestCache(), "etag-1"));
 
         _mockCollectionCache
-            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         _mockTemplateStore
@@ -2299,7 +2299,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .ReturnsAsync((cache, "etag-1"));
 
         _mockCollectionCache
-            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Return 2 total templates for milestone calculation
@@ -2363,7 +2363,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .ReturnsAsync((cache, "etag-1"));
 
         _mockCollectionCache
-            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Only 1 template total = 100% when unlocked
@@ -2573,7 +2573,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .ReturnsAsync((cache, "etag-1"));
 
         _mockCollectionCache
-            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Return 4 total templates for milestone calculation
@@ -2654,7 +2654,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .ReturnsAsync((cache, "etag-1"));
 
         _mockCollectionCache
-            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         _mockTemplateStore
@@ -2730,7 +2730,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .ReturnsAsync((cache, "etag-1"));
 
         _mockCollectionCache
-            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         _mockTemplateStore
@@ -3022,7 +3022,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // First TrySave fails (null = conflict), second succeeds
         var trySaveCallCount = 0;
         _mockCollectionCache
-            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
             {
                 trySaveCallCount++;
@@ -3250,7 +3250,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .Setup(s => s.GetWithETagAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((cache, "etag-1"));
         _mockCollectionCache
-            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         CollectionDiscoveryAdvancedClientEvent? capturedClientEvent = null;

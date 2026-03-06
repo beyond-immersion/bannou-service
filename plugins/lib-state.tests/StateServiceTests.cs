@@ -1296,7 +1296,7 @@ public class StateServiceTests
 
         // GetKeyCountAsync should NOT have been called
         _mockStateStoreFactory.Verify(
-            f => f.GetKeyCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            f => f.GetKeyCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

@@ -548,7 +548,7 @@ public class InstrumentedCacheableStateStoreTests
     {
         // Arrange
         _innerStoreMock
-            .Setup(x => x.GetCounterAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetCounterAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0L);
 
         // Act
@@ -636,7 +636,7 @@ public class InstrumentedCacheableStateStoreTests
     {
         // Arrange
         _innerStoreMock
-            .Setup(x => x.DeleteCounterAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DeleteCounterAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -840,7 +840,7 @@ public class InstrumentedCacheableStateStoreTests
     {
         // Arrange
         _innerStoreMock
-            .Setup(x => x.HashExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.HashExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act
@@ -921,7 +921,7 @@ public class InstrumentedCacheableStateStoreTests
     {
         // Arrange
         _innerStoreMock
-            .Setup(x => x.HashGetAllAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.HashGetAllAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Act
@@ -958,7 +958,7 @@ public class InstrumentedCacheableStateStoreTests
     {
         // Arrange
         _innerStoreMock
-            .Setup(x => x.HashCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.HashCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0);
 
         // Act
@@ -1010,7 +1010,7 @@ public class InstrumentedCacheableStateStoreTests
     {
         // Arrange
         _innerStoreMock
-            .Setup(x => x.DeleteHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DeleteHashAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act

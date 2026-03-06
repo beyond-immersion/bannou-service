@@ -71,7 +71,7 @@ public class ContractExpirationServiceTests
 
         // Default: no pending or active contracts
         _mockIndexStore.Setup(s => s.GetAsync(
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
     }
 
@@ -464,7 +464,7 @@ public class ContractExpirationServiceTests
 
         // Assert - instance store never queried (payment schedule skipped)
         mockInstanceStore.Verify(
-            s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -792,7 +792,7 @@ public class ContractExpirationServiceTests
             .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag-0"));
         concreteInstanceStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         // The CheckPaymentScheduleAsync also reads from the stateStoreFactory resolved in scope
@@ -936,7 +936,7 @@ public class ContractExpirationServiceTests
             .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag-0"));
         concreteInstanceStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
         using var worker = new ContractExpirationService(

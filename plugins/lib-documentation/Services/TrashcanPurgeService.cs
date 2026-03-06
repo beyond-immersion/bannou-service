@@ -270,7 +270,7 @@ public class TrashcanPurgeService : BackgroundService
             // GetWithETagAsync returns non-null etag when key exists (loaded above);
             // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await guidListStore.TrySaveAsync(
-                trashListKey, trashedDocIds, trashEtag ?? string.Empty, cancellationToken);
+                trashListKey, trashedDocIds, trashEtag ?? string.Empty, cancellationToken: cancellationToken);
 
             if (saveResult == null)
             {

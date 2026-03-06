@@ -56,11 +56,11 @@ public class CharacterPersonalityServiceTests
         // Setup default behavior for state stores
         _mockPersonalityStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PersonalityData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
-        _mockPersonalityStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockPersonalityStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockCombatStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CombatPreferencesData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
-        _mockCombatStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCombatStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Setup message bus to capture published events using the 3-argument overload
@@ -421,7 +421,7 @@ public class CharacterPersonalityServiceTests
         Assert.Equal(StatusCodes.NotFound, status);
 
         // Verify delete was NOT called
-        _mockPersonalityStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockPersonalityStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -575,7 +575,7 @@ public class CharacterPersonalityServiceTests
             .Setup(s => s.GetWithETagAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingData, "etag-1"));
         _mockPersonalityStore
-            .Setup(s => s.TrySaveAsync($"personality-{characterId}", It.IsAny<PersonalityData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"personality-{characterId}", It.IsAny<PersonalityData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var service = CreateService();
@@ -606,7 +606,7 @@ public class CharacterPersonalityServiceTests
             .Setup(s => s.GetWithETagAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingData, "etag-1"));
         _mockPersonalityStore
-            .Setup(s => s.TrySaveAsync($"personality-{characterId}", It.IsAny<PersonalityData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"personality-{characterId}", It.IsAny<PersonalityData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var service = CreateService();
@@ -665,7 +665,7 @@ public class CharacterPersonalityServiceTests
             .Setup(s => s.GetWithETagAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingData, "etag-1"));
         _mockPersonalityStore
-            .Setup(s => s.TrySaveAsync($"personality-{characterId}", It.IsAny<PersonalityData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"personality-{characterId}", It.IsAny<PersonalityData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var service = CreateService();
@@ -871,7 +871,7 @@ public class CharacterPersonalityServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
-        _mockCombatStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockCombatStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -915,7 +915,7 @@ public class CharacterPersonalityServiceTests
             .Setup(s => s.GetWithETagAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingData, "etag-1"));
         _mockCombatStore
-            .Setup(s => s.TrySaveAsync($"combat-{characterId}", It.IsAny<CombatPreferencesData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"combat-{characterId}", It.IsAny<CombatPreferencesData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var service = CreateService();
@@ -955,7 +955,7 @@ public class CharacterPersonalityServiceTests
             .Setup(s => s.GetWithETagAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingData, "etag-1"));
         _mockCombatStore
-            .Setup(s => s.TrySaveAsync($"combat-{characterId}", It.IsAny<CombatPreferencesData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"combat-{characterId}", It.IsAny<CombatPreferencesData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var service = CreateService();
@@ -986,7 +986,7 @@ public class CharacterPersonalityServiceTests
             .Setup(s => s.GetWithETagAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingData, "etag-1"));
         _mockCombatStore
-            .Setup(s => s.TrySaveAsync($"combat-{characterId}", It.IsAny<CombatPreferencesData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"combat-{characterId}", It.IsAny<CombatPreferencesData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var service = CreateService();
@@ -1214,7 +1214,7 @@ public class CharacterPersonalityServiceTests
             .Setup(s => s.GetWithETagAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingData, "etag-1"));
         _mockPersonalityStore
-            .Setup(s => s.TrySaveAsync($"personality-{characterId}", It.IsAny<PersonalityData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync($"personality-{characterId}", It.IsAny<PersonalityData>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var service = CreateService();

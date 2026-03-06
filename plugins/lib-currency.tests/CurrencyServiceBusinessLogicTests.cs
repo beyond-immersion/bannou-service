@@ -816,7 +816,7 @@ public class CurrencyServiceBusinessLogicTests
             .Setup(s => s.GetWithETagAsync($"wallet:{_walletId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((wallet, "etag-1"));
         _mockWalletStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<WalletModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<WalletModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var request = new FreezeWalletRequest { WalletId = _walletId, Reason = "Suspected fraud" };
@@ -867,7 +867,7 @@ public class CurrencyServiceBusinessLogicTests
             .Setup(s => s.GetWithETagAsync($"wallet:{_walletId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((wallet, "etag-1"));
         _mockWalletStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<WalletModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<WalletModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var request = new UnfreezeWalletRequest { WalletId = _walletId };
@@ -926,7 +926,7 @@ public class CurrencyServiceBusinessLogicTests
             .Setup(s => s.GetAsync($"wallet:{destWalletId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(destWallet);
         _mockWalletStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<WalletModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<WalletModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         var request = new CloseWalletRequest
@@ -1673,7 +1673,7 @@ public class CurrencyServiceBusinessLogicTests
             .Setup(s => s.GetWithETagAsync($"def:{_definitionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((def, "etag-1"));
         _mockDefinitionStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<CurrencyDefinitionModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<CurrencyDefinitionModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
         _mockDefStringStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("base-currency:")), It.IsAny<CancellationToken>()))
@@ -1733,7 +1733,7 @@ public class CurrencyServiceBusinessLogicTests
             .Setup(s => s.GetWithETagAsync($"def:{_definitionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((def, "etag-1"));
         _mockDefinitionStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<CurrencyDefinitionModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<CurrencyDefinitionModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null); // Conflict on every attempt
 
         var request = new UpdateExchangeRateRequest
@@ -1878,7 +1878,7 @@ public class CurrencyServiceBusinessLogicTests
             .Setup(s => s.GetWithETagAsync($"hold:{holdId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((hold, "etag-1"));
         _mockHoldStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<HoldModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<HoldModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
 
         // Balance of 500
@@ -1998,7 +1998,7 @@ public class CurrencyServiceBusinessLogicTests
             .Setup(s => s.GetWithETagAsync($"hold:{holdId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((hold, "etag-1"));
         _mockHoldStore
-            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<HoldModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<HoldModel>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
         SetupWalletExists(wallet);
 

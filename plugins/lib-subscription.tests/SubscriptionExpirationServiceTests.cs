@@ -229,7 +229,7 @@ public class SubscriptionExpirationServiceTests
         // Mock: CleanupSubscriptionIndexAsync succeeds
         _mockIndexStore.Setup(s => s.GetWithETagAsync("subscription-index", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid> { subscriptionId }, "etag1"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag1", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag2");
 
         using var service = CreateService();
@@ -267,7 +267,7 @@ public class SubscriptionExpirationServiceTests
         // Mock: Cleanup index
         _mockIndexStore.Setup(s => s.GetWithETagAsync("subscription-index", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid> { subscriptionId }, "etag1"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag1", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag2");
 
         using var service = CreateService();
@@ -298,7 +298,7 @@ public class SubscriptionExpirationServiceTests
         // Mock: Cleanup index
         _mockIndexStore.Setup(s => s.GetWithETagAsync("subscription-index", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid> { subscriptionId }, "etag1"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag1", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag2");
 
         using var service = CreateService();
@@ -345,10 +345,10 @@ public class SubscriptionExpirationServiceTests
                 return (new List<Guid> { subscriptionId, secondSubId }, "etag2");
             });
 
-        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag1", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null); // ETag conflict on first attempt
 
-        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag2", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag2", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag3"); // Success on second attempt
 
         using var service = CreateService();
@@ -379,7 +379,7 @@ public class SubscriptionExpirationServiceTests
         // Mock: Every TrySaveAsync fails (etag conflict all 3 attempts)
         _mockIndexStore.Setup(s => s.GetWithETagAsync("subscription-index", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid> { subscriptionId }, "stale-etag"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "stale-etag", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "stale-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null); // Always fails
 
         using var service = CreateService();
@@ -390,7 +390,7 @@ public class SubscriptionExpirationServiceTests
         // Assert - All 3 retry attempts were made
         _mockIndexStore.Verify(s => s.GetWithETagAsync("subscription-index", It.IsAny<CancellationToken>()),
             Times.Exactly(3));
-        _mockIndexStore.Verify(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "stale-etag", It.IsAny<CancellationToken>()),
+        _mockIndexStore.Verify(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "stale-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Exactly(3));
     }
 
@@ -424,8 +424,8 @@ public class SubscriptionExpirationServiceTests
         await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
 
         // Assert - No index cleanup needed (no IDs to remove)
-        _mockIndexStore.Verify(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _mockIndexStore.Verify(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockIndexStore.Verify(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockIndexStore.Verify(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -453,7 +453,7 @@ public class SubscriptionExpirationServiceTests
         await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
 
         // Assert - TrySaveAsync should never be called since index is empty
-        _mockIndexStore.Verify(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockIndexStore.Verify(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -486,7 +486,7 @@ public class SubscriptionExpirationServiceTests
         // Mock: Cleanup index
         _mockIndexStore.Setup(s => s.GetWithETagAsync("subscription-index", It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid> { subscriptionId }, "etag1"));
-        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag1", It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync("subscription-index", It.IsAny<List<Guid>>(), "etag1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag2");
 
         using var service = CreateService();

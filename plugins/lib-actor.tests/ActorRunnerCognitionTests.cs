@@ -86,7 +86,7 @@ public class ActorRunnerCognitionTests
         };
 
         var behaviorLoaderMock = new Mock<IBehaviorDocumentLoader>();
-        behaviorLoaderMock.Setup(l => l.GetDocumentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        behaviorLoaderMock.Setup(l => l.GetDocumentAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(testDoc);
 
         var executorMock = new Mock<IDocumentExecutor>();
@@ -330,7 +330,7 @@ public class ActorRunnerCognitionTests
             }
         };
         var behaviorLoaderMock = new Mock<IBehaviorDocumentLoader>();
-        behaviorLoaderMock.Setup(l => l.GetDocumentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        behaviorLoaderMock.Setup(l => l.GetDocumentAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(document);
 
         var executorMock = new Mock<IDocumentExecutor>();

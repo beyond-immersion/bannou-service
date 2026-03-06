@@ -48,7 +48,7 @@ public class MessagingSubscriptionRecoveryServiceTests
 
         _mockSubscriptionStore
             .Setup(x => x.GetSetAsync<ExternalSubscriptionData>(
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ExternalSubscriptionData>());
 
         _messagingService = new MessagingService(
@@ -98,7 +98,7 @@ public class MessagingSubscriptionRecoveryServiceTests
         // Assert - Recovery was called (GetSetAsync was invoked)
         _mockSubscriptionStore.Verify(
             x => x.GetSetAsync<ExternalSubscriptionData>(
-                It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -108,7 +108,7 @@ public class MessagingSubscriptionRecoveryServiceTests
         // Arrange - Make recovery throw
         _mockSubscriptionStore
             .Setup(x => x.GetSetAsync<ExternalSubscriptionData>(
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("State store unavailable"));
 
         using var service = CreateService();

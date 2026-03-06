@@ -1146,7 +1146,7 @@ public partial class QuestService : IQuestService
                 progressKey,
                 progress,
                 etag ?? string.Empty,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             if (saveResult == null)
             {

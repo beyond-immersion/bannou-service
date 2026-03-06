@@ -792,7 +792,7 @@ public class AuthServiceTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SendGrid API key invalid"));
 
         var service = CreateAuthService();
@@ -829,7 +829,7 @@ public class AuthServiceTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP connection refused"));
 
         var service = CreateAuthService();
@@ -888,7 +888,7 @@ public class AuthServiceTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -950,7 +950,7 @@ public class AuthServiceTests
         // Mock OAuth service to return valid Steam ID
         _mockOAuthService.Setup(o => o.ValidateSteamTicketAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(steamId);
 
         // Mock OAuth service to return/create account
@@ -1051,7 +1051,7 @@ public class AuthServiceTests
 
         // Verify mock info was used (not real Steam API)
         _mockOAuthService.Verify(o => o.GetMockSteamUserInfoAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _mockOAuthService.Verify(o => o.ValidateSteamTicketAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockOAuthService.Verify(o => o.ValidateSteamTicketAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -1099,7 +1099,7 @@ public class AuthServiceTests
         // Arrange
         _mockOAuthService.Setup(o => o.ValidateSteamTicketAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         var realConfig = new AuthServiceConfiguration
@@ -1145,7 +1145,7 @@ public class AuthServiceTests
 
         _mockOAuthService.Setup(o => o.ValidateSteamTicketAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(steamId);
 
         // Account creation fails
@@ -1295,7 +1295,7 @@ public class AuthServiceTests
         // Arrange - no prior attempts
         _mockCacheableStore.Setup(s => s.GetCounterAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((long?)null);
 
         var accountId = Guid.NewGuid();
@@ -1350,7 +1350,7 @@ public class AuthServiceTests
         // Arrange - no prior attempts
         _mockCacheableStore.Setup(s => s.GetCounterAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((long?)null);
 
         // Account not found throws ApiException with 404
@@ -1398,7 +1398,7 @@ public class AuthServiceTests
         // Arrange - 3 prior failed attempts (below threshold of 5)
         _mockCacheableStore.Setup(s => s.GetCounterAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((long?)3);
 
         var accountId = Guid.NewGuid();
@@ -1456,7 +1456,7 @@ public class AuthServiceTests
         // Arrange - 4 attempts (one below the default max of 5)
         _mockCacheableStore.Setup(s => s.GetCounterAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((long?)4);
 
         var accountId = Guid.NewGuid();
@@ -1506,7 +1506,7 @@ public class AuthServiceTests
         // Arrange - no counter exists (first attempt)
         _mockCacheableStore.Setup(s => s.GetCounterAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((long?)null);
 
         var accountId = Guid.NewGuid();
@@ -1582,7 +1582,7 @@ public class AuthServiceTests
 
         _mockCacheableStore.Setup(s => s.GetCounterAsync(
             It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((long?)null);
 
         // Account not found
@@ -2100,7 +2100,7 @@ public class AuthServiceTests
         Assert.Equal(StatusCodes.NotFound, status);
 
         // Verify no session store operations occurred
-        _mockSessionStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockSessionStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -2246,7 +2246,7 @@ public class AuthServiceTests
 
         // Account index NOT updated (no session data to extract accountId)
         _mockSessionService.Verify(
-            s => s.RemoveSessionFromAccountIndexAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.RemoveSessionFromAccountIndexAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
 
         // Session invalidation event NOT published (no session data)
@@ -2771,7 +2771,7 @@ public class AuthServiceTests
     public async Task LoginAsync_Success_ShouldPublishLoginSuccessfulEvent()
     {
         // Arrange
-        _mockCacheableStore.Setup(s => s.GetCounterAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockCacheableStore.Setup(s => s.GetCounterAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((long?)null);
 
         var accountId = Guid.NewGuid();

@@ -2886,7 +2886,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             It.IsAny<ShortcutPublishedEvent>(),
             It.IsAny<CancellationToken>()), Times.Never);
         _mockSubscriberSessionsStore.Verify(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

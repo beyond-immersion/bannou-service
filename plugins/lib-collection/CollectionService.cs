@@ -1501,7 +1501,7 @@ public partial class CollectionService : ICollectionService
                     BuildCacheKey(collection.CollectionId),
                     cacheToUpdate,
                     etag,
-                    cancellationToken);
+                    cancellationToken: cancellationToken);
 
                 if (newEtag != null) break;
 
@@ -1759,7 +1759,7 @@ public partial class CollectionService : ICollectionService
                     BuildCacheKey(collection.CollectionId),
                     cache,
                     etag,
-                    cancellationToken);
+                    cancellationToken: cancellationToken);
 
                 if (newEtag != null) break;
 
@@ -2293,7 +2293,7 @@ public partial class CollectionService : ICollectionService
                     BuildCacheKey(collection.CollectionId),
                     cache,
                     etag,
-                    cancellationToken);
+                    cancellationToken: cancellationToken);
 
                 if (newEtag != null) break;
 

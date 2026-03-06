@@ -62,7 +62,7 @@ public class InstrumentedStateStoreTests
     {
         // Arrange
         _innerStoreMock
-            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TestEntity());
 
         // Act
@@ -100,7 +100,7 @@ public class InstrumentedStateStoreTests
         // Arrange
         var expectedException = new InvalidOperationException("Test error");
         _innerStoreMock
-            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(expectedException);
 
         // Act & Assert
@@ -259,7 +259,7 @@ public class InstrumentedStateStoreTests
     {
         // Arrange
         _innerStoreMock
-            .Setup(x => x.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new TestEntity(), "etag-1"));
 
         // Act
@@ -305,7 +305,7 @@ public class InstrumentedStateStoreTests
         // Arrange
         var expectedException = new InvalidOperationException("Test error");
         _innerStoreMock
-            .Setup(x => x.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(expectedException);
 
         // Act & Assert
@@ -334,7 +334,7 @@ public class InstrumentedStateStoreTests
         var entity = new TestEntity { Id = "test-1", Name = "Test" };
         var expectedNewEtag = "etag-new";
         _innerStoreMock
-            .Setup(x => x.TrySaveAsync("test-key", entity, "etag-old", It.IsAny<CancellationToken>()))
+            .Setup(x => x.TrySaveAsync("test-key", entity, "etag-old", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedNewEtag);
 
         // Act
@@ -343,7 +343,7 @@ public class InstrumentedStateStoreTests
         // Assert
         Assert.Equal(expectedNewEtag, result);
         _innerStoreMock.Verify(
-            x => x.TrySaveAsync("test-key", entity, "etag-old", It.IsAny<CancellationToken>()),
+            x => x.TrySaveAsync("test-key", entity, "etag-old", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -353,7 +353,7 @@ public class InstrumentedStateStoreTests
         // Arrange
         var entity = new TestEntity { Id = "test-1" };
         _innerStoreMock
-            .Setup(x => x.TrySaveAsync("test-key", entity, "stale-etag", It.IsAny<CancellationToken>()))
+            .Setup(x => x.TrySaveAsync("test-key", entity, "stale-etag", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -369,7 +369,7 @@ public class InstrumentedStateStoreTests
         // Arrange
         var entity = new TestEntity { Id = "test-1" };
         _innerStoreMock
-            .Setup(x => x.TrySaveAsync(It.IsAny<string>(), It.IsAny<TestEntity>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.TrySaveAsync(It.IsAny<string>(), It.IsAny<TestEntity>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-new");
 
         // Act
@@ -399,7 +399,7 @@ public class InstrumentedStateStoreTests
         // Arrange
         var expectedException = new InvalidOperationException("Concurrency failure");
         _innerStoreMock
-            .Setup(x => x.TrySaveAsync(It.IsAny<string>(), It.IsAny<TestEntity>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.TrySaveAsync(It.IsAny<string>(), It.IsAny<TestEntity>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(expectedException);
 
         // Act & Assert

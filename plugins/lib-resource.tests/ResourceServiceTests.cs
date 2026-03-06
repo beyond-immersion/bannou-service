@@ -147,19 +147,19 @@ public class ResourceServiceTests
 
         // Setup SetCountAsync based on simulated state
         _mockRefStore
-            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string key, CancellationToken _) =>
                 _simulatedSets.ContainsKey(key) ? _simulatedSets[key].Count : 0);
 
         // Setup GetSetAsync based on simulated state
         _mockRefStore
-            .Setup(s => s.GetSetAsync<ResourceReferenceEntry>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<ResourceReferenceEntry>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string key, CancellationToken _) =>
                 _simulatedSets.ContainsKey(key) ? _simulatedSets[key].ToList() : new List<ResourceReferenceEntry>());
 
         // Setup DeleteSetAsync with capture
         _mockRefStore
-            .Setup(s => s.DeleteSetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteSetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, CancellationToken>((key, _) =>
             {
                 _capturedSetDeletes.Add(key);
@@ -175,7 +175,7 @@ public class ResourceServiceTests
             .ReturnsAsync("mock-etag");
 
         _mockGraceStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, CancellationToken>((key, _) => _capturedGraceDeletes.Add(key))
             .ReturnsAsync(true);
 
@@ -195,7 +195,7 @@ public class ResourceServiceTests
 
         // Setup callback index store (empty by default)
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         _mockCallbackIndexStore
@@ -247,7 +247,7 @@ public class ResourceServiceTests
             .Returns(_mockCompressIndexStore.Object);
 
         _mockCompressIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string key, CancellationToken _) =>
                 _simulatedCompressIndex.ContainsKey(key)
                     ? _simulatedCompressIndex[key].ToList()
@@ -1140,7 +1140,7 @@ public class ResourceServiceTests
 
         // Setup RESTRICT callback for scene source type
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "scene" });
 
         _mockCleanupStore
@@ -1212,7 +1212,7 @@ public class ResourceServiceTests
 
         // Setup RESTRICT callback for scene
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "scene" });
 
         _mockCleanupStore
@@ -1282,7 +1282,7 @@ public class ResourceServiceTests
 
         // Setup mixed callbacks: CASCADE, RESTRICT, DETACH
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "actor", "scene", "encounter" });
 
         _mockCleanupStore
@@ -3323,7 +3323,7 @@ public class ResourceServiceTests
 
         // No callbacks registered (empty index)
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         var request = new ExecuteCleanupRequest
@@ -3369,7 +3369,7 @@ public class ResourceServiceTests
 
         // No callbacks registered
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         var request = new ExecuteCleanupRequest
@@ -3437,7 +3437,7 @@ public class ResourceServiceTests
 
         // No cleanup callbacks registered
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         var request = new ExecuteCompressRequest
@@ -3628,7 +3628,7 @@ public class ResourceServiceTests
 
         // No cleanup callbacks (empty index)
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         var request = new ExecuteCleanupRequest
@@ -3680,7 +3680,7 @@ public class ResourceServiceTests
 
         // Setup RESTRICT callback for scene type
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "scene" });
 
         _mockCleanupStore
@@ -3701,7 +3701,7 @@ public class ResourceServiceTests
         // Simulate race condition: between pre-check and lock, a RESTRICT reference is added
         var lockCallCount = 0;
         _mockRefStore
-            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string key, CancellationToken _) =>
             {
                 lockCallCount++;
@@ -3762,7 +3762,7 @@ public class ResourceServiceTests
 
         // Setup CASCADE callback
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "actor" });
 
         _mockCleanupStore
@@ -3859,7 +3859,7 @@ public class ResourceServiceTests
 
         // Setup DETACH callback for encounter source type
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "encounter" });
 
         _mockCleanupStore
@@ -3953,7 +3953,7 @@ public class ResourceServiceTests
 
         // Setup CASCADE callback
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "actor" });
 
         _mockCleanupStore
@@ -4049,7 +4049,7 @@ public class ResourceServiceTests
 
         // Setup two CASCADE callbacks
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "actor", "encounter" });
 
         _mockCleanupStore
@@ -4184,7 +4184,7 @@ public class ResourceServiceTests
 
         // No cleanup callbacks registered (so cleanup succeeds trivially)
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         var request = new ExecuteCompressRequest
@@ -4679,7 +4679,7 @@ public class ResourceServiceTests
         // Capture master index removal calls
         var capturedMasterIndexRemovals = new List<(string Key, string Value)>();
         _mockCallbackIndexStore
-            .Setup(s => s.RemoveFromSetAsync("callback-resource-types", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.RemoveFromSetAsync("callback-resource-types", It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback((string key, string value, CancellationToken ct) =>
             {
                 capturedMasterIndexRemovals.Add((key, value));
@@ -4851,7 +4851,7 @@ public class ResourceServiceTests
 
         // Setup two CASCADE callbacks
         _mockCallbackIndexStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "actor", "encounter" });
 
         _mockCleanupStore
