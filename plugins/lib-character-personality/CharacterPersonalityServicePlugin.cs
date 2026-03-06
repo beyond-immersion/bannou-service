@@ -41,7 +41,7 @@ public class CharacterPersonalityServicePlugin : BaseBannouPlugin
         services.AddSingleton<IPersonalityDataCache, PersonalityDataCache>();
 
         // Register variable provider factories for Actor to discover via DI
-        // These enable dependency inversion: Actor (L2) consumes providers without knowing about CharacterPersonality (L3)
+        // These enable dependency inversion: Actor (L2) consumes providers without knowing about CharacterPersonality (L4)
         services.AddSingleton<IVariableProviderFactory, PersonalityProviderFactory>();
         services.AddSingleton<IVariableProviderFactory, CombatPreferencesProviderFactory>();
 

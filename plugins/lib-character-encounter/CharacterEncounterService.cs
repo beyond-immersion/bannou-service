@@ -494,6 +494,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 EmotionalImpact = hasProvidedPerspective && provided != null
                     ? provided.EmotionalImpact
                     : defaultEmotionalImpact,
+                ImpactIntensity = hasProvidedPerspective ? provided?.ImpactIntensity ?? 0f : 0f,
                 SentimentShift = hasProvidedPerspective ? provided?.SentimentShift : GetDefaultSentimentShiftForOutcome(body.Outcome),
                 MemoryStrength = (float)(hasProvidedPerspective ? provided?.MemoryStrength ?? _configuration.DefaultMemoryStrength : _configuration.DefaultMemoryStrength),
                 RememberedAs = hasProvidedPerspective ? provided?.RememberedAs : null,
@@ -1037,6 +1038,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
         // Apply updates
         if (body.EmotionalImpact.HasValue) perspective.EmotionalImpact = body.EmotionalImpact.Value;
+        if (body.ImpactIntensity.HasValue) perspective.ImpactIntensity = body.ImpactIntensity.Value;
         if (body.SentimentShift.HasValue) perspective.SentimentShift = body.SentimentShift.Value;
         if (body.RememberedAs != null) perspective.RememberedAs = body.RememberedAs;
         perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -1591,6 +1593,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                         EncounterId = perspectiveModel.EncounterId,
                         CharacterId = perspectiveModel.CharacterId,
                         EmotionalImpact = perspectiveModel.EmotionalImpact,
+                        ImpactIntensity = perspectiveModel.ImpactIntensity,
                         SentimentShift = perspectiveModel.SentimentShift,
                         MemoryStrength = perspectiveModel.MemoryStrength,
                         RememberedAs = perspectiveModel.RememberedAs,
@@ -2899,6 +2902,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             EncounterId = data.EncounterId,
             CharacterId = data.CharacterId,
             EmotionalImpact = data.EmotionalImpact,
+            ImpactIntensity = data.ImpactIntensity,
             SentimentShift = data.SentimentShift,
             MemoryStrength = data.MemoryStrength,
             RememberedAs = data.RememberedAs,

@@ -55,6 +55,7 @@ public class CharacterPersonalityServiceConfiguration : BaseServiceConfiguration
     /// Base chance for trait shift per evolution event (0.0-1.0)
     /// Environment variable: CHARACTER_PERSONALITY_BASE_EVOLUTION_PROBABILITY
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
     public double BaseEvolutionProbability { get; set; } = 0.15;
 
     /// <summary>
@@ -73,48 +74,56 @@ public class CharacterPersonalityServiceConfiguration : BaseServiceConfiguration
     /// TTL in minutes for personality and combat preferences cache entries
     /// Environment variable: CHARACTER_PERSONALITY_CACHE_TTL_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int CacheTtlMinutes { get; set; } = 5;
 
     /// <summary>
     /// Maximum number of characters allowed in batch operations
     /// Environment variable: CHARACTER_PERSONALITY_MAX_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxBatchSize { get; set; } = 100;
 
     /// <summary>
     /// Maximum retry attempts for optimistic concurrency conflicts
     /// Environment variable: CHARACTER_PERSONALITY_MAX_CONCURRENCY_RETRIES
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxConcurrencyRetries { get; set; } = 3;
 
     /// <summary>
     /// Base probability for combat style transitions (0.0-1.0)
     /// Environment variable: CHARACTER_PERSONALITY_COMBAT_STYLE_TRANSITION_PROBABILITY
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
     public double CombatStyleTransitionProbability { get; set; } = 0.3;
 
     /// <summary>
     /// Probability for combat style transitions after defeat (0.0-1.0)
     /// Environment variable: CHARACTER_PERSONALITY_COMBAT_DEFEAT_STYLE_TRANSITION_PROBABILITY
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
     public double CombatDefeatStyleTransitionProbability { get; set; } = 0.4;
 
     /// <summary>
     /// Probability for balanced style to become aggressive after victory (0.0-1.0)
     /// Environment variable: CHARACTER_PERSONALITY_COMBAT_VICTORY_BALANCED_TRANSITION_PROBABILITY
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
     public double CombatVictoryBalancedTransitionProbability { get; set; } = 0.2;
 
     /// <summary>
     /// Base probability for combat role transitions (0.0-1.0)
     /// Environment variable: CHARACTER_PERSONALITY_COMBAT_ROLE_TRANSITION_PROBABILITY
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
     public double CombatRoleTransitionProbability { get; set; } = 0.4;
 
     /// <summary>
     /// Probability for defensive shift after injury (0.0-1.0)
     /// Environment variable: CHARACTER_PERSONALITY_COMBAT_DEFENSIVE_SHIFT_PROBABILITY
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
     public double CombatDefensiveShiftProbability { get; set; } = 0.5;
 
     /// <summary>

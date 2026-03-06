@@ -1,0 +1,183 @@
+openapi: 3.0.4
+info:
+  title: Character Personality Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for character-personality service.\nDO NOT EDIT - This file is completely
+    overwritten by generate-lifecycle-events.py.\nSource of truth: character-personality-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    PersonalityCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to personality.created when a personality is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - version
+      properties:
+        eventName:
+          type: string
+          default: personality.created
+          description: 'Event type identifier: personality.created'
+        characterId: &id001
+          type: string
+          format: uuid
+          description: ID of the character whose personality changed
+        version: &id002
+          type: integer
+          description: Version number of the personality data
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
+        is_deletion: false
+    PersonalityUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to personality.updated when a personality is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - version
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: personality.updated
+          description: 'Event type identifier: personality.updated'
+        characterId: *id001
+        version: *id002
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
+        is_deletion: false
+    PersonalityDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to personality.deleted when a personality is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - version
+      properties:
+        eventName:
+          type: string
+          default: personality.deleted
+          description: 'Event type identifier: personality.deleted'
+        characterId: *id001
+        version: *id002
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
+        is_deletion: true
+    CombatPreferencesCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to combat-preferences.created when a combatpreferences is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - version
+      properties:
+        eventName:
+          type: string
+          default: combat-preferences.created
+          description: 'Event type identifier: combat-preferences.created'
+        characterId: &id003
+          type: string
+          format: uuid
+          description: ID of the character whose combat preferences changed
+        version: &id004
+          type: integer
+          description: Version number of the combat preferences data
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
+        is_deletion: false
+    CombatPreferencesUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to combat-preferences.updated when a combatpreferences is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - version
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: combat-preferences.updated
+          description: 'Event type identifier: combat-preferences.updated'
+        characterId: *id003
+        version: *id004
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
+        is_deletion: false
+    CombatPreferencesDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to combat-preferences.deleted when a combatpreferences is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - version
+      properties:
+        eventName:
+          type: string
+          default: combat-preferences.deleted
+          description: 'Event type identifier: combat-preferences.deleted'
+        characterId: *id003
+        version: *id004
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
+        is_deletion: true

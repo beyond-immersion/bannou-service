@@ -123,9 +123,26 @@ The Achievement plugin is currently a leaf service — it reacts to external eve
 
 ### Design Considerations (Requires Planning)
 
+- **Missing `IPrerequisiteProviderFactory` implementation**: SERVICE-HIERARCHY.md explicitly lists Achievement as a dynamic prerequisite provider for Quest (`providerName: "achievement"`). Quest validates prerequisites via `IPrerequisiteProviderFactory` — Achievement should implement this interface so quests can require specific achievements before acceptance. Currently no provider exists.
+  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/578 -->
+
+- **No lib-resource cleanup for entity deletion (T28)**: Achievement progress is keyed by `{gameServiceId}:{entityType}:{entityId}`. When a character, account, or other entity is deleted, this progress data becomes permanently orphaned in Redis. Per T28, Achievement should implement `ISeededResourceProvider` to clean up progress data when referenced entities are deleted. This is not the high-frequency exception — progress is per-entity, entities are long-lived.
+  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/579 -->
+
+- **T13: Write endpoints with empty x-permissions**: `UpdateAchievementProgress` and `UnlockAchievement` have `x-permissions: []`, meaning anonymous WebSocket access. These are primarily called by event handlers (service-to-service) but the empty permissions expose them to any connected client. Needs explicit decision on whether to add role requirements or document anonymous access as intentional.
+  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/580 -->
+
+- **TotalEligibleEntities never populated**: The rarity calculation background worker depends on `TotalEligibleEntities > 0`, but this field is never written by any endpoint. The rarity percentage calculation branch will never execute, making the rarity system effectively dead code until this field is automated or manually populated.
+  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/581 -->
+
 - **Event handler N+1 query pattern**: Each analytics/leaderboard event triggers `LoadAchievementDefinitionsAsync` which loads every definition individually from Redis (one GetAsync per achievement in the index). No caching layer exists — high-frequency events could generate significant Redis traffic. A cache with invalidation on definition CRUD would improve this but requires careful design around coherency across service instances.
+  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/582 -->
 
 - **Platform sync is fire-and-forget on unlock**: When `AutoSyncOnUnlock=true`, platform syncs happen inline during unlock but failures don't prevent the local unlock from succeeding. Retry logic exists but if all retries fail, the sync is marked failed in the event and the achievement stays locally unlocked but not synced. No retry queue exists for permanently failed syncs.
+  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/583 -->
+
+- **GetPlatformSyncStatus returns hardcoded zeros**: Per-entity platform sync history is not tracked. The endpoint returns hardcoded zeros for synced/pending/failed counts and null for last sync timestamp and error. Needs a sync history store or progress store extension.
+  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/584 -->
 
 ## Work Tracking
 
@@ -133,4 +150,10 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Active
 
-(No active work items)
+- [#578](https://github.com/beyond-immersion/bannou-service/issues/578) — Implement `IPrerequisiteProviderFactory` for Quest prerequisite validation
+- [#579](https://github.com/beyond-immersion/bannou-service/issues/579) — T28 lib-resource cleanup for entity deletion
+- [#580](https://github.com/beyond-immersion/bannou-service/issues/580) — T13 review: write endpoints with empty x-permissions
+- [#581](https://github.com/beyond-immersion/bannou-service/issues/581) — TotalEligibleEntities automation for rarity calculation
+- [#582](https://github.com/beyond-immersion/bannou-service/issues/582) — Event handler N+1 definition loading — add caching layer
+- [#583](https://github.com/beyond-immersion/bannou-service/issues/583) — Platform sync permanent failure retry queue
+- [#584](https://github.com/beyond-immersion/bannou-service/issues/584) — GetPlatformSyncStatus sync history tracking

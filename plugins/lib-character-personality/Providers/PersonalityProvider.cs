@@ -1,7 +1,7 @@
 // =============================================================================
 // Personality Variable Provider
 // Provides personality data for ABML expressions via ${personality.*} paths.
-// Owned by lib-character-personality per service hierarchy (L3).
+// Owned by lib-character-personality per service hierarchy (L4).
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;

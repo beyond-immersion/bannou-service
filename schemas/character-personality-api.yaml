@@ -62,20 +62,7 @@ servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
 
-x-lifecycle:
-  entity: Personality
-  response_model: PersonalityResponse
-  id_field: characterId
-  events:
-    created:
-      topic: character-personality.created
-      description: Published when personality is created for a character
-    updated:
-      topic: character-personality.updated
-      description: Published when personality traits are modified
-    deleted:
-      topic: character-personality.deleted
-      description: Published when personality is removed from a character
+# NOTE: x-lifecycle moved to character-personality-events.yaml
 
 paths:
   /character-personality/get:
@@ -150,7 +137,9 @@ paths:
 
         This endpoint is typically called by the behavior service when significant
         events occur during gameplay.
-      x-permissions: []
+      x-permissions:
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -179,7 +168,9 @@ paths:
         returned in the notFound array.
 
         Maximum 100 characters per request.
-      x-permissions: []
+      x-permissions:
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -288,7 +279,9 @@ paths:
 
         Combat experiences can shift style (e.g., repeated losses may make a
         character more defensive), adjust risk tolerance, or change retreat thresholds.
-      x-permissions: []
+      x-permissions:
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -529,6 +522,7 @@ components:
         changeCount:
           type: integer
           default: 0
+          minimum: 0
           description: Number of times this trait has evolved
 
     PersonalityResponse:
@@ -575,17 +569,9 @@ components:
       description: Result of recording an experience, including any personality evolution
       additionalProperties: false
       required:
-      - characterId
-      - experienceRecorded
       - personalityEvolved
+      - changedTraits
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character who had the experience
-        experienceRecorded:
-          type: boolean
-          description: Whether the experience was recorded successfully
         personalityEvolved:
           type: boolean
           description: Whether any traits changed as a result of this experience
@@ -814,17 +800,8 @@ components:
       description: Result of recording a combat experience
       additionalProperties: false
       required:
-      - characterId
-      - experienceRecorded
       - preferencesEvolved
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character who had the combat experience
-        experienceRecorded:
-          type: boolean
-          description: Whether the experience was recorded successfully
         preferencesEvolved:
           type: boolean
           description: Whether any preferences changed as a result
@@ -924,7 +901,6 @@ components:
       required:
       - personalityDeleted
       - combatPreferencesDeleted
-      - success
       properties:
         personalityDeleted:
           type: boolean
@@ -932,9 +908,6 @@ components:
         combatPreferencesDeleted:
           type: boolean
           description: Whether combat preferences were found and deleted
-        success:
-          type: boolean
-          description: Whether cleanup completed successfully
 
     # ===========================================================================
     # Compression Models (Resource Service Integration)
@@ -1007,25 +980,12 @@ components:
       description: Result of restoration from archive
       additionalProperties: false
       required:
-      - characterId
       - personalityRestored
       - combatPreferencesRestored
-      - success
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character data was restored for
         personalityRestored:
           type: boolean
           description: Whether personality traits were restored
         combatPreferencesRestored:
           type: boolean
           description: Whether combat preferences were restored
-        success:
-          type: boolean
-          description: Whether restoration completed successfully
-        errorMessage:
-          type: string
-          nullable: true
-          description: Error details if restoration failed

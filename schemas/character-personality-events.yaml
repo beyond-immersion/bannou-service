@@ -13,15 +13,13 @@ info:
   version: 1.0.0
   x-event-subscriptions: []  # Character Personality doesn't subscribe to external events
   x-event-publications:
+    # Lifecycle events (auto-generated via x-lifecycle)
     - topic: personality.created
       event: PersonalityCreatedEvent
       description: Published when a character's personality is first created
     - topic: personality.updated
       event: PersonalityUpdatedEvent
       description: Published when a character's personality traits are updated
-    - topic: personality.evolved
-      event: PersonalityEvolvedEvent
-      description: Published when a character's personality evolves due to experience
     - topic: personality.deleted
       event: PersonalityDeletedEvent
       description: Published when a character's personality is deleted
@@ -31,76 +29,63 @@ info:
     - topic: combat-preferences.updated
       event: CombatPreferencesUpdatedEvent
       description: Published when a character's combat preferences are updated
-    - topic: combat-preferences.evolved
-      event: CombatPreferencesEvolvedEvent
-      description: Published when a character's combat preferences evolve due to combat experience
     - topic: combat-preferences.deleted
       event: CombatPreferencesDeletedEvent
       description: Published when a character's combat preferences are deleted
+    # Custom evolution events (not lifecycle - contain domain-specific fields)
+    - topic: personality.evolved
+      event: PersonalityEvolvedEvent
+      description: Published when a character's personality evolves due to experience
+    - topic: combat-preferences.evolved
+      event: CombatPreferencesEvolvedEvent
+      description: Published when a character's combat preferences evolve due to combat experience
 
 paths: {}  # Events don't have HTTP paths
 
+# ==========================================================================
+# Lifecycle Events (auto-generated CRUD events)
+# ==========================================================================
+
+x-lifecycle:
+  Personality:
+    model:
+      characterId:
+        type: string
+        format: uuid
+        primary: true
+        required: true
+        description: ID of the character whose personality changed
+      version:
+        type: integer
+        required: true
+        description: Version number of the personality data
+    resource_mapping:
+      resource_type: character
+      resource_id_field: characterId
+      source_type: character-personality
+
+  CombatPreferences:
+    model:
+      characterId:
+        type: string
+        format: uuid
+        primary: true
+        required: true
+        description: ID of the character whose combat preferences changed
+      version:
+        type: integer
+        required: true
+        description: Version number of the combat preferences data
+    resource_mapping:
+      resource_type: character
+      resource_id_field: characterId
+      source_type: character-personality
+
 components:
   schemas:
-    PersonalityCreatedEvent:
-      type: object
-      additionalProperties: false
-      description: Published when a character's personality is first created
-      x-resource-mapping:
-        resource_type: character
-        resource_id_field: characterId
-        source_type: character-personality
-      required:
-        - eventId
-        - timestamp
-        - characterId
-        - version
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character whose personality was created
-        version:
-          type: integer
-          description: Version number of the personality data
-
-    PersonalityUpdatedEvent:
-      type: object
-      additionalProperties: false
-      description: Published when a character's personality traits are updated
-      x-resource-mapping:
-        resource_type: character
-        resource_id_field: characterId
-        source_type: character-personality
-      required:
-        - eventId
-        - timestamp
-        - characterId
-        - version
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character whose personality was updated
-        version:
-          type: integer
-          description: New version number of the personality data
+    # ==========================================================================
+    # Custom Events (not auto-generated - contain domain-specific fields)
+    # ==========================================================================
 
     PersonalityEvolvedEvent:
       type: object
@@ -144,90 +129,8 @@ components:
         affectedTraits:
           type: array
           items:
-            type: string
-          description: List of trait names that were affected by the evolution
-
-    PersonalityDeletedEvent:
-      type: object
-      additionalProperties: false
-      description: Published when a character's personality is deleted
-      required:
-        - eventId
-        - timestamp
-        - characterId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character whose personality was deleted
-
-    CombatPreferencesCreatedEvent:
-      type: object
-      additionalProperties: false
-      description: Published when a character's combat preferences are first created
-      x-resource-mapping:
-        resource_type: character
-        resource_id_field: characterId
-        source_type: character-personality
-      required:
-        - eventId
-        - timestamp
-        - characterId
-        - version
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character whose combat preferences were created
-        version:
-          type: integer
-          description: Version number of the combat preferences data
-
-    CombatPreferencesUpdatedEvent:
-      type: object
-      additionalProperties: false
-      description: Published when a character's combat preferences are updated
-      x-resource-mapping:
-        resource_type: character
-        resource_id_field: characterId
-        source_type: character-personality
-      required:
-        - eventId
-        - timestamp
-        - characterId
-        - version
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character whose combat preferences were updated
-        version:
-          type: integer
-          description: New version number of the combat preferences data
+            $ref: 'character-personality-api.yaml#/components/schemas/TraitAxis'
+          description: List of trait axes that were affected by the evolution
 
     CombatPreferencesEvolvedEvent:
       type: object
@@ -267,25 +170,3 @@ components:
         version:
           type: integer
           description: New version number of the combat preferences data
-
-    CombatPreferencesDeletedEvent:
-      type: object
-      additionalProperties: false
-      description: Published when a character's combat preferences are deleted
-      required:
-        - eventId
-        - timestamp
-        - characterId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character whose combat preferences were deleted

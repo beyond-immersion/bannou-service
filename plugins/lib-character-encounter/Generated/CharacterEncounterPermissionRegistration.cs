@@ -137,6 +137,21 @@ public static class CharacterEncounterPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/character-encounter/record",
+            Method = ServiceEndpointMethod.Post,
+            Description = "recordEncounter",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/character-encounter/query/by-character",
             Method = ServiceEndpointMethod.Post,
             Description = "queryByCharacter",
@@ -212,9 +227,54 @@ public static class CharacterEncounterPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/character-encounter/batch-get",
+            Method = ServiceEndpointMethod.Post,
+            Description = "batchGetSentiment",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/character-encounter/get-perspective",
             Method = ServiceEndpointMethod.Post,
             Description = "getPerspective",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-encounter/update-perspective",
+            Method = ServiceEndpointMethod.Post,
+            Description = "updatePerspective",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-encounter/refresh-memory",
+            Method = ServiceEndpointMethod.Post,
+            Description = "refreshMemory",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

@@ -48,13 +48,41 @@ public sealed class EncountersProviderFactory : IVariableProviderFactory
             return EncountersProvider.Empty;
         }
 
-        // Load basic encounter list
-        // Note: sentiment, hasMet, and pairEncounters are loaded on-demand via the cache
-        // For now, we just load the basic encounter list for the provider
         var encounters = await _cache.GetEncountersOrLoadAsync(characterId.Value, ct);
+
+        // Extract unique participant IDs (excluding this character) to load relational data
+        var otherParticipants = new HashSet<Guid>();
+        if (encounters?.Encounters != null)
+        {
+            foreach (var encounter in encounters.Encounters)
+            {
+                foreach (var pid in encounter.Encounter.ParticipantIds)
+                {
+                    if (pid != characterId.Value)
+                    {
+                        otherParticipants.Add(pid);
+                    }
+                }
+            }
+        }
+
+        // Load sentiment and has-met data for all known participants via the cache
+        var sentiments = new Dictionary<Guid, SentimentResponse>();
+        var hasMet = new Dictionary<Guid, HasMetResponse>();
+        foreach (var targetId in otherParticipants)
+        {
+            var sentiment = await _cache.GetSentimentOrLoadAsync(characterId.Value, targetId, ct);
+            if (sentiment != null) sentiments[targetId] = sentiment;
+
+            var met = await _cache.HasMetOrLoadAsync(characterId.Value, targetId, ct);
+            if (met != null) hasMet[targetId] = met;
+        }
+
         return new EncountersProvider(
             encounters,
-            grudgeThreshold: _configuration.GrudgeSentimentThreshold,
-            allyThreshold: _configuration.AllySentimentThreshold);
+            sentiments: sentiments,
+            hasMet: hasMet,
+            grudgeThreshold: (float)_configuration.GrudgeSentimentThreshold,
+            allyThreshold: (float)_configuration.AllySentimentThreshold);
     }
 }

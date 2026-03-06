@@ -3,7 +3,7 @@
 > **Plugin**: lib-character-lifecycle (not yet created)
 > **Schema**: `schemas/character-lifecycle-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
-> **State Store**: lifecycle-characters (MySQL), lifecycle-heritage (MySQL), lifecycle-bloodlines (MySQL), lifecycle-cache (Redis), lifecycle-lock (Redis) — all planned
+> **State Store**: character-lifecycle-profiles (MySQL), character-lifecycle-heritage (MySQL), character-lifecycle-bloodlines (MySQL), character-lifecycle-cache (Redis), character-lifecycle-lock (Redis) — all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
@@ -35,25 +35,25 @@ LifecycleProfile:
   realmId:             Guid          # Realm for worldstate time queries
   speciesCode:         string        # Species determines stage thresholds and longevity
   birthGameYear:       int           # Game year of birth (from worldstate)
-  birthSeason:         string        # Season of birth
+  birthSeason:         string        # Season of birth (game-configurable, from Worldstate calendar)
   currentAge:          int           # Current age in game years
   currentStage:        string        # Current lifecycle stage code
-  causeOfCreation:     string        # "procreation", "seeded", "divine", "spawned"
+  causeOfCreation:     CreationCause # Procreation, Seeded, Divine, Spawned
   parentAId:           Guid?         # Null for seeded/spawned characters
   parentBId:           Guid?
   householdOrgId:      Guid?         # Organization ID of household
-  marriageContractId:  Guid?         # Active marriage Contract ID (null if unmarried)
-  spouseCharacterId:   Guid?         # Current spouse (from Relationship, cached)
+  marriageContractIds: Guid[]        # Active marriage Contract IDs (empty if unmarried; array for polygamous cultures)
+  spouseCharacterIds:  Guid[]        # Current spouses (from Relationship, cached; empty if unmarried)
   childCount:          int           # Living children count
   totalChildCount:     int           # All children ever (including deceased)
-  fertilityModifier:   float         # Species + age + heritage modifier
-  healthModifier:      float         # Age-based health decline
+  fertilityModifier:   float         # Species + age + heritage modifier (0.0-2.0)
+  healthModifier:      float         # Age-based health decline (0.0-2.0)
   naturalDeathYear:    int?          # Projected natural death year (null = not yet calculated)
-  fulfillmentScore:    float?        # Calculated at death from Disposition drives
+  fulfillmentScore:    float?        # Calculated at death from Disposition drives (0.0-1.0)
   deathGameYear:       int?          # Game year of death (null = alive)
-  deathCause:          string?       # "natural", "combat", "disease", "accident", "divine", etc.
+  deathCause:          string?       # Game-extensible death cause code (e.g., "natural", "combat", "disease")
   afterlifePath:       string?       # Determined at death processing
-  status:              string        # "alive", "dying", "dead", "archived"
+  status:              LifecycleStatus # Alive, Dying, Dead, Archived
 ```
 
 ### Lifecycle Stages
@@ -90,11 +90,11 @@ LifecycleTemplate:
   naturalDeathRange:
     minAge:            int           # Earliest natural death (e.g., 75)
     maxAge:            int           # Latest natural death (e.g., 95)
-    distribution:      string        # "uniform", "normal", "weighted_late"
+    distribution:      DeathDistribution # Uniform, Normal, WeightedLate
   fertilityWindow:
     peakStartAge:      int           # When fertility peaks
     peakEndAge:        int           # When peak ends
-    declineRate:       float         # How fast fertility drops after peak
+    declineRate:       float         # How fast fertility drops after peak (0.0-1.0)
 ```
 
 ### Aging
@@ -110,11 +110,11 @@ On worldstate.year-changed (realmId, yearsCrossed):
      c. If stage changed:
         - Update healthModifier from template
         - Update fertilityModifier
-        - Publish lifecycle.stage-changed event
+        - Publish character-lifecycle.stage-changed event
         - Trigger stage-specific side effects (see below)
      d. Check natural death (has age exceeded naturalDeathYear?)
      e. If natural death:
-        - Transition to "dying" status
+        - Transition to Dying status
         - Begin death processing pipeline
   3. Batch processing with configurable batch size
 ```
@@ -124,9 +124,9 @@ On worldstate.year-changed (realmId, yearsCrossed):
 | Transition | Side Effects |
 |------------|-------------|
 | child → adolescent | Heritage traits fully express. Personality initialization from heritage phenotype → Character-Personality. Coming-of-age event published. |
-| adolescent → adult | Can now marry, work, own organizations. Organization household role eligible for upgrade (Dependent → active member). `lifecycle.adult-reached` event published. |
-| adult → elder | Health modifier begins declining. Wisdom modifier increases. Succession planning urgency. `lifecycle.elder-reached` event consumed by Disposition for drive evaluation (legacy drives intensify). |
-| elder → dying | Natural death year reached. Final fulfillment calculation begins. Last-will contract triggered if exists. `lifecycle.dying` event published. |
+| adolescent → adult | Can now marry, work, own organizations. Organization household role eligible for upgrade (Dependent → active member). `character-lifecycle.stage-changed` event published (consumers filter by `newStage`). |
+| adult → elder | Health modifier begins declining. Wisdom modifier increases. Succession planning urgency. `character-lifecycle.stage-changed` event consumed by Disposition for drive evaluation (legacy drives intensify). |
+| elder → dying | Natural death year reached. Final fulfillment calculation begins. Last-will contract triggered if exists. `character-lifecycle.dying` event published. |
 
 ### Marriage Orchestration
 
@@ -136,7 +136,6 @@ Marriage composes Contract + Relationship + Organization into a coherent ceremon
 Marriage Flow:
   1. Validate eligibility:
      - Both characters in "adult" or "elder" stage
-     - Neither currently married (active SPOUSE relationship)
      - No prohibited relationship types between them (configurable)
      - Species compatibility check (if cross-species marriage allowed)
 
@@ -163,7 +162,7 @@ Marriage Flow:
      - Trust modifier between spouses
      - Drive formation check: "protect_family" drive may form
 
-  6. Publish lifecycle.marriage event
+  6. Publish character-lifecycle.marriage event
 ```
 
 ### Procreation
@@ -223,7 +222,7 @@ Procreation Flow:
   9. Register with Resource (via IResourceClient):
      - Character reference tracking for cleanup coordination
 
-  10. Publish lifecycle.birth event:
+  10. Publish character-lifecycle.birth event:
       - Includes characterId, parentIds, speciesCode, realmId, bloodlines
       - Consumed by: Disposition (family drive seeds), Analytics, Storyline
 ```
@@ -235,12 +234,9 @@ Death is the content flywheel's ignition moment. Every character death produces 
 ```
 Death Processing Pipeline:
   1. Determine cause of death:
-     - "natural": age exceeded naturalDeathYear
-     - "combat": combat system reports lethal damage
-     - "disease": disease/status system reports terminal condition
-     - "accident": environmental hazard
-     - "divine": god intervention
-     - "execution": legal system (faction enforcement)
+     - Game-extensible cause codes (e.g., "natural", "combat", "disease",
+       "accident", "divine", "execution")
+     - No internal logic branches on specific cause values
      - External systems call lifecycle's RecordDeath endpoint with cause
 
   2. Calculate fulfillment (from Disposition):
@@ -254,12 +250,15 @@ Death Processing Pipeline:
 
   3. Calculate guardian spirit contribution:
      a. baseLogos = totalFulfillment * speciesLogosMultiplier
+        (speciesLogosMultiplier: per-species value from LifecycleTemplate)
      b. bonusLogos = guardian trust modifier (from Disposition guardian feelings)
         - Character who trusted the spirit contributes more
         - Character who resented the spirit contributes less
      c. totalLogos = baseLogos + bonusLogos
      d. Apply to guardian spirit seed (via ISeedClient):
-        - RecordGrowth on the account's guardian seed
+        - Resolve: characterId → household Org → account owner → guardian seed
+          (T32: lifecycle never receives accountId directly)
+        - RecordGrowth on the resolved guardian seed
         - Growth domain: "character_lifecycle"
 
   4. Trigger archive compression (via IResourceClient):
@@ -288,10 +287,10 @@ Death Processing Pipeline:
        * Traumatic death → vengeance seeds, haunting, warning tales
 
   7. Update lifecycle profile:
-     - status: "dead"
+     - status: Dead
      - deathGameYear, deathCause, fulfillmentScore, afterlifePath
 
-  8. Publish lifecycle.death event:
+  8. Publish character-lifecycle.death event:
      - Includes all death processing results
      - Consumed by: Storyline (archive → narrative seeds), Puppetmaster
        (regional watchers notified), Analytics (population statistics),
@@ -394,7 +393,7 @@ GenotypeEntry:
   traitCode:     string        # "physical_strength", "magical_aptitude", etc.
   alleleA:       float         # Value from parent A (0.0-1.0)
   alleleB:       float         # Value from parent B (0.0-1.0)
-  dominance:     string        # How alleles combine to produce phenotype
+  dominance:     DominanceModel # DominantHigh, DominantLow, Blending, Codominant, Maternal, Random
 ```
 
 **Phenotype** (what is expressed):
@@ -402,19 +401,19 @@ GenotypeEntry:
 PhenotypeEntry:
   traitCode:     string        # Same code as genotype
   value:         float         # The expressed value
-  expressionRule: string       # How it was computed
+  expressionRule: DominanceModel # Which dominance model produced this value
 ```
 
 **Dominance models**:
 
 | Model | Computation | Example |
 |-------|------------|---------|
-| `dominant_high` | `max(alleleA, alleleB)` | Physical strength: the stronger allele dominates |
-| `dominant_low` | `min(alleleA, alleleB)` | Magical sensitivity: the weaker allele dominates (recessive magic) |
-| `blending` | `(alleleA + alleleB) / 2.0` | Temperament: average of both parents |
-| `codominant` | Both expressed, stored as range | Hair color: both pigments visible |
-| `maternal` | `alleleA` (convention: A = birth parent) | Mitochondrial traits |
-| `random` | Random selection of one allele | Eye color: one or the other |
+| `DominantHigh` | `max(alleleA, alleleB)` | Physical strength: the stronger allele dominates |
+| `DominantLow` | `min(alleleA, alleleB)` | Magical sensitivity: the weaker allele dominates (recessive magic) |
+| `Blending` | `(alleleA + alleleB) / 2.0` | Temperament: average of both parents |
+| `Codominant` | Both expressed, stored as range | Hair color: both pigments visible |
+| `Maternal` | `alleleA` (convention: A = birth parent) | Mitochondrial traits |
+| `Random` | Random selection of one allele | Eye color: one or the other |
 
 **Mutation**: During recombination, each trait has a configurable mutation chance (default: 2%). A mutation shifts the selected allele value by a random amount within a configurable range. Mutations are recorded for bloodline tracking ("the Blackthorn red hair originated from a mutation in generation 3").
 
@@ -430,7 +429,7 @@ HeritableTraitTemplate:
     - traitCode:       string         # "physical_strength"
       displayName:     string         # "Physical Strength"
       category:        string         # "physical", "mental", "magical", "social"
-      dominanceModel:  string         # How alleles combine
+      dominanceModel:  DominanceModel # How alleles combine
       mutationChance:  float          # 0.0-1.0 (default 0.02)
       mutationRange:   float          # Max shift on mutation (default 0.1)
       expressionDelay: string?        # Stage at which trait fully expresses
@@ -441,7 +440,7 @@ HeritableTraitTemplate:
                                       # e.g., "smithing" → smithing aptitude
 ```
 
-**Expression delay**: Some traits don't fully express until a certain lifecycle stage. A child's magical aptitude might be latent until adolescence. Physical strength doesn't peak until adulthood. The heritage engine stores the full genotype at birth but computes phenotype expression progressively, publishing `lifecycle.trait-expressed` events when latent traits activate.
+**Expression delay**: Some traits don't fully express until a certain lifecycle stage. A child's magical aptitude might be latent until adolescence. Physical strength doesn't peak until adulthood. The heritage engine stores the full genotype at birth but computes phenotype expression progressively, publishing `character-lifecycle.trait.expressed` events when latent traits activate.
 
 ### Bloodline Tracking
 
@@ -519,9 +518,9 @@ GENERATION 1: Erik and Marta (seeded characters)
 Year 5: First child born (Kael)
   Heritage computation:
     physical_strength: alleleA=0.8(Erik), alleleB=0.4(Marta)
-      dominance: blending → phenotype: 0.6
+      dominance: Blending → phenotype: 0.6
     magical_aptitude: alleleA=0.2(Erik), alleleB=0.7(Marta)
-      dominance: dominant_high → phenotype: 0.7
+      dominance: DominantHigh → phenotype: 0.7
     mutation: hand_eye_coordination shifted +0.08 (lucky mutation)
 
   Result: Kael has moderate strength AND high magic -- unusual for
@@ -535,9 +534,9 @@ Year 5: First child born (Kael)
 Year 8: Second child born (Lena)
   Heritage computation:
     physical_strength: alleleA=0.8(Erik), alleleB=0.4(Marta)
-      dominance: blending → phenotype: 0.6
+      dominance: Blending → phenotype: 0.6
     magical_aptitude: alleleA=0.2(Erik), alleleB=0.7(Marta)
-      dominance: dominant_high → phenotype: 0.2 (drew Erik's allele)
+      dominance: DominantHigh → phenotype: 0.2 (drew Erik's allele)
     No mutations.
 
   Result: Lena has moderate strength, low magic. Traditional blacksmith
@@ -628,8 +627,8 @@ GENERATION 3: Thane grows up carrying both bloodlines
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-actor (L2) | Actor discovers `HeritageProviderFactory` and `LifecycleProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection; creates provider instances per character for ABML behavior execution (`${heritage.*}` and `${lifecycle.*}` variables) |
-| lib-organization (L4) | Organization Phase 5 awaits lifecycle events: `lifecycle.marriage` triggers household creation, `lifecycle.birth` triggers member addition, `lifecycle.death` triggers succession. Organization subscribes to these events for household management. |
-| lib-disposition (L4, planned) | Disposition Extension 2 (drive inheritance) can consume `lifecycle.birth` events to seed latent drives in newborn characters based on parent drive history. `lifecycle.stage-changed` events trigger drive evaluation checks (elder stage → legacy drives intensify). |
+| lib-organization (L4) | Organization Phase 5 awaits lifecycle events: `character-lifecycle.marriage` triggers household creation, `character-lifecycle.birth` triggers member addition, `character-lifecycle.death` triggers succession. Organization subscribes to these events for household management. |
+| lib-disposition (L4, planned) | Disposition Extension 2 (drive inheritance) can consume `character-lifecycle.birth` events to seed latent drives in newborn characters based on parent drive history. `character-lifecycle.stage-changed` events trigger drive evaluation checks (elder stage → legacy drives intensify). |
 | lib-storyline (L4) | Storyline consumes death archives for narrative generation. Birth events create story hooks ("a child born under unusual circumstances"). Marriage events create alliance/rivalry narratives. Bloodline data enriches scenario preconditions. |
 | lib-puppetmaster (L4) | Regional watchers monitor lifecycle events for narrative opportunities: significant deaths, unusual births (powerful heritage convergence), marriage alliances between rival families. |
 | lib-gardener (L4) | Player experience orchestration uses lifecycle to surface "your character is aging," "your heir is ready," "succession is approaching" as player-facing progression indicators. The household-as-garden context depends on lifecycle events for state transitions. |
@@ -640,8 +639,22 @@ GENERATION 3: Thane grows up carrying both bloodlines
 
 ## State Storage
 
+### Resource References (`x-references` in API schema)
+
+```yaml
+x-references:
+  character:
+    source_type: lifecycle
+    on_delete: CASCADE
+    cleanup_endpoint: /character-lifecycle/cleanup-by-character
+  realm:
+    source_type: lifecycle
+    on_delete: CASCADE
+    cleanup_endpoint: /character-lifecycle/cleanup-by-realm
+```
+
 ### Lifecycle Profile Store
-**Store**: `lifecycle-characters` (Backend: MySQL)
+**Store**: `character-lifecycle-profiles` (Backend: MySQL)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -652,7 +665,7 @@ GENERATION 3: Thane grows up carrying both bloodlines
 | `profile:parent:{characterId}` | `LifecycleProfileModel` | Reverse lookup: all children of a character |
 
 ### Heritage Store
-**Store**: `lifecycle-heritage` (Backend: MySQL)
+**Store**: `character-lifecycle-heritage` (Backend: MySQL)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -663,7 +676,7 @@ GENERATION 3: Thane grows up carrying both bloodlines
 | `hybrid-template:{speciesA}:{speciesB}:{gameServiceId}` | `HybridTraitTemplateModel` | Cross-species hybridization rules |
 
 ### Bloodline Store
-**Store**: `lifecycle-bloodlines` (Backend: MySQL)
+**Store**: `character-lifecycle-bloodlines` (Backend: MySQL)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -673,7 +686,7 @@ GENERATION 3: Thane grows up carrying both bloodlines
 | `bloodline:members:{bloodlineId}` | `BloodlineMemberListModel` | All living members of a bloodline (for targeting, queries) |
 
 ### Lifecycle Cache
-**Store**: `lifecycle-cache` (Backend: Redis, prefix: `lifecycle:cache`)
+**Store**: `character-lifecycle-cache` (Backend: Redis, prefix: `character-lifecycle:cache`)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -681,14 +694,16 @@ GENERATION 3: Thane grows up carrying both bloodlines
 | `realm-pop:{realmId}` | `RealmPopulationModel` | Cached population statistics per realm: total alive, births this year, deaths this year, age distribution. Updated by aging worker. |
 
 ### Distributed Locks
-**Store**: `lifecycle-lock` (Backend: Redis, prefix: `lifecycle:lock`)
+**Store**: `character-lifecycle-lock` (Backend: Redis, prefix: `character-lifecycle:lock`)
 
 | Key Pattern | Purpose |
 |-------------|---------|
-| `aging:{realmId}` | Aging batch lock (prevents concurrent aging for same realm across nodes) |
+| `aging:{realmId}` | Aging batch lock (prevents concurrent aging for same realm across nodes). When multiple nodes receive the same `worldstate.year-changed` event, only the lock winner processes. |
 | `procreation:{parentAId}:{parentBId}` | Procreation lock (prevents concurrent births from same parents) |
 | `death:{characterId}` | Death processing lock (prevents concurrent death processing) |
 | `marriage:{characterAId}:{characterBId}` | Marriage lock (prevents concurrent marriage processing) |
+| `pregnancy-worker` | Pregnancy worker lock (prevents concurrent pregnancy batch processing across nodes) |
+| `bloodline-worker` | Bloodline formation worker lock (prevents concurrent bloodline evaluation across nodes) |
 
 ---
 
@@ -698,12 +713,30 @@ GENERATION 3: Thane grows up carrying both bloodlines
 |-------|----------|------|-----------|
 | `currentStage` | B (Content Code) | Opaque string | Species-configurable lifecycle stage codes (infant, child, adolescent, adult, elder, dying, etc.). Follows the same extensibility pattern as seed type codes and collection type codes. Different species define different stage sets and thresholds. |
 | `speciesCode` | B (Content Code) | Opaque string | References species from lib-species. Determines stage thresholds, longevity, heritage trait definitions, and lifecycle progression rules. |
-| `status` (on lifecycle) | C (System State) | Service-specific enum | Finite set of character lifecycle statuses (alive, dying, dead, archived). System-owned; drives death processing and archival state machine. |
+| `status` (on lifecycle) | C (System State) | `LifecycleStatus` enum | Finite set: `Alive`, `Dying`, `Dead`, `Archived`. System-owned; drives death processing and archival state machine. |
+| `causeOfCreation` | C (System State) | `CreationCause` enum | Finite set: `Procreation`, `Seeded`, `Divine`, `Spawned`. System-owned; determines creation pathway processing (procreation triggers heritage engine, seeded skips it). |
+| `deathCause` | B (Content Code) | Opaque string | Game-extensible death cause codes (e.g., "natural", "combat", "disease", "accident", "divine", "execution"). No internal logic branches on specific values; games define their own death taxonomies. |
+| `afterlifePath` | B (Content Code) | Opaque string | Game-configurable afterlife pathway codes (e.g., "elysium", "purgatory", "restless"). Determines what kind of content the death archive generates. |
 | `traitCode` (on genotype/phenotype) | B (Content Code) | Opaque string | Game-configurable genetic trait identifiers (physical_strength, magical_aptitude, heat_tolerance, etc.). Extensible per species without schema changes. |
-| `dominance` (on genotype) | C (System State) | Service-specific enum | Finite set of genetic dominance models (dominant_high, dominant_low, blending, random). System-owned; each model has specific phenotype computation logic. |
+| `dominance` (on genotype) | C (System State) | `DominanceModel` enum | Finite set: `DominantHigh`, `DominantLow`, `Blending`, `Codominant`, `Maternal`, `Random`. System-owned; each model has specific phenotype computation logic. |
+| `expressionRule` (on phenotype) | C (System State) | `DominanceModel` enum | Records which dominance model produced the phenotype value. Same enum as `dominance` — tracks computation provenance. |
+| `distribution` (on naturalDeathRange) | C (System State) | `DeathDistribution` enum | Finite set: `Uniform`, `Normal`, `WeightedLate`. System-owned; each model has specific mathematical computation for natural death year selection. |
+| `birthSeason` | B (Content Code) | Opaque string | Season of birth from Worldstate's calendar system. Game-configurable per calendar template (different games may define different season sets). |
 | `category` (on trait definition) | B (Content Code) | Opaque string | Game-configurable trait categories (physical, mental, magical, social). Used for grouping and aptitude computation. |
 | `bloodlineCode` | B (Content Code) | Opaque string | Game-configurable bloodline identifiers (blackthorn, ironforge, moonwhisper, etc.). Accumulated through lineage, carries trait signatures. |
-| `deathPathway` | B (Content Code) | Opaque string | Game-configurable afterlife pathway codes (elysium, purgatory, restless, etc.). Determines what kind of content the death archive generates. |
+
+### Deprecation Lifecycle (IMPLEMENTATION TENETS — T31)
+
+All template entities follow **Category B** deprecation (instances persist independently and need the template to remain readable forever):
+
+| Entity | Category | Deprecation | Undeprecate | Delete | Rationale |
+|--------|----------|-------------|-------------|--------|-----------|
+| `LifecycleTemplate` | B | Yes (one-way) | No | No | Active characters reference their species' lifecycle template for aging. Template must persist for stage computation. |
+| `HeritableTraitTemplate` | B | Yes (one-way) | No | No | Existing genetic profiles reference trait codes defined in these templates. Template must persist for phenotype resolution. |
+| `HybridTraitTemplate` | B | Yes (one-way) | No | No | Existing hybrid characters reference species-pair templates. Template must persist for heritage queries. |
+| `Bloodline` | B | Yes (one-way) | No | No | Living characters reference bloodline memberships. Bloodline must persist for heritage queries and ABML variable resolution. |
+
+**Deprecation behavior**: Deprecated templates/bloodlines are excluded from list/query results by default (`includeDeprecated: false`). Creating new instances referencing a deprecated template is rejected with `BadRequest`. Existing instances continue to function normally. Deprecation uses the triple-field model: `IsDeprecated`, `DeprecatedAt`, `DeprecationReason`. Deprecation events are published via `*.updated` with `changedFields` containing the deprecation fields (no dedicated `*.deprecated` events).
 
 ---
 
@@ -711,29 +744,37 @@ GENERATION 3: Thane grows up carrying both bloodlines
 
 ### Published Events
 
+**Domain events** (manually defined, not x-lifecycle generated):
+
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `lifecycle.birth` | `LifecycleBirthEvent` | Character born through procreation. Includes characterId, parentIds, speciesCode, realmId, bloodlineIds, heritagePheno summary. |
-| `lifecycle.stage-changed` | `LifecycleStageChangedEvent` | Character transitioned lifecycle stage. Includes characterId, previousStage, newStage, age, realmId. |
-| `lifecycle.adult-reached` | `LifecycleAdultReachedEvent` | Character reached adult stage. Includes characterId, realmId. (Convenience event for services that only care about adulthood.) |
-| `lifecycle.marriage` | `LifecycleMarriageEvent` | Characters married. Includes characterAId, characterBId, contractId, householdOrgId, realmId. |
-| `lifecycle.divorce` | `LifecycleDivorceEvent` | Marriage ended. Includes characterAId, characterBId, contractId, cause. |
-| `lifecycle.dying` | `LifecycleDyingEvent` | Character entered dying state. Includes characterId, projectedDeathYear, cause. |
-| `lifecycle.death` | `LifecycleDeathEvent` | Character died. Includes characterId, deathCause, fulfillmentScore, afterlifePath, realmId, guardianSpiritContribution, archiveId. |
-| `lifecycle.trait-expressed` | `LifecycleTraitExpressedEvent` | Latent heritage trait activated (e.g., at adolescence). Includes characterId, traitCode, phenotypeValue. |
-| `lifecycle.bloodline-formed` | `LifecycleBloodlineFormedEvent` | New bloodline identified from consistent trait patterns across generations. Includes bloodlineCode, originCharacterId, traitSignature. |
-| `lifecycle.inheritance-processed` | `LifecycleInheritanceProcessedEvent` | Inheritance distributed after death. Includes deceasedId, heirId, assetsTransferred summary. |
+| `character-lifecycle.birth` | `CharacterLifecycleBirthEvent` | Character born through procreation. Includes characterId, parentIds, speciesCode, realmId, bloodlineIds, heritagePheno summary. |
+| `character-lifecycle.stage-changed` | `CharacterLifecycleStageChangedEvent` | Character transitioned lifecycle stage. Includes characterId, previousStage, newStage, age, realmId. Consumers should filter by `newStage` for specific transitions (e.g., adulthood). |
+| `character-lifecycle.marriage` | `CharacterLifecycleMarriageEvent` | Characters married. Includes characterAId, characterBId, contractId, householdOrgId, realmId. |
+| `character-lifecycle.divorce` | `CharacterLifecycleDivorceEvent` | Marriage ended. Includes characterAId, characterBId, contractId, cause. |
+| `character-lifecycle.dying` | `CharacterLifecycleDyingEvent` | Character entered dying state. Includes characterId, projectedDeathYear, cause. |
+| `character-lifecycle.death` | `CharacterLifecycleDeathEvent` | Character died. Includes characterId, deathCause, fulfillmentScore, afterlifePath, realmId, guardianSpiritContribution, archiveId. |
+| `character-lifecycle.trait.expressed` | `CharacterLifecycleTraitExpressedEvent` | Latent heritage trait activated (e.g., at adolescence). Includes characterId, traitCode, phenotypeValue. Pattern C: `trait` is a sub-entity. |
+| `character-lifecycle.bloodline.formed` | `CharacterLifecycleBloodlineFormedEvent` | New bloodline identified from consistent trait patterns across generations. Includes bloodlineCode, originCharacterId, traitSignature. Pattern C: `bloodline` is a sub-entity. |
+| `character-lifecycle.inheritance.processed` | `CharacterLifecycleInheritanceProcessedEvent` | Inheritance distributed after death. Includes deceasedId, heirId, assetsTransferred summary. Pattern C: `inheritance` is a sub-entity. |
+
+**CRUD lifecycle events** (generated via `x-lifecycle` in events schema):
+
+Templates (`LifecycleTemplate`, `HeritableTraitTemplate`, `HybridTraitTemplate`) and `Bloodline` entities use `x-lifecycle` with `topic_prefix: character-lifecycle` for standard created/updated/deleted events (e.g., `character-lifecycle.lifecycle-template.created`, `character-lifecycle.bloodline.deleted`).
+
+**Note**: The former `lifecycle.adult-reached` convenience event has been removed. Consumers should subscribe to `character-lifecycle.stage-changed` and filter by `newStage` to detect specific stage transitions.
 
 ### Consumed Events
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `worldstate.year-changed` | `HandleYearChangedAsync` | Batch-advance character ages for the affected realm. Detect stage transitions, natural deaths. Publish stage-changed and dying events. Primary aging driver. |
+| `worldstate.year-changed` | `HandleYearChangedAsync` | Batch-advance character ages for the affected realm. Detect stage transitions, natural deaths. Publish stage-changed and dying events. Primary aging driver. When multiple nodes receive the same event, only the node that acquires the distributed lock processes the batch; others skip at Debug level. |
 | `worldstate.season-changed` | `HandleSeasonChangedAsync` | Update seasonal fertility modifiers. Seasonal birth rate adjustments (if configured). |
-| `character.deleted` | `HandleCharacterDeletedAsync` | Clean up lifecycle profile, genetic profile, and bloodline memberships for the deleted character. Update parent records (decrement child counts). |
-| `contract.terminated` | `HandleContractTerminatedAsync` | If a marriage contract is terminated: process as divorce. Update lifecycle profiles for both spouses. Publish `lifecycle.divorce`. |
+| `contract.terminated` | `HandleContractTerminatedAsync` | If a marriage contract is terminated: process as divorce. Update lifecycle profiles for both spouses. Publish `character-lifecycle.divorce`. |
 | `contract.breached` | `HandleContractBreachedAsync` | If a marriage contract is breached: evaluate breach severity. May trigger divorce proceedings or reconciliation period (configurable). |
 | `seed.phase.changed` | `HandleSeedPhaseChangedAsync` | If a household seed gains `dynasty.establish` capability: evaluate whether the family qualifies for bloodline formation. |
+
+**Note**: Character deletion cleanup is handled exclusively via lib-resource cleanup callbacks (`/character-lifecycle/cleanup-by-character`), not via event subscription (per FOUNDATION TENETS — T28 forbids subscribing to `*.deleted` events for dependent data cleanup).
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
@@ -746,9 +787,9 @@ GENERATION 3: Thane grows up carrying both bloodlines
 
 | Resource Type | Source Type | Priority | Compress Endpoint | Decompress Endpoint |
 |--------------|-------------|----------|-------------------|---------------------|
-| character | lifecycle | 50 | `/character-lifecycle/get-compress-data` | `/character-lifecycle/restore-from-archive` |
+| character | lifecycle | 25 | `/character-lifecycle/get-compress-data` | `/character-lifecycle/restore-from-archive` |
 
-Archives lifecycle summary (stages traversed, marriages, children, fulfillment) and heritage profile (genetic data, bloodlines, aptitudes) for character compression. Priority 50 ensures lifecycle data is archived after personality/history/encounters (which it references) but before final Resource compression.
+Archives lifecycle summary (stages traversed, marriages, children, fulfillment) and heritage profile (genetic data, bloodlines, aptitudes) for character compression. Priority 25 places this in the extension data range (10-30), alongside personality/history/encounters. The `LifecycleArchive` response schema should include `x-archive-type: true` to enable `IResourceTemplate` generation for compile-time ABML snapshot path validation (consumed by Storyline and Puppetmaster).
 
 ---
 
@@ -788,7 +829,8 @@ Archives lifecycle summary (stages traversed, marriages, children, fulfillment) 
 | `CharacterLifecycleServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (creates 5 stores) |
 | `IMessageBus` | Event publishing |
-| `IEventConsumer` | Worldstate, character, contract, seed event subscriptions |
+| `ITelemetryProvider` | Telemetry span creation for all async helpers (heritage computation, fulfillment calculation, death pipeline, background workers) per T30 |
+| `IEventConsumer` | Worldstate, contract, seed event subscriptions |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 | `ICharacterClient` | Character creation and queries (L2) |
 | `IRelationshipClient` | Family bond creation (L2) |
@@ -804,9 +846,9 @@ Archives lifecycle summary (stages traversed, marriages, children, fulfillment) 
 
 | Worker | Trigger | Lock Key | Purpose |
 |--------|---------|----------|---------|
-| `LifecycleAgingWorkerService` | `worldstate.year-changed` event | `lifecycle:lock:aging:{realmId}` | Batch-advances character ages for a realm when the game year changes. Detects stage transitions and natural deaths. Not interval-based -- triggered by worldstate events. |
-| `LifecyclePregnancyWorkerService` | `worldstate.day-changed` event | `lifecycle:lock:pregnancy-worker` | Checks pending pregnancies against current game time. When pregnancy duration is reached, executes the birth flow (heritage computation, character creation, relationship bonds, household addition). |
-| `LifecycleBloodlineWorkerService` | `lifecycle.birth` event (batched) | `lifecycle:lock:bloodline-worker` | On births, evaluates whether the newborn's lineage qualifies for bloodline formation (3+ generations with consistent trait signature). Batched to avoid per-birth evaluation overhead. |
+| `LifecycleAgingWorkerService` | `worldstate.year-changed` event | `character-lifecycle:lock:aging:{realmId}` | Batch-advances character ages for a realm when the game year changes. Detects stage transitions and natural deaths. Not interval-based -- triggered by worldstate events. When multiple nodes receive the same event, only the node that acquires the lock processes; others skip at Debug level. |
+| `LifecyclePregnancyWorkerService` | `worldstate.day-changed` event | `character-lifecycle:lock:pregnancy-worker` | Checks pending pregnancies against current game time. When pregnancy duration is reached, executes the birth flow (heritage computation, character creation, relationship bonds, household addition). |
+| `LifecycleBloodlineWorkerService` | `character-lifecycle.birth` event (batched) | `character-lifecycle:lock:bloodline-worker` | On births, evaluates whether the newborn's lineage qualifies for bloodline formation (3+ generations with consistent trait signature). Batched to avoid per-birth evaluation overhead. |
 
 ### Variable Provider Factories
 
@@ -823,15 +865,15 @@ Archives lifecycle summary (stages traversed, marriages, children, fulfillment) 
 
 All endpoints require `developer` role.
 
-- **InitiateMarriage** (`/character-lifecycle/marriage/initiate`): Validates eligibility (adult/elder stage, not already married, no prohibited relationship). Creates marriage contract via `IContractClient`. Creates SPOUSE relationship via `IRelationshipClient`. Resolves household (configurable: join existing, merge, or create new via Organization). Seeds Disposition feelings. Publishes `lifecycle.marriage`.
+- **InitiateMarriage** (`/character-lifecycle/marriage/initiate`): Validates eligibility (adult/elder stage, no prohibited relationship, species compatibility). Creates marriage contract via `IContractClient`. Creates SPOUSE relationship via `IRelationshipClient`. Resolves household (configurable: join existing, merge, or create new via Organization). Seeds Disposition feelings. Publishes `character-lifecycle.marriage`.
 
 - **InitiateProcreation** (`/character-lifecycle/procreation/initiate`): Validates eligibility (fertile stage, fertility check). Creates a pending pregnancy record with expected birth date (current game time + `PregnancyDurationGameDays`). The pregnancy worker handles actual birth when the date is reached. Returns pregnancy ID and expected birth date.
 
-- **RecordDeath** (`/character-lifecycle/death/record`): External death reporting. Accepts characterId and cause of death. Acquires death processing lock. Executes the full death processing pipeline (fulfillment calculation, guardian spirit contribution, archive trigger, inheritance, afterlife path). Publishes `lifecycle.death`. Returns fulfillment score and afterlife path.
+- **RecordDeath** (`/character-lifecycle/death/record`): External death reporting. Accepts characterId and cause of death. Acquires death processing lock. Executes the full death processing pipeline (fulfillment calculation, guardian spirit contribution, archive trigger, inheritance, afterlife path). Publishes `character-lifecycle.death`. Returns fulfillment score and afterlife path.
 
 - **GetLifecycleProfile** (`/character-lifecycle/profile/get`): Returns full lifecycle profile for a character: age, stage, heritage summary, marriage status, children, fulfillment (if dead).
 
-- **QueryByStage** (`/character-lifecycle/profile/query-by-stage`): Paged query for characters in a specific lifecycle stage within a realm. Used by behavior systems to find eligible marriage partners, by storyline to find elders nearing death, etc.
+- **QueryByStage** (`/character-lifecycle/profile/query-by-stage`): Paged query for characters in a specific lifecycle stage within a realm. Used by behavior systems to find eligible marriage partners, by storyline to find elders nearing death, etc. Supports `includeArchived` parameter (default: `false`) to exclude `Archived` status profiles.
 
 - **QueryByBloodline** (`/character-lifecycle/profile/query-by-bloodline`): Returns all living characters with a specific bloodline membership. Used by Quest prerequisites, Divine targeting, Storyline scenario matching.
 
@@ -840,6 +882,8 @@ All endpoints require `developer` role.
 - **SeedLifecycleProfile** (`/character-lifecycle/profile/seed`): Bulk creation of lifecycle profiles for seeded (first-generation) characters. Accepts character IDs with birth years, stages, and optional heritage data. Used during world initialization.
 
 ### Heritage Management (6 endpoints)
+
+Read endpoints (`GetGeneticProfile`, `GetPhenotype`, `QueryByAptitude`, `GetFamilyTree`) use `x-permissions: [user]`. Write endpoints (`SeedGeneticProfile`, `SimulateOffspring`) require `developer` role.
 
 - **GetGeneticProfile** (`/character-lifecycle/heritage/get-genetic-profile`): Returns full genetic profile for a character: genotype, phenotype, aptitudes, bloodlines, mutations, parent references.
 
@@ -867,26 +911,30 @@ All require `developer` role.
 
 - **GetHeritableTraitTemplate** (`/character-lifecycle/template/get-heritable-traits`): Returns heritable trait template for a species.
 
-- **ListTemplates** (`/character-lifecycle/template/list`): Returns all lifecycle and heritage templates for a game service.
+- **ListTemplates** (`/character-lifecycle/template/list`): Returns all lifecycle and heritage templates for a game service. Supports `includeDeprecated` parameter (default: `false`) per T31.
 
 ### Bloodline Management (4 endpoints)
 
+Read endpoints (`GetBloodline`, `ListBloodlines`, `QueryBloodlineMembers`) use `x-permissions: [user]`. `EstablishBloodline` requires `developer` role (noted below).
+
 - **GetBloodline** (`/character-lifecycle/bloodline/get`): Returns bloodline definition: origin, trait signature, member count, generation span.
 
-- **ListBloodlines** (`/character-lifecycle/bloodline/list`): Paged list of bloodlines within a game service. Filterable by trait signature, minimum generation depth, minimum member count.
+- **ListBloodlines** (`/character-lifecycle/bloodline/list`): Paged list of bloodlines within a game service. Filterable by trait signature, minimum generation depth, minimum member count. Supports `includeDeprecated` parameter (default: `false`) per T31.
 
-- **EstablishBloodline** (`/character-lifecycle/bloodline/establish`): Manually establishes a bloodline (divine intervention, noble declaration). Creates bloodline record and assigns to specified character and their ancestors (retroactive). Publishes `lifecycle.bloodline-formed`. Requires `developer` role.
+- **EstablishBloodline** (`/character-lifecycle/bloodline/establish`): Manually establishes a bloodline (divine intervention, noble declaration). Creates bloodline record and assigns to specified character and their ancestors (retroactive). Publishes `character-lifecycle.bloodline.formed`. Requires `developer` role.
 
 - **QueryBloodlineMembers** (`/character-lifecycle/bloodline/query-members`): Returns living members of a bloodline with their generation depth and trait expression.
 
 ### Cleanup Endpoints (2 endpoints)
 
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
+Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). All cleanup endpoints use `x-permissions: []` (service-to-service only, not client-accessible).
 
 - **CleanupByCharacter** (`/character-lifecycle/cleanup-by-character`): Removes lifecycle profile, genetic profile, and bloodline memberships. Updates parent records (decrement child counts). Does NOT cascade-delete children (they exist independently).
 - **CleanupByRealm** (`/character-lifecycle/cleanup-by-realm`): Removes all lifecycle data for characters in the realm.
 
 ### Compression Endpoints (2 endpoints)
+
+All compression endpoints use `x-permissions: []` (service-to-service only, called by lib-resource).
 
 - **GetCompressData** (`/character-lifecycle/get-compress-data`): Returns a `LifecycleArchive` (extends `ResourceArchiveBase`) containing: lifecycle summary (stages traversed, marriages, children born/surviving, fulfillment score, afterlife path), heritage profile (phenotype, aptitudes, bloodlines), and generational context (parent summaries, notable ancestors). This is key content flywheel material.
 - **RestoreFromArchive** (`/character-lifecycle/restore-from-archive`): Restores lifecycle profile and genetic data from archive. Heritage is restored as-is (genetic data doesn't change). Lifecycle stage is set to the archived stage. Fulfillment score preserved.
@@ -903,7 +951,7 @@ Implements `IVariableProviderFactory` (via `HeritageProviderFactory`). Loads fro
 |----------|------|-------------|
 | `${heritage.species}` | string | Character's primary species code |
 | `${heritage.hybrid}` | bool | Whether character is a species hybrid |
-| `${heritage.secondary_species}` | string | Secondary species code (empty if not hybrid) |
+| `${heritage.secondary_species}` | string? | Secondary species code (null if not hybrid) |
 | `${heritage.generation}` | int | Generation depth from earliest tracked ancestor |
 | `${heritage.trait.<traitCode>}` | float | Expressed phenotype value for a specific trait (0.0-1.0) |
 | `${heritage.trait.<traitCode>.latent}` | bool | Whether the trait is still latent (not yet expressed due to expression delay) |
@@ -966,12 +1014,13 @@ Implements `IVariableProviderFactory` (via `LifecycleProviderFactory`). Loads fr
 
 | Variable | Type | Description |
 |----------|------|-------------|
-| `${lifecycle.is_married}` | bool | Whether character has an active SPOUSE relationship |
-| `${lifecycle.spouse_id}` | string | Spouse character ID (empty if unmarried) |
+| `${lifecycle.is_married}` | bool | Whether character has any active SPOUSE relationships |
+| `${lifecycle.spouse_count}` | int | Number of current spouses (0 if unmarried) |
+| `${lifecycle.spouse_ids}` | string | Comma-separated spouse character IDs (null if unmarried) |
 | `${lifecycle.child_count}` | int | Number of living children |
 | `${lifecycle.total_children}` | int | Total children ever born (including deceased) |
 | `${lifecycle.has_children}` | bool | Whether character has any living children |
-| `${lifecycle.household_role}` | string | Role in primary household Organization (empty if no household) |
+| `${lifecycle.household_role}` | string? | Role in primary household Organization (null if no household) |
 | `${lifecycle.is_household_head}` | bool | Whether character leads their household |
 
 ### Fulfillment (alive characters)
@@ -1177,9 +1226,9 @@ Lifecycle identity, aging, and heritage computation are owned here. Marriage cer
 │  │   patience: alleleA=0.6(Erik), alleleB=0.7(Marta)   │              │
 │  │                                                       │              │
 │  │ Phenotype (after dominance):                          │              │
-│  │   strength: 0.6  (blending: (0.8+0.4)/2)            │              │
-│  │   magic:    0.7  (dominant_high: max(0.2, 0.7))     │              │
-│  │   patience: 0.65 (blending: (0.6+0.7)/2)            │              │
+│  │   strength: 0.6  (Blending: (0.8+0.4)/2)             │              │
+│  │   magic:    0.7  (DominantHigh: max(0.2, 0.7))      │              │
+│  │   patience: 0.65 (Blending: (0.6+0.7)/2)            │              │
 │  │                                                       │              │
 │  │ Aptitudes (derived from phenotype):                   │              │
 │  │   smithing:    0.55 (str*0.4 + patience*0.4 + ...)   │              │
@@ -1238,8 +1287,8 @@ Lifecycle identity, aging, and heritage computation are owned here. Marriage cer
 - Implement recombination algorithm (allele selection, dominance, mutation)
 - Implement phenotype expression (immediate and delayed)
 - Implement aptitude derivation from phenotype
-- Implement heritage variable provider factory (`${heritage.*}` namespace)
-- Implement lifecycle variable provider factory (`${lifecycle.*}` namespace)
+- Implement heritage variable provider factory (`${heritage.*}` namespace) — register in `variable-providers.yaml`
+- Implement lifecycle variable provider factory (`${lifecycle.*}` namespace) — register in `variable-providers.yaml`
 - Implement SeedGeneticProfile for first-generation characters
 - Implement SimulateOffspring endpoint
 
@@ -1410,8 +1459,17 @@ Heritage provides the NATURE. Personality/Disposition/History provide the NURTUR
 
 8. **NPC marriage decision-making**: NPC actors need ABML behaviors that evaluate potential marriage partners based on lifecycle/heritage variables. This is an ABML authoring concern, not a service concern, but the variable providers must expose enough data for sophisticated partner evaluation (genetic compatibility, fertility window, household status, drive alignment).
 
+9. **Polygamous marriage support**: `spouseCharacterIds` and `marriageContractIds` are arrays, not single values. Marriage eligibility does not check "is already married" — games that want monogamy enforce it via marriage contract template terms or cultural norms through the Faction/Obligation system, not lifecycle code. The `${lifecycle.spouse_count}` and `${lifecycle.spouse_ids}` variables expose the full spouse set to ABML. This is game-configurable, not hardcoded.
+
+10. **Guardian spirit seed resolution (T32 compliance)**: Death processing must resolve `characterId → household Organization → account owner → guardian spirit seed` without accepting `accountId` in the request. The resolution chain is: query Organization for the character's household, query the household's account owner, then record growth on the account's guardian seed via `ISeedClient`. This respects the T32 account identity boundary — lifecycle never receives or stores accountId directly.
+
 ---
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. Worldstate is the primary prerequisite (Phase 0) -- lifecycle cannot function without the game clock. Organization's household pattern (Phase 5 of Organization) is the secondary prerequisite for full marriage/procreation flows but not for basic aging (Phase 1). Disposition enhances death processing but is not a blocker (fulfillment defaults to neutral without it). Phase 1 (templates and aging) is self-contained once Worldstate exists. Phase 2 (heritage engine) is self-contained. Phases 3-5 progressively integrate with more services.*
+*No active work items. Plugin is in pre-implementation phase.*
+
+- **#436**: Character-Lifecycle service implementation (tracks all phases)
+- **#385**: Organization Phase 5 — household pattern (prerequisite for marriage/procreation)
+
+Worldstate is the primary prerequisite (Phase 0) — lifecycle cannot function without the game clock. Organization's household pattern (Phase 5 of Organization) is the secondary prerequisite for full marriage/procreation flows but not for basic aging (Phase 1). Disposition enhances death processing but is not a blocker (fulfillment defaults to neutral without it). Phase 1 (templates and aging) is self-contained once Worldstate exists. Phase 2 (heritage engine) is self-contained. Phases 3-5 progressively integrate with more services.

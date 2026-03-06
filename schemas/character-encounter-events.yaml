@@ -100,6 +100,9 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's memory of an encounter fades below threshold
+      x-event-template:
+        name: encounter_memory_faded
+        topic: encounter.memory.faded
       required:
         - eventId
         - timestamp

@@ -67,7 +67,6 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _messageBus = messageBus;
         _personalityCache = personalityCache;
         _resourceClient = resourceClient;
-        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
 
         _personalityStore = stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
@@ -111,15 +110,18 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
             var existing = await _personalityStore.GetAsync(key, cancellationToken);
             var isNew = existing == null;
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var version = existing != null ? existing.Version + 1 : 1;
+            var createdAt = existing != null ? existing.CreatedAtUnix : now;
 
             var data = new PersonalityData
             {
                 CharacterId = body.CharacterId,
                 Traits = body.Traits.ToDictionary(t => t.Axis, t => t.Value),
                 ArchetypeHint = body.ArchetypeHint,
-                Version = isNew ? 1 : existing!.Version + 1,
-                CreatedAtUnix = isNew ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() : existing!.CreatedAtUnix,
-                UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                Version = version,
+                CreatedAtUnix = createdAt,
+                UpdatedAtUnix = now
             };
 
             await _personalityStore.SaveAsync(key, data, cancellationToken: cancellationToken);
@@ -183,8 +185,6 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         var result = new ExperienceResult
         {
-            CharacterId = body.CharacterId,
-            ExperienceRecorded = true,
             PersonalityEvolved = evolved,
             ChangedTraits = new List<TraitValue>()
         };
@@ -245,7 +245,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                         ExperienceType = body.ExperienceType,
                         Intensity = body.Intensity,
                         Version = data.Version,
-                        AffectedTraits = affectedTraits.Keys.Select(k => k.ToString()).ToList()
+                        AffectedTraits = affectedTraits.Keys.ToList()
                     }, cancellationToken: cancellationToken);
 
                     _logger.LogInformation("Personality evolved for character {CharacterId}, new version {Version}",
@@ -383,6 +383,9 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
             var existing = await _combatPreferencesStore.GetAsync(key, cancellationToken);
             var isNew = existing == null;
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var version = existing != null ? existing.Version + 1 : 1;
+            var createdAt = existing != null ? existing.CreatedAtUnix : now;
 
             var data = new CombatPreferencesData
             {
@@ -393,9 +396,9 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 RiskTolerance = body.Preferences.RiskTolerance,
                 RetreatThreshold = body.Preferences.RetreatThreshold,
                 ProtectAllies = body.Preferences.ProtectAllies,
-                Version = isNew ? 1 : existing!.Version + 1,
-                CreatedAtUnix = isNew ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() : existing!.CreatedAtUnix,
-                UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                Version = version,
+                CreatedAtUnix = createdAt,
+                UpdatedAtUnix = now
             };
 
             await _combatPreferencesStore.SaveAsync(key, data, cancellationToken: cancellationToken);
@@ -532,8 +535,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         return (StatusCodes.OK, new CleanupByCharacterResponse
         {
             PersonalityDeleted = personalityDeleted,
-            CombatPreferencesDeleted = combatPreferencesDeleted,
-            Success = true
+            CombatPreferencesDeleted = combatPreferencesDeleted
         });
     }
 
@@ -561,8 +563,6 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         var result = new CombatEvolutionResult
         {
-            CharacterId = body.CharacterId,
-            ExperienceRecorded = true,
             PreferencesEvolved = evolved
         };
 
@@ -917,11 +917,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             _logger.LogWarning(ex, "Failed to decompress archive data for character {CharacterId}", body.CharacterId);
             return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
             {
-                CharacterId = body.CharacterId,
                 PersonalityRestored = false,
-                CombatPreferencesRestored = false,
-                Success = false,
-                ErrorMessage = $"Invalid archive data: {ex.Message}"
+                CombatPreferencesRestored = false
             });
         }
 
@@ -983,10 +980,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         return (StatusCodes.OK, new RestoreFromArchiveResponse
         {
-            CharacterId = body.CharacterId,
             PersonalityRestored = personalityRestored,
-            CombatPreferencesRestored = combatPreferencesRestored,
-            Success = true
+            CombatPreferencesRestored = combatPreferencesRestored
         });
     }
 

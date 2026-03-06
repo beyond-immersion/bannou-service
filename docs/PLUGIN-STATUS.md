@@ -82,8 +82,8 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Behavior](#behavior-status) | L4 | 88% | 0 | L3-hardened. T23/T4/T26/T8 audit fixes, 929 tests. IAssetClient soft dependency, async emitters, sentinel elimination. 6 stubs remain. |
 | [Character Encounter](#character-encounter-status) | L4 | 92% | 0 | Production-hardened. T8/T21/T25 compliant, NRT-clean schemas, validation bounds on all properties. ETag retry configurable, event outcome typed. Index growth concerns remain. |
 | [Character History](#character-history-status) | L4 | 95% | 0 | Feature-complete. Participations, backstory, summarization, compression. Hardened: T8 filler removed, EntityType enum, enriched events, expanded tests. |
-| [Character Lifecycle](#character-lifecycle-status) | L4 | 0% | 0 | Pre-implementation. Generational cycle orchestration and genetic heritage spec. No schema, no code. |
-| [Character Personality](#character-personality-status) | L4 | 90% | 0 | Full evolution pipeline. Both variable providers work. Combat style transitions limited. |
+| [Character Lifecycle](#character-lifecycle-status) | L4 | 0% | 0 | Pre-implementation. Spec audited: event topics, type classifications, state stores, deprecation lifecycle, T28/T32 compliance, polygamy support all corrected. No schema, no code. |
+| [Character Personality](#character-personality-status) | L4 | 95% | 0 | Hardened. x-lifecycle, T8 filler removal, T13 permissions, T25 type safety, config validation, null safety. Both variable providers work. |
 | [Divine](#divine-status) | L4 | 25% | 0 | Aspirational. All 22 endpoints return NotImplemented. Detailed plan exists, zero code. |
 | [Escrow](#escrow-status) | L4 | 70% | 1 | 13-state FSM works. Validation placeholder, custom handlers inert, status index broken. |
 | [Environment](#environment-status) | L4 | 0% | 0 | Pre-implementation. Weather simulation, temperature modeling, and ecological resource availability spec. No schema, no code. |
@@ -1392,7 +1392,9 @@ gh issue list --search "Character History:" --state open
 
 ### Production Readiness: 0%
 
-Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for generational cycle orchestration and genetic heritage -- the "ignition switch" for the content flywheel. Two complementary subsystems: **Lifecycle** (aging, marriage, procreation, death processing driven by worldstate year/season events) and **Heritage** (genetic trait inheritance with allele recombination, dominance models, mutation, phenotype expression, aptitude derivation, and bloodline tracking). Orchestrates across 12+ existing services: Character (L2) for CRUD, Relationship (L2) for bonds, Organization (L4) for households, Disposition (L4) for fulfillment calculation, Contract (L1) for marriage ceremonies, Resource (L1) for archive compression, Seed (L2) for guardian spirit growth, Character-Personality (L4) for trait seeding, Character-History (L4) for backstory, and Storyline (L4) for narrative generation from death archives. Specifies 28 planned endpoints, 5 state stores, 10+ published events, 5+ consumed events, 2 background workers (aging/pregnancy), 2 variable provider namespaces (`${lifecycle.*}`, `${heritage.*}`), and an 8-phase implementation plan (Phase 0 requires Worldstate, Organization Phase 5, and Disposition as prerequisites). No endpoints, no generated code, no service implementation exists.
+Aspirational/planned only. Deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for generational cycle orchestration and genetic heritage — the "ignition switch" for the content flywheel. Two complementary subsystems: **Lifecycle** (aging, marriage, procreation, death processing driven by worldstate year/season events) and **Heritage** (genetic trait inheritance with allele recombination, dominance models, mutation, phenotype expression, aptitude derivation, and bloodline tracking). Orchestrates across 12+ existing services. Specifies 28 planned endpoints, 5 state stores, 9 domain events + x-lifecycle CRUD events, 5 consumed events, 3 background workers (aging/pregnancy/bloodline), 2 variable provider namespaces (`${lifecycle.*}`, `${heritage.*}`), and an 8-phase implementation plan.
+
+**Spec audit completed** (2026-03-05): Event topics corrected to `character-lifecycle.*` prefix with Pattern C for sub-entities. Type field classifications formalized (4 system enums: `LifecycleStatus`, `CreationCause`, `DominanceModel`, `DeathDistribution`; opaque strings for game-extensible codes). State store names corrected to `character-lifecycle-*` prefix. T28 compliance enforced (removed `character.deleted` event subscription, uses lib-resource cleanup callbacks exclusively). T31 deprecation lifecycle added (Category B for all template entities and bloodlines). T32 guardian spirit resolution path documented (characterId → household → account → seed, no accountId in requests). Polygamy support confirmed (`spouseCharacterIds: Guid[]`). `x-references` YAML spec added. `x-permissions` documented on all endpoint sections. Variable provider sentinel values corrected to null.
 
 ### Bug Count: 0
 
@@ -1400,20 +1402,22 @@ No implementation exists to have bugs.
 
 ### Top 3 Bugs
 
-*(None -- pre-implementation)*
+*(None — pre-implementation)*
 
 ### Top 3 Enhancements
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Phase 1 - Lifecycle Templates and Profiles** | Create schemas, generate code, implement lifecycle template CRUD, profile management, basic aging via `worldstate.year-changed` events, stage transition detection, and resource cleanup/compression callbacks. | No issue |
-| 2 | **Phase 3 - Procreation** | Implement fertility calculation, pregnancy tracking with expected birth dates, pregnancy worker (worldstate.day-changed triggered), full procreation flow (heritage computation, character creation, relationships, household, backstory seeding), and child limits. | No issue |
-| 3 | **Phase 5 - Death Processing** | Implement fulfillment calculation from Disposition drives, guardian spirit contribution to Seed, archive compression trigger via Resource, inheritance processing, afterlife pathway determination, and content flywheel integration with Storyline. | No issue |
+| 1 | **Phase 1 - Lifecycle Templates and Profiles** | Create schemas, generate code, implement lifecycle template CRUD, profile management, basic aging via `worldstate.year-changed` events, stage transition detection, resource cleanup/compression callbacks. Prerequisite: Worldstate must publish year-changed events. | #436 |
+| 2 | **Phase 3 - Procreation** | Implement fertility calculation, pregnancy tracking with expected birth dates, pregnancy worker (worldstate.day-changed triggered), full procreation flow (heritage computation, character creation, relationships, household, backstory seeding), and child limits. Prerequisite: Organization Phase 5 (#385). | #436 |
+| 3 | **Phase 5 - Death Processing** | Implement fulfillment calculation from Disposition drives, guardian spirit contribution to Seed (via characterId → household → account resolution chain), archive compression trigger via Resource, inheritance processing, afterlife pathway determination, and content flywheel integration with Storyline. | #436 |
 
 ### GH Issues
 
 ```bash
 gh issue list --search "Character Lifecycle:" --state open
+# #436 - Character-Lifecycle service implementation
+# #385 - Organization Phase 5 (household pattern prerequisite)
 ```
 
 ---
@@ -1422,9 +1426,9 @@ gh issue list --search "Character Lifecycle:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [CHARACTER-PERSONALITY.md](plugins/CHARACTER-PERSONALITY.md)
 
-### Production Readiness: 90%
+### Production Readiness: 95%
 
-Feature-complete with no stubs, no bugs, and all 14 configuration properties wired. Full personality evolution pipeline (9 experience types), combat preference evolution (10 combat experience types), compression/restoration support for lib-resource, and both Variable Provider Factory implementations (personality and combat) registered and functional. Remaining gap is in design hardening: combat style transitions are limited and asymmetric (BERSERKER is a trap state), trait direction weights are hardcoded rather than configurable, and several desirable extensions are unimplemented.
+Hardened to production quality. Feature-complete with no stubs, no bugs, and all 14 configuration properties wired with validation constraints. Full personality evolution pipeline (9 experience types), combat preference evolution (10 combat experience types), compression/restoration support for lib-resource, and both Variable Provider Factory implementations (personality and combat) registered and functional. Hardening pass applied: x-lifecycle for 6 lifecycle events (T5), T8 filler field removal from 4 response models, T13 developer-role permissions on 3 previously anonymous mutation endpoints, T25 affectedTraits type safety (string→TraitAxis enum), null-forgiving operator elimination, NRT compliance, and min/max validation on all config probabilities/integers. Remaining gap is design extensions: combat style transitions are limited (BERSERKER trap state), trait direction weights are hardcoded, and several desirable extensions are tracked by GH issues.
 
 ### Bug Count: 0
 

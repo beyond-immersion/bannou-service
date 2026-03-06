@@ -70,6 +70,7 @@ internal class PerspectiveData
     public Guid EncounterId { get; set; }
     public Guid CharacterId { get; set; }
     public EmotionalImpact EmotionalImpact { get; set; }
+    public float ImpactIntensity { get; set; }
     public float? SentimentShift { get; set; }
     public float MemoryStrength { get; set; } = 1.0f;
     public string? RememberedAs { get; set; }

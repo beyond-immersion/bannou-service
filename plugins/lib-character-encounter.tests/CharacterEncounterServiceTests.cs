@@ -732,6 +732,61 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         Assert.Equal("A great deal", perspA.RememberedAs);
     }
 
+    [Fact]
+    public async Task RecordEncounterAsync_WithImpactIntensity_StoresAndReturnsValue()
+    {
+        // Arrange
+        var service = CreateService();
+        var charA = Guid.NewGuid();
+        var charB = Guid.NewGuid();
+
+        SetupTypeExists("COMBAT", CreateTestEncounterType("COMBAT", "Combat", isBuiltIn: true));
+        SetupEmptyIndexes();
+
+        var savedPerspectives = new List<PerspectiveData>();
+        _mockEncounterStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<EncounterData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+        _mockPerspectiveStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, PerspectiveData, StateOptions?, CancellationToken>((_, p, _, _) => savedPerspectives.Add(p))
+            .ReturnsAsync("etag-1");
+
+        var request = new RecordEncounterRequest
+        {
+            EncounterTypeCode = "COMBAT",
+            RealmId = Guid.NewGuid(),
+            ParticipantIds = new List<Guid> { charA, charB },
+            Outcome = EncounterOutcome.Negative,
+            Perspectives = new List<PerspectiveInput>
+            {
+                new() { CharacterId = charA, EmotionalImpact = EmotionalImpact.Anger, ImpactIntensity = 0.8f },
+                new() { CharacterId = charB, EmotionalImpact = EmotionalImpact.Fear, ImpactIntensity = 0.6f }
+            }
+        };
+
+        // Act
+        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+
+        // Assert - IMPLEMENTATION TENETS: ImpactIntensity stored and mapped to response
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, savedPerspectives.Count);
+
+        var perspA = savedPerspectives.FirstOrDefault(p => p.CharacterId == charA);
+        Assert.NotNull(perspA);
+        Assert.Equal(0.8f, perspA.ImpactIntensity);
+
+        var perspB = savedPerspectives.FirstOrDefault(p => p.CharacterId == charB);
+        Assert.NotNull(perspB);
+        Assert.Equal(0.6f, perspB.ImpactIntensity);
+
+        // Verify response model also contains ImpactIntensity
+        var responsePerspA = response.Perspectives.FirstOrDefault(p => p.CharacterId == charA);
+        Assert.NotNull(responsePerspA);
+        Assert.Equal(0.8f, responsePerspA.ImpactIntensity);
+    }
+
     #endregion
 
     #region Query Tests
@@ -2365,7 +2420,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         // Act
         var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
 
-        // Assert - T8: null payload for errors
+        // Assert - IMPLEMENTATION TENETS: null payload for errors
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
     }
@@ -2387,7 +2442,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         // Act
         var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
 
-        // Assert - T8: null payload for errors
+        // Assert - IMPLEMENTATION TENETS: null payload for errors
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
     }

@@ -40,7 +40,7 @@ public class CharacterEncounterServicePlugin : BaseBannouPlugin
         services.AddSingleton<IEncounterDataCache, EncounterDataCache>();
 
         // Register variable provider factory for Actor to discover via DI
-        // Enables dependency inversion: Actor (L2) consumes providers without knowing about CharacterEncounter (L3)
+        // Enables dependency inversion: Actor (L2) consumes providers without knowing about CharacterEncounter (L4)
         services.AddSingleton<IVariableProviderFactory, EncountersProviderFactory>();
 
         // Register the memory decay scheduler background service

@@ -241,7 +241,9 @@ paths:
 
         Perspectives can be provided in the request or will be auto-generated with
         default values if not specified.
-      x-permissions: []
+      x-permissions:
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -405,7 +407,9 @@ paths:
       description: |
         Calculates sentiment toward multiple target characters in a single call.
         Efficient for behavior system queries that check multiple NPCs.
-      x-permissions: []
+      x-permissions:
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -461,7 +465,9 @@ paths:
       description: |
         Updates a character's perspective on an encounter. Used when a character
         reflects on past events or gains new information about an encounter.
-      x-permissions: []
+      x-permissions:
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -487,7 +493,9 @@ paths:
       description: |
         Strengthens a character's memory of an encounter. Called when the encounter
         is referenced in dialogue, thought, or action. Counteracts memory decay.
-      x-permissions: []
+      x-permissions:
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:

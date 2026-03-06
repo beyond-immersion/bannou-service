@@ -77,6 +77,36 @@ public static class CharacterPersonalityPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/character-personality/evolve",
+            Method = ServiceEndpointMethod.Post,
+            Description = "recordExperience",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-personality/batch-get",
+            Method = ServiceEndpointMethod.Post,
+            Description = "batchGetPersonalities",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/character-personality/delete",
             Method = ServiceEndpointMethod.Post,
             Description = "deletePersonality",
@@ -115,6 +145,21 @@ public static class CharacterPersonalityPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-personality/evolve-combat",
+            Method = ServiceEndpointMethod.Post,
+            Description = "evolveCombatPreferences",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

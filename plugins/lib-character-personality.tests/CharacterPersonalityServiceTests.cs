@@ -592,8 +592,6 @@ public class CharacterPersonalityServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(characterId, response.CharacterId);
-        Assert.True(response.ExperienceRecorded);
         // Evolution is probabilistic, so we just verify the result contains valid data
     }
 
@@ -684,7 +682,7 @@ public class CharacterPersonalityServiceTests
         // Assert - all experience types should complete without error
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.ExperienceRecorded);
+
     }
 
     #endregion
@@ -934,8 +932,6 @@ public class CharacterPersonalityServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(characterId, response.CharacterId);
-        Assert.True(response.ExperienceRecorded);
     }
 
     [Theory]
@@ -976,7 +972,7 @@ public class CharacterPersonalityServiceTests
         // Assert - all combat experience types should complete without error
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.ExperienceRecorded);
+
     }
 
     [Fact]
@@ -1038,11 +1034,10 @@ public class CharacterPersonalityServiceTests
         // Act
         var endpoints = CharacterPersonalityPermissionRegistration.GetEndpoints();
 
-        // Assert - Only endpoints with x-permissions are registered (9 out of 11)
-        // The evolve and batch-get endpoints have no x-permissions defined
+        // Assert - All 12 endpoints have x-permissions defined
         // Includes 2 compression endpoints: get-compress-data and restore-from-archive
         Assert.NotNull(endpoints);
-        Assert.Equal(9, endpoints.Count);
+        Assert.Equal(12, endpoints.Count);
     }
 
     [Fact]
@@ -1236,7 +1231,7 @@ public class CharacterPersonalityServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.ExperienceRecorded);
+
         // With 0 intensity, evolution probability is 0, so no evolution
         Assert.False(response.PersonalityEvolved);
     }
@@ -1711,11 +1706,8 @@ public class CharacterPersonalityServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(characterId, response.CharacterId);
         Assert.True(response.PersonalityRestored);
         Assert.True(response.CombatPreferencesRestored);
-        Assert.True(response.Success);
-        Assert.Null(response.ErrorMessage);
 
         // Verify saves were called
         _mockPersonalityStore.Verify(s => s.SaveAsync(
@@ -1778,7 +1770,6 @@ public class CharacterPersonalityServiceTests
         Assert.NotNull(response);
         Assert.True(response.PersonalityRestored);
         Assert.False(response.CombatPreferencesRestored);
-        Assert.True(response.Success);
 
         // Verify only personality save was called
         _mockPersonalityStore.Verify(s => s.SaveAsync(
@@ -1814,11 +1805,8 @@ public class CharacterPersonalityServiceTests
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.NotNull(response);
-        Assert.False(response.Success);
         Assert.False(response.PersonalityRestored);
         Assert.False(response.CombatPreferencesRestored);
-        Assert.NotNull(response.ErrorMessage);
-        Assert.Contains("Invalid archive data", response.ErrorMessage);
     }
 
     [Fact]
@@ -1842,8 +1830,8 @@ public class CharacterPersonalityServiceTests
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.NotNull(response.ErrorMessage);
+        Assert.False(response.PersonalityRestored);
+        Assert.False(response.CombatPreferencesRestored);
     }
 
     [Fact]
@@ -1959,7 +1947,9 @@ public class CharacterPersonalityServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.True(response?.Success);
+        Assert.NotNull(response);
+        Assert.True(response.PersonalityRestored);
+        Assert.True(response.CombatPreferencesRestored);
 
         // Verify two reference registrations were made (one for personality, one for combat)
         Assert.Equal(2, capturedRequests.Count);
