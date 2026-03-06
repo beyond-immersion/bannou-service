@@ -1198,7 +1198,7 @@ public class MeshStateManagerTests
     {
         // Arrange - state store factory throws when getting stores
         _mockStateStoreFactory
-            .Setup(x => x.GetStoreAsync<MeshEndpoint>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetStoreAsync<MeshEndpoint>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("State store not available"));
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());

@@ -741,7 +741,7 @@ public class SessionServiceTests
             It.IsAny<Guid>(),
             It.IsAny<TimeSpan>(),
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<CancellationToken>()))
             .Callback<string, Guid, TimeSpan, string, CancellationToken>(
                 (jti, acctId, _, _, _) =>
                 {
@@ -813,7 +813,7 @@ public class SessionServiceTests
             It.IsAny<Guid>(),
             It.IsAny<TimeSpan>(),
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<CancellationToken>()), Times.Never);
 
         // Assert - Session deletion and event publishing still happened
         _mockSessionStore.Verify(s => s.DeleteAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()), Times.Once);

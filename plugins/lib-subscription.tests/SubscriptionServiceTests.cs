@@ -1371,7 +1371,7 @@ public class SubscriptionServiceTests
 
         // Verify no state store operations occurred
         _mockSubscriptionStore.Verify(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

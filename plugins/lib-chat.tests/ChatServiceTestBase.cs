@@ -121,12 +121,12 @@ public abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigura
         // Default: participant store returns empty hash (no participants)
         MockParticipantStore
             .Setup(s => s.HashGetAllAsync<ChatParticipantModel>(
-                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, ChatParticipantModel>());
 
         // Default: participant store count returns 0
         MockParticipantStore
-            .Setup(s => s.HashCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.HashCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0L);
 
         // Default: permission client succeeds silently

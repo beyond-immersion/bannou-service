@@ -2451,7 +2451,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var entity2Id = Guid.NewGuid();
 
         _mockEntitySetStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>
             {
                 $"character:{entity1Id}",

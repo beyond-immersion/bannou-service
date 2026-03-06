@@ -71,7 +71,7 @@ public class ContractExpirationServiceTests
 
         // Default: no pending or active contracts
         _mockIndexStore.Setup(s => s.GetAsync(
-                It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
     }
 
@@ -464,7 +464,7 @@ public class ContractExpirationServiceTests
 
         // Assert - instance store never queried (payment schedule skipped)
         mockInstanceStore.Verify(
-            s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

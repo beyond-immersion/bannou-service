@@ -1809,7 +1809,7 @@ public class VoiceServiceTests
 
         // Verify no state store reads occurred (lock failed before any reads)
         _mockRoomStore.Verify(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

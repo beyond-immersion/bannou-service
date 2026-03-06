@@ -424,7 +424,7 @@ public class SubscriptionExpirationServiceTests
         await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
 
         // Assert - No index cleanup needed (no IDs to remove)
-        _mockIndexStore.Verify(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockIndexStore.Verify(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _mockIndexStore.Verify(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

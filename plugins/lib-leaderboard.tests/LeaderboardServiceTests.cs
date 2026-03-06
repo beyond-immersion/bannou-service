@@ -381,7 +381,7 @@ public class LeaderboardServiceTests
         var leaderboardId = "test-leaderboard";
 
         _mockDefinitionStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new LeaderboardDefinitionData
             {
                 GameServiceId = gameServiceId,

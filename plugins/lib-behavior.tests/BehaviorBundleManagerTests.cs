@@ -355,7 +355,7 @@ public class BehaviorBundleManagerTests
         Assert.Null(result);
         _mockMetadataStore.Verify(s => s.DeleteAsync(
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -564,7 +564,7 @@ public class BehaviorBundleManagerTests
         Assert.False(result);
         _mockGoapMetadataStore.Verify(s => s.DeleteAsync(
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

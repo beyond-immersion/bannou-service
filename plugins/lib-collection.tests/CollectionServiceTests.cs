@@ -1314,7 +1314,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Cache operations
         _mockCollectionCache
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((CollectionCacheModel?)null, (string?)null));
 
         // Template query for milestones

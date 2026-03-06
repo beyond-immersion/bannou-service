@@ -94,7 +94,7 @@ public class AuthServiceEventsTests
             .Returns(_mockPasswordResetStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<SessionDataModel>(It.IsAny<string>()))
             .Returns(_mockSessionStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetCacheableStoreAsync<SessionDataModel>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockStateStoreFactory.Setup(f => f.GetCacheableStoreAsync<SessionDataModel>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_mockCacheableStore.Object);
 
         // Setup default behavior for state stores
@@ -306,7 +306,7 @@ public class AuthServiceEventsTests
 
         _mockSessionStore.Verify(s => s.GetAsync(
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            It.IsAny<CancellationToken>()),
             Times.Never);
 
         _mockSessionStore.Verify(s => s.SaveAsync(

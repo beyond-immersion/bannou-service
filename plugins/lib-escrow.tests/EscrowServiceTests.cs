@@ -497,7 +497,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
 
         // The service uses GetWithETagAsync and TrySaveAsync for optimistic concurrency
         _mockPartyPendingStore
-            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new PartyPendingCount { PendingCount = 3 }, "etag"));
 
         PartyPendingCount? savedCount = null;
