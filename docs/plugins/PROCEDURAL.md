@@ -98,13 +98,14 @@ Registers new chamber in:
 | lib-state (`IStateStoreFactory`) | Template metadata (MySQL), job records (MySQL), generation cache (Redis), distributed locks (Redis) |
 | lib-state (`IDistributedLockProvider`) | Distributed locks for concurrent generation deduplication |
 | lib-messaging (`IMessageBus`) | Publishing generation lifecycle events (job.started, job.completed, job.failed) |
-| lib-asset (`IAssetClient`) | HDA template storage and retrieval, generated output upload, bundle creation (L3) |
-| lib-orchestrator (`IOrchestratorClient`) | Houdini worker pool management -- acquire/release workers (L3) |
+| `ITelemetryProvider` | Telemetry span instrumentation for all async methods (L0) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
+| lib-asset (`IAssetClient`) | HDA template storage and retrieval, generated output upload, bundle creation (L3) | All template registration, generation, and introspection endpoints return error. Service starts but cannot perform its core function. |
+| lib-orchestrator (`IOrchestratorClient`) | Houdini worker pool management -- acquire/release workers (L3) | Worker acquisition fails. Generation requests return error. Cache reads still work. |
 | lib-analytics (`IAnalyticsClient`) | Generation metrics (template popularity, generation times, cache hit rates) | Metrics not published |
 
 ---
@@ -119,7 +120,7 @@ Registers new chamber in:
 | **lib-scene** (L4) | Batch generation of scene element variations |
 | Realm seeding workflows | Initial world geometry during realm creation |
 
-All dependents are L4 (or L2 workflows using L4). lib-procedural is L4 and depends only on L3 (Asset, Orchestrator) and L0 (state, messaging). No hierarchy issues.
+All dependents are L4 (or L2 workflows using L4). lib-procedural is L4 and depends on L3 (Asset, Orchestrator) as soft dependencies with graceful degradation, and L0 (state, messaging) as hard dependencies. Per SERVICE-HIERARCHY.md, L4→L3 dependencies require runtime resolution via `IServiceProvider.GetService<T>()` with null checks -- if either L3 service is disabled, generation capability is unavailable but the service does not crash at startup.
 
 ---
 
@@ -153,7 +154,7 @@ All dependents are L4 (or L2 workflows using L4). lib-procedural is L4 and depen
 | Key Pattern | Purpose |
 |-------------|---------|
 | `gen:{hash}` | Generation deduplication -- prevent concurrent identical generation requests |
-| `tmpl:{templateId}` | Template mutation lock (register, update, deactivate) |
+| `tmpl:{templateId}` | Template mutation lock (register, update, deprecate) |
 
 ---
 
@@ -161,19 +162,28 @@ All dependents are L4 (or L2 workflows using L4). lib-procedural is L4 and depen
 
 ### Published Events
 
+**Lifecycle events** (auto-generated via `x-lifecycle` with `topic_prefix: procedural`):
+
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `procedural.template.created` | `ProceduralTemplateCreatedEvent` | New HDA template registered |
+| `procedural.template.updated` | `ProceduralTemplateUpdatedEvent` | Template metadata updated, or template deprecated (with `changedFields` including deprecation fields) |
+| `procedural.template.deleted` | `ProceduralTemplateDeletedEvent` | Schema-generated but never published (Category B -- templates persist forever) |
+
+**Custom events** (job state machine transitions, not CRUD lifecycle):
+
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `procedural.job.queued` | `ProceduralJobQueuedEvent` | Generation job accepted and queued |
 | `procedural.job.started` | `ProceduralJobStartedEvent` | Houdini worker acquired, generation beginning |
 | `procedural.job.completed` | `ProceduralJobCompletedEvent` | Generation successful, output uploaded to Asset service |
 | `procedural.job.failed` | `ProceduralJobFailedEvent` | Generation failed (timeout, HDA error, worker unavailable) |
-| `procedural.template.registered` | `ProceduralTemplateRegisteredEvent` | New HDA template registered |
 
 ### Consumed Events
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `asset.deleted` | `HandleAssetDeletedAsync` | If deleted asset is an HDA template, deactivate the template registration |
+| `asset.deleted` | `HandleAssetDeletedAsync` | If deleted asset is an HDA template, deprecate the template registration (AUDIT:NEEDS_DESIGN -- see DC#6 below: should this use lib-resource x-references instead of event subscription per T28?) |
 
 ---
 
@@ -199,12 +209,12 @@ All dependents are L4 (or L2 workflows using L4). lib-procedural is L4 and depen
 
 ### Template Management (4 endpoints)
 
-All endpoints require `developer` role.
+All endpoints require `developer` role. Templates are **T31 Category B** entities (instances -- jobs and cached results -- persist independently with the template's ID). Category B means: deprecation is one-way (no undeprecate), there is no delete endpoint, and deprecated templates remain readable forever.
 
-- **RegisterTemplate** (`/procedural/template/register`): Downloads HDA from Asset service, introspects parameter schema via Houdini worker, stores template metadata with parameter definitions. Validates HDA is loadable.
-- **GetTemplate** (`/procedural/template/get`): Returns template metadata including full parameter schema.
-- **ListTemplates** (`/procedural/template/list`): Paged query with optional category filter.
-- **DeactivateTemplate** (`/procedural/template/deactivate`): Soft-deactivate. Active jobs using this template continue; new requests rejected.
+- **RegisterTemplate** (`/procedural/template/register`): Downloads HDA from Asset service, introspects parameter schema via Houdini worker, stores template metadata with parameter definitions. Validates HDA is loadable. MUST check that the template code is not already taken.
+- **GetTemplate** (`/procedural/template/get`): Returns template metadata including full parameter schema and deprecation state.
+- **ListTemplates** (`/procedural/template/list`): Paged query with optional category filter. MUST support `includeDeprecated` parameter (default: `false`).
+- **DeprecateTemplate** (`/procedural/template/deprecate`): Deprecate template (T31 Category B). Active jobs using this template continue; new generation requests rejected with `BadRequest`. Idempotent -- returns `OK` if already deprecated. Uses triple-field deprecation model (`IsDeprecated`, `DeprecatedAt`, `DeprecationReason`). State change published as `procedural.template.updated` with `changedFields`.
 
 ### Generation (4 endpoints)
 
@@ -423,7 +433,7 @@ The flywheel doesn't just generate stories -- it generates the **geometry those 
 
 1. **Parameters are schema-less (additionalProperties: true)**: Different HDAs have completely different parameter sets. lib-procedural stores the parameter schema per template (from introspection) but the generation request accepts arbitrary key-value pairs. Validation happens at introspection time, not in the API schema.
 
-2. **Determinism requires explicit seeds**: If the caller doesn't provide a seed, lib-procedural generates a random one. But the random seed is stored in the job record, so the generation can always be reproduced later.
+2. **Determinism requires explicit seeds**: If the caller doesn't provide a seed, lib-procedural generates a random one. But the random seed is stored in the job record, so the generation can always be reproduced later. Per T26, the seed parameter in the generation request schema must be `nullable: true` (null = "generate random seed"), not a sentinel value like 0 or -1.
 
 3. **Cache key is content-addressed**: SHA256(templateId + canonicalized parameters + seed). Two requests with identical inputs always hit the same cache entry, even from different callers. This is intentional -- generation is pure function of inputs.
 
@@ -445,8 +455,20 @@ The flywheel doesn't just generate stories -- it generates the **geometry those 
 
 5. **Multi-output HDAs**: Some HDAs produce multiple outputs (mesh + collision mesh + LODs + textures). The generation response should support multiple asset IDs per job.
 
+6. **(AUDIT:NEEDS_DESIGN) Asset deletion cleanup -- lib-resource vs event subscription**: Templates store Asset entity references (HDA file IDs). When the HDA asset is deleted, the template should be deprecated. T28 forbids event subscriptions for "destroying dependent data" but permits them for "live state reactions." Deprecating (not destroying) a template is arguably a live state reaction. Decision needed: use lib-resource `x-references` with `onDelete: detach` (deprecate template via cleanup callback), or keep the `asset.deleted` event subscription as a live state reaction. If lib-resource is used, remove the event subscription.
+
+7. **(AUDIT:NEEDS_DESIGN) lib-resource integration scope**: Should Procedural register references to Asset entities via `x-references`? Should other services that store Procedural template IDs (e.g., lib-dungeon storing the template used for chamber generation) register references back to Procedural? T28 says services that store another service's entity ID should register references with lib-resource, but the practical scope needs definition.
+
+8. **(AUDIT:NEEDS_DESIGN) DefaultOutputFormat -- enum vs string**: Output formats (Glb, Usd, Bgeo, etc.) are determined by what Houdini can export. T25 favors enums for finite system-owned sets, but the set could expand with Houdini updates. Decision: define an `OutputFormat` enum (Category C, PascalCase values) or keep as string for extensibility.
+
+9. **(AUDIT:NEEDS_DESIGN) Worker pool tunables ownership**: The deep dive shows `min_workers`, `max_workers`, `idle_timeout`, `warmup_hdas` as inline pool config values. T21 requires all tunables in config. Decision: are these Procedural's config properties (passed to Orchestrator pool API) or Orchestrator's pool configuration? If Procedural's, add `HoudiniPoolMinWorkers`, `HoudiniPoolMaxWorkers`, `HoudiniPoolIdleTimeoutSeconds`, `HoudiniWarmupHdas` to the configuration table.
+
+10. **(AUDIT:NEEDS_DESIGN) x-permissions model for generation endpoints**: The deep dive mentions "procedural.generate permission" which is not a valid x-permissions construct (Bannou uses roles and states, not custom permission strings). Decision needed: should generation endpoints be `x-permissions: []` (service-to-service only via mesh, not exposed to WebSocket clients) or `x-permissions: [{role: developer}]` (accessible to developer WebSocket sessions)? Template/cache/introspection endpoints should be `[{role: developer}]`.
+
+11. **(AUDIT:NEEDS_DESIGN) T29 documentation for HDA parameters**: The parameters field uses `additionalProperties: true` which T29 restricts. The use case is defensible (opaque pass-through to Houdini workers, no Bannou service reads keys by convention, validated at runtime against per-template parameter schema). Decision: what exact T29 compliance description to include in the schema property description.
+
 ---
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase.*
+*No active work items. Plugin is in pre-implementation phase. 6 design considerations (DC#6-DC#11) added by L4 audit (2026-03-07) require resolution before schema creation.*

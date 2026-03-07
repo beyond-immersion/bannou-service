@@ -1,4 +1,6 @@
 using BeyondImmersion.BannouService.Matchmaking.Helpers;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace BeyondImmersion.BannouService.Matchmaking.Tests;
 
@@ -12,7 +14,7 @@ public class MatchmakingAlgorithmTests
 
     public MatchmakingAlgorithmTests()
     {
-        _sut = new MatchmakingAlgorithm();
+        _sut = new MatchmakingAlgorithm(Mock.Of<ILogger<MatchmakingAlgorithm>>());
     }
 
     #region TryMatchTickets Tests

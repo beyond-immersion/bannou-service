@@ -12,7 +12,7 @@ public class AffordanceScorerTests
 
     public AffordanceScorerTests()
     {
-        _sut = new AffordanceScorer();
+        _sut = new AffordanceScorer(new MappingServiceConfiguration());
     }
 
     #region GetKindsForAffordanceType Tests

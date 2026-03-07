@@ -6,6 +6,7 @@
 > **State Store**: organization-entities (MySQL), organization-members (MySQL), organization-roles (MySQL), organization-assets (MySQL), organization-succession (MySQL), organization-cache (Redis), organization-lock (Redis) — all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Schema Requirements**: `x-service-layer: GameFeatures` at root of `organization-api.yaml`. State stores in `schemas/state-stores.yaml`. Variable provider (`${organization.*}`) in `schemas/variable-providers.yaml`.
 
 ## Overview
 
@@ -122,14 +123,14 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
 | `orgTypeCode` | B (Content Code) | Opaque string | Game-configurable organization types (household, guild, trading_company, temple, military_unit, etc.). Extensible without schema changes; role templates are defined per org type. |
-| `ownerType` (on `OrganizationModel`) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity that owns the organization (character, family, faction). All valid values are first-class Bannou entities. |
-| `entityType` (on succession heir) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the type of the designated heir entity. |
+| `ownerType` (on `OrganizationModel`) | A (Entity Reference) | `$ref: EntityType` | Identifies the entity that owns the organization (character, organization [household], faction). All valid values are first-class Bannou entities. |
+| `entityType` (on succession heir) | A (Entity Reference) | `$ref: EntityType` | Identifies the type of the designated heir entity. |
 | `assetType` | B (Content Code) | Opaque string | Asset categories registered to an organization (wallet, inventory, location, contract, custom). Extensible for game-specific asset registrations. |
 | `roleCode` | B (Content Code) | Opaque string | Role identifiers within an organization type (owner, manager, apprentice, etc.). Defined per org type at deployment time. |
 | `departmentCode` | B (Content Code) | Opaque string | Optional department identifiers within an organization. Game-configurable grouping mechanism. |
 | `legalStatus` | C (System State) | Service-specific enum | Finite set of legal statuses (Chartered, Licensed, Tolerated, Outlawed). System-owned; drives sovereign interaction logic and charter contract management. |
 | `status` (on `OrganizationModel`) | C (System State) | Service-specific enum | Finite set of organization lifecycle states (Active, Suspended, Dissolved, Archived). System-owned; drives state machine transitions. |
-| `successionMode` | C (System State) | Service-specific enum | Finite set of succession strategies (primogeniture, designated, elective, conquest). System-owned; determines succession execution logic. |
+| `successionMode` | C (System State) | Service-specific enum | Finite set of succession strategies (`Primogeniture`, `Designated`, `Elective`, `Conquest`, `EqualDivision`, `Testament`, `Dissolution`). System-owned; determines succession execution logic. |
 
 ---
 
@@ -137,20 +138,27 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 ### Published Events
 
+**Lifecycle events** (auto-generated via `x-lifecycle` with `topic_prefix: organization`):
+
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `organization.created` | `OrganizationCreatedEvent` | Organization entity created (lifecycle) |
-| `organization.updated` | `OrganizationUpdatedEvent` | Organization entity updated (lifecycle) |
-| `organization.dissolved` | `OrganizationDissolvedEvent` | Organization enters dissolution (lifecycle) |
-| `organization.archived` | `OrganizationArchivedEvent` | Organization archived after dissolution (lifecycle) |
-| `organization.deleted` | `OrganizationDeletedEvent` | Organization permanently deleted (lifecycle) |
+| `organization.created` | `OrganizationCreatedEvent` | Organization entity created |
+| `organization.updated` | `OrganizationUpdatedEvent` | Organization entity updated (includes status transitions) |
+| `organization.deleted` | `OrganizationDeletedEvent` | Organization permanently deleted |
+
+**Custom events** (manually defined in `organization-events.yaml`):
+
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `organization.dissolved` | `OrganizationDissolvedEvent` | Organization enters dissolution (carries dissolution reason, successor references) |
+| `organization.archived` | `OrganizationArchivedEvent` | Organization archived after dissolution (carries archive reference) |
 | `organization.member.added` | `OrganizationMemberAddedEvent` | Character joins organization |
 | `organization.member.removed` | `OrganizationMemberRemovedEvent` | Character leaves or is removed from organization |
-| `organization.member.role_changed` | `OrganizationMemberRoleChangedEvent` | Member's role within organization changes (promotion, demotion) |
+| `organization.member.role-changed` | `OrganizationMemberRoleChangedEvent` | Member's role within organization changes (promotion, demotion) |
 | `organization.succession.triggered` | `OrganizationSuccessionTriggeredEvent` | Succession process initiated (leader death, retirement, removal) |
 | `organization.succession.completed` | `OrganizationSuccessionCompletedEvent` | New leader installed |
 | `organization.succession.contested` | `OrganizationSuccessionContestedEvent` | Multiple claimants; escalated to arbitration |
-| `organization.legal_status.changed` | `OrganizationLegalStatusChangedEvent` | Legal status changed (chartered, licensed, tolerated, outlawed) |
+| `organization.legal-status.changed` | `OrganizationLegalStatusChangedEvent` | Legal status changed (Chartered, Licensed, Tolerated, Outlawed) |
 | `organization.asset.registered` | `OrganizationAssetRegisteredEvent` | Asset registered to organization |
 | `organization.asset.deregistered` | `OrganizationAssetDeregisteredEvent` | Asset removed from organization registry |
 | `organization.phase.changed` | `OrganizationPhaseChangedEvent` | Organization seed transitioned to new growth phase |
@@ -167,13 +175,22 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 | `seed.phase.changed` | `HandleSeedPhaseChangedAsync` | For organization seeds: update cached phase, publish `organization.phase.changed`, re-evaluate available capabilities. |
 | `seed.capability.updated` | `HandleSeedCapabilityUpdatedAsync` | Invalidate cached capability manifest for affected organization. |
 
+### Schema Declarations
+
+**`x-event-publications`** (in `organization-events.yaml`): All lifecycle events (`organization.created`, `organization.updated`, `organization.deleted` via `x-lifecycle`) and all custom events (`organization.dissolved`, `organization.archived`, `organization.member.added`, `organization.member.removed`, `organization.member.role-changed`, `organization.succession.triggered`, `organization.succession.completed`, `organization.succession.contested`, `organization.legal-status.changed`, `organization.asset.registered`, `organization.asset.deregistered`, `organization.phase.changed`).
+
+**`x-event-subscriptions`** (in `organization-events.yaml`): `contract.breached`, `contract.terminated`, `contract.fulfilled` (from lib-contract L1), `faction.territory.claimed`, `faction.territory.released` (from lib-faction L4), `seed.phase.changed`, `seed.capability.updated` (from lib-seed L2). Handlers filter by contract template code or seed owner to process only organization-related events.
+
 ### Resource Cleanup (FOUNDATION TENETS)
+
+Organization (L4) declares `x-references` in `organization-api.yaml` for all L2 resources it references. The Create endpoint registers references via `IResourceClient.RegisterReferenceAsync`, and the Delete endpoint calls `IResourceClient.ExecuteCleanupAsync`.
 
 | Target Resource | Source Type | On Delete | Cleanup Endpoint |
 |----------------|-------------|-----------|-----------------|
 | character | organization | CASCADE | `/organization/cleanup-by-character` — removes member from all organizations, triggers succession if leader, initiates dissolution if sole member |
-| realm | organization | CASCADE | `/organization/cleanup-by-realm` |
-| location | organization | CASCADE | `/organization/cleanup-by-location` |
+| location | organization | CASCADE | `/organization/cleanup-by-location` — updates organizations at this location (removes location reference; organizations can relocate) |
+
+> **AUDIT:NEEDS_DESIGN**: Should `realm` be a direct `x-references` target? Organization has no direct `realmId` field — realm cleanup would need to traverse through locations. Consider whether realm cleanup cascades through Location's cleanup of Organization instead.
 
 ### DI Listener Patterns
 
@@ -201,7 +218,7 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 | `SuccessionCheckDelayMinutes` | `ORGANIZATION_SUCCESSION_CHECK_DELAY_MINUTES` | `5` | Initial delay before succession worker starts |
 | `SuccessionCheckBatchSize` | `ORGANIZATION_SUCCESSION_CHECK_BATCH_SIZE` | `50` | Organizations per batch in succession worker |
 | `QueryPageSize` | `ORGANIZATION_QUERY_PAGE_SIZE` | `20` | Default page size for paged queries |
-| `DefaultLegalStatus` | `ORGANIZATION_DEFAULT_LEGAL_STATUS` | `Tolerated` | Legal status assigned to new organizations |
+| `DefaultLegalStatus` | `ORGANIZATION_DEFAULT_LEGAL_STATUS` | `Tolerated` | Legal status assigned to new organizations. Schema must use `$ref: LegalStatus` enum, not plain string. |
 | `SeedBulkPageSize` | `ORGANIZATION_SEED_BULK_PAGE_SIZE` | `100` | Page size for bulk seed operations |
 
 ---
@@ -212,6 +229,7 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 |---------|------|
 | `ILogger<OrganizationService>` | Structured logging |
 | `OrganizationServiceConfiguration` | Typed configuration access |
+| `ITelemetryProvider` | Span creation for async method instrumentation (L0) |
 | `IStateStoreFactory` | State store access (creates 7 stores) |
 | `IMessageBus` | Event publishing |
 | `IEventConsumer` | Contract, faction, seed event subscriptions |
@@ -232,7 +250,7 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 | Worker | Interval Config | Lock Key | Purpose |
 |--------|----------------|----------|---------|
-| `OrganizationSuccessionWorkerService` | `SuccessionCheckIntervalMinutes` | `org:lock:succession-worker` | Periodically checks for organizations with pending succession (leader role vacancy). Executes deterministic succession modes (primogeniture, designated). Opens voting periods for elective modes. Flags contested successions for arbitration. |
+| `OrganizationSuccessionWorkerService` | `SuccessionCheckIntervalMinutes` | `org:lock:succession-worker` | Periodically checks for organizations with pending succession (leader role vacancy). Executes deterministic succession modes (Primogeniture, Designated). Opens voting periods for Elective modes. Flags contested successions for arbitration. |
 | `OrganizationCharterRenewalWorkerService` | (uses Contract milestone system) | `org:lock:charter-worker` | Monitors charter contract milestones for renewal deadlines. Publishes warnings before expiry. Handles grace period expiry by downgrading legal status. |
 
 ### Variable Provider Factories
@@ -249,7 +267,7 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 All endpoints require `developer` role.
 
-- **Create** (`/organization/create`): Validates game service existence. Validates owner entity existence via `ICharacterClient`. Provisions organizational seed via `ISeedClient` (type matches org type code). Provisions organization wallet via `ICurrencyClient`. Provisions organization inventory via `IInventoryClient`. Registers role definitions from org type template. Sets default legal status (`Tolerated`). Saves under ID, code, owner, and location lookup keys. Publishes `organization.created`.
+- **Create** (`/organization/create`): Validates game service existence. Validates owner entity existence via `ICharacterClient`. Provisions organizational seed via `ISeedClient` (type matches org type code). Provisions organization wallet via `ICurrencyClient`. Provisions organization inventory via `IInventoryClient`. Registers role definitions from org type template. Sets default legal status (`Tolerated`). Registers resource references via `IResourceClient` for owner character and jurisdiction location (per FOUNDATION TENETS — T28). Saves under ID, code, owner, and location lookup keys. Publishes `organization.created`.
 
 - **Get** (`/organization/get`): Load from MySQL by organizationId. Enriches with cached capability manifest, member count, and current leader.
 
@@ -330,6 +348,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 - **CleanupByLocation** (`/organization/cleanup-by-location`): Updates organizations at this location (remove location reference, not dissolve -- organizations can relocate).
 
 ### Compression Endpoints (2 endpoints)
+
+> **AUDIT:NEEDS_DESIGN**: Compression flow — is Organization a `x-compression-callback` target (lib-resource calls its compress endpoint during character/realm archival), or does Organization self-initiate compression for its own dissolved entities, or both? If participating in lib-resource callbacks, specify `resourceType`, `sourceType: organization`, `priority` (likely 70-90 range for optional game features data). If self-managed only, document as such.
 
 - **GetCompressData** (`/organization/get-compress-data`): Returns organization data suitable for archival -- member history, transaction summary, succession history, legal status changes. For content flywheel consumption.
 - **RestoreFromArchive** (`/organization/restore-from-archive`): Restores an archived organization from compressed data. Used for narrative generation where historical organizations are referenced.
@@ -432,7 +452,7 @@ Organization identity and structure are owned here. Treasury is Currency (organi
 
 ### Phase 4: Succession System
 - Implement succession rule storage
-- Implement deterministic succession modes (primogeniture, designated, dissolution)
+- Implement deterministic succession modes (Primogeniture, Designated, Dissolution)
 - Implement elective succession (voting period, quorum, tie-breaking)
 - Implement succession worker background service
 - Wire character death events as succession triggers
@@ -441,7 +461,7 @@ Organization identity and structure are owned here. Treasury is Currency (organi
 ### Phase 5: Household Pattern
 - Author `household` seed type definition with growth phases and capabilities
 - Author role template for household type (head, heir, dependent, elder, servant)
-- Implement household-specific succession modes (primogeniture, matrilineal, equal)
+- Implement household-specific succession modes (Primogeniture, matrilineal, EqualDivision)
 - Wire household creation into character lifecycle (marriage, coming of age)
 - Wire household dissolution into arbitration (divorce, exile, branch family)
 
@@ -887,7 +907,7 @@ When an organization's leader dies, retires, or is removed, succession determine
 | Mode | Mechanism | Common For |
 |------|-----------|-----------|
 | **Primogeniture** | Eldest child (or eldest of a specified gender) inherits | Households, noble houses |
-| **Equal Division** | All eligible members vote; majority wins | Guilds, cooperatives |
+| **EqualDivision** | All eligible members vote; majority wins | Guilds, cooperatives |
 | **Designated** | Current leader explicitly names successor (stored as a relationship) | Shops, military units |
 | **Testament** | Per a will contract created by the leader | Noble houses, wealthy households |
 | **Elective** | Members with sufficient role priority vote | Guilds, trading companies |
@@ -908,7 +928,7 @@ Organization's succession mode checked
         |     Contracts transferred.
         |     Events published.
         |
-        +-- Equal Division/Elective:
+        +-- EqualDivision/Elective:
         |     Voting period opened (Contract milestone).
         |     Members with eligible roles vote.
         |     Deadline enforced. Majority wins.

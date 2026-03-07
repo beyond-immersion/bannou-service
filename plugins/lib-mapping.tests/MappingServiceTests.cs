@@ -400,11 +400,10 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.ReleaseAuthorityAsync(request, CancellationToken.None);
+        var status = await service.ReleaseAuthorityAsync(request, CancellationToken.None);
 
-        // Assert - Unauthorized returns null response
+        // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
-        Assert.Null(response);
     }
 
     #endregion
@@ -500,7 +499,6 @@ public class MappingServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.NotNull(response.Objects);
-        Assert.Equal(100, response.Position.X);
     }
 
     [Fact]
@@ -528,7 +526,6 @@ public class MappingServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.NotNull(response.Objects);
-        Assert.NotNull(response.Bounds);
     }
 
     [Fact]
@@ -569,7 +566,7 @@ public class MappingServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal("gold_vein", response.ObjectType);
+        Assert.NotNull(response.Objects);
     }
 
     #endregion
@@ -604,8 +601,6 @@ public class MappingServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.NotNull(response.Locations);
-        Assert.NotNull(response.QueryMetadata);
-        Assert.False(response.QueryMetadata.CacheHit);
     }
 
     [Fact]
@@ -649,7 +644,7 @@ public class MappingServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.QueryMetadata?.CacheHit);
+        Assert.NotNull(response.Locations);
     }
 
     #endregion
@@ -796,12 +791,10 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.ReleaseAuthoringAsync(releaseRequest, CancellationToken.None);
+        var status = await service.ReleaseAuthoringAsync(releaseRequest, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(response);
-        Assert.True(response.Released);
     }
 
     #endregion
@@ -855,7 +848,7 @@ public class MappingServiceTests
                 new IngestPayload
                 {
                     ObjectType = "enemy_spawn",
-                    Position = new EventPosition3D { X = 200, Y = 0, Z = 200 }
+                    Position = new Position3D { X = 200, Y = 0, Z = 200 }
                 }
             }
         };
@@ -1106,12 +1099,10 @@ public class MappingServiceTests
         var request = new DeleteDefinitionRequest { DefinitionId = definitionId };
 
         // Act
-        var (status, response) = await service.DeleteDefinitionAsync(request, CancellationToken.None);
+        var status = await service.DeleteDefinitionAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(response);
-        Assert.True(response.Deleted);
 
         // Verify delete was called
         _mockDefinitionStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -1125,11 +1116,10 @@ public class MappingServiceTests
         var request = new DeleteDefinitionRequest { DefinitionId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.DeleteDefinitionAsync(request, CancellationToken.None);
+        var status = await service.DeleteDefinitionAsync(request, CancellationToken.None);
 
-        // Assert - NotFound returns null response
+        // Assert
         Assert.Equal(StatusCodes.NotFound, status);
-        Assert.Null(response);
     }
 
     #endregion

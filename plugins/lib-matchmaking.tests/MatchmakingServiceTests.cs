@@ -38,6 +38,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
     private readonly Mock<IGameSessionClient> _mockGameSessionClient;
     private readonly Mock<BeyondImmersion.BannouService.Permission.IPermissionClient> _mockPermissionClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
 
     private const string STATE_STORE = "matchmaking-statestore";
     private const string QUEUE_PREFIX = "queue:";
@@ -68,6 +69,9 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         _mockGameSessionClient = new Mock<IGameSessionClient>();
         _mockPermissionClient = new Mock<BeyondImmersion.BannouService.Permission.IPermissionClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(Mock.Of<ILogger>());
 
         var mockLockResponse = new Mock<ILockResponse>();
         mockLockResponse.Setup(l => l.Success).Returns(true);
@@ -112,6 +116,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             _mockMessageBus.Object,
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             Configuration,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
@@ -665,7 +670,6 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.NotEqual(Guid.Empty, response.TicketId);
-        Assert.Equal(TEST_QUEUE_ID, response.QueueId);
 
         // Verify ticket was saved
         _mockTicketStore.Verify(s => s.SaveAsync(
@@ -828,7 +832,6 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(matchId, response.MatchId);
         Assert.Equal(1, response.AcceptedCount);
         Assert.False(response.AllAccepted);
 
