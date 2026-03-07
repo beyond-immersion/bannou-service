@@ -1,0 +1,87 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BeyondImmersion.BannouService.StructuralTests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <Configurations>Debug;Release;Development</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" Version="6.0.4">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Test utilities (validators) -->
+    <ProjectReference Include="..\test-utilities\test-utilities.csproj" />
+
+    <!-- All service plugins — auto-discovered via [BannouService] attribute -->
+    <ProjectReference Include="..\plugins\lib-account\lib-account.csproj" />
+    <ProjectReference Include="..\plugins\lib-achievement\lib-achievement.csproj" />
+    <ProjectReference Include="..\plugins\lib-actor\lib-actor.csproj" />
+    <ProjectReference Include="..\plugins\lib-analytics\lib-analytics.csproj" />
+    <ProjectReference Include="..\plugins\lib-asset\lib-asset.csproj" />
+    <ProjectReference Include="..\plugins\lib-auth\lib-auth.csproj" />
+    <ProjectReference Include="..\plugins\lib-behavior\lib-behavior.csproj" />
+    <ProjectReference Include="..\plugins\lib-character\lib-character.csproj" />
+    <ProjectReference Include="..\plugins\lib-character-encounter\lib-character-encounter.csproj" />
+    <ProjectReference Include="..\plugins\lib-character-history\lib-character-history.csproj" />
+    <ProjectReference Include="..\plugins\lib-character-personality\lib-character-personality.csproj" />
+    <ProjectReference Include="..\plugins\lib-chat\lib-chat.csproj" />
+    <ProjectReference Include="..\plugins\lib-collection\lib-collection.csproj" />
+    <ProjectReference Include="..\plugins\lib-connect\lib-connect.csproj" />
+    <ProjectReference Include="..\plugins\lib-contract\lib-contract.csproj" />
+    <ProjectReference Include="..\plugins\lib-currency\lib-currency.csproj" />
+    <ProjectReference Include="..\plugins\lib-divine\lib-divine.csproj" />
+    <ProjectReference Include="..\plugins\lib-documentation\lib-documentation.csproj" />
+    <ProjectReference Include="..\plugins\lib-escrow\lib-escrow.csproj" />
+    <ProjectReference Include="..\plugins\lib-faction\lib-faction.csproj" />
+    <ProjectReference Include="..\plugins\lib-game-service\lib-game-service.csproj" />
+    <ProjectReference Include="..\plugins\lib-game-session\lib-game-session.csproj" />
+    <ProjectReference Include="..\plugins\lib-gardener\lib-gardener.csproj" />
+    <ProjectReference Include="..\plugins\lib-inventory\lib-inventory.csproj" />
+    <ProjectReference Include="..\plugins\lib-item\lib-item.csproj" />
+    <ProjectReference Include="..\plugins\lib-leaderboard\lib-leaderboard.csproj" />
+    <ProjectReference Include="..\plugins\lib-license\lib-license.csproj" />
+    <ProjectReference Include="..\plugins\lib-location\lib-location.csproj" />
+    <ProjectReference Include="..\plugins\lib-mapping\lib-mapping.csproj" />
+    <ProjectReference Include="..\plugins\lib-matchmaking\lib-matchmaking.csproj" />
+    <ProjectReference Include="..\plugins\lib-mesh\lib-mesh.csproj" />
+    <ProjectReference Include="..\plugins\lib-messaging\lib-messaging.csproj" />
+    <ProjectReference Include="..\plugins\lib-music\lib-music.csproj" />
+    <ProjectReference Include="..\plugins\lib-obligation\lib-obligation.csproj" />
+    <ProjectReference Include="..\plugins\lib-orchestrator\lib-orchestrator.csproj" />
+    <ProjectReference Include="..\plugins\lib-permission\lib-permission.csproj" />
+    <ProjectReference Include="..\plugins\lib-puppetmaster\lib-puppetmaster.csproj" />
+    <ProjectReference Include="..\plugins\lib-quest\lib-quest.csproj" />
+    <ProjectReference Include="..\plugins\lib-realm\lib-realm.csproj" />
+    <ProjectReference Include="..\plugins\lib-realm-history\lib-realm-history.csproj" />
+    <ProjectReference Include="..\plugins\lib-relationship\lib-relationship.csproj" />
+    <ProjectReference Include="..\plugins\lib-resource\lib-resource.csproj" />
+    <ProjectReference Include="..\plugins\lib-save-load\lib-save-load.csproj" />
+    <ProjectReference Include="..\plugins\lib-scene\lib-scene.csproj" />
+    <ProjectReference Include="..\plugins\lib-seed\lib-seed.csproj" />
+    <ProjectReference Include="..\plugins\lib-species\lib-species.csproj" />
+    <ProjectReference Include="..\plugins\lib-state\lib-state.csproj" />
+    <ProjectReference Include="..\plugins\lib-status\lib-status.csproj" />
+    <ProjectReference Include="..\plugins\lib-storyline\lib-storyline.csproj" />
+    <ProjectReference Include="..\plugins\lib-subscription\lib-subscription.csproj" />
+    <ProjectReference Include="..\plugins\lib-telemetry\lib-telemetry.csproj" />
+    <ProjectReference Include="..\plugins\lib-transit\lib-transit.csproj" />
+    <ProjectReference Include="..\plugins\lib-voice\lib-voice.csproj" />
+    <ProjectReference Include="..\plugins\lib-website\lib-website.csproj" />
+    <ProjectReference Include="..\plugins\lib-worldstate\lib-worldstate.csproj" />
+  </ItemGroup>
+
+</Project>

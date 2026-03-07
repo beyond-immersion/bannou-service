@@ -166,6 +166,10 @@ LIFECYCLE_OUTPUT_FILE="$LIFECYCLE_OUTPUT_DIR/${SERVICE_PASCAL}LifecycleEvents.cs
 if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
     echo -e "${YELLOW}🔄 Found lifecycle events file, generating lifecycle event models...${NC}"
 
+    # Run lifecycle event resolver to handle complex cross-file refs
+    echo -e "${YELLOW}🔄 Checking lifecycle events for complex cross-file refs...${NC}"
+    python3 "$SCRIPT_DIR/resolve-lifecycle-refs.py" "$SERVICE_NAME" 2>&1 | while read line; do echo "  $line"; done
+
     # Check if a resolved version exists (for schemas with complex cross-file refs)
     if [ -f "$LIFECYCLE_EVENTS_RESOLVED" ]; then
         LIFECYCLE_SCHEMA_TO_PROCESS="$LIFECYCLE_EVENTS_RESOLVED"

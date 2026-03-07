@@ -99,7 +99,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: '#/components/schemas/Provider'
+          $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
       - name: redirectUri
         in: query
         required: true
@@ -134,7 +134,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: '#/components/schemas/Provider'
+          $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
       requestBody:
         required: true
         content:
@@ -558,11 +558,6 @@ components:
       bearerFormat: JWT
 
   schemas:
-    Provider:
-      type: string
-      enum: [Google, Discord, Twitch, Steam]
-      description: Authentication provider type
-
     EmailProvider:
       type: string
       enum: [None, Sendgrid, Smtp, Ses]
@@ -1115,7 +1110,7 @@ components:
         name:
           type: string
           example: "discord"
-          description: Internal identifier for the provider (matches Provider enum for OAuth)
+          description: Internal identifier for the provider (matches OAuthProvider enum for OAuth)
         displayName:
           type: string
           example: "Discord"

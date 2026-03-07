@@ -429,17 +429,6 @@ paths:
 
 components:
   schemas:
-    # Shared Enum Definitions (consolidated to avoid duplication)
-    AuthProvider:
-      type: string
-      description: All authentication provider types including email
-      enum: [Email, Google, Discord, Twitch, Steam]
-
-    OAuthProvider:
-      type: string
-      description: OAuth provider types (excludes email)
-      enum: [Google, Discord, Twitch, Steam]
-
     # Request Models for POST-only pattern
     ListAccountsRequest:
       type: object
@@ -457,7 +446,7 @@ components:
           description: Filter accounts by display name
         provider:
           allOf:
-          - $ref: '#/components/schemas/AuthProvider'
+          - $ref: 'common-api.yaml#/components/schemas/AuthProvider'
           nullable: true
           description: Filter accounts by authentication provider
         verified:
@@ -552,7 +541,7 @@ components:
       properties:
         provider:
           allOf:
-          - $ref: '#/components/schemas/OAuthProvider'
+          - $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
           description: OAuth provider type
         externalId:
           type: string
@@ -742,7 +731,7 @@ components:
           description: ID of the account to add auth method to
         provider:
           allOf:
-          - $ref: '#/components/schemas/OAuthProvider'
+          - $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
           description: OAuth provider type to add
         externalId:
           type: string
@@ -839,7 +828,7 @@ components:
           description: Unique identifier for the authentication method
         provider:
           allOf:
-          - $ref: '#/components/schemas/AuthProvider'
+          - $ref: 'common-api.yaml#/components/schemas/AuthProvider'
           description: Authentication provider type
         externalId:
           type: string
@@ -869,7 +858,7 @@ components:
           description: Unique identifier for the authentication method
         provider:
           allOf:
-          - $ref: '#/components/schemas/OAuthProvider'
+          - $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
           description: OAuth provider type
         externalId:
           type: string

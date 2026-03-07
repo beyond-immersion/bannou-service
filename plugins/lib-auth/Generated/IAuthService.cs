@@ -42,7 +42,7 @@ public partial interface IAuthService : IBannouService
         /// <summary>
         /// CompleteOAuth operation
         /// </summary>
-        Task<(StatusCodes, AuthResponse?)> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, AuthResponse?)> CompleteOAuthAsync(OAuthProvider provider, OAuthCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// VerifySteamAuth operation

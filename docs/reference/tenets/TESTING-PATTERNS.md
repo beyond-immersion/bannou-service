@@ -190,6 +190,65 @@ public void MyService_ConstructorIsValid() =>
 
 ---
 
+## Enum Boundary Mapping Tests (REQUIRED)
+
+Every plugin that maps between enum types — SDK boundary (A2), subset/superset, or lossy switch — MUST have corresponding unit tests using `EnumMappingValidator` from `test-utilities`. These tests catch value drift at compile/test time rather than at runtime.
+
+### Infrastructure
+
+- **`bannou-service/EnumMapping.cs`** — Shared extension methods:
+  - `MapByName<TSource, TTarget>()` — name-matching conversion (throws on no match)
+  - `MapByNameOrDefault<TSource, TTarget>(fallback)` — name-matching with fallback for superset→subset
+  - `TryMapByName<TSource, TTarget>(out result)` — non-throwing name-matching
+- **`test-utilities/EnumMappingValidator.cs`** — Test assertion helpers
+
+### Validation Patterns
+
+| Pattern | Validator Method | When to Use |
+|---------|-----------------|-------------|
+| **Identical enums** | `AssertFullCoverage<TA, TB>()` | A2 boundaries where schema and SDK have the same values |
+| **Superset→subset** | `AssertSupersetToSubsetMapping<TSuper, TSub>(extras...)` | SDK has extra values not in schema; validates relationship AND enumerates expected extras |
+| **Subset only** | `AssertSubset<TSubset, TSuperset>()` | One-directional check that all subset values exist in superset |
+| **Lossy switch** | `AssertSwitchCoversAllValues<TSource>(func)` | Explicit switch expression where values map to different names |
+
+### Which Runtime Helper + Which Test
+
+| Mapping Type | Runtime Helper | Test Pattern |
+|-------------|---------------|-------------|
+| Identical names, no lossy mapping | `MapByName` | `AssertFullCoverage` |
+| Superset→subset (shared values match by name) | `MapByName` (subset→super), `MapByNameOrDefault` (super→subset) | `AssertSupersetToSubsetMapping` |
+| Lossy or name-mismatched | Explicit `switch` expression | `AssertSwitchCoversAllValues` |
+
+### Example
+
+```csharp
+[Fact]
+public void ArcType_FullCoverage()
+{
+    EnumMappingValidator.AssertFullCoverage<ArcType, StorylineTheory.ArcType>();
+}
+
+[Fact]
+public void ChordQuality_SupersetMapping()
+{
+    EnumMappingValidator.AssertSupersetToSubsetMapping<
+        MusicTheory.ChordQuality, ChordSymbolQuality>(
+        MusicTheory.ChordQuality.MinorMajor7,
+        MusicTheory.ChordQuality.Power);
+}
+
+[Fact]
+public void KeyMode_LossySwitch()
+{
+    EnumMappingValidator.AssertSwitchCoversAllValues<KeySignatureMode>(
+        mode => MusicService.MapKeyModeToModeType(mode));
+}
+```
+
+> **Boundary classification**: A1 (third-party library), A2 (plugin SDK), A3 (domain decision), A4 (protocol) are acceptable boundaries needing mapping tests. V1–V5 are violations to fix, not test around. See SCHEMA-RULES.md § "Enum Boundary Classification" for full definitions.
+
+---
+
 ## Test Structure Guidelines
 
 ### Arrange:Assert Ratio

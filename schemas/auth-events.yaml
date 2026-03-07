@@ -276,7 +276,7 @@ components:
           format: uuid
           description: ID of the account that logged in
         provider:
-          $ref: 'auth-api.yaml#/components/schemas/Provider'
+          $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
           description: OAuth provider name
         providerUserId:
           type: string

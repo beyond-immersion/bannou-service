@@ -16,6 +16,7 @@
 #   - service: Primary service that owns this store
 #   - purpose: Human-readable description
 #   - enableSearch: Enable RedisSearch full-text indexing (redis only)
+#   - indirectOnly: true if store is accessed only via IRedisOperations/Lua (not GetStore)
 #
 # Generated artifacts:
 #   - bannou-service/Generated/StateStoreDefinitions.cs
@@ -568,6 +569,7 @@ x-state-stores:
     prefix: "mesh:cb"
     service: Mesh
     purpose: Distributed circuit breaker state for cross-instance failure tracking
+    indirectOnly: true
 
   # ============================================================================
   # Music Stores

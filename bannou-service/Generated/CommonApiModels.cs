@@ -181,6 +181,55 @@ public enum SentimentCategory
 #pragma warning restore CS1591
 
 /// <summary>
+/// OAuth provider types (excludes email). Subset of AuthProvider.
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum OAuthProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Google")]
+    Google = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Discord")]
+    Discord = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Twitch")]
+    Twitch = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Steam")]
+    Steam = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// All authentication provider types including email. Superset of OAuthProvider.
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Email")]
+    Email = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Google")]
+    Google = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Discord")]
+    Discord = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Twitch")]
+    Twitch = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Steam")]
+    Steam = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Individual API endpoint with permission requirements.
 /// <br/>Extracted from OpenAPI schema x-permissions sections.
 /// <br/>

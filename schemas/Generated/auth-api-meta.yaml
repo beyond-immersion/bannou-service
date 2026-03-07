@@ -177,7 +177,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: '#/components/schemas/Provider'
+          $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
       - name: redirectUri
         in: query
         required: true
@@ -218,7 +218,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: '#/components/schemas/Provider'
+          $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
       requestBody:
         required: true
         content:
@@ -762,7 +762,7 @@ paths:
         : false,\n            \"required\": [\n                \"name\",\n                \"displayName\",\n             \
         \   \"authType\"\n            ],\n            \"properties\": {\n                \"name\": {\n                   \
         \ \"type\": \"string\",\n                    \"example\": \"discord\",\n                    \"description\": \"Internal
-        identifier for the provider (matches Provider enum for OAuth)\"\n                },\n                \"displayName\"\
+        identifier for the provider (matches OAuthProvider enum for OAuth)\"\n                },\n                \"displayName\"\
         : {\n                    \"type\": \"string\",\n                    \"example\": \"Discord\",\n                  \
         \  \"description\": \"Human-readable name for the provider\"\n                },\n                \"authType\": {\n\
         \                    \"$ref\": \"#/$defs/AuthType\",\n                    \"description\": \"Authentication mechanism
@@ -1026,14 +1026,6 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    Provider:
-      type: string
-      enum:
-      - Google
-      - Discord
-      - Twitch
-      - Steam
-      description: Authentication provider type
     EmailProvider:
       type: string
       enum:
@@ -1588,7 +1580,7 @@ components:
         name:
           type: string
           example: "discord"
-          description: Internal identifier for the provider (matches Provider enum for OAuth)
+          description: Internal identifier for the provider (matches OAuthProvider enum for OAuth)
         displayName:
           type: string
           example: "Discord"

@@ -1,10 +1,8 @@
 openapi: 3.0.4
 info:
   title: Account Service Events Lifecycle Events
-  description: "AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.\nDO NOT EDIT - Regenerate
-    with scripts/resolve-event-refs.py\nSource: account-lifecycle-events.yaml\n\nAuto-generated lifecycle event schemas for
-    account service.\nDO NOT EDIT - This file is completely overwritten by generate-lifecycle-events.py.\nSource of truth:
-    account-events.yaml x-lifecycle section."
+  description: "Auto-generated lifecycle event schemas for account service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: account-events.yaml x-lifecycle section."
   version: 1.0.0
 paths: {}
 components:
@@ -184,7 +182,7 @@ components:
 
     AuthProvider:
       type: string
-      description: All authentication provider types including email
+      description: All authentication provider types including email. Superset of OAuthProvider.
       enum: [Email, Google, Discord, Twitch, Steam]
 x-inlined-types:
 - AuthMethodInfo

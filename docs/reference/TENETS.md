@@ -197,7 +197,7 @@ Tenets are organized into categories based on when they're needed:
 |---|------|-----------|
 | **T4** | Infrastructure Libs Pattern | MUST use lib-state, lib-messaging, lib-mesh; direct DB/queue access forbidden; L0/L1/L2 dependencies are hard (fail at startup) |
 | **T5** | Event-Driven Architecture | All state changes publish typed events; no anonymous objects |
-| **T6** | Service Implementation Pattern | Partial class structure with standardized dependencies |
+| **T6** | Service Implementation Pattern | Partial class structure with standardized dependencies; state store key builders with `Build*Key()` methods |
 | **T13** | X-Permissions Usage | All endpoints declare x-permissions; `[]` = service-only (no WebSocket); `role: anonymous` = pre-auth public. See [ENDPOINT-PERMISSION-GUIDELINES.md](ENDPOINT-PERMISSION-GUIDELINES.md) for the decision framework |
 | **T15** | Browser-Facing Endpoints | GET/path-params only for OAuth, Website, WebSocket upgrade (exceptional) |
 | **T18** | Licensing Requirements | MIT/BSD/Apache only; GPL forbidden for linked code |
@@ -284,6 +284,9 @@ Tenets are organized into categories based on when they're needed:
 | Storing `IStateStoreFactory` as a field when only used in constructor | T4, T6 | Use constructor parameter directly; do not store as field |
 | BackgroundService passing `IStateStoreFactory` to sub-methods | T6 | Resolve stores once per scope, pass `IStateStore<T>` references |
 | BackgroundService calling `GetStore<T>()` per sub-method | T6 | Acquire all stores once at scope creation, pass as parameters |
+| Inline string interpolation for state store keys | T6 | Use `Build*Key()` method with `const` prefix |
+| `private static` key builder method | T6 | Use `internal static` for provider/test accessibility |
+| `Get*Key` naming for key construction | T6 | Use `Build*Key` — `Get` implies store retrieval |
 | Missing x-permissions on endpoint | T13 | Add to schema; use `[]` for service-to-service only, `role: anonymous` for pre-auth public |
 | GPL library in NuGet package | T18 | Use MIT/BSD alternative |
 | Missing event consumer registration | T3 | Add RegisterEventConsumers call |
@@ -310,6 +313,7 @@ Tenets are organized into categories based on when they're needed:
 | Hardcoded magic number for tunable | T21 | Define in configuration schema, use config |
 | Defined cache store not used | T21 | Implement cache read-through or remove store |
 | Secondary fallback for defaulted config property | T21 | Remove fallback; if null, throw (infrastructure failure) |
+| Comma-delimited string for structured config (`"A,B,C"` parsed at runtime) | T21 | Define individual typed properties or array with `$ref` enum items in config schema |
 | Non-async Task-returning method | T23 | Add `async` keyword and `await Task.CompletedTask` if no other await exists |
 | Non-async ValueTask-returning method | T23 | Add `async` keyword; return value directly instead of `ValueTask.FromResult` |
 | `Task.FromResult` without async | T23 | Use `async` method with `await Task.CompletedTask` |
@@ -331,6 +335,10 @@ Tenets are organized into categories based on when they're needed:
 | String `ownerType`/`entityType` for L2+ entity references | T14, T25 | Use `$ref: EntityType` — hierarchy isolation only applies to L1 enumerating L2+ types |
 | Service-specific enum duplicating EntityType values | T14 | Use `$ref: EntityType` unless valid set includes non-entity roles (see T14 decision tree) |
 | L2 service using opaque string for entity types within L1/L2 | T14, T25 | EntityType is appropriate — hierarchy isolation does not apply within same layer or lower |
+| Enum defined only in C# code (no schema definition) | T1, T25 | Define in service `-api.yaml` or `common-api.yaml`; generate, don't hand-write |
+| Hand-written duplicate enum in `*ServiceModels.cs` mirroring generated type | T25 | Use the generated enum directly; internal model duplicates are V4 violations |
+| A2 SDK boundary enum mapping without `EnumMappingValidator` test | T11, T25 | Add `AssertFullCoverage` / `AssertSupersetToSubsetMapping` test (see TESTING-PATTERNS.md) |
+| `x-sdk-type` referencing non-Core SDK namespace enum | T1 | SDK boundary enums belong in plugin code with A2 mapping; schema enums use `common-api.yaml` or service `-api.yaml` |
 | Using `Guid.Empty` to mean "none" | T26 | Make field `Guid?` nullable |
 | Using `-1` to mean "no index" | T26 | Make field `int?` nullable |
 | Using empty string for "absent" | T26 | Make field `string?` nullable |

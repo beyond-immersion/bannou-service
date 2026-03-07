@@ -1079,6 +1079,67 @@ Do NOT define enums that enumerate services, resources, or entity types from oth
 
 **Full decision tree**: See IMPLEMENTATION TENETS T14 for the authoritative three-category classification (Category A: entity references → EntityType, Category B: game content codes → string, Category C: system state → service-specific enum).
 
+### Where to Define Enums (Location Decision Tree)
+
+When adding a new enum, apply these tests in order — stop at the first match:
+
+| Test | Condition | Location | Example |
+|------|-----------|----------|---------|
+| 1 | System-wide primitive used by **3+ services**? | `common-api.yaml` | `EntityType`, `ServiceHealthStatus` |
+| 2 | Identity-boundary concept (T32)? | `common-api.yaml` | `OAuthProvider`, `AuthProvider` |
+| 3 | Domain SDK type (MusicTheory, StorylineTheory, etc.)? | Service `-api.yaml` + A2 boundary mapping | `KeySignatureMode` in `music-api.yaml` |
+| 4 | Service-specific system state/mode? | Owning service's `-api.yaml` | `ContractStatus`, `SaveCategory` |
+| 5 | Game-configurable content extensible at deployment? | Opaque `string` (T14 Category B) | `seedType`, `collectionType` |
+
+**Promotion threshold**: An enum used by fewer than 3 services stays in the owning service's `-api.yaml`. Once 3+ services reference it, move it to `common-api.yaml` and have all services `$ref` from there. Identity-boundary concepts (test 2) go to `common-api.yaml` regardless of consumer count.
+
+**This decision tree is complementary to T14's polymorphic type field decision tree** (in IMPLEMENTATION-DATA.md). T14 answers "what *type* should this polymorphic field be?" (EntityType vs opaque string vs service-specific enum). This tree answers "where should the enum *live* in the schema hierarchy?" Both apply when adding new enums; neither replaces the other.
+
+### Code-Only Enums Are Always Wrong
+
+If an enum exists only in C# code (not in any schema), it violates the schema-first principle. Either define it in the appropriate schema and generate it, or use an existing schema-defined enum.
+
+The only exception is enums that genuinely cannot be schema-defined — internal compiler/interpreter states covered by T1's standalone runtime/interpreter exemption (e.g., ABML bytecode opcodes).
+
+```csharp
+// WRONG: Code-only enum duplicating a schema-defined enum
+public enum SubscriptionExchangeType { Fanout, Direct, Topic }  // Use generated ExchangeType
+
+// CORRECT: Use the schema-generated enum everywhere
+await _subscriber.SubscribeDynamicAsync<T>(topic, handler, ExchangeType.Direct);
+```
+
+### When Separate Enum Definitions Are Correct
+
+OpenAPI (3.0.x and 3.1.x) has **no native mechanism** for defining enum subsets or supersets. JSON Schema's constraint system only adds constraints, never removes them. There is no way to express "`$ref` this enum but restrict to these 3 values." This means separate definitions are the correct pattern when:
+
+1. **API safety subsets**: A writable enum intentionally excludes dangerous values from the full readable enum. Example: Transit's `SettableConnectionStatus` excludes `Destroyed` (system-managed state that callers cannot set directly).
+
+2. **Granularity tiers**: Different concerns need different levels of detail from the same domain concept. Example: `ServiceHealthStatus` (3 values) vs `InstanceHealthStatus` (5 values) vs `EndpointStatus` (4 values) — each tier serves a different audience.
+
+3. **Non-entity role inclusion**: A service-specific enum includes roles that are not in `EntityType` (T14 test 3). Example: Inventory's `ContainerOwnerType` includes `Escrow`, `Mail`, `Vehicle` alongside entity types.
+
+4. **Cross-service schema boundary**: Two services need the same concept but schemas cannot `$ref` each other's API files. If the enum doesn't meet the 3-service threshold for `common-api.yaml`, separate definitions with documented relationships are correct.
+
+**In all cases**: Document the relationship in the enum's schema `description` field (e.g., "Subset of ConnectionStatus excluding system-managed states").
+
+#### Enum Boundary Classification (Audit Reference)
+
+Every enum mapping in the codebase falls into one of these categories:
+
+**Acceptable Boundaries (no fix needed)**:
+- **A1 — Third-Party Library**: Mapping between a Bannou enum and an external library type (RabbitMQ, LibGit2Sharp, .NET framework, Redis Lua scripts). Genuine abstraction boundary.
+- **A2 — Plugin SDK Boundary**: Mapping between a schema-generated enum and a domain-specific SDK enum (MusicTheory, StorylineTheory, ABML parser). The plugin defines its own enum in its schema and maps at the boundary.
+- **A3 — Domain Decision Mapping**: Mapping between genuinely different domain concepts (e.g., ScenarioCategory to PoiType). Different concepts with intentional lossy transformation.
+- **A4 — Protocol Boundary**: Mapping between HTTP/WebSocket protocol types and internal types (HttpMethodType to HttpMethod, HttpStatusCode to ResponseCodes).
+
+**Violations (fix required)**:
+- **V1 — Duplicate Enum (identical values)**: Two enums represent the same concept with identical values. Fix: consolidate to one definition.
+- **V2 — Duplicate Enum (subset/superset)**: One enum is a strict subset/superset of another for the same concept. Fix: if values should genuinely differ, document the relationship and keep separate; if identical, consolidate.
+- **V3 — String Where Enum Should Be**: Schema field typed as `string` when valid values are a finite, system-owned set. Fix: define an enum.
+- **V4 — Internal Model Duplicates API Enum**: `*ServiceModels.cs` defines an enum identical to the generated API enum. Fix: use the generated enum directly.
+- **V5 — String Configuration for Enum Values**: Configuration uses a string parsed at runtime into enum values. Fix: use typed enum in configuration schema.
+
 ### Enum Value Casing (PascalCase ONLY)
 
 **ALL enum values in schemas MUST use PascalCase.** No exceptions for snake_case, SCREAMING_SNAKE_CASE, camelCase, or kebab-case.

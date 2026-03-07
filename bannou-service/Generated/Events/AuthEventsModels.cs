@@ -327,7 +327,7 @@ public partial class AuthOAuthLoginSuccessfulEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Provider Provider { get; set; } = default!;
+    public OAuthProvider Provider { get; set; } = default!;
 
     /// <summary>
     /// User ID from the OAuth provider

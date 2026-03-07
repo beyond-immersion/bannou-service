@@ -159,7 +159,9 @@ def generate_csharp(stores: dict) -> str:
         service = store_config.get('service', 'Unknown')
         purpose = store_config.get('purpose', '').replace('"', '\\"')
         backend = store_config.get('backend', 'redis')
-        lines.append(f'            [{to_constant_name(store_name)}] = new StoreMetadata("{service}", "{purpose}", "{backend}"),')
+        indirect_only = store_config.get('indirectOnly', False)
+        indirect_str = "true" if indirect_only else "false"
+        lines.append(f'            [{to_constant_name(store_name)}] = new StoreMetadata("{service}", "{purpose}", "{backend}", {indirect_str}),')
 
     lines.append("        };")
     lines.append("")
@@ -172,7 +174,8 @@ def generate_csharp(stores: dict) -> str:
     lines.append("/// <param name=\"Service\">Primary service that owns this store.</param>")
     lines.append("/// <param name=\"Purpose\">Human-readable description of the store's purpose.</param>")
     lines.append("/// <param name=\"Backend\">Backend type (redis, mysql, memory).</param>")
-    lines.append("public readonly record struct StoreMetadata(string Service, string Purpose, string Backend);")
+    lines.append("/// <param name=\"IndirectOnly\">True if store is accessed only via IRedisOperations/Lua, not GetStore.</param>")
+    lines.append("public readonly record struct StoreMetadata(string Service, string Purpose, string Backend, bool IndirectOnly = false);")
     lines.append("")
 
     return '\n'.join(lines)

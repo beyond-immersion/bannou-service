@@ -98,7 +98,7 @@ public partial class StatusService : IStatusService
     /// <summary>
     /// Maps an EntityType to ContainerOwnerType for inventory operations.
     /// Name-matched values (Character, Account, Location, Guild) map directly;
-    /// all others fall back to Other. Uses shared EnumMapping helper per ENUM-BOUNDARIES Rule 7.
+    /// all others fall back to Other. Uses shared EnumMapping helper per IMPLEMENTATION TENETS.
     /// </summary>
     internal static ContainerOwnerType MapToContainerOwnerType(EntityType entityType) =>
         entityType.MapByNameOrDefault(ContainerOwnerType.Other);

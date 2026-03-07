@@ -25,6 +25,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService;
 
 
 namespace BeyondImmersion.Bannou.Auth.ClientEvents;
@@ -201,7 +202,7 @@ public partial class AuthExternalAccountLinkedClientEvent : BaseClientEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Provider Provider { get; set; } = default!;
+    public OAuthProvider Provider { get; set; } = default!;
 
 }
 

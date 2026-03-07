@@ -48,19 +48,16 @@ paths:
         accounts by email address\"\n                },\n                \"displayName\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Filter accounts by
         display name\"\n                },\n                \"provider\": {\n                    \"allOf\": [\n          \
-        \              {\n                            \"$ref\": \"#/$defs/AuthProvider\"\n                        }\n    \
-        \                ],\n                    \"nullable\": true,\n                    \"description\": \"Filter accounts
-        by authentication provider\"\n                },\n                \"verified\": {\n                    \"type\": \"\
-        boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Filter accounts by email
-        verification status\"\n                },\n                \"page\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\":
-        \"Page number for pagination\"\n                },\n                \"pageSize\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"\
-        default\": 20,\n                    \"description\": \"Number of accounts per page\"\n                }\n        \
-        \    }\n        },\n        \"AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        All authentication provider types including email\",\n            \"enum\": [\n                \"Email\",\n      \
-        \          \"Google\",\n                \"Discord\",\n                \"Twitch\",\n                \"Steam\"\n   \
-        \         ]\n        }\n    }\n}"
+        \              {\n                            \"type\": \"object\"\n                        }\n                  \
+        \  ],\n                    \"nullable\": true,\n                    \"description\": \"Filter accounts by authentication
+        provider\"\n                },\n                \"verified\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Filter accounts by email verification
+        status\"\n                },\n                \"page\": {\n                    \"type\": \"integer\",\n          \
+        \          \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\": \"Page number
+        for pagination\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n\
+        \                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n\
+        \                    \"description\": \"Number of accounts per page\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountListResponse\"\
         ,\n    \"$defs\": {\n        \"AccountListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Paginated list of accounts\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
@@ -117,17 +114,14 @@ paths:
         \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
         \  },\n                \"provider\": {\n                    \"allOf\": [\n                        {\n            \
-        \                \"$ref\": \"#/$defs/AuthProvider\"\n                        }\n                    ],\n         \
-        \           \"description\": \"Authentication provider type\"\n                },\n                \"externalId\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
-        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"Email\",\n                \"Google\",\n           \
-        \     \"Discord\",\n                \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \                \"type\": \"object\"\n                        }\n                    ],\n                    \"description\"\
+        : \"Authentication provider type\"\n                },\n                \"externalId\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"External user
+        ID from the authentication provider\"\n                },\n                \"displayName\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display
+        name from the authentication provider\"\n                },\n                \"linkedAt\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp
+        when the authentication method was linked\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List accounts with filtering\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listAccounts\"\n}"
   /account/create:
@@ -215,18 +209,15 @@ paths:
         \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
         \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
-        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
-        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
-        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
-        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
-        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
-        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
-        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \               \"allOf\": [\n                        {\n                            \"type\": \"object\"\n      \
+        \                  }\n                    ],\n                    \"description\": \"Authentication provider type\"\
+        \n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"External user ID from the authentication provider\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Display name from the authentication provider\"\
+        \n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication method
+        was linked\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new account\",\n    \"description\": \"\",\n    \"tags\": [\n  \
         \      \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createAccount\"\n}"
   /account/get:
@@ -298,18 +289,15 @@ paths:
         \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
         \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
-        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
-        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
-        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
-        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
-        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
-        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
-        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \               \"allOf\": [\n                        {\n                            \"type\": \"object\"\n      \
+        \                  }\n                    ],\n                    \"description\": \"Authentication provider type\"\
+        \n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"External user ID from the authentication provider\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Display name from the authentication provider\"\
+        \n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication method
+        was linked\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get account by ID\",\n    \"description\": \"\",\n    \"tags\": [\n   \
         \     \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccount\"\n}"
   /account/update:
@@ -392,18 +380,15 @@ paths:
         \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
         \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
-        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
-        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
-        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
-        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
-        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
-        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
-        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \               \"allOf\": [\n                        {\n                            \"type\": \"object\"\n      \
+        \                  }\n                    ],\n                    \"description\": \"Authentication provider type\"\
+        \n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"External user ID from the authentication provider\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Display name from the authentication provider\"\
+        \n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication method
+        was linked\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update account\",\n    \"description\": \"\",\n    \"tags\": [\n      \
         \  \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateAccount\"\n}"
   /account/delete:
@@ -505,18 +490,15 @@ paths:
         \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
         \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
-        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
-        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
-        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
-        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
-        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
-        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
-        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \               \"allOf\": [\n                        {\n                            \"type\": \"object\"\n      \
+        \                  }\n                    ],\n                    \"description\": \"Authentication provider type\"\
+        \n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"External user ID from the authentication provider\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Display name from the authentication provider\"\
+        \n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication method
+        was linked\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get account by email\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Account Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountByEmail\"\n}"
   /account/auth-methods/list:
@@ -560,17 +542,14 @@ paths:
         \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
         \  },\n                \"provider\": {\n                    \"allOf\": [\n                        {\n            \
-        \                \"$ref\": \"#/$defs/AuthProvider\"\n                        }\n                    ],\n         \
-        \           \"description\": \"Authentication provider type\"\n                },\n                \"externalId\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
-        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"Email\",\n                \"Google\",\n           \
-        \     \"Discord\",\n                \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \                \"type\": \"object\"\n                        }\n                    ],\n                    \"description\"\
+        : \"Authentication provider type\"\n                },\n                \"externalId\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"External user
+        ID from the authentication provider\"\n                },\n                \"displayName\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display
+        name from the authentication provider\"\n                },\n                \"linkedAt\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp
+        when the authentication method was linked\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get authentication methods for account\",\n    \"description\": \"\",\n\
         \    \"tags\": [\n        \"Authentication Methods\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
         getAuthMethods\"\n}"
@@ -605,15 +584,13 @@ paths:
         \n            ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the account to
         add auth method to\"\n                },\n                \"provider\": {\n                    \"allOf\": [\n    \
-        \                    {\n                            \"$ref\": \"#/$defs/OAuthProvider\"\n                        }\n\
-        \                    ],\n                    \"description\": \"OAuth provider type to add\"\n                },\n\
-        \                \"externalId\": {\n                    \"type\": \"string\",\n                    \"maxLength\":
-        255,\n                    \"description\": \"External user ID from the OAuth provider\"\n                },\n    \
-        \            \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Display name from the OAuth provider\"\n                }\n            }\n\
-        \        },\n        \"OAuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"OAuth
-        provider types (excludes email)\",\n            \"enum\": [\n                \"Google\",\n                \"Discord\"\
-        ,\n                \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \                    {\n                            \"type\": \"object\"\n                        }\n            \
+        \        ],\n                    \"description\": \"OAuth provider type to add\"\n                },\n           \
+        \     \"externalId\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 255,\n    \
+        \                \"description\": \"External user ID from the OAuth provider\"\n                },\n             \
+        \   \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Display name from the OAuth provider\"\n                }\n            }\n    \
+        \    }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthMethodResponse\"\
         ,\n    \"$defs\": {\n        \"AuthMethodResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after adding an authentication method\",\n            \"additionalProperties\": false,\n            \"\
@@ -621,17 +598,14 @@ paths:
         \      ],\n            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the authentication
         method\"\n                },\n                \"provider\": {\n                    \"allOf\": [\n                \
-        \        {\n                            \"$ref\": \"#/$defs/OAuthProvider\"\n                        }\n         \
-        \           ],\n                    \"description\": \"OAuth provider type\"\n                },\n               \
-        \ \"externalId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"External user ID from the OAuth provider\"\n                },\n                \"\
-        displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Display name from the OAuth provider\"\n                },\n                \"linkedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Timestamp when the authentication method was linked\"\n                }\n            }\n \
-        \       },\n        \"OAuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"OAuth
-        provider types (excludes email)\",\n            \"enum\": [\n                \"Google\",\n                \"Discord\"\
-        ,\n                \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \        {\n                            \"type\": \"object\"\n                        }\n                    ],\n\
+        \                    \"description\": \"OAuth provider type\"\n                },\n                \"externalId\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the OAuth provider\"\n                },\n                \"displayName\": {\n         \
+        \           \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Display name from the OAuth provider\"\n                },\n                \"linkedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp
+        when the authentication method was linked\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Add authentication method to account\",\n    \"description\": \"\",\n \
         \   \"tags\": [\n        \"Authentication Methods\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"addAuthMethod\"\
         \n}"
@@ -695,13 +669,10 @@ paths:
         description\": \"Request to get account by external provider ID\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"provider\",\n                \"externalId\"\n            ],\n    \
         \        \"properties\": {\n                \"provider\": {\n                    \"allOf\": [\n                  \
-        \      {\n                            \"$ref\": \"#/$defs/OAuthProvider\"\n                        }\n           \
-        \         ],\n                    \"description\": \"OAuth provider type\"\n                },\n                \"\
-        externalId\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 255,\n            \
-        \        \"description\": \"External ID from the provider\"\n                }\n            }\n        },\n      \
-        \  \"OAuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"OAuth provider types (excludes
-        email)\",\n            \"enum\": [\n                \"Google\",\n                \"Discord\",\n                \"\
-        Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \      {\n                            \"type\": \"object\"\n                        }\n                    ],\n  \
+        \                  \"description\": \"OAuth provider type\"\n                },\n                \"externalId\": {\n\
+        \                    \"type\": \"string\",\n                    \"maxLength\": 255,\n                    \"description\"\
+        : \"External ID from the provider\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
         ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
@@ -743,18 +714,15 @@ paths:
         \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
         \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
-        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
-        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
-        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
-        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
-        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
-        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
-        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \               \"allOf\": [\n                        {\n                            \"type\": \"object\"\n      \
+        \                  }\n                    ],\n                    \"description\": \"Authentication provider type\"\
+        \n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"External user ID from the authentication provider\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Display name from the authentication provider\"\
+        \n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication method
+        was linked\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get account by external provider ID\",\n    \"description\": \"\",\n  \
         \  \"tags\": [\n        \"Account Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountByProvider\"\
         \n}"
@@ -833,18 +801,15 @@ paths:
         \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
         \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
-        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
-        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
-        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
-        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
-        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
-        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
-        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \               \"allOf\": [\n                        {\n                            \"type\": \"object\"\n      \
+        \                  }\n                    ],\n                    \"description\": \"Authentication provider type\"\
+        \n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"External user ID from the authentication provider\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Display name from the authentication provider\"\
+        \n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication method
+        was linked\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update account profile\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Profile Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateProfile\"\n}"
   /account/password/update:
@@ -1001,17 +966,14 @@ paths:
         methodId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n            \
         \        \"nullable\": true,\n                    \"description\": \"Unique identifier for the authentication method\"\
         \n                },\n                \"provider\": {\n                    \"allOf\": [\n                        {\n\
-        \                            \"$ref\": \"#/$defs/AuthProvider\"\n                        }\n                    ],\n\
-        \                    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
         \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
         \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
-        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"Email\",\n                \"Google\",\n           \
-        \     \"Discord\",\n                \"Twitch\",\n                \"Steam\"\n            ]\n        },\n        \"\
         BulkOperationFailure\": {\n            \"type\": \"object\",\n            \"description\": \"Details of a failed bulk
         operation item\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\"\
         ,\n                \"error\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n  \
@@ -1222,39 +1184,19 @@ paths:
         \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
         \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
-        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
-        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
-        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
-        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
-        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
-        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
-        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
+        \               \"allOf\": [\n                        {\n                            \"type\": \"object\"\n      \
+        \                  }\n                    ],\n                    \"description\": \"Authentication provider type\"\
+        \n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"External user ID from the authentication provider\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Display name from the authentication provider\"\
+        \n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication method
+        was linked\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update account email address\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateEmail\"\n}"
 components:
   schemas:
-    AuthProvider:
-      type: string
-      description: All authentication provider types including email
-      enum:
-      - Email
-      - Google
-      - Discord
-      - Twitch
-      - Steam
-    OAuthProvider:
-      type: string
-      description: OAuth provider types (excludes email)
-      enum:
-      - Google
-      - Discord
-      - Twitch
-      - Steam
     ListAccountsRequest:
       type: object
       description: Request to list accounts with optional filtering
@@ -1271,7 +1213,7 @@ components:
           description: Filter accounts by display name
         provider:
           allOf:
-          - $ref: '#/components/schemas/AuthProvider'
+          - $ref: 'common-api.yaml#/components/schemas/AuthProvider'
           nullable: true
           description: Filter accounts by authentication provider
         verified:
@@ -1360,7 +1302,7 @@ components:
       properties:
         provider:
           allOf:
-          - $ref: '#/components/schemas/OAuthProvider'
+          - $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
           description: OAuth provider type
         externalId:
           type: string
@@ -1542,7 +1484,7 @@ components:
           description: ID of the account to add auth method to
         provider:
           allOf:
-          - $ref: '#/components/schemas/OAuthProvider'
+          - $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
           description: OAuth provider type to add
         externalId:
           type: string
@@ -1638,7 +1580,7 @@ components:
           description: Unique identifier for the authentication method
         provider:
           allOf:
-          - $ref: '#/components/schemas/AuthProvider'
+          - $ref: 'common-api.yaml#/components/schemas/AuthProvider'
           description: Authentication provider type
         externalId:
           type: string
@@ -1667,7 +1609,7 @@ components:
           description: Unique identifier for the authentication method
         provider:
           allOf:
-          - $ref: '#/components/schemas/OAuthProvider'
+          - $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
           description: OAuth provider type
         externalId:
           type: string

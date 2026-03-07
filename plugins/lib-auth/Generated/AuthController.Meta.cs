@@ -1774,7 +1774,7 @@ public partial class AuthController
                 "name": {
                     "type": "string",
                     "example": "discord",
-                    "description": "Internal identifier for the provider (matches Provider enum for OAuth)"
+                    "description": "Internal identifier for the provider (matches OAuthProvider enum for OAuth)"
                 },
                 "displayName": {
                     "type": "string",

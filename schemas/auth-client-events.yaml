@@ -186,7 +186,7 @@ components:
           default: "auth.external-account-linked"
           description: Fixed event type identifier
         provider:
-          $ref: 'auth-api.yaml#/components/schemas/Provider'
+          $ref: 'common-api.yaml#/components/schemas/OAuthProvider'
           description: OAuth provider that was linked
 
     AuthSessionTerminatedClientEvent:

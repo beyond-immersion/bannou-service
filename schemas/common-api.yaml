@@ -78,6 +78,16 @@ components:
         - Bored
         - Hostile
 
+    OAuthProvider:
+      type: string
+      description: OAuth provider types (excludes email). Subset of AuthProvider.
+      enum: [Google, Discord, Twitch, Steam]
+
+    AuthProvider:
+      type: string
+      description: All authentication provider types including email. Superset of OAuthProvider.
+      enum: [Email, Google, Discord, Twitch, Steam]
+
     # ==========================================================================
     # Permission Metadata Types
     # ==========================================================================

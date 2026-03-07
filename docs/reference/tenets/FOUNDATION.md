@@ -468,6 +468,64 @@ public MyWorker(
     ITelemetryProvider telemetryProvider)   // For per-cycle spans
 ```
 
+### State Store Key Builders (MANDATORY)
+
+State store keys MUST be constructed via `const` prefix fields and `internal static` key-building methods. Inline string interpolation at call sites is FORBIDDEN.
+
+**Rules:**
+
+| Rule | Why |
+|------|-----|
+| Key prefixes MUST be `private const string` fields named `*_PREFIX` or `*_KEY_PREFIX` | Single-point definition; prevents typos and multi-point format changes |
+| Keys MUST be constructed via `internal static string Build*Key()` methods | Centralizes format; enables telemetry, testing, and provider access |
+| Builder visibility MUST be `internal static` (not `private static`) | Provider factories and tests in the same assembly need key access |
+| Naming MUST use `Build` prefix (not `Get`) | `Get` implies retrieval from a store; `Build` communicates string construction |
+| Key builders SHOULD be grouped in a `#region Key Building Helpers` block | Discoverability; separates infrastructure from business logic |
+| Inline `$"{PREFIX}{id}"` at call sites is FORBIDDEN | Bypasses the builder, reintroducing the multi-point change and typo risks the pattern eliminates |
+
+**Canonical pattern** (reference: lib-location):
+
+```csharp
+// Prefix constants — single source of truth for key format
+private const string LOCATION_KEY_PREFIX = "location:";
+private const string CODE_INDEX_PREFIX = "code-index:";
+private const string REALM_INDEX_PREFIX = "realm-index:";
+
+#region Key Building Helpers
+
+// internal static — accessible to provider factories and tests in the same assembly
+internal static string BuildLocationKey(Guid locationId)
+    => $"{LOCATION_KEY_PREFIX}{locationId}";
+
+internal static string BuildCodeIndexKey(Guid realmId, string code)
+    => $"{CODE_INDEX_PREFIX}{realmId}:{code.ToUpperInvariant()}";
+
+internal static string BuildRealmIndexKey(Guid realmId)
+    => $"{REALM_INDEX_PREFIX}{realmId}";
+
+#endregion
+
+// Usage in service methods — always call the builder
+var location = await _locationStore.GetAsync(BuildLocationKey(body.LocationId), ct);
+```
+
+```csharp
+// FORBIDDEN: Inline interpolation at call sites
+var location = await _locationStore.GetAsync($"location:{body.LocationId}", ct);
+var location = await _locationStore.GetAsync($"{LOCATION_KEY_PREFIX}{body.LocationId}", ct);
+```
+
+**Why `internal static`**: Provider factories (which live in the same assembly) often need to construct keys for cache loading. For example, Transit's `TransitVariableProviderFactory` calls `TransitService.BuildJourneyKey()`. Using `private` forces the factory to duplicate the key format — violating DRY and creating a drift risk.
+
+**Validation**: `StateStoreKeyValidator.ValidateKeyBuilders<TService>()` in `test-utilities/` verifies the structural pattern via reflection (prefix constants exist, builder methods exist, visibility is correct).
+
+```csharp
+// One-line test per service (same pattern as ServiceConstructorValidator)
+[Fact]
+public void LocationService_HasValidKeyBuilders() =>
+    StateStoreKeyValidator.ValidateKeyBuilders<LocationService>();
+```
+
 ---
 
 ## Tenet 13: X-Permissions Usage (DOCUMENTED)
@@ -1080,6 +1138,9 @@ ownerId:
 | Anonymous event objects | T5 | Define typed event in schema |
 | Manually defining lifecycle events | T5 | Use `x-lifecycle` in events schema |
 | Service class missing `partial` | T6 | Add `partial` keyword |
+| Inline string interpolation for state store keys | T6 | Use `Build*Key()` method with `const` prefix |
+| `private static` key builder method | T6 | Use `internal static` for provider/test accessibility |
+| `Get*Key` naming for key construction | T6 | Use `Build*Key` — `Get` implies store retrieval |
 | Missing x-permissions on endpoint | T13 | Add to schema; use `[]` for service-to-service only, `role: anonymous` for pre-auth public |
 | Designing browser-facing without justification | T15 | Use POST-only WebSocket pattern |
 | GPL library in NuGet package | T18 | Use MIT/BSD alternative |
