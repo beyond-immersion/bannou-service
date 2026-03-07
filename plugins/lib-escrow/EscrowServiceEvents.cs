@@ -173,7 +173,7 @@ public partial class EscrowService
                 FinalizerCount = 0,
                 StartedAt = now
             };
-            await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowFinalizing, finalizingEvent);
+            await _messageBus.PublishEscrowFinalizingAsync(finalizingEvent);
 
             _logger.LogInformation("Escrow {EscrowId} transitioned to Finalizing on contract.fulfilled for contract {ContractId}",
                 escrowId, contractId);
@@ -283,7 +283,7 @@ public partial class EscrowService
                 Resolution = EscrowResolution.Refunded,
                 CompletedAt = now
             };
-            await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowRefunded, refundEvent);
+            await _messageBus.PublishEscrowRefundedAsync(refundEvent);
 
             _logger.LogInformation("Escrow {EscrowId} refunded on contract.terminated for contract {ContractId}",
                 escrowId, contractId);

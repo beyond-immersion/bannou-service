@@ -259,10 +259,7 @@ public class StorageCircuitBreaker
                 FailureCount = failureCount
             };
 
-            await _messageBus.TryPublishAsync(
-                "save-load.circuit-breaker.state-changed",
-                stateChangeEvent,
-                cancellationToken: cancellationToken);
+            await _messageBus.PublishCircuitBreakerStateChangedAsync(stateChangeEvent, cancellationToken);
         }
         catch (Exception ex)
         {

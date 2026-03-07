@@ -257,7 +257,7 @@ public partial class GardenerService : IGardenerService
         await _gardenCacheStore.AddToSetAsync<Guid>(
             ActiveGardensTrackingKey, accountId.Value, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.garden.entered",
+        await _messageBus.PublishGardenerGardenEnteredAsync(
             new GardenerGardenEnteredEvent
             {
                 EventId = Guid.NewGuid(),
@@ -265,7 +265,7 @@ public partial class GardenerService : IGardenerService
                 WebSocketSessionId = body.SessionId,
                 SeedId = activeSeed.SeedId,
                 GardenInstanceId = gardenInstanceId
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         _logger.LogInformation(
             "Created garden instance {GardenInstanceId} for account {AccountId} with seed {SeedId}",
@@ -346,7 +346,7 @@ public partial class GardenerService : IGardenerService
                         PoiKey(garden.GardenInstanceId, poiId), poi, cancellationToken: cancellationToken);
                     triggeredPois.Add(MapToPoiSummary(poi));
 
-                    await _messageBus.TryPublishAsync("gardener.poi.entered",
+                    await _messageBus.PublishGardenerPoiEnteredAsync(
                         new GardenerPoiEnteredEvent
                         {
                             EventId = Guid.NewGuid(),
@@ -354,7 +354,7 @@ public partial class GardenerService : IGardenerService
                             WebSocketSessionId = body.SessionId,
                             PoiId = poiId,
                             ScenarioTemplateId = poi.ScenarioTemplateId
-                        }, cancellationToken: cancellationToken);
+                        }, cancellationToken);
                 }
             }
         }
@@ -408,7 +408,7 @@ public partial class GardenerService : IGardenerService
         await _gardenCacheStore.RemoveFromSetAsync<Guid>(
             ActiveGardensTrackingKey, accountId.Value, cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.garden.left",
+        await _messageBus.PublishGardenerGardenLeftAsync(
             new GardenerGardenLeftEvent
             {
                 EventId = Guid.NewGuid(),
@@ -416,7 +416,7 @@ public partial class GardenerService : IGardenerService
                 WebSocketSessionId = body.SessionId,
                 GardenInstanceId = garden.GardenInstanceId,
                 SessionDurationSeconds = sessionDuration
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         _logger.LogInformation(
             "Garden instance {GardenInstanceId} ended for account {AccountId}, duration {Duration}s",
@@ -527,7 +527,7 @@ public partial class GardenerService : IGardenerService
         await _poiStore.SaveAsync(
             PoiKey(garden.GardenInstanceId, body.PoiId), poi, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.poi.entered",
+        await _messageBus.PublishGardenerPoiEnteredAsync(
             new GardenerPoiEnteredEvent
             {
                 EventId = Guid.NewGuid(),
@@ -535,7 +535,7 @@ public partial class GardenerService : IGardenerService
                 WebSocketSessionId = body.SessionId,
                 PoiId = body.PoiId,
                 ScenarioTemplateId = poi.ScenarioTemplateId
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         return (StatusCodes.OK, new PoiInteractionResponse
         {
@@ -590,7 +590,7 @@ public partial class GardenerService : IGardenerService
         garden.NeedsReEvaluation = true;
         await _gardenStore.SaveAsync(GardenKey(accountId.Value), garden, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.poi.declined",
+        await _messageBus.PublishGardenerPoiDeclinedAsync(
             new GardenerPoiDeclinedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -598,7 +598,7 @@ public partial class GardenerService : IGardenerService
                 WebSocketSessionId = body.SessionId,
                 PoiId = body.PoiId,
                 ScenarioTemplateId = poi.ScenarioTemplateId
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         return (StatusCodes.OK, new DeclinePoiResponse());
     }
@@ -748,7 +748,7 @@ public partial class GardenerService : IGardenerService
         }
         await _gardenStore.DeleteAsync(GardenKey(accountId.Value), cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.scenario.started",
+        await _messageBus.PublishGardenerScenarioStartedAsync(
             new GardenerScenarioStartedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -758,7 +758,7 @@ public partial class GardenerService : IGardenerService
                 GameSessionId = gameSession.SessionId,
                 WebSocketSessionId = body.SessionId,
                 SeedId = garden.SeedId
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         // Notify Puppetmaster if available (L4 soft dependency)
         var puppetmasterClient = _serviceProvider.GetService<IPuppetmasterClient>();
@@ -855,7 +855,7 @@ public partial class GardenerService : IGardenerService
         // Clean up game session by having participant leave
         await TryCleanupGameSessionAsync(scenario, cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.scenario.completed",
+        await _messageBus.PublishGardenerScenarioCompletedAsync(
             new GardenerScenarioCompletedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -864,7 +864,7 @@ public partial class GardenerService : IGardenerService
                 ScenarioTemplateId = scenario.ScenarioTemplateId,
                 WebSocketSessionId = body.SessionId,
                 GrowthAwarded = growthAwarded
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         _logger.LogInformation(
             "Scenario {ScenarioId} completed for account {AccountId}, growth awarded in {DomainCount} domains",
@@ -931,14 +931,14 @@ public partial class GardenerService : IGardenerService
 
         await TryCleanupGameSessionAsync(scenario, cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.scenario.abandoned",
+        await _messageBus.PublishGardenerScenarioAbandonedAsync(
             new GardenerScenarioAbandonedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 ScenarioInstanceId = scenario.ScenarioInstanceId,
                 WebSocketSessionId = body.SessionId
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         _logger.LogInformation(
             "Scenario {ScenarioId} abandoned by account {AccountId}",
@@ -1037,7 +1037,7 @@ public partial class GardenerService : IGardenerService
 
         await _scenarioStore.SaveAsync(ScenarioKey(accountId.Value), newScenario, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.scenario.chained",
+        await _messageBus.PublishGardenerScenarioChainedAsync(
             new GardenerScenarioChainedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1046,7 +1046,7 @@ public partial class GardenerService : IGardenerService
                 NewScenarioInstanceId = newScenarioId,
                 WebSocketSessionId = body.SessionId,
                 ChainDepth = newScenario.ChainDepth
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         _logger.LogInformation(
             "Scenario chained: {PrevId} -> {NewId} (depth {Depth}) for account {AccountId}",
@@ -1109,7 +1109,7 @@ public partial class GardenerService : IGardenerService
 
         await _templateStore.SaveAsync(TemplateKey(templateId), template, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.scenario-template.created",
+        await _messageBus.PublishScenarioTemplateCreatedAsync(
             new ScenarioTemplateCreatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1123,7 +1123,7 @@ public partial class GardenerService : IGardenerService
                 Status = template.Status,
                 CreatedAt = now,
                 UpdatedAt = now
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         _logger.LogInformation(
             "Created scenario template {TemplateId} with code {Code}", templateId, body.Code);
@@ -1245,7 +1245,7 @@ public partial class GardenerService : IGardenerService
         template.UpdatedAt = DateTimeOffset.UtcNow;
         await _templateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.scenario-template.updated",
+        await _messageBus.PublishScenarioTemplateUpdatedAsync(
             new ScenarioTemplateUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1259,7 +1259,7 @@ public partial class GardenerService : IGardenerService
                 Status = template.Status,
                 CreatedAt = template.CreatedAt,
                 UpdatedAt = template.UpdatedAt
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         _logger.LogInformation(
             "Updated scenario template {TemplateId}", body.ScenarioTemplateId);
@@ -1293,7 +1293,7 @@ public partial class GardenerService : IGardenerService
         template.UpdatedAt = DateTimeOffset.UtcNow;
         await _templateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.scenario-template.updated",
+        await _messageBus.PublishScenarioTemplateUpdatedAsync(
             new ScenarioTemplateUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1307,7 +1307,7 @@ public partial class GardenerService : IGardenerService
                 Status = template.Status,
                 CreatedAt = template.CreatedAt,
                 UpdatedAt = template.UpdatedAt
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         _logger.LogInformation(
             "Deprecated scenario template {TemplateId} ({Code})",
@@ -1360,14 +1360,14 @@ public partial class GardenerService : IGardenerService
         // Publish phase change event if phase changed
         if (body.CurrentPhase != null && body.CurrentPhase.Value != previousPhase)
         {
-            await _messageBus.TryPublishAsync("gardener.phase.changed",
+            await _messageBus.PublishGardenerPhaseChangedAsync(
                 new GardenerPhaseChangedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     PreviousPhase = previousPhase,
                     NewPhase = body.CurrentPhase.Value
-                }, cancellationToken: cancellationToken);
+                }, cancellationToken);
 
             _logger.LogInformation(
                 "Deployment phase changed from {PreviousPhase} to {NewPhase}",
@@ -1577,7 +1577,7 @@ public partial class GardenerService : IGardenerService
             await _gardenStore.DeleteAsync(GardenKey(garden.AccountId), cancellationToken);
         }
 
-        await _messageBus.TryPublishAsync("gardener.bond.entered-together",
+        await _messageBus.PublishGardenerBondEnteredTogetherAsync(
             new GardenerBondEnteredTogetherEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1586,7 +1586,7 @@ public partial class GardenerService : IGardenerService
                 ScenarioInstanceId = scenarioId,
                 ScenarioTemplateId = body.ScenarioTemplateId,
                 ParticipantSessionIds = gardens.Select(g => g.SessionId).ToList()
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
         _logger.LogInformation(
             "Bond scenario {ScenarioId} started for bond {BondId} with {Count} participants",

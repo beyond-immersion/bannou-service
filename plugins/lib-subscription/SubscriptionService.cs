@@ -43,9 +43,6 @@ public partial class SubscriptionService : ISubscriptionService
     private const string SERVICE_SUBSCRIPTIONS_PREFIX = "service-subscriptions:";
     internal const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
 
-    // Event topics
-    private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
-
     /// <summary>
     /// Creates a new instance of the SubscriptionService.
     /// </summary>
@@ -664,7 +661,7 @@ public partial class SubscriptionService : ISubscriptionService
                 : null
         };
 
-        await _messageBus.TryPublishAsync(SUBSCRIPTION_UPDATED_TOPIC, eventData);
+        await _messageBus.PublishSubscriptionUpdatedAsync(eventData);
 
         _logger.LogDebug("Published subscription.updated event for {SubscriptionId} with action {Action}",
             model.SubscriptionId, action);

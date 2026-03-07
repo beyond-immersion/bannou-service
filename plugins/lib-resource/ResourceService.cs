@@ -198,8 +198,7 @@ public partial class ResourceService : IResourceService
 
             // Publish grace period started event
             var gracePeriodEndsAt = now.AddSeconds(_configuration.DefaultGracePeriodSeconds);
-            await _messageBus.TryPublishAsync(
-                "resource.grace-period.started",
+            await _messageBus.PublishResourceGracePeriodStartedAsync(
                 new ResourceGracePeriodStartedEvent
                 {
                     ResourceType = body.ResourceType,
@@ -667,8 +666,7 @@ public partial class ResourceService : IResourceService
                         body.ResourceType, body.ResourceId);
 
                     // Publish failure event for monitoring
-                    await _messageBus.TryPublishAsync(
-                        "resource.cleanup.callback-failed",
+                    await _messageBus.PublishResourceCleanupCallbackFailedAsync(
                         new ResourceCleanupCallbackFailedEvent
                         {
                             ResourceType = body.ResourceType,
@@ -1040,8 +1038,7 @@ public partial class ResourceService : IResourceService
                         body.ResourceType, body.ResourceId);
 
                     // Publish failure event
-                    await _messageBus.TryPublishAsync(
-                        "resource.compress.callback-failed",
+                    await _messageBus.PublishResourceCompressCallbackFailedAsync(
                         new ResourceCompressCallbackFailedEvent
                         {
                             EventId = Guid.NewGuid(),
@@ -1094,8 +1091,7 @@ public partial class ResourceService : IResourceService
                 });
 
                 // Publish failure event
-                await _messageBus.TryPublishAsync(
-                    "resource.compress.callback-failed",
+                await _messageBus.PublishResourceCompressCallbackFailedAsync(
                     new ResourceCompressCallbackFailedEvent
                     {
                         EventId = Guid.NewGuid(),
@@ -1202,8 +1198,7 @@ public partial class ResourceService : IResourceService
         }
 
         // Publish compressed event
-        await _messageBus.TryPublishAsync(
-            "resource.compressed",
+        await _messageBus.PublishResourceCompressedAsync(
             new ResourceCompressedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1404,8 +1399,7 @@ public partial class ResourceService : IResourceService
         var failed = callbackResults.Where(r => !r.Success).Select(r => r.SourceType).ToList();
         if (succeeded.Count > 0)
         {
-            await _messageBus.TryPublishAsync(
-                "resource.decompressed",
+            await _messageBus.PublishResourceDecompressedAsync(
                 new ResourceDecompressedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -1978,8 +1972,7 @@ public partial class ResourceService : IResourceService
             snapshotId, body.ResourceType, body.ResourceId, snapshotEntries.Count, expiresAt);
 
         // Publish snapshot created event
-        await _messageBus.TryPublishAsync(
-            "resource.snapshot.created",
+        await _messageBus.PublishResourceSnapshotCreatedAsync(
             new ResourceSnapshotCreatedEvent
             {
                 EventId = Guid.NewGuid(),

@@ -38,14 +38,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     private const string LORE_KEY_PREFIX = "realm-lore-";
     private const string PARTICIPATION_INDEX_KEY_PREFIX = "realm-participation-index-";
 
-    // Event topics
-    private const string PARTICIPATION_RECORDED_TOPIC = "realm-history.participation.recorded";
-    private const string PARTICIPATION_DELETED_TOPIC = "realm-history.participation.deleted";
-    private const string LORE_CREATED_TOPIC = "realm-history.lore.created";
-    private const string LORE_UPDATED_TOPIC = "realm-history.lore.updated";
-    private const string LORE_DELETED_TOPIC = "realm-history.lore.deleted";
-    private const string HISTORY_DELETED_TOPIC = "realm-history.deleted";
-
     /// <summary>
     /// Initializes the RealmHistory service with required dependencies.
     /// </summary>
@@ -166,7 +158,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         }
 
         // Publish typed event per FOUNDATION TENETS
-        await _messageBus.TryPublishAsync(PARTICIPATION_RECORDED_TOPIC, new RealmParticipationRecordedEvent
+        await _messageBus.PublishRealmParticipationRecordedAsync(new RealmParticipationRecordedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -174,7 +166,7 @@ public partial class RealmHistoryService : IRealmHistoryService
             HistoricalEventId = body.EventId,
             ParticipationId = participationId,
             Role = body.Role
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         // Register realm reference with lib-resource for cleanup coordination
         await RegisterRealmReferenceAsync(participationId.ToString(), body.RealmId, cancellationToken);
@@ -308,14 +300,14 @@ public partial class RealmHistoryService : IRealmHistoryService
         }
 
         // Publish typed event per FOUNDATION TENETS
-        await _messageBus.TryPublishAsync(PARTICIPATION_DELETED_TOPIC, new RealmParticipationDeletedEvent
+        await _messageBus.PublishRealmParticipationDeletedAsync(new RealmParticipationDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ParticipationId = body.ParticipationId,
             RealmId = data.RealmId,
             HistoricalEventId = data.EventId
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogDebug("Deleted participation {ParticipationId}", body.ParticipationId);
         return StatusCodes.OK;
@@ -454,27 +446,27 @@ public partial class RealmHistoryService : IRealmHistoryService
         var now = DateTimeOffset.UtcNow;
         if (result.IsNew)
         {
-            await _messageBus.TryPublishAsync(LORE_CREATED_TOPIC, new RealmLoreCreatedEvent
+            await _messageBus.PublishRealmLoreCreatedAsync(new RealmLoreCreatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 RealmId = body.RealmId,
                 ElementCount = result.Backstory.Elements.Count
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             // Register realm reference with lib-resource for cleanup coordination (only on new lore)
             await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
         }
         else
         {
-            await _messageBus.TryPublishAsync(LORE_UPDATED_TOPIC, new RealmLoreUpdatedEvent
+            await _messageBus.PublishRealmLoreUpdatedAsync(new RealmLoreUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 RealmId = body.RealmId,
                 ElementCount = result.Backstory.Elements.Count,
                 ReplaceExisting = body.ReplaceExisting
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
         }
 
         _logger.LogDebug("Lore {Action} for realm {RealmId}, {Count} elements",
@@ -540,27 +532,27 @@ public partial class RealmHistoryService : IRealmHistoryService
         var now = DateTimeOffset.UtcNow;
         if (result.IsNew)
         {
-            await _messageBus.TryPublishAsync(LORE_CREATED_TOPIC, new RealmLoreCreatedEvent
+            await _messageBus.PublishRealmLoreCreatedAsync(new RealmLoreCreatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 RealmId = body.RealmId,
                 ElementCount = result.Backstory.Elements.Count
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             // Register realm reference with lib-resource for cleanup coordination (only on new lore)
             await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
         }
         else
         {
-            await _messageBus.TryPublishAsync(LORE_UPDATED_TOPIC, new RealmLoreUpdatedEvent
+            await _messageBus.PublishRealmLoreUpdatedAsync(new RealmLoreUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 RealmId = body.RealmId,
                 ElementCount = result.Backstory.Elements.Count,
                 ReplaceExisting = false
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
         }
 
         _logger.LogDebug("Lore element {Action} for realm {RealmId}, now {Count} elements",
@@ -599,12 +591,12 @@ public partial class RealmHistoryService : IRealmHistoryService
         await UnregisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
 
         // Publish typed event per FOUNDATION TENETS
-        await _messageBus.TryPublishAsync(LORE_DELETED_TOPIC, new RealmLoreDeletedEvent
+        await _messageBus.PublishRealmLoreDeletedAsync(new RealmLoreDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RealmId = body.RealmId
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogDebug("Deleted lore for realm {RealmId}", body.RealmId);
         return StatusCodes.OK;
@@ -672,14 +664,14 @@ public partial class RealmHistoryService : IRealmHistoryService
         var loreDeleted = loreLockResult.Value;
 
         // Publish typed event per FOUNDATION TENETS
-        await _messageBus.TryPublishAsync(HISTORY_DELETED_TOPIC, new RealmHistoryDeletedEvent
+        await _messageBus.PublishRealmHistoryDeletedAsync(new RealmHistoryDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RealmId = body.RealmId,
             ParticipationsDeleted = participationsDeleted,
             LoreDeleted = loreDeleted
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogDebug(
             "Deleted all history for realm {RealmId}: {ParticipationsDeleted} participations, lore={LoreDeleted}",

@@ -243,8 +243,7 @@ public partial class StatusService : IStatusService
         await _templateStore.SaveAsync(codeKey, model, cancellationToken: cancellationToken);
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync(
-            "status.template.created",
+        await _messageBus.PublishStatusTemplateCreatedAsync(
             new StatusTemplateCreatedEvent
             {
                 StatusTemplateId = templateId,
@@ -258,7 +257,7 @@ public partial class StatusService : IStatusService
                 IsDeprecated = false,
                 CreatedAt = now
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         _logger.LogInformation(
             "Created status template {Code} ({TemplateId}) for game service {GameServiceId}",
@@ -441,8 +440,7 @@ public partial class StatusService : IStatusService
             TemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync(
-            "status.template.updated",
+        await _messageBus.PublishStatusTemplateUpdatedAsync(
             new StatusTemplateUpdatedEvent
             {
                 StatusTemplateId = template.StatusTemplateId,
@@ -460,7 +458,7 @@ public partial class StatusService : IStatusService
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = changedFields
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         _logger.LogInformation(
             "Updated status template {TemplateId} fields: {Fields}",
@@ -517,8 +515,7 @@ public partial class StatusService : IStatusService
         await _templateStore.SaveAsync(
             TemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync(
-            "status.template.updated",
+        await _messageBus.PublishStatusTemplateUpdatedAsync(
             new StatusTemplateUpdatedEvent
             {
                 StatusTemplateId = template.StatusTemplateId,
@@ -536,7 +533,7 @@ public partial class StatusService : IStatusService
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         _logger.LogInformation(
             "Deprecated status template {TemplateId} ({Code}): {Reason}",
@@ -593,8 +590,7 @@ public partial class StatusService : IStatusService
         await _templateStore.SaveAsync(
             TemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync(
-            "status.template.updated",
+        await _messageBus.PublishStatusTemplateUpdatedAsync(
             new StatusTemplateUpdatedEvent
             {
                 StatusTemplateId = template.StatusTemplateId,
@@ -610,7 +606,7 @@ public partial class StatusService : IStatusService
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         _logger.LogInformation(
             "Undeprecated status template {TemplateId} ({Code})",
@@ -667,8 +663,7 @@ public partial class StatusService : IStatusService
             TemplateCodeKey(template.GameServiceId, template.Code), cancellationToken);
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync(
-            "status.template.deleted",
+        await _messageBus.PublishStatusTemplateDeletedAsync(
             new StatusTemplateDeletedEvent
             {
                 StatusTemplateId = template.StatusTemplateId,
@@ -685,7 +680,7 @@ public partial class StatusService : IStatusService
                 CreatedAt = template.CreatedAt,
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         _logger.LogInformation(
             "Deleted status template {TemplateId} ({Code})",
@@ -770,8 +765,7 @@ public partial class StatusService : IStatusService
             await _templateStore.SaveAsync(TemplateIdKey(templateId), model, cancellationToken: cancellationToken);
             await _templateStore.SaveAsync(codeKey, model, cancellationToken: cancellationToken);
 
-            await _messageBus.TryPublishAsync(
-                "status.template.created",
+            await _messageBus.PublishStatusTemplateCreatedAsync(
                 new StatusTemplateCreatedEvent
                 {
                     StatusTemplateId = templateId,
@@ -785,7 +779,7 @@ public partial class StatusService : IStatusService
                     IsDeprecated = false,
                     CreatedAt = now
                 },
-                cancellationToken: cancellationToken);
+                cancellationToken);
 
             created++;
         }
@@ -1013,8 +1007,7 @@ public partial class StatusService : IStatusService
         // Publish cleansed event for the batch operation
         if (removed > 0)
         {
-            await _messageBus.TryPublishAsync(
-                "status.cleansed",
+            await _messageBus.PublishStatusCleansedAsync(
                 new StatusCleansedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -1025,7 +1018,7 @@ public partial class StatusService : IStatusService
                     StatusesRemoved = removed,
                     Reason = body.Reason
                 },
-                cancellationToken: cancellationToken);
+                cancellationToken);
         }
 
         return (StatusCodes.OK, new RemoveStatusesResponse { StatusesRemoved = removed });
@@ -1377,8 +1370,7 @@ public partial class StatusService : IStatusService
                     InstanceIdKey(existing.StatusInstanceId), existing, cancellationToken: cancellationToken);
                 await InvalidateActiveCacheAsync(body.EntityId, body.EntityType, cancellationToken);
 
-                await _messageBus.TryPublishAsync(
-                    "status.stacked",
+                await _messageBus.PublishStatusStackedAsync(
                     new StatusStackedEvent
                     {
                         EventId = Guid.NewGuid(),
@@ -1390,7 +1382,7 @@ public partial class StatusService : IStatusService
                         OldStackCount = existing.StackCount,
                         NewStackCount = existing.StackCount
                     },
-                    cancellationToken: cancellationToken);
+                    cancellationToken);
 
                 // Push client event for duration refresh
                 await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
@@ -1440,8 +1432,7 @@ public partial class StatusService : IStatusService
                     InstanceIdKey(existing.StatusInstanceId), existing, cancellationToken: cancellationToken);
                 await InvalidateActiveCacheAsync(body.EntityId, body.EntityType, cancellationToken);
 
-                await _messageBus.TryPublishAsync(
-                    "status.stacked",
+                await _messageBus.PublishStatusStackedAsync(
                     new StatusStackedEvent
                     {
                         EventId = Guid.NewGuid(),
@@ -1453,7 +1444,7 @@ public partial class StatusService : IStatusService
                         OldStackCount = oldCount,
                         NewStackCount = existing.StackCount
                     },
-                    cancellationToken: cancellationToken);
+                    cancellationToken);
 
                 // Push client event for stack increase
                 await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
@@ -1619,8 +1610,7 @@ public partial class StatusService : IStatusService
         await InvalidateActiveCacheAsync(body.EntityId, body.EntityType, cancellationToken);
 
         // Publish granted event
-        await _messageBus.TryPublishAsync(
-            "status.granted",
+        await _messageBus.PublishStatusGrantedAsync(
             new StatusGrantedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1635,7 +1625,7 @@ public partial class StatusService : IStatusService
                 ExpiresAt = expiresAt,
                 GrantResult = GrantResult.Granted
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         // Push client event to sessions observing this entity
         await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
@@ -1779,8 +1769,7 @@ public partial class StatusService : IStatusService
         await InvalidateActiveCacheAsync(instance.EntityId, instance.EntityType, cancellationToken);
 
         // Publish removed event
-        await _messageBus.TryPublishAsync(
-            "status.removed",
+        await _messageBus.PublishStatusRemovedAsync(
             new StatusRemovedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1791,7 +1780,7 @@ public partial class StatusService : IStatusService
                 StatusInstanceId = instance.StatusInstanceId,
                 Reason = reason
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         // Push client event to sessions observing this entity
         await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
@@ -1888,8 +1877,7 @@ public partial class StatusService : IStatusService
             // Lazy expiration: clean up expired statuses found during rebuild
             if (instance.ExpiresAt.HasValue && instance.ExpiresAt.Value <= now)
             {
-                await _messageBus.TryPublishAsync(
-                    "status.expired",
+                await _messageBus.PublishStatusExpiredAsync(
                     new StatusExpiredEvent
                     {
                         EventId = Guid.NewGuid(),
@@ -1899,7 +1887,7 @@ public partial class StatusService : IStatusService
                         StatusTemplateCode = instance.StatusTemplateCode,
                         StatusInstanceId = instance.StatusInstanceId
                     },
-                    cancellationToken: cancellationToken);
+                    cancellationToken);
 
                 // Push client event for expiration
                 await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
@@ -2084,8 +2072,7 @@ public partial class StatusService : IStatusService
         Guid? existingStatusInstanceId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.PublishGrantFailedEventAsync");
-        await _messageBus.TryPublishAsync(
-            "status.grant-failed",
+        await _messageBus.PublishStatusGrantFailedAsync(
             new StatusGrantFailedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2096,7 +2083,7 @@ public partial class StatusService : IStatusService
                 Reason = reason,
                 ExistingStatusInstanceId = existingStatusInstanceId
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
     }
 
     #region Response Builders

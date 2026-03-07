@@ -133,10 +133,7 @@ public partial class QuestService
                     RequiredCount = progress.RequiredCount,
                     IsComplete = true
                 };
-                await _messageBus.TryPublishAsync(
-                    QuestPublishedTopics.QuestObjectiveProgressed,
-                    progressEvent,
-                    cancellationToken: CancellationToken.None);
+                await _messageBus.PublishQuestObjectiveProgressedAsync(progressEvent, CancellationToken.None);
 
                 break;
             }
@@ -334,10 +331,7 @@ public partial class QuestService
                     // Use first questor as the abandoning character for event-driven abandonment
                     AbandoningCharacterId = current.QuestorCharacterIds.FirstOrDefault()
                 };
-                await _messageBus.TryPublishAsync(
-                    QuestPublishedTopics.QuestAbandoned,
-                    abandonedEvent,
-                    cancellationToken: CancellationToken.None);
+                await _messageBus.PublishQuestAbandonedAsync(abandonedEvent, CancellationToken.None);
 
                 _logger.LogInformation(
                     "Quest abandoned via contract termination: {QuestInstanceId} ({Code})",
@@ -355,10 +349,7 @@ public partial class QuestService
                     QuestorCharacterIds = current.QuestorCharacterIds,
                     Reason = reason
                 };
-                await _messageBus.TryPublishAsync(
-                    QuestPublishedTopics.QuestFailed,
-                    failedEvent,
-                    cancellationToken: CancellationToken.None);
+                await _messageBus.PublishQuestFailedAsync(failedEvent, CancellationToken.None);
 
                 _logger.LogInformation(
                     "Quest failed: {QuestInstanceId} ({Code}), reason: {Reason}",

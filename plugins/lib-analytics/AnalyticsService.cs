@@ -612,7 +612,7 @@ public partial class AnalyticsService : IAnalyticsService
                 NewRatingDeviation = newRD,
                 MatchId = body.MatchId
             };
-            await _messageBus.TryPublishAsync("analytics.rating.updated", ratingEvent, cancellationToken: cancellationToken);
+            await _messageBus.PublishAnalyticsRatingUpdatedAsync(ratingEvent, cancellationToken);
         }
 
         return (StatusCodes.OK, new UpdateSkillRatingResponse
@@ -658,7 +658,7 @@ public partial class AnalyticsService : IAnalyticsService
             Action = body.Action,
             SessionId = body.SessionId
         };
-        await _messageBus.TryPublishAsync("analytics.controller.recorded", controllerEvent, cancellationToken: cancellationToken);
+        await _messageBus.PublishAnalyticsControllerRecordedAsync(controllerEvent, cancellationToken);
 
         return StatusCodes.OK;
     }
@@ -1759,10 +1759,7 @@ public partial class AnalyticsService : IAnalyticsService
 
                 foreach (var scoreEvent in scoreEvents)
                 {
-                    await _messageBus.TryPublishAsync(
-                        "analytics.score.updated",
-                        scoreEvent,
-                        cancellationToken: cancellationToken);
+                    await _messageBus.PublishAnalyticsScoreUpdatedAsync(scoreEvent, cancellationToken);
                 }
 
                 foreach (var milestone in milestoneChecks)
@@ -1823,7 +1820,7 @@ public partial class AnalyticsService : IAnalyticsService
                     MilestoneValue = milestone,
                     MilestoneName = $"{scoreType}_{milestone}"
                 };
-                await _messageBus.TryPublishAsync("analytics.milestone.reached", milestoneEvent, cancellationToken: cancellationToken);
+                await _messageBus.PublishAnalyticsMilestoneReachedAsync(milestoneEvent, cancellationToken);
             }
         }
     }

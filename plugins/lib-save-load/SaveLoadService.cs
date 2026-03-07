@@ -40,18 +40,6 @@ namespace BeyondImmersion.BannouService.SaveLoad;
 [BannouService("save-load", typeof(ISaveLoadService), lifetime: ServiceLifetime.Scoped)]
 public partial class SaveLoadService : ISaveLoadService
 {
-    // Topic constants for event publishing (per FOUNDATION TENETS - Event-Driven Architecture)
-    // Pattern C: {service}.{entity}.{action} with topic_prefix "save-load"
-    private const string SAVE_SLOT_CREATED_TOPIC = "save-load.save-slot.created";
-    private const string SAVE_SLOT_UPDATED_TOPIC = "save-load.save-slot.updated";
-    private const string SAVE_SLOT_DELETED_TOPIC = "save-load.save-slot.deleted";
-    private const string SAVE_CREATED_TOPIC = "save-load.save.created";
-    private const string SAVE_LOADED_TOPIC = "save-load.save.loaded";
-    private const string SAVE_VERSION_PINNED_TOPIC = "save-load.version.pinned";
-    private const string SAVE_VERSION_UNPINNED_TOPIC = "save-load.version.unpinned";
-    private const string SAVE_VERSION_DELETED_TOPIC = "save-load.version.deleted";
-    private const string SAVE_QUEUED_TOPIC = "save-load.upload.queued";
-
     private readonly IMessageBus _messageBus;
     /// <summary>Store for save slot metadata (basic CRUD operations).</summary>
     private readonly IStateStore<SaveSlotMetadata> _slotStore;
@@ -628,7 +616,7 @@ public partial class SaveLoadService : ISaveLoadService
             await _pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
             uploadPending = true;
 
-            await _messageBus.TryPublishAsync(SAVE_QUEUED_TOPIC, new SaveQueuedEvent
+            await _messageBus.PublishSaveQueuedAsync(new SaveQueuedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
@@ -638,7 +626,7 @@ public partial class SaveLoadService : ISaveLoadService
                 OwnerId = body.OwnerId,
                 OwnerType = body.OwnerType,
                 SizeBytes = compressedSize
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             _logger.LogDebug("Queued async upload {UploadId} for slot {SlotId} version {Version}",
                 uploadId, slot.SlotId, nextVersion);
@@ -1078,7 +1066,7 @@ public partial class SaveLoadService : ISaveLoadService
             SchemaVersion = body.SchemaVersion,
             Pinned = false
         };
-        await _messageBus.TryPublishAsync(SAVE_CREATED_TOPIC, createdEvent, cancellationToken: cancellationToken);
+        await _messageBus.PublishSaveCreatedAsync(createdEvent, cancellationToken);
 
         // Calculate compression savings
         var compressionSavings = estimatedFullSize > 0 ? 1.0 - ((double)deltaSize / estimatedFullSize) : 0;
@@ -1177,7 +1165,7 @@ public partial class SaveLoadService : ISaveLoadService
             OwnerId = body.OwnerId,
             OwnerType = body.OwnerType
         };
-        await _messageBus.TryPublishAsync(SAVE_LOADED_TOPIC, loadEvent, cancellationToken: cancellationToken);
+        await _messageBus.PublishSaveLoadedAsync(loadEvent, cancellationToken);
 
         return (StatusCodes.OK, new LoadResponse
         {
@@ -1500,10 +1488,7 @@ public partial class SaveLoadService : ISaveLoadService
             VersionNumber = version.VersionNumber,
             CheckpointName = body.CheckpointName
         };
-        await _messageBus.TryPublishAsync(
-            SAVE_VERSION_PINNED_TOPIC,
-            pinnedEvent,
-            cancellationToken: cancellationToken);
+        await _messageBus.PublishVersionPinnedAsync(pinnedEvent, cancellationToken);
 
         return (StatusCodes.OK, MapToVersionResponse(version));
     }
@@ -1561,10 +1546,7 @@ public partial class SaveLoadService : ISaveLoadService
             VersionNumber = version.VersionNumber,
             PreviousCheckpointName = previousCheckpointName
         };
-        await _messageBus.TryPublishAsync(
-            SAVE_VERSION_UNPINNED_TOPIC,
-            unpinnedEvent,
-            cancellationToken: cancellationToken);
+        await _messageBus.PublishVersionUnpinnedAsync(unpinnedEvent, cancellationToken);
 
         return (StatusCodes.OK, MapToVersionResponse(version));
     }
@@ -1668,10 +1650,7 @@ public partial class SaveLoadService : ISaveLoadService
             VersionNumber = body.VersionNumber,
             BytesFreed = bytesFreed
         };
-        await _messageBus.TryPublishAsync(
-            SAVE_VERSION_DELETED_TOPIC,
-            deletedEvent,
-            cancellationToken: cancellationToken);
+        await _messageBus.PublishVersionDeletedAsync(deletedEvent, cancellationToken);
 
         return (StatusCodes.OK, new DeleteVersionResponse
         {
@@ -2261,7 +2240,7 @@ public partial class SaveLoadService : ISaveLoadService
             OwnerType = slot.OwnerType,
             SizeBytes = sourceVersion.SizeBytes
         };
-        await _messageBus.TryPublishAsync(SAVE_CREATED_TOPIC, createdEvent, cancellationToken: cancellationToken);
+        await _messageBus.PublishSaveCreatedAsync(createdEvent, cancellationToken);
 
         return (StatusCodes.OK, new SaveResponse
         {
@@ -2630,7 +2609,7 @@ public partial class SaveLoadService : ISaveLoadService
             UpdatedAt = slot.UpdatedAt
         };
 
-        await _messageBus.TryPublishAsync(SAVE_SLOT_CREATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishSaveSlotCreatedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published SaveSlotCreatedEvent for slot: {SlotId}", slot.SlotId);
     }
 
@@ -2658,7 +2637,7 @@ public partial class SaveLoadService : ISaveLoadService
             ChangedFields = changedFields.ToList()
         };
 
-        await _messageBus.TryPublishAsync(SAVE_SLOT_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishSaveSlotUpdatedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published SaveSlotUpdatedEvent for slot: {SlotId}, changed: {ChangedFields}", slot.SlotId, string.Join(", ", changedFields));
     }
 
@@ -2686,7 +2665,7 @@ public partial class SaveLoadService : ISaveLoadService
             DeletedReason = deletedReason
         };
 
-        await _messageBus.TryPublishAsync(SAVE_SLOT_DELETED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishSaveSlotDeletedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published SaveSlotDeletedEvent for slot: {SlotId}", slot.SlotId);
     }
 

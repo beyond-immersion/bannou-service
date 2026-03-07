@@ -114,7 +114,7 @@ enum class EAssetType : uint8
     Other UMETA(DisplayName = "Other"),
 };
 
-/** All authentication provider types including email */
+/** All authentication provider types including email. Superset of OAuthProvider. */
 UENUM(BlueprintType)
 enum class EAuthProvider : uint8
 {
@@ -471,7 +471,8 @@ enum class EContainerConstraintModel : uint8
     Unlimited UMETA(DisplayName = "Unlimited"),
 };
 
-/** Type of entity that owns this container */
+/** Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.
+ */
 UENUM(BlueprintType)
 enum class EContainerOwnerType : uint8
 {
@@ -1259,6 +1260,16 @@ enum class ENormSeverity : uint8
     Strict UMETA(DisplayName = "Strict"),
 };
 
+/** OAuth provider types (excludes email). Subset of AuthProvider. */
+UENUM(BlueprintType)
+enum class EOAuthProvider : uint8
+{
+    Google UMETA(DisplayName = "Google"),
+    Discord UMETA(DisplayName = "Discord"),
+    Twitch UMETA(DisplayName = "Twitch"),
+    Steam UMETA(DisplayName = "Steam"),
+};
+
 /** When a hidden objective is revealed in the quest log */
 UENUM(BlueprintType)
 enum class EObjectiveRevealBehavior : uint8
@@ -1432,16 +1443,6 @@ enum class EProcessingStatus : uint8
     Processing UMETA(DisplayName = "Processing"),
     Complete UMETA(DisplayName = "Complete"),
     Failed UMETA(DisplayName = "Failed"),
-};
-
-/** Authentication provider type */
-UENUM(BlueprintType)
-enum class EProvider : uint8
-{
-    Google UMETA(DisplayName = "Google"),
-    Discord UMETA(DisplayName = "Discord"),
-    Twitch UMETA(DisplayName = "Twitch"),
-    Steam UMETA(DisplayName = "Steam"),
 };
 
 /** How quantities are tracked for this item type */
@@ -1729,7 +1730,8 @@ enum class ESessionType : uint8
     Matchmade UMETA(DisplayName = "Matchmade"),
 };
 
-/** Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker) */
+/** API-writable subset of ConnectionStatus. Excludes SeasonalClosed, which is system-managed by the Seasonal Connection Worker. Mapping from SettableConnectionStatus to ConnectionStatus is lossless (all values exist in both); the reverse direction is intentionally restricted at the API level.
+ */
 UENUM(BlueprintType)
 enum class ESettableConnectionStatus : uint8
 {

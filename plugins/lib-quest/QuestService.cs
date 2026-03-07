@@ -729,7 +729,7 @@ public partial class QuestService : IQuestService
             QuestorCharacterIds = new List<Guid> { body.QuestorCharacterId },
             GameServiceId = definition.GameServiceId
         };
-        await _messageBus.TryPublishAsync(QuestPublishedTopics.QuestAccepted, acceptedEvent, cancellationToken: cancellationToken);
+        await _messageBus.PublishQuestAcceptedAsync(acceptedEvent, cancellationToken);
 
         _logger.LogInformation("Quest accepted: {QuestInstanceId} ({Code}) by character {CharacterId}",
             questInstanceId, definition.Code, body.QuestorCharacterId);
@@ -816,7 +816,7 @@ public partial class QuestService : IQuestService
                 QuestCode = instance.Code,
                 AbandoningCharacterId = body.QuestorCharacterId
             };
-            await _messageBus.TryPublishAsync(QuestPublishedTopics.QuestAbandoned, abandonedEvent, cancellationToken: cancellationToken);
+            await _messageBus.PublishQuestAbandonedAsync(abandonedEvent, cancellationToken);
 
             _logger.LogInformation("Quest abandoned: {QuestInstanceId} by character {CharacterId}",
                 body.QuestInstanceId, body.QuestorCharacterId);
@@ -1152,7 +1152,7 @@ public partial class QuestService : IQuestService
                 RequiredCount = progress.RequiredCount,
                 IsComplete = progress.IsComplete
             };
-            await _messageBus.TryPublishAsync(QuestPublishedTopics.QuestObjectiveProgressed, progressEvent, cancellationToken: cancellationToken);
+            await _messageBus.PublishQuestObjectiveProgressedAsync(progressEvent, cancellationToken);
 
             // If milestone completed, notify Contract service
             if (milestoneCompleted)
@@ -1879,7 +1879,7 @@ public partial class QuestService : IQuestService
                 QuestorCharacterIds = current.QuestorCharacterIds,
                 GameServiceId = current.GameServiceId
             };
-            await _messageBus.TryPublishAsync(QuestPublishedTopics.QuestCompleted, completedEvent, cancellationToken: cancellationToken);
+            await _messageBus.PublishQuestCompletedAsync(completedEvent, cancellationToken);
 
             _logger.LogInformation("Quest completed: {QuestInstanceId} ({Code})",
                 instance.QuestInstanceId, current.Code);

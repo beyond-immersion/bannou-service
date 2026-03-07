@@ -371,7 +371,7 @@ public class SeedDecayWorkerService : BackgroundService
                 "Seed {SeedId} regressed from phase {OldPhase} to {NewPhase} due to decay",
                 seed.SeedId, previousPhase, seed.GrowthPhase);
 
-            await messageBus.TryPublishAsync("seed.phase.changed", new SeedPhaseChangedEvent
+            await messageBus.PublishSeedPhaseChangedAsync(new SeedPhaseChangedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
@@ -381,7 +381,7 @@ public class SeedDecayWorkerService : BackgroundService
                 NewPhase = seed.GrowthPhase,
                 TotalGrowth = newTotalGrowth,
                 Direction = PhaseChangeDirection.Regressed
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             // Dispatch phase regression notification to evolution listeners
             await SeedEvolutionDispatcher.DispatchPhaseChangedAsync(

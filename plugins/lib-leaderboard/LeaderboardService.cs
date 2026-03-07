@@ -170,7 +170,7 @@ public partial class LeaderboardService : ILeaderboardService
                 cancellationToken: cancellationToken);
         }
 
-        await _messageBus.TryPublishAsync("leaderboard.definition.created", new LeaderboardDefinitionCreatedEvent
+        await _messageBus.PublishLeaderboardDefinitionCreatedAsync(new LeaderboardDefinitionCreatedEvent
         {
             GameServiceId = definition.GameServiceId,
             LeaderboardId = definition.LeaderboardId,
@@ -179,7 +179,7 @@ public partial class LeaderboardService : ILeaderboardService
             UpdateMode = definition.UpdateMode.ToString(),
             IsSeasonal = definition.IsSeasonal,
             IsPublic = definition.IsPublic
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         return (StatusCodes.OK, MapToResponse(definition, 0));
     }
@@ -316,7 +316,7 @@ public partial class LeaderboardService : ILeaderboardService
             return (StatusCodes.Conflict, null);
         }
 
-        await _messageBus.TryPublishAsync("leaderboard.definition.updated", new LeaderboardDefinitionUpdatedEvent
+        await _messageBus.PublishLeaderboardDefinitionUpdatedAsync(new LeaderboardDefinitionUpdatedEvent
         {
             GameServiceId = definition.GameServiceId,
             LeaderboardId = definition.LeaderboardId,
@@ -326,7 +326,7 @@ public partial class LeaderboardService : ILeaderboardService
             IsSeasonal = definition.IsSeasonal,
             IsPublic = definition.IsPublic,
             ChangedFields = changedFields
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         // Get entry count
         var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
@@ -386,7 +386,7 @@ public partial class LeaderboardService : ILeaderboardService
             body.LeaderboardId,
             cancellationToken);
 
-        await _messageBus.TryPublishAsync("leaderboard.definition.deleted", new LeaderboardDefinitionDeletedEvent
+        await _messageBus.PublishLeaderboardDefinitionDeletedAsync(new LeaderboardDefinitionDeletedEvent
         {
             GameServiceId = definition.GameServiceId,
             LeaderboardId = definition.LeaderboardId,
@@ -395,7 +395,7 @@ public partial class LeaderboardService : ILeaderboardService
             UpdateMode = definition.UpdateMode.ToString(),
             IsSeasonal = definition.IsSeasonal,
             IsPublic = definition.IsPublic
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         return StatusCodes.OK;
     }
@@ -467,7 +467,7 @@ public partial class LeaderboardService : ILeaderboardService
                 Rank = currentRank,
                 TotalEntries = totalEntries
             };
-            await _messageBus.TryPublishAsync("leaderboard.entry.added", entryAddedEvent, cancellationToken: cancellationToken);
+            await _messageBus.PublishLeaderboardEntryAddedAsync(entryAddedEvent, cancellationToken);
         }
         // Publish rank changed event if rank changed significantly (for existing entries)
         else if (previousRank.HasValue && newRank.HasValue && previousRank.Value != newRank.Value)
@@ -486,7 +486,7 @@ public partial class LeaderboardService : ILeaderboardService
                 PreviousScore = previousScore ?? 0,
                 CurrentScore = finalScore
             };
-            await _messageBus.TryPublishAsync("leaderboard.rank.changed", rankEvent, cancellationToken: cancellationToken);
+            await _messageBus.PublishLeaderboardRankChangedAsync(rankEvent, cancellationToken);
         }
 
         return (StatusCodes.OK, new SubmitScoreResponse
@@ -824,7 +824,7 @@ public partial class LeaderboardService : ILeaderboardService
             SeasonNumber = newSeasonNumber,
             PreviousSeasonNumber = newSeasonNumber - 1
         };
-        await _messageBus.TryPublishAsync("leaderboard.season.started", seasonEvent, cancellationToken: cancellationToken);
+        await _messageBus.PublishLeaderboardSeasonStartedAsync(seasonEvent, cancellationToken);
 
         return (StatusCodes.OK, new SeasonResponse
         {

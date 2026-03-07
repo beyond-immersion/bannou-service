@@ -296,8 +296,7 @@ public partial class AssetService : IAssetService
             uploadId, isMultipart);
 
         // Publish AssetUploadRequestedEvent for audit trail
-        await _messageBus.TryPublishAsync(
-            "asset.upload.requested",
+        await _messageBus.PublishAssetUploadRequestedAsync(
             new BeyondImmersion.BannouService.Events.AssetUploadRequestedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -467,8 +466,7 @@ public partial class AssetService : IAssetService
             assetId, finalKey, requiresProcessing);
 
         // Publish asset.upload.completed event
-        await _messageBus.TryPublishAsync(
-            "asset.upload.completed",
+        await _messageBus.PublishAssetUploadCompletedAsync(
             new BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -492,8 +490,7 @@ public partial class AssetService : IAssetService
         else
         {
             // Asset is immediately ready (no processing needed)
-            await _messageBus.TryPublishAsync(
-                "asset.ready",
+            await _messageBus.PublishAssetReadyAsync(
                 new BeyondImmersion.BannouService.Events.AssetReadyEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -914,7 +911,7 @@ public partial class AssetService : IAssetService
             await _bundleCreationJobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken);
 
             // Publish job event for processing pool
-            await _messageBus.TryPublishAsync("asset.bundle.create", new BundleCreationJobQueuedEvent
+            await _messageBus.PublishBundleCreationJobQueuedAsync(new BundleCreationJobQueuedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1023,8 +1020,7 @@ public partial class AssetService : IAssetService
             bundleStream.Length);
 
         // Publish asset.bundle.created event
-        await _messageBus.TryPublishAsync(
-            "asset.bundle.created",
+        await _messageBus.PublishBundleCreatedAsync(
             new BeyondImmersion.BannouService.Events.BundleCreatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1686,8 +1682,7 @@ public partial class AssetService : IAssetService
             body.MetabundleId, metabundleAssets.Count, assetsToInclude.Count, standalonesToInclude.Count, sourceBundles.Count, bundleStream.Length);
 
         // Publish metabundle.created event
-        await _messageBus.TryPublishAsync(
-            "asset.metabundle.created",
+        await _messageBus.PublishMetabundleCreatedAsync(
             new BeyondImmersion.BannouService.Events.MetabundleCreatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2582,7 +2577,7 @@ public partial class AssetService : IAssetService
                     poolType, assetId);
 
                 // Publish delayed retry event
-                await _messageBus.TryPublishAsync("asset.processing.retry", new AssetProcessingRetryEvent
+                await _messageBus.PublishAssetProcessingRetryAsync(new AssetProcessingRetryEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -2638,8 +2633,7 @@ public partial class AssetService : IAssetService
             }).ConfigureAwait(false);
 
             // Publish asset.processing.queued event for service-level tracking
-            await _messageBus.TryPublishAsync(
-                "asset.processing.queued",
+            await _messageBus.PublishAssetProcessingQueuedAsync(
                 new BeyondImmersion.BannouService.Events.AssetProcessingQueuedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -2657,7 +2651,7 @@ public partial class AssetService : IAssetService
                 poolType, assetId);
 
             // Publish delayed retry event
-            await _messageBus.TryPublishAsync("asset.processing.retry", new AssetProcessingRetryEvent
+            await _messageBus.PublishAssetProcessingRetryAsync(new AssetProcessingRetryEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -2810,7 +2804,7 @@ public partial class AssetService : IAssetService
         }
 
         // Publish event
-        await _messageBus.TryPublishAsync("asset.bundle.updated", new BeyondImmersion.BannouService.Events.BundleUpdatedEvent
+        await _messageBus.PublishBundleUpdatedAsync(new BeyondImmersion.BannouService.Events.BundleUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = bundle.UpdatedAt.Value,
@@ -2937,7 +2931,7 @@ public partial class AssetService : IAssetService
         }
 
         // Publish event
-        await _messageBus.TryPublishAsync("asset.bundle.deleted", new BeyondImmersion.BannouService.Events.BundleDeletedEvent
+        await _messageBus.PublishBundleDeletedAsync(new BeyondImmersion.BannouService.Events.BundleDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = deletedAt,
@@ -3030,7 +3024,7 @@ public partial class AssetService : IAssetService
         await IndexBundleAssetsAsync(bundle, cancellationToken);
 
         // Publish event
-        await _messageBus.TryPublishAsync("asset.bundle.restored", new BeyondImmersion.BannouService.Events.BundleRestoredEvent
+        await _messageBus.PublishBundleRestoredAsync(new BeyondImmersion.BannouService.Events.BundleRestoredEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = restoredAt,
@@ -3386,8 +3380,7 @@ public partial class AssetService : IAssetService
             jobId, request.MetabundleId, totalAssetCount);
 
         // Publish job to processing queue
-        await _messageBus.TryPublishAsync(
-            "asset.metabundle.job.queued",
+        await _messageBus.PublishMetabundleJobQueuedAsync(
             new MetabundleJobQueuedEvent
             {
                 EventId = Guid.NewGuid(),

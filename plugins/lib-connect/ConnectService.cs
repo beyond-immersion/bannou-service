@@ -4,10 +4,10 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
-using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Connect.Helpers;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Meta;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.ServiceClients;
@@ -935,7 +935,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                     ConnectInstanceId = _instanceId,
                     PeerGuid = connectionState.PeerGuid
                 };
-                await _messageBus.TryPublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
+                await _messageBus.PublishSessionConnectedAsync(sessionConnectedEvent, cancellationToken);
                 _logger.LogInformation("Published session.connected event for session {SessionId} with PeerGuid {PeerGuid}",
                     sessionId, connectionState.PeerGuid);
 
@@ -967,7 +967,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                             ["connect_instance_id"] = _instanceId
                         }
                     };
-                    await _messageBus.TryPublishAsync("session.reconnected", sessionReconnectedEvent, cancellationToken: cancellationToken);
+                    await _messageBus.PublishSessionReconnectedAsync(sessionReconnectedEvent, cancellationToken);
                     _logger.LogInformation("Published session.reconnected event for session {SessionId} with new PeerGuid {PeerGuid} - services should re-publish shortcuts",
                         sessionId, connectionState.PeerGuid);
 
@@ -1094,7 +1094,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                         Reconnectable = !isForcedDisconnect,
                         Reason = isForcedDisconnect ? "forced_disconnect" : "graceful_disconnect"
                     };
-                    await _messageBus.TryPublishAsync("session.disconnected", sessionDisconnectedEvent);
+                    await _messageBus.PublishSessionDisconnectedAsync(sessionDisconnectedEvent);
                     _logger.LogInformation("Published session.disconnected event for session {SessionId}, reconnectable: {Reconnectable}",
                         sessionId, !isForcedDisconnect);
 

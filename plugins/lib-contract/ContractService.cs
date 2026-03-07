@@ -2130,7 +2130,7 @@ public partial class ContractService : IContractService
                 _logger.LogWarning("Template substitution failed for prebound API {Service}{Endpoint}: {Error}",
                     api.ServiceName, api.Endpoint, result.SubstitutionError);
 
-                await _messageBus.TryPublishAsync("contract.prebound-api.failed", new ContractPreboundApiFailedEvent
+                await _messageBus.PublishContractPreboundApiFailedAsync(new ContractPreboundApiFailedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -2157,7 +2157,7 @@ public partial class ContractService : IContractService
                     _logger.LogWarning("Prebound API response validation failed for {Service}{Endpoint}: {Outcome} - {Reason}",
                         api.ServiceName, api.Endpoint, validationResult.Outcome, validationResult.FailureReason);
 
-                    await _messageBus.TryPublishAsync("contract.prebound-api.validation-failed", new ContractPreboundApiValidationFailedEvent
+                    await _messageBus.PublishContractPreboundApiValidationFailedAsync(new ContractPreboundApiValidationFailedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
@@ -2176,7 +2176,7 @@ public partial class ContractService : IContractService
             }
 
             // Publish execution event
-            await _messageBus.TryPublishAsync("contract.prebound-api.executed", new ContractPreboundApiExecutedEvent
+            await _messageBus.PublishContractPreboundApiExecutedAsync(new ContractPreboundApiExecutedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -2193,7 +2193,7 @@ public partial class ContractService : IContractService
             _logger.LogWarning(ex, "Prebound API returned error: {Service}{Endpoint} - {StatusCode}",
                 api.ServiceName, api.Endpoint, ex.StatusCode);
 
-            await _messageBus.TryPublishAsync("contract.prebound-api.failed", new ContractPreboundApiFailedEvent
+            await _messageBus.PublishContractPreboundApiFailedAsync(new ContractPreboundApiFailedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -2211,7 +2211,7 @@ public partial class ContractService : IContractService
             _logger.LogError(ex, "Failed to execute prebound API: {Service}{Endpoint}",
                 api.ServiceName, api.Endpoint);
 
-            await _messageBus.TryPublishAsync("contract.prebound-api.failed", new ContractPreboundApiFailedEvent
+            await _messageBus.PublishContractPreboundApiFailedAsync(new ContractPreboundApiFailedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -2697,7 +2697,7 @@ public partial class ContractService : IContractService
 
     private async Task PublishTemplateCreatedEventAsync(ContractTemplateModel model, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.template.created", new ContractTemplateCreatedEvent
+        await _messageBus.PublishContractTemplateCreatedAsync(new ContractTemplateCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2718,7 +2718,7 @@ public partial class ContractService : IContractService
     private async Task PublishTemplateUpdatedEventAsync(
         ContractTemplateModel model, List<string> changedFields, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.template.updated", new ContractTemplateUpdatedEvent
+        await _messageBus.PublishContractTemplateUpdatedAsync(new ContractTemplateUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2740,7 +2740,7 @@ public partial class ContractService : IContractService
 
     private async Task PublishTemplateDeletedEventAsync(ContractTemplateModel model, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.template.deleted", new ContractTemplateDeletedEvent
+        await _messageBus.PublishContractTemplateDeletedAsync(new ContractTemplateDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2762,7 +2762,7 @@ public partial class ContractService : IContractService
 
     private async Task PublishInstanceCreatedEventAsync(ContractInstanceModel model, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.instance.created", new ContractInstanceCreatedEvent
+        await _messageBus.PublishContractInstanceCreatedAsync(new ContractInstanceCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2780,7 +2780,7 @@ public partial class ContractService : IContractService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.contract", "ContractService.PublishInstanceUpdatedEventAsync");
 
-        await _messageBus.TryPublishAsync("contract.instance.updated", new ContractInstanceUpdatedEvent
+        await _messageBus.PublishContractInstanceUpdatedAsync(new ContractInstanceUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2805,7 +2805,7 @@ public partial class ContractService : IContractService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.contract", "ContractService.PublishInstanceDeletedEventAsync");
 
-        await _messageBus.TryPublishAsync("contract.instance.deleted", new ContractInstanceDeletedEvent
+        await _messageBus.PublishContractInstanceDeletedAsync(new ContractInstanceDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2833,7 +2833,7 @@ public partial class ContractService : IContractService
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
-        await _messageBus.TryPublishAsync("contract.proposed", new ContractProposedEvent
+        await _messageBus.PublishContractProposedAsync(new ContractProposedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2847,7 +2847,7 @@ public partial class ContractService : IContractService
     private async Task PublishConsentReceivedEventAsync(
         ContractInstanceModel model, ContractPartyModel party, int remaining, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.consent-received", new ContractConsentReceivedEvent
+        await _messageBus.PublishContractConsentReceivedAsync(new ContractConsentReceivedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2868,7 +2868,7 @@ public partial class ContractService : IContractService
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
-        await _messageBus.TryPublishAsync("contract.accepted", new ContractAcceptedEvent
+        await _messageBus.PublishContractAcceptedAsync(new ContractAcceptedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2888,7 +2888,7 @@ public partial class ContractService : IContractService
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
-        await _messageBus.TryPublishAsync("contract.activated", new ContractActivatedEvent
+        await _messageBus.PublishContractActivatedAsync(new ContractActivatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2903,7 +2903,7 @@ public partial class ContractService : IContractService
         ContractInstanceModel contract, MilestoneInstanceModel milestone,
         object? evidence, int apisExecuted, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.milestone.completed", new ContractMilestoneCompletedEvent
+        await _messageBus.PublishContractMilestoneCompletedAsync(new ContractMilestoneCompletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2919,7 +2919,7 @@ public partial class ContractService : IContractService
         ContractInstanceModel contract, MilestoneInstanceModel milestone,
         string reason, bool wasRequired, bool triggeredBreach, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.milestone.failed", new ContractMilestoneFailedEvent
+        await _messageBus.PublishContractMilestoneFailedAsync(new ContractMilestoneFailedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2935,7 +2935,7 @@ public partial class ContractService : IContractService
     private async Task PublishBreachDetectedEventAsync(
         ContractInstanceModel contract, BreachModel breach, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.breach.detected", new ContractBreachDetectedEvent
+        await _messageBus.PublishContractBreachDetectedAsync(new ContractBreachDetectedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2951,7 +2951,7 @@ public partial class ContractService : IContractService
 
     private async Task PublishBreachCuredEventAsync(BreachModel breach, string? evidence, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.breach.cured", new ContractBreachCuredEvent
+        await _messageBus.PublishContractBreachCuredAsync(new ContractBreachCuredEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2970,7 +2970,7 @@ public partial class ContractService : IContractService
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
-        await _messageBus.TryPublishAsync("contract.fulfilled", new ContractFulfilledEvent
+        await _messageBus.PublishContractFulfilledAsync(new ContractFulfilledEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2985,7 +2985,7 @@ public partial class ContractService : IContractService
         ContractInstanceModel model, Guid? terminatedById, EntityType? terminatedByType,
         string? reason, bool wasBreachRelated, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.terminated", new ContractTerminatedEvent
+        await _messageBus.PublishContractTerminatedAsync(new ContractTerminatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -3006,7 +3006,7 @@ public partial class ContractService : IContractService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.contract", "ContractService.PublishContractExpiredEventAsync");
 
-        await _messageBus.TryPublishAsync("contract.expired", new ContractExpiredEvent
+        await _messageBus.PublishContractExpiredAsync(new ContractExpiredEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -3031,7 +3031,7 @@ public partial class ContractService : IContractService
             Role = p.Role
         }).ToList();
 
-        await _messageBus.TryPublishAsync("contract.payment.due", new ContractPaymentDueEvent
+        await _messageBus.PublishContractPaymentDueAsync(new ContractPaymentDueEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

@@ -614,7 +614,7 @@ public partial class AchievementService : IAchievementService
             TargetProgress = achievementProgress.TargetProgress,
             PercentComplete = (double)achievementProgress.CurrentProgress / achievementProgress.TargetProgress * 100.0
         };
-        await _messageBus.TryPublishAsync("achievement.progress.updated", progressEvent, cancellationToken: cancellationToken);
+        await _messageBus.PublishAchievementProgressUpdatedAsync(progressEvent, cancellationToken);
 
         // Check for progress milestones and push client events
         // IMPLEMENTATION TENETS compliant: milestone thresholds from configuration
@@ -1305,7 +1305,7 @@ public partial class AchievementService : IAchievementService
             IsRare = isRare,
             Rarity = rarityPercent
         };
-        await _messageBus.TryPublishAsync("achievement.progress.unlocked", unlockEvent, cancellationToken: cancellationToken);
+        await _messageBus.PublishAchievementUnlockedAsync(unlockEvent, cancellationToken);
 
         // Push client event to unlocking entity's WebSocket sessions
         await _entitySessionRegistry.PublishToEntitySessionsAsync(
@@ -1563,7 +1563,7 @@ public partial class AchievementService : IAchievementService
             Success = result.Success,
             ErrorMessage = result.ErrorMessage
         };
-        await _messageBus.TryPublishAsync("achievement.platform.synced", syncEvent, cancellationToken: cancellationToken);
+        await _messageBus.PublishAchievementPlatformSyncedAsync(syncEvent, cancellationToken);
     }
 
     /// <summary>
@@ -1666,7 +1666,7 @@ public partial class AchievementService : IAchievementService
             CreatedAt = definition.CreatedAt,
             Metadata = definition.Metadata
         };
-        await _messageBus.TryPublishAsync("achievement.definition.created", eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishAchievementDefinitionCreatedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published achievement.definition.created event for {AchievementId}", definition.AchievementId);
     }
 
@@ -1714,7 +1714,7 @@ public partial class AchievementService : IAchievementService
             Metadata = definition.Metadata,
             ChangedFields = changedFields
         };
-        await _messageBus.TryPublishAsync("achievement.definition.updated", eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishAchievementDefinitionUpdatedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published achievement.definition.updated event for {AchievementId} (changed: {ChangedFields})",
             definition.AchievementId, string.Join(", ", changedFields));
     }

@@ -1701,7 +1701,7 @@ public partial class AuthService : IAuthService
                 SessionId = sessionId
             };
 
-            await _messageBus.TryPublishAsync(AUTH_LOGIN_SUCCESSFUL_TOPIC, eventModel);
+            await _messageBus.PublishAuthLoginSuccessfulAsync(eventModel);
             _logger.LogDebug("Published AuthLoginSuccessfulEvent for account {AccountId}, session {SessionId}", accountId, sessionId);
         }
         catch (Exception ex)
@@ -1734,7 +1734,7 @@ public partial class AuthService : IAuthService
                 AccountId = accountId
             };
 
-            await _messageBus.TryPublishAsync(AUTH_LOGIN_FAILED_TOPIC, eventModel);
+            await _messageBus.PublishAuthLoginFailedAsync(eventModel);
             _logger.LogDebug("Published AuthLoginFailedEvent for account {AccountId}, reason: {Reason}", accountId, reason);
         }
         catch (Exception ex)
@@ -1772,7 +1772,7 @@ public partial class AuthService : IAuthService
                 SessionId = sessionId
             };
 
-            await _messageBus.TryPublishAsync(AUTH_REGISTRATION_SUCCESSFUL_TOPIC, eventModel);
+            await _messageBus.PublishAuthRegistrationSuccessfulAsync(eventModel);
             _logger.LogDebug("Published AuthRegistrationSuccessfulEvent for account {AccountId}, session {SessionId}", accountId, sessionId);
         }
         catch (Exception ex)
@@ -1799,7 +1799,7 @@ public partial class AuthService : IAuthService
                 IsNewAccount = isNewAccount
             };
 
-            await _messageBus.TryPublishAsync(AUTH_OAUTH_SUCCESSFUL_TOPIC, eventModel);
+            await _messageBus.PublishAuthOAuthLoginSuccessfulAsync(eventModel);
             _logger.LogDebug("Published AuthOAuthLoginSuccessfulEvent for account {AccountId} via {Provider}, session {SessionId}", accountId, provider, sessionId);
         }
         catch (Exception ex)
@@ -1844,7 +1844,7 @@ public partial class AuthService : IAuthService
                 IsNewAccount = isNewAccount
             };
 
-            await _messageBus.TryPublishAsync(AUTH_STEAM_SUCCESSFUL_TOPIC, eventModel);
+            await _messageBus.PublishAuthSteamLoginSuccessfulAsync(eventModel);
             _logger.LogDebug("Published AuthSteamLoginSuccessfulEvent for account {AccountId}, session {SessionId}", accountId, sessionId);
         }
         catch (Exception ex)
@@ -1886,7 +1886,7 @@ public partial class AuthService : IAuthService
                 AccountId = accountId
             };
 
-            await _messageBus.TryPublishAsync(AUTH_PASSWORD_RESET_SUCCESSFUL_TOPIC, eventModel);
+            await _messageBus.PublishAuthPasswordResetSuccessfulAsync(eventModel);
             _logger.LogDebug("Published AuthPasswordResetSuccessfulEvent for account {AccountId}", accountId);
         }
         catch (Exception ex)
@@ -1915,7 +1915,7 @@ public partial class AuthService : IAuthService
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId
             };
-            await _messageBus.TryPublishAsync(AUTH_MFA_ENABLED_TOPIC, eventModel);
+            await _messageBus.PublishAuthMfaEnabledAsync(eventModel);
             _logger.LogDebug("Published AuthMfaEnabledEvent for account {AccountId}", accountId);
         }
         catch (Exception ex)
@@ -1946,7 +1946,7 @@ public partial class AuthService : IAuthService
                 DisabledBy = disabledBy,
                 AdminReason = adminReason
             };
-            await _messageBus.TryPublishAsync(AUTH_MFA_DISABLED_TOPIC, eventModel);
+            await _messageBus.PublishAuthMfaDisabledAsync(eventModel);
             _logger.LogDebug("Published AuthMfaDisabledEvent for account {AccountId}, by {DisabledBy}", accountId, disabledBy);
         }
         catch (Exception ex)
@@ -1979,7 +1979,7 @@ public partial class AuthService : IAuthService
                 SessionId = sessionId,
                 RecoveryCodesRemaining = recoveryCodesRemaining
             };
-            await _messageBus.TryPublishAsync(AUTH_MFA_VERIFIED_TOPIC, eventModel);
+            await _messageBus.PublishAuthMfaVerifiedAsync(eventModel);
             _logger.LogDebug("Published AuthMfaVerifiedEvent for account {AccountId}, method {Method}", accountId, method);
         }
         catch (Exception ex)
@@ -2003,7 +2003,7 @@ public partial class AuthService : IAuthService
                 Method = method,
                 Reason = reason
             };
-            await _messageBus.TryPublishAsync(AUTH_MFA_FAILED_TOPIC, eventModel);
+            await _messageBus.PublishAuthMfaFailedAsync(eventModel);
             _logger.LogDebug("Published AuthMfaFailedEvent for account {AccountId}, reason {Reason}", accountId, reason);
         }
         catch (Exception ex)

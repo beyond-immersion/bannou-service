@@ -326,10 +326,7 @@ public class MeshHealthCheckService : BackgroundService
                 Reason = DeregistrationReason.HealthCheckFailed
             };
 
-            await messageBus.TryPublishAsync(
-                "mesh.endpoint.deregistered",
-                evt,
-                cancellationToken: cancellationToken);
+            await messageBus.PublishMeshEndpointDeregisteredAsync(evt, cancellationToken);
 
             _logger.LogInformation(
                 "Published deregistration event for endpoint {InstanceId} (app: {AppId}, reason: HealthCheckFailed)",
@@ -389,10 +386,7 @@ public class MeshHealthCheckService : BackgroundService
                 LastError = lastError
             };
 
-            await messageBus.TryPublishAsync(
-                "mesh.endpoint.health.failed",
-                evt,
-                cancellationToken: cancellationToken);
+            await messageBus.PublishMeshEndpointHealthCheckFailedAsync(evt, cancellationToken);
 
             _logger.LogDebug(
                 "Published health check failed event for endpoint {InstanceId} ({Failures}/{Threshold})",

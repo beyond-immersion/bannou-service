@@ -129,14 +129,14 @@ public partial class BehaviorService : IBehaviorService
                 string.Join("; ", result.Errors.Select(e => e.Message)));
 
             // Publish compilation failed event for monitoring (contains error details for debugging)
-            await _messageBus.TryPublishAsync(COMPILATION_FAILED_TOPIC, new BehaviorCompilationFailedEvent
+            await _messageBus.PublishBehaviorCompilationFailedAsync(new BehaviorCompilationFailedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 BehaviorName = body.BehaviorName,
                 ErrorCount = result.Errors.Count,
                 Errors = result.Errors.Select(e => e.Message).ToList()
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             return (StatusCodes.BadRequest, null);
         }
@@ -265,7 +265,7 @@ public partial class BehaviorService : IBehaviorService
                 UpdatedAt = now,
                 ChangedFields = new List<string> { "bytecode" }
             };
-            await _messageBus.TryPublishAsync("behavior.updated", updateEvent);
+            await _messageBus.PublishBehaviorUpdatedAsync(updateEvent);
             _logger.LogDebug("Published behavior.updated event for {BehaviorId}", behaviorId);
         }
         else
@@ -286,7 +286,7 @@ public partial class BehaviorService : IBehaviorService
                 CreatedAt = now,
                 UpdatedAt = now
             };
-            await _messageBus.TryPublishAsync("behavior.created", createEvent);
+            await _messageBus.PublishBehaviorCreatedAsync(createEvent);
             _logger.LogDebug("Published behavior.created event for {BehaviorId}", behaviorId);
         }
     }
@@ -742,7 +742,7 @@ public partial class BehaviorService : IBehaviorService
             DeletedReason = "Invalidated via API"
         };
 
-        await _messageBus.TryPublishAsync("behavior.deleted", deleteEvent);
+        await _messageBus.PublishBehaviorDeletedAsync(deleteEvent);
         _logger.LogDebug("Published behavior.deleted event for {BehaviorId}", metadata.BehaviorId);
     }
 
@@ -858,7 +858,7 @@ public partial class BehaviorService : IBehaviorService
             plan.PlanningTimeMs);
 
         // Publish plan generated event for monitoring/analytics
-        await _messageBus.TryPublishAsync(GOAP_PLAN_GENERATED_TOPIC, new GoapPlanGeneratedEvent
+        await _messageBus.PublishGoapPlanGeneratedAsync(new GoapPlanGeneratedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -866,7 +866,7 @@ public partial class BehaviorService : IBehaviorService
             GoalId = body.Goal.Name,
             PlanStepCount = plan.ActionCount,
             PlanningTimeMs = (int)plan.PlanningTimeMs
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         return (StatusCodes.OK, new GoapPlanResponse
         {

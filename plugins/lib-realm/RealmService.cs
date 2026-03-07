@@ -1478,7 +1478,7 @@ public partial class RealmService : IRealmService
             UpdatedAt = model.UpdatedAt
         };
 
-        await _messageBus.TryPublishAsync("realm.created", eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishRealmCreatedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published realm.created event for {RealmId}", model.RealmId);
     }
 
@@ -1509,7 +1509,7 @@ public partial class RealmService : IRealmService
             ChangedFields = changedFields.ToList()
         };
 
-        await _messageBus.TryPublishAsync("realm.updated", eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishRealmUpdatedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published realm.updated event for {RealmId} with changed fields: {ChangedFields}",
             model.RealmId, string.Join(", ", changedFields));
     }
@@ -1545,7 +1545,7 @@ public partial class RealmService : IRealmService
             CharactersFailed = charactersFailed
         };
 
-        await _messageBus.TryPublishAsync("realm.merged", eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishRealmMergedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published realm.merged event for source {SourceRealmId} into target {TargetRealmId}",
             sourceRealm.RealmId, targetRealm.RealmId);
     }
@@ -1578,7 +1578,7 @@ public partial class RealmService : IRealmService
             DeletedReason = deletedReason
         };
 
-        await _messageBus.TryPublishAsync("realm.deleted", eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishRealmDeletedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published realm.deleted event for {RealmId}", model.RealmId);
     }
 

@@ -221,7 +221,7 @@ public partial class EscrowService
                     ?? agreementModel.Parties?.Count(p => p.ConsentRequired) ?? 0,
                 ConsentedAt = now
             };
-            await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowConsentReceived, consentEvent, cancellationToken);
+            await _messageBus.PublishEscrowConsentReceivedAsync(consentEvent, cancellationToken);
 
             if (newStatus == EscrowStatus.Finalizing && previousStatus != EscrowStatus.Finalizing)
             {
@@ -234,7 +234,7 @@ public partial class EscrowService
                     FinalizerCount = 0,
                     StartedAt = now
                 };
-                await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowFinalizing, finalizingEvent, cancellationToken);
+                await _messageBus.PublishEscrowFinalizingAsync(finalizingEvent, cancellationToken);
             }
             else if (newStatus == EscrowStatus.Disputed)
             {
@@ -248,7 +248,7 @@ public partial class EscrowService
                     Reason = body.Notes ?? "Party initiated dispute",
                     DisputedAt = now
                 };
-                await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowDisputed, disputeEvent, cancellationToken);
+                await _messageBus.PublishEscrowDisputedAsync(disputeEvent, cancellationToken);
             }
             else if (newStatus == EscrowStatus.Refunding && previousStatus != EscrowStatus.Refunding)
             {
@@ -262,7 +262,7 @@ public partial class EscrowService
                         .Select(MapDepositToApiModel).ToList(),
                     Reason = body.Notes ?? "Party initiated refund"
                 };
-                await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowRefunding, refundingEvent, cancellationToken);
+                await _messageBus.PublishEscrowRefundingAsync(refundingEvent, cancellationToken);
             }
 
             _logger.LogInformation(

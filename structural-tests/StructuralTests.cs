@@ -1,6 +1,6 @@
-using System.Reflection;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.TestUtilities;
+using System.Reflection;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.StructuralTests;

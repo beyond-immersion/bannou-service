@@ -143,7 +143,7 @@ public class CleanupService : BackgroundService
             if (slot.VersionCount == 0 && versionsDeleted > 0)
             {
                 await slotStore.DeleteAsync(slot.GetStateKey(), cancellationToken);
-                await messageBus.TryPublishAsync("save-load.save-slot.deleted", new SaveSlotDeletedEvent
+                await messageBus.PublishSaveSlotDeletedAsync(new SaveSlotDeletedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -162,7 +162,7 @@ public class CleanupService : BackgroundService
                     CreatedAt = slot.CreatedAt,
                     UpdatedAt = slot.UpdatedAt,
                     DeletedReason = "Scheduled cleanup - all versions expired"
-                }, cancellationToken: cancellationToken);
+                }, cancellationToken);
                 totalSlotsDeleted++;
             }
         }
@@ -173,8 +173,7 @@ public class CleanupService : BackgroundService
                 "Scheduled cleanup completed: {Versions} versions deleted, {Slots} slots deleted, {Bytes} bytes freed",
                 totalVersionsDeleted, totalSlotsDeleted, totalBytesFreed);
 
-            await messageBus.TryPublishAsync(
-                "save-load.cleanup.completed",
+            await messageBus.PublishCleanupCompletedAsync(
                 new CleanupCompletedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -183,7 +182,7 @@ public class CleanupService : BackgroundService
                     SlotsDeleted = totalSlotsDeleted,
                     BytesFreed = totalBytesFreed
                 },
-                cancellationToken: cancellationToken);
+                cancellationToken);
         }
         else
         {

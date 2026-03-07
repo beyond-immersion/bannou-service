@@ -269,10 +269,7 @@ public class SaveUploadWorker : BackgroundService
             AssetId = Guid.Parse(assetMetadata.AssetId)
         };
 
-        await messageBus.TryPublishAsync(
-            "save-load.upload.completed",
-            completedEvent,
-            cancellationToken: cancellationToken);
+        await messageBus.PublishSaveUploadCompletedAsync(completedEvent, cancellationToken);
 
         _logger.LogInformation(
             "Upload completed for slot {SlotId} version {Version}, asset ID {AssetId}",
@@ -313,10 +310,7 @@ public class SaveUploadWorker : BackgroundService
                 WillRetry = false
             };
 
-            await messageBus.TryPublishAsync(
-                "save-load.upload.failed",
-                failedEvent,
-                cancellationToken: cancellationToken);
+            await messageBus.PublishSaveUploadFailedAsync(failedEvent, cancellationToken);
 
             // Delete the failed entry after max attempts and remove from tracking set
             // PendingUploadEntry.UploadId is Guid - convert to string for set

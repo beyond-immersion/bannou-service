@@ -159,7 +159,7 @@ public sealed class HeartbeatEmitter : IAsyncDisposable
             Capacity = _configuration.PoolNodeCapacity
         };
 
-        await _messageBus.TryPublishAsync("actor.pool-node.heartbeat", heartbeat, cancellationToken: ct);
+        await _messageBus.PublishPoolNodeHeartbeatAsync(heartbeat, ct);
 
         _logger.LogDebug(
             "Emitted heartbeat for node {NodeId}: {ActorCount} actors",

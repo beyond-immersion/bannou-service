@@ -151,10 +151,7 @@ public partial class PuppetmasterService : IPuppetmasterService
             BehaviorRef = body.BehaviorRef,
             InvalidatedCount = invalidatedCount
         };
-        await _messageBus.TryPublishAsync(
-            "puppetmaster.behavior.invalidated",
-            evt,
-            cancellationToken: cancellationToken);
+        await _messageBus.PublishBehaviorInvalidatedAsync(evt, cancellationToken);
 
         var response = new InvalidateBehaviorsResponse
         {
@@ -250,10 +247,7 @@ public partial class PuppetmasterService : IPuppetmasterService
             BehaviorRef = body.BehaviorRef,
             ActorId = null
         };
-        await _messageBus.TryPublishAsync(
-            "puppetmaster.watcher.started",
-            evt,
-            cancellationToken: cancellationToken);
+        await _messageBus.PublishWatcherStartedAsync(evt, cancellationToken);
 
         _logger.LogInformation(
             "Started watcher {WatcherId} for realm {RealmId}, type {WatcherType}",
@@ -300,10 +294,7 @@ public partial class PuppetmasterService : IPuppetmasterService
             WatcherType = watcher.WatcherType,
             Reason = "manual"
         };
-        await _messageBus.TryPublishAsync(
-            "puppetmaster.watcher.stopped",
-            evt,
-            cancellationToken: cancellationToken);
+        await _messageBus.PublishWatcherStoppedAsync(evt, cancellationToken);
 
         _logger.LogInformation(
             "Stopped watcher {WatcherId} for realm {RealmId}, type {WatcherType}",

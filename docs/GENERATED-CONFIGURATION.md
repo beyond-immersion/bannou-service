@@ -345,7 +345,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS` | int | `600` | TTL in seconds for backstory cache entries. Backstory data i... |
+| `CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_MINUTES` | int | `10` | TTL in minutes for backstory cache entries. Backstory data i... |
 | `CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout in seconds for distributed locks during index and ba... |
 | `CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS` | int | `100` | Maximum number of backstory elements allowed per character. ... |
 | `CHARACTER_HISTORY_MAX_COMPRESS_BACKSTORY_POINTS` | int | `10` | Maximum number of backstory points to include in compression... |
@@ -478,7 +478,7 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `CURRENCY_AUTOGAIN_BATCH_SIZE` | int | `1000` | For task mode - batch size per processing cycle |
 | `CURRENCY_AUTOGAIN_PROCESSING_MODE` | string | `lazy` | How autogain is calculated (lazy = on-demand at query time, ... |
-| `CURRENCY_AUTOGAIN_TASK_INTERVAL_MS` | int | `60000` | For task mode - how often to process autogain in millisecond... |
+| `CURRENCY_AUTOGAIN_TASK_INTERVAL_SECONDS` | int | `60` | For task mode - how often to process autogain in seconds |
 | `CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS` | int | `15` | Delay in seconds before first autogain task cycle (allows se... |
 | `CURRENCY_BALANCE_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for balance cache entries |
 | `CURRENCY_BALANCE_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for balance-level distributed locks |
@@ -1053,7 +1053,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SAVE_LOAD_CLEANUP_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before cleanup service starts processing |
 | `SAVE_LOAD_CONFLICT_DETECTION_ENABLED` | bool | `true` | Enable device-based conflict detection for cloud saves. Requ... |
 | `SAVE_LOAD_CONFLICT_DETECTION_WINDOW_MINUTES` | int | `5` | Time window for considering saves as potentially conflicting... |
-| `SAVE_LOAD_DEFAULT_COMPRESSION_BY_CATEGORY` | string | **REQUIRED** | Default compression per category as comma-separated KEY=VALU... |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_AUTO_SAVE` | string | `Gzip` | Default compression for AUTO_SAVE category. Overrides Defaul... |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_CHECKPOINT` | string | `Gzip` | Default compression for CHECKPOINT category. Overrides Defau... |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_MANUAL_SAVE` | string | `Gzip` | Default compression for MANUAL_SAVE category. Overrides Defa... |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_QUICK_SAVE` | string | `None` | Default compression for QUICK_SAVE category. Overrides Defau... |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_STATE_SNAPSHOT` | string | `Brotli` | Default compression for STATE_SNAPSHOT category. Overrides D... |
 | `SAVE_LOAD_DEFAULT_COMPRESSION_TYPE` | string | `Gzip` | Default compression algorithm |
 | `SAVE_LOAD_DEFAULT_DELTA_ALGORITHM` | string | `JsonPatch` | Default algorithm for delta computation |
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_AUTO_SAVE` | int | `5` | Default max versions for AUTO_SAVE category |
@@ -1298,9 +1302,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 1004
-- **Required (no default)**: 59
-- **Optional (has default)**: 945
+- **Total properties**: 1008
+- **Required (no default)**: 58
+- **Optional (has default)**: 950
 
 ## Environment Variable Naming Convention
 

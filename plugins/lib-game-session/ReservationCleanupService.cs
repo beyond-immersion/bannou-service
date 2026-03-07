@@ -245,8 +245,7 @@ public class ReservationCleanupService : BackgroundService
             }
 
             // Publish server-side domain event
-            await _messageBus.TryPublishAsync(
-                "game-session.cancelled",
+            await _messageBus.PublishGameSessionCancelledAsync(
                 new GameSessionCancelledEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -261,8 +260,7 @@ public class ReservationCleanupService : BackgroundService
             if (fullModel != null)
             {
                 // Publish lifecycle deleted event using shared helper
-                await _messageBus.TryPublishAsync(
-                    "game-session.deleted",
+                await _messageBus.PublishGameSessionDeletedAsync(
                     GameSessionService.BuildDeletedEvent(fullModel, "Reservation timeout - not enough players"),
                     cancellationToken);
             }

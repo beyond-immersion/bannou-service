@@ -1299,7 +1299,7 @@ public partial class SpeciesService : ISpeciesService
                 UpdatedAt = model.UpdatedAt
             };
 
-            await _messageBus.TryPublishAsync("species.created", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.PublishSpeciesCreatedAsync(eventModel, cancellationToken);
             _logger.LogDebug("Published species.created event for {SpeciesId}", model.SpeciesId);
         }
         catch (Exception ex)
@@ -1340,7 +1340,7 @@ public partial class SpeciesService : ISpeciesService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _messageBus.TryPublishAsync("species.updated", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.PublishSpeciesUpdatedAsync(eventModel, cancellationToken);
             _logger.LogDebug("Published species.updated event for {SpeciesId} with changed fields: {ChangedFields}",
                 model.SpeciesId, string.Join(", ", changedFields));
         }
@@ -1381,7 +1381,7 @@ public partial class SpeciesService : ISpeciesService
                 DeletedReason = deletedReason
             };
 
-            await _messageBus.TryPublishAsync("species.deleted", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.PublishSpeciesDeletedAsync(eventModel, cancellationToken);
             _logger.LogDebug("Published species.deleted event for {SpeciesId}", model.SpeciesId);
         }
         catch (Exception ex)
@@ -1413,7 +1413,7 @@ public partial class SpeciesService : ISpeciesService
                 MergedCharacterCount = migratedCharacterCount
             };
 
-            await _messageBus.TryPublishAsync("species.merged", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.PublishSpeciesMergedAsync(eventModel, cancellationToken);
             _logger.LogDebug("Published species.merged event: {SourceId} -> {TargetId} ({Count} characters)",
                 sourceModel.SpeciesId, targetModel.SpeciesId, migratedCharacterCount);
         }

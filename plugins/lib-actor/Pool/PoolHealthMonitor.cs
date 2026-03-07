@@ -143,7 +143,7 @@ public sealed class PoolHealthMonitor : BackgroundService
                 ActorCount = actors.Count
             };
 
-            await _messageBus.TryPublishAsync("actor.pool-node.unhealthy", unhealthyEvent, cancellationToken: ct);
+            await _messageBus.PublishPoolNodeUnhealthyAsync(unhealthyEvent, ct);
 
             // Remove the node from the pool
             await _poolManager.RemoveNodeAsync(node.NodeId, "heartbeat_timeout", ct);

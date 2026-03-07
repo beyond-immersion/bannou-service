@@ -169,7 +169,7 @@ public partial class VoiceService : IVoiceService
         await _stringStore.SaveAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", roomId.ToString(), cancellationToken: cancellationToken);
 
         // Publish service event
-        await _messageBus.TryPublishAsync("voice.room.created", new VoiceRoomCreatedEvent
+        await _messageBus.PublishVoiceRoomCreatedAsync(new VoiceRoomCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -290,7 +290,7 @@ public partial class VoiceService : IVoiceService
                     await _stringStore.SaveAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", body.RoomId.ToString(), cancellationToken: cancellationToken);
 
                     // Publish room created event
-                    await _messageBus.TryPublishAsync("voice.room.created", new VoiceRoomCreatedEvent
+                    await _messageBus.PublishVoiceRoomCreatedAsync(new VoiceRoomCreatedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = now,
@@ -406,7 +406,7 @@ public partial class VoiceService : IVoiceService
         }
 
         // Publish peer joined service event
-        await _messageBus.TryPublishAsync("voice.peer.joined", new VoicePeerJoinedEvent
+        await _messageBus.PublishVoicePeerJoinedAsync(new VoicePeerJoinedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -538,7 +538,7 @@ public partial class VoiceService : IVoiceService
         var remainingCount = await _endpointRegistry.GetParticipantCountAsync(body.RoomId, cancellationToken);
 
         // Publish peer left service event
-        await _messageBus.TryPublishAsync("voice.peer.left", new VoicePeerLeftEvent
+        await _messageBus.PublishVoicePeerLeftAsync(new VoicePeerLeftEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -661,7 +661,7 @@ public partial class VoiceService : IVoiceService
 
         // Publish room deleted service event
         var deleteReason = body.Reason ?? VoiceRoomDeletedReason.Manual;
-        await _messageBus.TryPublishAsync("voice.room.deleted", new VoiceRoomDeletedEvent
+        await _messageBus.PublishVoiceRoomDeletedAsync(new VoiceRoomDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -911,7 +911,7 @@ public partial class VoiceService : IVoiceService
             await ClearConsentPendingStatesAsync(participantSessionIds, cancellationToken);
 
             // Publish declined service event
-            await _messageBus.TryPublishAsync("voice.broadcast.declined", new VoiceBroadcastDeclinedEvent
+            await _messageBus.PublishVoiceBroadcastDeclinedAsync(new VoiceBroadcastDeclinedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -955,7 +955,7 @@ public partial class VoiceService : IVoiceService
             await ClearConsentPendingStatesAsync(participantSessionIds, cancellationToken);
 
             // Publish approved service event
-            await _messageBus.TryPublishAsync("voice.broadcast.approved", new VoiceBroadcastApprovedEvent
+            await _messageBus.PublishVoiceBroadcastApprovedAsync(new VoiceBroadcastApprovedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1093,7 +1093,7 @@ public partial class VoiceService : IVoiceService
         await _roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
 
         // Publish stopped service event
-        await _messageBus.TryPublishAsync("voice.broadcast.stopped", new VoiceBroadcastStoppedEvent
+        await _messageBus.PublishVoiceBroadcastStoppedAsync(new VoiceBroadcastStoppedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1383,7 +1383,7 @@ public partial class VoiceService : IVoiceService
             await _roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
 
             // Publish tier upgraded service event
-            await _messageBus.TryPublishAsync("voice.room.tier-upgraded", new VoiceRoomTierUpgradedEvent
+            await _messageBus.PublishVoiceRoomTierUpgradedAsync(new VoiceRoomTierUpgradedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,

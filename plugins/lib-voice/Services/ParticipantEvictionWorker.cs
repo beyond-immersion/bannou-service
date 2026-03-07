@@ -259,7 +259,7 @@ public class ParticipantEvictionWorker : BackgroundService
             var remainingCount = await _endpointRegistry.GetParticipantCountAsync(roomId, cancellationToken);
 
             // Publish peer left service event
-            await messageBus.TryPublishAsync("voice.peer.left", new VoicePeerLeftEvent
+            await messageBus.PublishVoicePeerLeftAsync(new VoicePeerLeftEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
@@ -364,7 +364,7 @@ public class ParticipantEvictionWorker : BackgroundService
         await stringStore.DeleteAsync($"voice:session-room:{roomData.SessionId}", cancellationToken);
 
         // Publish room deleted service event with Empty reason
-        await messageBus.TryPublishAsync("voice.room.deleted", new VoiceRoomDeletedEvent
+        await messageBus.PublishVoiceRoomDeletedAsync(new VoiceRoomDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -417,7 +417,7 @@ public class ParticipantEvictionWorker : BackgroundService
         }
 
         // Publish declined service event
-        await messageBus.TryPublishAsync("voice.broadcast.declined", new VoiceBroadcastDeclinedEvent
+        await messageBus.PublishVoiceBroadcastDeclinedAsync(new VoiceBroadcastDeclinedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -468,7 +468,7 @@ public class ParticipantEvictionWorker : BackgroundService
         await roomStore.SaveAsync($"voice:room:{roomId}", roomData, cancellationToken: cancellationToken);
 
         // Publish stopped service event
-        await messageBus.TryPublishAsync("voice.broadcast.stopped", new VoiceBroadcastStoppedEvent
+        await messageBus.PublishVoiceBroadcastStoppedAsync(new VoiceBroadcastStoppedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

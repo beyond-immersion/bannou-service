@@ -214,7 +214,7 @@ public partial class ItemService : IItemService
         await PopulateTemplateCacheAsync(templateId.ToString(), model, cancellationToken);
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync("item.template.created", new ItemTemplateCreatedEvent
+        await _messageBus.PublishItemTemplateCreatedAsync(new ItemTemplateCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -358,7 +358,7 @@ public partial class ItemService : IItemService
         // Invalidate cache after write
         await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("item.template.updated", new ItemTemplateUpdatedEvent
+        await _messageBus.PublishItemTemplateUpdatedAsync(new ItemTemplateUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -415,7 +415,7 @@ public partial class ItemService : IItemService
         await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
 
         // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
-        await _messageBus.TryPublishAsync("item.template.updated", new ItemTemplateUpdatedEvent
+        await _messageBus.PublishItemTemplateUpdatedAsync(new ItemTemplateUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -530,7 +530,7 @@ public partial class ItemService : IItemService
         // Populate instance cache
         await PopulateInstanceCacheAsync(instanceId.ToString(), model, cancellationToken);
 
-        await _messageBus.TryPublishAsync("item.instance.created", new ItemInstanceCreatedEvent
+        await _messageBus.PublishItemInstanceCreatedAsync(new ItemInstanceCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -702,7 +702,7 @@ public partial class ItemService : IItemService
         // Invalidate cache after write
         await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("item.instance.modified", new ItemInstanceModifiedEvent
+        await _messageBus.PublishItemInstanceModifiedAsync(new ItemInstanceModifiedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -764,7 +764,7 @@ public partial class ItemService : IItemService
 
         var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
 
-        await _messageBus.TryPublishAsync("item.instance.bound", new ItemInstanceBoundEvent
+        await _messageBus.PublishItemInstanceBoundAsync(new ItemInstanceBoundEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -822,7 +822,7 @@ public partial class ItemService : IItemService
 
         var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
 
-        await _messageBus.TryPublishAsync("item.instance.unbound", new ItemInstanceUnboundEvent
+        await _messageBus.PublishItemInstanceUnboundAsync(new ItemInstanceUnboundEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -874,7 +874,7 @@ public partial class ItemService : IItemService
         // Invalidate cache after delete
         await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("item.instance.destroyed", new ItemInstanceDestroyedEvent
+        await _messageBus.PublishItemInstanceDestroyedAsync(new ItemInstanceDestroyedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1421,7 +1421,7 @@ public partial class ItemService : IItemService
         CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.PublishStepCompletedEventAsync");
-        await _messageBus.TryPublishAsync("item.use-step-completed", new ItemUseStepCompletedEvent
+        await _messageBus.PublishItemUseStepCompletedAsync(new ItemUseStepCompletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1453,7 +1453,7 @@ public partial class ItemService : IItemService
         CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.PublishStepFailedEventAsync");
-        await _messageBus.TryPublishAsync("item.use-step-failed", new ItemUseStepFailedEvent
+        await _messageBus.PublishItemUseStepFailedAsync(new ItemUseStepFailedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1778,7 +1778,7 @@ public partial class ItemService : IItemService
             await InvalidateInstanceCacheAsync(instanceId.ToString(), cancellationToken);
 
             // Publish destroy event
-            await _messageBus.TryPublishAsync("item.instance.destroyed", new ItemInstanceDestroyedEvent
+            await _messageBus.PublishItemInstanceDestroyedAsync(new ItemInstanceDestroyedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1803,7 +1803,7 @@ public partial class ItemService : IItemService
             await InvalidateInstanceCacheAsync(instanceId.ToString(), cancellationToken);
 
             // Publish modify event
-            await _messageBus.TryPublishAsync("item.instance.modified", new ItemInstanceModifiedEvent
+            await _messageBus.PublishItemInstanceModifiedAsync(new ItemInstanceModifiedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1961,7 +1961,7 @@ public partial class ItemService : IItemService
             TotalCount = totalCount
         };
 
-        await _messageBus.TryPublishAsync("item.used", evt, cancellationToken);
+        await _messageBus.PublishItemUsedAsync(evt, cancellationToken);
         _logger.LogDebug(
             "Published batched item.used event: batchId={BatchId}, records={Count}, total={Total}",
             batch.BatchId, records.Count, totalCount);
@@ -1987,7 +1987,7 @@ public partial class ItemService : IItemService
             TotalCount = totalCount
         };
 
-        await _messageBus.TryPublishAsync("item.use-failed", evt, cancellationToken);
+        await _messageBus.PublishItemUseFailedAsync(evt, cancellationToken);
         _logger.LogDebug(
             "Published batched item.use-failed event: batchId={BatchId}, records={Count}, total={Total}",
             batch.BatchId, records.Count, totalCount);

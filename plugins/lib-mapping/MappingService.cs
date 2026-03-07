@@ -98,11 +98,6 @@ public partial class MappingService : IMappingService
     private const string DEFINITION_PREFIX = "map:definition:";
     private const string DEFINITION_INDEX_KEY = "map:definition-index";
 
-    // Authority event topics
-    private const string AUTHORITY_GRANTED_TOPIC = "mapping.authority.granted";
-    private const string AUTHORITY_RELEASED_TOPIC = "mapping.authority.released";
-    private const string AUTHORITY_EXPIRED_TOPIC = "mapping.authority.expired";
-
     /// <summary>
     /// Initializes a new instance of the MappingService.
     /// </summary>
@@ -392,7 +387,7 @@ public partial class MappingService : IMappingService
             await PublishChannelCreatedEventAsync(channel, cancellationToken);
 
             // Publish authority granted event
-            await _messageBus.TryPublishAsync(AUTHORITY_GRANTED_TOPIC, new MappingAuthorityGrantedEvent
+            await _messageBus.PublishMappingAuthorityGrantedAsync(new MappingAuthorityGrantedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -402,7 +397,7 @@ public partial class MappingService : IMappingService
                 AuthorityAppId = body.SourceAppId,
                 ExpiresAt = expiresAt,
                 IsNewChannel = existingChannel == null
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             _logger.LogInformation("Created channel {ChannelId} for region {RegionId}, kind {Kind}",
                 channelId, body.RegionId, body.Kind);
@@ -457,7 +452,7 @@ public partial class MappingService : IMappingService
             var channelKey = BuildChannelKey(body.ChannelId);
             var channel = await _channelStore
                 .GetAsync(channelKey, cancellationToken);
-            await _messageBus.TryPublishAsync(AUTHORITY_RELEASED_TOPIC, new MappingAuthorityReleasedEvent
+            await _messageBus.PublishMappingAuthorityReleasedAsync(new MappingAuthorityReleasedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -465,7 +460,7 @@ public partial class MappingService : IMappingService
                 RegionId = channel?.RegionId,
                 Kind = channel?.Kind,
                 AuthorityAppId = authority.AuthorityAppId
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             _logger.LogInformation("Released authority for channel {ChannelId}", body.ChannelId);
             return StatusCodes.OK;
@@ -1423,7 +1418,7 @@ public partial class MappingService : IMappingService
         if (authority.ExpiresAt < DateTimeOffset.UtcNow)
         {
             // Publish authority expired event (fire-and-forget for monitoring)
-            _ = _messageBus.TryPublishAsync(AUTHORITY_EXPIRED_TOPIC, new MappingAuthorityExpiredEvent
+            _ = _messageBus.PublishMappingAuthorityExpiredAsync(new MappingAuthorityExpiredEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -2079,7 +2074,7 @@ public partial class MappingService : IMappingService
             UpdatedAt = channel.UpdatedAt
         };
 
-        await _messageBus.TryPublishAsync("mapping.channel.created", eventData, cancellationToken: cancellationToken);
+        await _messageBus.PublishMappingChannelCreatedAsync(eventData, cancellationToken);
     }
 
     private async Task PublishMapUpdatedEventAsync(ChannelRecord channel, Bounds? bounds, long version, DeltaType deltaType, MapPayload payload, string? sourceAppId, CancellationToken cancellationToken)

@@ -289,7 +289,7 @@ public class CurrencyAutogainTaskService : BackgroundService
                 return true; // Balance was saved successfully, just can't publish event
             }
 
-            await messageBus.TryPublishAsync("currency.autogain.calculated", new CurrencyAutogainCalculatedEvent
+            await messageBus.PublishCurrencyAutogainCalculatedAsync(new CurrencyAutogainCalculatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,

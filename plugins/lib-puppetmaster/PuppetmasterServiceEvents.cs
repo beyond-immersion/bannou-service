@@ -484,10 +484,7 @@ public partial class PuppetmasterService
                 WatcherType = watcher.WatcherType,
                 Reason = reason
             };
-            await _messageBus.TryPublishAsync(
-                "puppetmaster.watcher.stopped",
-                evt,
-                cancellationToken: CancellationToken.None);
+            await _messageBus.PublishWatcherStoppedAsync(evt, CancellationToken.None);
 
             stoppedCount++;
         }

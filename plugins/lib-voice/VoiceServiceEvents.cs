@@ -87,7 +87,7 @@ public partial class VoiceService
         var remainingCount = await _endpointRegistry.GetParticipantCountAsync(roomId, CancellationToken.None);
 
         // Publish peer left service event
-        await _messageBus.TryPublishAsync("voice.peer.left", new VoicePeerLeftEvent
+        await _messageBus.PublishVoicePeerLeftAsync(new VoicePeerLeftEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

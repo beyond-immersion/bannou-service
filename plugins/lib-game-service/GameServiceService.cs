@@ -506,7 +506,7 @@ public partial class GameServiceService : IGameServiceService
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
             UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix ?? model.CreatedAtUnix)
         };
-        await _messageBus.TryPublishAsync("game-service.created", eventModel);
+        await _messageBus.PublishGameServiceCreatedAsync(eventModel);
     }
 
     /// <summary>
@@ -533,7 +533,7 @@ public partial class GameServiceService : IGameServiceService
             UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix ?? model.CreatedAtUnix),
             ChangedFields = changedFields
         };
-        await _messageBus.TryPublishAsync("game-service.updated", eventModel);
+        await _messageBus.PublishGameServiceUpdatedAsync(eventModel);
     }
 
     /// <summary>
@@ -560,7 +560,7 @@ public partial class GameServiceService : IGameServiceService
             UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix ?? model.CreatedAtUnix),
             DeletedReason = reason
         };
-        await _messageBus.TryPublishAsync("game-service.deleted", eventModel);
+        await _messageBus.PublishGameServiceDeletedAsync(eventModel);
     }
 
     #endregion

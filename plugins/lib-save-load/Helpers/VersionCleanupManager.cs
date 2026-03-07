@@ -207,10 +207,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             SlotsDeleted = 0,
             BytesFreed = bytesFreed
         };
-        await _messageBus.TryPublishAsync(
-            "save-load.cleanup.completed",
-            cleanupEvent,
-            cancellationToken: cancellationToken);
+        await _messageBus.PublishCleanupCompletedAsync(cleanupEvent, cancellationToken);
     }
 
     /// <inheritdoc />

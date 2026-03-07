@@ -181,7 +181,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         }
 
         // Publish typed event per FOUNDATION TENETS
-        await _messageBus.TryPublishAsync(PARTICIPATION_RECORDED_TOPIC, new CharacterParticipationRecordedEvent
+        await _messageBus.PublishCharacterParticipationRecordedAsync(new CharacterParticipationRecordedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -192,7 +192,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             HistoricalEventName = body.EventName,
             EventCategory = body.EventCategory,
             Significance = body.Significance
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         // Register character reference with lib-resource for cleanup coordination
         await RegisterCharacterReferenceAsync(participationId.ToString(), body.CharacterId, cancellationToken);
@@ -316,14 +316,14 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         }
 
         // Publish typed event per FOUNDATION TENETS
-        await _messageBus.TryPublishAsync(PARTICIPATION_DELETED_TOPIC, new CharacterParticipationDeletedEvent
+        await _messageBus.PublishCharacterParticipationDeletedAsync(new CharacterParticipationDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ParticipationId = body.ParticipationId,
             CharacterId = data.CharacterId,
             HistoricalEventId = data.EventId
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation("Deleted participation {ParticipationId}", body.ParticipationId);
         return StatusCodes.OK;
@@ -456,27 +456,27 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         var now = DateTimeOffset.UtcNow;
         if (result.IsNew)
         {
-            await _messageBus.TryPublishAsync(BACKSTORY_CREATED_TOPIC, new CharacterBackstoryCreatedEvent
+            await _messageBus.PublishCharacterBackstoryCreatedAsync(new CharacterBackstoryCreatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 CharacterId = body.CharacterId,
                 ElementCount = result.Backstory.Elements.Count
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             // Register character reference with lib-resource for cleanup coordination (only on new backstory)
             await RegisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
         }
         else
         {
-            await _messageBus.TryPublishAsync(BACKSTORY_UPDATED_TOPIC, new CharacterBackstoryUpdatedEvent
+            await _messageBus.PublishCharacterBackstoryUpdatedAsync(new CharacterBackstoryUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 CharacterId = body.CharacterId,
                 ElementCount = result.Backstory.Elements.Count,
                 ReplaceExisting = body.ReplaceExisting
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
         }
 
         _logger.LogInformation("Backstory {Action} for character {CharacterId}, {Count} elements",
@@ -537,27 +537,27 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         var now = DateTimeOffset.UtcNow;
         if (result.IsNew)
         {
-            await _messageBus.TryPublishAsync(BACKSTORY_CREATED_TOPIC, new CharacterBackstoryCreatedEvent
+            await _messageBus.PublishCharacterBackstoryCreatedAsync(new CharacterBackstoryCreatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 CharacterId = body.CharacterId,
                 ElementCount = result.Backstory.Elements.Count
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             // Register character reference with lib-resource for cleanup coordination (only on new backstory)
             await RegisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
         }
         else
         {
-            await _messageBus.TryPublishAsync(BACKSTORY_UPDATED_TOPIC, new CharacterBackstoryUpdatedEvent
+            await _messageBus.PublishCharacterBackstoryUpdatedAsync(new CharacterBackstoryUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 CharacterId = body.CharacterId,
                 ElementCount = result.Backstory.Elements.Count,
                 ReplaceExisting = false
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
         }
 
         _logger.LogInformation("Backstory element added for character {CharacterId}, now {Count} elements",
@@ -592,12 +592,12 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             await UnregisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
 
             // Publish typed event per FOUNDATION TENETS
-            await _messageBus.TryPublishAsync(BACKSTORY_DELETED_TOPIC, new CharacterBackstoryDeletedEvent
+            await _messageBus.PublishCharacterBackstoryDeletedAsync(new CharacterBackstoryDeletedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = body.CharacterId
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             _logger.LogInformation("Backstory deleted for character {CharacterId}", body.CharacterId);
             return StatusCodes.OK;
@@ -663,14 +663,14 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             var backstoryDeleted = backstoryLockResult.Value;
 
             // Publish typed event per FOUNDATION TENETS
-            await _messageBus.TryPublishAsync(HISTORY_DELETED_TOPIC, new CharacterHistoryDeletedEvent
+            await _messageBus.PublishCharacterHistoryDeletedAsync(new CharacterHistoryDeletedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = body.CharacterId,
                 ParticipationsDeleted = participationsDeleted,
                 BackstoryDeleted = backstoryDeleted
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             _logger.LogInformation("Deleted all history for character {CharacterId}: {ParticipationsDeleted} participations, backstory={BackstoryDeleted}",
                 body.CharacterId, participationsDeleted, backstoryDeleted);

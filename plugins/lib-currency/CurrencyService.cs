@@ -191,7 +191,7 @@ public partial class CurrencyService : ICurrencyService
             await _definitionStringStore.SaveAsync($"{BASE_CURRENCY_INDEX}{body.Scope}", $"{definitionId}:{body.Code}", cancellationToken: cancellationToken);
         }
 
-        await _messageBus.TryPublishAsync("currency.definition.created", new CurrencyDefinitionCreatedEvent
+        await _messageBus.PublishCurrencyDefinitionCreatedAsync(new CurrencyDefinitionCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -293,7 +293,7 @@ public partial class CurrencyService : ICurrencyService
 
         await _definitionStore.SaveAsync(key, model, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("currency.definition.updated", new CurrencyDefinitionUpdatedEvent
+        await _messageBus.PublishCurrencyDefinitionUpdatedAsync(new CurrencyDefinitionUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -343,7 +343,7 @@ public partial class CurrencyService : ICurrencyService
         await _walletStore.SaveAsync($"{WALLET_PREFIX}{walletId}", model, cancellationToken: cancellationToken);
         await _walletStringStore.SaveAsync($"{WALLET_OWNER_INDEX}{ownerKey}", walletId.ToString(), cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("currency.wallet.created", new CurrencyWalletCreatedEvent
+        await _messageBus.PublishCurrencyWalletCreatedAsync(new CurrencyWalletCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -469,7 +469,7 @@ public partial class CurrencyService : ICurrencyService
             return (StatusCodes.Conflict, null);
         }
 
-        await _messageBus.TryPublishAsync("currency.wallet.frozen", new CurrencyWalletFrozenEvent
+        await _messageBus.PublishCurrencyWalletFrozenAsync(new CurrencyWalletFrozenEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -514,7 +514,7 @@ public partial class CurrencyService : ICurrencyService
             return (StatusCodes.Conflict, null);
         }
 
-        await _messageBus.TryPublishAsync("currency.wallet.unfrozen", new CurrencyWalletUnfrozenEvent
+        await _messageBus.PublishCurrencyWalletUnfrozenAsync(new CurrencyWalletUnfrozenEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -598,7 +598,7 @@ public partial class CurrencyService : ICurrencyService
             return (StatusCodes.Conflict, null);
         }
 
-        await _messageBus.TryPublishAsync("currency.wallet.closed", new CurrencyWalletClosedEvent
+        await _messageBus.PublishCurrencyWalletClosedAsync(new CurrencyWalletClosedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -737,7 +737,7 @@ public partial class CurrencyService : ICurrencyService
                 earnCapAmountLimited = creditAmount - cappedAmount;
                 creditAmount = cappedAmount;
 
-                await _messageBus.TryPublishAsync("currency.earn-cap.reached", new CurrencyEarnCapReachedEvent
+                await _messageBus.PublishCurrencyEarnCapReachedAsync(new CurrencyEarnCapReachedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -775,7 +775,7 @@ public partial class CurrencyService : ICurrencyService
                 walletCapAmountLost = overflow;
                 creditAmount -= overflow;
 
-                await _messageBus.TryPublishAsync("currency.wallet-cap.reached", new CurrencyWalletCapReachedEvent
+                await _messageBus.PublishCurrencyWalletCapReachedAsync(new CurrencyWalletCapReachedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -805,7 +805,7 @@ public partial class CurrencyService : ICurrencyService
 
         await RecordIdempotencyAsync(body.IdempotencyKey, transaction.TransactionId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("currency.credited", new CurrencyCreditedEvent
+        await _messageBus.PublishCurrencyCreditedAsync(new CurrencyCreditedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -900,7 +900,7 @@ public partial class CurrencyService : ICurrencyService
 
         await RecordIdempotencyAsync(body.IdempotencyKey, transaction.TransactionId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("currency.debited", new CurrencyDebitedEvent
+        await _messageBus.PublishCurrencyDebitedAsync(new CurrencyDebitedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1031,7 +1031,7 @@ public partial class CurrencyService : ICurrencyService
 
         await RecordIdempotencyAsync(body.IdempotencyKey, transaction.TransactionId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("currency.transferred", new CurrencyTransferredEvent
+        await _messageBus.PublishCurrencyTransferredAsync(new CurrencyTransferredEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1401,7 +1401,7 @@ public partial class CurrencyService : ICurrencyService
             {
                 var baseCurrencyCode = await FindBaseCurrencyCodeAsync(cancellationToken) ?? definition.Code;
 
-                await _messageBus.TryPublishAsync("currency.exchange-rate.updated", new CurrencyExchangeRateUpdatedEvent
+                await _messageBus.PublishCurrencyExchangeRateUpdatedAsync(new CurrencyExchangeRateUpdatedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -1733,7 +1733,7 @@ public partial class CurrencyService : ICurrencyService
 
         await RecordIdempotencyAsync(body.IdempotencyKey, holdId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("currency.hold.created", new CurrencyHoldCreatedEvent
+        await _messageBus.PublishCurrencyHoldCreatedAsync(new CurrencyHoldCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1832,7 +1832,7 @@ public partial class CurrencyService : ICurrencyService
             return (StatusCodes.InternalServerError, null);
         }
 
-        await _messageBus.TryPublishAsync("currency.hold.captured", new CurrencyHoldCapturedEvent
+        await _messageBus.PublishCurrencyHoldCapturedAsync(new CurrencyHoldCapturedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1914,7 +1914,7 @@ public partial class CurrencyService : ICurrencyService
             return (StatusCodes.InternalServerError, null);
         }
 
-        await _messageBus.TryPublishAsync("currency.hold.released", new CurrencyHoldReleasedEvent
+        await _messageBus.PublishCurrencyHoldReleasedAsync(new CurrencyHoldReleasedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2194,7 +2194,7 @@ public partial class CurrencyService : ICurrencyService
 
         await SaveBalanceAsync(balance, ct);
 
-        await _messageBus.TryPublishAsync("currency.autogain.calculated", new CurrencyAutogainCalculatedEvent
+        await _messageBus.PublishCurrencyAutogainCalculatedAsync(new CurrencyAutogainCalculatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,

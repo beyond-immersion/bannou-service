@@ -2065,7 +2065,7 @@ public partial class LocationService : ILocationService
             UpdatedAt = model.UpdatedAt
         };
 
-        await _messageBus.TryPublishAsync("location.created", eventData, cancellationToken: cancellationToken);
+        await _messageBus.PublishLocationCreatedAsync(eventData, cancellationToken);
     }
 
     private async Task PublishLocationUpdatedEventAsync(LocationModel model, IList<string> changedFields, CancellationToken cancellationToken)
@@ -2098,7 +2098,7 @@ public partial class LocationService : ILocationService
             ChangedFields = changedFields.ToList()
         };
 
-        await _messageBus.TryPublishAsync("location.updated", eventData, cancellationToken: cancellationToken);
+        await _messageBus.PublishLocationUpdatedAsync(eventData, cancellationToken);
 
         // Publish client event to sessions observing this location
         await _entitySessionRegistry.PublishToEntitySessionsAsync(
@@ -2165,7 +2165,7 @@ public partial class LocationService : ILocationService
             Metadata = model.Metadata
         };
 
-        await _messageBus.TryPublishAsync("location.deleted", eventData, cancellationToken: cancellationToken);
+        await _messageBus.PublishLocationDeletedAsync(eventData, cancellationToken);
     }
 
     private async Task PublishEntityArrivedEventAsync(
@@ -2185,7 +2185,7 @@ public partial class LocationService : ILocationService
             ReportedBy = reportedBy
         };
 
-        await _messageBus.TryPublishAsync("location.entity-arrived", eventData, cancellationToken: cancellationToken);
+        await _messageBus.PublishLocationEntityArrivedAsync(eventData, cancellationToken);
 
         // Publish client event to sessions observing this location
         await PublishPresenceClientEventAsync(locationId, realmId, entityType, entityId, PresenceChangeType.Arrived, cancellationToken);
@@ -2208,7 +2208,7 @@ public partial class LocationService : ILocationService
             ReportedBy = reportedBy
         };
 
-        await _messageBus.TryPublishAsync("location.entity-departed", eventData, cancellationToken: cancellationToken);
+        await _messageBus.PublishLocationEntityDepartedAsync(eventData, cancellationToken);
 
         // Publish client event to sessions observing this location
         await PublishPresenceClientEventAsync(locationId, realmId, entityType, entityId, PresenceChangeType.Departed, cancellationToken);

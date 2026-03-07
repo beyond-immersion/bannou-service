@@ -232,7 +232,7 @@ public partial class FactionService : IFactionService
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
         };
-        await _messageBus.TryPublishAsync("faction.created", evt, cancellationToken: ct);
+        await _messageBus.PublishFactionCreatedAsync(evt, ct);
     }
 
     /// <summary>
@@ -263,7 +263,7 @@ public partial class FactionService : IFactionService
             UpdatedAt = model.UpdatedAt,
             ChangedFields = changedFields.ToList(),
         };
-        await _messageBus.TryPublishAsync("faction.updated", evt, cancellationToken: ct);
+        await _messageBus.PublishFactionUpdatedAsync(evt, ct);
     }
 
     // ========================================================================
@@ -751,7 +751,7 @@ public partial class FactionService : IFactionService
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
         };
-        await _messageBus.TryPublishAsync("faction.deleted", deletedEvt, cancellationToken: cancellationToken);
+        await _messageBus.PublishFactionDeletedAsync(deletedEvt, cancellationToken);
 
         _logger.LogInformation("Deleted faction {FactionId}", body.FactionId);
         return StatusCodes.OK;
@@ -937,7 +937,7 @@ public partial class FactionService : IFactionService
             RealmId = model.RealmId,
             PreviousBaselineFactionId = previousBaselineId,
         };
-        await _messageBus.TryPublishAsync("faction.realm-baseline.designated", evt, cancellationToken: cancellationToken);
+        await _messageBus.PublishFactionRealmBaselineDesignatedAsync(evt, cancellationToken);
         await InvalidateNormCacheForFactionAsync(model.FactionId, cancellationToken);
         if (previousBaselineId.HasValue)
         {
@@ -1054,7 +1054,7 @@ public partial class FactionService : IFactionService
             CharacterId = body.CharacterId,
             Role = role,
         };
-        await _messageBus.TryPublishAsync("faction.member.added", evt, cancellationToken: cancellationToken);
+        await _messageBus.PublishFactionMemberAddedAsync(evt, cancellationToken);
         await InvalidateNormCacheForCharacterAsync(body.CharacterId, cancellationToken);
 
         _logger.LogInformation("Added member {CharacterId} to faction {FactionId} with role {Role}",
@@ -1132,7 +1132,7 @@ public partial class FactionService : IFactionService
             FactionId = factionId,
             CharacterId = characterId,
         };
-        await _messageBus.TryPublishAsync("faction.member.removed", evt, cancellationToken: ct);
+        await _messageBus.PublishFactionMemberRemovedAsync(evt, ct);
         await InvalidateNormCacheForCharacterAsync(characterId, ct);
 
         _logger.LogInformation("Removed member {CharacterId} from faction {FactionId}", characterId, factionId);
@@ -1255,7 +1255,7 @@ public partial class FactionService : IFactionService
             PreviousRole = previousRole,
             NewRole = body.Role,
         };
-        await _messageBus.TryPublishAsync("faction.member.role-changed", evt, cancellationToken: cancellationToken);
+        await _messageBus.PublishFactionMemberRoleChangedAsync(evt, cancellationToken);
 
         _logger.LogInformation("Updated member {CharacterId} role in faction {FactionId} from {PreviousRole} to {NewRole}",
             body.CharacterId, body.FactionId, previousRole, body.Role);
@@ -1374,7 +1374,7 @@ public partial class FactionService : IFactionService
             LocationId = body.LocationId,
             ClaimId = claimId,
         };
-        await _messageBus.TryPublishAsync("faction.territory.claimed", evt, cancellationToken: cancellationToken);
+        await _messageBus.PublishFactionTerritoryClaimedAsync(evt, cancellationToken);
         await InvalidateNormCacheForFactionAsync(body.FactionId, cancellationToken);
 
         _logger.LogInformation("Faction {FactionId} claimed territory at location {LocationId}", body.FactionId, body.LocationId);
@@ -1444,7 +1444,7 @@ public partial class FactionService : IFactionService
             LocationId = claim.LocationId,
             ClaimId = claim.ClaimId,
         };
-        await _messageBus.TryPublishAsync("faction.territory.released", evt, cancellationToken: ct);
+        await _messageBus.PublishFactionTerritoryReleasedAsync(evt, ct);
         await InvalidateNormCacheForFactionAsync(claim.FactionId, ct);
 
         _logger.LogInformation("Released territory claim {ClaimId} at location {LocationId}", claim.ClaimId, claim.LocationId);
@@ -1574,7 +1574,7 @@ public partial class FactionService : IFactionService
             Severity = body.Severity,
             Scope = body.Scope,
         };
-        await _messageBus.TryPublishAsync("faction.norm.defined", evt, cancellationToken: cancellationToken);
+        await _messageBus.PublishFactionNormDefinedAsync(evt, cancellationToken);
         await InvalidateNormCacheForFactionAsync(body.FactionId, cancellationToken);
 
         _logger.LogInformation("Defined norm {NormId} for faction {FactionId}, violation type {ViolationType}",
@@ -1642,7 +1642,7 @@ public partial class FactionService : IFactionService
             Severity = updatedSeverity,
             Scope = updatedScope,
         };
-        await _messageBus.TryPublishAsync("faction.norm.updated", evt, cancellationToken: cancellationToken);
+        await _messageBus.PublishFactionNormUpdatedAsync(evt, cancellationToken);
         await InvalidateNormCacheForFactionAsync(norm.FactionId, cancellationToken);
 
         _logger.LogInformation("Updated norm {NormId}", body.NormId);
@@ -1685,7 +1685,7 @@ public partial class FactionService : IFactionService
             NormId = body.NormId,
             ViolationType = norm.ViolationType,
         };
-        await _messageBus.TryPublishAsync("faction.norm.deleted", evt, cancellationToken: cancellationToken);
+        await _messageBus.PublishFactionNormDeletedAsync(evt, cancellationToken);
         await InvalidateNormCacheForFactionAsync(norm.FactionId, cancellationToken);
 
         _logger.LogInformation("Deleted norm {NormId}", body.NormId);

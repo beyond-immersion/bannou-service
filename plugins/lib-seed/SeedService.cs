@@ -190,7 +190,7 @@ public partial class SeedService : ISeedService
         await _growthStore.SaveAsync($"growth:{seed.SeedId}", growth, cancellationToken: cancellationToken);
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync("seed.created", new SeedCreatedEvent
+        await _messageBus.PublishSeedCreatedAsync(new SeedCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = seed.CreatedAt,
@@ -204,7 +204,7 @@ public partial class SeedService : ISeedService
             DisplayName = seed.DisplayName,
             Status = seed.Status,
             BondId = seed.BondId
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         return (StatusCodes.OK, MapToResponse(seed));
     }
@@ -327,7 +327,7 @@ public partial class SeedService : ISeedService
 
         await _seedStore.SaveAsync(key, seed, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed.updated", new SeedUpdatedEvent
+        await _messageBus.PublishSeedUpdatedAsync(new SeedUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -342,7 +342,7 @@ public partial class SeedService : ISeedService
             Status = seed.Status,
             BondId = seed.BondId,
             ChangedFields = changedFields
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         return (StatusCodes.OK, MapToResponse(seed));
     }
@@ -403,7 +403,7 @@ public partial class SeedService : ISeedService
                     cancellationToken: cancellationToken);
 
                 // Publish event for the deactivated seed's status change per FOUNDATION TENETS
-                await _messageBus.TryPublishAsync("seed.updated", new SeedUpdatedEvent
+                await _messageBus.PublishSeedUpdatedAsync(new SeedUpdatedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -418,14 +418,14 @@ public partial class SeedService : ISeedService
                     Status = activeSeed.Value.Status,
                     BondId = activeSeed.Value.BondId,
                     ChangedFields = new[] { "status" }
-                }, cancellationToken: cancellationToken);
+                }, cancellationToken);
             }
         }
 
         seed.Status = SeedStatus.Active;
         await _seedStore.SaveAsync(key, seed, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed.activated", new SeedActivatedEvent
+        await _messageBus.PublishSeedActivatedAsync(new SeedActivatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -434,7 +434,7 @@ public partial class SeedService : ISeedService
             OwnerType = seed.OwnerType,
             SeedTypeCode = seed.SeedTypeCode,
             PreviousActiveSeedId = previousActiveSeedId
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         return (StatusCodes.OK, MapToResponse(seed));
     }
@@ -466,7 +466,7 @@ public partial class SeedService : ISeedService
         seed.Status = SeedStatus.Archived;
         await _seedStore.SaveAsync(key, seed, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed.archived", new SeedArchivedEvent
+        await _messageBus.PublishSeedArchivedAsync(new SeedArchivedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -474,7 +474,7 @@ public partial class SeedService : ISeedService
             OwnerId = seed.OwnerId,
             OwnerType = seed.OwnerType,
             SeedTypeCode = seed.SeedTypeCode
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         return (StatusCodes.OK, MapToResponse(seed));
     }
@@ -668,7 +668,7 @@ public partial class SeedService : ISeedService
 
         await _typeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed.type.created", new SeedTypeCreatedEvent
+        await _messageBus.PublishSeedTypeCreatedAsync(new SeedTypeCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -683,7 +683,7 @@ public partial class SeedService : ISeedService
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         return (StatusCodes.OK, MapTypeToResponse(model));
     }
@@ -801,7 +801,7 @@ public partial class SeedService : ISeedService
         if (body.GrowthDecayRatePerDay.HasValue) changedFields.Add("growthDecayRatePerDay");
         if (body.SameOwnerGrowthMultiplier.HasValue) changedFields.Add("sameOwnerGrowthMultiplier");
 
-        await _messageBus.TryPublishAsync("seed.type.updated", new SeedTypeUpdatedEvent
+        await _messageBus.PublishSeedTypeUpdatedAsync(new SeedTypeUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -817,7 +817,7 @@ public partial class SeedService : ISeedService
             DeprecatedAt = seedType.DeprecatedAt,
             DeprecationReason = seedType.DeprecationReason,
             ChangedFields = changedFields
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         return (StatusCodes.OK, MapTypeToResponse(seedType));
     }
@@ -853,7 +853,7 @@ public partial class SeedService : ISeedService
 
         await _typeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed.type.updated", new SeedTypeUpdatedEvent
+        await _messageBus.PublishSeedTypeUpdatedAsync(new SeedTypeUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -869,7 +869,7 @@ public partial class SeedService : ISeedService
             DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
             ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation("Deprecated seed type: {SeedTypeCode}", body.SeedTypeCode);
         return (StatusCodes.OK, MapTypeToResponse(model));
@@ -905,7 +905,7 @@ public partial class SeedService : ISeedService
 
         await _typeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed.type.updated", new SeedTypeUpdatedEvent
+        await _messageBus.PublishSeedTypeUpdatedAsync(new SeedTypeUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -921,7 +921,7 @@ public partial class SeedService : ISeedService
             DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
             ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation("Undeprecated seed type: {SeedTypeCode}", body.SeedTypeCode);
         return (StatusCodes.OK, MapTypeToResponse(model));
@@ -979,7 +979,7 @@ public partial class SeedService : ISeedService
 
         await _typeStore.DeleteAsync(key, cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed.type.deleted", new SeedTypeDeletedEvent
+        await _messageBus.PublishSeedTypeDeletedAsync(new SeedTypeDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -994,7 +994,7 @@ public partial class SeedService : ISeedService
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation("Deleted seed type: {SeedTypeCode}", body.SeedTypeCode);
         return StatusCodes.OK;
@@ -1148,14 +1148,14 @@ public partial class SeedService : ISeedService
                 }
             }
 
-            await _messageBus.TryPublishAsync("seed.bond.formed", new SeedBondFormedEvent
+            await _messageBus.PublishSeedBondFormedAsync(new SeedBondFormedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 BondId = bond.BondId,
                 SeedTypeCode = bond.SeedTypeCode,
                 ParticipantSeedIds = bond.Participants.Select(p => p.SeedId).ToList()
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
         }
 
         await _bondStore.SaveAsync(bondKey, bond, cancellationToken: cancellationToken);
@@ -1322,7 +1322,7 @@ public partial class SeedService : ISeedService
 
             domainChanges.Add(new DomainChange(domain, previousDepth, newDepth));
 
-            await _messageBus.TryPublishAsync("seed.growth.updated", new SeedGrowthUpdatedEvent
+            await _messageBus.PublishSeedGrowthUpdatedAsync(new SeedGrowthUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
@@ -1333,7 +1333,7 @@ public partial class SeedService : ISeedService
                 NewDepth = newDepth,
                 TotalGrowth = growth.Domains.Values.Sum(d => d.Depth),
                 CrossPollinated = false
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
         }
 
         await _growthStore.SaveAsync($"growth:{seedId}", growth, cancellationToken: cancellationToken);
@@ -1396,7 +1396,7 @@ public partial class SeedService : ISeedService
             _logger.LogInformation("Seed {SeedId} transitioned from phase {OldPhase} to {NewPhase}",
                 seedId, previousPhase, seed.GrowthPhase);
 
-            await _messageBus.TryPublishAsync("seed.phase.changed", new SeedPhaseChangedEvent
+            await _messageBus.PublishSeedPhaseChangedAsync(new SeedPhaseChangedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1406,7 +1406,7 @@ public partial class SeedService : ISeedService
                 NewPhase = seed.GrowthPhase,
                 TotalGrowth = newTotalGrowth,
                 Direction = PhaseChangeDirection.Progressed
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             // Dispatch phase change notification to evolution listeners
             await SeedEvolutionDispatcher.DispatchPhaseChangedAsync(
@@ -1516,7 +1516,7 @@ public partial class SeedService : ISeedService
 
             crossDomainChanges.Add(new DomainChange(domain, previousDepth, newDepth));
 
-            await _messageBus.TryPublishAsync("seed.growth.updated", new SeedGrowthUpdatedEvent
+            await _messageBus.PublishSeedGrowthUpdatedAsync(new SeedGrowthUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
@@ -1527,7 +1527,7 @@ public partial class SeedService : ISeedService
                 NewDepth = newDepth,
                 TotalGrowth = growth.Domains.Values.Sum(d => d.Depth),
                 CrossPollinated = true
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
         }
 
         await _growthStore.SaveAsync($"growth:{siblingSeedId}", growth, cancellationToken: cancellationToken);
@@ -1557,7 +1557,7 @@ public partial class SeedService : ISeedService
                 "Seed {SeedId} transitioned from phase {OldPhase} to {NewPhase} via cross-pollination",
                 siblingSeedId, previousPhase, seed.GrowthPhase);
 
-            await _messageBus.TryPublishAsync("seed.phase.changed", new SeedPhaseChangedEvent
+            await _messageBus.PublishSeedPhaseChangedAsync(new SeedPhaseChangedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1567,7 +1567,7 @@ public partial class SeedService : ISeedService
                 NewPhase = seed.GrowthPhase,
                 TotalGrowth = newTotalGrowth,
                 Direction = PhaseChangeDirection.Progressed
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             // Dispatch phase change notification to evolution listeners
             await SeedEvolutionDispatcher.DispatchPhaseChangedAsync(
@@ -1627,7 +1627,7 @@ public partial class SeedService : ISeedService
                             ? PhaseChangeDirection.Progressed
                             : PhaseChangeDirection.Regressed;
 
-                        await _messageBus.TryPublishAsync("seed.phase.changed", new SeedPhaseChangedEvent
+                        await _messageBus.PublishSeedPhaseChangedAsync(new SeedPhaseChangedEvent
                         {
                             EventId = Guid.NewGuid(),
                             Timestamp = DateTimeOffset.UtcNow,
@@ -1637,7 +1637,7 @@ public partial class SeedService : ISeedService
                             NewPhase = seed.GrowthPhase,
                             TotalGrowth = seed.TotalGrowth,
                             Direction = direction
-                        }, cancellationToken: cancellationToken);
+                        }, cancellationToken);
 
                         // Dispatch phase change notification to evolution listeners
                         await SeedEvolutionDispatcher.DispatchPhaseChangedAsync(
@@ -1753,7 +1753,7 @@ public partial class SeedService : ISeedService
 
         await _capabilityCacheStore.SaveAsync($"cap:{seed.SeedId}", manifest, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed.capability.updated", new SeedCapabilityUpdatedEvent
+        await _messageBus.PublishSeedCapabilityUpdatedAsync(new SeedCapabilityUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = manifest.ComputedAt,
@@ -1761,7 +1761,7 @@ public partial class SeedService : ISeedService
             SeedTypeCode = seed.SeedTypeCode,
             Version = manifest.Version,
             CapabilityCount = capabilities.Count(c => c.Unlocked)
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         // Dispatch capability notification to evolution listeners
         await SeedEvolutionDispatcher.DispatchCapabilitiesChangedAsync(

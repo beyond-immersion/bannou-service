@@ -829,7 +829,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
             kvp => kvp.Value.ToList() as ICollection<string>);
 
         // Publish service event (broadcast to any subscriber, regardless of connection state)
-        await _messageBus.TryPublishAsync("permission.capability-update", new PermissionCapabilityUpdate
+        await _messageBus.PublishPermissionCapabilityUpdateAsync(new PermissionCapabilityUpdate
         {
             SessionId = sessionGuid,
             Version = version,

@@ -268,7 +268,7 @@ public sealed class ActorRunner : IActorRunner
         _logger.LogInformation("Actor {ActorId} started successfully", ActorId);
 
         // Publish started event
-        await _messageBus.TryPublishAsync(ACTOR_INSTANCE_STARTED_TOPIC, new ActorInstanceStartedEvent
+        await _messageBus.PublishActorInstanceStartedAsync(new ActorInstanceStartedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -277,13 +277,13 @@ public sealed class ActorRunner : IActorRunner
             TemplateId = TemplateId,
             CharacterId = CharacterId,
             Category = Category
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         // If spawned with a characterId already set, emit bound event so consumers
         // always see a character-bound event regardless of spawn-bound vs hot-swap
         if (CharacterId.HasValue)
         {
-            await _messageBus.TryPublishAsync(CHARACTER_BOUND_TOPIC, new ActorCharacterBoundEvent
+            await _messageBus.PublishActorCharacterBoundAsync(new ActorCharacterBoundEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -291,7 +291,7 @@ public sealed class ActorRunner : IActorRunner
                 CharacterId = CharacterId.Value,
                 RealmId = RealmId,
                 PreviousCharacterId = null
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
         }
     }
 
@@ -382,7 +382,7 @@ public sealed class ActorRunner : IActorRunner
         await SetupPerceptionSubscriptionAsync(cancellationToken);
 
         // Publish character bound event
-        await _messageBus.TryPublishAsync(CHARACTER_BOUND_TOPIC, new ActorCharacterBoundEvent
+        await _messageBus.PublishActorCharacterBoundAsync(new ActorCharacterBoundEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -390,7 +390,7 @@ public sealed class ActorRunner : IActorRunner
             CharacterId = characterId,
             RealmId = RealmId,
             PreviousCharacterId = previousCharacterId
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation("Actor {ActorId} bound to character {CharacterId}", ActorId, characterId);
     }
@@ -463,7 +463,7 @@ public sealed class ActorRunner : IActorRunner
             ActorId, encounterId, encounterType, participants.Count);
 
         // Publish encounter started event (fire-and-forget: sync interface method)
-        _ = _messageBus.TryPublishAsync(ENCOUNTER_STARTED_TOPIC, new ActorEncounterStartedEvent
+        _ = _messageBus.PublishActorEncounterStartedAsync(new ActorEncounterStartedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -491,7 +491,7 @@ public sealed class ActorRunner : IActorRunner
             ActorId, encounter.EncounterId, oldPhase, phase);
 
         // Publish phase changed event (fire-and-forget: sync interface method)
-        _ = _messageBus.TryPublishAsync(ENCOUNTER_PHASE_CHANGED_TOPIC, new ActorEncounterPhaseChangedEvent
+        _ = _messageBus.PublishActorEncounterPhaseChangedAsync(new ActorEncounterPhaseChangedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -521,7 +521,7 @@ public sealed class ActorRunner : IActorRunner
             ActorId, encounterId, duration);
 
         // Publish encounter ended event (fire-and-forget: sync interface method)
-        _ = _messageBus.TryPublishAsync(ENCOUNTER_ENDED_TOPIC, new ActorEncounterEndedEvent
+        _ = _messageBus.PublishActorEncounterEndedAsync(new ActorEncounterEndedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1298,13 +1298,13 @@ public sealed class ActorRunner : IActorRunner
                 _logger.LogWarning(ex, "Actor {ActorId} failed to send state update to {AppId}, falling back to pub/sub",
                     ActorId, targetAppId);
                 // Fall back to pub/sub
-                await _messageBus.TryPublishAsync("character.state-update", evt, cancellationToken: ct);
+                await _messageBus.PublishCharacterStateUpdateAsync(evt, ct);
             }
         }
         else
         {
             // No source app-id yet, use pub/sub fallback
-            await _messageBus.TryPublishAsync("character.state-update", evt, cancellationToken: ct);
+            await _messageBus.PublishCharacterStateUpdateAsync(evt, ct);
             _logger.LogDebug("Actor {ActorId} published state update via pub/sub for character {CharacterId} (no source app-id)",
                 ActorId, CharacterId);
         }
@@ -1329,14 +1329,14 @@ public sealed class ActorRunner : IActorRunner
                 _logger.LogDebug("Actor {ActorId} persisted state", ActorId);
 
                 // Publish state persisted event
-                await _messageBus.TryPublishAsync(ACTOR_STATE_PERSISTED_TOPIC, new ActorStatePersistedEvent
+                await _messageBus.PublishActorStatePersistedAsync(new ActorStatePersistedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     ActorId = ActorId,
                     NodeId = NodeId,
                     LoopIterations = LoopIterations
-                }, cancellationToken: ct);
+                }, ct);
                 return;
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)

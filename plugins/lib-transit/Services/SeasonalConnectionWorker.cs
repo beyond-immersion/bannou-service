@@ -411,8 +411,7 @@ public class SeasonalConnectionWorker : BackgroundService
             CrossRealm = connection.CrossRealm
         };
 
-        var published = await messageBus.TryPublishAsync(
-            "transit.connection.status-changed", eventModel, cancellationToken: cancellationToken);
+        var published = await messageBus.PublishTransitConnectionStatusChangedAsync(eventModel, cancellationToken);
         if (published)
         {
             _logger.LogDebug("Published transit.connection.status-changed event for {ConnectionId}: {PreviousStatus} -> {NewStatus}",

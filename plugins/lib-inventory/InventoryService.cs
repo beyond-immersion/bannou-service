@@ -208,7 +208,7 @@ public partial class InventoryService : IInventoryService
         await AddToListAsync(_containerStringStore,
             $"{CONT_TYPE_INDEX}{body.ContainerType}", containerId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("inventory.container.created", new InventoryContainerCreatedEvent
+        await _messageBus.PublishInventoryContainerCreatedAsync(new InventoryContainerCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -435,7 +435,7 @@ public partial class InventoryService : IInventoryService
         // Save with cache write-through
         await SaveContainerWithCacheAsync(model, cancellationToken);
 
-        await _messageBus.TryPublishAsync("inventory.container.updated", new InventoryContainerUpdatedEvent
+        await _messageBus.PublishInventoryContainerUpdatedAsync(new InventoryContainerUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -577,7 +577,7 @@ public partial class InventoryService : IInventoryService
         // Invalidate cache after MySQL delete
         await InvalidateContainerCacheAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
 
-        await _messageBus.TryPublishAsync("inventory.container.deleted", new InventoryContainerDeletedEvent
+        await _messageBus.PublishInventoryContainerDeletedAsync(new InventoryContainerDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -746,7 +746,7 @@ public partial class InventoryService : IInventoryService
         // Check if container is now full and emit event
         await EmitContainerFullEventIfNeededAsync(container, now, cancellationToken);
 
-        await _messageBus.TryPublishAsync("inventory.item.placed", new InventoryItemPlacedEvent
+        await _messageBus.PublishInventoryItemPlacedAsync(new InventoryItemPlacedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -878,7 +878,7 @@ public partial class InventoryService : IInventoryService
             _logger.LogWarning(ex, "Failed to clear item container reference for {InstanceId}", body.InstanceId);
         }
 
-        await _messageBus.TryPublishAsync("inventory.item.removed", new InventoryItemRemovedEvent
+        await _messageBus.PublishInventoryItemRemovedAsync(new InventoryItemRemovedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -969,7 +969,7 @@ public partial class InventoryService : IInventoryService
 
             var sameContainerNow = DateTimeOffset.UtcNow;
 
-            await _messageBus.TryPublishAsync("inventory.item.moved", new InventoryItemMovedEvent
+            await _messageBus.PublishInventoryItemMovedAsync(new InventoryItemMovedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = sameContainerNow,
@@ -1082,7 +1082,7 @@ public partial class InventoryService : IInventoryService
 
         var now = DateTimeOffset.UtcNow;
 
-        await _messageBus.TryPublishAsync("inventory.item.moved", new InventoryItemMovedEvent
+        await _messageBus.PublishInventoryItemMovedAsync(new InventoryItemMovedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1241,7 +1241,7 @@ public partial class InventoryService : IInventoryService
 
         var now = DateTimeOffset.UtcNow;
 
-        await _messageBus.TryPublishAsync("inventory.item.transferred", new InventoryItemTransferredEvent
+        await _messageBus.PublishInventoryItemTransferredAsync(new InventoryItemTransferredEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1418,7 +1418,7 @@ public partial class InventoryService : IInventoryService
             await SaveContainerWithCacheAsync(container, cancellationToken);
         }
 
-        await _messageBus.TryPublishAsync("inventory.item.split", new InventoryItemSplitEvent
+        await _messageBus.PublishInventoryItemSplitAsync(new InventoryItemSplitEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1653,7 +1653,7 @@ public partial class InventoryService : IInventoryService
                 }
             }
 
-            await _messageBus.TryPublishAsync("inventory.item.stacked", new InventoryItemStackedEvent
+            await _messageBus.PublishInventoryItemStackedAsync(new InventoryItemStackedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
@@ -2183,7 +2183,7 @@ public partial class InventoryService : IInventoryService
 
         if (constraintType is not null)
         {
-            await _messageBus.TryPublishAsync("inventory.container.full", new InventoryContainerFullEvent
+            await _messageBus.PublishInventoryContainerFullAsync(new InventoryContainerFullEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = timestamp,

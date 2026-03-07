@@ -140,6 +140,16 @@ else
 fi
 echo ""
 
+# Generate typed event publisher extension methods from x-event-publications
+echo -e "${BLUE}📤 Generating typed event publisher extensions...${NC}"
+if python3 "$SCRIPT_DIR/generate-event-publishers.py"; then
+    echo -e "${GREEN}✅ Event publisher extensions generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate event publisher extensions${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate client events (server-to-client push events via WebSocket)
 echo -e "${BLUE}🌟 Generating client events...${NC}"
 if ./generate-client-events.sh; then

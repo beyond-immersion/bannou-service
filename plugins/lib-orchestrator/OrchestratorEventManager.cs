@@ -48,21 +48,21 @@ public class OrchestratorEventManager : IOrchestratorEventManager
     public async Task PublishServiceRestartEventAsync(ServiceRestartEvent restartEvent)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorEventManager.PublishServiceRestartEventAsync");
-        await _messageBus.TryPublishAsync(RESTART_TOPIC, restartEvent);
+        await _messageBus.PublishServiceRestartAsync(restartEvent);
         _logger.LogInformation("Published service restart event for {Service}", restartEvent.ServiceName);
     }
 
     public async Task PublishDeploymentEventAsync(DeploymentEvent deploymentEvent)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorEventManager.PublishDeploymentEventAsync");
-        await _messageBus.TryPublishAsync(DEPLOYMENT_TOPIC, deploymentEvent);
+        await _messageBus.PublishDeploymentAsync(deploymentEvent);
         _logger.LogInformation("Published deployment event: {Action} ({DeploymentId})", deploymentEvent.Action, deploymentEvent.DeploymentId);
     }
 
     public async Task PublishFullMappingsAsync(FullServiceMappingsEvent mappingsEvent)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorEventManager.PublishFullMappingsAsync");
-        await _messageBus.TryPublishAsync(FULL_MAPPINGS_TOPIC, mappingsEvent);
+        await _messageBus.PublishFullServiceMappingsAsync(mappingsEvent);
         _logger.LogInformation(
             "Published full service mappings v{Version} with {Count} services",
             mappingsEvent.Version,

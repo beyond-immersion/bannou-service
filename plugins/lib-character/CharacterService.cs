@@ -669,7 +669,7 @@ public partial class CharacterService : ICharacterService
         }
 
         // Publish compression event - L4 services can subscribe to clean up their data
-        await _messageBus.TryPublishAsync(CHARACTER_COMPRESSED_TOPIC, new CharacterCompressedEvent
+        await _messageBus.PublishCharacterCompressedAsync(new CharacterCompressedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1593,7 +1593,7 @@ public partial class CharacterService : ICharacterService
             UpdatedAt = character.UpdatedAt
         };
 
-        await _messageBus.TryPublishAsync(CHARACTER_CREATED_TOPIC, eventModel);
+        await _messageBus.PublishCharacterCreatedAsync(eventModel);
         _logger.LogDebug("Published CharacterCreatedEvent for character: {CharacterId}", character.CharacterId);
     }
 
@@ -1619,7 +1619,7 @@ public partial class CharacterService : ICharacterService
             ChangedFields = changedFields.ToList()
         };
 
-        await _messageBus.TryPublishAsync(CHARACTER_UPDATED_TOPIC, eventModel);
+        await _messageBus.PublishCharacterUpdatedAsync(eventModel);
         _logger.LogDebug("Published CharacterUpdatedEvent for character: {CharacterId}", character.CharacterId);
     }
 
@@ -1645,7 +1645,7 @@ public partial class CharacterService : ICharacterService
             DeletedReason = deletedReason
         };
 
-        await _messageBus.TryPublishAsync(CHARACTER_DELETED_TOPIC, eventModel);
+        await _messageBus.PublishCharacterDeletedAsync(eventModel);
         _logger.LogDebug("Published CharacterDeletedEvent for character: {CharacterId}", character.CharacterId);
     }
 
@@ -1664,7 +1664,7 @@ public partial class CharacterService : ICharacterService
             PreviousRealmId = previousRealmId
         };
 
-        await _messageBus.TryPublishAsync(CHARACTER_REALM_JOINED_TOPIC, eventModel);
+        await _messageBus.PublishCharacterRealmJoinedAsync(eventModel);
         _logger.LogDebug("Published CharacterRealmJoinedEvent for character: {CharacterId}", characterId);
     }
 
@@ -1683,7 +1683,7 @@ public partial class CharacterService : ICharacterService
             Reason = reason
         };
 
-        await _messageBus.TryPublishAsync(CHARACTER_REALM_LEFT_TOPIC, eventModel);
+        await _messageBus.PublishCharacterRealmLeftAsync(eventModel);
         _logger.LogDebug("Published CharacterRealmLeftEvent for character: {CharacterId}", characterId);
     }
 

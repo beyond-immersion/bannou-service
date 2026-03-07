@@ -369,8 +369,7 @@ public partial class AssetService
         await IndexBundleAssetsAsync(metabundleMetadata, cancellationToken).ConfigureAwait(false);
 
         // Publish metabundle.created event
-        await _messageBus.TryPublishAsync(
-            "asset.metabundle.created",
+        await _messageBus.PublishMetabundleCreatedAsync(
             new MetabundleCreatedEvent
             {
                 EventId = Guid.NewGuid(),

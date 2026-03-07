@@ -1354,7 +1354,7 @@ public partial class ContractService
                 var failureReason = $"Template substitution failed: {result.SubstitutionError}";
                 _logger.LogWarning("Template substitution failed for clause {ClauseId}: {Error}",
                     clause.Id, result.SubstitutionError);
-                await _messageBus.TryPublishAsync("contract.prebound-api.failed", new ContractPreboundApiFailedEvent
+                await _messageBus.PublishContractPreboundApiFailedAsync(new ContractPreboundApiFailedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -1381,7 +1381,7 @@ public partial class ContractService
                 var failureReason = $"Handler returned status {result.Result?.StatusCode}";
                 _logger.LogWarning("Clause execution failed for {ClauseId}: status={StatusCode}",
                     clause.Id, result.Result?.StatusCode);
-                await _messageBus.TryPublishAsync("contract.prebound-api.failed", new ContractPreboundApiFailedEvent
+                await _messageBus.PublishContractPreboundApiFailedAsync(new ContractPreboundApiFailedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -1616,7 +1616,7 @@ public partial class ContractService
     private async Task PublishContractLockedEventAsync(
         ContractInstanceModel model, Guid guardianId, string guardianType, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.locked", new ContractLockedEvent
+        await _messageBus.PublishContractLockedAsync(new ContractLockedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1629,7 +1629,7 @@ public partial class ContractService
     private async Task PublishContractUnlockedEventAsync(
         ContractInstanceModel model, Guid? guardianId, string? guardianType, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.unlocked", new ContractUnlockedEvent
+        await _messageBus.PublishContractUnlockedAsync(new ContractUnlockedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1645,7 +1645,7 @@ public partial class ContractService
         Guid toEntityId, EntityType toEntityType,
         CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.party.transferred", new ContractPartyTransferredEvent
+        await _messageBus.PublishContractPartyTransferredAsync(new ContractPartyTransferredEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1660,7 +1660,7 @@ public partial class ContractService
 
     private async Task PublishClauseTypeRegisteredEventAsync(ClauseTypeModel model, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.clausetype.registered", new ClauseTypeRegisteredEvent
+        await _messageBus.PublishClauseTypeRegisteredAsync(new ClauseTypeRegisteredEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1674,7 +1674,7 @@ public partial class ContractService
     private async Task PublishTemplateValuesSetEventAsync(
         ContractInstanceModel model, List<string> keys, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.templatevalues.set", new ContractTemplateValuesSetEvent
+        await _messageBus.PublishContractTemplateValuesSetAsync(new ContractTemplateValuesSetEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1687,7 +1687,7 @@ public partial class ContractService
     private async Task PublishContractExecutedEventAsync(
         ContractInstanceModel model, List<DistributionRecordModel> distributions, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract.executed", new ContractExecutedEvent
+        await _messageBus.PublishContractExecutedAsync(new ContractExecutedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

@@ -135,23 +135,23 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 // Register character reference for new personality per IMPLEMENTATION TENETS
                 await RegisterCharacterReferenceAsync(body.CharacterId.ToString(), body.CharacterId, cancellationToken);
 
-                await _messageBus.TryPublishAsync(PERSONALITY_CREATED_TOPIC, new PersonalityCreatedEvent
+                await _messageBus.PublishPersonalityCreatedAsync(new PersonalityCreatedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     CharacterId = body.CharacterId,
                     Version = data.Version
-                }, cancellationToken: cancellationToken);
+                }, cancellationToken);
             }
             else
             {
-                await _messageBus.TryPublishAsync(PERSONALITY_UPDATED_TOPIC, new PersonalityUpdatedEvent
+                await _messageBus.PublishPersonalityUpdatedAsync(new PersonalityUpdatedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     CharacterId = body.CharacterId,
                     Version = data.Version
-                }, cancellationToken: cancellationToken);
+                }, cancellationToken);
             }
 
             _logger.LogInformation("Personality {Action} for character {CharacterId}, version {Version}",
@@ -238,7 +238,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                     result.NewVersion = data.Version;
                     saveSucceeded = true;
 
-                    await _messageBus.TryPublishAsync(PERSONALITY_EVOLVED_TOPIC, new PersonalityEvolvedEvent
+                    await _messageBus.PublishPersonalityEvolvedAsync(new PersonalityEvolvedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
@@ -247,7 +247,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                         Intensity = body.Intensity,
                         Version = data.Version,
                         AffectedTraits = affectedTraits.Keys.ToList()
-                    }, cancellationToken: cancellationToken);
+                    }, cancellationToken);
 
                     _logger.LogInformation("Personality evolved for character {CharacterId}, new version {Version}",
                         body.CharacterId, data.Version);
@@ -337,12 +337,12 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             await _personalityStore.DeleteAsync(key, cancellationToken);
 
             // Publish deletion event using typed events per IMPLEMENTATION TENETS
-            await _messageBus.TryPublishAsync(PERSONALITY_DELETED_TOPIC, new PersonalityDeletedEvent
+            await _messageBus.PublishPersonalityDeletedAsync(new PersonalityDeletedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = body.CharacterId
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             _logger.LogInformation("Personality deleted for character {CharacterId}", body.CharacterId);
             return StatusCodes.OK;
@@ -412,23 +412,23 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 // Register character reference for new combat preferences per IMPLEMENTATION TENETS
                 await RegisterCharacterReferenceAsync($"combat-{body.CharacterId}", body.CharacterId, cancellationToken);
 
-                await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_CREATED_TOPIC, new CombatPreferencesCreatedEvent
+                await _messageBus.PublishCombatPreferencesCreatedAsync(new CombatPreferencesCreatedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     CharacterId = body.CharacterId,
                     Version = data.Version
-                }, cancellationToken: cancellationToken);
+                }, cancellationToken);
             }
             else
             {
-                await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_UPDATED_TOPIC, new CombatPreferencesUpdatedEvent
+                await _messageBus.PublishCombatPreferencesUpdatedAsync(new CombatPreferencesUpdatedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     CharacterId = body.CharacterId,
                     Version = data.Version
-                }, cancellationToken: cancellationToken);
+                }, cancellationToken);
             }
 
             _logger.LogInformation("Combat preferences {Action} for character {CharacterId}, version {Version}",
@@ -460,12 +460,12 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             await _combatPreferencesStore.DeleteAsync(key, cancellationToken);
 
             // Publish deletion event using typed events per IMPLEMENTATION TENETS
-            await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_DELETED_TOPIC, new CombatPreferencesDeletedEvent
+            await _messageBus.PublishCombatPreferencesDeletedAsync(new CombatPreferencesDeletedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = body.CharacterId
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             _logger.LogInformation("Combat preferences deleted for character {CharacterId}", body.CharacterId);
             return StatusCodes.OK;
@@ -499,12 +499,12 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             personalityDeleted = true;
 
             // Publish deletion event
-            await _messageBus.TryPublishAsync(PERSONALITY_DELETED_TOPIC, new PersonalityDeletedEvent
+            await _messageBus.PublishPersonalityDeletedAsync(new PersonalityDeletedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = body.CharacterId
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             _logger.LogInformation("Personality deleted for character {CharacterId} during cleanup", body.CharacterId);
         }
@@ -519,12 +519,12 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             combatPreferencesDeleted = true;
 
             // Publish deletion event
-            await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_DELETED_TOPIC, new CombatPreferencesDeletedEvent
+            await _messageBus.PublishCombatPreferencesDeletedAsync(new CombatPreferencesDeletedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = body.CharacterId
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             _logger.LogInformation("Combat preferences deleted for character {CharacterId} during cleanup", body.CharacterId);
         }
@@ -601,7 +601,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                     result.NewVersion = data.Version;
                     saveSucceeded = true;
 
-                    await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_EVOLVED_TOPIC, new CombatPreferencesEvolvedEvent
+                    await _messageBus.PublishCombatPreferencesEvolvedAsync(new CombatPreferencesEvolvedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
@@ -609,7 +609,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                         ExperienceType = body.ExperienceType,
                         Intensity = body.Intensity,
                         Version = data.Version
-                    }, cancellationToken: cancellationToken);
+                    }, cancellationToken);
 
                     _logger.LogInformation("Combat preferences evolved for character {CharacterId}, new version {Version}",
                         body.CharacterId, data.Version);

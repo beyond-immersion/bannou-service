@@ -1384,7 +1384,7 @@ public partial class AccountService : IAccountService
             CreatedAt = account.CreatedAt
         };
 
-        await _messageBus.TryPublishAsync(ACCOUNT_CREATED_TOPIC, eventModel);
+        await _messageBus.PublishAccountCreatedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published AccountCreatedEvent for account: {AccountId}", account.AccountId);
     }
 
@@ -1415,7 +1415,7 @@ public partial class AccountService : IAccountService
             ChangedFields = changedFields.ToList()
         };
 
-        await _messageBus.TryPublishAsync(ACCOUNT_UPDATED_TOPIC, eventModel);
+        await _messageBus.PublishAccountUpdatedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published AccountUpdatedEvent for account: {AccountId}", account.AccountId);
     }
 
@@ -1446,7 +1446,7 @@ public partial class AccountService : IAccountService
             DeletedReason = deletedReason
         };
 
-        await _messageBus.TryPublishAsync(ACCOUNT_DELETED_TOPIC, eventModel);
+        await _messageBus.PublishAccountDeletedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published AccountDeletedEvent for account {AccountId}", account.AccountId);
     }
 

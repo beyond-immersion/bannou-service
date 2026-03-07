@@ -1943,7 +1943,7 @@ public partial class DocumentationService : IDocumentationService
                 UpdatedAt = doc.UpdatedAt
             };
 
-            await _messageBus.TryPublishAsync(DOCUMENT_CREATED_TOPIC, eventModel);
+            await _messageBus.PublishDocumentCreatedAsync(eventModel);
             _logger.LogDebug("Published DocumentCreatedEvent for document {DocumentId}", doc.DocumentId);
         }
         catch (Exception ex)
@@ -1976,7 +1976,7 @@ public partial class DocumentationService : IDocumentationService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _messageBus.TryPublishAsync(DOCUMENT_UPDATED_TOPIC, eventModel);
+            await _messageBus.PublishDocumentUpdatedAsync(eventModel);
             _logger.LogDebug("Published DocumentUpdatedEvent for document {DocumentId}", doc.DocumentId);
         }
         catch (Exception ex)
@@ -2009,7 +2009,7 @@ public partial class DocumentationService : IDocumentationService
                 DeletedReason = reason
             };
 
-            await _messageBus.TryPublishAsync(DOCUMENT_DELETED_TOPIC, eventModel);
+            await _messageBus.PublishDocumentDeletedAsync(eventModel);
             _logger.LogDebug("Published DocumentDeletedEvent for document {DocumentId}", doc.DocumentId);
         }
         catch (Exception ex)
@@ -2045,7 +2045,7 @@ public partial class DocumentationService : IDocumentationService
                 RelevanceScore = relevanceScore
             };
 
-            await _messageBus.TryPublishAsync("documentation.queried", eventModel);
+            await _messageBus.PublishDocumentationQueriedAsync(eventModel);
             _logger.LogDebug("Published DocumentationQueriedEvent for query '{Query}'", query);
         }
         catch (Exception ex)
@@ -2076,7 +2076,7 @@ public partial class DocumentationService : IDocumentationService
                 ResultCount = resultCount
             };
 
-            await _messageBus.TryPublishAsync("documentation.searched", eventModel);
+            await _messageBus.PublishDocumentationSearchedAsync(eventModel);
             _logger.LogDebug("Published DocumentationSearchedEvent for term '{Term}'", searchTerm);
         }
         catch (Exception ex)
@@ -3120,7 +3120,7 @@ public partial class DocumentationService : IDocumentationService
                 RepositoryUrl = binding.RepositoryUrl,
                 Branch = binding.Branch
             };
-            await _messageBus.TryPublishAsync(BINDING_CREATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+            await _messageBus.PublishDocumentationBindingCreatedAsync(eventModel, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -3144,7 +3144,7 @@ public partial class DocumentationService : IDocumentationService
                 BindingId = binding.BindingId,
                 DocumentsDeleted = documentsDeleted
             };
-            await _messageBus.TryPublishAsync(BINDING_REMOVED_TOPIC, eventModel, cancellationToken: cancellationToken);
+            await _messageBus.PublishDocumentationBindingRemovedAsync(eventModel, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -3175,7 +3175,7 @@ public partial class DocumentationService : IDocumentationService
                 SyncId = syncId,
                 TriggeredBy = triggeredBy
             };
-            await _messageBus.TryPublishAsync(SYNC_STARTED_TOPIC, eventModel, cancellationToken: cancellationToken);
+            await _messageBus.PublishDocumentationSyncStartedAsync(eventModel, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -3206,7 +3206,7 @@ public partial class DocumentationService : IDocumentationService
                 DurationMs = result.DurationMs,
                 ErrorMessage = result.ErrorMessage
             };
-            await _messageBus.TryPublishAsync(SYNC_COMPLETED_TOPIC, eventModel, cancellationToken: cancellationToken);
+            await _messageBus.PublishDocumentationSyncCompletedAsync(eventModel, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -3507,7 +3507,7 @@ public partial class DocumentationService : IDocumentationService
                 DocumentCount = archive.DocumentCount,
                 SizeBytes = (int)Math.Min(archive.SizeBytes, int.MaxValue)
             };
-            await _messageBus.TryPublishAsync(ARCHIVE_CREATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+            await _messageBus.PublishDocumentationArchiveCreatedAsync(eventModel, cancellationToken);
         }
         catch (Exception ex)
         {

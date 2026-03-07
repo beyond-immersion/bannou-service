@@ -532,7 +532,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         await PrunePairEncountersIfNeededAsync(participantIds, cancellationToken);
 
         // Publish event - convert enum to string at API boundary for event schema
-        await _messageBus.TryPublishAsync(ENCOUNTER_RECORDED_TOPIC, new EncounterRecordedEvent
+        await _messageBus.PublishEncounterRecordedAsync(new EncounterRecordedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -544,7 +544,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             ParticipantIds = participantIds,
             Context = body.Context,
             EncounterTimestamp = body.Timestamp
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         // Register character references with lib-resource for cleanup coordination
         foreach (var participantId in participantIds)
@@ -1048,7 +1048,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
 
         // Publish event - convert enum to string at API boundary for event schema
-        await _messageBus.TryPublishAsync(ENCOUNTER_PERSPECTIVE_UPDATED_TOPIC, new EncounterPerspectiveUpdatedEvent
+        await _messageBus.PublishEncounterPerspectiveUpdatedAsync(new EncounterPerspectiveUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1059,7 +1059,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             NewEmotionalImpact = body.EmotionalImpact,
             PreviousSentimentShift = previousSentiment,
             NewSentimentShift = body.SentimentShift
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation("Updated perspective {PerspectiveId}", perspective.PerspectiveId);
 
@@ -1107,7 +1107,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
 
         // Publish event
-        await _messageBus.TryPublishAsync(ENCOUNTER_MEMORY_REFRESHED_TOPIC, new EncounterMemoryRefreshedEvent
+        await _messageBus.PublishEncounterMemoryRefreshedAsync(new EncounterMemoryRefreshedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1116,7 +1116,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             PerspectiveId = perspective.PerspectiveId,
             PreviousStrength = previousStrength,
             NewStrength = perspective.MemoryStrength
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogDebug("Refreshed memory {PerspectiveId}: {OldStrength} -> {NewStrength}",
             perspective.PerspectiveId, previousStrength, perspective.MemoryStrength);
@@ -1167,7 +1167,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         await RemoveFromTypeEncounterIndexAsync(encounter.EncounterTypeCode, body.EncounterId, cancellationToken);
 
         // Publish event
-        await _messageBus.TryPublishAsync(ENCOUNTER_DELETED_TOPIC, new EncounterDeletedEvent
+        await _messageBus.PublishEncounterDeletedAsync(new EncounterDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1176,7 +1176,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             PerspectivesDeleted = perspectivesDeleted,
             DeletedByCharacterCleanup = false,
             CleanupCharacterId = null
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         // Unregister character references with lib-resource
         foreach (var participantId in participantIds)
@@ -1255,7 +1255,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 await RemoveFromTypeEncounterIndexAsync(encounter.EncounterTypeCode, encounterId, cancellationToken);
 
                 // Publish event (+1 for target character's perspective deleted in first loop)
-                await _messageBus.TryPublishAsync(ENCOUNTER_DELETED_TOPIC, new EncounterDeletedEvent
+                await _messageBus.PublishEncounterDeletedAsync(new EncounterDeletedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -1264,7 +1264,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     PerspectivesDeleted = otherPerspectivesDeleted + 1,
                     DeletedByCharacterCleanup = true,
                     CleanupCharacterId = body.CharacterId
-                }, cancellationToken: cancellationToken);
+                }, cancellationToken);
             }
 
             _logger.LogInformation("Deleted {Encounters} encounters and {Perspectives} perspectives for character {CharacterId}",
@@ -1352,7 +1352,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
                         if (!dryRun)
                         {
-                            await _messageBus.TryPublishAsync(ENCOUNTER_MEMORY_FADED_TOPIC, new EncounterMemoryFadedEvent
+                            await _messageBus.PublishEncounterMemoryFadedAsync(new EncounterMemoryFadedEvent
                             {
                                 EventId = Guid.NewGuid(),
                                 Timestamp = DateTimeOffset.UtcNow,
@@ -1362,7 +1362,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                                 PreviousStrength = previousStrength,
                                 NewStrength = perspective.MemoryStrength,
                                 FadeThreshold = (float)_configuration.MemoryFadeThreshold
-                            }, cancellationToken: cancellationToken);
+                            }, cancellationToken);
                         }
                     }
                 }
@@ -2746,7 +2746,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         // Check if faded below threshold
         if (previousStrength >= _configuration.MemoryFadeThreshold && freshPerspective.MemoryStrength < _configuration.MemoryFadeThreshold)
         {
-            await _messageBus.TryPublishAsync(ENCOUNTER_MEMORY_FADED_TOPIC, new EncounterMemoryFadedEvent
+            await _messageBus.PublishEncounterMemoryFadedAsync(new EncounterMemoryFadedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -2756,7 +2756,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 PreviousStrength = previousStrength,
                 NewStrength = freshPerspective.MemoryStrength,
                 FadeThreshold = (float)_configuration.MemoryFadeThreshold
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
         }
 
         return freshPerspective;

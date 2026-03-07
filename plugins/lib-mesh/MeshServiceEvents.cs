@@ -290,10 +290,7 @@ public partial class MeshService
                 LastHeartbeatAt = lastHeartbeatAt
             };
 
-            await _messageBus.TryPublishAsync(
-                "mesh.endpoint.degraded",
-                evt,
-                cancellationToken: CancellationToken.None);
+            await _messageBus.PublishMeshEndpointDegradedAsync(evt, CancellationToken.None);
 
             _logger.LogInformation(
                 "Published degradation event for endpoint {InstanceId} reason {Reason}",

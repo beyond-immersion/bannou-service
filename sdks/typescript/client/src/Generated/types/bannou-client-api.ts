@@ -11442,7 +11442,7 @@ export interface components {
       linkedAt: string;
     };
     /**
-     * @description All authentication provider types including email
+     * @description All authentication provider types including email. Superset of OAuthProvider.
      * @enum {string}
      */
     AuthProvider: 'Email' | 'Google' | 'Discord' | 'Twitch' | 'Steam';
@@ -14090,7 +14090,7 @@ export interface components {
       rotated?: boolean | null;
     };
     /**
-     * @description Type of entity that owns this container
+     * @description Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.
      * @enum {string}
      */
     ContainerOwnerType:
@@ -23308,6 +23308,11 @@ export interface components {
       /** @description Information about the client device (optional) */
       deviceInfo?: components['schemas']['DeviceInfo'];
     };
+    /**
+     * @description OAuth provider types (excludes email). Subset of AuthProvider.
+     * @enum {string}
+     */
+    OAuthProvider: 'Google' | 'Discord' | 'Twitch' | 'Steam';
     /** @description Definition of a single quest objective with tracking parameters */
     ObjectiveDefinition: {
       /** @description Unique objective code within quest */
@@ -24046,15 +24051,10 @@ export interface components {
        */
       contractId: string;
     };
-    /**
-     * @description Authentication provider type
-     * @enum {string}
-     */
-    Provider: 'Google' | 'Discord' | 'Twitch' | 'Steam';
     /** @description Information about an available authentication provider */
     ProviderInfo: {
       /**
-       * @description Internal identifier for the provider (matches Provider enum for OAuth)
+       * @description Internal identifier for the provider (matches OAuthProvider enum for OAuth)
        * @example discord
        */
       name: string;
@@ -27437,7 +27437,7 @@ export interface components {
       previousRatio: number;
     };
     /**
-     * @description Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker)
+     * @description API-writable subset of ConnectionStatus. Excludes SeasonalClosed, which is system-managed by the Seasonal Connection Worker. Mapping from SettableConnectionStatus to ConnectionStatus is lossless (all values exist in both); the reverse direction is intentionally restricted at the API level.
      * @enum {string}
      */
     SettableConnectionStatus: 'Open' | 'Closed' | 'Dangerous' | 'Blocked';
@@ -31996,7 +31996,7 @@ export interface operations {
       };
       header?: never;
       path: {
-        provider: components['schemas']['Provider'];
+        provider: components['schemas']['OAuthProvider'];
       };
       cookie?: never;
     };
@@ -32016,7 +32016,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        provider: components['schemas']['Provider'];
+        provider: components['schemas']['OAuthProvider'];
       };
       cookie?: never;
     };

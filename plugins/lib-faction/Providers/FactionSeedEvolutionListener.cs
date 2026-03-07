@@ -117,8 +117,7 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
             "Updated faction {FactionId} phase from {OldPhase} to {NewPhase} for seed {SeedId}",
             notification.OwnerId, notification.PreviousPhase, notification.NewPhase, notification.SeedId);
 
-        await _messageBus.TryPublishAsync(
-            "faction.updated",
+        await _messageBus.PublishFactionUpdatedAsync(
             new FactionUpdatedEvent
             {
                 EventId = Guid.NewGuid(),

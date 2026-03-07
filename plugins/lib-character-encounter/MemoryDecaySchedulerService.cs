@@ -257,7 +257,7 @@ public class MemoryDecaySchedulerService : BackgroundService
             if (willFade)
             {
                 faded++;
-                await messageBus.TryPublishAsync(ENCOUNTER_MEMORY_FADED_TOPIC, new EncounterMemoryFadedEvent
+                await messageBus.PublishEncounterMemoryFadedAsync(new EncounterMemoryFadedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -267,7 +267,7 @@ public class MemoryDecaySchedulerService : BackgroundService
                     PreviousStrength = (float)previousStrength,
                     NewStrength = (float)perspective.MemoryStrength,
                     FadeThreshold = (float)_configuration.MemoryFadeThreshold
-                }, cancellationToken: cancellationToken);
+                }, cancellationToken);
             }
         }
 

@@ -277,14 +277,14 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
                 toRemove.Add(poiId);
                 expired++;
 
-                await messageBus.TryPublishAsync("gardener.poi.expired",
+                await messageBus.PublishGardenerPoiExpiredAsync(
                     new GardenerPoiExpiredEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         GardenInstanceId = garden.GardenInstanceId,
                         PoiId = poiId
-                    }, cancellationToken: ct);
+                    }, ct);
             }
             else if (poi.Status != PoiStatus.Active)
             {
@@ -403,7 +403,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
             existingPois.Add(poi);
             spawned++;
 
-            await messageBus.TryPublishAsync("gardener.poi.spawned",
+            await messageBus.PublishGardenerPoiSpawnedAsync(
                 new GardenerPoiSpawnedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -412,7 +412,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
                     PoiId = poiId,
                     PoiType = poi.PoiType,
                     ScenarioTemplateId = template.ScenarioTemplateId
-                }, cancellationToken: ct);
+                }, ct);
         }
 
         return spawned;

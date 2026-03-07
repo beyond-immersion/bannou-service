@@ -99,8 +99,7 @@ public partial class CollectionService
                     cancellationToken);
 
                 // Publish collection.deleted lifecycle event per FOUNDATION TENETS
-                await _messageBus.TryPublishAsync(
-                    "collection.deleted",
+                await _messageBus.PublishCollectionDeletedAsync(
                     new CollectionDeletedEvent
                     {
                         CollectionId = collection.CollectionId,
@@ -112,7 +111,7 @@ public partial class CollectionService
                         CreatedAt = collection.CreatedAt,
                         DeletedReason = $"Owner {ownerType} deleted"
                     },
-                    cancellationToken: cancellationToken);
+                    cancellationToken);
 
                 deletedCount++;
             }

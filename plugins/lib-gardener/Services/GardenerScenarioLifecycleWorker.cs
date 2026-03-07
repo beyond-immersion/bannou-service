@@ -418,7 +418,7 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
         }
         else if (isTimeout)
         {
-            await messageBus.TryPublishAsync("gardener.scenario.completed",
+            await messageBus.PublishGardenerScenarioCompletedAsync(
                 new GardenerScenarioCompletedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -427,18 +427,18 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
                     ScenarioTemplateId = scenario.ScenarioTemplateId,
                     WebSocketSessionId = firstParticipant.SessionId,
                     GrowthAwarded = partialGrowth
-                }, cancellationToken: ct);
+                }, ct);
         }
         else
         {
-            await messageBus.TryPublishAsync("gardener.scenario.abandoned",
+            await messageBus.PublishGardenerScenarioAbandonedAsync(
                 new GardenerScenarioAbandonedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     ScenarioInstanceId = scenario.ScenarioInstanceId,
                     WebSocketSessionId = firstParticipant.SessionId
-                }, cancellationToken: ct);
+                }, ct);
         }
     }
 

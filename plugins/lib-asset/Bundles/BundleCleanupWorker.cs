@@ -247,7 +247,7 @@ public sealed class BundleCleanupWorker : BackgroundService
         await bundleStore.RemoveFromSetAsync("deleted-bundles-index", bundleId, cancellationToken: cancellationToken);
 
         // Publish permanent deletion event
-        await messageBus.TryPublishAsync("asset.bundle.deleted", new BundleDeletedEvent
+        await messageBus.PublishBundleDeletedAsync(new BundleDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

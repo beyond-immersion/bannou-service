@@ -55,11 +55,6 @@ public partial class GameSessionService : IGameSessionService
     internal const string SESSION_LIST_KEY = "session-list";
     private const string LOBBY_KEY_PREFIX = "lobby:";
     private const string SUBSCRIBER_SESSIONS_PREFIX = "subscriber-sessions:";
-    private const string SESSION_CREATED_TOPIC = "game-session.created";
-    private const string SESSION_UPDATED_TOPIC = "game-session.updated";
-    private const string SESSION_DELETED_TOPIC = "game-session.deleted";
-    private const string PLAYER_JOINED_TOPIC = "game-session.player-joined";
-    private const string PLAYER_LEFT_TOPIC = "game-session.player-left";
 
     /// <summary>
     /// Game service stub names that this service handles, populated from configuration.
@@ -310,8 +305,7 @@ public partial class GameSessionService : IGameSessionService
         await _sessionListStore.SaveAsync(SESSION_LIST_KEY, sessionIds, cancellationToken: cancellationToken);
 
         // Publish event with full model data
-        await _messageBus.TryPublishAsync(
-            SESSION_CREATED_TOPIC,
+        await _messageBus.PublishGameSessionCreatedAsync(
             new GameSessionCreatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -487,8 +481,7 @@ public partial class GameSessionService : IGameSessionService
         await _sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
         // Publish domain event (SessionId in event = lobby ID for game session identification)
-        await _messageBus.TryPublishAsync(
-            PLAYER_JOINED_TOPIC,
+        await _messageBus.PublishGameSessionPlayerJoinedAsync(
             new GameSessionPlayerJoinedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -498,8 +491,7 @@ public partial class GameSessionService : IGameSessionService
             });
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync(
-            SESSION_UPDATED_TOPIC,
+        await _messageBus.PublishGameSessionUpdatedAsync(
             BuildUpdatedEvent(model, "currentPlayers", "status"));
 
         // Push client events to session participants
@@ -606,8 +598,7 @@ public partial class GameSessionService : IGameSessionService
         var actionTimestamp = DateTimeOffset.UtcNow;
 
         // Publish game action event so other systems can react
-        // TryPublishAsync handles buffering, retry, and error logging internally
-        await _messageBus.TryPublishAsync("game-session.action.performed", new GameSessionActionPerformedEvent
+        await _messageBus.PublishGameSessionActionPerformedAsync(new GameSessionActionPerformedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = actionTimestamp,
@@ -741,8 +732,7 @@ public partial class GameSessionService : IGameSessionService
         await _sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
         // Publish domain event
-        await _messageBus.TryPublishAsync(
-            PLAYER_LEFT_TOPIC,
+        await _messageBus.PublishGameSessionPlayerLeftAsync(
             new GameSessionPlayerLeftEvent
             {
                 EventId = Guid.NewGuid(),
@@ -753,8 +743,7 @@ public partial class GameSessionService : IGameSessionService
             });
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync(
-            SESSION_UPDATED_TOPIC,
+        await _messageBus.PublishGameSessionUpdatedAsync(
             BuildUpdatedEvent(model, "currentPlayers", "status"));
 
         // Push client events to remaining session participants
@@ -961,8 +950,7 @@ public partial class GameSessionService : IGameSessionService
         await _sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
         // Publish domain event
-        await _messageBus.TryPublishAsync(
-            PLAYER_JOINED_TOPIC,
+        await _messageBus.PublishGameSessionPlayerJoinedAsync(
             new GameSessionPlayerJoinedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -972,8 +960,7 @@ public partial class GameSessionService : IGameSessionService
             });
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync(
-            SESSION_UPDATED_TOPIC,
+        await _messageBus.PublishGameSessionUpdatedAsync(
             BuildUpdatedEvent(model, "currentPlayers", "status", "reservations"));
 
         // Push client events to session participants
@@ -1130,8 +1117,7 @@ public partial class GameSessionService : IGameSessionService
         await _sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
         // Publish domain event
-        await _messageBus.TryPublishAsync(
-            PLAYER_LEFT_TOPIC,
+        await _messageBus.PublishGameSessionPlayerLeftAsync(
             new GameSessionPlayerLeftEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1142,8 +1128,7 @@ public partial class GameSessionService : IGameSessionService
             });
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync(
-            SESSION_UPDATED_TOPIC,
+        await _messageBus.PublishGameSessionUpdatedAsync(
             BuildUpdatedEvent(model, "currentPlayers", "status"));
 
         // Push client events to remaining session participants
@@ -1376,8 +1361,7 @@ public partial class GameSessionService : IGameSessionService
         await _sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
         // Publish domain event
-        await _messageBus.TryPublishAsync(
-            PLAYER_LEFT_TOPIC,
+        await _messageBus.PublishGameSessionPlayerLeftAsync(
             new GameSessionPlayerLeftEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1389,8 +1373,7 @@ public partial class GameSessionService : IGameSessionService
             });
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync(
-            SESSION_UPDATED_TOPIC,
+        await _messageBus.PublishGameSessionUpdatedAsync(
             BuildUpdatedEvent(model, "currentPlayers", "status"));
 
         // Push client events to remaining session participants and the kicked player

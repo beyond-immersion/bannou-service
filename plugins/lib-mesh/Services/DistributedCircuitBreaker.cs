@@ -346,7 +346,7 @@ public sealed class DistributedCircuitBreaker
             OpenedAt = openedAt
         };
 
-        var published = await _messageBus.TryPublishAsync("mesh.circuit.changed", evt, cancellationToken);
+        var published = await _messageBus.PublishMeshCircuitStateChangedAsync(evt, cancellationToken);
 
         if (published)
         {

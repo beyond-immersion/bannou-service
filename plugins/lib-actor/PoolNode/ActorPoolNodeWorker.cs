@@ -140,7 +140,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
             Capacity = _configuration.PoolNodeCapacity
         };
 
-        await _messageBus.TryPublishAsync("actor.pool-node.registered", registrationEvent, cancellationToken: ct);
+        await _messageBus.PublishPoolNodeRegisteredAsync(registrationEvent, ct);
 
         _logger.LogInformation(
             "Registered pool node {NodeId} with control plane (capacity: {Capacity})",
@@ -319,7 +319,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 CharacterId = runner.CharacterId
             };
 
-            await _messageBus.TryPublishAsync("actor.instance.completed", completedEvent, cancellationToken: ct);
+            await _messageBus.PublishActorCompletedAsync(completedEvent, ct);
 
             _logger.LogInformation("Stopped actor {ActorId} successfully", command.ActorId);
             return true;
@@ -466,7 +466,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
             NewStatus = newStatus
         };
 
-        await _messageBus.TryPublishAsync("actor.instance.status-changed", statusEvent, cancellationToken: ct);
+        await _messageBus.PublishActorStatusChangedAsync(statusEvent, ct);
     }
 
     private async Task ShutdownAsync(string nodeId)
@@ -510,7 +510,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 EstimatedDrainTimeSeconds = runningActors.Count * 2 // Rough estimate
             };
 
-            await _messageBus.TryPublishAsync("actor.pool-node.draining", drainingEvent, cancellationToken: CancellationToken.None);
+            await _messageBus.PublishPoolNodeDrainingAsync(drainingEvent, CancellationToken.None);
 
             // Stop all actors gracefully
             foreach (var runner in runningActors)

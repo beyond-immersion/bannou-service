@@ -443,7 +443,7 @@ public class SessionService : ISessionService
                 DisconnectClients = true
             };
 
-            await _messageBus.TryPublishAsync(SESSION_INVALIDATED_TOPIC, eventModel);
+            await _messageBus.PublishSessionInvalidatedAsync(eventModel);
             _logger.LogInformation("Published SessionInvalidatedEvent for account {AccountId}: {SessionCount} sessions, reason: {Reason}",
                 accountId, sessionIds.Count, reason);
         }
@@ -478,7 +478,7 @@ public class SessionService : ISessionService
                 Reason = reason
             };
 
-            await _messageBus.TryPublishAsync(SESSION_UPDATED_TOPIC, eventModel);
+            await _messageBus.PublishSessionUpdatedAsync(eventModel);
             _logger.LogDebug("Published SessionUpdatedEvent for session {SessionId}, reason: {Reason}", sessionId, reason);
         }
         catch (Exception ex)

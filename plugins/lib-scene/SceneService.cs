@@ -68,17 +68,6 @@ public partial class SceneService : ISceneService
     private const string SCENE_GLOBAL_INDEX_KEY = "scene:global-index";
     private const string SCENE_VERSION_HISTORY_PREFIX = "scene:version-history:";
 
-    // Event topics following QUALITY TENETS: {entity}.{action} pattern
-    private const string SCENE_CREATED_TOPIC = "scene.created";
-    private const string SCENE_UPDATED_TOPIC = "scene.updated";
-    private const string SCENE_DELETED_TOPIC = "scene.deleted";
-    private const string SCENE_INSTANTIATED_TOPIC = "scene.instantiated";
-    private const string SCENE_DESTROYED_TOPIC = "scene.destroyed";
-    private const string SCENE_CHECKED_OUT_TOPIC = "scene.checked-out";
-    private const string SCENE_COMMITTED_TOPIC = "scene.committed";
-    private const string SCENE_CHECKOUT_DISCARDED_TOPIC = "scene.checkout-discarded";
-    private const string VALIDATION_RULES_UPDATED_TOPIC = "scene.validation-rules-updated";
-
     // YAML serializer/deserializer
     private static readonly ISerializer YamlSerializer = new SerializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
@@ -583,7 +572,7 @@ public partial class SceneService : ISceneService
             Metadata = body.Metadata
         };
 
-        var published = await _messageBus.TryPublishAsync(SCENE_INSTANTIATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.PublishSceneInstantiatedAsync(eventModel, cancellationToken);
 
         _logger.LogInformation("InstantiateScene succeeded: instanceId={InstanceId}", body.InstanceId);
         return (StatusCodes.OK, new InstantiateSceneResponse
@@ -608,7 +597,7 @@ public partial class SceneService : ISceneService
             Metadata = body.Metadata
         };
 
-        await _messageBus.TryPublishAsync(SCENE_DESTROYED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishSceneDestroyedAsync(eventModel, cancellationToken);
 
         _logger.LogInformation("DestroyInstance succeeded: instanceId={InstanceId}", body.InstanceId);
         return StatusCodes.OK;
@@ -702,7 +691,7 @@ public partial class SceneService : ISceneService
             CheckedOutById = checkoutState.EditorId,
             ExpiresAt = expiresAt
         };
-        await _messageBus.TryPublishAsync(SCENE_CHECKED_OUT_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishSceneCheckedOutAsync(eventModel, cancellationToken);
 
         _logger.LogInformation("CheckoutScene succeeded: sceneId={SceneId}, expiresAt={ExpiresAt}", body.SceneId, expiresAt);
         return (StatusCodes.OK, new CheckoutResponse
@@ -783,7 +772,7 @@ public partial class SceneService : ISceneService
             ChangesSummary = body.ChangesSummary,
             NodeCount = CountNodes(body.Scene.Root)
         };
-        await _messageBus.TryPublishAsync(SCENE_COMMITTED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishSceneCommittedAsync(eventModel, cancellationToken);
 
         _logger.LogInformation("CommitScene succeeded: sceneId={SceneId}, newVersion={Version}", body.SceneId, updateResponse.Scene.Version);
         return (StatusCodes.OK, new CommitResponse
@@ -838,7 +827,7 @@ public partial class SceneService : ISceneService
             DiscardedByType = checkout.EditorType,
             DiscardedById = checkout.EditorId
         };
-        await _messageBus.TryPublishAsync(SCENE_CHECKOUT_DISCARDED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishSceneCheckoutDiscardedAsync(eventModel, cancellationToken);
 
         _logger.LogInformation("DiscardCheckout succeeded: sceneId={SceneId}", body.SceneId);
         return StatusCodes.OK;
@@ -941,7 +930,7 @@ public partial class SceneService : ISceneService
             SceneType = body.SceneType,
             RuleCount = body.Rules.Count
         };
-        await _messageBus.TryPublishAsync(VALIDATION_RULES_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishSceneValidationRulesUpdatedAsync(eventModel, cancellationToken);
 
         _logger.LogInformation("RegisterValidationRules succeeded: gameId={GameId}, sceneType={SceneType}", body.GameId, body.SceneType);
         return StatusCodes.OK;
@@ -1823,7 +1812,7 @@ public partial class SceneService : ISceneService
             UpdatedAt = scene.UpdatedAt
         };
 
-        await _messageBus.TryPublishAsync(SCENE_CREATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishSceneCreatedAsync(eventModel, cancellationToken);
     }
 
     private async Task PublishSceneUpdatedEventAsync(Scene scene, string previousVersion, int nodeCount, CancellationToken cancellationToken)
@@ -1845,7 +1834,7 @@ public partial class SceneService : ISceneService
             UpdatedAt = scene.UpdatedAt
         };
 
-        await _messageBus.TryPublishAsync(SCENE_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishSceneUpdatedAsync(eventModel, cancellationToken);
     }
 
     private async Task PublishSceneDeletedEventAsync(Scene scene, int nodeCount, string? reason, CancellationToken cancellationToken)
@@ -1867,7 +1856,7 @@ public partial class SceneService : ISceneService
             UpdatedAt = scene.UpdatedAt
         };
 
-        await _messageBus.TryPublishAsync(SCENE_DELETED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.PublishSceneDeletedAsync(eventModel, cancellationToken);
     }
 
     #endregion

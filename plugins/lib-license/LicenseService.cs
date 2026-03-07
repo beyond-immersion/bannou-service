@@ -388,8 +388,7 @@ public partial class LicenseService : ILicenseService
 
         _logger.LogInformation("Created board template {BoardTemplateId}", template.BoardTemplateId);
 
-        await _messageBus.TryPublishAsync(
-            "license.board-template.created",
+        await _messageBus.PublishLicenseBoardTemplateCreatedAsync(
             new LicenseBoardTemplateCreatedEvent
             {
                 BoardTemplateId = template.BoardTemplateId,
@@ -403,7 +402,7 @@ public partial class LicenseService : ILicenseService
                 CreatedAt = template.CreatedAt,
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         return (StatusCodes.OK, MapTemplateToResponse(template));
     }
@@ -510,8 +509,7 @@ public partial class LicenseService : ILicenseService
 
         _logger.LogInformation("Updated board template {BoardTemplateId}", template.BoardTemplateId);
 
-        await _messageBus.TryPublishAsync(
-            "license.board-template.updated",
+        await _messageBus.PublishLicenseBoardTemplateUpdatedAsync(
             new LicenseBoardTemplateUpdatedEvent
             {
                 BoardTemplateId = template.BoardTemplateId,
@@ -526,7 +524,7 @@ public partial class LicenseService : ILicenseService
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = changedFields
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         return (StatusCodes.OK, MapTemplateToResponse(template));
     }
@@ -577,8 +575,7 @@ public partial class LicenseService : ILicenseService
 
         _logger.LogInformation("Deleted board template {BoardTemplateId}", body.BoardTemplateId);
 
-        await _messageBus.TryPublishAsync(
-            "license.board-template.deleted",
+        await _messageBus.PublishLicenseBoardTemplateDeletedAsync(
             new LicenseBoardTemplateDeletedEvent
             {
                 BoardTemplateId = template.BoardTemplateId,
@@ -592,7 +589,7 @@ public partial class LicenseService : ILicenseService
                 CreatedAt = template.CreatedAt,
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         return (StatusCodes.OK, MapTemplateToResponse(template));
     }
@@ -1022,8 +1019,7 @@ public partial class LicenseService : ILicenseService
             "Created board {BoardId} for owner {OwnerType}:{OwnerId} with container {ContainerId}",
             board.BoardId, board.OwnerType, board.OwnerId, board.ContainerId);
 
-        await _messageBus.TryPublishAsync(
-            "license.board.created",
+        await _messageBus.PublishLicenseBoardCreatedAsync(
             new LicenseBoardCreatedEvent
             {
                 BoardId = board.BoardId,
@@ -1035,7 +1031,7 @@ public partial class LicenseService : ILicenseService
                 ContainerId = board.ContainerId,
                 CreatedAt = board.CreatedAt
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         return (StatusCodes.OK, MapBoardToResponse(board));
     }
@@ -1139,8 +1135,7 @@ public partial class LicenseService : ILicenseService
         _logger.LogInformation("Deleted board {BoardId} for owner {OwnerType}:{OwnerId}",
             board.BoardId, board.OwnerType, board.OwnerId);
 
-        await _messageBus.TryPublishAsync(
-            "license.board.deleted",
+        await _messageBus.PublishLicenseBoardDeletedAsync(
             new LicenseBoardDeletedEvent
             {
                 BoardId = board.BoardId,
@@ -1152,7 +1147,7 @@ public partial class LicenseService : ILicenseService
                 ContainerId = board.ContainerId,
                 CreatedAt = board.CreatedAt
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         return (StatusCodes.OK, MapBoardToResponse(board));
     }
@@ -1462,8 +1457,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // 12. Publish license.unlocked event
-        await _messageBus.TryPublishAsync(
-            LicensePublishedTopics.LicenseUnlocked,
+        await _messageBus.PublishLicenseUnlockedAsync(
             new LicenseUnlockedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1478,7 +1472,7 @@ public partial class LicenseService : ILicenseService
                 ContractInstanceId = contractInstanceId,
                 LpCost = definition.LpCost
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         _logger.LogInformation(
             "Unlocked license {Code} at ({X}, {Y}) on board {BoardId} for owner {OwnerType}:{OwnerId}",
@@ -1535,8 +1529,7 @@ public partial class LicenseService : ILicenseService
         UnlockFailureReason reason, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.PublishUnlockFailedAsync");
-        await _messageBus.TryPublishAsync(
-            LicensePublishedTopics.LicenseUnlockFailed,
+        await _messageBus.PublishLicenseUnlockFailedAsync(
             new LicenseUnlockFailedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1547,7 +1540,7 @@ public partial class LicenseService : ILicenseService
                 LicenseCode = licenseCode,
                 Reason = reason
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -2157,8 +2150,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // 16. Publish license.board.created lifecycle event
-        await _messageBus.TryPublishAsync(
-            "license.board.created",
+        await _messageBus.PublishLicenseBoardCreatedAsync(
             new LicenseBoardCreatedEvent
             {
                 BoardId = newBoard.BoardId,
@@ -2170,11 +2162,10 @@ public partial class LicenseService : ILicenseService
                 ContainerId = newBoard.ContainerId,
                 CreatedAt = newBoard.CreatedAt
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         // 17. Publish license.board.cloned custom event
-        await _messageBus.TryPublishAsync(
-            LicensePublishedTopics.LicenseBoardCloned,
+        await _messageBus.PublishLicenseBoardClonedAsync(
             new LicenseBoardClonedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2187,7 +2178,7 @@ public partial class LicenseService : ILicenseService
                 TargetGameServiceId = newBoard.GameServiceId,
                 LicensesCloned = clonedEntries.Count
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         _logger.LogInformation(
             "Cloned board {SourceBoardId} to {TargetBoardId} for owner {OwnerType}:{OwnerId} with {LicensesCloned} licenses",

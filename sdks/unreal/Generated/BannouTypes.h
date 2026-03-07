@@ -815,6 +815,7 @@ struct FNormScope;
 struct FNormSeverity;
 struct FNoteEvent;
 struct FOAuthCallbackRequest;
+struct FOAuthProvider;
 struct FObjectiveDefinition;
 struct FObjectiveProgress;
 struct FObjectiveProgressResponse;
@@ -870,7 +871,6 @@ struct FProcessingStatus;
 struct FProgressionAnalysis;
 struct FPromoteVersionRequest;
 struct FProposeContractInstanceRequest;
-struct FProvider;
 struct FProviderInfo;
 struct FProvidersResponse;
 struct FPurgeTrashcanRequest;
@@ -2838,7 +2838,7 @@ struct FAuthMethodInfo
 };
 
 /**
- * All authentication provider types including email
+ * All authentication provider types including email. Superset of OAuthProvider.
  */
 USTRUCT(BlueprintType)
 struct FAuthProvider
@@ -7022,7 +7022,7 @@ struct FContainerItem
 };
 
 /**
- * Type of entity that owns this container
+ * Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.
  */
 USTRUCT(BlueprintType)
 struct FContainerOwnerType
@@ -21468,6 +21468,16 @@ struct FOAuthCallbackRequest
 };
 
 /**
+ * OAuth provider types (excludes email). Subset of AuthProvider.
+ */
+USTRUCT(BlueprintType)
+struct FOAuthProvider
+{
+    GENERATED_BODY()
+
+};
+
+/**
  * Definition of a single quest objective with tracking parameters
  */
 USTRUCT(BlueprintType)
@@ -22706,16 +22716,6 @@ struct FProposeContractInstanceRequest
 };
 
 /**
- * Authentication provider type
- */
-USTRUCT(BlueprintType)
-struct FProvider
-{
-    GENERATED_BODY()
-
-};
-
-/**
  * Information about an available authentication provider
  */
 USTRUCT(BlueprintType)
@@ -22723,7 +22723,7 @@ struct FProviderInfo
 {
     GENERATED_BODY()
 
-    /** Internal identifier for the provider (matches Provider enum for OAuth) */
+    /** Internal identifier for the provider (matches OAuthProvider enum for OAuth) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Name;
 
@@ -27988,7 +27988,7 @@ struct FSetTimeRatioResponse
 };
 
 /**
- * Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker)
+ * API-writable subset of ConnectionStatus. Excludes SeasonalClosed, which is system-managed by the Seasonal Connection Worker. Mapping from SettableConnectionStatus to ConnectionStatus is lossless (all values exist in both); the reverse direction is intentionally restricted at the API level.
  */
 USTRUCT(BlueprintType)
 struct FSettableConnectionStatus

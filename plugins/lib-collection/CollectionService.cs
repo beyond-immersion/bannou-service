@@ -472,8 +472,7 @@ public partial class CollectionService : ICollectionService
             instance,
             cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync(
-            "collection.created",
+        await _messageBus.PublishCollectionCreatedAsync(
             new CollectionCreatedEvent
             {
                 CollectionId = instance.CollectionId,
@@ -484,7 +483,7 @@ public partial class CollectionService : ICollectionService
                 ContainerId = instance.ContainerId,
                 CreatedAt = instance.CreatedAt
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         // Register reference with lib-resource for character-owned collections per FOUNDATION TENETS
         if (ownerType == EntityType.Character)
@@ -525,8 +524,7 @@ public partial class CollectionService : ICollectionService
             var previousPercentage = (double)(unlockedCount - 1) / totalCount * 100.0;
             if (previousPercentage < milestone && percentage >= milestone)
             {
-                await _messageBus.TryPublishAsync(
-                    CollectionPublishedTopics.CollectionMilestoneReached,
+                await _messageBus.PublishCollectionMilestoneReachedAsync(
                     new CollectionMilestoneReachedEvent
                     {
                         EventId = Guid.NewGuid(),
@@ -539,7 +537,7 @@ public partial class CollectionService : ICollectionService
                         Milestone = $"{(int)milestone}%",
                         CompletionPercentage = percentage
                     },
-                    cancellationToken: cancellationToken);
+                    cancellationToken);
 
                 // Push milestone client event to collection owner's WebSocket sessions
                 await _entitySessionRegistry.PublishToEntitySessionsAsync(
@@ -653,8 +651,7 @@ public partial class CollectionService : ICollectionService
             template,
             cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync(
-            "collection.entry-template.created",
+        await _messageBus.PublishCollectionEntryTemplateCreatedAsync(
             new CollectionEntryTemplateCreatedEvent
             {
                 EntryTemplateId = template.EntryTemplateId,
@@ -668,7 +665,7 @@ public partial class CollectionService : ICollectionService
                 CreatedAt = template.CreatedAt,
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         _logger.LogInformation("Created entry template {EntryTemplateId}", template.EntryTemplateId);
 
@@ -847,8 +844,7 @@ public partial class CollectionService : ICollectionService
             template,
             cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync(
-            "collection.entry-template.updated",
+        await _messageBus.PublishCollectionEntryTemplateUpdatedAsync(
             new CollectionEntryTemplateUpdatedEvent
             {
                 EntryTemplateId = template.EntryTemplateId,
@@ -863,7 +859,7 @@ public partial class CollectionService : ICollectionService
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = changedFields
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         _logger.LogInformation(
             "Updated entry template {EntryTemplateId}, fields: {ChangedFields}",
@@ -923,8 +919,7 @@ public partial class CollectionService : ICollectionService
 
         var changedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" };
 
-        await _messageBus.TryPublishAsync(
-            "collection.entry-template.updated",
+        await _messageBus.PublishCollectionEntryTemplateUpdatedAsync(
             new CollectionEntryTemplateUpdatedEvent
             {
                 EntryTemplateId = template.EntryTemplateId,
@@ -939,7 +934,7 @@ public partial class CollectionService : ICollectionService
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = changedFields
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         _logger.LogInformation("Deprecated entry template {EntryTemplateId}", template.EntryTemplateId);
 
@@ -1033,8 +1028,7 @@ public partial class CollectionService : ICollectionService
                 template,
                 cancellationToken: cancellationToken);
 
-            await _messageBus.TryPublishAsync(
-                "collection.entry-template.created",
+            await _messageBus.PublishCollectionEntryTemplateCreatedAsync(
                 new CollectionEntryTemplateCreatedEvent
                 {
                     EntryTemplateId = template.EntryTemplateId,
@@ -1048,7 +1042,7 @@ public partial class CollectionService : ICollectionService
                     CreatedAt = template.CreatedAt,
                     UpdatedAt = template.UpdatedAt ?? template.CreatedAt
                 },
-                cancellationToken: cancellationToken);
+                cancellationToken);
 
             created++;
         }
@@ -1224,8 +1218,7 @@ public partial class CollectionService : ICollectionService
             BuildCollectionByOwnerKey(collection.OwnerId, collection.OwnerType, collection.GameServiceId, collection.CollectionType),
             cancellationToken);
 
-        await _messageBus.TryPublishAsync(
-            "collection.deleted",
+        await _messageBus.PublishCollectionDeletedAsync(
             new CollectionDeletedEvent
             {
                 CollectionId = collection.CollectionId,
@@ -1236,7 +1229,7 @@ public partial class CollectionService : ICollectionService
                 ContainerId = collection.ContainerId,
                 CreatedAt = collection.CreatedAt
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         // Unregister reference with lib-resource for character-owned collections per FOUNDATION TENETS
         if (collection.OwnerType == EntityType.Character)
@@ -1280,8 +1273,7 @@ public partial class CollectionService : ICollectionService
                 "Entry template with code {EntryCode} not found for type {CollectionType} in game {GameServiceId}",
                 body.EntryCode, body.CollectionType, body.GameServiceId);
 
-            await _messageBus.TryPublishAsync(
-                CollectionPublishedTopics.CollectionEntryGrantFailed,
+            await _messageBus.PublishCollectionEntryGrantFailedAsync(
                 new CollectionEntryGrantFailedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -1291,7 +1283,7 @@ public partial class CollectionService : ICollectionService
                     EntryCode = body.EntryCode,
                     Reason = GrantFailureReason.EntryNotFound
                 },
-                cancellationToken: cancellationToken);
+                cancellationToken);
 
             return (StatusCodes.NotFound, null);
         }
@@ -1303,8 +1295,7 @@ public partial class CollectionService : ICollectionService
                 "Rejecting grant of deprecated entry template {EntryCode} for {OwnerType} {OwnerId}",
                 body.EntryCode, body.OwnerType, body.OwnerId);
 
-            await _messageBus.TryPublishAsync(
-                CollectionPublishedTopics.CollectionEntryGrantFailed,
+            await _messageBus.PublishCollectionEntryGrantFailedAsync(
                 new CollectionEntryGrantFailedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -1314,7 +1305,7 @@ public partial class CollectionService : ICollectionService
                     EntryCode = body.EntryCode,
                     Reason = GrantFailureReason.TemplateDeprecated
                 },
-                cancellationToken: cancellationToken);
+                cancellationToken);
 
             return (StatusCodes.BadRequest, null);
         }
@@ -1391,8 +1382,7 @@ public partial class CollectionService : ICollectionService
                 "Collection {CollectionId} has reached max entries limit of {Max}",
                 collection.CollectionId, _configuration.MaxEntriesPerCollection);
 
-            await _messageBus.TryPublishAsync(
-                CollectionPublishedTopics.CollectionEntryGrantFailed,
+            await _messageBus.PublishCollectionEntryGrantFailedAsync(
                 new CollectionEntryGrantFailedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -1403,7 +1393,7 @@ public partial class CollectionService : ICollectionService
                     EntryCode = body.EntryCode,
                     Reason = GrantFailureReason.MaxEntriesReached
                 },
-                cancellationToken: cancellationToken);
+                cancellationToken);
 
             return (StatusCodes.Conflict, null);
         }
@@ -1431,8 +1421,7 @@ public partial class CollectionService : ICollectionService
                 "Failed to create item instance for entry {EntryCode} in collection {CollectionId}",
                 body.EntryCode, collection.CollectionId);
 
-            await _messageBus.TryPublishAsync(
-                CollectionPublishedTopics.CollectionEntryGrantFailed,
+            await _messageBus.PublishCollectionEntryGrantFailedAsync(
                 new CollectionEntryGrantFailedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -1443,7 +1432,7 @@ public partial class CollectionService : ICollectionService
                     EntryCode = body.EntryCode,
                     Reason = GrantFailureReason.ItemCreationFailed
                 },
-                cancellationToken: cancellationToken);
+                cancellationToken);
 
             return (StatusCodes.InternalServerError, null);
         }
@@ -1511,8 +1500,7 @@ public partial class CollectionService : ICollectionService
             cancellationToken: cancellationToken);
 
         // Publish entry-unlocked event (for external/distributed consumers)
-        await _messageBus.TryPublishAsync(
-            CollectionPublishedTopics.CollectionEntryUnlocked,
+        await _messageBus.PublishCollectionEntryUnlockedAsync(
             new CollectionEntryUnlockedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1528,7 +1516,7 @@ public partial class CollectionService : ICollectionService
                 Tags = template.Tags,
                 IsFirstGlobal = isFirstGlobal
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         // Push client event to collection owner's WebSocket sessions
         await _entitySessionRegistry.PublishToEntitySessionsAsync(
@@ -2078,8 +2066,7 @@ public partial class CollectionService : ICollectionService
         // Publish lifecycle event per FOUNDATION TENETS
         if (isUpdate)
         {
-            await _messageBus.TryPublishAsync(
-                "collection.area-content-config.updated",
+            await _messageBus.PublishCollectionAreaContentConfigUpdatedAsync(
                 new CollectionAreaContentConfigUpdatedEvent
                 {
                     AreaConfigId = config.AreaConfigId,
@@ -2091,12 +2078,11 @@ public partial class CollectionService : ICollectionService
                     UpdatedAt = config.UpdatedAt ?? config.CreatedAt,
                     ChangedFields = changedFields
                 },
-                cancellationToken: cancellationToken);
+                cancellationToken);
         }
         else
         {
-            await _messageBus.TryPublishAsync(
-                "collection.area-content-config.created",
+            await _messageBus.PublishCollectionAreaContentConfigCreatedAsync(
                 new CollectionAreaContentConfigCreatedEvent
                 {
                     AreaConfigId = config.AreaConfigId,
@@ -2107,7 +2093,7 @@ public partial class CollectionService : ICollectionService
                     CreatedAt = config.CreatedAt,
                     UpdatedAt = config.UpdatedAt ?? config.CreatedAt
                 },
-                cancellationToken: cancellationToken);
+                cancellationToken);
         }
 
         _logger.LogInformation(
@@ -2171,8 +2157,7 @@ public partial class CollectionService : ICollectionService
             BuildAreaContentByCodeKey(config.GameServiceId, config.CollectionType, config.AreaCode),
             cancellationToken);
 
-        await _messageBus.TryPublishAsync(
-            "collection.area-content-config.deleted",
+        await _messageBus.PublishCollectionAreaContentConfigDeletedAsync(
             new CollectionAreaContentConfigDeletedEvent
             {
                 AreaConfigId = config.AreaConfigId,
@@ -2183,7 +2168,7 @@ public partial class CollectionService : ICollectionService
                 CreatedAt = config.CreatedAt,
                 UpdatedAt = config.UpdatedAt ?? config.CreatedAt
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         _logger.LogInformation("Deleted area content config {AreaConfigId} for area {AreaCode}", config.AreaConfigId, config.AreaCode);
 
@@ -2297,8 +2282,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Publish discovery advanced event
-        await _messageBus.TryPublishAsync(
-            CollectionPublishedTopics.CollectionDiscoveryAdvanced,
+        await _messageBus.PublishCollectionDiscoveryAdvancedAsync(
             new CollectionDiscoveryAdvancedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2310,7 +2294,7 @@ public partial class CollectionService : ICollectionService
                 NewLevel = nextLevel,
                 Reveals = nextLevelDef.Reveals.ToList()
             },
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         // Push discovery client event to collection owner's WebSocket sessions
         await _entitySessionRegistry.PublishToEntitySessionsAsync(

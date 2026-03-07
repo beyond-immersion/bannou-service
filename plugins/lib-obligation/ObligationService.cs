@@ -443,7 +443,7 @@ public partial class ObligationService : IObligationService
                 && o.ClauseCode.Equals(body.ClauseCode, StringComparison.OrdinalIgnoreCase));
 
         // Publish violation event for downstream consumers (personality drift, encounter memory)
-        await _messageBus.TryPublishAsync("obligation.violation.reported", new ObligationViolationReportedEvent
+        await _messageBus.PublishObligationViolationReportedAsync(new ObligationViolationReportedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -461,7 +461,7 @@ public partial class ObligationService : IObligationService
             TargetEntityId = body.TargetEntityId,
             TargetEntityType = body.TargetEntityType,
             ContractRole = matchingObligation?.ContractRole
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation(
             "Violation {ViolationId} recorded for character {CharacterId}, breachReported={BreachReported}",
@@ -809,7 +809,7 @@ public partial class ObligationService : IObligationService
             ct);
 
         // Publish cache rebuilt event (observability)
-        await _messageBus.TryPublishAsync("obligation.cache.rebuilt", new ObligationCacheRebuiltEvent
+        await _messageBus.PublishObligationCacheRebuiltAsync(new ObligationCacheRebuiltEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -817,7 +817,7 @@ public partial class ObligationService : IObligationService
             ObligationCount = obligations.Count,
             ContractCount = contractCount,
             Trigger = trigger
-        }, cancellationToken: ct);
+        }, ct);
 
         _logger.LogInformation(
             "Rebuilt obligation cache for character {CharacterId}: {ObligationCount} obligations from {ContractCount} contracts (trigger: {Trigger})",

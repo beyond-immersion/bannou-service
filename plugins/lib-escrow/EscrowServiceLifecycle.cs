@@ -233,7 +233,7 @@ public partial class EscrowService
                 ReferenceId = body.ReferenceId,
                 CreatedAt = now
             };
-            await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowCreated, createdEvent, cancellationToken);
+            await _messageBus.PublishEscrowCreatedAsync(createdEvent, cancellationToken);
 
             _logger.LogInformation(
                 "Created escrow {EscrowId} with {PartyCount} parties, type {EscrowType}, trust mode {TrustMode}",

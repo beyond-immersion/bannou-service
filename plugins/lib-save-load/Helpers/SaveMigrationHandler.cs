@@ -384,7 +384,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         await _slotQueryStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
 
         // Publish event - SaveSlotMetadata.SlotId is now Guid
-        await _messageBus.TryPublishAsync("save-load.save.migrated", new SaveMigratedEvent
+        await _messageBus.PublishSaveMigratedAsync(new SaveMigratedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -396,7 +396,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             OwnerType = slot.OwnerType,
             FromSchemaVersion = currentSchemaVersion,
             ToSchemaVersion = body.TargetSchemaVersion
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation(
             "Migrated save {SlotName} from {From} to {To}, new version {Version}",

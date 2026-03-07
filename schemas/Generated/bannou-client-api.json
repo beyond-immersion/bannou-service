@@ -1394,7 +1394,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "$ref": "#/components/schemas/Provider"
+              "$ref": "#/components/schemas/OAuthProvider"
             }
           },
           {
@@ -1441,7 +1441,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "$ref": "#/components/schemas/Provider"
+              "$ref": "#/components/schemas/OAuthProvider"
             }
           }
         ],
@@ -22132,7 +22132,7 @@
       },
       "AuthProvider": {
         "type": "string",
-        "description": "All authentication provider types including email",
+        "description": "All authentication provider types including email. Superset of OAuthProvider.",
         "enum": [
           "Email",
           "Google",
@@ -27348,7 +27348,7 @@
       },
       "ContainerOwnerType": {
         "type": "string",
-        "description": "Type of entity that owns this container",
+        "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
         "enum": [
           "Character",
           "Account",
@@ -45545,6 +45545,16 @@
           }
         }
       },
+      "OAuthProvider": {
+        "type": "string",
+        "description": "OAuth provider types (excludes email). Subset of AuthProvider.",
+        "enum": [
+          "Google",
+          "Discord",
+          "Twitch",
+          "Steam"
+        ]
+      },
       "ObjectiveDefinition": {
         "type": "object",
         "description": "Definition of a single quest objective with tracking parameters",
@@ -47035,16 +47045,6 @@
           }
         }
       },
-      "Provider": {
-        "type": "string",
-        "enum": [
-          "Google",
-          "Discord",
-          "Twitch",
-          "Steam"
-        ],
-        "description": "Authentication provider type"
-      },
       "ProviderInfo": {
         "type": "object",
         "description": "Information about an available authentication provider",
@@ -47058,7 +47058,7 @@
           "name": {
             "type": "string",
             "example": "discord",
-            "description": "Internal identifier for the provider (matches Provider enum for OAuth)"
+            "description": "Internal identifier for the provider (matches OAuthProvider enum for OAuth)"
           },
           "displayName": {
             "type": "string",
@@ -53929,7 +53929,7 @@
       },
       "SettableConnectionStatus": {
         "type": "string",
-        "description": "Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker)",
+        "description": "API-writable subset of ConnectionStatus. Excludes SeasonalClosed, which is system-managed by the Seasonal Connection Worker. Mapping from SettableConnectionStatus to ConnectionStatus is lossless (all values exist in both); the reverse direction is intentionally restricted at the API level.\n",
         "enum": [
           "Open",
           "Closed",

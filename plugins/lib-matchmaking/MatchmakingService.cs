@@ -70,13 +70,6 @@ public partial class MatchmakingService : IMatchmakingService
     private const string PENDING_MATCH_PREFIX = "pending-match:";
     private const string QUEUE_TICKETS_PREFIX = "queue-tickets:";
 
-    // Event topics
-    private const string TICKET_CREATED_TOPIC = "matchmaking.ticket-created";
-    private const string TICKET_CANCELLED_TOPIC = "matchmaking.ticket-cancelled";
-    private const string MATCH_FORMED_TOPIC = "matchmaking.match-formed";
-    private const string MATCH_ACCEPTED_TOPIC = "matchmaking.match-accepted";
-    private const string MATCH_DECLINED_TOPIC = "matchmaking.match-declined";
-
     private readonly string _serverSalt;
 
     /// <summary>
@@ -250,7 +243,7 @@ public partial class MatchmakingService : IMatchmakingService
         await AddToQueueListAsync(queue.QueueId, cancellationToken);
 
         // Publish event
-        await _messageBus.TryPublishAsync("matchmaking.queue.created", new MatchmakingQueueCreatedEvent
+        await _messageBus.PublishMatchmakingQueueCreatedAsync(new MatchmakingQueueCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -261,7 +254,7 @@ public partial class MatchmakingService : IMatchmakingService
             MinCount = queue.MinCount,
             MaxCount = queue.MaxCount,
             CreatedAt = queue.CreatedAt
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation("Queue {QueueId} created successfully", queue.QueueId);
         return (StatusCodes.OK, MapQueueModelToResponse(queue));
@@ -316,7 +309,7 @@ public partial class MatchmakingService : IMatchmakingService
         }
 
         // Publish event
-        await _messageBus.TryPublishAsync("matchmaking.queue.updated", new MatchmakingQueueUpdatedEvent
+        await _messageBus.PublishMatchmakingQueueUpdatedAsync(new MatchmakingQueueUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -327,7 +320,7 @@ public partial class MatchmakingService : IMatchmakingService
             MinCount = queue.MinCount,
             MaxCount = queue.MaxCount,
             CreatedAt = queue.CreatedAt
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation("Queue {QueueId} updated successfully", queue.QueueId);
         return (StatusCodes.OK, MapQueueModelToResponse(queue));
@@ -362,7 +355,7 @@ public partial class MatchmakingService : IMatchmakingService
         await RemoveFromQueueListAsync(body.QueueId, cancellationToken);
 
         // Publish event
-        await _messageBus.TryPublishAsync("matchmaking.queue.deleted", new MatchmakingQueueDeletedEvent
+        await _messageBus.PublishMatchmakingQueueDeletedAsync(new MatchmakingQueueDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -373,7 +366,7 @@ public partial class MatchmakingService : IMatchmakingService
             MinCount = queue.MinCount,
             MaxCount = queue.MaxCount,
             CreatedAt = queue.CreatedAt
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation("Queue {QueueId} deleted successfully", body.QueueId);
         return StatusCodes.OK;
@@ -562,7 +555,7 @@ public partial class MatchmakingService : IMatchmakingService
         await PublishMatchmakingShortcutsAsync(sessionId, accountId, ticketId, cancellationToken);
 
         // Publish event - use webSocketSessionId per FOUNDATION TENETS (Account Identity Boundary)
-        await _messageBus.TryPublishAsync(TICKET_CREATED_TOPIC, new MatchmakingTicketCreatedEvent
+        await _messageBus.PublishMatchmakingTicketCreatedAsync(new MatchmakingTicketCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -572,7 +565,7 @@ public partial class MatchmakingService : IMatchmakingService
             PartyId = ticket.PartyId,
             PartySize = ticket.PartyMembers?.Count,
             SkillRating = ticket.SkillRating
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         // Send client event
         await _clientEventPublisher.PublishToSessionAsync(sessionId.ToString(), new QueueJoinedClientEvent
@@ -963,7 +956,7 @@ public partial class MatchmakingService : IMatchmakingService
         }
 
         // Publish event - use webSocketSessionId per FOUNDATION TENETS (Account Identity Boundary)
-        await _messageBus.TryPublishAsync(MATCH_FORMED_TOPIC, new MatchmakingMatchFormedEvent
+        await _messageBus.PublishMatchmakingMatchFormedAsync(new MatchmakingMatchFormedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -981,7 +974,7 @@ public partial class MatchmakingService : IMatchmakingService
             AverageSkillRating = match.AverageSkillRating,
             SkillRatingSpread = match.SkillRatingSpread,
             AcceptDeadline = acceptDeadline
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
     }
 
     /// <summary>
@@ -1077,7 +1070,7 @@ public partial class MatchmakingService : IMatchmakingService
             }
 
             // Publish event
-            await _messageBus.TryPublishAsync(MATCH_ACCEPTED_TOPIC, new MatchmakingMatchAcceptedEvent
+            await _messageBus.PublishMatchmakingMatchAcceptedAsync(new MatchmakingMatchAcceptedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1086,7 +1079,7 @@ public partial class MatchmakingService : IMatchmakingService
                 GameSessionId = sessionResponse.SessionId,
                 PlayerCount = match.PlayerCount,
                 AverageWaitTimeSeconds = match.MatchedTickets.Average(t => t.WaitTimeSeconds)
-            }, cancellationToken: cancellationToken);
+            }, cancellationToken);
 
             // Update match status to completed
             match.Status = MatchStatus.Completed;
@@ -1191,7 +1184,7 @@ public partial class MatchmakingService : IMatchmakingService
         var declinedByTicketId = declinedBy.HasValue
             ? match.MatchedTickets.FirstOrDefault(t => t.AccountId == declinedBy.Value)?.TicketId
             : null;
-        await _messageBus.TryPublishAsync(MATCH_DECLINED_TOPIC, new MatchmakingMatchDeclinedEvent
+        await _messageBus.PublishMatchmakingMatchDeclinedAsync(new MatchmakingMatchDeclinedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1200,7 +1193,7 @@ public partial class MatchmakingService : IMatchmakingService
             DeclinedByTicketId = declinedByTicketId,
             AffectedTicketIds = match.MatchedTickets.Select(t => t.TicketId).ToList(),
             RequeuingTicketIds = playersToRequeue.Select(t => t.TicketId).ToList()
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
     }
 
     /// <summary>
@@ -1263,7 +1256,7 @@ public partial class MatchmakingService : IMatchmakingService
         await RemoveFromQueueTicketsAsync(ticket.QueueId, ticketId, cancellationToken);
 
         // Publish service event - use webSocketSessionId per FOUNDATION TENETS (Account Identity Boundary)
-        await _messageBus.TryPublishAsync(TICKET_CANCELLED_TOPIC, new MatchmakingTicketCancelledEvent
+        await _messageBus.PublishMatchmakingTicketCancelledAsync(new MatchmakingTicketCancelledEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1273,7 +1266,7 @@ public partial class MatchmakingService : IMatchmakingService
             PartyId = ticket.PartyId,
             Reason = (CancelReason)reason,
             WaitTimeSeconds = waitTime
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
     }
 
     /// <summary>
@@ -1880,7 +1873,7 @@ public partial class MatchmakingService : IMatchmakingService
                 Stats = stats
             };
 
-            await _messageBus.TryPublishAsync("matchmaking.stats", statsEvent, cancellationToken);
+            await _messageBus.PublishMatchmakingStatsAsync(statsEvent, cancellationToken);
             _logger.LogDebug("Published matchmaking stats: {QueueCount} queues, {TotalTickets} tickets",
                 stats.Count, stats.Sum(s => s.ActiveTickets));
         }

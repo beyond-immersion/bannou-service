@@ -205,7 +205,7 @@ public partial class OrchestratorService : IOrchestratorService
         string pubsubMessage;
         try
         {
-            await _messageBus.TryPublishAsync("orchestrator.health-ping", new OrchestratorHealthPingEvent
+            await _messageBus.PublishOrchestratorHealthPingAsync(new OrchestratorHealthPingEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -2073,7 +2073,7 @@ public partial class OrchestratorService : IOrchestratorService
         // Publish ConfigurationChangedEvent so running containers can self-evaluate restart need
         if (changedKeys.Count > 0)
         {
-            await _messageBus.TryPublishAsync("bannou.configuration-events", new ConfigurationChangedEvent
+            await _messageBus.PublishConfigurationChangedAsync(new ConfigurationChangedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -2151,7 +2151,7 @@ public partial class OrchestratorService : IOrchestratorService
             body.ChangedKeys.Count, currentVersion, body.Reason);
 
         var now = DateTimeOffset.UtcNow;
-        await _messageBus.TryPublishAsync("bannou.configuration-events", new ConfigurationChangedEvent
+        await _messageBus.PublishConfigurationChangedAsync(new ConfigurationChangedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -2514,7 +2514,7 @@ public partial class OrchestratorService : IOrchestratorService
         await UpdatePoolMetricsAsync(poolType, body.Success);
 
         // Publish typed event for analytics aggregation
-        await _messageBus.TryPublishAsync("orchestrator.processor.released", new ProcessorReleasedEvent
+        await _messageBus.PublishProcessorReleasedAsync(new ProcessorReleasedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

@@ -598,7 +598,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                     : null
             };
 
-            await _messageBus.TryPublishAsync("asset.processing.completed", processingEvent);
+            await _messageBus.PublishAssetProcessingCompletedAsync(processingEvent);
         }
         catch (Exception ex)
         {
@@ -640,7 +640,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 ErrorMessage = errorMessage
             };
 
-            await _messageBus.TryPublishAsync("asset.processing.completed", failureEvent);
+            await _messageBus.PublishAssetProcessingCompletedAsync(failureEvent);
         }
         catch (Exception ex)
         {
@@ -674,8 +674,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 return;
             }
 
-            await _messageBus.TryPublishAsync(
-                "asset.ready",
+            await _messageBus.PublishAssetReadyAsync(
                 new AssetReadyEvent
                 {
                     EventId = Guid.NewGuid(),
