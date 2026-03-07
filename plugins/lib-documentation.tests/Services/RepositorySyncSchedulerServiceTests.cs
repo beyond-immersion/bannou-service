@@ -188,7 +188,7 @@ public class RepositorySyncSchedulerServiceTests
             Namespace = testNamespace,
             RepositoryUrl = "https://github.com/test/repo.git",
             Branch = "main",
-            Status = BindingStatusInternal.Synced,
+            Status = BindingStatus.Synced,
             SyncEnabled = true,
             SyncIntervalMinutes = 60,
             LastSyncAt = DateTimeOffset.UtcNow.AddHours(-2) // 2 hours ago - needs sync
@@ -241,7 +241,7 @@ public class RepositorySyncSchedulerServiceTests
         {
             BindingId = Guid.NewGuid(),
             Namespace = testNamespace,
-            Status = BindingStatusInternal.Disabled, // Disabled
+            Status = BindingStatus.Disabled, // Disabled
             SyncEnabled = true
         };
 
@@ -261,7 +261,7 @@ public class RepositorySyncSchedulerServiceTests
             .ReturnsAsync(binding);
 
         // Assert - Binding is disabled, scheduler should skip it
-        Assert.Equal(BindingStatusInternal.Disabled, binding.Status);
+        Assert.Equal(BindingStatus.Disabled, binding.Status);
         // Sync should never be called for disabled bindings (verified by integration tests)
     }
 
@@ -280,7 +280,7 @@ public class RepositorySyncSchedulerServiceTests
         {
             BindingId = Guid.NewGuid(),
             Namespace = testNamespace,
-            Status = BindingStatusInternal.Syncing, // Already syncing
+            Status = BindingStatus.Syncing, // Already syncing
             SyncEnabled = true
         };
 
@@ -300,7 +300,7 @@ public class RepositorySyncSchedulerServiceTests
             .ReturnsAsync(binding);
 
         // Assert - Binding is already syncing, scheduler should skip it
-        Assert.Equal(BindingStatusInternal.Syncing, binding.Status);
+        Assert.Equal(BindingStatus.Syncing, binding.Status);
         // Sync should never be called for already syncing bindings (verified by integration tests)
     }
 

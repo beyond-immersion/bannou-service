@@ -85,6 +85,22 @@ public partial class WorldstateService : IWorldstateService
         RegisterEventConsumers(eventConsumer);
     }
 
+    #region Key Building Helpers
+
+    private const string CLOCK_KEY_PREFIX = "realm:";
+    private const string RATIO_KEY_PREFIX = "ratio:";
+    private const string CONFIG_KEY_PREFIX = "realm-config:";
+    private const string CALENDAR_KEY_PREFIX = "calendar:";
+    private const string CLOCK_LOCK_KEY_PREFIX = "clock:";
+
+    internal static string BuildClockKey(Guid realmId) => $"{CLOCK_KEY_PREFIX}{realmId}";
+    internal static string BuildRatioKey(Guid realmId) => $"{RATIO_KEY_PREFIX}{realmId}";
+    internal static string BuildConfigKey(Guid realmId) => $"{CONFIG_KEY_PREFIX}{realmId}";
+    internal static string BuildCalendarKey(Guid gameServiceId, string templateCode) => $"{CALENDAR_KEY_PREFIX}{gameServiceId}:{templateCode}";
+    internal static string BuildClockLockKey(Guid realmId) => $"{CLOCK_LOCK_KEY_PREFIX}{realmId}";
+
+    #endregion
+
     /// <summary>
     /// Gets the current game time snapshot for a realm.
     /// Retrieves the cached clock state from Redis.
@@ -96,7 +112,7 @@ public partial class WorldstateService : IWorldstateService
     {
         _logger.LogDebug("Getting realm time for realm {RealmId}", body.RealmId);
 
-        var clockKey = $"realm:{body.RealmId}";
+        var clockKey = BuildClockKey(body.RealmId);
         var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
         if (clock == null)
         {
@@ -161,7 +177,7 @@ public partial class WorldstateService : IWorldstateService
 
         foreach (var realmId in body.RealmIds)
         {
-            var clockKey = $"realm:{realmId}";
+            var clockKey = BuildClockKey(realmId);
             var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
             if (clock != null)
             {
@@ -204,7 +220,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Load ratio history for piecewise integration
-        var ratioKey = $"ratio:{body.RealmId}";
+        var ratioKey = BuildRatioKey(body.RealmId);
         var ratioHistory = await _ratioHistoryStore.GetAsync(ratioKey, cancellationToken);
         if (ratioHistory == null)
         {
@@ -217,7 +233,7 @@ public partial class WorldstateService : IWorldstateService
             ratioHistory.Segments, body.FromRealTime, body.ToRealTime);
 
         // Load realm config to get the calendar template for decomposition
-        var configKey = $"realm-config:{body.RealmId}";
+        var configKey = BuildConfigKey(body.RealmId);
         var realmConfig = await _realmConfigStore.GetAsync(configKey, cancellationToken);
         if (realmConfig == null)
         {
@@ -227,7 +243,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Load calendar template for decomposition
-        var calendarKey = $"calendar:{realmConfig.GameServiceId}:{realmConfig.CalendarTemplateCode}";
+        var calendarKey = BuildCalendarKey(realmConfig.GameServiceId, realmConfig.CalendarTemplateCode);
         var calendar = await _calendarStore.GetAsync(calendarKey, cancellationToken);
         if (calendar == null)
         {
@@ -262,7 +278,7 @@ public partial class WorldstateService : IWorldstateService
             body.RealmId, body.EntityId);
 
         // Load current clock state
-        var clockKey = $"realm:{body.RealmId}";
+        var clockKey = BuildClockKey(body.RealmId);
         var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
         if (clock == null)
         {
@@ -339,7 +355,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Validate calendar template exists
-        var calendarKey = $"calendar:{realm.GameServiceId}:{templateCode}";
+        var calendarKey = BuildCalendarKey(realm.GameServiceId, templateCode);
         var calendar = await _calendarStore.GetAsync(calendarKey, cancellationToken);
         if (calendar == null)
         {
@@ -349,10 +365,10 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Acquire distributed lock to prevent concurrent initialization race condition
-        var lockOwner = $"worldstate-{Guid.NewGuid():N}";
+        var lockOwner = $"init-clock-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.WorldstateLock,
-            $"clock:{body.RealmId}",
+            BuildClockLockKey(body.RealmId),
             lockOwner,
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -363,7 +379,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Check no existing clock (prevent re-initialization)
-        var clockKey = $"realm:{body.RealmId}";
+        var clockKey = BuildClockKey(body.RealmId);
         var existingClock = await _clockStore.GetAsync(clockKey, cancellationToken);
         if (existingClock != null)
         {
@@ -394,7 +410,7 @@ public partial class WorldstateService : IWorldstateService
             DowntimePolicy = downtimePolicy,
             RealmEpoch = epoch
         };
-        var configKey = $"realm-config:{body.RealmId}";
+        var configKey = BuildConfigKey(body.RealmId);
         await _realmConfigStore.SaveAsync(configKey, realmConfig, cancellationToken: cancellationToken);
 
         // Create initial clock model (Redis)
@@ -438,11 +454,11 @@ public partial class WorldstateService : IWorldstateService
                 }
             }
         };
-        var ratioKey = $"ratio:{body.RealmId}";
+        var ratioKey = BuildRatioKey(body.RealmId);
         await _ratioHistoryStore.SaveAsync(ratioKey, ratioHistory, cancellationToken: cancellationToken);
 
         // Register realm reference for cleanup tracking
-        await RegisterRealmReferenceAsync($"clock:{body.RealmId}", body.RealmId, cancellationToken);
+        await RegisterRealmReferenceAsync(BuildClockLockKey(body.RealmId), body.RealmId, cancellationToken);
 
         // Publish initialization event
         await _messageBus.TryPublishAsync("worldstate.realm-clock.initialized", new WorldstateRealmClockInitializedEvent
@@ -507,10 +523,10 @@ public partial class WorldstateService : IWorldstateService
         // the background worker (clock:{realmId}) because this method reads, mutates, and
         // writes the same RealmClockModel in Redis. Using a different key (ratio:{realmId})
         // would allow concurrent execution with clock operations, causing lost updates.
-        var lockOwner = $"worldstate-{Guid.NewGuid():N}";
+        var lockOwner = $"set-ratio-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.WorldstateLock,
-            $"clock:{body.RealmId}",
+            BuildClockLockKey(body.RealmId),
             lockOwner,
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -521,7 +537,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Load clock
-        var clockKey = $"realm:{body.RealmId}";
+        var clockKey = BuildClockKey(body.RealmId);
         var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
         if (clock == null)
         {
@@ -532,7 +548,7 @@ public partial class WorldstateService : IWorldstateService
         var previousRatio = clock.TimeRatio;
 
         // Load calendar template for materialization
-        var calendarKey = $"calendar:{clock.GameServiceId}:{clock.CalendarTemplateCode}";
+        var calendarKey = BuildCalendarKey(clock.GameServiceId, clock.CalendarTemplateCode);
         var calendar = await _calendarStore.GetAsync(calendarKey, cancellationToken);
         if (calendar == null)
         {
@@ -566,7 +582,7 @@ public partial class WorldstateService : IWorldstateService
         _realmClockCache.Invalidate(body.RealmId);
 
         // Update realm config
-        var configKey = $"realm-config:{body.RealmId}";
+        var configKey = BuildConfigKey(body.RealmId);
         var realmConfig = await _realmConfigStore.GetAsync(configKey, cancellationToken);
         if (realmConfig != null)
         {
@@ -575,7 +591,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Append new ratio segment to history
-        var ratioKey = $"ratio:{body.RealmId}";
+        var ratioKey = BuildRatioKey(body.RealmId);
         var ratioHistory = await _ratioHistoryStore.GetAsync(ratioKey, cancellationToken);
         if (ratioHistory != null)
         {
@@ -663,10 +679,10 @@ public partial class WorldstateService : IWorldstateService
         _logger.LogDebug("Advancing clock for realm {RealmId}", body.RealmId);
 
         // Acquire distributed lock
-        var lockOwner = $"worldstate-{Guid.NewGuid():N}";
+        var lockOwner = $"advance-clock-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.WorldstateLock,
-            $"clock:{body.RealmId}",
+            BuildClockLockKey(body.RealmId),
             lockOwner,
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -677,7 +693,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Load clock
-        var clockKey = $"realm:{body.RealmId}";
+        var clockKey = BuildClockKey(body.RealmId);
         var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
         if (clock == null)
         {
@@ -689,7 +705,7 @@ public partial class WorldstateService : IWorldstateService
         var previousSnapshot = WorldstateBoundaryEventPublisher.MapClockToSnapshot(clock);
 
         // Load realm config to get calendar template code
-        var configKey = $"realm-config:{body.RealmId}";
+        var configKey = BuildConfigKey(body.RealmId);
         var realmConfig = await _realmConfigStore.GetAsync(configKey, cancellationToken);
         if (realmConfig == null)
         {
@@ -699,7 +715,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Load calendar template
-        var calendarKey = $"calendar:{realmConfig.GameServiceId}:{realmConfig.CalendarTemplateCode}";
+        var calendarKey = BuildCalendarKey(realmConfig.GameServiceId, realmConfig.CalendarTemplateCode);
         var calendar = await _calendarStore.GetAsync(calendarKey, cancellationToken);
         if (calendar == null)
         {
@@ -847,7 +863,7 @@ public partial class WorldstateService : IWorldstateService
             return ((StatusCodes)ex.StatusCode, null);
         }
 
-        var calendarKey = $"calendar:{body.GameServiceId}:{body.TemplateCode}";
+        var calendarKey = BuildCalendarKey(body.GameServiceId, body.TemplateCode);
 
         // Check uniqueness: template code must be unique per game service
         var existing = await _calendarStore.GetAsync(calendarKey, cancellationToken);
@@ -962,7 +978,7 @@ public partial class WorldstateService : IWorldstateService
         _logger.LogDebug("Getting calendar template {TemplateCode} for game service {GameServiceId}",
             body.TemplateCode, body.GameServiceId);
 
-        var calendarKey = $"calendar:{body.GameServiceId}:{body.TemplateCode}";
+        var calendarKey = BuildCalendarKey(body.GameServiceId, body.TemplateCode);
         var model = await _calendarStore.GetAsync(calendarKey, cancellationToken);
         if (model == null)
         {
@@ -1008,8 +1024,8 @@ public partial class WorldstateService : IWorldstateService
         _logger.LogDebug("Updating calendar template {TemplateCode} for game service {GameServiceId}",
             body.TemplateCode, body.GameServiceId);
 
-        var calendarKey = $"calendar:{body.GameServiceId}:{body.TemplateCode}";
-        var lockOwner = $"worldstate-{Guid.NewGuid():N}";
+        var calendarKey = BuildCalendarKey(body.GameServiceId, body.TemplateCode);
+        var lockOwner = $"update-calendar-{Guid.NewGuid():N}";
 
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.WorldstateLock,
@@ -1152,8 +1168,8 @@ public partial class WorldstateService : IWorldstateService
         _logger.LogDebug("Deleting calendar template {TemplateCode} for game service {GameServiceId}",
             body.TemplateCode, body.GameServiceId);
 
-        var calendarKey = $"calendar:{body.GameServiceId}:{body.TemplateCode}";
-        var lockOwner = $"worldstate-{Guid.NewGuid():N}";
+        var calendarKey = BuildCalendarKey(body.GameServiceId, body.TemplateCode);
+        var lockOwner = $"delete-calendar-{Guid.NewGuid():N}";
 
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.WorldstateLock,
@@ -1226,7 +1242,7 @@ public partial class WorldstateService : IWorldstateService
     {
         _logger.LogDebug("Getting realm config for realm {RealmId}", body.RealmId);
 
-        var configKey = $"realm-config:{body.RealmId}";
+        var configKey = BuildConfigKey(body.RealmId);
         var config = await _realmConfigStore.GetAsync(configKey, cancellationToken);
         if (config == null)
         {
@@ -1235,7 +1251,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Enrich with current active state from Redis clock
-        var clockKey = $"realm:{body.RealmId}";
+        var clockKey = BuildClockKey(body.RealmId);
         var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
 
         if (clock == null)
@@ -1262,10 +1278,10 @@ public partial class WorldstateService : IWorldstateService
     {
         _logger.LogDebug("Updating realm config for realm {RealmId}", body.RealmId);
 
-        var lockOwner = $"worldstate-{Guid.NewGuid():N}";
+        var lockOwner = $"update-config-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.WorldstateLock,
-            $"clock:{body.RealmId}",
+            BuildClockLockKey(body.RealmId),
             lockOwner,
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -1276,7 +1292,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Load existing config
-        var configKey = $"realm-config:{body.RealmId}";
+        var configKey = BuildConfigKey(body.RealmId);
         var config = await _realmConfigStore.GetAsync(configKey, cancellationToken);
         if (config == null)
         {
@@ -1297,7 +1313,7 @@ public partial class WorldstateService : IWorldstateService
         if (!string.IsNullOrEmpty(body.CalendarTemplateCode) && body.CalendarTemplateCode != config.CalendarTemplateCode)
         {
             // Validate new calendar template exists
-            var newCalendarKey = $"calendar:{config.GameServiceId}:{body.CalendarTemplateCode}";
+            var newCalendarKey = BuildCalendarKey(config.GameServiceId, body.CalendarTemplateCode);
             var newCalendar = await _calendarStore.GetAsync(newCalendarKey, cancellationToken);
             if (newCalendar == null)
             {
@@ -1315,7 +1331,7 @@ public partial class WorldstateService : IWorldstateService
         {
             _logger.LogDebug("No fields changed for realm config {RealmId}, returning current state", body.RealmId);
 
-            var clockForNoOp = await _clockStore.GetAsync($"realm:{body.RealmId}", cancellationToken);
+            var clockForNoOp = await _clockStore.GetAsync(BuildClockKey(body.RealmId), cancellationToken);
             if (clockForNoOp == null)
             {
                 _logger.LogWarning("Realm config exists but clock is missing for realm {RealmId} (possible data corruption)",
@@ -1329,7 +1345,7 @@ public partial class WorldstateService : IWorldstateService
         await _realmConfigStore.SaveAsync(configKey, config, cancellationToken: cancellationToken);
 
         // Sync changed fields to the Redis clock model
-        var clockKey = $"realm:{body.RealmId}";
+        var clockKey = BuildClockKey(body.RealmId);
         var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
         if (clock != null)
         {
@@ -1411,7 +1427,7 @@ public partial class WorldstateService : IWorldstateService
         var summaries = new List<RealmClockSummary>();
         foreach (var config in pagedResult.Items)
         {
-            var clockKey = $"realm:{config.RealmId}";
+            var clockKey = BuildClockKey(config.RealmId);
             var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
 
             if (clock == null)
@@ -1455,7 +1471,7 @@ public partial class WorldstateService : IWorldstateService
         _logger.LogDebug("Cleaning up worldstate data for realm {RealmId}", body.RealmId);
 
         // Load realm config before deletion for the lifecycle event
-        var configKey = $"realm-config:{body.RealmId}";
+        var configKey = BuildConfigKey(body.RealmId);
         var realmConfig = await _realmConfigStore.GetAsync(configKey, cancellationToken);
         if (realmConfig == null)
         {
@@ -1464,18 +1480,18 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Delete clock from Redis
-        var clockKey = $"realm:{body.RealmId}";
+        var clockKey = BuildClockKey(body.RealmId);
         await _clockStore.DeleteAsync(clockKey, cancellationToken);
 
         // Delete ratio history from MySQL
-        var ratioKey = $"ratio:{body.RealmId}";
+        var ratioKey = BuildRatioKey(body.RealmId);
         await _ratioHistoryStore.DeleteAsync(ratioKey, cancellationToken);
 
         // Delete realm config from MySQL
         await _realmConfigStore.DeleteAsync(configKey, cancellationToken);
 
         // Unregister realm reference for cleanup tracking
-        await UnregisterRealmReferenceAsync($"clock:{body.RealmId}", body.RealmId, cancellationToken);
+        await UnregisterRealmReferenceAsync(BuildClockLockKey(body.RealmId), body.RealmId, cancellationToken);
 
         // Publish realm config deleted lifecycle event only when config existed.
         // When realmConfig is null (partially initialized or already cleaned up), we skip
@@ -1528,14 +1544,14 @@ public partial class WorldstateService : IWorldstateService
         // Delete each calendar template
         foreach (var template in calendars)
         {
-            var calendarKey = $"calendar:{body.GameServiceId}:{template.TemplateCode}";
+            var calendarKey = BuildCalendarKey(body.GameServiceId, template.TemplateCode);
 
             // Delete from store
             await _calendarStore.DeleteAsync(calendarKey, cancellationToken);
 
             // Unregister game-service reference
             await UnregisterGameServiceReferenceAsync(
-                $"calendar:{body.GameServiceId}:{template.TemplateCode}", body.GameServiceId, cancellationToken);
+                BuildCalendarKey(body.GameServiceId, template.TemplateCode), body.GameServiceId, cancellationToken);
 
             // Publish lifecycle event for each deleted template
             await _messageBus.TryPublishAsync("worldstate.calendar-template.deleted", new CalendarTemplateDeletedEvent

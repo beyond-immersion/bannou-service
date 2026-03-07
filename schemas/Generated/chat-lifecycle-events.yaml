@@ -24,6 +24,7 @@ components:
       - maxParticipants
       - isArchived
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -69,8 +70,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the chat room was last updated
+          description: Timestamp when the chat room was last updated (set to createdAt on creation)
     ChatRoomUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -88,6 +88,7 @@ components:
       - maxParticipants
       - isArchived
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -110,8 +111,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the chat room was last updated
+          description: Timestamp when the chat room was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -134,6 +134,7 @@ components:
       - maxParticipants
       - isArchived
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -155,8 +156,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the chat room was last updated
+          description: Timestamp when the chat room was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true
@@ -178,6 +178,7 @@ components:
       - allowAnonymousSenders
       - status
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -213,8 +214,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the chat room type was last updated
+          description: Timestamp when the chat room type was last updated (set to createdAt on creation)
     ChatRoomTypeUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -232,6 +232,7 @@ components:
       - allowAnonymousSenders
       - status
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -252,8 +253,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the chat room type was last updated
+          description: Timestamp when the chat room type was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -276,6 +276,7 @@ components:
       - allowAnonymousSenders
       - status
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -295,8 +296,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the chat room type was last updated
+          description: Timestamp when the chat room type was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true

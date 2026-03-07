@@ -666,7 +666,7 @@ public partial class CollectionService : ICollectionService
                 HideWhenLocked = template.HideWhenLocked,
                 ItemTemplateId = template.ItemTemplateId,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt
+                UpdatedAt = template.UpdatedAt ?? template.CreatedAt
             },
             cancellationToken: cancellationToken);
 
@@ -860,7 +860,7 @@ public partial class CollectionService : ICollectionService
                 HideWhenLocked = template.HideWhenLocked,
                 ItemTemplateId = template.ItemTemplateId,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt,
+                UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = changedFields
             },
             cancellationToken: cancellationToken);
@@ -936,7 +936,7 @@ public partial class CollectionService : ICollectionService
                 HideWhenLocked = template.HideWhenLocked,
                 ItemTemplateId = template.ItemTemplateId,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt,
+                UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = changedFields
             },
             cancellationToken: cancellationToken);
@@ -1046,7 +1046,7 @@ public partial class CollectionService : ICollectionService
                     HideWhenLocked = template.HideWhenLocked,
                     ItemTemplateId = template.ItemTemplateId,
                     CreatedAt = template.CreatedAt,
-                    UpdatedAt = template.UpdatedAt
+                    UpdatedAt = template.UpdatedAt ?? template.CreatedAt
                 },
                 cancellationToken: cancellationToken);
 
@@ -2088,7 +2088,7 @@ public partial class CollectionService : ICollectionService
                     GameServiceId = config.GameServiceId,
                     DefaultEntryCode = config.DefaultEntryCode,
                     CreatedAt = config.CreatedAt,
-                    UpdatedAt = config.UpdatedAt,
+                    UpdatedAt = config.UpdatedAt ?? config.CreatedAt,
                     ChangedFields = changedFields
                 },
                 cancellationToken: cancellationToken);
@@ -2105,7 +2105,7 @@ public partial class CollectionService : ICollectionService
                     GameServiceId = config.GameServiceId,
                     DefaultEntryCode = config.DefaultEntryCode,
                     CreatedAt = config.CreatedAt,
-                    UpdatedAt = config.UpdatedAt
+                    UpdatedAt = config.UpdatedAt ?? config.CreatedAt
                 },
                 cancellationToken: cancellationToken);
         }
@@ -2181,7 +2181,7 @@ public partial class CollectionService : ICollectionService
                 GameServiceId = config.GameServiceId,
                 DefaultEntryCode = config.DefaultEntryCode,
                 CreatedAt = config.CreatedAt,
-                UpdatedAt = config.UpdatedAt
+                UpdatedAt = config.UpdatedAt ?? config.CreatedAt
             },
             cancellationToken: cancellationToken);
 

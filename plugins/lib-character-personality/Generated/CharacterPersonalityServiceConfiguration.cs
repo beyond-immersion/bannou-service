@@ -75,7 +75,7 @@ public class CharacterPersonalityServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: CHARACTER_PERSONALITY_CACHE_TTL_MINUTES
     /// </summary>
     [ConfigRange(Minimum = 1)]
-    public int CacheTtlMinutes { get; set; } = 5;
+    public int PersonalityCacheTtlMinutes { get; set; } = 5;
 
     /// <summary>
     /// Maximum number of characters allowed in batch operations

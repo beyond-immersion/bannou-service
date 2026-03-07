@@ -31,13 +31,13 @@ x-service-configuration:
       env: CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS
       default: 15
       description: Delay in seconds before first autogain task cycle (allows services to start)
-    autogainTaskIntervalMs:
+    autogainTaskIntervalSeconds:
       type: integer
-      minimum: 1000
-      maximum: 3600000
-      env: CURRENCY_AUTOGAIN_TASK_INTERVAL_MS
-      default: 60000
-      description: For task mode - how often to process autogain in milliseconds
+      minimum: 1
+      maximum: 3600
+      env: CURRENCY_AUTOGAIN_TASK_INTERVAL_SECONDS
+      default: 60
+      description: For task mode - how often to process autogain in seconds
     autogainBatchSize:
       type: integer
       minimum: 1

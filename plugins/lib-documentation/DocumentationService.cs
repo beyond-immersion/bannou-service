@@ -696,7 +696,7 @@ public partial class DocumentationService : IDocumentationService
 
         // Check if namespace is bound to a repository (403 for manual modifications)
         var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
-        if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+        if (binding != null && binding.Status != BindingStatus.Disabled)
         {
             _logger.LogWarning("CreateDocument rejected: namespace {Namespace} is bound to repository", body.Namespace);
             return (StatusCodes.Forbidden, null);
@@ -785,7 +785,7 @@ public partial class DocumentationService : IDocumentationService
 
         // Check if namespace is bound to a repository (403 for manual modifications)
         var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
-        if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+        if (binding != null && binding.Status != BindingStatus.Disabled)
         {
             _logger.LogWarning("UpdateDocument rejected: namespace {Namespace} is bound to repository", namespaceId);
             return (StatusCodes.Forbidden, null);
@@ -938,7 +938,7 @@ public partial class DocumentationService : IDocumentationService
 
         // Check if namespace is bound to a repository (403 for manual modifications)
         var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
-        if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+        if (binding != null && binding.Status != BindingStatus.Disabled)
         {
             _logger.LogWarning("DeleteDocument rejected: namespace {Namespace} is bound to repository", body.Namespace);
             return (StatusCodes.Forbidden, null);
@@ -2117,7 +2117,7 @@ public partial class DocumentationService : IDocumentationService
             Namespace = body.Namespace,
             RepositoryUrl = body.RepositoryUrl,
             Branch = body.Branch ?? "main",
-            Status = Models.BindingStatusInternal.Pending,
+            Status = BindingStatus.Pending,
             SyncEnabled = true,
             SyncIntervalMinutes = body.SyncIntervalMinutes,
             FilePatterns = body.FilePatterns?.ToList() ?? ["**/*.md"],
@@ -2127,7 +2127,7 @@ public partial class DocumentationService : IDocumentationService
             ArchiveEnabled = body.ArchiveEnabled,
             ArchiveOnSync = body.ArchiveOnSync,
             CreatedAt = DateTimeOffset.UtcNow,
-            OwnerType = MapOwnerType(body.OwnerType),
+            OwnerType = body.OwnerType,
             OwnerId = body.OwnerId
         };
 
@@ -2145,7 +2145,7 @@ public partial class DocumentationService : IDocumentationService
             Namespace = binding.Namespace,
             RepositoryUrl = binding.RepositoryUrl,
             Branch = binding.Branch,
-            Status = MapBindingStatus(binding.Status),
+            Status = binding.Status,
             CreatedAt = binding.CreatedAt
         });
     }
@@ -2220,7 +2220,7 @@ public partial class DocumentationService : IDocumentationService
         return (StatusCodes.OK, new SyncRepositoryResponse
         {
             SyncId = result.SyncId ?? throw new InvalidOperationException("Sync result must have a SyncId"),
-            Status = MapSyncStatus(result.Status),
+            Status = result.Status,
             CommitHash = result.CommitHash,
             DocumentsCreated = result.DocumentsCreated,
             DocumentsUpdated = result.DocumentsUpdated,
@@ -2251,7 +2251,7 @@ public partial class DocumentationService : IDocumentationService
             response.LastSync = new SyncInfo
             {
                 SyncId = null, // Not tracked per-sync currently
-                Status = binding.Status == Models.BindingStatusInternal.Error ? SyncStatus.Failed : SyncStatus.Success,
+                Status = binding.Status == BindingStatus.Error ? SyncStatus.Failed : SyncStatus.Success,
                 TriggeredBy = SyncTrigger.Scheduled,
                 StartedAt = binding.LastSyncAt.Value,
                 CompletedAt = binding.LastSyncAt.Value,
@@ -2285,8 +2285,7 @@ public partial class DocumentationService : IDocumentationService
         var filteredBindings = allBindings.AsEnumerable();
         if (body.Status != default)
         {
-            var targetStatus = MapToInternalBindingStatus(body.Status);
-            filteredBindings = filteredBindings.Where(b => b.Status == targetStatus);
+            filteredBindings = filteredBindings.Where(b => b.Status == body.Status);
         }
 
         var totalCount = filteredBindings.Count();
@@ -2380,7 +2379,7 @@ public partial class DocumentationService : IDocumentationService
             DocumentCount = documents.Count,
             SizeBytes = bundleData.Length,
             CreatedAt = DateTimeOffset.UtcNow,
-            OwnerType = MapOwnerType(body.OwnerType),
+            OwnerType = body.OwnerType,
             OwnerId = body.OwnerId,
             Description = body.Description,
             CommitHash = await GetCurrentCommitHashForNamespaceAsync(body.Namespace, cancellationToken)
@@ -2463,7 +2462,7 @@ public partial class DocumentationService : IDocumentationService
                 ArchiveId = a.ArchiveId,
                 Namespace = a.Namespace,
                 CreatedAt = a.CreatedAt,
-                OwnerType = MapOwnerTypeNullable(a.OwnerType),
+                OwnerType = a.OwnerType,
                 OwnerId = a.OwnerId,
                 DocumentCount = a.DocumentCount,
                 SizeBytes = (int)Math.Min(a.SizeBytes, int.MaxValue),
@@ -2495,7 +2494,7 @@ public partial class DocumentationService : IDocumentationService
 
         // Check if namespace is bound to a repository
         var binding = await GetBindingForNamespaceAsync(archive.Namespace, cancellationToken);
-        if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+        if (binding != null && binding.Status != BindingStatus.Disabled)
         {
             _logger.LogWarning("Cannot restore to bound namespace {Namespace}", archive.Namespace);
             return (StatusCodes.Forbidden, null);
@@ -2678,7 +2677,7 @@ public partial class DocumentationService : IDocumentationService
         _logger.LogInformation("Starting sync {SyncId} for namespace {Namespace}", syncId, binding.Namespace);
 
         // Update status to syncing
-        binding.Status = Models.BindingStatusInternal.Syncing;
+        binding.Status = BindingStatus.Syncing;
         await SaveBindingAsync(binding, cancellationToken);
 
         // Publish sync started event
@@ -2699,7 +2698,7 @@ public partial class DocumentationService : IDocumentationService
             if (!gitResult.Success)
             {
                 var failedResult = Models.SyncResult.Failed(syncId, gitResult.ErrorMessage ?? "Git sync failed", startedAt);
-                binding.Status = Models.BindingStatusInternal.Error;
+                binding.Status = BindingStatus.Error;
                 binding.LastSyncError = gitResult.ErrorMessage;
                 await SaveBindingAsync(binding, cancellationToken);
                 await TryPublishSyncCompletedEventAsync(binding, syncId, failedResult, cancellationToken);
@@ -2711,7 +2710,7 @@ public partial class DocumentationService : IDocumentationService
             {
                 _logger.LogDebug("Repository unchanged, skipping sync for namespace {Namespace}", binding.Namespace);
                 var noChangeResult = Models.SyncResult.Success(syncId, gitResult.CommitHash, 0, 0, 0, startedAt);
-                binding.Status = Models.BindingStatusInternal.Synced;
+                binding.Status = BindingStatus.Synced;
                 binding.LastSyncAt = DateTimeOffset.UtcNow;
                 await SaveBindingAsync(binding, cancellationToken);
                 await TryPublishSyncCompletedEventAsync(binding, syncId, noChangeResult, cancellationToken);
@@ -2814,7 +2813,7 @@ public partial class DocumentationService : IDocumentationService
             }
 
             // Update binding state
-            binding.Status = Models.BindingStatusInternal.Synced;
+            binding.Status = BindingStatus.Synced;
             binding.LastSyncAt = DateTimeOffset.UtcNow;
             binding.LastCommitHash = gitResult.CommitHash;
             binding.LastSyncError = null;
@@ -2841,7 +2840,7 @@ public partial class DocumentationService : IDocumentationService
         {
             _logger.LogError(ex, "Sync failed for namespace {Namespace}", binding.Namespace);
 
-            binding.Status = Models.BindingStatusInternal.Error;
+            binding.Status = BindingStatus.Error;
             binding.LastSyncError = ex.Message;
             await SaveBindingAsync(binding, cancellationToken);
 
@@ -3087,73 +3086,6 @@ public partial class DocumentationService : IDocumentationService
     }
 
     /// <summary>
-    /// Maps internal binding status to API enum.
-    /// </summary>
-    private static BindingStatus MapBindingStatus(Models.BindingStatusInternal status) => status switch
-    {
-        Models.BindingStatusInternal.Pending => BindingStatus.Pending,
-        Models.BindingStatusInternal.Syncing => BindingStatus.Syncing,
-        Models.BindingStatusInternal.Synced => BindingStatus.Synced,
-        Models.BindingStatusInternal.Error => BindingStatus.Error,
-        Models.BindingStatusInternal.Disabled => BindingStatus.Disabled,
-        _ => BindingStatus.Pending
-    };
-
-    /// <summary>
-    /// Maps API binding status to internal enum.
-    /// </summary>
-    private static Models.BindingStatusInternal MapToInternalBindingStatus(BindingStatus status) => status switch
-    {
-        BindingStatus.Pending => Models.BindingStatusInternal.Pending,
-        BindingStatus.Syncing => Models.BindingStatusInternal.Syncing,
-        BindingStatus.Synced => Models.BindingStatusInternal.Synced,
-        BindingStatus.Error => Models.BindingStatusInternal.Error,
-        BindingStatus.Disabled => Models.BindingStatusInternal.Disabled,
-        _ => Models.BindingStatusInternal.Pending
-    };
-
-    /// <summary>
-    /// Maps internal sync status to API enum.
-    /// </summary>
-    private static SyncStatus MapSyncStatus(Models.SyncStatusInternal status) => status switch
-    {
-        Models.SyncStatusInternal.Success => SyncStatus.Success,
-        Models.SyncStatusInternal.Partial => SyncStatus.Partial,
-        Models.SyncStatusInternal.Failed => SyncStatus.Failed,
-        _ => SyncStatus.Failed
-    };
-
-    /// <summary>
-    /// Maps API owner type to internal enum.
-    /// </summary>
-    private static Models.OwnerTypeInternal MapOwnerType(DocumentationOwnerType ownerType) => ownerType switch
-    {
-        DocumentationOwnerType.Session => Models.OwnerTypeInternal.Session,
-        DocumentationOwnerType.Service => Models.OwnerTypeInternal.Service,
-        _ => Models.OwnerTypeInternal.Session
-    };
-
-    /// <summary>
-    /// Maps internal owner type to API enum.
-    /// </summary>
-    private static DocumentationOwnerType MapOwnerTypeToApi(Models.OwnerTypeInternal ownerType) => ownerType switch
-    {
-        Models.OwnerTypeInternal.Session => DocumentationOwnerType.Session,
-        Models.OwnerTypeInternal.Service => DocumentationOwnerType.Service,
-        _ => DocumentationOwnerType.Session
-    };
-
-    /// <summary>
-    /// Maps internal owner type to nullable API enum (for response models where owner may be unknown).
-    /// </summary>
-    private static DocumentationOwnerType? MapOwnerTypeNullable(Models.OwnerTypeInternal ownerType) => ownerType switch
-    {
-        Models.OwnerTypeInternal.Session => DocumentationOwnerType.Session,
-        Models.OwnerTypeInternal.Service => DocumentationOwnerType.Service,
-        _ => DocumentationOwnerType.Session
-    };
-
-    /// <summary>
     /// Maps binding to API info model.
     /// </summary>
     private static RepositoryBindingInfo MapToBindingInfo(Models.RepositoryBinding binding) => new()
@@ -3162,12 +3094,12 @@ public partial class DocumentationService : IDocumentationService
         Namespace = binding.Namespace,
         RepositoryUrl = binding.RepositoryUrl,
         Branch = binding.Branch,
-        Status = MapBindingStatus(binding.Status),
+        Status = binding.Status,
         SyncEnabled = binding.SyncEnabled,
         SyncIntervalMinutes = binding.SyncIntervalMinutes,
         DocumentCount = binding.DocumentCount,
         CreatedAt = binding.CreatedAt,
-        OwnerType = MapOwnerTypeToApi(binding.OwnerType),
+        OwnerType = binding.OwnerType,
         OwnerId = binding.OwnerId
     };
 
@@ -3259,13 +3191,6 @@ public partial class DocumentationService : IDocumentationService
         using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishSyncCompletedEventAsync");
         try
         {
-            var status = result.Status switch
-            {
-                Models.SyncStatusInternal.Success => SyncStatus.Success,
-                Models.SyncStatusInternal.Partial => SyncStatus.Partial,
-                Models.SyncStatusInternal.Failed => SyncStatus.Failed,
-                _ => SyncStatus.Failed
-            };
             var eventModel = new DocumentationSyncCompletedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -3273,7 +3198,7 @@ public partial class DocumentationService : IDocumentationService
                 Namespace = binding.Namespace,
                 BindingId = binding.BindingId,
                 SyncId = syncId,
-                Status = status,
+                Status = result.Status,
                 CommitHash = result.CommitHash,
                 DocumentsCreated = result.DocumentsCreated,
                 DocumentsUpdated = result.DocumentsUpdated,

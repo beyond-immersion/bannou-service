@@ -26,6 +26,7 @@ components:
       - adjacencyMode
       - isActive
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -65,8 +66,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the license board template was last updated
+          description: Timestamp when the license board template was last updated (set to createdAt on creation)
     LicenseBoardTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -86,6 +86,7 @@ components:
       - adjacencyMode
       - isActive
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -107,8 +108,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the license board template was last updated
+          description: Timestamp when the license board template was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -133,6 +133,7 @@ components:
       - adjacencyMode
       - isActive
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -153,8 +154,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the license board template was last updated
+          description: Timestamp when the license board template was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true
@@ -176,6 +176,7 @@ components:
       - gameServiceId
       - containerId
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -216,8 +217,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the license board was last updated
+          description: Timestamp when the license board was last updated (set to createdAt on creation)
     LicenseBoardUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -235,6 +235,7 @@ components:
       - gameServiceId
       - containerId
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -255,8 +256,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the license board was last updated
+          description: Timestamp when the license board was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -279,6 +279,7 @@ components:
       - gameServiceId
       - containerId
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -298,8 +299,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the license board was last updated
+          description: Timestamp when the license board was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true

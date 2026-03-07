@@ -332,7 +332,7 @@ public class OAuthProviderServiceTests : IDisposable
     public void GetAuthorizationUrl_ForDiscord_ShouldReturnValidUrl()
     {
         // Act
-        var url = _service.GetAuthorizationUrl(Provider.Discord, null, "test-state");
+        var url = _service.GetAuthorizationUrl(OAuthProvider.Discord, null, "test-state");
 
         // Assert
         Assert.NotNull(url);
@@ -353,7 +353,7 @@ public class OAuthProviderServiceTests : IDisposable
     public void GetAuthorizationUrl_ForGoogle_ShouldReturnValidUrl()
     {
         // Act
-        var url = _service.GetAuthorizationUrl(Provider.Google, null, "test-state");
+        var url = _service.GetAuthorizationUrl(OAuthProvider.Google, null, "test-state");
 
         // Assert
         Assert.NotNull(url);
@@ -374,7 +374,7 @@ public class OAuthProviderServiceTests : IDisposable
     public void GetAuthorizationUrl_ForTwitch_ShouldReturnValidUrl()
     {
         // Act
-        var url = _service.GetAuthorizationUrl(Provider.Twitch, null, "test-state");
+        var url = _service.GetAuthorizationUrl(OAuthProvider.Twitch, null, "test-state");
 
         // Assert
         Assert.NotNull(url);
@@ -398,7 +398,7 @@ public class OAuthProviderServiceTests : IDisposable
         var customRedirectUri = "http://custom.example.com/callback";
 
         // Act
-        var url = _service.GetAuthorizationUrl(Provider.Discord, customRedirectUri, null);
+        var url = _service.GetAuthorizationUrl(OAuthProvider.Discord, customRedirectUri, null);
 
         // Assert
         Assert.NotNull(url);
@@ -413,7 +413,7 @@ public class OAuthProviderServiceTests : IDisposable
     public void GetAuthorizationUrl_WithoutState_ShouldStillReturnUrl()
     {
         // Act
-        var url = _service.GetAuthorizationUrl(Provider.Discord, null, null);
+        var url = _service.GetAuthorizationUrl(OAuthProvider.Discord, null, null);
 
         // Assert
         Assert.NotNull(url);
@@ -432,7 +432,7 @@ public class OAuthProviderServiceTests : IDisposable
     public async Task GetMockUserInfoAsync_ForDiscord_ShouldReturnMockInfo()
     {
         // Act
-        var result = await _service.GetMockUserInfoAsync(Provider.Discord);
+        var result = await _service.GetMockUserInfoAsync(OAuthProvider.Discord);
 
         // Assert
         Assert.NotNull(result);
@@ -445,7 +445,7 @@ public class OAuthProviderServiceTests : IDisposable
     public async Task GetMockUserInfoAsync_ForGoogle_ShouldReturnMockInfo()
     {
         // Act
-        var result = await _service.GetMockUserInfoAsync(Provider.Google);
+        var result = await _service.GetMockUserInfoAsync(OAuthProvider.Google);
 
         // Assert
         Assert.NotNull(result);
@@ -457,7 +457,7 @@ public class OAuthProviderServiceTests : IDisposable
     public async Task GetMockUserInfoAsync_ForTwitch_ShouldReturnMockInfo()
     {
         // Act
-        var result = await _service.GetMockUserInfoAsync(Provider.Twitch);
+        var result = await _service.GetMockUserInfoAsync(OAuthProvider.Twitch);
 
         // Assert
         Assert.NotNull(result);
@@ -516,7 +516,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync(existingAccount);
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result.Account);
@@ -562,7 +562,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync("etag");
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result.Account);
@@ -609,7 +609,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync(new AuthMethodResponse());
 
         // Act
-        await _service.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, CancellationToken.None);
+        await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, CancellationToken.None);
 
         // Assert - verify AddAuthMethodAsync was called with correct parameters
         _mockAccountClient.Verify(c => c.AddAuthMethodAsync(
@@ -665,7 +665,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync(new AuthMethodResponse());
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Google, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Google, userInfo, CancellationToken.None);
 
         // Assert - verify AddAuthMethodAsync was called with correct parameters
         Assert.NotNull(result.Account);
@@ -712,7 +712,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ThrowsAsync(new ApiException("Conflict", 409));
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Twitch, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Twitch, userInfo, CancellationToken.None);
 
         // Assert - method should succeed despite 409 from sync
         Assert.NotNull(result.Account);
@@ -754,7 +754,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ThrowsAsync(new Exception("Service unavailable"));
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Steam, userInfo, CancellationToken.None);
 
         // Assert - method should succeed despite sync failure (best-effort)
         Assert.NotNull(result.Account);
@@ -814,7 +814,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync("etag");
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, CancellationToken.None);
 
         // Assert - new account was created successfully
         Assert.NotNull(result.Account);

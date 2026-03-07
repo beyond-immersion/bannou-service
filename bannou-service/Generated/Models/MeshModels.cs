@@ -125,7 +125,8 @@ public partial class MeshEndpoint
 }
 
 /// <summary>
-/// Health status of an endpoint
+/// Health status of an individual endpoint. Subset of common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.
+/// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

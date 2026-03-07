@@ -51,8 +51,8 @@ public class CurrencyAutogainTaskService : BackgroundService
         }
 
         _logger.LogInformation(
-            "Autogain task service starting, interval: {IntervalMs}ms, batch size: {BatchSize}",
-            _configuration.AutogainTaskIntervalMs, _configuration.AutogainBatchSize);
+            "Autogain task service starting, interval: {IntervalSeconds}s, batch size: {BatchSize}",
+            _configuration.AutogainTaskIntervalSeconds, _configuration.AutogainBatchSize);
 
         // Wait before first cycle to allow services to start
         try
@@ -82,7 +82,7 @@ public class CurrencyAutogainTaskService : BackgroundService
 
             try
             {
-                await Task.Delay(_configuration.AutogainTaskIntervalMs, stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(_configuration.AutogainTaskIntervalSeconds), stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

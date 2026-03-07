@@ -39,7 +39,7 @@ public sealed class PersonalityDataCache : IPersonalityDataCache
         _logger = logger;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
-        _cacheTtl = TimeSpan.FromMinutes(config.CacheTtlMinutes);
+        _cacheTtl = TimeSpan.FromMinutes(config.PersonalityCacheTtlMinutes);
     }
 
     /// <inheritdoc/>

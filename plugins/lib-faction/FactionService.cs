@@ -532,10 +532,11 @@ public partial class FactionService : IFactionService
     {
         _logger.LogDebug("Updating faction {FactionId}", body.FactionId);
 
+        var lockOwner = $"update-faction-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"faction:{body.FactionId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
@@ -593,10 +594,11 @@ public partial class FactionService : IFactionService
     {
         _logger.LogDebug("Deprecating faction {FactionId}", body.FactionId);
 
+        var lockOwner = $"deprecate-faction-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"faction:{body.FactionId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
@@ -629,10 +631,11 @@ public partial class FactionService : IFactionService
     {
         _logger.LogDebug("Undeprecating faction {FactionId}", body.FactionId);
 
+        var lockOwner = $"undeprecate-faction-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"faction:{body.FactionId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
@@ -665,10 +668,11 @@ public partial class FactionService : IFactionService
     {
         _logger.LogDebug("Deleting faction {FactionId}", body.FactionId);
 
+        var lockOwner = $"delete-faction-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"faction:{body.FactionId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return StatusCodes.Conflict;
@@ -885,10 +889,11 @@ public partial class FactionService : IFactionService
     {
         _logger.LogDebug("Designating faction {FactionId} as realm baseline", body.FactionId);
 
+        var lockOwner = $"designate-baseline-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"faction:{body.FactionId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
@@ -976,10 +981,11 @@ public partial class FactionService : IFactionService
 
         // Lock per faction (not per member pair) to serialize MemberCount updates
         // and prevent concurrent additions from racing on the denormalized count
+        var lockOwner = $"add-member-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"faction-membership:{body.FactionId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
@@ -1065,10 +1071,11 @@ public partial class FactionService : IFactionService
 
         // Lock per faction (not per member pair) to serialize MemberCount updates
         // and prevent concurrent removals from racing on the denormalized count
+        var lockOwner = $"remove-member-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"faction-membership:{body.FactionId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return StatusCodes.Conflict;
@@ -1210,10 +1217,11 @@ public partial class FactionService : IFactionService
         _logger.LogDebug("Updating role for member {CharacterId} in faction {FactionId} to {Role}",
             body.CharacterId, body.FactionId, body.Role);
 
+        var lockOwner = $"update-role-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"membership:{body.FactionId}:{body.CharacterId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
@@ -1282,10 +1290,11 @@ public partial class FactionService : IFactionService
     {
         _logger.LogDebug("Faction {FactionId} claiming territory at location {LocationId}", body.FactionId, body.LocationId);
 
+        var lockOwner = $"claim-territory-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"territory:{body.LocationId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
@@ -1382,10 +1391,11 @@ public partial class FactionService : IFactionService
         var claim = await _territoryStore.GetAsync(ClaimKey(body.ClaimId), cancellationToken);
         if (claim == null) return StatusCodes.NotFound;
 
+        var lockOwner = $"release-territory-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"territory:{claim.LocationId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return StatusCodes.Conflict;
@@ -1508,10 +1518,11 @@ public partial class FactionService : IFactionService
         _logger.LogDebug("Defining norm for faction {FactionId}, violation type {ViolationType}",
             body.FactionId, body.ViolationType);
 
+        var lockOwner = $"define-norm-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"norm:{body.FactionId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
@@ -1581,10 +1592,11 @@ public partial class FactionService : IFactionService
         var norm = await _normStore.GetAsync(NormKey(body.NormId), cancellationToken);
         if (norm == null) return (StatusCodes.NotFound, null);
 
+        var lockOwner = $"update-norm-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"norm:{norm.FactionId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
@@ -1647,10 +1659,11 @@ public partial class FactionService : IFactionService
         var norm = await _normStore.GetAsync(NormKey(body.NormId), cancellationToken);
         if (norm == null) return StatusCodes.NotFound;
 
+        var lockOwner = $"delete-norm-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
             resourceId: $"norm:{norm.FactionId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return StatusCodes.Conflict;

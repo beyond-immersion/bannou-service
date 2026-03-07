@@ -2212,7 +2212,7 @@ public partial class MappingService : IMappingService
             ingestTopic,
             async (evt, ct) => await HandleIngestEventAsync(channelId, evt, ct),
             exchange: null,
-            exchangeType: SubscriptionExchangeType.Topic,
+            exchangeType: ExchangeType.Topic,
             cancellationToken: cancellationToken);
 
         IngestSubscriptions[channelId] = subscription;

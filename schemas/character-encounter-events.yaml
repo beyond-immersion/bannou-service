@@ -11,6 +11,7 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  x-event-subscriptions: []  # Character Encounter self-subscribes for cache invalidation only; no external event subscriptions
   x-event-publications:
     - topic: encounter.recorded
       event: EncounterRecordedEvent

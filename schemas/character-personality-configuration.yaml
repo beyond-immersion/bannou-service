@@ -34,7 +34,7 @@ x-service-configuration:
       env: CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT
 
     # Cache Configuration
-    CacheTtlMinutes:
+    PersonalityCacheTtlMinutes:
       type: integer
       description: TTL in minutes for personality and combat preferences cache entries
       default: 5

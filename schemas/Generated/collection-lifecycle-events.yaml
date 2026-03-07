@@ -25,6 +25,7 @@ components:
       - hideWhenLocked
       - itemTemplateId
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -65,8 +66,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the collection entry template was last updated
+          description: Timestamp when the collection entry template was last updated (set to createdAt on creation)
     CollectionEntryTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -85,6 +85,7 @@ components:
       - hideWhenLocked
       - itemTemplateId
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -106,8 +107,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the collection entry template was last updated
+          description: Timestamp when the collection entry template was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -131,6 +131,7 @@ components:
       - hideWhenLocked
       - itemTemplateId
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -151,8 +152,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the collection entry template was last updated
+          description: Timestamp when the collection entry template was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true
@@ -173,6 +173,7 @@ components:
       - gameServiceId
       - defaultEntryCode
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -202,8 +203,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the collection area content config was last updated
+          description: Timestamp when the collection area content config was last updated (set to createdAt on creation)
     CollectionAreaContentConfigUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -220,6 +220,7 @@ components:
       - gameServiceId
       - defaultEntryCode
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -238,8 +239,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the collection area content config was last updated
+          description: Timestamp when the collection area content config was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -261,6 +261,7 @@ components:
       - gameServiceId
       - defaultEntryCode
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -278,8 +279,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the collection area content config was last updated
+          description: Timestamp when the collection area content config was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true
@@ -301,6 +301,7 @@ components:
       - gameServiceId
       - containerId
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -335,8 +336,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the collection was last updated
+          description: Timestamp when the collection was last updated (set to createdAt on creation)
     CollectionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -354,6 +354,7 @@ components:
       - gameServiceId
       - containerId
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -373,8 +374,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the collection was last updated
+          description: Timestamp when the collection was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -397,6 +397,7 @@ components:
       - gameServiceId
       - containerId
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -415,8 +416,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the collection was last updated
+          description: Timestamp when the collection was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true

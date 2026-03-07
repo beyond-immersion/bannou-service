@@ -71,11 +71,11 @@ public class CurrencyServiceConfiguration : BaseServiceConfiguration
     public int AutogainTaskStartupDelaySeconds { get; set; } = 15;
 
     /// <summary>
-    /// For task mode - how often to process autogain in milliseconds
-    /// Environment variable: CURRENCY_AUTOGAIN_TASK_INTERVAL_MS
+    /// For task mode - how often to process autogain in seconds
+    /// Environment variable: CURRENCY_AUTOGAIN_TASK_INTERVAL_SECONDS
     /// </summary>
-    [ConfigRange(Minimum = 1000, Maximum = 3600000)]
-    public int AutogainTaskIntervalMs { get; set; } = 60000;
+    [ConfigRange(Minimum = 1, Maximum = 3600)]
+    public int AutogainTaskIntervalSeconds { get; set; } = 60;
 
     /// <summary>
     /// For task mode - batch size per processing cycle

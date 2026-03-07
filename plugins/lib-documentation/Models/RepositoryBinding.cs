@@ -19,7 +19,7 @@ internal sealed class RepositoryBinding
     public string Branch { get; set; } = "main";
 
     /// <summary>Gets or sets the binding status.</summary>
-    public BindingStatusInternal Status { get; set; } = BindingStatusInternal.Pending;
+    public BindingStatus Status { get; set; } = BindingStatus.Pending;
 
     /// <summary>Gets or sets whether sync is enabled.</summary>
     public bool SyncEnabled { get; set; } = true;
@@ -58,7 +58,7 @@ internal sealed class RepositoryBinding
     public DateTimeOffset CreatedAt { get; set; }
 
     /// <summary>Gets or sets the type of owner for this binding.</summary>
-    public OwnerTypeInternal OwnerType { get; set; }
+    public DocumentationOwnerType OwnerType { get; set; }
 
     /// <summary>
     /// Gets or sets the owner identifier.
@@ -74,38 +74,6 @@ internal sealed class RepositoryBinding
     public DateTimeOffset? NextSyncAt { get; set; }
 }
 
-/// <summary>
-/// Internal binding status enum to avoid dependency on generated types.
-/// </summary>
-internal enum BindingStatusInternal
-{
-    /// <summary>Binding created, awaiting first sync.</summary>
-    Pending,
-
-    /// <summary>Sync in progress.</summary>
-    Syncing,
-
-    /// <summary>Last sync completed successfully.</summary>
-    Synced,
-
-    /// <summary>Last sync failed with error.</summary>
-    Error,
-
-    /// <summary>Binding is disabled.</summary>
-    Disabled
-}
-
-/// <summary>
-/// Internal owner type enum to avoid dependency on generated types.
-/// </summary>
-internal enum OwnerTypeInternal
-{
-    /// <summary>Owner is a WebSocket session (identified by session ID).</summary>
-    Session,
-
-    /// <summary>Owner is a service (identified by service name).</summary>
-    Service
-}
 
 /// <summary>
 /// Result of a sync operation.
@@ -116,7 +84,7 @@ internal sealed class SyncResult
     public Guid? SyncId { get; set; }
 
     /// <summary>Gets or sets the sync status.</summary>
-    public SyncStatusInternal Status { get; set; }
+    public SyncStatus Status { get; set; }
 
     /// <summary>Gets or sets the commit hash after sync.</summary>
     public string? CommitHash { get; set; }
@@ -155,7 +123,7 @@ internal sealed class SyncResult
         return new SyncResult
         {
             SyncId = syncId,
-            Status = SyncStatusInternal.Success,
+            Status = SyncStatus.Success,
             CommitHash = commitHash,
             DocumentsCreated = created,
             DocumentsUpdated = updated,
@@ -180,7 +148,7 @@ internal sealed class SyncResult
         return new SyncResult
         {
             SyncId = syncId,
-            Status = SyncStatusInternal.Partial,
+            Status = SyncStatus.Partial,
             CommitHash = commitHash,
             DocumentsCreated = created,
             DocumentsUpdated = updated,
@@ -199,7 +167,7 @@ internal sealed class SyncResult
         return new SyncResult
         {
             SyncId = syncId,
-            Status = SyncStatusInternal.Failed,
+            Status = SyncStatus.Failed,
             ErrorMessage = errorMessage,
             StartedAt = startedAt,
             CompletedAt = now,
@@ -213,7 +181,7 @@ internal sealed class SyncResult
         return new SyncResult
         {
             SyncId = null,
-            Status = SyncStatusInternal.Failed,
+            Status = SyncStatus.Failed,
             ErrorMessage = message,
             StartedAt = DateTimeOffset.UtcNow,
             CompletedAt = DateTimeOffset.UtcNow,
@@ -222,20 +190,6 @@ internal sealed class SyncResult
     }
 }
 
-/// <summary>
-/// Internal sync status enum.
-/// </summary>
-internal enum SyncStatusInternal
-{
-    /// <summary>Sync completed successfully.</summary>
-    Success,
-
-    /// <summary>Sync completed with some failures.</summary>
-    Partial,
-
-    /// <summary>Sync failed completely.</summary>
-    Failed
-}
 
 /// <summary>
 /// Internal model for archive storage.
@@ -267,7 +221,7 @@ internal sealed class DocumentationArchive
     public string? Description { get; set; }
 
     /// <summary>Gets or sets the type of owner for this archive.</summary>
-    public OwnerTypeInternal OwnerType { get; set; }
+    public DocumentationOwnerType OwnerType { get; set; }
 
     /// <summary>
     /// Gets or sets the owner identifier.

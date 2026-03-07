@@ -27,6 +27,7 @@ components:
       - boundsPrecision
       - coordinateMode
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -99,8 +100,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the location was last updated
+          description: Timestamp when the location was last updated (set to createdAt on creation)
     LocationUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -121,6 +121,7 @@ components:
       - boundsPrecision
       - coordinateMode
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -150,8 +151,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the location was last updated
+          description: Timestamp when the location was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -177,6 +177,7 @@ components:
       - boundsPrecision
       - coordinateMode
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -205,8 +206,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the location was last updated
+          description: Timestamp when the location was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true

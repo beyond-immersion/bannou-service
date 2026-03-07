@@ -52,7 +52,7 @@ internal sealed class RealmClockCache : IRealmClockCache
             _logger.LogDebug("Clock cache expired for realm {RealmId}, reloading from store", realmId);
         }
 
-        var clockKey = $"realm:{realmId}";
+        var clockKey = WorldstateService.BuildClockKey(realmId);
         var clock = await _clockStore.GetAsync(clockKey, ct);
         if (clock == null)
         {

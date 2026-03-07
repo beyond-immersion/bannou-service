@@ -57,7 +57,8 @@ public enum ConnectionStatus
 #pragma warning restore CS1591
 
 /// <summary>
-/// Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker)
+/// API-writable subset of ConnectionStatus. Excludes SeasonalClosed, which is system-managed by the Seasonal Connection Worker. Mapping from SettableConnectionStatus to ConnectionStatus is lossless (all values exist in both); the reverse direction is intentionally restricted at the API level.
+/// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

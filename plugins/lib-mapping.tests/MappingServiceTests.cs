@@ -119,7 +119,7 @@ public class MappingServiceTests
                 It.IsAny<string>(),
                 It.IsAny<Func<MapIngestEvent, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Mock.Of<IAsyncDisposable>());
 
@@ -370,7 +370,7 @@ public class MappingServiceTests
             It.Is<string>(t => t.StartsWith("map.ingest.")),
             It.IsAny<Func<MapIngestEvent, CancellationToken, Task>>(),
             It.IsAny<string?>(),
-            It.IsAny<SubscriptionExchangeType>(),
+            It.IsAny<ExchangeType>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

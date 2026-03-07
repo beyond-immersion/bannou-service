@@ -1467,7 +1467,7 @@ public class DocumentationServiceExtendedTests
                 DocumentCount = 5,
                 SizeBytes = 1024,
                 CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
-                OwnerType = OwnerTypeInternal.Session,
+                OwnerType = DocumentationOwnerType.Session,
                 OwnerId = "owner1"
             });
 
@@ -1481,7 +1481,7 @@ public class DocumentationServiceExtendedTests
                 DocumentCount = 3,
                 SizeBytes = 512,
                 CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
-                OwnerType = OwnerTypeInternal.Service,
+                OwnerType = DocumentationOwnerType.Service,
                 OwnerId = "owner2"
             });
 
@@ -1571,7 +1571,7 @@ public class DocumentationServiceExtendedTests
             {
                 BindingId = Guid.NewGuid(),
                 Namespace = TEST_NAMESPACE,
-                Status = BindingStatusInternal.Synced
+                Status = BindingStatus.Synced
             });
 
         // Act
@@ -1699,7 +1699,7 @@ public class DocumentationServiceExtendedTests
             Namespace = TEST_NAMESPACE,
             RepositoryUrl = "https://github.com/test/repo.git",
             Branch = "main",
-            Status = BindingStatusInternal.Synced,
+            Status = BindingStatus.Synced,
             LastCommitHash = "abc123"
         };
 
@@ -1759,7 +1759,7 @@ public class DocumentationServiceExtendedTests
             Namespace = TEST_NAMESPACE,
             RepositoryUrl = "https://github.com/test/repo.git",
             Branch = "main",
-            Status = BindingStatusInternal.Synced
+            Status = BindingStatus.Synced
         };
 
         var request = new SyncRepositoryRequest

@@ -207,7 +207,7 @@ public class WorldstateClockWorkerService : BackgroundService
         var lockOwner = $"worldstate-worker-{Guid.NewGuid():N}";
         await using var lockResponse = await lockProvider.LockAsync(
             StateStoreDefinitions.WorldstateLock,
-            $"clock:{config.RealmId}",
+            WorldstateService.BuildClockLockKey(config.RealmId),
             lockOwner,
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -218,7 +218,7 @@ public class WorldstateClockWorkerService : BackgroundService
         }
 
         // Fetch clock from Redis
-        var clockKey = $"realm:{config.RealmId}";
+        var clockKey = WorldstateService.BuildClockKey(config.RealmId);
         var clock = await clockStore.GetAsync(clockKey, cancellationToken);
         if (clock == null)
         {

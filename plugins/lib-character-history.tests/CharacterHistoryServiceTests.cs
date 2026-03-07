@@ -102,7 +102,7 @@ public class CharacterHistoryServiceTests
 
         // Assert
         Assert.NotNull(config);
-        Assert.Equal(600, config.BackstoryCacheTtlSeconds);
+        Assert.Equal(10, config.BackstoryCacheTtlMinutes);
         Assert.Equal(100, config.MaxBackstoryElements);
     }
 

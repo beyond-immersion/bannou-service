@@ -195,10 +195,34 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     public int GzipCompressionLevel { get; set; } = 6;
 
     /// <summary>
-    /// Default compression per category as comma-separated KEY=VALUE pairs (e.g., "QUICK_SAVE=NONE,AUTO_SAVE=GZIP"). Overrides DefaultCompressionType when specified. If empty/null, uses DefaultCompressionType for all categories.
-    /// Environment variable: SAVE_LOAD_DEFAULT_COMPRESSION_BY_CATEGORY
+    /// Default compression for QUICK_SAVE category. Overrides DefaultCompressionType.
+    /// Environment variable: SAVE_LOAD_DEFAULT_COMPRESSION_QUICK_SAVE
     /// </summary>
-    public string? DefaultCompressionByCategory { get; set; }
+    public CompressionType DefaultCompressionQuickSave { get; set; } = CompressionType.None;
+
+    /// <summary>
+    /// Default compression for AUTO_SAVE category. Overrides DefaultCompressionType.
+    /// Environment variable: SAVE_LOAD_DEFAULT_COMPRESSION_AUTO_SAVE
+    /// </summary>
+    public CompressionType DefaultCompressionAutoSave { get; set; } = CompressionType.Gzip;
+
+    /// <summary>
+    /// Default compression for MANUAL_SAVE category. Overrides DefaultCompressionType.
+    /// Environment variable: SAVE_LOAD_DEFAULT_COMPRESSION_MANUAL_SAVE
+    /// </summary>
+    public CompressionType DefaultCompressionManualSave { get; set; } = CompressionType.Gzip;
+
+    /// <summary>
+    /// Default compression for CHECKPOINT category. Overrides DefaultCompressionType.
+    /// Environment variable: SAVE_LOAD_DEFAULT_COMPRESSION_CHECKPOINT
+    /// </summary>
+    public CompressionType DefaultCompressionCheckpoint { get; set; } = CompressionType.Gzip;
+
+    /// <summary>
+    /// Default compression for STATE_SNAPSHOT category. Overrides DefaultCompressionType.
+    /// Environment variable: SAVE_LOAD_DEFAULT_COMPRESSION_STATE_SNAPSHOT
+    /// </summary>
+    public CompressionType DefaultCompressionStateSnapshot { get; set; } = CompressionType.Brotli;
 
     /// <summary>
     /// Maximum thumbnail size in bytes (default 256KB)

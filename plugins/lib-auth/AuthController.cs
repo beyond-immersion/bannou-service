@@ -28,7 +28,7 @@ public partial class AuthController : AuthControllerBase
     /// returns a 302 redirect, not JSON (x-controller-only in schema).
     /// </summary>
     public override async Task<IActionResult> InitOAuth(
-        [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider,
+        [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] OAuthProvider provider,
         [FromQuery][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string redirectUri,
         [FromQuery] string? state,
         CancellationToken cancellationToken = default)

@@ -28,9 +28,9 @@ public interface ILifecycleEvent
 
     /// <summary>
     /// Timestamp when the entity was last updated.
-    /// Null if the entity has never been modified after creation.
+    /// Set to CreatedAt on creation (entity was "last touched" at birth).
     /// </summary>
-    DateTimeOffset? UpdatedAt { get; }
+    DateTimeOffset UpdatedAt { get; }
 }
 
 /// <summary>

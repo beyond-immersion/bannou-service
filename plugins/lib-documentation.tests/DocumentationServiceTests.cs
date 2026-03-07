@@ -601,7 +601,7 @@ public class DocumentationServiceTests
             Namespace = TEST_NAMESPACE,
             RepositoryUrl = "https://github.com/test/repo.git",
             Branch = "main",
-            Status = BindingStatusInternal.Synced,
+            Status = BindingStatus.Synced,
             LastCommitHash = "abc123",
             DocumentCount = 10,
             LastSyncAt = DateTimeOffset.UtcNow.AddHours(-1)
@@ -781,7 +781,7 @@ public class DocumentationServiceTests
             BindingId = Guid.NewGuid(),
             Namespace = TEST_NAMESPACE,
             RepositoryUrl = "https://github.com/test/repo.git",
-            Status = BindingStatusInternal.Synced
+            Status = BindingStatus.Synced
         };
 
         var request = new CreateDocumentRequest
@@ -814,7 +814,7 @@ public class DocumentationServiceTests
             BindingId = Guid.NewGuid(),
             Namespace = TEST_NAMESPACE,
             RepositoryUrl = "https://github.com/test/repo.git",
-            Status = BindingStatusInternal.Synced
+            Status = BindingStatus.Synced
         };
 
         var request = new UpdateDocumentRequest
@@ -845,7 +845,7 @@ public class DocumentationServiceTests
             BindingId = Guid.NewGuid(),
             Namespace = TEST_NAMESPACE,
             RepositoryUrl = "https://github.com/test/repo.git",
-            Status = BindingStatusInternal.Synced
+            Status = BindingStatus.Synced
         };
 
         var request = new DeleteDocumentRequest

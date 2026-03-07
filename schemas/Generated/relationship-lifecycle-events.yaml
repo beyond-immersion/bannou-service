@@ -25,6 +25,7 @@ components:
       - relationshipTypeId
       - startedAt
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -73,8 +74,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the relationship was last updated
+          description: Timestamp when the relationship was last updated (set to createdAt on creation)
     RelationshipUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -93,6 +93,7 @@ components:
       - relationshipTypeId
       - startedAt
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -115,8 +116,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the relationship was last updated
+          description: Timestamp when the relationship was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -140,6 +140,7 @@ components:
       - relationshipTypeId
       - startedAt
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -161,8 +162,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the relationship was last updated
+          description: Timestamp when the relationship was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true
@@ -184,6 +184,7 @@ components:
       - isDeprecated
       - depth
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -256,8 +257,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the relationship type was last updated
+          description: Timestamp when the relationship type was last updated (set to createdAt on creation)
     RelationshipTypeUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -275,6 +275,7 @@ components:
       - isDeprecated
       - depth
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -303,8 +304,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the relationship type was last updated
+          description: Timestamp when the relationship type was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -327,6 +327,7 @@ components:
       - isDeprecated
       - depth
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -354,8 +355,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the relationship type was last updated
+          description: Timestamp when the relationship type was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true

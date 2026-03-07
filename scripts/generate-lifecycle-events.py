@@ -27,7 +27,7 @@ Architecture:
 
 Event Pattern:
 - All events have: eventId (uuid), timestamp (datetime)
-- All events have: full model data (sensitive fields omitted)
+- All events have: full model data (sensitive fields omitted), createdAt, updatedAt
 - UpdatedEvent adds: changedFields (string[])
 - DeletedEvent adds: deletedReason (string?)
 
@@ -240,8 +240,7 @@ def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict
             'updatedAt': {
                 'type': 'string',
                 'format': 'date-time',
-                'nullable': True,
-                'description': f'Timestamp when the {entity_lower} was last updated'
+                'description': f'Timestamp when the {entity_lower} was last updated (set to createdAt on creation)'
             },
         }
 
@@ -249,7 +248,7 @@ def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict
             props.update(extra_props)
 
         # Required fields: base class fields + eventName + model required + auto-injected + extras
-        required = ['eventName', 'eventId', 'timestamp'] + model_required_fields.copy() + ['createdAt']
+        required = ['eventName', 'eventId', 'timestamp'] + model_required_fields.copy() + ['createdAt', 'updatedAt']
         if extra_required:
             required.extend(extra_required)
 

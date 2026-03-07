@@ -401,7 +401,7 @@ public partial class LicenseService : ILicenseService
                 AdjacencyMode = template.AdjacencyMode,
                 IsActive = template.IsActive,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt
+                UpdatedAt = template.UpdatedAt ?? template.CreatedAt
             },
             cancellationToken: cancellationToken);
 
@@ -523,7 +523,7 @@ public partial class LicenseService : ILicenseService
                 AdjacencyMode = template.AdjacencyMode,
                 IsActive = template.IsActive,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt,
+                UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = changedFields
             },
             cancellationToken: cancellationToken);
@@ -590,7 +590,7 @@ public partial class LicenseService : ILicenseService
                 AdjacencyMode = template.AdjacencyMode,
                 IsActive = template.IsActive,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt
+                UpdatedAt = template.UpdatedAt ?? template.CreatedAt
             },
             cancellationToken: cancellationToken);
 

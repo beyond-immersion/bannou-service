@@ -1602,7 +1602,7 @@ public sealed class ActorRunner : IActorRunner
             _perceptionSubscription = await _messageSubscriber.SubscribeDynamicAsync<CharacterPerceptionEvent>(
                 topic,
                 async (evt, innerCt) => await HandlePerceptionEventAsync(evt, innerCt),
-                exchangeType: SubscriptionExchangeType.Topic,
+                exchangeType: ExchangeType.Topic,
                 cancellationToken: ct);
 
             _logger.LogDebug("Actor {ActorId} subscribed to perception stream for character {CharacterId}",

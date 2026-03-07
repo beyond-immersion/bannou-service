@@ -25,6 +25,7 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  x-event-subscriptions: []  # Growth intake via ICollectionUnlockListener DI pattern, not event subscriptions
   x-event-publications:
     # Seed lifecycle events (auto-generated from x-lifecycle)
     - topic: seed.created

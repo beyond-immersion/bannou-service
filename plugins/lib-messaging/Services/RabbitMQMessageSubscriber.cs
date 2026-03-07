@@ -208,7 +208,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
         string? exchange = null,
-        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
+        ExchangeType exchangeType = ExchangeType.Topic,
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
@@ -225,8 +225,8 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         // Map enum to RabbitMQ exchange type
         var rabbitExchangeType = exchangeType switch
         {
-            SubscriptionExchangeType.Direct => RmqExchangeType.Direct,
-            SubscriptionExchangeType.Fanout => RmqExchangeType.Fanout,
+            ExchangeType.Direct => RmqExchangeType.Direct,
+            ExchangeType.Fanout => RmqExchangeType.Fanout,
             _ => RmqExchangeType.Topic
         };
 
@@ -345,7 +345,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         string topic,
         Func<byte[], CancellationToken, Task> handler,
         string? exchange = null,
-        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
+        ExchangeType exchangeType = ExchangeType.Topic,
         string? queueName = null,
         TimeSpan? queueTtl = null,
         CancellationToken cancellationToken = default)
@@ -364,8 +364,8 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         // Map enum to RabbitMQ exchange type
         var rabbitExchangeType = exchangeType switch
         {
-            SubscriptionExchangeType.Direct => RmqExchangeType.Direct,
-            SubscriptionExchangeType.Fanout => RmqExchangeType.Fanout,
+            ExchangeType.Direct => RmqExchangeType.Direct,
+            ExchangeType.Fanout => RmqExchangeType.Fanout,
             _ => RmqExchangeType.Topic
         };
 

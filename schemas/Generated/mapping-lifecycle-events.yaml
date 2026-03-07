@@ -23,6 +23,7 @@ components:
       - nonAuthorityHandling
       - version
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -66,8 +67,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the mapping channel was last updated
+          description: Timestamp when the mapping channel was last updated (set to createdAt on creation)
     MappingChannelUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -84,6 +84,7 @@ components:
       - nonAuthorityHandling
       - version
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -105,8 +106,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the mapping channel was last updated
+          description: Timestamp when the mapping channel was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -128,6 +128,7 @@ components:
       - nonAuthorityHandling
       - version
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -148,8 +149,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the mapping channel was last updated
+          description: Timestamp when the mapping channel was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true

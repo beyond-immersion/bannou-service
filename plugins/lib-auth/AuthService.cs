@@ -309,7 +309,7 @@ public partial class AuthService : IAuthService
 
     /// <inheritdoc/>
     public async Task<(StatusCodes, AuthResponse?)> CompleteOAuthAsync(
-        Provider provider,
+        OAuthProvider provider,
         OAuthCallbackRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -330,9 +330,9 @@ public partial class AuthService : IAuthService
         // Exchange authorization code for tokens and get user info
         Services.OAuthUserInfo? userInfo = provider switch
         {
-            Provider.Discord => await _oauthService.ExchangeDiscordCodeAsync(body.Code, cancellationToken),
-            Provider.Google => await _oauthService.ExchangeGoogleCodeAsync(body.Code, cancellationToken),
-            Provider.Twitch => await _oauthService.ExchangeTwitchCodeAsync(body.Code, cancellationToken),
+            OAuthProvider.Discord => await _oauthService.ExchangeDiscordCodeAsync(body.Code, cancellationToken),
+            OAuthProvider.Google => await _oauthService.ExchangeGoogleCodeAsync(body.Code, cancellationToken),
+            OAuthProvider.Twitch => await _oauthService.ExchangeTwitchCodeAsync(body.Code, cancellationToken),
             _ => null
         };
 
@@ -423,7 +423,7 @@ public partial class AuthService : IAuthService
             Email = null // Steam doesn't provide email
         };
 
-        var (account, isNewAccount) = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, cancellationToken);
+        var (account, isNewAccount) = await _oauthService.FindOrCreateOAuthAccountAsync(OAuthProvider.Steam, userInfo, cancellationToken);
         if (account == null)
         {
             _logger.LogError("Failed to find or create account for Steam user: {SteamId}", steamId);
@@ -525,7 +525,7 @@ public partial class AuthService : IAuthService
 
     /// <inheritdoc/>
     public async Task<(StatusCodes, InitOAuthResponse?)> InitOAuthAsync(
-        Provider provider,
+        OAuthProvider provider,
         string redirectUri,
         string? state,
         CancellationToken cancellationToken = default)
@@ -1458,7 +1458,7 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Handle mock OAuth authentication for testing
     /// </summary>
-    private async Task<(StatusCodes, AuthResponse?)> HandleMockOAuthAsync(Provider provider, CancellationToken cancellationToken)
+    private async Task<(StatusCodes, AuthResponse?)> HandleMockOAuthAsync(OAuthProvider provider, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Using mock OAuth provider for {Provider}", provider);
 
@@ -1492,7 +1492,7 @@ public partial class AuthService : IAuthService
         _logger.LogInformation("Using mock Steam provider");
 
         var userInfo = await _oauthService.GetMockSteamUserInfoAsync(cancellationToken);
-        var (account, _) = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, cancellationToken);
+        var (account, _) = await _oauthService.FindOrCreateOAuthAccountAsync(OAuthProvider.Steam, userInfo, cancellationToken);
         if (account == null)
         {
             return (StatusCodes.InternalServerError, null);
@@ -1784,7 +1784,7 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Publish AuthOAuthLoginSuccessfulEvent for OAuth provider analytics.
     /// </summary>
-    private async Task PublishOAuthLoginSuccessfulEventAsync(Guid accountId, Provider provider, string providerUserId, Guid sessionId, bool isNewAccount)
+    private async Task PublishOAuthLoginSuccessfulEventAsync(Guid accountId, OAuthProvider provider, string providerUserId, Guid sessionId, bool isNewAccount)
     {
         try
         {
@@ -1867,7 +1867,7 @@ public partial class AuthService : IAuthService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Provider = Provider.Steam
+                Provider = OAuthProvider.Steam
             });
         }
     }

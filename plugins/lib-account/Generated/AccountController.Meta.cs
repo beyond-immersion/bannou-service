@@ -41,7 +41,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/AuthProvider"
+                            "type": "object"
                         }
                     ],
                     "nullable": true,
@@ -66,17 +66,6 @@ public partial class AccountController
                     "description": "Number of accounts per page"
                 }
             }
-        },
-        "AuthProvider": {
-            "type": "string",
-            "description": "All authentication provider types including email",
-            "enum": [
-                "Email",
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -235,7 +224,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/AuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "Authentication provider type"
@@ -256,17 +245,6 @@ public partial class AccountController
                     "description": "Timestamp when the authentication method was linked"
                 }
             }
-        },
-        "AuthProvider": {
-            "type": "string",
-            "description": "All authentication provider types including email",
-            "enum": [
-                "Email",
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -495,7 +473,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/AuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "Authentication provider type"
@@ -516,17 +494,6 @@ public partial class AccountController
                     "description": "Timestamp when the authentication method was linked"
                 }
             }
-        },
-        "AuthProvider": {
-            "type": "string",
-            "description": "All authentication provider types including email",
-            "enum": [
-                "Email",
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -723,7 +690,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/AuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "Authentication provider type"
@@ -744,17 +711,6 @@ public partial class AccountController
                     "description": "Timestamp when the authentication method was linked"
                 }
             }
-        },
-        "AuthProvider": {
-            "type": "string",
-            "description": "All authentication provider types including email",
-            "enum": [
-                "Email",
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -973,7 +929,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/AuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "Authentication provider type"
@@ -994,17 +950,6 @@ public partial class AccountController
                     "description": "Timestamp when the authentication method was linked"
                 }
             }
-        },
-        "AuthProvider": {
-            "type": "string",
-            "description": "All authentication provider types including email",
-            "enum": [
-                "Email",
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -1286,7 +1231,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/AuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "Authentication provider type"
@@ -1307,17 +1252,6 @@ public partial class AccountController
                     "description": "Timestamp when the authentication method was linked"
                 }
             }
-        },
-        "AuthProvider": {
-            "type": "string",
-            "description": "All authentication provider types including email",
-            "enum": [
-                "Email",
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -1443,7 +1377,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/AuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "Authentication provider type"
@@ -1464,17 +1398,6 @@ public partial class AccountController
                     "description": "Timestamp when the authentication method was linked"
                 }
             }
-        },
-        "AuthProvider": {
-            "type": "string",
-            "description": "All authentication provider types including email",
-            "enum": [
-                "Email",
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -1559,7 +1482,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/OAuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "OAuth provider type to add"
@@ -1575,16 +1498,6 @@ public partial class AccountController
                     "description": "Display name from the OAuth provider"
                 }
             }
-        },
-        "OAuthProvider": {
-            "type": "string",
-            "description": "OAuth provider types (excludes email)",
-            "enum": [
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -1613,7 +1526,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/OAuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "OAuth provider type"
@@ -1634,16 +1547,6 @@ public partial class AccountController
                     "description": "Timestamp when the authentication method was linked"
                 }
             }
-        },
-        "OAuthProvider": {
-            "type": "string",
-            "description": "OAuth provider types (excludes email)",
-            "enum": [
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -1812,7 +1715,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/OAuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "OAuth provider type"
@@ -1823,16 +1726,6 @@ public partial class AccountController
                     "description": "External ID from the provider"
                 }
             }
-        },
-        "OAuthProvider": {
-            "type": "string",
-            "description": "OAuth provider types (excludes email)",
-            "enum": [
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -1949,7 +1842,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/AuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "Authentication provider type"
@@ -1970,17 +1863,6 @@ public partial class AccountController
                     "description": "Timestamp when the authentication method was linked"
                 }
             }
-        },
-        "AuthProvider": {
-            "type": "string",
-            "description": "All authentication provider types including email",
-            "enum": [
-                "Email",
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -2189,7 +2071,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/AuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "Authentication provider type"
@@ -2210,17 +2092,6 @@ public partial class AccountController
                     "description": "Timestamp when the authentication method was linked"
                 }
             }
-        },
-        "AuthProvider": {
-            "type": "string",
-            "description": "All authentication provider types including email",
-            "enum": [
-                "Email",
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }
@@ -2648,7 +2519,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/AuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "Authentication provider type"
@@ -2669,17 +2540,6 @@ public partial class AccountController
                     "description": "Timestamp when the authentication method was linked"
                 }
             }
-        },
-        "AuthProvider": {
-            "type": "string",
-            "description": "All authentication provider types including email",
-            "enum": [
-                "Email",
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         },
         "BulkOperationFailure": {
             "type": "object",
@@ -3264,7 +3124,7 @@ public partial class AccountController
                 "provider": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/AuthProvider"
+                            "type": "object"
                         }
                     ],
                     "description": "Authentication provider type"
@@ -3285,17 +3145,6 @@ public partial class AccountController
                     "description": "Timestamp when the authentication method was linked"
                 }
             }
-        },
-        "AuthProvider": {
-            "type": "string",
-            "description": "All authentication provider types including email",
-            "enum": [
-                "Email",
-                "Google",
-                "Discord",
-                "Twitch",
-                "Steam"
-            ]
         }
     }
 }

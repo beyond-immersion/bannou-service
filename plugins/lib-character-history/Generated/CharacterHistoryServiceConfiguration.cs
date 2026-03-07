@@ -52,11 +52,11 @@ public class CharacterHistoryServiceConfiguration : BaseServiceConfiguration
 {
 
     /// <summary>
-    /// TTL in seconds for backstory cache entries. Backstory data is nearly immutable, so longer TTLs are appropriate.
-    /// Environment variable: CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS
+    /// TTL in minutes for backstory cache entries. Backstory data is nearly immutable, so longer TTLs are appropriate.
+    /// Environment variable: CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_MINUTES
     /// </summary>
     [ConfigRange(Minimum = 1)]
-    public int BackstoryCacheTtlSeconds { get; set; } = 600;
+    public int BackstoryCacheTtlMinutes { get; set; } = 10;
 
     /// <summary>
     /// Maximum number of backstory elements allowed per character. Prevents unbounded growth from repeated AddBackstoryElement or SetBackstory calls. Returns BadRequest when limit would be exceeded.

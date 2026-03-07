@@ -192,7 +192,7 @@ public class AuthTestHandler : BaseHttpTestHandler
 
             try
             {
-                var oauthResponse = await authClient.CompleteOAuthAsync(Provider.Discord, oauthRequest);
+                var oauthResponse = await authClient.CompleteOAuthAsync(OAuthProvider.Discord, oauthRequest);
 
                 // OAuth succeeded (mock mode enabled) - verify the token works
                 if (string.IsNullOrWhiteSpace(oauthResponse.AccessToken))

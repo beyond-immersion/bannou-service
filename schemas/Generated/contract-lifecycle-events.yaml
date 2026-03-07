@@ -26,6 +26,7 @@ components:
       - transferable
       - isActive
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -72,8 +73,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the contract template was last updated
+          description: Timestamp when the contract template was last updated (set to createdAt on creation)
     ContractTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -93,6 +93,7 @@ components:
       - transferable
       - isActive
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -116,8 +117,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the contract template was last updated
+          description: Timestamp when the contract template was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -142,6 +142,7 @@ components:
       - transferable
       - isActive
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -164,8 +165,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the contract template was last updated
+          description: Timestamp when the contract template was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true
@@ -185,6 +185,7 @@ components:
       - templateCode
       - status
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -236,8 +237,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the contract instance was last updated
+          description: Timestamp when the contract instance was last updated (set to createdAt on creation)
     ContractInstanceUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -253,6 +253,7 @@ components:
       - templateCode
       - status
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -275,8 +276,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the contract instance was last updated
+          description: Timestamp when the contract instance was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -297,6 +297,7 @@ components:
       - templateCode
       - status
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -318,8 +319,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the contract instance was last updated
+          description: Timestamp when the contract instance was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true

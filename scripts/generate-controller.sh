@@ -67,12 +67,14 @@ fi
 FILTERED_SCHEMA_FILE="$SCHEMA_FILE"
 if grep -q "application/yaml" "$SCHEMA_FILE" || grep -q 'format: uri' "$SCHEMA_FILE"; then
     echo -e "${YELLOW}🔧 Creating filtered schema for content type and URI format fixes...${NC}"
-    FILTERED_SCHEMA_FILE="/tmp/${SERVICE_NAME}-filtered-schema.yaml"
+    FILTERED_SCHEMA_FILE="../schemas/Generated/${SERVICE_NAME}-filtered-schema.yaml"
 
     # Use Python to fix content types and URI formats, but KEEP controller-only methods
+    # Output goes to schemas/Generated/ so cross-file $refs need ../ prefix adjustment
     python3 -c "
 import yaml
 import sys
+import re
 
 with open('$SCHEMA_FILE', 'r') as f:
     schema = yaml.safe_load(f)
@@ -95,6 +97,23 @@ if 'paths' in schema:
                         if 'schema' in param and param['schema'].get('type') == 'string' and param['schema'].get('format') == 'uri':
                             print(f'Removing format: uri from {path} {method} parameter {param.get(\"name\", \"unknown\")} to maintain string type', file=sys.stderr)
                             del param['schema']['format']
+
+# Fix relative paths: output is in schemas/Generated/ so sibling refs need ../ prefix
+def fix_refs(obj):
+    if isinstance(obj, dict):
+        for key, val in obj.items():
+            if key == '\$ref' and isinstance(val, str) and '#' in val and not val.startswith('#'):
+                # Cross-file ref without ../ prefix — add it for Generated/ location
+                m = re.match(r'([a-zA-Z][a-zA-Z0-9_-]*\\.yaml#.+)', val)
+                if m:
+                    obj[key] = '../' + val
+            else:
+                fix_refs(val)
+    elif isinstance(obj, list):
+        for item in obj:
+            fix_refs(item)
+
+fix_refs(schema)
 
 # Write filtered schema - KEEP ALL METHODS including x-controller-only
 with open('$FILTERED_SCHEMA_FILE', 'w') as f:

@@ -373,7 +373,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.CompleteOAuthAsync(Provider.Discord, request);
+        var (status, response) = await service.CompleteOAuthAsync(OAuthProvider.Discord, request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -570,13 +570,13 @@ public class AuthServiceTests
     {
         // Arrange
         _mockOAuthService
-            .Setup(o => o.GetAuthorizationUrl(Provider.Discord, "https://example.com/callback", "test-state"))
+            .Setup(o => o.GetAuthorizationUrl(OAuthProvider.Discord, "https://example.com/callback", "test-state"))
             .Returns("https://discord.com/oauth2/authorize?client_id=test&state=test-state");
         var service = CreateAuthService();
 
         // Act
         var (status, response) = await service.InitOAuthAsync(
-            Provider.Discord,
+            OAuthProvider.Discord,
             "https://example.com/callback",
             "test-state");
 
@@ -942,7 +942,7 @@ public class AuthServiceTests
 
         // Mock OAuth service to return/create account
         _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
-            Provider.Steam,
+            OAuthProvider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync((account, false));
@@ -1014,7 +1014,7 @@ public class AuthServiceTests
             .ReturnsAsync(mockSteamInfo);
 
         _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
-            Provider.Steam,
+            OAuthProvider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync((account, false));
@@ -1137,7 +1137,7 @@ public class AuthServiceTests
 
         // Account creation fails
         _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
-            Provider.Steam,
+            OAuthProvider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(((AccountResponse?)null, false));

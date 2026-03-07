@@ -293,7 +293,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -322,7 +322,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Cannot create subscription"));
 
@@ -370,7 +370,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -404,7 +404,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -467,7 +467,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -530,7 +530,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -569,7 +569,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -613,7 +613,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -652,7 +652,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -688,7 +688,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => handleIndex++ == 0 ? mockHandle1.Object : mockHandle2.Object);
 
@@ -739,7 +739,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => handleIndex++ == 0 ? mockHandle1.Object : mockHandle2.Object);
 
@@ -804,7 +804,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -844,7 +844,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Cannot subscribe"));
 
@@ -880,7 +880,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -918,7 +918,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
-                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<ExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 

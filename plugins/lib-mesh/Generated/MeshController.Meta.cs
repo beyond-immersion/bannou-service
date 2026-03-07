@@ -170,7 +170,7 @@ public partial class MeshController
         },
         "EndpointStatus": {
             "type": "string",
-            "description": "Health status of an endpoint",
+            "description": "Health status of an individual endpoint. Subset of common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\n",
             "enum": [
                 "Healthy",
                 "Degraded",
@@ -262,7 +262,7 @@ public partial class MeshController
         },
         "EndpointStatus": {
             "type": "string",
-            "description": "Health status of an endpoint",
+            "description": "Health status of an individual endpoint. Subset of common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\n",
             "enum": [
                 "Healthy",
                 "Degraded",
@@ -388,7 +388,7 @@ public partial class MeshController
         },
         "EndpointStatus": {
             "type": "string",
-            "description": "Health status of an endpoint",
+            "description": "Health status of an individual endpoint. Subset of common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\n",
             "enum": [
                 "Healthy",
                 "Degraded",
@@ -659,7 +659,7 @@ public partial class MeshController
         },
         "EndpointStatus": {
             "type": "string",
-            "description": "Health status of an endpoint",
+            "description": "Health status of an individual endpoint. Subset of common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\n",
             "enum": [
                 "Healthy",
                 "Degraded",
@@ -875,7 +875,7 @@ public partial class MeshController
         },
         "EndpointStatus": {
             "type": "string",
-            "description": "Health status of an endpoint",
+            "description": "Health status of an individual endpoint. Subset of common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\n",
             "enum": [
                 "Healthy",
                 "Degraded",
@@ -1133,7 +1133,7 @@ public partial class MeshController
         },
         "EndpointStatus": {
             "type": "string",
-            "description": "Health status of an endpoint",
+            "description": "Health status of an individual endpoint. Subset of common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\n",
             "enum": [
                 "Healthy",
                 "Degraded",
@@ -1380,7 +1380,7 @@ public partial class MeshController
         },
         "EndpointStatus": {
             "type": "string",
-            "description": "Health status of an endpoint",
+            "description": "Health status of an individual endpoint. Subset of common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\n",
             "enum": [
                 "Healthy",
                 "Degraded",

@@ -27,6 +27,7 @@ components:
       - monthsPerYear
       - seasonsPerYear
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -79,8 +80,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the calendar template was last updated
+          description: Timestamp when the calendar template was last updated (set to createdAt on creation)
     CalendarTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -101,6 +101,7 @@ components:
       - monthsPerYear
       - seasonsPerYear
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -124,8 +125,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the calendar template was last updated
+          description: Timestamp when the calendar template was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -151,6 +151,7 @@ components:
       - monthsPerYear
       - seasonsPerYear
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -173,8 +174,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the calendar template was last updated
+          description: Timestamp when the calendar template was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true
@@ -197,6 +197,7 @@ components:
       - realmEpoch
       - isActive
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -234,8 +235,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the realm config was last updated
+          description: Timestamp when the realm config was last updated (set to createdAt on creation)
     RealmConfigUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -254,6 +254,7 @@ components:
       - realmEpoch
       - isActive
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -274,8 +275,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the realm config was last updated
+          description: Timestamp when the realm config was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -299,6 +299,7 @@ components:
       - realmEpoch
       - isActive
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -318,8 +319,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the realm config was last updated
+          description: Timestamp when the realm config was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true

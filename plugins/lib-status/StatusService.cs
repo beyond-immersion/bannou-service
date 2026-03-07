@@ -457,7 +457,7 @@ public partial class StatusService : IStatusService
                 DeprecatedAt = template.DeprecatedAt,
                 DeprecationReason = template.DeprecationReason,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt,
+                UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = changedFields
             },
             cancellationToken: cancellationToken);
@@ -533,7 +533,7 @@ public partial class StatusService : IStatusService
                 DeprecatedAt = template.DeprecatedAt,
                 DeprecationReason = template.DeprecationReason,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt,
+                UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
             },
             cancellationToken: cancellationToken);
@@ -607,7 +607,7 @@ public partial class StatusService : IStatusService
                 StackBehavior = template.StackBehavior,
                 IsDeprecated = template.IsDeprecated,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt,
+                UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
             },
             cancellationToken: cancellationToken);
@@ -683,7 +683,7 @@ public partial class StatusService : IStatusService
                 DeprecatedAt = template.DeprecatedAt,
                 DeprecationReason = template.DeprecationReason,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt
+                UpdatedAt = template.UpdatedAt ?? template.CreatedAt
             },
             cancellationToken: cancellationToken);
 

@@ -494,7 +494,7 @@ These are existing issues discovered during the analysis, not proposals.
 | Plugin | Violation | Tenet | Severity | Status |
 |--------|-----------|-------|----------|--------|
 | **lib-location** | Almost no endpoint methods have telemetry spans | T30 | High | ✅ FIXED — 19 StartActivity calls added |
-| **lib-worldstate** | Missing spans on several service endpoint methods | T30 | Medium | ⚠️ PARTIALLY FIXED — only 1 span; most methods uncovered |
+| **lib-worldstate** | Missing spans on several service endpoint methods | T30 | Medium | ✅ FALSE POSITIVE — T30 exempts primary interface methods (generated controller wraps them); helper services already had spans |
 | **lib-collection** | Missing spans on async helpers (`CreateCollectionInternalAsync`, `LoadOrRebuildCollectionCacheAsync`, `DispatchUnlockListenersAsync`) | T30 | Medium | ✅ FIXED — all 3 helpers have spans |
 | **lib-matchmaking** | Worker `ExecuteAsync` has process-lifetime span (useless) | T30 | Low | ✅ FIXED — spans are now per-cycle |
 | **lib-matchmaking** | Worker catch block only logs, doesn't publish error events | T7 | Medium | ✅ FIXED — uses TryPublishWorkerErrorAsync |
@@ -512,7 +512,7 @@ These are existing issues discovered during the analysis, not proposals.
 | Plugin | Issue | Impact | Status |
 |--------|-------|--------|--------|
 | **lib-status** | Hardcodes `ContainerOwnerType.Other` for all containers instead of mapping from `EntityType` | Loses owner type information downstream; cross-service queries for "all containers for this character" don't work | ✅ FIXED — uses MapByNameOrDefault helper |
-| **lib-worldstate** | Uses inline string interpolation for state keys instead of const prefix + Build method | Typo-prone, multi-point key format changes | ❌ NOT FIXED — 24+ inline interpolations remain |
+| **lib-worldstate** | Uses inline string interpolation for state keys instead of const prefix + Build method | Typo-prone, multi-point key format changes | ✅ FIXED — 5 `Build*Key()` methods added to WorldstateService; all call sites updated including caches and worker |
 
 ---
 
@@ -525,16 +525,16 @@ These don't necessarily need new tenets but should be addressed for consistency.
 | Worker error event publishing | Matchmaking: log only. Currency/subscription: publish error events. | All workers MUST publish error events | Per-worker fix | ✅ FIXED — matchmaking uses TryPublishWorkerErrorAsync |
 | Worker DI scope approach | Matchmaking: delegates to service. Currency: independent store access. Subscription: hybrid. | Document both delegation and independent as valid; deprecate hybrid (both resolving service AND doing direct store access) | Documentation | ❌ NOT DONE |
 | Config property naming for workers | `BackgroundServiceStartupDelaySeconds` vs `StartupDelaySeconds` vs `AutogainTaskStartupDelaySeconds` | `{WorkerName}StartupDelaySeconds`, `{WorkerName}IntervalSeconds` | Schema renames | ✅ DONE — standardized in worker tenet rules |
-| Config interval units | Seconds vs minutes vs milliseconds for same concept | Prefer seconds; milliseconds only for sub-second precision | Schema renames | ⚠️ PARTIAL — currency config still mixes ms/s |
+| Config interval units | Seconds vs minutes vs milliseconds for same concept | Prefer seconds; milliseconds only for sub-second precision | Schema renames | ✅ FIXED — currency `autogainTaskIntervalMs` renamed to `autogainTaskIntervalSeconds` |
 | Pagination response shape | Location: full metadata (`Page`, `PageSize`, `HasNextPage`, `HasPreviousPage`). Transit/Worldstate: `TotalCount` only. | Standardize pagination response wrapper | Schema + SCHEMA-RULES addition | ✅ DONE — PaginationHelper + PaginationResult<T> in bannou-service |
-| Lock owner string format | Location: bare GUID. Transit: `$"operation-{Guid:N}"`. Worldstate: `$"service-{Guid:N}"`. | `$"{operation}-{Guid:N}"` (debuggable, shows which operation holds the lock) | Per-service fix | ❌ NOT VERIFIED |
-| Model visibility | Worldstate: all `public`. Transit: mostly `internal`. | Default `internal`; `public` only when external consumers (providers, caches) need access | Per-service fix | ❌ NOT VERIFIED |
-| Cache TTL config naming | `CacheTtlMinutes` vs `BackstoryCacheTtlSeconds` vs `EncounterCacheTtlMinutes` | `{Entity}CacheTtlMinutes` (consistent entity prefix, consistent unit) | Schema renames | ❌ NOT FIXED |
+| Lock owner string format | Location: bare GUID. Transit: `$"operation-{Guid:N}"`. Worldstate: `$"service-{Guid:N}"`. | `$"{operation}-{Guid:N}"` (debuggable, shows which operation holds the lock) | Per-service fix | ✅ FIXED — faction (13 sites) and obligation (1 site) changed from bare `Guid.NewGuid().ToString()` to `$"operation-{Guid:N}"` format |
+| Model visibility | Worldstate: all `public`. Transit: mostly `internal`. | Default `internal`; `public` only when external consumers (providers, caches) need access | Per-service fix | ✅ VERIFIED — worldstate models must be `public` because its DI helper interfaces (IWorldstateTimeCalculator, ICalendarTemplateCache, IRealmClockCache) reference them in method signatures, and those interfaces are injected into the generated `public` service constructor. Transit models can be `internal` because no public interface references them. Not inconsistent — structurally required. |
+| Cache TTL config naming | `CacheTtlMinutes` vs `BackstoryCacheTtlSeconds` vs `EncounterCacheTtlMinutes` | `{Entity}CacheTtlMinutes` (consistent entity prefix, consistent unit) | Schema renames | ✅ FIXED — personality `CacheTtlMinutes` → `PersonalityCacheTtlMinutes`; history `BackstoryCacheTtlSeconds` → `BackstoryCacheTtlMinutes` |
 | Event error reporting in event handlers | Quest: direct `TryPublishErrorAsync` with full params. Escrow: wrapper with reduced params. | Full params (dependency, endpoint, stack) for debuggability | Per-service fix | ❌ NOT FIXED |
 | Container owner type mapping | Collection: maps `EntityType` to `ContainerOwnerType`. Status: hardcodes `Other`. | Map properly like Collection does | lib-status fix | ✅ FIXED — uses MapByNameOrDefault |
-| Lock timeout configuration | Collection: single timeout. Status: dual timeout (acquisition + TTL). | Dual timeout is more robust (cancel stale acquisition attempts) | Evaluate for standardization | ❌ NOT VERIFIED |
+| Lock timeout configuration | Collection: single timeout. Status: dual timeout (acquisition + TTL). | Dual timeout is more robust (cancel stale acquisition attempts) | Evaluate for standardization | ✅ VERIFIED — Status intentionally uses dual timeout: `LockTimeoutSeconds` (30s TTL for the lock in Redis) + `LockAcquisitionTimeoutSeconds` (5s CancelAfter on CancellationTokenSource). This prevents 30s request blocking when a lock holder crashes. Most services use single timeout as both TTL and acquisition bound. Dual is more robust but standardizing across all services is a design decision, not a bug. |
 | Key builder naming | `Build*Key()` vs `Get*Key()` vs `*Key()` | Standardize on `Build*Key()` | Per-service rename | ✅ DONE — codified in T6 tenet rules |
-| `x-event-subscriptions` on event schemas | Personality/history: `x-event-subscriptions: []`. Encounter: missing. | All event schemas include `x-event-subscriptions` (even if empty) | Schema fix | ❌ NOT FIXED — encounter still missing |
+| `x-event-subscriptions` on event schemas | Personality/history: `x-event-subscriptions: []`. Encounter: missing. | All event schemas include `x-event-subscriptions` (even if empty) | Schema fix | ✅ FIXED — added to character-encounter, license, resource, and seed event schemas (all 4 missing files) |
 | Cleanup by foreign key endpoint naming | Worldstate: `CleanupBy{Entity}Async`. Others: various. | Standardize naming convention in SCHEMA-RULES `x-references` docs | Documentation | ❌ NOT FIXED |
 
 ---

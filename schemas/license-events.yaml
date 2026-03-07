@@ -23,6 +23,7 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  x-event-subscriptions: []  # Cleanup handled via x-references callbacks, not event subscriptions
   x-event-publications:
     # Board template lifecycle events (auto-generated from x-lifecycle)
     - topic: license.board-template.created

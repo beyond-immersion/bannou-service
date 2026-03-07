@@ -47,7 +47,7 @@ public interface IOAuthProviderService
     /// <param name="userInfo">The user info from the provider.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Tuple of (account, isNewAccount) - account is null on failure.</returns>
-    Task<(AccountResponse? Account, bool IsNewAccount)> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken);
+    Task<(AccountResponse? Account, bool IsNewAccount)> FindOrCreateOAuthAccountAsync(OAuthProvider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken);
 
     /// <summary>
     /// Generates the OAuth authorization URL for a provider.
@@ -56,7 +56,7 @@ public interface IOAuthProviderService
     /// <param name="redirectUri">The redirect URI for the callback.</param>
     /// <param name="state">Optional state parameter for CSRF protection.</param>
     /// <returns>The authorization URL, or null if provider is not configured.</returns>
-    string? GetAuthorizationUrl(Provider provider, string? redirectUri, string? state);
+    string? GetAuthorizationUrl(OAuthProvider provider, string? redirectUri, string? state);
 
     /// <summary>
     /// Checks if mock OAuth is enabled (for testing).
@@ -69,7 +69,7 @@ public interface IOAuthProviderService
     /// <param name="provider">The OAuth provider.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Mock OAuth user info.</returns>
-    Task<OAuthUserInfo> GetMockUserInfoAsync(Provider provider, CancellationToken cancellationToken = default);
+    Task<OAuthUserInfo> GetMockUserInfoAsync(OAuthProvider provider, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets mock Steam user info (for testing).

@@ -99,7 +99,7 @@ public enum EntityType
 #pragma warning restore CS1591
 
 /// <summary>
-/// Health status for individual services and components. Used by heartbeat events and orchestrator health monitoring.
+/// Health status for individual services and components. Used by heartbeat events and orchestrator health monitoring. Subset of InstanceHealthStatus (3 of 5 values). mesh-api EndpointStatus is a separate 4-value subset with different granularity.
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -119,7 +119,7 @@ public enum ServiceHealthStatus
 #pragma warning restore CS1591
 
 /// <summary>
-/// Operational status for app instances. Superset of ServiceHealthStatus with instance-level states (overloaded, shutting_down).
+/// Operational status for app instances. Superset of ServiceHealthStatus with instance-level states (Overloaded, ShuttingDown). mesh-api EndpointStatus is a separate subset excluding Overloaded.
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

@@ -54,7 +54,7 @@ internal sealed class CalendarTemplateCache : ICalendarTemplateCache
             _logger.LogDebug("Calendar cache expired for {CacheKey}, reloading from store", cacheKey);
         }
 
-        var storeKey = $"calendar:{gameServiceId}:{templateCode}";
+        var storeKey = WorldstateService.BuildCalendarKey(gameServiceId, templateCode);
         var calendar = await _calendarStore.GetAsync(storeKey, ct);
         if (calendar == null)
         {

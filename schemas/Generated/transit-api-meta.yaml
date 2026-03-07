@@ -1643,9 +1643,11 @@ paths:
         status of a transit connection\",\n            \"enum\": [\n                \"Open\",\n                \"Closed\"\
         ,\n                \"Dangerous\",\n                \"Blocked\",\n                \"SeasonalClosed\"\n            ]\n\
         \        },\n        \"SettableConnectionStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed
-        by the Seasonal Connection Worker)\",\n            \"enum\": [\n                \"Open\",\n                \"Closed\"\
-        ,\n                \"Dangerous\",\n                \"Blocked\"\n            ]\n        }\n    }\n}"
+        : \"API-writable subset of ConnectionStatus. Excludes SeasonalClosed, which is system-managed by the Seasonal Connection
+        Worker. Mapping from SettableConnectionStatus to ConnectionStatus is lossless (all values exist in both); the reverse
+        direction is intentionally restricted at the API level.\\n\",\n            \"enum\": [\n                \"Open\",\n\
+        \                \"Closed\",\n                \"Dangerous\",\n                \"Blocked\"\n            ]\n       \
+        \ }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConnectionResponse\"\
         ,\n    \"$defs\": {\n        \"ConnectionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing a single transit connection\",\n            \"required\"\
@@ -4144,8 +4146,12 @@ components:
       - SeasonalClosed
     SettableConnectionStatus:
       type: string
-      description: Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is
-        managed by the Seasonal Connection Worker)
+      description: >
+        API-writable subset of ConnectionStatus. Excludes SeasonalClosed,
+        which is system-managed by the Seasonal Connection Worker. Mapping
+        from SettableConnectionStatus to ConnectionStatus is lossless
+        (all values exist in both); the reverse direction is intentionally
+        restricted at the API level.
       enum:
       - Open
       - Closed

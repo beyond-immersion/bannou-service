@@ -189,11 +189,35 @@ x-service-configuration:
       maximum: 9
       description: GZIP compression level (1-9, higher = better compression, slower)
 
-    DefaultCompressionByCategory:
-      type: string
-      nullable: true
-      env: SAVE_LOAD_DEFAULT_COMPRESSION_BY_CATEGORY
-      description: Default compression per category as comma-separated KEY=VALUE pairs (e.g., "QUICK_SAVE=NONE,AUTO_SAVE=GZIP"). Overrides DefaultCompressionType when specified. If empty/null, uses DefaultCompressionType for all categories.
+    DefaultCompressionQuickSave:
+      $ref: 'save-load-api.yaml#/components/schemas/CompressionType'
+      env: SAVE_LOAD_DEFAULT_COMPRESSION_QUICK_SAVE
+      default: None
+      description: Default compression for QUICK_SAVE category. Overrides DefaultCompressionType.
+
+    DefaultCompressionAutoSave:
+      $ref: 'save-load-api.yaml#/components/schemas/CompressionType'
+      env: SAVE_LOAD_DEFAULT_COMPRESSION_AUTO_SAVE
+      default: Gzip
+      description: Default compression for AUTO_SAVE category. Overrides DefaultCompressionType.
+
+    DefaultCompressionManualSave:
+      $ref: 'save-load-api.yaml#/components/schemas/CompressionType'
+      env: SAVE_LOAD_DEFAULT_COMPRESSION_MANUAL_SAVE
+      default: Gzip
+      description: Default compression for MANUAL_SAVE category. Overrides DefaultCompressionType.
+
+    DefaultCompressionCheckpoint:
+      $ref: 'save-load-api.yaml#/components/schemas/CompressionType'
+      env: SAVE_LOAD_DEFAULT_COMPRESSION_CHECKPOINT
+      default: Gzip
+      description: Default compression for CHECKPOINT category. Overrides DefaultCompressionType.
+
+    DefaultCompressionStateSnapshot:
+      $ref: 'save-load-api.yaml#/components/schemas/CompressionType'
+      env: SAVE_LOAD_DEFAULT_COMPRESSION_STATE_SNAPSHOT
+      default: Brotli
+      description: Default compression for STATE_SNAPSHOT category. Overrides DefaultCompressionType.
 
     # ═══════════════════════════════════════════════════════════════════════════
     # THUMBNAIL SETTINGS

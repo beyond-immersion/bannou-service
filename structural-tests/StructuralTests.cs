@@ -89,6 +89,101 @@ public class StructuralTests
     }
 
     /// <summary>
+    /// Validates that every generated Publish*Async extension method on the service's
+    /// *EventPublisher class is called from somewhere in the plugin assembly.
+    /// An uncalled method means a declared event topic is never published.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_CallsAllGeneratedEventPublishers(Type serviceType)
+    {
+        var publisherInfo = EventPublishingValidator.GetEventPublisherInfo(serviceType);
+        if (publisherInfo == null)
+            return; // No generated publisher — service has no published events
+
+        var assemblyPath = serviceType.Assembly.Location;
+        if (string.IsNullOrEmpty(assemblyPath))
+            return;
+
+        var referencedMethods = AssemblyMetadataScanner.GetReferencedMethods(
+            assemblyPath,
+            publisherInfo.PublisherType.Name,
+            publisherInfo.MethodNames);
+
+        var uncalledMethods = publisherInfo.MethodNames
+            .Where(m => !referencedMethods.Contains(m))
+            .ToArray();
+
+        Assert.True(
+            uncalledMethods.Length == 0,
+            $"{serviceType.Name}: {uncalledMethods.Length} generated event publisher method(s) " +
+            $"on {publisherInfo.PublisherType.Name} are never called " +
+            $"(declared events not published):\n" +
+            string.Join("\n", uncalledMethods.Select(m => $"  - {m}")));
+    }
+
+    /// <summary>
+    /// Validates that every plugin using EnumMapping helper methods (MapByName,
+    /// MapByNameOrDefault, TryMapByName) has corresponding EnumMappingValidator
+    /// tests in its test project. This is the safety guarantee documented in
+    /// EnumMapping's XML docs — catching enum value drift at test time rather
+    /// than at runtime.
+    /// </summary>
+    [Fact]
+    public void PluginsUsingEnumMapping_MustHaveEnumMappingValidatorTests()
+    {
+        EnsureAssembliesLoaded();
+
+        string[] enumMappingMethods = ["MapByName", "MapByNameOrDefault", "TryMapByName"];
+        string[] validatorMethods =
+        [
+            "AssertFullCoverage", "AssertSubset", "AssertSupersetToSubsetMapping",
+            "AssertSwitchCoversAllValues", "AssertSourceCoveredByTarget"
+        ];
+
+        var failures = new List<string>();
+
+        var pluginAssemblies = AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a =>
+            {
+                var name = a.GetName().Name;
+                return name != null
+                    && name.StartsWith("lib-", StringComparison.Ordinal)
+                    && !name.EndsWith(".tests", StringComparison.Ordinal);
+            });
+
+        foreach (var pluginAssembly in pluginAssemblies)
+        {
+            var pluginPath = pluginAssembly.Location;
+            if (string.IsNullOrEmpty(pluginPath))
+                continue;
+
+            if (!AssemblyMetadataScanner.ReferencesMethodOnType(pluginPath, "EnumMapping", enumMappingMethods))
+                continue;
+
+            var pluginName = pluginAssembly.GetName().Name!;
+            var serviceName = pluginName["lib-".Length..];
+            var testAssemblyPath = TestAssemblyDiscovery.GetTestAssemblyPath(serviceName);
+
+            if (testAssemblyPath == null)
+            {
+                failures.Add($"{pluginName}: test assembly not found (not built or missing)");
+            }
+            else if (!AssemblyMetadataScanner.ReferencesMethodOnType(
+                testAssemblyPath, "EnumMappingValidator", validatorMethods))
+            {
+                failures.Add($"{pluginName}: uses EnumMapping but test project has no EnumMappingValidator tests");
+            }
+        }
+
+        Assert.True(
+            failures.Count == 0,
+            $"Plugins using EnumMapping helpers must have corresponding EnumMappingValidator " +
+            $"tests in their test project (per ENUM-BOUNDARIES.md):\n" +
+            string.Join("\n", failures.Select(f => $"  - {f}")));
+    }
+
+    /// <summary>
     /// Ensures all plugin assemblies are loaded into the AppDomain.
     /// Project references guarantee compilation but not loading — we need
     /// to touch at least one type per assembly to force the CLR to load it.

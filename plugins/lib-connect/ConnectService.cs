@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Connect.Helpers;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
@@ -908,7 +909,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                     topic: topic,
                     handler: (bytes, ct) => HandleClientEventAsync(sessionId, bytes),
                     exchange: CLIENT_EVENTS_EXCHANGE,
-                    exchangeType: SubscriptionExchangeType.Direct,
+                    exchangeType: ExchangeType.Direct,
                     queueName: queueName,
                     queueTtl: TimeSpan.FromSeconds(_configuration.ReconnectionWindowSeconds),
                     cancellationToken: cancellationToken);

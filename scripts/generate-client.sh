@@ -55,12 +55,14 @@ mkdir -p "$OUTPUT_DIR"
 FILTERED_SCHEMA_FILE="$SCHEMA_FILE"
 if grep -q "x-from-authorization" "$SCHEMA_FILE"; then
     echo -e "${YELLOW}🔧 Creating filtered schema for client generation (removing x-from-authorization parameters)...${NC}"
-    FILTERED_SCHEMA_FILE="/tmp/${SERVICE_NAME}-client-filtered-schema.yaml"
+    FILTERED_SCHEMA_FILE="../schemas/Generated/${SERVICE_NAME}-client-filtered-schema.yaml"
 
     # Use Python to remove x-from-authorization parameters from client schema
+    # Output goes to schemas/Generated/ so cross-file $refs need ../ prefix adjustment
     python3 -c "
 import yaml
 import sys
+import re
 
 with open('$SCHEMA_FILE', 'r') as f:
     schema = yaml.safe_load(f)
@@ -80,6 +82,22 @@ if 'paths' in schema:
                         filtered_params.append(param)
 
                 method_data['parameters'] = filtered_params
+
+# Fix relative paths: output is in schemas/Generated/ so sibling refs need ../ prefix
+def fix_refs(obj):
+    if isinstance(obj, dict):
+        for key, val in obj.items():
+            if key == '\$ref' and isinstance(val, str) and '#' in val and not val.startswith('#'):
+                m = re.match(r'([a-zA-Z][a-zA-Z0-9_-]*\\.yaml#.+)', val)
+                if m:
+                    obj[key] = '../' + val
+            else:
+                fix_refs(val)
+    elif isinstance(obj, list):
+        for item in obj:
+            fix_refs(item)
+
+fix_refs(schema)
 
 # Write filtered schema for client generation
 with open('$FILTERED_SCHEMA_FILE', 'w') as f:

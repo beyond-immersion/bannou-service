@@ -2794,7 +2794,7 @@ public partial class ContractService : IContractService
             EffectiveUntil = model.EffectiveUntil,
             TerminatedAt = model.TerminatedAt,
             CreatedAt = model.CreatedAt,
-            UpdatedAt = model.UpdatedAt,
+            UpdatedAt = model.UpdatedAt ?? model.CreatedAt,
             ChangedFields = changedFields
         });
     }
@@ -2819,7 +2819,7 @@ public partial class ContractService : IContractService
             EffectiveUntil = model.EffectiveUntil,
             TerminatedAt = model.TerminatedAt,
             CreatedAt = model.CreatedAt,
-            UpdatedAt = model.UpdatedAt,
+            UpdatedAt = model.UpdatedAt ?? model.CreatedAt,
             DeletedReason = reason
         });
     }

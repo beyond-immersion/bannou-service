@@ -1,10 +1,8 @@
 openapi: 3.0.4
 info:
   title: Achievement Service Events Lifecycle Events
-  description: "AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.\nDO NOT EDIT - Regenerate
-    with scripts/resolve-event-refs.py\nSource: achievement-lifecycle-events.yaml\n\nAuto-generated lifecycle event schemas
-    for achievement service.\nDO NOT EDIT - This file is completely overwritten by generate-lifecycle-events.py.\nSource of
-    truth: achievement-events.yaml x-lifecycle section."
+  description: "Auto-generated lifecycle event schemas for achievement service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: achievement-events.yaml x-lifecycle section."
   version: 1.0.0
 paths: {}
 components:
@@ -29,6 +27,7 @@ components:
       - isDeprecated
       - earnedCount
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -142,8 +141,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the achievement definition was last updated
+          description: Timestamp when the achievement definition was last updated (set to createdAt on creation)
     AchievementDefinitionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -164,6 +162,7 @@ components:
       - isDeprecated
       - earnedCount
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -202,8 +201,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the achievement definition was last updated
+          description: Timestamp when the achievement definition was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -229,6 +227,7 @@ components:
       - isDeprecated
       - earnedCount
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -266,8 +265,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the achievement definition was last updated
+          description: Timestamp when the achievement definition was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true

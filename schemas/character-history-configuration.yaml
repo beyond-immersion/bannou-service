@@ -15,12 +15,12 @@ paths: {}
 x-service-configuration:
   properties:
     # Cache Configuration
-    BackstoryCacheTtlSeconds:
+    BackstoryCacheTtlMinutes:
       type: integer
       minimum: 1
-      description: TTL in seconds for backstory cache entries. Backstory data is nearly immutable, so longer TTLs are appropriate.
-      default: 600
-      env: CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS
+      description: TTL in minutes for backstory cache entries. Backstory data is nearly immutable, so longer TTLs are appropriate.
+      default: 10
+      env: CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_MINUTES
     # Element Limits
     MaxBackstoryElements:
       type: integer

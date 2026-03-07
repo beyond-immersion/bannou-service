@@ -127,15 +127,18 @@ paths:
         \                    \"nullable\": true,\n                    \"description\": \"Game-specific container data. Client-only
         metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n\
         \        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Type of entity that owns this container\",\n            \"enum\": [\n                \"Character\",\n            \
-        \    \"Account\",\n                \"Location\",\n                \"Vehicle\",\n                \"Guild\",\n     \
-        \           \"Escrow\",\n                \"Mail\",\n                \"Other\"\n            ]\n        },\n       \
-        \ \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n            \"description\": \"Container capacity
-        constraint type\",\n            \"enum\": [\n                \"SlotOnly\",\n                \"WeightOnly\",\n    \
-        \            \"SlotAndWeight\",\n                \"Grid\",\n                \"Volumetric\",\n                \"Unlimited\"\
-        \n            ]\n        },\n        \"WeightContribution\": {\n            \"type\": \"string\",\n            \"\
-        description\": \"How container weight propagates to parent\",\n            \"enum\": [\n                \"None\",\n\
-        \                \"SelfOnly\",\n                \"SelfPlusContents\"\n            ]\n        }\n    }\n}"
+        Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes
+        non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType
+        should use MapByNameOrDefault with fallback to Other.\\n\",\n            \"enum\": [\n                \"Character\"\
+        ,\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n                \"Guild\"\
+        ,\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n            ]\n        },\n\
+        \        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n            \"description\": \"Container
+        capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\",\n                \"WeightOnly\"\
+        ,\n                \"SlotAndWeight\",\n                \"Grid\",\n                \"Volumetric\",\n              \
+        \  \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"How container weight propagates to parent\",\n            \"enum\": [\n          \
+        \      \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\n            ]\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
         ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
@@ -210,16 +213,18 @@ paths:
         \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
         \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
-        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
-        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\"\
-        ,\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n                \"Grid\",\n              \
-        \  \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
-        \            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\
-        \n            ]\n        }\n    }\n}"
+        ,\n            \"description\": \"Type of entity that owns this container. Intentionally separate from common-api
+        EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types.
+        Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\\n\",\n  \
+        \          \"enum\": [\n                \"Character\",\n                \"Account\",\n                \"Location\"\
+        ,\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\"\
+        ,\n                \"Other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
+        \             \"SlotOnly\",\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n               \
+        \ \"Grid\",\n                \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"\
+        WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight propagates
+        to parent\",\n            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"\
+        SelfPlusContents\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new container\",\n    \"description\": \"Creates a new container
         with the specified constraint model and capacity.\\nContainer types are game-defined strings (e.g., \\\"inventory\\\
         \", \\\"bank\\\", \\\"equipment_slot\\\").\\n\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\"\
@@ -337,31 +342,33 @@ paths:
         \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
         \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
-        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
-        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\"\
-        ,\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n                \"Grid\",\n              \
-        \  \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
-        \            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\
-        \n            ]\n        },\n        \"ContainerItem\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Item in a container\",\n            \"additionalProperties\": false,\n            \"required\": [\n          \
-        \      \"instanceId\",\n                \"templateId\",\n                \"quantity\"\n            ],\n          \
-        \  \"properties\": {\n                \"instanceId\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"uuid\",\n                    \"description\": \"Item instance ID\"\n                },\n   \
-        \             \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Item template ID\"\n                },\n                \"quantity\": {\n\
-        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
-        : \"Item quantity\"\n                },\n                \"slotIndex\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Slot position\"\n             \
-        \   },\n                \"slotX\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Grid X position\"\n                },\n                \"slotY\":
-        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Grid Y position\"\n                },\n                \"rotated\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Rotated in grid\"\n           \
-        \     }\n            }\n        }\n    }\n}"
+        ,\n            \"description\": \"Type of entity that owns this container. Intentionally separate from common-api
+        EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types.
+        Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\\n\",\n  \
+        \          \"enum\": [\n                \"Character\",\n                \"Account\",\n                \"Location\"\
+        ,\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\"\
+        ,\n                \"Other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
+        \             \"SlotOnly\",\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n               \
+        \ \"Grid\",\n                \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"\
+        WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight propagates
+        to parent\",\n            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"\
+        SelfPlusContents\"\n            ]\n        },\n        \"ContainerItem\": {\n            \"type\": \"object\",\n \
+        \           \"description\": \"Item in a container\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"instanceId\",\n                \"templateId\",\n                \"quantity\"\n  \
+        \          ],\n            \"properties\": {\n                \"instanceId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Item instance ID\"\n\
+        \                },\n                \"templateId\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"uuid\",\n                    \"description\": \"Item template ID\"\n                },\n    \
+        \            \"quantity\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"Item quantity\"\n                },\n                \"slotIndex\": {\n\
+        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Slot position\"\n                },\n                \"slotX\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Grid X position\"\n             \
+        \   },\n                \"slotY\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Grid Y position\"\n                },\n                \"rotated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Rotated in grid\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get container with contents\",\n    \"description\": \"Retrieves a container
         by ID, optionally including its contents.\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\":
         false,\n    \"operationId\": \"getContainer\"\n}"
@@ -414,13 +421,15 @@ paths:
         type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
         \            \"description\": \"Realm for new container\"\n                }\n            }\n        },\n        \"\
         ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns
-        this container\",\n            \"enum\": [\n                \"Character\",\n                \"Account\",\n       \
-        \         \"Location\",\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n \
-        \               \"Mail\",\n                \"Other\"\n            ]\n        },\n        \"ContainerConstraintModel\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Container capacity constraint type\",\n   \
-        \         \"enum\": [\n                \"SlotOnly\",\n                \"WeightOnly\",\n                \"SlotAndWeight\"\
-        ,\n                \"Grid\",\n                \"Volumetric\",\n                \"Unlimited\"\n            ]\n    \
-        \    }\n    }\n}"
+        this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional
+        roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use
+        MapByNameOrDefault with fallback to Other.\\n\",\n            \"enum\": [\n                \"Character\",\n      \
+        \          \"Account\",\n                \"Location\",\n                \"Vehicle\",\n                \"Guild\",\n\
+        \                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n            ]\n        },\n  \
+        \      \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n            \"description\": \"Container
+        capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\",\n                \"WeightOnly\"\
+        ,\n                \"SlotAndWeight\",\n                \"Grid\",\n                \"Volumetric\",\n              \
+        \  \"Unlimited\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
         ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
@@ -495,16 +504,18 @@ paths:
         \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
         \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
-        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
-        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\"\
-        ,\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n                \"Grid\",\n              \
-        \  \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
-        \            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\
-        \n            ]\n        }\n    }\n}"
+        ,\n            \"description\": \"Type of entity that owns this container. Intentionally separate from common-api
+        EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types.
+        Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\\n\",\n  \
+        \          \"enum\": [\n                \"Character\",\n                \"Account\",\n                \"Location\"\
+        ,\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\"\
+        ,\n                \"Other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
+        \             \"SlotOnly\",\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n               \
+        \ \"Grid\",\n                \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"\
+        WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight propagates
+        to parent\",\n            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"\
+        SelfPlusContents\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get container or create if not exists\",\n    \"description\": \"Enables
         lazy container creation for character inventories.\\nIf a container doesn't exist for the owner/type combination,
         creates it\\nwith the specified defaults.\\n\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\"\
@@ -545,10 +556,12 @@ paths:
         \    },\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by realm\"\n \
         \               }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
-        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
-        \           ]\n        }\n    }\n}"
+        ,\n            \"description\": \"Type of entity that owns this container. Intentionally separate from common-api
+        EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types.
+        Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\\n\",\n  \
+        \          \"enum\": [\n                \"Character\",\n                \"Account\",\n                \"Location\"\
+        ,\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\"\
+        ,\n                \"Other\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListContainersResponse\"\
         ,\n    \"$defs\": {\n        \"ListContainersResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"List of containers\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
@@ -630,16 +643,18 @@ paths:
         \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
         \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
-        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
-        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\"\
-        ,\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n                \"Grid\",\n              \
-        \  \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
-        \            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\
-        \n            ]\n        }\n    }\n}"
+        ,\n            \"description\": \"Type of entity that owns this container. Intentionally separate from common-api
+        EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types.
+        Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\\n\",\n  \
+        \          \"enum\": [\n                \"Character\",\n                \"Account\",\n                \"Location\"\
+        ,\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\"\
+        ,\n                \"Other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
+        \             \"SlotOnly\",\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n               \
+        \ \"Grid\",\n                \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"\
+        WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight propagates
+        to parent\",\n            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"\
+        SelfPlusContents\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List containers for owner\",\n    \"description\": \"Returns all containers
         owned by the specified entity.\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\": false,\n  \
         \  \"operationId\": \"listContainers\"\n}"
@@ -772,16 +787,18 @@ paths:
         \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
         \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
-        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
-        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\"\
-        ,\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n                \"Grid\",\n              \
-        \  \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
-        \            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\
-        \n            ]\n        }\n    }\n}"
+        ,\n            \"description\": \"Type of entity that owns this container. Intentionally separate from common-api
+        EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types.
+        Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\\n\",\n  \
+        \          \"enum\": [\n                \"Character\",\n                \"Account\",\n                \"Location\"\
+        ,\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\"\
+        ,\n                \"Other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
+        \             \"SlotOnly\",\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n               \
+        \ \"Grid\",\n                \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"\
+        WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight propagates
+        to parent\",\n            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"\
+        SelfPlusContents\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update container properties\",\n    \"description\": \"Updates mutable
         container properties like capacity limits and filtering.\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"updateContainer\"\n}"
@@ -1209,10 +1226,12 @@ paths:
         Pagination offset\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n\
         \                    \"default\": 50,\n                    \"minimum\": 1,\n                    \"maximum\": 200,\n\
         \                    \"description\": \"Max results\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
-        \            \"enum\": [\n                \"Character\",\n                \"Account\",\n                \"Location\"\
-        ,\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\"\
-        ,\n                \"Other\"\n            ]\n        }\n    }\n}"
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container. Intentionally
+        separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle)
+        alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback
+        to Other.\\n\",\n            \"enum\": [\n                \"Character\",\n                \"Account\",\n         \
+        \       \"Location\",\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n   \
+        \             \"Mail\",\n                \"Other\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryItemsResponse\"\
         ,\n    \"$defs\": {\n        \"QueryItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Query results\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
@@ -1271,10 +1290,12 @@ paths:
         \  \"description\": \"Owner type\"\n                },\n                \"templateId\": {\n                    \"\
         type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Template to
         count\"\n                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n  \
-        \              \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\"\
-        ,\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n\
-        \            ]\n        }\n    }\n}"
+        string\",\n            \"description\": \"Type of entity that owns this container. Intentionally separate from common-api
+        EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types.
+        Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\\n\",\n  \
+        \          \"enum\": [\n                \"Character\",\n                \"Account\",\n                \"Location\"\
+        ,\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\"\
+        ,\n                \"Other\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CountItemsResponse\"\
         ,\n    \"$defs\": {\n        \"CountItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Count result\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
@@ -1323,16 +1344,19 @@ paths:
         \  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ItemRequirement\"\
         \n                    },\n                    \"description\": \"Required items\"\n                }\n           \
         \ }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity that owns this container\",\n            \"enum\": [\n                \"Character\",\n        \
-        \        \"Account\",\n                \"Location\",\n                \"Vehicle\",\n                \"Guild\",\n \
-        \               \"Escrow\",\n                \"Mail\",\n                \"Other\"\n            ]\n        },\n   \
-        \     \"ItemRequirement\": {\n            \"type\": \"object\",\n            \"description\": \"Required item and
-        quantity\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"templateId\"\
-        ,\n                \"quantity\"\n            ],\n            \"properties\": {\n                \"templateId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Required template\"\n                },\n                \"quantity\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"double\",\n                    \"minimum\": 1,\n                    \"description\"\
-        : \"Required quantity\"\n                }\n            }\n        }\n    }\n}"
+        : \"Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set
+        includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to
+        ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\\n\",\n            \"enum\": [\n        \
+        \        \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\"\
+        ,\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n\
+        \            ]\n        },\n        \"ItemRequirement\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Required item and quantity\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
+        \             \"templateId\",\n                \"quantity\"\n            ],\n            \"properties\": {\n     \
+        \           \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Required template\"\n                },\n                \"quantity\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Required quantity\"\n                }\n            }\n        }\n  \
+        \  }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HasItemsResponse\"\
         ,\n    \"$defs\": {\n        \"HasItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Has items result\",\n            \"additionalProperties\": false,\n            \"required\": [\n             \
@@ -1394,10 +1418,12 @@ paths:
         to place\"\n                },\n                \"preferStackable\": {\n                    \"type\": \"boolean\"\
         ,\n                    \"default\": true,\n                    \"description\": \"Prefer existing stacks\"\n     \
         \           }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n \
-        \           \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n             \
-        \   \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n  \
-        \              \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n   \
-        \         ]\n        }\n    }\n}"
+        \           \"description\": \"Type of entity that owns this container. Intentionally separate from common-api EntityType
+        because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services
+        mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\\n\",\n           \
+        \ \"enum\": [\n                \"Character\",\n                \"Account\",\n                \"Location\",\n     \
+        \           \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n   \
+        \             \"Other\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/FindSpaceResponse\"\
         ,\n    \"$defs\": {\n        \"FindSpaceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Find space result\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
@@ -1455,7 +1481,12 @@ components:
       - SelfPlusContents
     ContainerOwnerType:
       type: string
-      description: Type of entity that owns this container
+      description: >
+        Type of entity that owns this container. Intentionally separate from
+        common-api EntityType because the valid set includes non-entity
+        functional roles (Escrow, Mail, Vehicle) alongside entity types.
+        Services mapping EntityType to ContainerOwnerType should use
+        MapByNameOrDefault with fallback to Other.
       enum:
       - Character
       - Account

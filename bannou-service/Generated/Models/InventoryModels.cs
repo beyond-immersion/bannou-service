@@ -103,7 +103,8 @@ public enum WeightContribution
 #pragma warning restore CS1591
 
 /// <summary>
-/// Type of entity that owns this container
+/// Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.
+/// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

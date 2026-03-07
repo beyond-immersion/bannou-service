@@ -22,6 +22,7 @@ components:
       - category
       - assetId
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -59,8 +60,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the behavior was last updated
+          description: Timestamp when the behavior was last updated (set to createdAt on creation)
     BehaviorUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -76,6 +76,7 @@ components:
       - category
       - assetId
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -96,8 +97,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the behavior was last updated
+          description: Timestamp when the behavior was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -118,6 +118,7 @@ components:
       - category
       - assetId
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -137,8 +138,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the behavior was last updated
+          description: Timestamp when the behavior was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true
@@ -157,6 +157,7 @@ components:
       - name
       - behaviorCount
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -184,8 +185,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the behavior bundle was last updated
+          description: Timestamp when the behavior bundle was last updated (set to createdAt on creation)
     BehaviorBundleUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -200,6 +200,7 @@ components:
       - name
       - behaviorCount
       - createdAt
+      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -217,8 +218,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the behavior bundle was last updated
+          description: Timestamp when the behavior bundle was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:
@@ -238,6 +238,7 @@ components:
       - name
       - behaviorCount
       - createdAt
+      - updatedAt
       properties:
         eventName:
           type: string
@@ -254,8 +255,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          nullable: true
-          description: Timestamp when the behavior bundle was last updated
+          description: Timestamp when the behavior bundle was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true

@@ -54,12 +54,12 @@ components:
     ServiceHealthStatus:
       type: string
       enum: [Healthy, Degraded, Unavailable]
-      description: Health status for individual services and components. Used by heartbeat events and orchestrator health monitoring.
+      description: Health status for individual services and components. Used by heartbeat events and orchestrator health monitoring. Subset of InstanceHealthStatus (3 of 5 values). mesh-api EndpointStatus is a separate 4-value subset with different granularity.
 
     InstanceHealthStatus:
       type: string
       enum: [Healthy, Degraded, Overloaded, ShuttingDown, Unavailable]
-      description: Operational status for app instances. Superset of ServiceHealthStatus with instance-level states (overloaded, shutting_down).
+      description: Operational status for app instances. Superset of ServiceHealthStatus with instance-level states (Overloaded, ShuttingDown). mesh-api EndpointStatus is a separate subset excluding Overloaded.
 
     SentimentCategory:
       type: string

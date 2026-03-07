@@ -279,7 +279,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     await Task.CompletedTask;
                 },
                 exchange: destination.Exchange,
-                exchangeType: SubscriptionExchangeType.Fanout);
+                exchangeType: ExchangeType.Fanout);
 
             // Create tap from character's event exchange to session's destination
             await using var tapHandle = await messageTap.CreateTapAsync(
@@ -354,7 +354,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     await Task.CompletedTask;
                 },
                 exchange: destination.Exchange,
-                exchangeType: SubscriptionExchangeType.Fanout);
+                exchangeType: ExchangeType.Fanout);
 
             // Create taps from both character exchanges to session destination
             await using var tap1 = await messageTap.CreateTapAsync("events", destination, sourceExchange1);
@@ -422,7 +422,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     await Task.CompletedTask;
                 },
                 exchange: destination.Exchange,
-                exchangeType: SubscriptionExchangeType.Fanout);
+                exchangeType: ExchangeType.Fanout);
 
             // Create tap with explicit source exchange
             var tapHandle = await messageTap.CreateTapAsync("events", destination, sourceExchange);
@@ -505,7 +505,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     await Task.CompletedTask;
                 },
                 exchange: destination.Exchange,
-                exchangeType: SubscriptionExchangeType.Fanout);
+                exchangeType: ExchangeType.Fanout);
 
             var beforeCreate = DateTimeOffset.UtcNow;
 
@@ -594,7 +594,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     await Task.CompletedTask;
                 },
                 exchange: destination.Exchange,
-                exchangeType: SubscriptionExchangeType.Direct);
+                exchangeType: ExchangeType.Direct);
 
             await using var tapHandle = await messageTap.CreateTapAsync(sourceTopic, destination, sourceExchange);
 

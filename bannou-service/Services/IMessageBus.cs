@@ -187,7 +187,7 @@ public interface IMessageSubscriber
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
         string? exchange = null,
-        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
+        ExchangeType exchangeType = ExchangeType.Topic,
         CancellationToken cancellationToken = default)
         where TEvent : class;
 
@@ -207,7 +207,7 @@ public interface IMessageSubscriber
         string topic,
         Func<byte[], CancellationToken, Task> handler,
         string? exchange = null,
-        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
+        ExchangeType exchangeType = ExchangeType.Topic,
         string? queueName = null,
         TimeSpan? queueTtl = null,
         CancellationToken cancellationToken = default);
@@ -218,25 +218,4 @@ public interface IMessageSubscriber
     /// <param name="topic">Topic/routing key to unsubscribe from</param>
     /// <returns>Task that completes when unsubscription is complete</returns>
     Task UnsubscribeAsync(string topic);
-}
-
-/// <summary>
-/// Exchange types for dynamic subscriptions.
-/// </summary>
-public enum SubscriptionExchangeType
-{
-    /// <summary>
-    /// Fanout exchange - broadcasts to all bound queues (use for broadcast scenarios).
-    /// </summary>
-    Fanout,
-
-    /// <summary>
-    /// Direct exchange - routes by exact routing key match (used for client events).
-    /// </summary>
-    Direct,
-
-    /// <summary>
-    /// Topic exchange - routes by pattern matching on routing key (default for service events).
-    /// </summary>
-    Topic
 }

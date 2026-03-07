@@ -399,7 +399,7 @@ public class OAuthProviderService : IOAuthProviderService
     }
 
     /// <inheritdoc/>
-    public async Task<(AccountResponse? Account, bool IsNewAccount)> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken)
+    public async Task<(AccountResponse? Account, bool IsNewAccount)> FindOrCreateOAuthAccountAsync(OAuthProvider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.FindOrCreateOAuthAccount");
         // Handle null userInfo gracefully - return null if no user info provided
@@ -535,13 +535,13 @@ public class OAuthProviderService : IOAuthProviderService
     }
 
     /// <inheritdoc/>
-    public string? GetAuthorizationUrl(Provider provider, string? redirectUri, string? state)
+    public string? GetAuthorizationUrl(OAuthProvider provider, string? redirectUri, string? state)
     {
         var encodedState = HttpUtility.UrlEncode(state ?? Guid.NewGuid().ToString());
 
         switch (provider)
         {
-            case Provider.Discord:
+            case OAuthProvider.Discord:
                 if (string.IsNullOrWhiteSpace(_configuration.DiscordClientId))
                 {
                     _logger.LogError("Discord Client ID not configured");
@@ -556,7 +556,7 @@ public class OAuthProviderService : IOAuthProviderService
                 var discordRedirectUri = HttpUtility.UrlEncode(effectiveDiscordRedirect);
                 return $"https://discord.com/oauth2/authorize?client_id={_configuration.DiscordClientId}&response_type=code&redirect_uri={discordRedirectUri}&scope=identify%20email&state={encodedState}";
 
-            case Provider.Google:
+            case OAuthProvider.Google:
                 if (string.IsNullOrWhiteSpace(_configuration.GoogleClientId))
                 {
                     _logger.LogError("Google Client ID not configured");
@@ -571,7 +571,7 @@ public class OAuthProviderService : IOAuthProviderService
                 var googleRedirectUri = HttpUtility.UrlEncode(effectiveGoogleRedirect);
                 return $"https://accounts.google.com/o/oauth2/v2/auth?client_id={_configuration.GoogleClientId}&response_type=code&redirect_uri={googleRedirectUri}&scope=openid%20email%20profile&state={encodedState}";
 
-            case Provider.Twitch:
+            case OAuthProvider.Twitch:
                 if (string.IsNullOrWhiteSpace(_configuration.TwitchClientId))
                 {
                     _logger.LogError("Twitch Client ID not configured");
@@ -586,7 +586,7 @@ public class OAuthProviderService : IOAuthProviderService
                 var twitchRedirectUri = HttpUtility.UrlEncode(effectiveTwitchRedirect);
                 return $"https://id.twitch.tv/oauth2/authorize?client_id={_configuration.TwitchClientId}&response_type=code&redirect_uri={twitchRedirectUri}&scope=user:read:email&state={encodedState}";
 
-            case Provider.Steam:
+            case OAuthProvider.Steam:
                 // Steam uses session tickets, not OAuth authorization URLs
                 _logger.LogWarning("Steam does not support OAuth authorization URLs - use /auth/steam/verify with session tickets");
                 return null;
@@ -598,15 +598,15 @@ public class OAuthProviderService : IOAuthProviderService
     }
 
     /// <inheritdoc/>
-    public async Task<OAuthUserInfo> GetMockUserInfoAsync(Provider provider, CancellationToken cancellationToken = default)
+    public async Task<OAuthUserInfo> GetMockUserInfoAsync(OAuthProvider provider, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.GetMockUserInfo");
         var mockProviderId = provider switch
         {
-            Provider.Discord => _configuration.MockDiscordId,
-            Provider.Google => _configuration.MockGoogleId,
-            Provider.Twitch => _configuration.MockTwitchId,
-            Provider.Steam => _configuration.MockSteamId,
+            OAuthProvider.Discord => _configuration.MockDiscordId,
+            OAuthProvider.Google => _configuration.MockGoogleId,
+            OAuthProvider.Twitch => _configuration.MockTwitchId,
+            OAuthProvider.Steam => _configuration.MockSteamId,
             _ => Guid.NewGuid().ToString()
         };
 
@@ -732,7 +732,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// This enables cross-service discovery (e.g., Achievement service finding Steam-linked accounts).
     /// Best-effort: auth flow succeeds even if this sync fails.
     /// </summary>
-    private async Task EnsureAuthMethodSyncedAsync(Guid accountId, Provider provider, string externalId, CancellationToken cancellationToken)
+    private async Task EnsureAuthMethodSyncedAsync(Guid accountId, OAuthProvider provider, string externalId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.EnsureAuthMethodSynced");
         try
@@ -740,7 +740,7 @@ public class OAuthProviderService : IOAuthProviderService
             await _accountClient.AddAuthMethodAsync(new AddAuthMethodRequest
             {
                 AccountId = accountId,
-                Provider = MapProviderToOAuthProvider(provider),
+                Provider = provider,
                 ExternalId = externalId
             }, cancellationToken);
 
@@ -761,21 +761,6 @@ public class OAuthProviderService : IOAuthProviderService
                 "Failed to sync auth method to Account service for {AccountId}, provider {Provider}",
                 accountId, provider);
         }
-    }
-
-    /// <summary>
-    /// Maps Auth service Provider enum to Account service OAuthProvider enum.
-    /// </summary>
-    private static OAuthProvider MapProviderToOAuthProvider(Provider provider)
-    {
-        return provider switch
-        {
-            Provider.Google => OAuthProvider.Google,
-            Provider.Discord => OAuthProvider.Discord,
-            Provider.Twitch => OAuthProvider.Twitch,
-            Provider.Steam => OAuthProvider.Steam,
-            _ => throw new ArgumentOutOfRangeException(nameof(provider), provider, "Unknown provider has no OAuthProvider mapping")
-        };
     }
 
     #region OAuth Response Models

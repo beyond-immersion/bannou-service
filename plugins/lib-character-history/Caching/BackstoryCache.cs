@@ -38,7 +38,7 @@ public sealed class BackstoryCache : IBackstoryCache
         _logger = logger;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
-        _cacheTtl = TimeSpan.FromSeconds(config.BackstoryCacheTtlSeconds);
+        _cacheTtl = TimeSpan.FromMinutes(config.BackstoryCacheTtlMinutes);
     }
 
     /// <inheritdoc/>

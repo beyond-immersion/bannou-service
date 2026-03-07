@@ -195,7 +195,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",
@@ -444,7 +444,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",
@@ -800,7 +800,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",
@@ -1008,7 +1008,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",
@@ -1248,7 +1248,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",
@@ -1384,7 +1384,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",
@@ -1634,7 +1634,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",
@@ -2033,7 +2033,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",
@@ -3111,7 +3111,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",
@@ -3289,7 +3289,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",
@@ -3431,7 +3431,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",
@@ -3632,7 +3632,7 @@ public partial class InventoryController
         },
         "ContainerOwnerType": {
             "type": "string",
-            "description": "Type of entity that owns this container",
+            "description": "Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\n",
             "enum": [
                 "Character",
                 "Account",

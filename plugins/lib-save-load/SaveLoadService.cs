@@ -2483,38 +2483,15 @@ public partial class SaveLoadService : ISaveLoadService
     /// <summary>
     /// Gets the default compression type for a save category.
     /// </summary>
-    private CompressionType GetDefaultCompressionType(SaveCategory category)
+    private CompressionType GetDefaultCompressionType(SaveCategory category) => category switch
     {
-        // Parse default compression by category if configured
-        // Format: "QUICK_SAVE:NONE,AUTO_SAVE:GZIP,..."
-        if (!string.IsNullOrEmpty(_configuration.DefaultCompressionByCategory))
-        {
-            var parts = _configuration.DefaultCompressionByCategory.Split(',');
-            foreach (var part in parts)
-            {
-                var kv = part.Trim().Split(':');
-                if (kv.Length == 2 &&
-                    Enum.TryParse<SaveCategory>(kv[0].Trim(), out var cat) &&
-                    cat == category &&
-                    Enum.TryParse<CompressionType>(kv[1].Trim(), out var comp))
-                {
-                    return comp;
-                }
-            }
-        }
-
-        // Default based on category characteristics
-        return category switch
-        {
-            SaveCategory.QuickSave => CompressionType.None,
-            SaveCategory.AutoSave => CompressionType.Gzip,
-            SaveCategory.ManualSave => CompressionType.Gzip,
-            SaveCategory.Checkpoint => CompressionType.Gzip,
-            SaveCategory.StateSnapshot => CompressionType.Brotli,
-            // Configuration already provides typed enum (T25 compliant)
-            _ => _configuration.DefaultCompressionType
-        };
-    }
+        SaveCategory.QuickSave => _configuration.DefaultCompressionQuickSave,
+        SaveCategory.AutoSave => _configuration.DefaultCompressionAutoSave,
+        SaveCategory.ManualSave => _configuration.DefaultCompressionManualSave,
+        SaveCategory.Checkpoint => _configuration.DefaultCompressionCheckpoint,
+        SaveCategory.StateSnapshot => _configuration.DefaultCompressionStateSnapshot,
+        _ => _configuration.DefaultCompressionType
+    };
 
     /// <summary>
     /// Converts internal SaveSlotMetadata to API SlotResponse.

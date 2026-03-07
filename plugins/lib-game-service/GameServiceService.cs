@@ -476,9 +476,7 @@ public partial class GameServiceService : IGameServiceService
             IsActive = model.IsActive,
             AutoLobbyEnabled = model.AutoLobbyEnabled,
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
-            UpdatedAt = model.UpdatedAtUnix.HasValue
-                ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
-                : null
+            UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix ?? model.CreatedAtUnix)
         };
     }
 
@@ -506,9 +504,7 @@ public partial class GameServiceService : IGameServiceService
             IsActive = model.IsActive,
             AutoLobbyEnabled = model.AutoLobbyEnabled,
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
-            UpdatedAt = model.UpdatedAtUnix.HasValue
-                ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
-                : null
+            UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix ?? model.CreatedAtUnix)
         };
         await _messageBus.TryPublishAsync("game-service.created", eventModel);
     }
@@ -534,9 +530,7 @@ public partial class GameServiceService : IGameServiceService
             IsActive = model.IsActive,
             AutoLobbyEnabled = model.AutoLobbyEnabled,
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
-            UpdatedAt = model.UpdatedAtUnix.HasValue
-                ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
-                : null,
+            UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix ?? model.CreatedAtUnix),
             ChangedFields = changedFields
         };
         await _messageBus.TryPublishAsync("game-service.updated", eventModel);
@@ -563,9 +557,7 @@ public partial class GameServiceService : IGameServiceService
             IsActive = model.IsActive,
             AutoLobbyEnabled = model.AutoLobbyEnabled,
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
-            UpdatedAt = model.UpdatedAtUnix.HasValue
-                ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
-                : null,
+            UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix ?? model.CreatedAtUnix),
             DeletedReason = reason
         };
         await _messageBus.TryPublishAsync("game-service.deleted", eventModel);

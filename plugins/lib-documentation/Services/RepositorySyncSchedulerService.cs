@@ -165,7 +165,7 @@ public class RepositorySyncSchedulerService : BackgroundService
                     continue;
                 }
 
-                if (binding.Status == BindingStatusInternal.Disabled || binding.Status == BindingStatusInternal.Syncing)
+                if (binding.Status == BindingStatus.Disabled || binding.Status == BindingStatus.Syncing)
                 {
                     continue;
                 }

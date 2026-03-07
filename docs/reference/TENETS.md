@@ -386,6 +386,7 @@ Tenets are organized into categories based on when they're needed:
 | Manually adding spans to generated code | T30 | Add to code generation templates, not generated files |
 | Missing `ITelemetryProvider` in helper service constructor | T30 | Add constructor parameter for span creation |
 | Span on non-async synchronous method | T30 | Only async methods need spans |
+| Adding span to primary interface method in `*Service.cs` | T30 | Do NOT add — generated controller already wraps these with spans |
 | Span name not following `{component}.{class}.{method}` pattern | T30 | Use `"bannou.{service}", "{Class}.{Method}"` format |
 | Adding deprecation to instance data (characters, sessions, etc.) | T31 | Use immediate hard delete; deprecation is for definitions only |
 | Bare boolean for deprecation (no timestamp or reason) | T31 | Use triple-field model: `IsDeprecated`, `DeprecatedAt`, `DeprecationReason` |

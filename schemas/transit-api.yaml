@@ -987,7 +987,12 @@ components:
 
     SettableConnectionStatus:
       type: string
-      description: Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker)
+      description: >
+        API-writable subset of ConnectionStatus. Excludes SeasonalClosed,
+        which is system-managed by the Seasonal Connection Worker. Mapping
+        from SettableConnectionStatus to ConnectionStatus is lossless
+        (all values exist in both); the reverse direction is intentionally
+        restricted at the API level.
       enum:
         - Open
         - Closed

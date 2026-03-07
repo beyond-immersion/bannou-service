@@ -106,9 +106,11 @@ paths:
         \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
         \            \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported via
         heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n        \
-        \    \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\":
-        [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n               \
-        \ \"ShuttingDown\"\n            ]\n        }\n    }\n}"
+        \    \"type\": \"string\",\n            \"description\": \"Health status of an individual endpoint. Subset of common-api
+        InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual endpoints).
+        Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\\n\",\n      \
+        \      \"enum\": [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n\
+        \                \"ShuttingDown\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get endpoints for a service\",\n    \"description\": \"Returns all healthy
         endpoints for the specified app-id.\\nUsed by IMeshClient to resolve target hosts for service invocation.\\n\",\n\
         \    \"tags\": [\n        \"Service Discovery\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getEndpoints\"\
@@ -144,9 +146,11 @@ paths:
         \n                },\n                \"appIdFilter\": {\n                    \"type\": \"string\",\n            \
         \        \"nullable\": true,\n                    \"description\": \"Optional filter by app-id prefix (null for all
         app IDs)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\": [\n             \
-        \   \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n                \"ShuttingDown\"\
-        \n            ]\n        }\n    }\n}"
+        string\",\n            \"description\": \"Health status of an individual endpoint. Subset of common-api InstanceHealthStatus
+        excluding Overloaded (an instance-level concept that does not apply to individual endpoints). Mapping from InstanceHealthStatus
+        uses MapByNameOrDefault with Overloaded falling back to Degraded.\\n\",\n            \"enum\": [\n               \
+        \ \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n                \"ShuttingDown\"\n\
+        \            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListEndpointsResponse\"\
         ,\n    \"$defs\": {\n        \"ListEndpointsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing all endpoints\",\n            \"additionalProperties\": false,\n            \"required\":
@@ -187,21 +191,23 @@ paths:
         array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
         \                    \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported
         via heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\"\
-        : [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n             \
-        \   \"ShuttingDown\"\n            ]\n        },\n        \"EndpointSummary\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Summary statistics for endpoints\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"totalEndpoints\",\n                \"healthyCount\",\n           \
-        \     \"degradedCount\",\n                \"unavailableCount\",\n                \"uniqueAppIds\"\n            ],\n\
-        \            \"properties\": {\n                \"totalEndpoints\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Total number of registered endpoints\"\n                },\n             \
-        \   \"healthyCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
-        of endpoints with Healthy status\"\n                },\n                \"degradedCount\": {\n                   \
-        \ \"type\": \"integer\",\n                    \"description\": \"Number of endpoints with Degraded status\"\n    \
-        \            },\n                \"unavailableCount\": {\n                    \"type\": \"integer\",\n           \
-        \         \"description\": \"Number of endpoints with Unavailable status\"\n                },\n                \"\
-        uniqueAppIds\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of unique
-        app-ids across all endpoints\"\n                }\n            }\n        }\n    }\n}"
+        \        \"type\": \"string\",\n            \"description\": \"Health status of an individual endpoint. Subset of
+        common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual
+        endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\\\
+        n\",\n            \"enum\": [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\"\
+        ,\n                \"ShuttingDown\"\n            ]\n        },\n        \"EndpointSummary\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Summary statistics for endpoints\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"totalEndpoints\",\n                \"healthyCount\",\n  \
+        \              \"degradedCount\",\n                \"unavailableCount\",\n                \"uniqueAppIds\"\n     \
+        \       ],\n            \"properties\": {\n                \"totalEndpoints\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Total number of registered endpoints\"\n                },\n  \
+        \              \"healthyCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of endpoints with Healthy status\"\n                },\n                \"degradedCount\": {\n        \
+        \            \"type\": \"integer\",\n                    \"description\": \"Number of endpoints with Degraded status\"\
+        \n                },\n                \"unavailableCount\": {\n                    \"type\": \"integer\",\n      \
+        \              \"description\": \"Number of endpoints with Unavailable status\"\n                },\n            \
+        \    \"uniqueAppIds\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
+        of unique app-ids across all endpoints\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all registered endpoints\",\n    \"description\": \"Returns all registered
         service endpoints across all app-ids.\\nAdmin-only endpoint for monitoring and debugging.\\n\",\n    \"tags\": [\n\
         \        \"Service Discovery\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listEndpoints\"\n}"
@@ -289,9 +295,11 @@ paths:
         array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
         \                    \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported
         via heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\"\
-        : [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n             \
-        \   \"ShuttingDown\"\n            ]\n        }\n    }\n}"
+        \        \"type\": \"string\",\n            \"description\": \"Health status of an individual endpoint. Subset of
+        common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual
+        endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\\\
+        n\",\n            \"enum\": [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\"\
+        ,\n                \"ShuttingDown\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Register a service endpoint\",\n    \"description\": \"Registers this instance's
         endpoint in the service mesh.\\nCalled during service startup to announce availability.\\nEndpoint TTL is refreshed
         on each heartbeat.\\n\",\n    \"tags\": [\n        \"Registration\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -377,9 +385,11 @@ paths:
         \             \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
         \n                    },\n                    \"nullable\": true,\n                    \"description\": \"List of
         non-critical issues (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"\
-        enum\": [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n       \
-        \         \"ShuttingDown\"\n            ]\n        }\n    }\n}"
+        \            \"type\": \"string\",\n            \"description\": \"Health status of an individual endpoint. Subset
+        of common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual
+        endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\\\
+        n\",\n            \"enum\": [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\"\
+        ,\n                \"ShuttingDown\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HeartbeatResponse\"\
         ,\n    \"$defs\": {\n        \"HeartbeatResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after heartbeat processed\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -471,9 +481,11 @@ paths:
         array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
         \                    \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported
         via heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\"\
-        : [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n             \
-        \   \"ShuttingDown\"\n            ]\n        }\n    }\n}"
+        \        \"type\": \"string\",\n            \"description\": \"Health status of an individual endpoint. Subset of
+        common-api InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual
+        endpoints). Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\\\
+        n\",\n            \"enum\": [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\"\
+        ,\n                \"ShuttingDown\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get optimal endpoint for routing\",\n    \"description\": \"Returns a single
         endpoint for the specified app-id, selected by the\\nconfigured load balancing algorithm (round-robin, least-connections,
         weighted).\\n\",\n    \"tags\": [\n        \"Routing\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -567,40 +579,42 @@ paths:
         \                    \"items\": {\n                        \"$ref\": \"#/$defs/MeshEndpoint\"\n                  \
         \  },\n                    \"nullable\": true,\n                    \"description\": \"Full endpoint list (null unless
         includeEndpoints=true)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n          \
-        \  \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\": [\n\
-        \                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n                \"\
-        ShuttingDown\"\n            ]\n        },\n        \"EndpointSummary\": {\n            \"type\": \"object\",\n   \
-        \         \"description\": \"Summary statistics for endpoints\",\n            \"additionalProperties\": false,\n \
-        \           \"required\": [\n                \"totalEndpoints\",\n                \"healthyCount\",\n            \
-        \    \"degradedCount\",\n                \"unavailableCount\",\n                \"uniqueAppIds\"\n            ],\n\
-        \            \"properties\": {\n                \"totalEndpoints\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Total number of registered endpoints\"\n                },\n             \
-        \   \"healthyCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
-        of endpoints with Healthy status\"\n                },\n                \"degradedCount\": {\n                   \
-        \ \"type\": \"integer\",\n                    \"description\": \"Number of endpoints with Degraded status\"\n    \
-        \            },\n                \"unavailableCount\": {\n                    \"type\": \"integer\",\n           \
-        \         \"description\": \"Number of endpoints with Unavailable status\"\n                },\n                \"\
-        uniqueAppIds\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of unique
-        app-ids across all endpoints\"\n                }\n            }\n        },\n        \"MeshEndpoint\": {\n      \
-        \      \"type\": \"object\",\n            \"description\": \"A service endpoint in the mesh\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"instanceId\",\n                \"appId\",\n             \
-        \   \"host\",\n                \"port\",\n                \"status\"\n            ],\n            \"properties\":
-        {\n                \"instanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Unique identifier for this instance\"\n                },\n      \
-        \          \"appId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n      \
-        \              \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\")\"\n                },\n\
-        \                \"host\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n \
-        \                   \"description\": \"Hostname or IP address\"\n                },\n                \"port\": {\n\
-        \                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
-        : 65535,\n                    \"description\": \"Service port (typically 80)\"\n                },\n             \
-        \   \"status\": {\n                    \"$ref\": \"#/$defs/EndpointStatus\",\n                    \"description\"\
-        : \"Current health status of the endpoint\"\n                },\n                \"loadPercent\": {\n            \
-        \        \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n\
-        \                    \"maximum\": 100,\n                    \"description\": \"Current load as percentage (0-100)\"\
-        ,\n                    \"default\": 0\n                },\n                \"maxConnections\": {\n               \
-        \     \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Maximum
-        concurrent connections this endpoint can handle\"\n                },\n                \"currentConnections\": {\n\
-        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        \  \"type\": \"string\",\n            \"description\": \"Health status of an individual endpoint. Subset of common-api
+        InstanceHealthStatus excluding Overloaded (an instance-level concept that does not apply to individual endpoints).
+        Mapping from InstanceHealthStatus uses MapByNameOrDefault with Overloaded falling back to Degraded.\\n\",\n      \
+        \      \"enum\": [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n\
+        \                \"ShuttingDown\"\n            ]\n        },\n        \"EndpointSummary\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Summary statistics for endpoints\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"totalEndpoints\",\n                \"healthyCount\",\n  \
+        \              \"degradedCount\",\n                \"unavailableCount\",\n                \"uniqueAppIds\"\n     \
+        \       ],\n            \"properties\": {\n                \"totalEndpoints\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Total number of registered endpoints\"\n                },\n  \
+        \              \"healthyCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of endpoints with Healthy status\"\n                },\n                \"degradedCount\": {\n        \
+        \            \"type\": \"integer\",\n                    \"description\": \"Number of endpoints with Degraded status\"\
+        \n                },\n                \"unavailableCount\": {\n                    \"type\": \"integer\",\n      \
+        \              \"description\": \"Number of endpoints with Unavailable status\"\n                },\n            \
+        \    \"uniqueAppIds\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
+        of unique app-ids across all endpoints\"\n                }\n            }\n        },\n        \"MeshEndpoint\":
+        {\n            \"type\": \"object\",\n            \"description\": \"A service endpoint in the mesh\",\n         \
+        \   \"additionalProperties\": false,\n            \"required\": [\n                \"instanceId\",\n             \
+        \   \"appId\",\n                \"host\",\n                \"port\",\n                \"status\"\n            ],\n\
+        \            \"properties\": {\n                \"instanceId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this instance\"\
+        \n                },\n                \"appId\": {\n                    \"type\": \"string\",\n                  \
+        \  \"minLength\": 1,\n                    \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\
+        \")\"\n                },\n                \"host\": {\n                    \"type\": \"string\",\n              \
+        \      \"minLength\": 1,\n                    \"description\": \"Hostname or IP address\"\n                },\n  \
+        \              \"port\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n    \
+        \                \"maximum\": 65535,\n                    \"description\": \"Service port (typically 80)\"\n     \
+        \           },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EndpointStatus\",\n       \
+        \             \"description\": \"Current health status of the endpoint\"\n                },\n                \"loadPercent\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0,\n                    \"maximum\": 100,\n                    \"description\": \"Current load as percentage
+        (0-100)\",\n                    \"default\": 0\n                },\n                \"maxConnections\": {\n      \
+        \              \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"\
+        Maximum concurrent connections this endpoint can handle\"\n                },\n                \"currentConnections\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Current active connections\"\n                },\n                \"services\": {\n                    \"type\"\
         : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
         \ },\n                    \"nullable\": true,\n                    \"description\": \"List of service names hosted
@@ -691,7 +705,12 @@ components:
           description: List of non-critical issues reported via heartbeat (null if none)
     EndpointStatus:
       type: string
-      description: Health status of an endpoint
+      description: >
+        Health status of an individual endpoint. Subset of common-api
+        InstanceHealthStatus excluding Overloaded (an instance-level
+        concept that does not apply to individual endpoints). Mapping
+        from InstanceHealthStatus uses MapByNameOrDefault with Overloaded
+        falling back to Degraded.
       enum:
       - Healthy
       - Degraded

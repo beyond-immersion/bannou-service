@@ -693,10 +693,11 @@ public partial class ObligationService : IObligationService
         Guid characterId, string trigger, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.obligation", "ObligationService.RebuildObligationCacheAsync");
+        var lockOwner = $"rebuild-cache-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             storeName: StateStoreDefinitions.ObligationLock,
             resourceId: $"cache:{characterId}",
-            lockOwner: Guid.NewGuid().ToString(),
+            lockOwner,
             expiryInSeconds: _configuration.LockTimeoutSeconds,
             cancellationToken: ct);
 

@@ -399,6 +399,22 @@ public class TenetComplianceTests
 
     #endregion
 
+    #region Enum Boundary Drift Tests (ENUM-BOUNDARIES Rule 7)
+
+    [Fact]
+    public void ExchangeType_ToRmqExchangeType_SwitchCoversAllValues()
+    {
+        EnumMappingValidator.AssertSwitchCoversAllValues<ExchangeType>(
+            e => e switch
+            {
+                ExchangeType.Direct => RabbitMQ.Client.ExchangeType.Direct,
+                ExchangeType.Fanout => RabbitMQ.Client.ExchangeType.Fanout,
+                _ => RabbitMQ.Client.ExchangeType.Topic
+            });
+    }
+
+    #endregion
+
     #region Null Reference Type Compliance Tests
 
     [Fact]
