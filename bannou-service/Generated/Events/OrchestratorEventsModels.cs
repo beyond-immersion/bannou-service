@@ -26,6 +26,21 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Orchestrator;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -35,24 +50,16 @@ using System = global::System;
 /// Simple health ping event published to verify pub/sub path is active. Used by infrastructure health checks.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class OrchestratorHealthPingEvent
+public partial class OrchestratorHealthPingEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event instance
+    /// Event type identifier: orchestrator.health-ping
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "orchestrator.health-ping";
 
     /// <summary>
     /// Current health status
@@ -69,24 +76,16 @@ public partial class OrchestratorHealthPingEvent
 /// Published when deployment state changes. Topic bannou.deployment-events.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DeploymentEvent
+public partial class DeploymentEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event instance
+    /// Event type identifier: bannou.deployment-events
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "bannou.deployment-events";
 
     /// <summary>
     /// Type of deployment action that triggered this event
@@ -136,24 +135,16 @@ public partial class DeploymentEvent
 /// Published when a service is restarted. Topic bannou.service-lifecycle.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServiceRestartEvent
+public partial class ServiceRestartEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event instance
+    /// Event type identifier: bannou.service-lifecycle
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "bannou.service-lifecycle";
 
     /// <summary>
     /// Name of the service that was restarted
@@ -189,24 +180,16 @@ public partial class ServiceRestartEvent
 /// Published when configuration or secrets change. All containers receive this via RabbitMQ. Plugins decide if they care based on changedKeys prefixes and request restart if needed. Topic bannou.configuration-events.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ConfigurationChangedEvent
+public partial class ConfigurationChangedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event instance
+    /// Event type identifier: bannou.configuration-events
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this configuration change occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "bannou.configuration-events";
 
     /// <summary>
     /// Monotonically increasing version number
@@ -228,24 +211,16 @@ public partial class ConfigurationChangedEvent
 /// Published when a processor is released back to the pool. Used by the Analytics service for pool utilization tracking. Topic orchestrator.processor.released.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ProcessorReleasedEvent
+public partial class ProcessorReleasedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event instance
+    /// Event type identifier: orchestrator.processor.released
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the release occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "orchestrator.processor.released";
 
     /// <summary>
     /// The pool type the processor belongs to (e.g., "actor-shared", "asset-image")

@@ -483,7 +483,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            EscrowTopics.EscrowCreated,
+            EscrowPublishedTopics.EscrowCreated,
             It.IsAny<EscrowCreatedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -850,7 +850,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            EscrowTopics.EscrowDepositReceived,
+            EscrowPublishedTopics.EscrowDepositReceived,
             It.IsAny<EscrowDepositReceivedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -889,7 +889,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            EscrowTopics.EscrowFunded,
+            EscrowPublishedTopics.EscrowFunded,
             It.IsAny<EscrowFundedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -1402,7 +1402,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            EscrowTopics.EscrowDisputed,
+            EscrowPublishedTopics.EscrowDisputed,
             It.IsAny<EscrowDisputedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }

@@ -95,7 +95,13 @@ public partial class CurrencyDefinitionCreatedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
-    /// When the definition was created
+    /// When the definition was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the currency definition was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -103,10 +109,10 @@ public partial class CurrencyDefinitionCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the definition was last modified
+    /// Timestamp when the currency definition was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -174,7 +180,13 @@ public partial class CurrencyDefinitionUpdatedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
-    /// When the definition was created
+    /// When the definition was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the currency definition was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -182,10 +194,10 @@ public partial class CurrencyDefinitionUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the definition was last modified
+    /// Timestamp when the currency definition was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -261,7 +273,13 @@ public partial class CurrencyDefinitionDeletedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
-    /// When the definition was created
+    /// When the definition was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the currency definition was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -269,10 +287,10 @@ public partial class CurrencyDefinitionDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the definition was last modified
+    /// Timestamp when the currency definition was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")
@@ -338,12 +356,18 @@ public partial class CurrencyWalletCreatedEvent : BaseServiceEvent
     public WalletStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// When the wallet was created
+    /// Timestamp when the currency wallet was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the currency wallet was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -403,12 +427,18 @@ public partial class CurrencyWalletUpdatedEvent : BaseServiceEvent
     public WalletStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// When the wallet was created
+    /// Timestamp when the currency wallet was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the currency wallet was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -476,12 +506,18 @@ public partial class CurrencyWalletDeletedEvent : BaseServiceEvent
     public WalletStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// When the wallet was created
+    /// Timestamp when the currency wallet was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the currency wallet was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

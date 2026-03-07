@@ -71,12 +71,18 @@ public partial class ActorTemplateCreatedEvent : BaseServiceEvent
     public string BehaviorRef { get; set; } = default!;
 
     /// <summary>
-    /// When the template was created
+    /// Timestamp when the actor template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the actor template was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -120,12 +126,18 @@ public partial class ActorTemplateUpdatedEvent : BaseServiceEvent
     public string BehaviorRef { get; set; } = default!;
 
     /// <summary>
-    /// When the template was created
+    /// Timestamp when the actor template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the actor template was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -177,12 +189,18 @@ public partial class ActorTemplateDeletedEvent : BaseServiceEvent
     public string BehaviorRef { get; set; } = default!;
 
     /// <summary>
-    /// When the template was created
+    /// Timestamp when the actor template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the actor template was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")
@@ -252,6 +270,20 @@ public partial class ActorInstanceCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the actor instance was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the actor instance was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -313,6 +345,20 @@ public partial class ActorInstanceUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the actor instance was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the actor instance was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -383,6 +429,20 @@ public partial class ActorInstanceDeletedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the actor instance was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the actor instance was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

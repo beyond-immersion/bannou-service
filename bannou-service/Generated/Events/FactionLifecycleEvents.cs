@@ -138,7 +138,7 @@ public partial class FactionCreatedEvent : BaseServiceEvent
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
-    /// When the faction was created
+    /// Timestamp when the faction was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -146,12 +146,10 @@ public partial class FactionCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the faction was last updated
+    /// Timestamp when the faction was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -262,7 +260,7 @@ public partial class FactionUpdatedEvent : BaseServiceEvent
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
-    /// When the faction was created
+    /// Timestamp when the faction was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -270,12 +268,10 @@ public partial class FactionUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the faction was last updated
+    /// Timestamp when the faction was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -394,7 +390,7 @@ public partial class FactionDeletedEvent : BaseServiceEvent
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
-    /// When the faction was created
+    /// Timestamp when the faction was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -402,12 +398,10 @@ public partial class FactionDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the faction was last updated
+    /// Timestamp when the faction was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

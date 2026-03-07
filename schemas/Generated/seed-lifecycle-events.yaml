@@ -25,6 +25,7 @@ components:
       - totalGrowth
       - displayName
       - status
+      - createdAt
       properties:
         eventName:
           type: string
@@ -70,6 +71,15 @@ components:
           format: uuid
           nullable: true
           description: "Bond ID if bonded, null otherwise"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the seed was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the seed was last updated
     SeedUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -88,6 +98,7 @@ components:
       - totalGrowth
       - displayName
       - status
+      - createdAt
       - changedFields
       properties:
         eventName:
@@ -104,6 +115,15 @@ components:
         displayName: *id008
         status: *id009
         bondId: *id010
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the seed was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the seed was last updated
         changedFields:
           type: array
           items:
@@ -127,6 +147,7 @@ components:
       - totalGrowth
       - displayName
       - status
+      - createdAt
       properties:
         eventName:
           type: string
@@ -142,6 +163,15 @@ components:
         displayName: *id008
         status: *id009
         bondId: *id010
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the seed was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the seed was last updated
         deletedReason:
           type: string
           nullable: true
@@ -164,6 +194,7 @@ components:
       - bondPermanent
       - sameOwnerGrowthMultiplier
       - isDeprecated
+      - createdAt
       properties:
         eventName:
           type: string
@@ -211,6 +242,15 @@ components:
           type: string
           nullable: true
           description: "Reason for deprecation"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the seed type was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the seed type was last updated
     SeedTypeUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -229,6 +269,7 @@ components:
       - bondPermanent
       - sameOwnerGrowthMultiplier
       - isDeprecated
+      - createdAt
       - changedFields
       properties:
         eventName:
@@ -246,6 +287,15 @@ components:
         isDeprecated: *id019
         deprecatedAt: *id020
         deprecationReason: *id021
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the seed type was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the seed type was last updated
         changedFields:
           type: array
           items:
@@ -269,6 +319,7 @@ components:
       - bondPermanent
       - sameOwnerGrowthMultiplier
       - isDeprecated
+      - createdAt
       properties:
         eventName:
           type: string
@@ -285,6 +336,15 @@ components:
         isDeprecated: *id019
         deprecatedAt: *id020
         deprecationReason: *id021
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the seed type was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the seed type was last updated
         deletedReason:
           type: string
           nullable: true

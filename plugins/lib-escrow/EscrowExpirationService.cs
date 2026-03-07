@@ -270,7 +270,7 @@ public class EscrowExpirationService : BackgroundService
             AutoRefunded = hasDeposits,
             ExpiredAt = now
         };
-        await messageBus.TryPublishAsync(EscrowTopics.EscrowExpired, expiredEvent, cancellationToken);
+        await messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowExpired, expiredEvent, cancellationToken);
 
         // If there were deposits, also publish refund event for downstream services
         if (hasDeposits)
@@ -290,7 +290,7 @@ public class EscrowExpirationService : BackgroundService
                 Resolution = EscrowResolution.Refunded,
                 CompletedAt = now
             };
-            await messageBus.TryPublishAsync(EscrowTopics.EscrowRefunded, refundEvent, cancellationToken);
+            await messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowRefunded, refundEvent, cancellationToken);
 
             _logger.LogInformation("Escrow {EscrowId} expired with {DepositCount} deposits auto-refunded",
                 agreement.EscrowId, (currentAgreement.Deposits ?? new List<EscrowDepositModel>()).Count);

@@ -81,8 +81,6 @@ x-lifecycle:
       isDeprecated: { type: boolean, required: true, description: "Whether this template is deprecated" }
       deprecatedAt: { type: string, format: date-time, nullable: true, description: "When this template was deprecated" }
       deprecationReason: { type: string, nullable: true, description: "Why this template was deprecated" }
-      createdAt: { type: string, format: date-time, required: true, description: "When this template was created" }
-      updatedAt: { type: string, format: date-time, nullable: true, description: "When this template was last updated" }
     sensitive:
     - contractTemplateId
 
@@ -98,10 +96,13 @@ components:
     # =========================================================================
 
     StatusGrantedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a status effect is successfully applied to an entity
       required:
+      - eventName
       - eventId
       - timestamp
       - entityId
@@ -112,14 +113,10 @@ components:
       - stackCount
       - grantResult
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the grant occurred
+          default: status.granted
+          description: 'Event type identifier: status.granted'
         entityId:
           type: string
           format: uuid
@@ -156,10 +153,13 @@ components:
           description: How the grant was resolved (granted, stacked, refreshed, replaced)
 
     StatusRemovedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a status effect is removed from an entity (any reason)
       required:
+      - eventName
       - eventId
       - timestamp
       - entityId
@@ -168,14 +168,10 @@ components:
       - statusInstanceId
       - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the removal occurred
+          default: status.removed
+          description: 'Event type identifier: status.removed'
         entityId:
           type: string
           format: uuid
@@ -196,10 +192,13 @@ components:
           description: Why the status was removed
 
     StatusExpiredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a status effect expires via TTL or contract timeout
       required:
+      - eventName
       - eventId
       - timestamp
       - entityId
@@ -207,14 +206,10 @@ components:
       - statusTemplateCode
       - statusInstanceId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the expiration occurred
+          default: status.expired
+          description: 'Event type identifier: status.expired'
         entityId:
           type: string
           format: uuid
@@ -232,10 +227,13 @@ components:
           description: Status instance that expired
 
     StatusStackedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a status effect stack count changes
       required:
+      - eventName
       - eventId
       - timestamp
       - entityId
@@ -245,14 +243,10 @@ components:
       - oldStackCount
       - newStackCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the stacking occurred
+          default: status.stacked
+          description: 'Event type identifier: status.stacked'
         entityId:
           type: string
           format: uuid
@@ -276,10 +270,13 @@ components:
           description: Stack count after this application
 
     StatusGrantFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a grant attempt is rejected
       required:
+      - eventName
       - eventId
       - timestamp
       - entityId
@@ -287,14 +284,10 @@ components:
       - statusTemplateCode
       - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the failure occurred
+          default: status.grant-failed
+          description: 'Event type identifier: status.grant-failed'
         entityId:
           type: string
           format: uuid
@@ -316,10 +309,13 @@ components:
           description: Existing status instance ID (set when ignore behavior prevents grant)
 
     StatusCleansedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when statuses are removed by category cleanse
       required:
+      - eventName
       - eventId
       - timestamp
       - entityId
@@ -328,14 +324,10 @@ components:
       - statusesRemoved
       - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the cleanse occurred
+          default: status.cleansed
+          description: 'Event type identifier: status.cleansed'
         entityId:
           type: string
           format: uuid

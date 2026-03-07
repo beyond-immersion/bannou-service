@@ -52,15 +52,15 @@ components:
           type: string
           nullable: true
           description: "Version of the schema used for this behavior"
-        createdAt: &id008
+        createdAt:
           type: string
           format: date-time
-          description: "Timestamp when the behavior was created"
-        updatedAt: &id009
+          description: Timestamp when the behavior was created
+        updatedAt:
           type: string
           format: date-time
           nullable: true
-          description: "Timestamp when the behavior was last updated"
+          description: Timestamp when the behavior was last updated
     BehaviorUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -89,8 +89,15 @@ components:
         assetId: *id005
         bytecodeSize: *id006
         schemaVersion: *id007
-        createdAt: *id008
-        updatedAt: *id009
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the behavior was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the behavior was last updated
         changedFields:
           type: array
           items:
@@ -123,8 +130,15 @@ components:
         assetId: *id005
         bytecodeSize: *id006
         schemaVersion: *id007
-        createdAt: *id008
-        updatedAt: *id009
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the behavior was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the behavior was last updated
         deletedReason:
           type: string
           nullable: true
@@ -148,30 +162,30 @@ components:
           type: string
           default: behavior.bundle.created
           description: 'Event type identifier: behavior.bundle.created'
-        bundleId: &id010
+        bundleId: &id008
           type: string
           description: "Unique identifier for the behavior bundle"
-        name: &id011
+        name: &id009
           type: string
           description: "Human-readable name of the bundle"
-        behaviorCount: &id012
+        behaviorCount: &id010
           type: integer
           format: int32
           description: "Number of behaviors in the bundle"
-        totalBytecodeSize: &id013
+        totalBytecodeSize: &id011
           type: integer
           format: int64
           nullable: true
           description: "Total size of all compiled bytecode in bytes"
-        createdAt: &id014
+        createdAt:
           type: string
           format: date-time
-          description: "Timestamp when the bundle was created"
-        updatedAt: &id015
+          description: Timestamp when the behavior bundle was created
+        updatedAt:
           type: string
           format: date-time
           nullable: true
-          description: "Timestamp when the bundle was last updated"
+          description: Timestamp when the behavior bundle was last updated
     BehaviorBundleUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -192,12 +206,19 @@ components:
           type: string
           default: behavior.bundle.updated
           description: 'Event type identifier: behavior.bundle.updated'
-        bundleId: *id010
-        name: *id011
-        behaviorCount: *id012
-        totalBytecodeSize: *id013
-        createdAt: *id014
-        updatedAt: *id015
+        bundleId: *id008
+        name: *id009
+        behaviorCount: *id010
+        totalBytecodeSize: *id011
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the behavior bundle was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the behavior bundle was last updated
         changedFields:
           type: array
           items:
@@ -222,12 +243,19 @@ components:
           type: string
           default: behavior.bundle.deleted
           description: 'Event type identifier: behavior.bundle.deleted'
-        bundleId: *id010
-        name: *id011
-        behaviorCount: *id012
-        totalBytecodeSize: *id013
-        createdAt: *id014
-        updatedAt: *id015
+        bundleId: *id008
+        name: *id009
+        behaviorCount: *id010
+        totalBytecodeSize: *id011
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the behavior bundle was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the behavior bundle was last updated
         deletedReason:
           type: string
           nullable: true

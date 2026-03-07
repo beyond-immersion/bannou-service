@@ -116,7 +116,7 @@ public partial class RelationshipCreatedEvent : BaseServiceEvent
     public object? Metadata { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the relationship record was created
+    /// Timestamp when the relationship was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -124,7 +124,7 @@ public partial class RelationshipCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the relationship record was last updated, null if never updated
+    /// Timestamp when the relationship was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -217,7 +217,7 @@ public partial class RelationshipUpdatedEvent : BaseServiceEvent
     public object? Metadata { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the relationship record was created
+    /// Timestamp when the relationship was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -225,7 +225,7 @@ public partial class RelationshipUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the relationship record was last updated, null if never updated
+    /// Timestamp when the relationship was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -326,7 +326,7 @@ public partial class RelationshipDeletedEvent : BaseServiceEvent
     public object? Metadata { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the relationship record was created
+    /// Timestamp when the relationship was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -334,7 +334,7 @@ public partial class RelationshipDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the relationship record was last updated, null if never updated
+    /// Timestamp when the relationship was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -470,9 +470,7 @@ public partial class RelationshipTypeCreatedEvent : BaseServiceEvent
     /// Timestamp when the relationship type was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -599,9 +597,7 @@ public partial class RelationshipTypeUpdatedEvent : BaseServiceEvent
     /// Timestamp when the relationship type was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -736,9 +732,7 @@ public partial class RelationshipTypeDeletedEvent : BaseServiceEvent
     /// Timestamp when the relationship type was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

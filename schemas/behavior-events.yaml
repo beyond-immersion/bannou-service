@@ -64,8 +64,6 @@ x-lifecycle:
       assetId: { type: string, required: true, description: "Identifier of the asset associated with this behavior" }
       bytecodeSize: { type: integer, format: int32, nullable: true, description: "Size of the compiled bytecode in bytes" }  # NRT: Optional property MUST be nullable
       schemaVersion: { type: string, nullable: true, description: "Version of the schema used for this behavior" }  # NRT: Optional property MUST be nullable
-      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the behavior was created" }
-      updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the behavior was last updated" }  # NRT: Optional property MUST be nullable
     sensitive: []  # No sensitive fields
 
   BehaviorBundle:
@@ -74,8 +72,6 @@ x-lifecycle:
       name: { type: string, required: true, description: "Human-readable name of the bundle" }
       behaviorCount: { type: integer, format: int32, required: true, description: "Number of behaviors in the bundle" }
       totalBytecodeSize: { type: integer, format: int64, nullable: true, description: "Total size of all compiled bytecode in bytes" }
-      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the bundle was created" }
-      updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the bundle was last updated" }
     events:
       - created
       - updated
@@ -91,10 +87,13 @@ paths: {}  # Events don't have HTTP paths
 components:
   schemas:
     CinematicExtensionAvailableEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a cinematic extension is available for injection at a continuation point.
       required:
+        - eventName
         - eventId
         - timestamp
         - characterId
@@ -102,14 +101,10 @@ components:
         - continuationPointName
         - extensionBytecode
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance.
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was generated.
+          default: behavior.cinematic-extension
+          description: 'Event type identifier: behavior.cinematic-extension'
         characterId:
           type: string
           format: uuid
@@ -136,23 +131,22 @@ components:
           description: Epoch milliseconds when this extension expires. Null if no expiration.
 
     BehaviorCompilationFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when ABML compilation fails. Used for monitoring and alerting.
       required:
+        - eventName
         - eventId
         - timestamp
         - errorCount
         - errors
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance.
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was generated.
+          default: behavior.compilation-failed
+          description: 'Event type identifier: behavior.compilation-failed'
         behaviorName:
           type: string
           nullable: true
@@ -172,23 +166,22 @@ components:
           description: Hash of the ABML content for deduplication.
 
     GoapPlanGeneratedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when the GOAP planner generates a new plan. Useful for debugging and analytics.
       required:
+        - eventName
         - eventId
         - timestamp
         - goalId
         - planStepCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance.
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was generated.
+          default: behavior.goap-plan-generated
+          description: 'Event type identifier: behavior.goap-plan-generated'
         actorId:
           type: string
           format: uuid

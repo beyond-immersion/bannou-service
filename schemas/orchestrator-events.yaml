@@ -50,22 +50,21 @@ components:
     # Health Check Events
     # =========================================================================
     OrchestratorHealthPingEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Simple health ping event published to verify pub/sub path is active. Used by infrastructure health checks.
       required:
+        - eventName
         - eventId
         - timestamp
         - status
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was created
+          default: orchestrator.health-ping
+          description: 'Event type identifier: orchestrator.health-ping'
         status:
           type: string
           enum: [Ok, Degraded, Checking]
@@ -76,23 +75,22 @@ components:
     # Deployment Events
     # =========================================================================
     DeploymentEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when deployment state changes. Topic bannou.deployment-events.
       required:
+        - eventName
         - eventId
         - timestamp
         - action
         - deploymentId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event occurred
+          default: bannou.deployment-events
+          description: 'Event type identifier: bannou.deployment-events'
         action:
           $ref: 'orchestrator-api.yaml#/components/schemas/DeploymentAction'
           description: Type of deployment action that triggered this event
@@ -122,23 +120,22 @@ components:
     # Service Restart Events
     # =========================================================================
     ServiceRestartEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a service is restarted. Topic bannou.service-lifecycle.
       required:
+        - eventName
         - eventId
         - timestamp
         - serviceName
         - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event occurred
+          default: bannou.service-lifecycle
+          description: 'Event type identifier: bannou.service-lifecycle'
         serviceName:
           type: string
           description: Name of the service that was restarted
@@ -159,23 +156,22 @@ components:
     # Configuration Change Events
     # =========================================================================
     ConfigurationChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when configuration or secrets change. All containers receive this via RabbitMQ. Plugins decide if they care based on changedKeys prefixes and request restart if needed. Topic bannou.configuration-events.
       required:
+        - eventName
         - eventId
         - timestamp
         - configVersion
         - changedKeys
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When this configuration change occurred
+          default: bannou.configuration-events
+          description: 'Event type identifier: bannou.configuration-events'
         configVersion:
           type: integer
           description: Monotonically increasing version number
@@ -189,10 +185,13 @@ components:
     # Processor Pool Events
     # =========================================================================
     ProcessorReleasedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a processor is released back to the pool. Used by the Analytics service for pool utilization tracking. Topic orchestrator.processor.released.
       required:
+        - eventName
         - eventId
         - timestamp
         - poolType
@@ -200,14 +199,10 @@ components:
         - success
         - leaseDurationMs
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When the release occurred
+          default: orchestrator.processor.released
+          description: 'Event type identifier: orchestrator.processor.released'
         poolType:
           type: string
           description: The pool type the processor belongs to (e.g., "actor-shared", "asset-image")

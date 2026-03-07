@@ -121,8 +121,6 @@ x-lifecycle:
       category: { $ref: 'gardener-api.yaml#/components/schemas/ScenarioCategory', required: true, description: "Primary gameplay category" }
       connectivityMode: { $ref: 'gardener-api.yaml#/components/schemas/ConnectivityMode', required: true, description: "World connectivity mode" }
       status: { $ref: 'gardener-api.yaml#/components/schemas/TemplateStatus', required: true, description: "Current lifecycle status" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
-      updatedAt: { type: string, format: date-time, required: true, description: "When the template was last updated" }
     sensitive: [content]
 
 paths: {}  # Events don't have HTTP paths
@@ -137,24 +135,23 @@ components:
     # =========================================================================
 
     GardenerGardenEnteredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player enters the garden
       required:
+        - eventName
         - eventId
         - timestamp
         - webSocketSessionId
         - seedId
         - gardenInstanceId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.garden.entered
+          description: 'Event type identifier: gardener.garden.entered'
         webSocketSessionId:
           type: string
           format: uuid
@@ -169,24 +166,23 @@ components:
           description: Created garden instance ID
 
     GardenerGardenLeftEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player leaves the garden
       required:
+        - eventName
         - eventId
         - timestamp
         - webSocketSessionId
         - gardenInstanceId
         - sessionDurationSeconds
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.garden.left
+          description: 'Event type identifier: gardener.garden.left'
         webSocketSessionId:
           type: string
           format: uuid
@@ -201,10 +197,13 @@ components:
           description: Total garden session duration in seconds
 
     GardenerPoiSpawnedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a POI spawns in a garden instance
       required:
+        - eventName
         - eventId
         - timestamp
         - gardenInstanceId
@@ -212,14 +211,10 @@ components:
         - poiType
         - scenarioTemplateId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.poi.spawned
+          description: 'Event type identifier: gardener.poi.spawned'
         gardenInstanceId:
           type: string
           format: uuid
@@ -237,24 +232,23 @@ components:
           description: Scenario template this POI leads to
 
     GardenerPoiEnteredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player enters a POI or triggers a scenario from it
       required:
+        - eventName
         - eventId
         - timestamp
         - webSocketSessionId
         - poiId
         - scenarioTemplateId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.poi.entered
+          description: 'Event type identifier: gardener.poi.entered'
         webSocketSessionId:
           type: string
           format: uuid
@@ -269,24 +263,23 @@ components:
           description: Scenario template associated with the POI
 
     GardenerPoiDeclinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player declines a POI
       required:
+        - eventName
         - eventId
         - timestamp
         - webSocketSessionId
         - poiId
         - scenarioTemplateId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.poi.declined
+          description: 'Event type identifier: gardener.poi.declined'
         webSocketSessionId:
           type: string
           format: uuid
@@ -301,23 +294,22 @@ components:
           description: Scenario template that was declined
 
     GardenerPoiExpiredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a POI expires without player interaction
       required:
+        - eventName
         - eventId
         - timestamp
         - gardenInstanceId
         - poiId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.poi.expired
+          description: 'Event type identifier: gardener.poi.expired'
         gardenInstanceId:
           type: string
           format: uuid
@@ -328,10 +320,13 @@ components:
           description: POI that expired
 
     GardenerScenarioStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scenario instance is created
       required:
+        - eventName
         - eventId
         - timestamp
         - scenarioInstanceId
@@ -340,14 +335,10 @@ components:
         - webSocketSessionId
         - seedId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.scenario.started
+          description: 'Event type identifier: gardener.scenario.started'
         scenarioInstanceId:
           type: string
           format: uuid
@@ -370,10 +361,13 @@ components:
           description: Active seed for the entering player
 
     GardenerScenarioCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scenario is completed with growth awards
       required:
+        - eventName
         - eventId
         - timestamp
         - scenarioInstanceId
@@ -381,14 +375,10 @@ components:
         - webSocketSessionId
         - growthAwarded
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.scenario.completed
+          description: 'Event type identifier: gardener.scenario.completed'
         scenarioInstanceId:
           type: string
           format: uuid
@@ -409,23 +399,22 @@ components:
           description: Growth awarded per domain
 
     GardenerScenarioAbandonedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scenario is abandoned
       required:
+        - eventName
         - eventId
         - timestamp
         - scenarioInstanceId
         - webSocketSessionId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.scenario.abandoned
+          description: 'Event type identifier: gardener.scenario.abandoned'
         scenarioInstanceId:
           type: string
           format: uuid
@@ -436,10 +425,13 @@ components:
           description: WebSocket session ID of the player that abandoned the scenario
 
     GardenerScenarioChainedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player chains from one scenario to another
       required:
+        - eventName
         - eventId
         - timestamp
         - previousScenarioInstanceId
@@ -447,14 +439,10 @@ components:
         - webSocketSessionId
         - chainDepth
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.scenario.chained
+          description: 'Event type identifier: gardener.scenario.chained'
         previousScenarioInstanceId:
           type: string
           format: uuid
@@ -472,10 +460,13 @@ components:
           description: Current chain depth after chaining
 
     GardenerBondEnteredTogetherEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when bonded players enter a scenario together
       required:
+        - eventName
         - eventId
         - timestamp
         - bondId
@@ -483,14 +474,10 @@ components:
         - scenarioTemplateId
         - participantSessionIds
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.bond.entered-together
+          description: 'Event type identifier: gardener.bond.entered-together'
         bondId:
           type: string
           format: uuid
@@ -511,23 +498,22 @@ components:
           description: WebSocket session IDs of bond participants entering together
 
     GardenerPhaseChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when the deployment phase changes
       required:
+        - eventName
         - eventId
         - timestamp
         - previousPhase
         - newPhase
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: gardener.phase.changed
+          description: 'Event type identifier: gardener.phase.changed'
         previousPhase:
           $ref: 'gardener-api.yaml#/components/schemas/DeploymentPhase'
           description: Phase before the change

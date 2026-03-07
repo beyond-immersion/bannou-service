@@ -464,7 +464,6 @@ This document lists all events defined in Bannou's event schemas.
 | `MapIngestEvent` | Custom | `map-ingest` | Event published by authority to ingest topic for h... |
 | `MapObjectsChangedEvent` | Custom | `map-objects-changed` | Published when metadata objects change in a map. |
 | `MapSnapshotEvent` | Custom | `map-snapshot` | Published when a full snapshot is available. |
-| `MapUnauthorizedPublishWarning` | Custom | `map-unauthorized-publish-warning` | Published when a non-authority attempts to publish... |
 | `MapUpdatedEvent` | Lifecycle (Updated) | `map.updated` | Published when map layer data changes. |
 | `MappingAuthorityExpiredEvent` | Expiration | `mapping-authority.expired` | Published when authority expires (detected during ... |
 | `MappingAuthorityGrantedEvent` | Custom | `mapping-authority-granted` | Published when authority is granted over a mapping... |

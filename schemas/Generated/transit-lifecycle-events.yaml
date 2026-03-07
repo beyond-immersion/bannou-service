@@ -31,8 +31,8 @@ components:
       - fromRealmId
       - toRealmId
       - crossRealm
-      - createdAt
       - modifiedAt
+      - createdAt
       properties:
         eventName:
           type: string
@@ -118,14 +118,19 @@ components:
         crossRealm: &id020
           type: boolean
           description: "Whether this connection spans realm boundaries"
-        createdAt: &id021
-          type: string
-          format: date-time
-          description: "Timestamp when the connection was created"
-        modifiedAt: &id022
+        modifiedAt: &id021
           type: string
           format: date-time
           description: "Timestamp when the connection was last modified"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the transit connection was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the transit connection was last updated
     TransitConnectionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -150,8 +155,8 @@ components:
       - fromRealmId
       - toRealmId
       - crossRealm
-      - createdAt
       - modifiedAt
+      - createdAt
       - changedFields
       properties:
         eventName:
@@ -178,8 +183,16 @@ components:
         fromRealmId: *id018
         toRealmId: *id019
         crossRealm: *id020
-        createdAt: *id021
-        modifiedAt: *id022
+        modifiedAt: *id021
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the transit connection was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the transit connection was last updated
         changedFields:
           type: array
           items:
@@ -209,8 +222,8 @@ components:
       - fromRealmId
       - toRealmId
       - crossRealm
-      - createdAt
       - modifiedAt
+      - createdAt
       properties:
         eventName:
           type: string
@@ -236,8 +249,16 @@ components:
         fromRealmId: *id018
         toRealmId: *id019
         crossRealm: *id020
-        createdAt: *id021
-        modifiedAt: *id022
+        modifiedAt: *id021
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the transit connection was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the transit connection was last updated
         deletedReason:
           type: string
           nullable: true

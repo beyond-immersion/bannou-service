@@ -59,6 +59,20 @@ public partial class PersonalityCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     public int Version { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the personality was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the personality was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -89,6 +103,20 @@ public partial class PersonalityUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     public int Version { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the personality was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the personality was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -130,6 +158,20 @@ public partial class PersonalityDeletedEvent : BaseServiceEvent
     public int Version { get; set; } = default!;
 
     /// <summary>
+    /// Timestamp when the personality was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the personality was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
@@ -166,6 +208,20 @@ public partial class CombatPreferencesCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     public int Version { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the combat preferences was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the combat preferences was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -196,6 +252,20 @@ public partial class CombatPreferencesUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     public int Version { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the combat preferences was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the combat preferences was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -235,6 +305,20 @@ public partial class CombatPreferencesDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     public int Version { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the combat preferences was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the combat preferences was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

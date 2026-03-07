@@ -108,12 +108,18 @@ public partial class ChatRoomCreatedEvent : BaseServiceEvent
     public bool IsArchived { get; set; } = default!;
 
     /// <summary>
-    /// When the room was created
+    /// Timestamp when the chat room was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the chat room was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -194,12 +200,18 @@ public partial class ChatRoomUpdatedEvent : BaseServiceEvent
     public bool IsArchived { get; set; } = default!;
 
     /// <summary>
-    /// When the room was created
+    /// Timestamp when the chat room was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the chat room was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -288,12 +300,18 @@ public partial class ChatRoomDeletedEvent : BaseServiceEvent
     public bool IsArchived { get; set; } = default!;
 
     /// <summary>
-    /// When the room was created
+    /// Timestamp when the chat room was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the chat room was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")
@@ -374,12 +392,18 @@ public partial class ChatRoomTypeCreatedEvent : BaseServiceEvent
     public RoomTypeStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// When the room type was registered
+    /// Timestamp when the chat room type was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the chat room type was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -454,12 +478,18 @@ public partial class ChatRoomTypeUpdatedEvent : BaseServiceEvent
     public RoomTypeStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// When the room type was registered
+    /// Timestamp when the chat room type was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the chat room type was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -542,12 +572,18 @@ public partial class ChatRoomTypeDeletedEvent : BaseServiceEvent
     public RoomTypeStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// When the room type was registered
+    /// Timestamp when the chat room type was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the chat room type was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

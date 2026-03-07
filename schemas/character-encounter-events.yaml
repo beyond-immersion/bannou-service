@@ -37,6 +37,8 @@ components:
     # ==========================================================================
 
     EncounterRecordedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a new encounter is recorded between characters
@@ -44,6 +46,7 @@ components:
         name: encounter_recorded
         topic: encounter.recorded
       required:
+        - eventName
         - eventId
         - timestamp
         - encounterId
@@ -53,14 +56,10 @@ components:
         - participantIds
         - encounterTimestamp
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: encounter.recorded
+          description: 'Event type identifier: encounter.recorded'
         encounterId:
           type: string
           format: uuid
@@ -97,6 +96,8 @@ components:
           description: In-game time when the encounter occurred
 
     EncounterMemoryFadedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character's memory of an encounter fades below threshold
@@ -104,6 +105,7 @@ components:
         name: encounter_memory_faded
         topic: encounter.memory.faded
       required:
+        - eventName
         - eventId
         - timestamp
         - encounterId
@@ -113,14 +115,10 @@ components:
         - newStrength
         - fadeThreshold
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: encounter.memory.faded
+          description: 'Event type identifier: encounter.memory.faded'
         encounterId:
           type: string
           format: uuid
@@ -153,6 +151,8 @@ components:
           description: The threshold below which memories are considered faded
 
     EncounterMemoryRefreshedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character's memory of an encounter is strengthened
@@ -164,6 +164,7 @@ components:
         resource_id_field: characterId
         source_type: character-encounter
       required:
+        - eventName
         - eventId
         - timestamp
         - encounterId
@@ -172,14 +173,10 @@ components:
         - previousStrength
         - newStrength
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: encounter.memory.refreshed
+          description: 'Event type identifier: encounter.memory.refreshed'
         encounterId:
           type: string
           format: uuid
@@ -206,6 +203,8 @@ components:
           description: Memory strength after refresh
 
     EncounterPerspectiveUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character's perspective on an encounter is updated
@@ -214,20 +213,17 @@ components:
         resource_id_field: characterId
         source_type: character-encounter
       required:
+        - eventName
         - eventId
         - timestamp
         - encounterId
         - characterId
         - perspectiveId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: encounter.perspective.updated
+          description: 'Event type identifier: encounter.perspective.updated'
         encounterId:
           type: string
           format: uuid
@@ -264,24 +260,23 @@ components:
           description: New sentiment shift (if changed)
 
     EncounterDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an encounter is deleted
       required:
+        - eventName
         - eventId
         - timestamp
         - encounterId
         - participantIds
         - perspectivesDeleted
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: encounter.deleted
+          description: 'Event type identifier: encounter.deleted'
         encounterId:
           type: string
           format: uuid

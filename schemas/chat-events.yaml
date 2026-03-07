@@ -120,7 +120,6 @@ x-lifecycle:
       participantCount: { type: integer, required: true, description: "Current number of participants in the room" }
       maxParticipants: { type: integer, required: true, description: "Maximum allowed participants in the room" }
       isArchived: { type: boolean, required: true, description: "Whether the room has been archived via Resource" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the room was created" }
     sensitive: [metadata]
   ChatRoomType:
     model:
@@ -131,7 +130,6 @@ x-lifecycle:
       persistenceMode: { $ref: 'chat-api.yaml#/components/schemas/PersistenceMode', required: true, description: "Whether messages are ephemeral (Redis) or persistent (MySQL)" }
       allowAnonymousSenders: { type: boolean, required: true, description: "Whether messages can be sent without sender identity" }
       status: { $ref: 'chat-api.yaml#/components/schemas/RoomTypeStatus', required: true, description: "Current lifecycle status of the room type" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the room type was registered" }
     sensitive: [validatorConfig, metadata]
 
 paths: {}  # Events don't have HTTP paths
@@ -147,10 +145,13 @@ components:
     # =========================================================================
 
     ChatParticipantJoinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a participant joins a chat room
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
@@ -159,14 +160,10 @@ components:
         - role
         - currentCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the participant joined
+          default: chat.participant.joined
+          description: 'Event type identifier: chat.participant.joined'
         roomId:
           type: string
           format: uuid
@@ -199,24 +196,23 @@ components:
           description: Total participant count after this join
 
     ChatParticipantLeftEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a participant leaves a chat room
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
         - participantSessionId
         - remainingCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the participant left
+          default: chat.participant.left
+          description: 'Event type identifier: chat.participant.left'
         roomId:
           type: string
           format: uuid
@@ -230,24 +226,23 @@ components:
           description: Remaining participant count after this departure
 
     ChatParticipantKickedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a participant is kicked from a chat room
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
         - targetSessionId
         - kickedBySessionId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the kick occurred
+          default: chat.participant.kicked
+          description: 'Event type identifier: chat.participant.kicked'
         roomId:
           type: string
           format: uuid
@@ -266,24 +261,23 @@ components:
           description: Optional reason provided for the kick
 
     ChatParticipantBannedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a participant is banned from a chat room
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
         - targetSessionId
         - bannedBySessionId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the ban was applied
+          default: chat.participant.banned
+          description: 'Event type identifier: chat.participant.banned'
         roomId:
           type: string
           format: uuid
@@ -306,24 +300,23 @@ components:
           description: Ban duration in minutes (null for permanent ban)
 
     ChatParticipantMutedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a participant is muted in a chat room
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
         - targetSessionId
         - mutedBySessionId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the mute was applied
+          default: chat.participant.muted
+          description: 'Event type identifier: chat.participant.muted'
         roomId:
           type: string
           format: uuid
@@ -342,24 +335,23 @@ components:
           description: Mute duration in minutes (null for permanent mute)
 
     ChatParticipantUnmutedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a participant is unmuted in a chat room
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
         - targetSessionId
         - unmutedBySessionId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the unmute occurred
+          default: chat.participant.unmuted
+          description: 'Event type identifier: chat.participant.unmuted'
         roomId:
           type: string
           format: uuid
@@ -374,10 +366,13 @@ components:
           description: Connect session ID of the moderator who removed the mute
 
     ChatParticipantRoleChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a participant's role changes (manual or automatic owner-leave promotion)
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
@@ -385,14 +380,10 @@ components:
         - oldRole
         - newRole
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the role change occurred
+          default: chat.participant.role-changed
+          description: 'Event type identifier: chat.participant.role-changed'
         roomId:
           type: string
           format: uuid
@@ -414,24 +405,23 @@ components:
           description: Session ID of who changed the role (null for automatic promotion)
 
     ChatParticipantUnbannedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a participant is unbanned from a chat room
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
         - targetSessionId
         - unbannedBySessionId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the unban occurred
+          default: chat.participant.unbanned
+          description: 'Event type identifier: chat.participant.unbanned'
         roomId:
           type: string
           format: uuid
@@ -450,6 +440,8 @@ components:
     # =========================================================================
 
     ChatMessageSentEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: >
@@ -457,6 +449,7 @@ components:
         Text and custom content are NOT included. Sentiment rooms include
         sentimentCategory and sentimentIntensity. Emoji rooms include emojiCode.
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
@@ -464,14 +457,10 @@ components:
         - messageId
         - messageFormat
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the message was sent
+          default: chat.message.sent
+          description: 'Event type identifier: chat.message.sent'
         roomId:
           type: string
           format: uuid
@@ -513,24 +502,23 @@ components:
           description: Emoji code string (populated only for Emoji format messages)
 
     ChatMessageDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a message is deleted from a chat room
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
         - messageId
         - deletedBySessionId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the message was deleted
+          default: chat.message.deleted
+          description: 'Event type identifier: chat.message.deleted'
         roomId:
           type: string
           format: uuid
@@ -549,23 +537,22 @@ components:
     # =========================================================================
 
     ChatRoomLockedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a chat room is locked (contract-triggered or manual)
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
         - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the room was locked
+          default: chat.room.locked
+          description: 'Event type identifier: chat.room.locked'
         roomId:
           type: string
           format: uuid
@@ -575,23 +562,22 @@ components:
           description: Reason the room was locked
 
     ChatRoomArchivedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a chat room is archived via Resource service
       required:
+        - eventName
         - eventId
         - timestamp
         - roomId
         - archiveId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the room was archived
+          default: chat.room.archived
+          description: 'Event type identifier: chat.room.archived'
         roomId:
           type: string
           format: uuid

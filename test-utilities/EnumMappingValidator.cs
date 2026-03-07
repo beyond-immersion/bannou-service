@@ -97,6 +97,61 @@ public static class EnumMappingValidator
     }
 
     /// <summary>
+    /// Validates a superset-to-subset enum mapping that uses
+    /// <see cref="EnumMapping.MapByNameOrDefault{TSource, TTarget}"/>. Asserts:
+    /// <list type="number">
+    ///   <item>Every value in <typeparamref name="TSubset"/> has a matching name in <typeparamref name="TSuperset"/></item>
+    ///   <item>The set of extra superset values (those not in subset) matches <paramref name="expectedExtras"/> exactly</item>
+    /// </list>
+    /// If the SDK adds a new value not listed in <paramref name="expectedExtras"/>, the test fails —
+    /// forcing a decision: add the value to the schema or add it to the expected extras list.
+    /// If a previously-extra value is added to the schema, the test also fails — keeping the list clean.
+    /// </summary>
+    /// <typeparam name="TSuperset">The larger enum (e.g., SDK enum with extra values).</typeparam>
+    /// <typeparam name="TSubset">The smaller enum (e.g., schema-generated, all values exist in superset).</typeparam>
+    /// <param name="expectedExtras">
+    /// The superset value names that intentionally have no match in the subset and will map to the fallback.
+    /// </param>
+    public static void AssertSupersetToSubsetMapping<TSuperset, TSubset>(params string[] expectedExtras)
+        where TSuperset : struct, Enum
+        where TSubset : struct, Enum
+    {
+        // 1. Verify subset relationship (every subset value exists in superset)
+        AssertSubset<TSubset, TSuperset>();
+
+        // 2. Find actual extra values in superset
+        var subsetNames = new HashSet<string>(Enum.GetNames<TSubset>());
+        var actualExtras = Enum.GetNames<TSuperset>()
+            .Where(name => !subsetNames.Contains(name))
+            .ToHashSet();
+
+        var expectedExtrasSet = new HashSet<string>(expectedExtras);
+
+        // 3. Check for unexpected extras (SDK added values we didn't know about)
+        var unexpectedExtras = actualExtras.Except(expectedExtrasSet).OrderBy(n => n).ToList();
+        if (unexpectedExtras.Count > 0)
+        {
+            Assert.Fail(
+                $"Superset {typeof(TSuperset).Name} has new values not in " +
+                $"{typeof(TSubset).Name} and not in expectedExtras: " +
+                $"[{string.Join(", ", unexpectedExtras)}]. " +
+                $"Either add these to {typeof(TSubset).Name}'s schema or " +
+                $"include them in expectedExtras.");
+        }
+
+        // 4. Check for stale expected extras (values that now exist in subset or were removed from superset)
+        var staleExtras = expectedExtrasSet.Except(actualExtras).OrderBy(n => n).ToList();
+        if (staleExtras.Count > 0)
+        {
+            Assert.Fail(
+                $"expectedExtras contains values that are no longer extras in " +
+                $"{typeof(TSuperset).Name} → {typeof(TSubset).Name}: " +
+                $"[{string.Join(", ", staleExtras)}]. " +
+                $"Remove them from expectedExtras.");
+        }
+    }
+
+    /// <summary>
     /// Asserts that a switch expression or mapping function handles every value of
     /// <typeparamref name="TSource"/> without throwing. Use this for lossy mappings
     /// where source values intentionally map to different target names (e.g.,

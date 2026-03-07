@@ -116,6 +116,20 @@ public partial class CalendarTemplateCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eraLabels")]
     public System.Collections.Generic.ICollection<EraLabel>? EraLabels { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the calendar template was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the calendar template was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -202,6 +216,20 @@ public partial class CalendarTemplateUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eraLabels")]
     public System.Collections.Generic.ICollection<EraLabel>? EraLabels { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the calendar template was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the calendar template was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -299,6 +327,20 @@ public partial class CalendarTemplateDeletedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<EraLabel>? EraLabels { get; set; } = default!;
 
     /// <summary>
+    /// Timestamp when the calendar template was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the calendar template was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
@@ -374,6 +416,20 @@ public partial class RealmConfigCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm config was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the realm config was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -443,6 +499,20 @@ public partial class RealmConfigUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the realm config was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the realm config was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -521,6 +591,20 @@ public partial class RealmConfigDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the realm config was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the realm config was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

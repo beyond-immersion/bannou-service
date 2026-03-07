@@ -94,8 +94,6 @@ x-lifecycle:
       deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the template was deprecated" }
       deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
       migrationTargetId: { type: string, format: uuid, nullable: true, description: "Template ID to migrate existing instances to" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
-      updatedAt: { type: string, format: date-time, nullable: true, description: "When the template was last modified" }
     sensitive: []
 
   ItemInstance:
@@ -115,7 +113,6 @@ x-lifecycle:
       customName: { type: string, nullable: true, description: "Player-assigned custom name for this instance" }
       originType: { $ref: 'item-api.yaml#/components/schemas/ItemOriginType', required: true, description: "How this item instance was created" }
       originId: { type: string, format: uuid, nullable: true, description: "Source entity ID for the origin (e.g., crafting recipe, vendor)" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the instance was created" }
       modifiedAt: { type: string, format: date-time, nullable: true, description: "When the instance was last modified" }
     sensitive: []
 
@@ -128,10 +125,13 @@ components:
     # =========================================================================
 
     ItemInstanceModifiedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when an item instance is modified (durability, stats, name changes)
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - instanceId
@@ -141,14 +141,10 @@ components:
       - originType
       - createdAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: item.instance.modified
+          description: 'Event type identifier: item.instance.modified'
         instanceId:
           type: string
           format: uuid
@@ -184,10 +180,13 @@ components:
           description: When the instance was modified
 
     ItemInstanceDestroyedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when an item instance is permanently destroyed
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - instanceId
@@ -197,14 +196,10 @@ components:
       - originType
       - createdAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: item.instance.destroyed
+          description: 'Event type identifier: item.instance.destroyed'
         instanceId:
           type: string
           format: uuid
@@ -244,10 +239,13 @@ components:
     # =========================================================================
 
     ItemInstanceBoundEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when an item is bound to a character (soulbound)
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - instanceId
@@ -257,14 +255,10 @@ components:
       - characterId
       - bindType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: item.instance.bound
+          description: 'Event type identifier: item.instance.bound'
         instanceId:
           type: string
           format: uuid
@@ -289,10 +283,13 @@ components:
           description: Type of binding
 
     ItemInstanceUnboundEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when an item binding is removed (admin action, expiration)
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - instanceId
@@ -302,14 +299,10 @@ components:
       - previousCharacterId
       - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: item.instance.unbound
+          description: 'Event type identifier: item.instance.unbound'
         instanceId:
           type: string
           format: uuid
@@ -343,24 +336,23 @@ components:
     # =========================================================================
 
     ItemUsedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Published when items are successfully used, batched with deduplication by templateId+userId
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - batchId
       - uses
       - totalCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When this batched event was published
+          default: item.used
+          description: 'Event type identifier: item.used'
         batchId:
           type: string
           format: uuid
@@ -375,24 +367,23 @@ components:
           description: Total number of uses in this deduplication window including any deduplicated entries
 
     ItemUseFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Published when item use attempts fail, batched with deduplication by templateId+userId
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - batchId
       - failures
       - totalCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When this batched event was published
+          default: item.use-failed
+          description: 'Event type identifier: item.use-failed'
         batchId:
           type: string
           format: uuid
@@ -503,10 +494,13 @@ components:
     # =========================================================================
 
     ItemUseStepCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Published when a multi-step item use milestone is completed
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - instanceId
@@ -519,14 +513,10 @@ components:
       - isComplete
       - consumed
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: item.use-step-completed
+          description: 'Event type identifier: item.use-step-completed'
         instanceId:
           type: string
           format: uuid
@@ -566,10 +556,13 @@ components:
           description: Whether item was consumed
 
     ItemUseStepFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Published when a multi-step item use milestone fails
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - instanceId
@@ -581,14 +574,10 @@ components:
       - milestoneCode
       - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: item.use-step-failed
+          description: 'Event type identifier: item.use-step-failed'
         instanceId:
           type: string
           format: uuid

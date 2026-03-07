@@ -3365,4 +3365,45 @@ public class RhythmicDensityAnalyzerTests
         Assert.Equal(3, (int)SdkDensityCategory.Dense);
         Assert.Equal(4, (int)SdkDensityCategory.VeryDense);
     }
+
+    #region Enum Boundary Mapping Validation
+
+    /// <summary>
+    /// Validates ChordQuality superset mapping: schema is subset of SDK,
+    /// SDK extras (MinorMajor7, Power) are expected and map to fallback.
+    /// Fails if SDK adds new values not in this list or schema.
+    /// </summary>
+    [Fact]
+    public void ChordQuality_SupersetMapping_IsValid() =>
+        EnumMappingValidator.AssertSupersetToSubsetMapping<SdkChordQuality, ChordQuality>(
+            "MinorMajor7", "Power");
+
+    /// <summary>
+    /// Validates ContourShape superset mapping: schema is subset of SDK,
+    /// SDK extras (InvertedArch, Free) are expected and map to fallback.
+    /// Fails if SDK adds new values not in this list or schema.
+    /// </summary>
+    [Fact]
+    public void ContourShape_SupersetMapping_IsValid() =>
+        EnumMappingValidator.AssertSupersetToSubsetMapping<SdkContourShape, ContourShape>(
+            "InvertedArch", "Free");
+
+    /// <summary>
+    /// Validates that the lossy KeyMode -> ModeType switch handles all KeyMode values.
+    /// This is a lossy mapping (Aeolian -> Minor) so MapByName cannot be used.
+    /// </summary>
+    [Fact]
+    public void KeyMode_ToModeType_SwitchCoversAllValues() =>
+        EnumMappingValidator.AssertSwitchCoversAllValues<KeyMode>(
+            mode => MusicService.TestableToModeType(mode));
+
+    /// <summary>
+    /// Validates that the ModeType -> KeyMode switch handles all ModeType values.
+    /// </summary>
+    [Fact]
+    public void ModeType_ToKeyMode_SwitchCoversAllValues() =>
+        EnumMappingValidator.AssertSwitchCoversAllValues<SdkModeType>(
+            mode => MusicService.TestableToApiMode(mode));
+
+    #endregion
 }

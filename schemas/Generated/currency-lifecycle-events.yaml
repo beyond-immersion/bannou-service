@@ -48,15 +48,20 @@ components:
         isActive: &id006
           type: boolean
           description: "Whether the definition is active"
-        createdAt: &id007
-          type: string
-          format: date-time
-          description: "When the definition was created"
-        modifiedAt: &id008
+        modifiedAt: &id007
           type: string
           format: date-time
           nullable: true
           description: "When the definition was last modified"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the currency definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the currency definition was last updated
     CurrencyDefinitionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -86,8 +91,16 @@ components:
         scope: *id004
         precision: *id005
         isActive: *id006
-        createdAt: *id007
-        modifiedAt: *id008
+        modifiedAt: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the currency definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the currency definition was last updated
         changedFields:
           type: array
           items:
@@ -121,8 +134,16 @@ components:
         scope: *id004
         precision: *id005
         isActive: *id006
-        createdAt: *id007
-        modifiedAt: *id008
+        modifiedAt: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the currency definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the currency definition was last updated
         deletedReason:
           type: string
           nullable: true
@@ -147,29 +168,34 @@ components:
           type: string
           default: currency.wallet.created
           description: 'Event type identifier: currency.wallet.created'
-        walletId: &id009
+        walletId: &id008
           type: string
           format: uuid
           description: "Unique wallet identifier"
-        ownerId: &id010
+        ownerId: &id009
           type: string
           format: uuid
           description: "Owner entity ID"
-        ownerType: &id011
+        ownerType: &id010
           $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Owner entity type"
-        realmId: &id012
+        realmId: &id011
           type: string
           format: uuid
           nullable: true
           description: "Realm ID for realm-scoped wallets"
-        status: &id013
+        status: &id012
           $ref: ../currency-api.yaml#/components/schemas/WalletStatus
           description: "Wallet status"
-        createdAt: &id014
+        createdAt:
           type: string
           format: date-time
-          description: "When the wallet was created"
+          description: Timestamp when the currency wallet was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the currency wallet was last updated
     CurrencyWalletUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -191,12 +217,20 @@ components:
           type: string
           default: currency.wallet.updated
           description: 'Event type identifier: currency.wallet.updated'
-        walletId: *id009
-        ownerId: *id010
-        ownerType: *id011
-        realmId: *id012
-        status: *id013
-        createdAt: *id014
+        walletId: *id008
+        ownerId: *id009
+        ownerType: *id010
+        realmId: *id011
+        status: *id012
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the currency wallet was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the currency wallet was last updated
         changedFields:
           type: array
           items:
@@ -222,12 +256,20 @@ components:
           type: string
           default: currency.wallet.deleted
           description: 'Event type identifier: currency.wallet.deleted'
-        walletId: *id009
-        ownerId: *id010
-        ownerType: *id011
-        realmId: *id012
-        status: *id013
-        createdAt: *id014
+        walletId: *id008
+        ownerId: *id009
+        ownerType: *id010
+        realmId: *id011
+        status: *id012
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the currency wallet was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the currency wallet was last updated
         deletedReason:
           type: string
           nullable: true

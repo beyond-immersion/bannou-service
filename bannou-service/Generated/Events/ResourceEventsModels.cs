@@ -25,6 +25,21 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -36,8 +51,16 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ResourceCleanupCallbackFailedEvent
+public partial class ResourceCleanupCallbackFailedEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: resource.cleanup.callback-failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.cleanup.callback-failed";
 
     /// <summary>
     /// Type of resource being cleaned up (opaque identifier)
@@ -91,14 +114,6 @@ public partial class ResourceCleanupCallbackFailedEvent
     [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
     public string? ErrorMessage { get; set; } = default!;
 
-    /// <summary>
-    /// When the failure occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -107,8 +122,16 @@ public partial class ResourceCleanupCallbackFailedEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ResourceGracePeriodStartedEvent
+public partial class ResourceGracePeriodStartedEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: resource.grace-period.started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.grace-period.started";
 
     /// <summary>
     /// Type of resource entering grace period (opaque identifier)
@@ -134,14 +157,6 @@ public partial class ResourceGracePeriodStartedEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset GracePeriodEndsAt { get; set; } = default!;
 
-    /// <summary>
-    /// When the grace period started
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -150,24 +165,16 @@ public partial class ResourceGracePeriodStartedEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ResourceCompressedEvent
+public partial class ResourceCompressedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Event type identifier: resource.compressed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the compression completed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "resource.compressed";
 
     /// <summary>
     /// Type of resource compressed (opaque identifier)
@@ -213,24 +220,16 @@ public partial class ResourceCompressedEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ResourceCompressCallbackFailedEvent
+public partial class ResourceCompressCallbackFailedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Event type identifier: resource.compress.callback-failed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the failure occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "resource.compress.callback-failed";
 
     /// <summary>
     /// Type of resource being compressed (opaque identifier)
@@ -293,24 +292,16 @@ public partial class ResourceCompressCallbackFailedEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ResourceDecompressedEvent
+public partial class ResourceDecompressedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Event type identifier: resource.decompressed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the decompression completed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "resource.decompressed";
 
     /// <summary>
     /// Type of resource decompressed (opaque identifier)
@@ -371,24 +362,16 @@ public partial class ResourceDecompressedEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ResourceSnapshotCreatedEvent
+public partial class ResourceSnapshotCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Event type identifier: resource.snapshot.created
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the snapshot was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "resource.snapshot.created";
 
     /// <summary>
     /// Type of resource snapshotted (opaque identifier)

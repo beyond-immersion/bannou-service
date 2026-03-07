@@ -23,7 +23,6 @@ components:
       - title
       - category
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -51,13 +50,14 @@ components:
             type: string
           nullable: true
           description: List of tags for categorization and search
-        createdAt: &id007
+        createdAt:
           type: string
           format: date-time
           description: Timestamp when the document was created
-        updatedAt: &id008
+        updatedAt:
           type: string
           format: date-time
+          nullable: true
           description: Timestamp when the document was last updated
     DocumentUpdatedEvent:
       allOf:
@@ -75,7 +75,6 @@ components:
       - title
       - category
       - createdAt
-      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -88,8 +87,15 @@ components:
         title: *id004
         category: *id005
         tags: *id006
-        createdAt: *id007
-        updatedAt: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the document was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the document was last updated
         changedFields:
           type: array
           items:
@@ -111,7 +117,6 @@ components:
       - title
       - category
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -123,8 +128,15 @@ components:
         title: *id004
         category: *id005
         tags: *id006
-        createdAt: *id007
-        updatedAt: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the document was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the document was last updated
         deletedReason:
           type: string
           nullable: true

@@ -72,8 +72,6 @@ x-lifecycle:
       boardContractTemplateId: { type: string, format: uuid, required: true, description: "Contract template that controls unlock behavior" }
       adjacencyMode: { $ref: 'license-api.yaml#/components/schemas/AdjacencyMode', required: true, description: "Grid traversal mode for this template" }
       isActive: { type: boolean, required: true, description: "Whether the template is active" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
-      updatedAt: { type: string, format: date-time, nullable: true, description: "When the template was last updated" }
     sensitive: []
 
   LicenseBoard:
@@ -85,7 +83,6 @@ x-lifecycle:
       boardTemplateId: { type: string, format: uuid, required: true, description: "Board template this instance was created from" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this board belongs to" }
       containerId: { type: string, format: uuid, required: true, description: "Inventory container holding unlocked license items" }
-      createdAt: { type: string, format: date-time, required: true, description: "When this board instance was created" }
     sensitive: []
 
 paths: {}  # Events don't have HTTP paths
@@ -101,10 +98,13 @@ components:
     # =========================================================================
 
     LicenseUnlockedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a license is successfully unlocked on a board
       required:
+      - eventName
       - eventId
       - timestamp
       - boardId
@@ -117,14 +117,10 @@ components:
       - contractInstanceId
       - lpCost
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the unlock occurred
+          default: license.unlocked
+          description: 'Event type identifier: license.unlocked'
         boardId:
           type: string
           format: uuid
@@ -159,10 +155,13 @@ components:
           description: LP cost that was deducted
 
     LicenseUnlockFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a license unlock attempt fails
       required:
+      - eventName
       - eventId
       - timestamp
       - boardId
@@ -171,14 +170,10 @@ components:
       - licenseCode
       - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the failure occurred
+          default: license.unlock-failed
+          description: 'Event type identifier: license.unlock-failed'
         boardId:
           type: string
           format: uuid
@@ -198,10 +193,13 @@ components:
           description: Why the unlock attempt failed
 
     LicenseBoardClonedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a board's unlock state is cloned to a new owner (developer tooling)
       required:
+      - eventName
       - eventId
       - timestamp
       - sourceBoardId
@@ -211,14 +209,10 @@ components:
       - targetGameServiceId
       - licensesCloned
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the clone occurred
+          default: license.board.cloned
+          description: 'Event type identifier: license.board.cloned'
         sourceBoardId:
           type: string
           format: uuid

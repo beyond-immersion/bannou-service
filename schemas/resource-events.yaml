@@ -48,20 +48,28 @@ components:
     # =========================================================================
 
     ResourceCleanupCallbackFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when a cleanup callback fails during resource deletion.
         Used for monitoring and alerting on cleanup failures.
       required:
+      - eventName
+      - eventId
+      - timestamp
       - resourceType
       - resourceId
       - sourceType
       - serviceName
       - endpoint
       - statusCode
-      - timestamp
       properties:
+        eventName:
+          type: string
+          default: resource.cleanup.callback-failed
+          description: 'Event type identifier: resource.cleanup.callback-failed'
         resourceType:
           type: string
           description: Type of resource being cleaned up (opaque identifier)
@@ -85,23 +93,27 @@ components:
           type: string
           nullable: true
           description: Error details
-        timestamp:
-          type: string
-          format: date-time
-          description: When the failure occurred
 
     ResourceGracePeriodStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when a resource's reference count reaches zero.
         The resource enters a grace period before becoming eligible for cleanup.
       required:
+      - eventName
+      - eventId
+      - timestamp
       - resourceType
       - resourceId
       - gracePeriodEndsAt
-      - timestamp
       properties:
+        eventName:
+          type: string
+          default: resource.grace-period.started
+          description: 'Event type identifier: resource.grace-period.started'
         resourceType:
           type: string
           description: Type of resource entering grace period (opaque identifier)
@@ -113,22 +125,21 @@ components:
           type: string
           format: date-time
           description: When the grace period ends and cleanup becomes eligible
-        timestamp:
-          type: string
-          format: date-time
-          description: When the grace period started
 
     # =========================================================================
     # Compression Events
     # =========================================================================
 
     ResourceCompressedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when compression completes successfully.
         Services can subscribe to perform post-compression actions.
       required:
+      - eventName
       - eventId
       - timestamp
       - resourceType
@@ -136,14 +147,10 @@ components:
       - archiveId
       - sourceDataDeleted
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the compression completed
+          default: resource.compressed
+          description: 'Event type identifier: resource.compressed'
         resourceType:
           type: string
           description: Type of resource compressed (opaque identifier)
@@ -163,12 +170,15 @@ components:
           description: Number of services that contributed data to the archive
 
     ResourceCompressCallbackFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when a compression callback fails.
         Used for monitoring and alerting on compression failures.
       required:
+      - eventName
       - eventId
       - timestamp
       - resourceType
@@ -178,14 +188,10 @@ components:
       - endpoint
       - statusCode
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the failure occurred
+          default: resource.compress.callback-failed
+          description: 'Event type identifier: resource.compress.callback-failed'
         resourceType:
           type: string
           description: Type of resource being compressed (opaque identifier)
@@ -211,6 +217,8 @@ components:
           description: Error details
 
     ResourceDecompressedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
@@ -218,6 +226,7 @@ components:
         Includes per-source-type success/failure arrays so consumers can assess partial
         restoration state without querying the full API response.
       required:
+      - eventName
       - eventId
       - timestamp
       - resourceType
@@ -227,14 +236,10 @@ components:
       - succeededSourceTypes
       - failedSourceTypes
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the decompression completed
+          default: resource.decompressed
+          description: 'Event type identifier: resource.decompressed'
         resourceType:
           type: string
           description: Type of resource decompressed (opaque identifier)
@@ -265,6 +270,8 @@ components:
     # =========================================================================
 
     ResourceSnapshotCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
@@ -276,6 +283,7 @@ components:
         data from living entities to seed emergent narratives without affecting
         the source data.
       required:
+      - eventName
       - eventId
       - timestamp
       - resourceType
@@ -285,14 +293,10 @@ components:
       - expiresAt
       - entriesCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the snapshot was created
+          default: resource.snapshot.created
+          description: 'Event type identifier: resource.snapshot.created'
         resourceType:
           type: string
           description: Type of resource snapshotted (opaque identifier)

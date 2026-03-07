@@ -27,7 +27,6 @@ components:
       - boundsPrecision
       - coordinateMode
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -93,14 +92,15 @@ components:
           additionalProperties: true
           nullable: true
           description: "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
-        createdAt: &id017
+        createdAt:
           type: string
           format: date-time
-          description: "Timestamp when the location was created"
-        updatedAt: &id018
+          description: Timestamp when the location was created
+        updatedAt:
           type: string
           format: date-time
-          description: "Timestamp when the location was last updated"
+          nullable: true
+          description: Timestamp when the location was last updated
     LocationUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -121,7 +121,6 @@ components:
       - boundsPrecision
       - coordinateMode
       - createdAt
-      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -144,8 +143,15 @@ components:
         coordinateMode: *id014
         localOrigin: *id015
         metadata: *id016
-        createdAt: *id017
-        updatedAt: *id018
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the location was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the location was last updated
         changedFields:
           type: array
           items:
@@ -171,7 +177,6 @@ components:
       - boundsPrecision
       - coordinateMode
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -193,8 +198,15 @@ components:
         coordinateMode: *id014
         localOrigin: *id015
         metadata: *id016
-        createdAt: *id017
-        updatedAt: *id018
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the location was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the location was last updated
         deletedReason:
           type: string
           nullable: true

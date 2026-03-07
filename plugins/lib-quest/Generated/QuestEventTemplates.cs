@@ -24,8 +24,7 @@ public static class QuestEventTemplates
         Topic: "quest.objective.progressed",
         EventType: typeof(QuestObjectiveProgressedEvent),
         PayloadTemplate: @"{
-    ""eventId"": ""{{eventId}}"",
-    ""timestamp"": ""{{timestamp}}"",
+    ""eventName"": ""{{eventName}}"",
     ""questInstanceId"": ""{{questInstanceId}}"",
     ""questCode"": ""{{questCode}}"",
     ""objectiveCode"": ""{{objectiveCode}}"",

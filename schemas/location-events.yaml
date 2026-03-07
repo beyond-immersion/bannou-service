@@ -51,18 +51,19 @@ x-lifecycle:
       coordinateMode: { $ref: 'location-api.yaml#/components/schemas/CoordinateMode', required: true, description: "How this location's coordinate system relates to its parent" }
       localOrigin: { $ref: 'common-api.yaml#/components/schemas/Position3D', nullable: true, description: "Origin point for local or inherited coordinate systems" }
       metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention." }
-      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was created" }
-      updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was last updated" }
 
 paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
     LocationEntityArrivedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an entity arrives at a location
       required:
+        - eventName
         - eventId
         - timestamp
         - entityType
@@ -70,14 +71,10 @@ components:
         - locationId
         - realmId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the arrival was recorded
+          default: location.entity-arrived
+          description: 'Event type identifier: location.entity-arrived'
         entityType:
           type: string
           description: Type of entity (opaque string - character, actor, npc, player, etc.)
@@ -99,10 +96,13 @@ components:
           description: Identifier of the reporter (service name or session ID)
 
     LocationEntityDepartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an entity departs from a location
       required:
+        - eventName
         - eventId
         - timestamp
         - entityType
@@ -110,14 +110,10 @@ components:
         - locationId
         - realmId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the departure was recorded
+          default: location.entity-departed
+          description: 'Event type identifier: location.entity-departed'
         entityType:
           type: string
           description: Type of entity (opaque string - character, actor, npc, player, etc.)

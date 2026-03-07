@@ -204,7 +204,13 @@ public partial class AchievementDefinitionCreatedEvent : BaseServiceEvent
     public long EarnedCount { get; set; } = default!;
 
     /// <summary>
-    /// When the achievement was created
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the achievement definition was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -212,10 +218,10 @@ public partial class AchievementDefinitionCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// Timestamp when the achievement definition was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -392,7 +398,13 @@ public partial class AchievementDefinitionUpdatedEvent : BaseServiceEvent
     public long EarnedCount { get; set; } = default!;
 
     /// <summary>
-    /// When the achievement was created
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the achievement definition was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -400,10 +412,10 @@ public partial class AchievementDefinitionUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// Timestamp when the achievement definition was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -588,7 +600,13 @@ public partial class AchievementDefinitionDeletedEvent : BaseServiceEvent
     public long EarnedCount { get; set; } = default!;
 
     /// <summary>
-    /// When the achievement was created
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the achievement definition was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -596,10 +614,10 @@ public partial class AchievementDefinitionDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// Timestamp when the achievement definition was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

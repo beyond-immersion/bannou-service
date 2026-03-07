@@ -25,6 +25,21 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -34,8 +49,16 @@ using System = global::System;
 /// Event published when a storyline plan is generated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class StorylineComposedEvent
+public partial class StorylineComposedEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: storyline.composed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "storyline.composed";
 
     /// <summary>
     /// Unique identifier for the composed plan
@@ -142,8 +165,16 @@ public partial class StorylineComposedEvent
 /// Event published when a scenario starts executing for a character
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ScenarioTriggeredEvent
+public partial class ScenarioTriggeredEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: storyline.scenario.triggered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "storyline.scenario.triggered";
 
     /// <summary>
     /// Unique identifier for this scenario execution instance
@@ -227,8 +258,16 @@ public partial class ScenarioTriggeredEvent
 /// Event published when a phase within a multi-phase scenario completes
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ScenarioPhaseCompletedEvent
+public partial class ScenarioPhaseCompletedEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: storyline.scenario.phase-completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "storyline.scenario.phase-completed";
 
     /// <summary>
     /// Unique identifier for this scenario execution instance
@@ -308,8 +347,16 @@ public partial class ScenarioPhaseCompletedEvent
 /// Event published when a scenario finishes successfully
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ScenarioCompletedEvent
+public partial class ScenarioCompletedEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: storyline.scenario.completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "storyline.scenario.completed";
 
     /// <summary>
     /// Unique identifier for this scenario execution instance
@@ -419,8 +466,16 @@ public partial class ScenarioCompletedEvent
 /// Event published when a scenario fails during execution
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ScenarioFailedEvent
+public partial class ScenarioFailedEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: storyline.scenario.failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "storyline.scenario.failed";
 
     /// <summary>
     /// Unique identifier for this scenario execution instance
@@ -518,8 +573,16 @@ public partial class ScenarioFailedEvent
 /// Event published when new scenarios become available for a character
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ScenarioAvailableEvent
+public partial class ScenarioAvailableEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: storyline.scenario.available
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "storyline.scenario.available";
 
     /// <summary>
     /// Character for whom scenarios are available

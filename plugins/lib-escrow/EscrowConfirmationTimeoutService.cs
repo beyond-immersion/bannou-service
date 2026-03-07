@@ -337,7 +337,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
             Resolution = EscrowResolution.Refunded,
             CompletedAt = now
         };
-        await messageBus.TryPublishAsync(EscrowTopics.EscrowRefunded, refundEvent, cancellationToken);
+        await messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowRefunded, refundEvent, cancellationToken);
 
         return true;
     }
@@ -410,7 +410,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
                 Resolution = EscrowResolution.Released,
                 CompletedAt = now
             };
-            await messageBus.TryPublishAsync(EscrowTopics.EscrowReleased, releaseEvent, cancellationToken);
+            await messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowReleased, releaseEvent, cancellationToken);
         }
         else
         {
@@ -429,7 +429,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
                 Resolution = EscrowResolution.Refunded,
                 CompletedAt = now
             };
-            await messageBus.TryPublishAsync(EscrowTopics.EscrowRefunded, refundEvent, cancellationToken);
+            await messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowRefunded, refundEvent, cancellationToken);
         }
 
         return true;
@@ -476,7 +476,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
             Reason = "Confirmation timeout expired",
             DisputedAt = now
         };
-        await messageBus.TryPublishAsync(EscrowTopics.EscrowDisputed, disputeEvent, cancellationToken);
+        await messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowDisputed, disputeEvent, cancellationToken);
 
         return true;
     }

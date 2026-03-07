@@ -106,7 +106,7 @@ public partial class LicenseBoardTemplateCreatedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
-    /// When the template was created
+    /// Timestamp when the license board template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -114,7 +114,7 @@ public partial class LicenseBoardTemplateCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the template was last updated
+    /// Timestamp when the license board template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -196,7 +196,7 @@ public partial class LicenseBoardTemplateUpdatedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
-    /// When the template was created
+    /// Timestamp when the license board template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -204,7 +204,7 @@ public partial class LicenseBoardTemplateUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the template was last updated
+    /// Timestamp when the license board template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -294,7 +294,7 @@ public partial class LicenseBoardTemplateDeletedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
-    /// When the template was created
+    /// Timestamp when the license board template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -302,7 +302,7 @@ public partial class LicenseBoardTemplateDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the template was last updated
+    /// Timestamp when the license board template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -386,12 +386,18 @@ public partial class LicenseBoardCreatedEvent : BaseServiceEvent
     public System.Guid ContainerId { get; set; } = default!;
 
     /// <summary>
-    /// When this board instance was created
+    /// Timestamp when the license board was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the license board was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -466,12 +472,18 @@ public partial class LicenseBoardUpdatedEvent : BaseServiceEvent
     public System.Guid ContainerId { get; set; } = default!;
 
     /// <summary>
-    /// When this board instance was created
+    /// Timestamp when the license board was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the license board was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -554,12 +566,18 @@ public partial class LicenseBoardDeletedEvent : BaseServiceEvent
     public System.Guid ContainerId { get; set; } = default!;
 
     /// <summary>
-    /// When this board instance was created
+    /// Timestamp when the license board was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the license board was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

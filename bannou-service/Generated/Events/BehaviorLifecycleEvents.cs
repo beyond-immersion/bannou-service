@@ -331,7 +331,7 @@ public partial class BehaviorBundleCreatedEvent : BaseServiceEvent
     public long? TotalBytecodeSize { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the bundle was created
+    /// Timestamp when the behavior bundle was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -339,7 +339,7 @@ public partial class BehaviorBundleCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the bundle was last updated
+    /// Timestamp when the behavior bundle was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -390,7 +390,7 @@ public partial class BehaviorBundleUpdatedEvent : BaseServiceEvent
     public long? TotalBytecodeSize { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the bundle was created
+    /// Timestamp when the behavior bundle was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -398,7 +398,7 @@ public partial class BehaviorBundleUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the bundle was last updated
+    /// Timestamp when the behavior bundle was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -457,7 +457,7 @@ public partial class BehaviorBundleDeletedEvent : BaseServiceEvent
     public long? TotalBytecodeSize { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the bundle was created
+    /// Timestamp when the behavior bundle was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -465,7 +465,7 @@ public partial class BehaviorBundleDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the bundle was last updated
+    /// Timestamp when the behavior bundle was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;

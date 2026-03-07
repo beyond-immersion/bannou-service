@@ -89,7 +89,6 @@ x-lifecycle:
       deprecatedAt: {type: string, format: date-time, nullable: true, description: "When deprecation occurred"}
       deprecationReason: {type: string, nullable: true, description: "Audit reason for deprecation"}
       earnedCount: {type: integer, format: int64, required: true, description: "How many entities have earned this"}
-      createdAt: {type: string, format: date-time, required: true, description: "When the achievement was created"}
       metadata: {type: object, additionalProperties: true, nullable: true, description: "Client-only metadata. No Bannou plugin
           reads specific keys from this field by convention."}
     sensitive: []
@@ -102,10 +101,13 @@ components:
     # Published Events
     # ============================================
     AchievementUnlockedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an entity unlocks an achievement
       required:
+      - eventName
       - eventId
       - timestamp
       - gameServiceId
@@ -117,14 +119,10 @@ components:
       - totalPoints
       - isRare
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the achievement was unlocked
+          default: achievement.progress.unlocked
+          description: 'Event type identifier: achievement.progress.unlocked'
         gameServiceId:
           type: string
           format: uuid
@@ -166,10 +164,13 @@ components:
           description: Percentage of players who have earned this (0-100)
 
     AchievementProgressUpdatedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when progress is made on a progressive achievement
       required:
+      - eventName
       - eventId
       - timestamp
       - gameServiceId
@@ -182,14 +183,10 @@ components:
       - targetProgress
       - percentComplete
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the progress was updated
+          default: achievement.progress.updated
+          description: 'Event type identifier: achievement.progress.updated'
         gameServiceId:
           type: string
           format: uuid
@@ -222,10 +219,13 @@ components:
           description: Completion percentage (0-100)
 
     AchievementPlatformSyncedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an achievement is synced to an external platform
       required:
+      - eventName
       - eventId
       - timestamp
       - gameServiceId
@@ -235,14 +235,10 @@ components:
       - platform
       - success
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the sync occurred
+          default: achievement.platform.synced
+          description: 'Event type identifier: achievement.platform.synced'
         gameServiceId:
           type: string
           format: uuid

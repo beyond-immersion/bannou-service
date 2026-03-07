@@ -109,7 +109,7 @@ public partial class EscrowService
                             DestinationContainerId = a.DestinationContainerId
                         }).ToList()
                 };
-                await _messageBus.TryPublishAsync(EscrowTopics.EscrowReleasing, releasingEvent, cancellationToken);
+                await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowReleasing, releasingEvent, cancellationToken);
 
                 _logger.LogInformation("Escrow {EscrowId} transitioning to Releasing, awaiting {Count} party confirmations, deadline: {Deadline}",
                     body.EscrowId, agreementModel.ReleaseConfirmations.Count, agreementModel.ConfirmationDeadline);
@@ -200,7 +200,7 @@ public partial class EscrowService
                 Resolution = EscrowResolution.Released,
                 CompletedAt = now
             };
-            await _messageBus.TryPublishAsync(EscrowTopics.EscrowReleased, releaseEvent, cancellationToken);
+            await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowReleased, releaseEvent, cancellationToken);
 
             _logger.LogInformation("Escrow {EscrowId} released with {ReleaseCount} transfers",
                 body.EscrowId, releases.Count);
@@ -322,7 +322,7 @@ public partial class EscrowService
                 Resolution = EscrowResolution.Refunded,
                 CompletedAt = now
             };
-            await _messageBus.TryPublishAsync(EscrowTopics.EscrowRefunded, refundEvent, cancellationToken);
+            await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowRefunded, refundEvent, cancellationToken);
 
             _logger.LogInformation("Escrow {EscrowId} refunded with {RefundCount} refunds",
                 body.EscrowId, refunds.Count);
@@ -429,7 +429,7 @@ public partial class EscrowService
                 DepositsRefunded = refunds.Count,
                 CancelledAt = now
             };
-            await _messageBus.TryPublishAsync(EscrowTopics.EscrowCancelled, cancelEvent, cancellationToken);
+            await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowCancelled, cancelEvent, cancellationToken);
 
             _logger.LogInformation("Escrow {EscrowId} cancelled, {RefundCount} deposits refunded",
                 body.EscrowId, refunds.Count);
@@ -536,7 +536,7 @@ public partial class EscrowService
                 Reason = body.Reason,
                 DisputedAt = now
             };
-            await _messageBus.TryPublishAsync(EscrowTopics.EscrowDisputed, disputeEvent, cancellationToken);
+            await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowDisputed, disputeEvent, cancellationToken);
 
             _logger.LogInformation("Dispute raised on escrow {EscrowId} by {PartyId}",
                 body.EscrowId, body.PartyId);
@@ -698,7 +698,7 @@ public partial class EscrowService
                 Notes = body.Notes,
                 ResolvedAt = now
             };
-            await _messageBus.TryPublishAsync(EscrowTopics.EscrowResolved, resolveEvent, cancellationToken);
+            await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowResolved, resolveEvent, cancellationToken);
 
             _logger.LogInformation("Escrow {EscrowId} resolved with {Resolution}",
                 body.EscrowId, body.Resolution);
@@ -1043,7 +1043,7 @@ public partial class EscrowService
             Resolution = EscrowResolution.Released,
             CompletedAt = timestamp
         };
-        await _messageBus.TryPublishAsync(EscrowTopics.EscrowReleased, releaseEvent, cancellationToken);
+        await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowReleased, releaseEvent, cancellationToken);
     }
 
     /// <summary>
@@ -1066,7 +1066,7 @@ public partial class EscrowService
             Resolution = EscrowResolution.Refunded,
             CompletedAt = timestamp
         };
-        await _messageBus.TryPublishAsync(EscrowTopics.EscrowRefunded, refundEvent, cancellationToken);
+        await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowRefunded, refundEvent, cancellationToken);
     }
 
     #endregion

@@ -26,7 +26,6 @@ components:
       - status
       - memberCount
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -82,14 +81,15 @@ components:
           type: string
           nullable: true
           description: "Reason for deprecation (null if not deprecated)"
-        createdAt: &id014
+        createdAt:
           type: string
           format: date-time
-          description: "When the faction was created"
-        updatedAt: &id015
+          description: Timestamp when the faction was created
+        updatedAt:
           type: string
           format: date-time
-          description: "When the faction was last updated"
+          nullable: true
+          description: Timestamp when the faction was last updated
     FactionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -109,7 +109,6 @@ components:
       - status
       - memberCount
       - createdAt
-      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -129,8 +128,15 @@ components:
         memberCount: *id011
         deprecatedAt: *id012
         deprecationReason: *id013
-        createdAt: *id014
-        updatedAt: *id015
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the faction was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the faction was last updated
         changedFields:
           type: array
           items:
@@ -155,7 +161,6 @@ components:
       - status
       - memberCount
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -174,8 +179,15 @@ components:
         memberCount: *id011
         deprecatedAt: *id012
         deprecationReason: *id013
-        createdAt: *id014
-        updatedAt: *id015
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the faction was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the faction was last updated
         deletedReason:
           type: string
           nullable: true

@@ -36,10 +36,15 @@ components:
         behaviorRef: &id003
           type: string
           description: Reference to behavior in lib-assets
-        createdAt: &id004
+        createdAt:
           type: string
           format: date-time
-          description: When the template was created
+          description: Timestamp when the actor template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the actor template was last updated
     ActorTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -63,7 +68,15 @@ components:
         templateId: *id001
         category: *id002
         behaviorRef: *id003
-        createdAt: *id004
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the actor template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the actor template was last updated
         changedFields:
           type: array
           items:
@@ -91,7 +104,15 @@ components:
         templateId: *id001
         category: *id002
         behaviorRef: *id003
-        createdAt: *id004
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the actor template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the actor template was last updated
         deletedReason:
           type: string
           nullable: true
@@ -110,34 +131,44 @@ components:
       - templateId
       - status
       - startedAt
+      - createdAt
       properties:
         eventName:
           type: string
           default: actor.instance.created
           description: 'Event type identifier: actor.instance.created'
-        actorId: &id005
+        actorId: &id004
           type: string
           description: Unique identifier for the actor instance
-        templateId: &id006
+        templateId: &id005
           type: string
           format: uuid
           description: Template this actor was instantiated from
-        characterId: &id007
+        characterId: &id006
           type: string
           format: uuid
           nullable: true
           description: Associated character ID for NPC brains
-        nodeId: &id008
+        nodeId: &id007
           type: string
           nullable: true
           description: Pool node running this actor
-        status: &id009
+        status: &id008
           $ref: ../actor-api.yaml#/components/schemas/ActorStatus
           description: Current actor lifecycle state
-        startedAt: &id010
+        startedAt: &id009
           type: string
           format: date-time
           description: When the actor started running
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the actor instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the actor instance was last updated
     ActorInstanceUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -152,18 +183,28 @@ components:
       - templateId
       - status
       - startedAt
+      - createdAt
       - changedFields
       properties:
         eventName:
           type: string
           default: actor.instance.updated
           description: 'Event type identifier: actor.instance.updated'
-        actorId: *id005
-        templateId: *id006
-        characterId: *id007
-        nodeId: *id008
-        status: *id009
-        startedAt: *id010
+        actorId: *id004
+        templateId: *id005
+        characterId: *id006
+        nodeId: *id007
+        status: *id008
+        startedAt: *id009
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the actor instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the actor instance was last updated
         changedFields:
           type: array
           items:
@@ -183,17 +224,27 @@ components:
       - templateId
       - status
       - startedAt
+      - createdAt
       properties:
         eventName:
           type: string
           default: actor.instance.deleted
           description: 'Event type identifier: actor.instance.deleted'
-        actorId: *id005
-        templateId: *id006
-        characterId: *id007
-        nodeId: *id008
-        status: *id009
-        startedAt: *id010
+        actorId: *id004
+        templateId: *id005
+        characterId: *id006
+        nodeId: *id007
+        status: *id008
+        startedAt: *id009
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the actor instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the actor instance was last updated
         deletedReason:
           type: string
           nullable: true

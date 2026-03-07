@@ -24,8 +24,7 @@ public static class ObligationEventTemplates
         Topic: "obligation.violation.reported",
         EventType: typeof(ObligationViolationReportedEvent),
         PayloadTemplate: @"{
-    ""eventId"": ""{{eventId}}"",
-    ""timestamp"": ""{{timestamp}}"",
+    ""eventName"": ""{{eventName}}"",
     ""violationId"": ""{{violationId}}"",
     ""characterId"": ""{{characterId}}"",
     ""contractId"": ""{{contractId}}"",

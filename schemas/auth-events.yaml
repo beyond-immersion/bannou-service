@@ -74,9 +74,14 @@ components:
       additionalProperties: false
       description: Event published when sessions are invalidated (logout, account deletion, etc.)
       required:
+        - eventName
         - sessionIds
         - reason
       properties:
+        eventName:
+          type: string
+          default: session.invalidated
+          description: 'Event type identifier: session.invalidated'
         accountId:
           type: string
           format: uuid
@@ -105,12 +110,17 @@ components:
         Published when a session's roles or authorizations change.
         Permission service subscribes to update capability compilation.
       required:
+        - eventName
         - accountId
         - sessionId
         - roles
         - authorizations
         - reason
       properties:
+        eventName:
+          type: string
+          default: session.updated
+          description: 'Event type identifier: session.updated'
         accountId:
           type: string
           format: uuid
@@ -144,10 +154,15 @@ components:
       additionalProperties: false
       description: Published when a user successfully authenticates with username/password
       required:
+        - eventName
         - accountId
         - username
         - sessionId
       properties:
+        eventName:
+          type: string
+          default: auth.login.successful
+          description: 'Event type identifier: auth.login.successful'
         accountId:
           type: string
           format: uuid
@@ -175,9 +190,14 @@ components:
       additionalProperties: false
       description: Published when a login attempt fails (for brute force detection)
       required:
+        - eventName
         - username
         - reason
       properties:
+        eventName:
+          type: string
+          default: auth.login.failed
+          description: 'Event type identifier: auth.login.failed'
         username:
           type: string
           description: Display name of the account (never email; "(unknown)" if account not found)
@@ -205,11 +225,16 @@ components:
       additionalProperties: false
       description: Published when a new user successfully registers
       required:
+        - eventName
         - accountId
         - username
         - email
         - sessionId
       properties:
+        eventName:
+          type: string
+          default: auth.registration.successful
+          description: 'Event type identifier: auth.registration.successful'
         accountId:
           type: string
           format: uuid
@@ -236,11 +261,16 @@ components:
       additionalProperties: false
       description: Published when a user authenticates via OAuth provider
       required:
+        - eventName
         - accountId
         - provider
         - providerUserId
         - sessionId
       properties:
+        eventName:
+          type: string
+          default: auth.oauth.successful
+          description: 'Event type identifier: auth.oauth.successful'
         accountId:
           type: string
           format: uuid
@@ -271,10 +301,15 @@ components:
       additionalProperties: false
       description: Published when a user authenticates via Steam
       required:
+        - eventName
         - accountId
         - steamId
         - sessionId
       properties:
+        eventName:
+          type: string
+          default: auth.steam.successful
+          description: 'Event type identifier: auth.steam.successful'
         accountId:
           type: string
           format: uuid
@@ -302,8 +337,13 @@ components:
       additionalProperties: false
       description: Published when a password reset is successfully completed
       required:
+        - eventName
         - accountId
       properties:
+        eventName:
+          type: string
+          default: auth.password-reset.successful
+          description: 'Event type identifier: auth.password-reset.successful'
         accountId:
           type: string
           format: uuid
@@ -324,8 +364,13 @@ components:
       additionalProperties: false
       description: Published when MFA is successfully enabled for an account
       required:
+        - eventName
         - accountId
       properties:
+        eventName:
+          type: string
+          default: auth.mfa.enabled
+          description: 'Event type identifier: auth.mfa.enabled'
         accountId:
           type: string
           format: uuid
@@ -338,9 +383,14 @@ components:
       additionalProperties: false
       description: Published when MFA is disabled for an account
       required:
+        - eventName
         - accountId
         - disabledBy
       properties:
+        eventName:
+          type: string
+          default: auth.mfa.disabled
+          description: 'Event type identifier: auth.mfa.disabled'
         accountId:
           type: string
           format: uuid
@@ -360,10 +410,15 @@ components:
       additionalProperties: false
       description: Published when MFA verification succeeds during login
       required:
+        - eventName
         - accountId
         - method
         - sessionId
       properties:
+        eventName:
+          type: string
+          default: auth.mfa.verified
+          description: 'Event type identifier: auth.mfa.verified'
         accountId:
           type: string
           format: uuid
@@ -387,10 +442,15 @@ components:
       additionalProperties: false
       description: Published when MFA verification fails during login
       required:
+        - eventName
         - accountId
         - method
         - reason
       properties:
+        eventName:
+          type: string
+          default: auth.mfa.failed
+          description: 'Event type identifier: auth.mfa.failed'
         accountId:
           type: string
           format: uuid

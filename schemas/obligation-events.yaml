@@ -53,6 +53,8 @@ components:
     # =========================================================================
 
     ObligationViolationReportedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
@@ -68,6 +70,7 @@ components:
         name: obligation_violation_reported
         topic: obligation.violation.reported
       required:
+        - eventName
         - eventId
         - timestamp
         - violationId
@@ -80,14 +83,10 @@ components:
         - violationCost
         - breachReported
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: obligation.violation.reported
+          description: 'Event type identifier: obligation.violation.reported'
         violationId:
           type: string
           format: uuid
@@ -157,6 +156,8 @@ components:
           description: The violating character's role in the contract
 
     ObligationCacheRebuiltEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character's obligation cache is rebuilt (for observability and debugging)
@@ -165,6 +166,7 @@ components:
         resource_id_field: characterId
         source_type: obligation
       required:
+        - eventName
         - eventId
         - timestamp
         - characterId
@@ -172,14 +174,10 @@ components:
         - contractCount
         - trigger
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: obligation.cache.rebuilt
+          description: 'Event type identifier: obligation.cache.rebuilt'
         characterId:
           type: string
           format: uuid

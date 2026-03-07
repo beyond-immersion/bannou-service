@@ -23,7 +23,6 @@ components:
       - nonAuthorityHandling
       - version
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -60,14 +59,15 @@ components:
           type: integer
           format: int64
           description: "Current version number"
-        createdAt: &id009
+        createdAt:
           type: string
           format: date-time
-          description: "When the channel was created"
-        updatedAt: &id010
+          description: Timestamp when the mapping channel was created
+        updatedAt:
           type: string
           format: date-time
-          description: "When the channel was last updated"
+          nullable: true
+          description: Timestamp when the mapping channel was last updated
     MappingChannelUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -84,7 +84,6 @@ components:
       - nonAuthorityHandling
       - version
       - createdAt
-      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -99,8 +98,15 @@ components:
         authorityExpiresAt: *id006
         nonAuthorityHandling: *id007
         version: *id008
-        createdAt: *id009
-        updatedAt: *id010
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the mapping channel was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the mapping channel was last updated
         changedFields:
           type: array
           items:
@@ -122,7 +128,6 @@ components:
       - nonAuthorityHandling
       - version
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -136,8 +141,15 @@ components:
         authorityExpiresAt: *id006
         nonAuthorityHandling: *id007
         version: *id008
-        createdAt: *id009
-        updatedAt: *id010
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the mapping channel was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the mapping channel was last updated
         deletedReason:
           type: string
           nullable: true

@@ -614,6 +614,35 @@ Service models (`*ServiceModels.cs`) must use generated API enums directly. Defi
 
 Configuration properties that represent enum values must use `$ref` to the enum type in the configuration schema. Comma-delimited strings parsed at runtime (V5 pattern) bypass all T21 guarantees. When per-category properties are needed, define individual typed properties rather than string bags.
 
+### Rule 7: All Enum Boundary Mappings Must Have Unit Tests
+
+Every plugin that maps between enum types (A2 SDK boundary, subset/superset, lossy switch) MUST have corresponding unit tests using `EnumMappingValidator` from test-utilities. These tests catch value drift at compile/test time rather than at runtime.
+
+**Infrastructure** (implemented):
+- `bannou-service/EnumMapping.cs` — shared extension methods:
+  - `MapByName<TSource, TTarget>()` — name-matching conversion (throws on no match)
+  - `MapByNameOrDefault<TSource, TTarget>(fallback)` — name-matching with fallback for superset→subset mappings
+  - `TryMapByName<TSource, TTarget>(out result)` — non-throwing name-matching
+- `test-utilities/EnumMappingValidator.cs` — test assertion helpers
+
+**Four validation patterns:**
+
+| Pattern | Validator Method | When to Use |
+|---------|-----------------|-------------|
+| **Identical enums** | `AssertFullCoverage<TA, TB>()` | A2 boundaries where schema and SDK have the same values (Storyline ArcType, SpectrumType, etc.) |
+| **Superset→subset** | `AssertSupersetToSubsetMapping<TSuper, TSub>(extras...)` | SDK has extra values not in schema; validates subset relationship AND enumerates expected extras (fails if SDK adds unexpected new values) |
+| **Subset only** | `AssertSubset<TSubset, TSuperset>()` | One-directional check that all subset values exist in superset |
+| **Lossy switch** | `AssertSwitchCoversAllValues<TSource>(func)` | Explicit switch expression where values map to different names (KeyMode.Aeolian → ModeType.Minor) |
+
+**When to use which runtime helper:**
+- **Identical names, no lossy mapping** → `MapByName` + `AssertFullCoverage` test
+- **Superset→subset (shared values match by name)** → `MapByName` for subset→superset direction, `MapByNameOrDefault` for superset→subset direction, `AssertSupersetToSubsetMapping` test
+- **Lossy or name-mismatched** → explicit switch + `AssertSwitchCoversAllValues` test
+
+**Current coverage:**
+- lib-storyline: 4 enum pairs with `AssertFullCoverage` + round-trip test (ArcType, SpectrumType, PlanningUrgency, EffectCardinality)
+- lib-music: 2 superset pairs with `AssertSupersetToSubsetMapping` (ChordQuality extras: MinorMajor7/Power; ContourShape extras: InvertedArch/Free) + 2 lossy pairs with `AssertSwitchCoversAllValues` (KeyMode/ModeType)
+
 ---
 
 *This document is the remediation reference. Execute from the Task Summary above. All original open questions are resolved.*

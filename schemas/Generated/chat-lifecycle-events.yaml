@@ -62,10 +62,15 @@ components:
         isArchived: &id009
           type: boolean
           description: "Whether the room has been archived via Resource"
-        createdAt: &id010
+        createdAt:
           type: string
           format: date-time
-          description: "When the room was created"
+          description: Timestamp when the chat room was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the chat room was last updated
     ChatRoomUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -98,7 +103,15 @@ components:
         participantCount: *id007
         maxParticipants: *id008
         isArchived: *id009
-        createdAt: *id010
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the chat room was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the chat room was last updated
         changedFields:
           type: array
           items:
@@ -135,7 +148,15 @@ components:
         participantCount: *id007
         maxParticipants: *id008
         isArchived: *id009
-        createdAt: *id010
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the chat room was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the chat room was last updated
         deletedReason:
           type: string
           nullable: true
@@ -162,33 +183,38 @@ components:
           type: string
           default: chat.room-type.created
           description: 'Event type identifier: chat.room-type.created'
-        code: &id011
+        code: &id010
           type: string
           description: "Unique room type code within game service scope"
-        displayName: &id012
+        displayName: &id011
           type: string
           description: "Human-readable room type name"
-        gameServiceId: &id013
+        gameServiceId: &id012
           type: string
           format: uuid
           nullable: true
           description: "Game service scope (null for global built-in types)"
-        messageFormat: &id014
+        messageFormat: &id013
           $ref: ../chat-api.yaml#/components/schemas/MessageFormat
           description: "Message format this room type accepts"
-        persistenceMode: &id015
+        persistenceMode: &id014
           $ref: ../chat-api.yaml#/components/schemas/PersistenceMode
           description: "Whether messages are ephemeral (Redis) or persistent (MySQL)"
-        allowAnonymousSenders: &id016
+        allowAnonymousSenders: &id015
           type: boolean
           description: "Whether messages can be sent without sender identity"
-        status: &id017
+        status: &id016
           $ref: ../chat-api.yaml#/components/schemas/RoomTypeStatus
           description: "Current lifecycle status of the room type"
-        createdAt: &id018
+        createdAt:
           type: string
           format: date-time
-          description: "When the room type was registered"
+          description: Timestamp when the chat room type was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the chat room type was last updated
     ChatRoomTypeUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -212,14 +238,22 @@ components:
           type: string
           default: chat.room-type.updated
           description: 'Event type identifier: chat.room-type.updated'
-        code: *id011
-        displayName: *id012
-        gameServiceId: *id013
-        messageFormat: *id014
-        persistenceMode: *id015
-        allowAnonymousSenders: *id016
-        status: *id017
-        createdAt: *id018
+        code: *id010
+        displayName: *id011
+        gameServiceId: *id012
+        messageFormat: *id013
+        persistenceMode: *id014
+        allowAnonymousSenders: *id015
+        status: *id016
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the chat room type was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the chat room type was last updated
         changedFields:
           type: array
           items:
@@ -247,14 +281,22 @@ components:
           type: string
           default: chat.room-type.deleted
           description: 'Event type identifier: chat.room-type.deleted'
-        code: *id011
-        displayName: *id012
-        gameServiceId: *id013
-        messageFormat: *id014
-        persistenceMode: *id015
-        allowAnonymousSenders: *id016
-        status: *id017
-        createdAt: *id018
+        code: *id010
+        displayName: *id011
+        gameServiceId: *id012
+        messageFormat: *id013
+        persistenceMode: *id014
+        allowAnonymousSenders: *id015
+        status: *id016
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the chat room type was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the chat room type was last updated
         deletedReason:
           type: string
           nullable: true

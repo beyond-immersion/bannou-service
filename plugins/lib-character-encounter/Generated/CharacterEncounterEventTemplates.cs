@@ -24,8 +24,7 @@ public static class CharacterEncounterEventTemplates
         Topic: "encounter.recorded",
         EventType: typeof(EncounterRecordedEvent),
         PayloadTemplate: @"{
-    ""eventId"": ""{{eventId}}"",
-    ""timestamp"": ""{{timestamp}}"",
+    ""eventName"": ""{{eventName}}"",
     ""encounterId"": ""{{encounterId}}"",
     ""encounterTypeCode"": ""{{encounterTypeCode}}"",
     ""outcome"": {{outcome}},
@@ -43,8 +42,7 @@ public static class CharacterEncounterEventTemplates
         Topic: "encounter.memory.faded",
         EventType: typeof(EncounterMemoryFadedEvent),
         PayloadTemplate: @"{
-    ""eventId"": ""{{eventId}}"",
-    ""timestamp"": ""{{timestamp}}"",
+    ""eventName"": ""{{eventName}}"",
     ""encounterId"": ""{{encounterId}}"",
     ""characterId"": ""{{characterId}}"",
     ""perspectiveId"": ""{{perspectiveId}}"",
@@ -60,8 +58,7 @@ public static class CharacterEncounterEventTemplates
         Topic: "encounter.memory.refreshed",
         EventType: typeof(EncounterMemoryRefreshedEvent),
         PayloadTemplate: @"{
-    ""eventId"": ""{{eventId}}"",
-    ""timestamp"": ""{{timestamp}}"",
+    ""eventName"": ""{{eventName}}"",
     ""encounterId"": ""{{encounterId}}"",
     ""characterId"": ""{{characterId}}"",
     ""perspectiveId"": ""{{perspectiveId}}"",

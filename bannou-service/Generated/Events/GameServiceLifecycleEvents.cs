@@ -88,7 +88,7 @@ public partial class GameServiceCreatedEvent : BaseServiceEvent
     public bool AutoLobbyEnabled { get; set; } = default!;
 
     /// <summary>
-    /// When the service was created
+    /// Timestamp when the game service was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -96,7 +96,7 @@ public partial class GameServiceCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the service was last updated
+    /// Timestamp when the game service was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -161,7 +161,7 @@ public partial class GameServiceUpdatedEvent : BaseServiceEvent
     public bool AutoLobbyEnabled { get; set; } = default!;
 
     /// <summary>
-    /// When the service was created
+    /// Timestamp when the game service was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -169,7 +169,7 @@ public partial class GameServiceUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the service was last updated
+    /// Timestamp when the game service was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -242,7 +242,7 @@ public partial class GameServiceDeletedEvent : BaseServiceEvent
     public bool AutoLobbyEnabled { get; set; } = default!;
 
     /// <summary>
-    /// When the service was created
+    /// Timestamp when the game service was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -250,7 +250,7 @@ public partial class GameServiceDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the service was last updated
+    /// Timestamp when the game service was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;

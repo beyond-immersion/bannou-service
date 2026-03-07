@@ -1127,7 +1127,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Verify entry-unlocked event
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync(CollectionTopics.EntryUnlocked, It.IsAny<CollectionEntryUnlockedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync(CollectionPublishedTopics.CollectionEntryUnlocked, It.IsAny<CollectionEntryUnlockedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -1214,7 +1214,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         _mockMessageBus.Verify(
             m => m.TryPublishAsync(
-                CollectionTopics.EntryGrantFailed,
+                CollectionPublishedTopics.CollectionEntryGrantFailed,
                 It.Is<CollectionEntryGrantFailedEvent>(e => e.Reason == GrantFailureReason.EntryNotFound),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -1272,7 +1272,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         _mockMessageBus.Verify(
             m => m.TryPublishAsync(
-                CollectionTopics.EntryGrantFailed,
+                CollectionPublishedTopics.CollectionEntryGrantFailed,
                 It.Is<CollectionEntryGrantFailedEvent>(e => e.Reason == GrantFailureReason.MaxEntriesReached),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -1395,7 +1395,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         _mockMessageBus.Verify(
             m => m.TryPublishAsync(
-                CollectionTopics.EntryGrantFailed,
+                CollectionPublishedTopics.CollectionEntryGrantFailed,
                 It.Is<CollectionEntryGrantFailedEvent>(e => e.Reason == GrantFailureReason.ItemCreationFailed),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -1888,7 +1888,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         _mockMessageBus.Verify(
             m => m.TryPublishAsync(
-                CollectionTopics.DiscoveryAdvanced,
+                CollectionPublishedTopics.CollectionDiscoveryAdvanced,
                 It.Is<CollectionDiscoveryAdvancedEvent>(e =>
                     e.NewLevel == 1 &&
                     e.EntryCode == "boss_dragon"),
@@ -2238,7 +2238,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         CollectionEntryUnlockedEvent? capturedEvent = null;
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync(CollectionTopics.EntryUnlocked, It.IsAny<CollectionEntryUnlockedEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(CollectionPublishedTopics.CollectionEntryUnlocked, It.IsAny<CollectionEntryUnlockedEvent>(), It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((_, evt, _) => capturedEvent = (CollectionEntryUnlockedEvent)evt)
             .ReturnsAsync(true);
 
@@ -2330,7 +2330,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Should publish milestone events (50% crossed when going from 1/2 to 2/2, and 100%)
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync(CollectionTopics.MilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync(CollectionPublishedTopics.CollectionMilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()),
             Times.AtLeastOnce);
     }
 
@@ -2377,7 +2377,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         CollectionMilestoneReachedEvent? capturedMilestone = null;
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync(CollectionTopics.MilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(CollectionPublishedTopics.CollectionMilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((_, evt, _) => capturedMilestone = (CollectionMilestoneReachedEvent)evt)
             .ReturnsAsync(true);
 
@@ -2401,7 +2401,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Verify the 100% milestone was published
         _mockMessageBus.Verify(
             m => m.TryPublishAsync(
-                CollectionTopics.MilestoneReached,
+                CollectionPublishedTopics.CollectionMilestoneReached,
                 It.Is<CollectionMilestoneReachedEvent>(e => e.Milestone == "100%"),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -2587,7 +2587,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         var capturedMilestones = new List<CollectionMilestoneReachedEvent>();
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync(CollectionTopics.MilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(CollectionPublishedTopics.CollectionMilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((_, evt, _) => capturedMilestones.Add((CollectionMilestoneReachedEvent)evt))
             .ReturnsAsync(true);
 
@@ -2667,7 +2667,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         var capturedMilestones = new List<CollectionMilestoneReachedEvent>();
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync(CollectionTopics.MilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(CollectionPublishedTopics.CollectionMilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((_, evt, _) => capturedMilestones.Add((CollectionMilestoneReachedEvent)evt))
             .ReturnsAsync(true);
 
@@ -2758,7 +2758,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Assert - 3/8 = 37.5%, no milestone should be published (25% already crossed, 50% not yet)
         Assert.Equal(StatusCodes.OK, status);
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync(CollectionTopics.MilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync(CollectionPublishedTopics.CollectionMilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -3720,7 +3720,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         CollectionEntryUnlockedEvent? capturedEvent = null;
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync(CollectionTopics.EntryUnlocked, It.IsAny<CollectionEntryUnlockedEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(CollectionPublishedTopics.CollectionEntryUnlocked, It.IsAny<CollectionEntryUnlockedEvent>(), It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((_, evt, _) => capturedEvent = (CollectionEntryUnlockedEvent)evt)
             .ReturnsAsync(true);
 
@@ -3760,7 +3760,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         CollectionEntryUnlockedEvent? capturedEvent = null;
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync(CollectionTopics.EntryUnlocked, It.IsAny<CollectionEntryUnlockedEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(CollectionPublishedTopics.CollectionEntryUnlocked, It.IsAny<CollectionEntryUnlockedEvent>(), It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((_, evt, _) => capturedEvent = (CollectionEntryUnlockedEvent)evt)
             .ReturnsAsync(true);
 

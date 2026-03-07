@@ -69,10 +69,13 @@ components:
     # Published Events
     # ============================================
     LeaderboardRankChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an entity's rank changes on a leaderboard
       required:
+        - eventName
         - eventId
         - timestamp
         - gameServiceId
@@ -85,14 +88,10 @@ components:
         - rankChange
         - previousScore
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the rank changed
+          default: leaderboard.rank.changed
+          description: 'Event type identifier: leaderboard.rank.changed'
         gameServiceId:
           type: string
           format: uuid
@@ -129,10 +128,13 @@ components:
           description: Current score
 
     LeaderboardEntryAddedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a new entity joins a leaderboard
       required:
+        - eventName
         - eventId
         - timestamp
         - gameServiceId
@@ -142,14 +144,10 @@ components:
         - score
         - rank
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the entry was added
+          default: leaderboard.entry.added
+          description: 'Event type identifier: leaderboard.entry.added'
         gameServiceId:
           type: string
           format: uuid
@@ -178,24 +176,23 @@ components:
           description: Total entries after addition
 
     LeaderboardSeasonStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a new leaderboard season begins
       required:
+        - eventName
         - eventId
         - timestamp
         - gameServiceId
         - leaderboardId
         - seasonNumber
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the season started
+          default: leaderboard.season.started
+          description: 'Event type identifier: leaderboard.season.started'
         gameServiceId:
           type: string
           format: uuid

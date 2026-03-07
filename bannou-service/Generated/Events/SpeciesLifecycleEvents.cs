@@ -147,9 +147,7 @@ public partial class SpeciesCreatedEvent : BaseServiceEvent
     /// Timestamp when the species was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -270,9 +268,7 @@ public partial class SpeciesUpdatedEvent : BaseServiceEvent
     /// Timestamp when the species was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -401,9 +397,7 @@ public partial class SpeciesDeletedEvent : BaseServiceEvent
     /// Timestamp when the species was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

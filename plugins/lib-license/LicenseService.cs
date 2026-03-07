@@ -18,19 +18,6 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.License;
 
 /// <summary>
-/// Topic constants for license board events.
-/// </summary>
-public static class LicenseTopics
-{
-    /// <summary>License unlocked event topic.</summary>
-    public const string LicenseUnlocked = "license.unlocked";
-    /// <summary>License unlock failed event topic.</summary>
-    public const string LicenseUnlockFailed = "license.unlock-failed";
-    /// <summary>License board cloned event topic.</summary>
-    public const string LicenseBoardCloned = "license.board.cloned";
-}
-
-/// <summary>
 /// Implementation of the License service.
 /// Provides grid-based progression boards (skill trees, license boards, tech trees)
 /// by combining Inventory (containers), Items (license nodes), and Contracts (unlock behavior).
@@ -1476,7 +1463,7 @@ public partial class LicenseService : ILicenseService
 
         // 12. Publish license.unlocked event
         await _messageBus.TryPublishAsync(
-            LicenseTopics.LicenseUnlocked,
+            LicensePublishedTopics.LicenseUnlocked,
             new LicenseUnlockedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1549,7 +1536,7 @@ public partial class LicenseService : ILicenseService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.PublishUnlockFailedAsync");
         await _messageBus.TryPublishAsync(
-            LicenseTopics.LicenseUnlockFailed,
+            LicensePublishedTopics.LicenseUnlockFailed,
             new LicenseUnlockFailedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2187,7 +2174,7 @@ public partial class LicenseService : ILicenseService
 
         // 17. Publish license.board.cloned custom event
         await _messageBus.TryPublishAsync(
-            LicenseTopics.LicenseBoardCloned,
+            LicensePublishedTopics.LicenseBoardCloned,
             new LicenseBoardClonedEvent
             {
                 EventId = Guid.NewGuid(),

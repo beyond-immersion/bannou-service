@@ -66,15 +66,15 @@ components:
           additionalProperties: true
           nullable: true
           description: "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
-        createdAt: &id010
+        createdAt:
           type: string
           format: date-time
-          description: "Timestamp when the relationship record was created"
-        updatedAt: &id011
+          description: Timestamp when the relationship was created
+        updatedAt:
           type: string
           format: date-time
           nullable: true
-          description: "Timestamp when the relationship record was last updated, null if never updated"
+          description: Timestamp when the relationship was last updated
     RelationshipUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -108,8 +108,15 @@ components:
         startedAt: *id007
         endedAt: *id008
         metadata: *id009
-        createdAt: *id010
-        updatedAt: *id011
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the relationship was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the relationship was last updated
         changedFields:
           type: array
           items:
@@ -147,8 +154,15 @@ components:
         startedAt: *id007
         endedAt: *id008
         metadata: *id009
-        createdAt: *id010
-        updatedAt: *id011
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the relationship was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the relationship was last updated
         deletedReason:
           type: string
           nullable: true
@@ -170,80 +184,80 @@ components:
       - isDeprecated
       - depth
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
           default: relationship.type.created
           description: 'Event type identifier: relationship.type.created'
-        relationshipTypeId: &id012
+        relationshipTypeId: &id010
           type: string
           format: uuid
           description: "Unique identifier for the relationship type"
-        code: &id013
+        code: &id011
           type: string
           description: "Machine-readable code for the relationship type"
-        name: &id014
+        name: &id012
           type: string
           description: "Human-readable display name for the relationship type"
-        description: &id015
+        description: &id013
           type: string
           nullable: true
           description: "Detailed description of the relationship type"
-        category: &id016
+        category: &id014
           type: string
           nullable: true
           description: "Category grouping for the relationship type"
-        parentTypeId: &id017
+        parentTypeId: &id015
           type: string
           format: uuid
           nullable: true
           description: "ID of the parent relationship type for hierarchical relationships"
-        parentTypeCode: &id018
+        parentTypeCode: &id016
           type: string
           nullable: true
           description: "Code of the parent relationship type"
-        inverseTypeId: &id019
+        inverseTypeId: &id017
           type: string
           format: uuid
           nullable: true
           description: "ID of the inverse relationship type for asymmetric relationships"
-        inverseTypeCode: &id020
+        inverseTypeCode: &id018
           type: string
           nullable: true
           description: "Code of the inverse relationship type"
-        isBidirectional: &id021
+        isBidirectional: &id019
           type: boolean
           description: "Whether the relationship applies equally in both directions"
-        isDeprecated: &id022
+        isDeprecated: &id020
           type: boolean
           description: "Whether this relationship type is deprecated and should not be used for new relationships"
-        deprecatedAt: &id023
+        deprecatedAt: &id021
           type: string
           format: date-time
           nullable: true
           description: "Timestamp when the relationship type was deprecated"
-        deprecationReason: &id024
+        deprecationReason: &id022
           type: string
           nullable: true
           description: "Explanation for why the relationship type was deprecated"
-        depth: &id025
+        depth: &id023
           type: integer
           description: "Hierarchy depth level from the root relationship type"
-        metadata: &id026
+        metadata: &id024
           type: object
           additionalProperties: true
           nullable: true
           description: "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by
             convention."
-        createdAt: &id027
+        createdAt:
           type: string
           format: date-time
-          description: "Timestamp when the relationship type was created"
-        updatedAt: &id028
+          description: Timestamp when the relationship type was created
+        updatedAt:
           type: string
           format: date-time
-          description: "Timestamp when the relationship type was last updated"
+          nullable: true
+          description: Timestamp when the relationship type was last updated
     RelationshipTypeUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -261,30 +275,36 @@ components:
       - isDeprecated
       - depth
       - createdAt
-      - updatedAt
       - changedFields
       properties:
         eventName:
           type: string
           default: relationship.type.updated
           description: 'Event type identifier: relationship.type.updated'
-        relationshipTypeId: *id012
-        code: *id013
-        name: *id014
-        description: *id015
-        category: *id016
-        parentTypeId: *id017
-        parentTypeCode: *id018
-        inverseTypeId: *id019
-        inverseTypeCode: *id020
-        isBidirectional: *id021
-        isDeprecated: *id022
-        deprecatedAt: *id023
-        deprecationReason: *id024
-        depth: *id025
-        metadata: *id026
-        createdAt: *id027
-        updatedAt: *id028
+        relationshipTypeId: *id010
+        code: *id011
+        name: *id012
+        description: *id013
+        category: *id014
+        parentTypeId: *id015
+        parentTypeCode: *id016
+        inverseTypeId: *id017
+        inverseTypeCode: *id018
+        isBidirectional: *id019
+        isDeprecated: *id020
+        deprecatedAt: *id021
+        deprecationReason: *id022
+        depth: *id023
+        metadata: *id024
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the relationship type was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the relationship type was last updated
         changedFields:
           type: array
           items:
@@ -307,29 +327,35 @@ components:
       - isDeprecated
       - depth
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
           default: relationship.type.deleted
           description: 'Event type identifier: relationship.type.deleted'
-        relationshipTypeId: *id012
-        code: *id013
-        name: *id014
-        description: *id015
-        category: *id016
-        parentTypeId: *id017
-        parentTypeCode: *id018
-        inverseTypeId: *id019
-        inverseTypeCode: *id020
-        isBidirectional: *id021
-        isDeprecated: *id022
-        deprecatedAt: *id023
-        deprecationReason: *id024
-        depth: *id025
-        metadata: *id026
-        createdAt: *id027
-        updatedAt: *id028
+        relationshipTypeId: *id010
+        code: *id011
+        name: *id012
+        description: *id013
+        category: *id014
+        parentTypeId: *id015
+        parentTypeCode: *id016
+        inverseTypeId: *id017
+        inverseTypeCode: *id018
+        isBidirectional: *id019
+        isDeprecated: *id020
+        deprecatedAt: *id021
+        deprecationReason: *id022
+        depth: *id023
+        metadata: *id024
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the relationship type was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the relationship type was last updated
         deletedReason:
           type: string
           nullable: true

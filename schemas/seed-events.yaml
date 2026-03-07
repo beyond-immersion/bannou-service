@@ -117,10 +117,13 @@ components:
     # Custom Published Events (non-lifecycle)
     # =========================================================================
     SeedGrowthUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when growth domain values change for a seed
       required:
+        - eventName
         - eventId
         - timestamp
         - seedId
@@ -130,14 +133,10 @@ components:
         - newDepth
         - totalGrowth
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the growth was recorded
+          default: seed.growth.updated
+          description: 'Event type identifier: seed.growth.updated'
         seedId:
           type: string
           format: uuid
@@ -168,10 +167,13 @@ components:
           description: Whether this growth was applied via cross-seed pollination rather than direct recording
 
     SeedPhaseChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a seed transitions to a new growth phase
       required:
+        - eventName
         - eventId
         - timestamp
         - seedId
@@ -181,14 +183,10 @@ components:
         - totalGrowth
         - direction
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the phase transition occurred
+          default: seed.phase.changed
+          description: 'Event type identifier: seed.phase.changed'
         seedId:
           type: string
           format: uuid
@@ -214,10 +212,13 @@ components:
           description: Whether this was a forward progression or a regression from decay
 
     SeedCapabilityUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a seed's capability manifest is recomputed
       required:
+        - eventName
         - eventId
         - timestamp
         - seedId
@@ -225,14 +226,10 @@ components:
         - version
         - capabilityCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the manifest was recomputed
+          default: seed.capability.updated
+          description: 'Event type identifier: seed.capability.updated'
         seedId:
           type: string
           format: uuid
@@ -251,10 +248,13 @@ components:
           description: Number of unlocked capabilities in the new manifest
 
     SeedActivatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a seed is set as active for its owner
       required:
+        - eventName
         - eventId
         - timestamp
         - seedId
@@ -262,14 +262,10 @@ components:
         - ownerType
         - seedTypeCode
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the activation occurred
+          default: seed.activated
+          description: 'Event type identifier: seed.activated'
         seedId:
           type: string
           format: uuid
@@ -292,10 +288,13 @@ components:
           description: The previously active seed that was deactivated, if any
 
     SeedArchivedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a seed is archived
       required:
+        - eventName
         - eventId
         - timestamp
         - seedId
@@ -303,14 +302,10 @@ components:
         - ownerType
         - seedTypeCode
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the archive occurred
+          default: seed.archived
+          description: 'Event type identifier: seed.archived'
         seedId:
           type: string
           format: uuid
@@ -328,24 +323,23 @@ components:
           description: Seed type code
 
     SeedBondFormedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a bond between seeds becomes active (all participants confirmed)
       required:
+        - eventName
         - eventId
         - timestamp
         - bondId
         - seedTypeCode
         - participantSeedIds
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the bond became active
+          default: seed.bond.formed
+          description: 'Event type identifier: seed.bond.formed'
         bondId:
           type: string
           format: uuid

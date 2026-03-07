@@ -102,7 +102,6 @@ x-lifecycle:
       scope: { $ref: 'currency-api.yaml#/components/schemas/CurrencyScope', required: true, description: "Currency scope" }
       precision: { $ref: 'currency-api.yaml#/components/schemas/CurrencyPrecision', required: true, description: "Currency precision type" }
       isActive: { type: boolean, required: true, description: "Whether the definition is active" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the definition was created" }
       modifiedAt: { type: string, format: date-time, nullable: true, description: "When the definition was last modified" }
 
   CurrencyWallet:
@@ -112,7 +111,6 @@ x-lifecycle:
       ownerType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Owner entity type" }
       realmId: { type: string, format: uuid, nullable: true, description: "Realm ID for realm-scoped wallets" }
       status: { $ref: 'currency-api.yaml#/components/schemas/WalletStatus', required: true, description: "Wallet status" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the wallet was created" }
 
 paths: {}
 
@@ -123,10 +121,13 @@ components:
     # =========================================================================
 
     CurrencyCreditedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when currency is credited to a wallet
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - transactionId
@@ -141,14 +142,10 @@ components:
       - earnCapApplied
       - walletCapApplied
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.credited
+          description: 'Event type identifier: currency.credited'
         transactionId:
           type: string
           format: uuid
@@ -199,10 +196,13 @@ components:
           description: Whether wallet cap was applied
 
     CurrencyDebitedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when currency is debited from a wallet
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - transactionId
@@ -215,14 +215,10 @@ components:
       - transactionType
       - newBalance
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.debited
+          description: 'Event type identifier: currency.debited'
         transactionId:
           type: string
           format: uuid
@@ -267,10 +263,13 @@ components:
           description: Reference entity ID
 
     CurrencyTransferredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when currency is transferred between wallets
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - transactionId
@@ -285,14 +284,10 @@ components:
       - amount
       - transactionType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.transferred
+          description: 'Event type identifier: currency.transferred'
         transactionId:
           type: string
           format: uuid
@@ -339,10 +334,13 @@ components:
     # =========================================================================
 
     CurrencyAutogainCalculatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when autogain is calculated for a balance
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - walletId
@@ -359,14 +357,10 @@ components:
       - periodsFrom
       - periodsTo
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.autogain.calculated
+          description: 'Event type identifier: currency.autogain.calculated'
         walletId:
           type: string
           format: uuid
@@ -421,10 +415,13 @@ components:
     # =========================================================================
 
     CurrencyEarnCapReachedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a credit is limited by earn cap
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - walletId
@@ -436,14 +433,10 @@ components:
       - attemptedAmount
       - limitedAmount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.earn-cap.reached
+          description: 'Event type identifier: currency.earn-cap.reached'
         walletId:
           type: string
           format: uuid
@@ -476,10 +469,13 @@ components:
           description: Amount actually credited after limiting
 
     CurrencyWalletCapReachedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a credit hits the wallet cap
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - walletId
@@ -490,14 +486,10 @@ components:
       - overflowBehavior
       - amountLost
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.wallet-cap.reached
+          description: 'Event type identifier: currency.wallet-cap.reached'
         walletId:
           type: string
           format: uuid
@@ -530,10 +522,13 @@ components:
     # =========================================================================
 
     CurrencyExpiredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when currency expires
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - transactionId
@@ -544,14 +539,10 @@ components:
       - amountExpired
       - expirationPolicy
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.expired
+          description: 'Event type identifier: currency.expired'
         transactionId:
           type: string
           format: uuid
@@ -584,10 +575,13 @@ components:
     # =========================================================================
 
     CurrencyExchangeRateUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a currency exchange rate is updated
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - currencyDefinitionId
@@ -597,14 +591,10 @@ components:
       - baseCurrencyCode
       - updatedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.exchange-rate.updated
+          description: 'Event type identifier: currency.exchange-rate.updated'
         currencyDefinitionId:
           type: string
           format: uuid
@@ -633,10 +623,13 @@ components:
     # =========================================================================
 
     CurrencyHoldCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when an authorization hold is created
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - holdId
@@ -646,14 +639,10 @@ components:
       - amount
       - expiresAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.hold.created
+          description: 'Event type identifier: currency.hold.created'
         holdId:
           type: string
           format: uuid
@@ -689,10 +678,13 @@ components:
           description: Reference ID
 
     CurrencyHoldCapturedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a hold is captured
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - holdId
@@ -704,14 +696,10 @@ components:
       - amountReleased
       - transactionId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.hold.captured
+          description: 'Event type identifier: currency.hold.captured'
         holdId:
           type: string
           format: uuid
@@ -746,10 +734,13 @@ components:
           description: Debit transaction ID
 
     CurrencyHoldReleasedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a hold is released
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - holdId
@@ -758,14 +749,10 @@ components:
       - currencyDefinitionId
       - amount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.hold.released
+          description: 'Event type identifier: currency.hold.released'
         holdId:
           type: string
           format: uuid
@@ -788,10 +775,13 @@ components:
           description: Amount made available again
 
     CurrencyHoldExpiredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a hold expires (auto-release)
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - holdId
@@ -801,14 +791,10 @@ components:
       - amount
       - originalExpiresAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.hold.expired
+          description: 'Event type identifier: currency.hold.expired'
         holdId:
           type: string
           format: uuid
@@ -839,24 +825,23 @@ components:
     # =========================================================================
 
     CurrencyWalletFrozenEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a wallet is frozen
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - walletId
       - ownerId
       - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.wallet.frozen
+          description: 'Event type identifier: currency.wallet.frozen'
         walletId:
           type: string
           format: uuid
@@ -870,23 +855,22 @@ components:
           description: Reason for freezing
 
     CurrencyWalletUnfrozenEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a wallet is unfrozen
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - walletId
       - ownerId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.wallet.unfrozen
+          description: 'Event type identifier: currency.wallet.unfrozen'
         walletId:
           type: string
           format: uuid
@@ -897,23 +881,22 @@ components:
           description: Wallet owner ID
 
     CurrencyWalletClosedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a wallet is permanently closed
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - walletId
       - ownerId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: currency.wallet.closed
+          description: 'Event type identifier: currency.wallet.closed'
         walletId:
           type: string
           format: uuid

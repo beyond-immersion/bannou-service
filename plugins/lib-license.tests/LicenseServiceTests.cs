@@ -1361,7 +1361,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
         // Verify unlock-failed event was published
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync(LicenseTopics.LicenseUnlockFailed, It.IsAny<LicenseUnlockFailedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync(LicensePublishedTopics.LicenseUnlockFailed, It.IsAny<LicenseUnlockFailedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         // Verify compensation: item was destroyed after contract failure
@@ -1413,7 +1413,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
         LicenseUnlockedEvent? capturedEvent = null;
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync(LicenseTopics.LicenseUnlocked, It.IsAny<LicenseUnlockedEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(LicensePublishedTopics.LicenseUnlocked, It.IsAny<LicenseUnlockedEvent>(), It.IsAny<CancellationToken>()))
             .Callback<string, LicenseUnlockedEvent, CancellationToken>((_, e, _) => capturedEvent = e)
             .ReturnsAsync(true);
 

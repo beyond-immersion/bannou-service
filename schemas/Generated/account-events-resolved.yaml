@@ -45,8 +45,6 @@ x-lifecycle:
         description: "Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null."
         items:
           $ref: '#/components/schemas/AuthMethodInfo'
-      createdAt: {type: string, format: date-time, required: true, description: "Timestamp when the account was created"}
-      updatedAt: {type: string, format: date-time, nullable: true, description: "Timestamp when the account was last updated"}    # NRT: Optional property MUST be nullable
       mfaEnabled: {type: boolean, description: "Whether multi-factor authentication is enabled for the account"}
       metadata: {type: object, additionalProperties: true, nullable: true, description: "Client-only metadata. No Bannou plugin
           reads specific keys from this field by convention."}                                                                                                                          # NRT: Optional object MUST be nullable

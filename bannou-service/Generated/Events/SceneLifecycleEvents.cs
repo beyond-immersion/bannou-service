@@ -106,7 +106,7 @@ public partial class SceneCreatedEvent : BaseServiceEvent
     public int NodeCount { get; set; } = default!;
 
     /// <summary>
-    /// Creation timestamp
+    /// Timestamp when the scene was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -114,12 +114,10 @@ public partial class SceneCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Last update timestamp
+    /// Timestamp when the scene was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -198,7 +196,7 @@ public partial class SceneUpdatedEvent : BaseServiceEvent
     public int NodeCount { get; set; } = default!;
 
     /// <summary>
-    /// Creation timestamp
+    /// Timestamp when the scene was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -206,12 +204,10 @@ public partial class SceneUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Last update timestamp
+    /// Timestamp when the scene was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -298,7 +294,7 @@ public partial class SceneDeletedEvent : BaseServiceEvent
     public int NodeCount { get; set; } = default!;
 
     /// <summary>
-    /// Creation timestamp
+    /// Timestamp when the scene was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -306,12 +302,10 @@ public partial class SceneDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Last update timestamp
+    /// Timestamp when the scene was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

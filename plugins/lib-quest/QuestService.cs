@@ -17,23 +17,6 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.Quest;
 
 /// <summary>
-/// Topic constants for quest events.
-/// </summary>
-public static class QuestTopics
-{
-    /// <summary>Quest accepted event topic.</summary>
-    public const string QuestAccepted = "quest.accepted";
-    /// <summary>Objective progress updated event topic.</summary>
-    public const string QuestObjectiveProgressed = "quest.objective.progressed";
-    /// <summary>Quest completed event topic.</summary>
-    public const string QuestCompleted = "quest.completed";
-    /// <summary>Quest failed event topic.</summary>
-    public const string QuestFailed = "quest.failed";
-    /// <summary>Quest abandoned event topic.</summary>
-    public const string QuestAbandoned = "quest.abandoned";
-}
-
-/// <summary>
 /// Implementation of the Quest service.
 /// Quest is a thin orchestration layer over lib-contract providing game-flavored
 /// quest semantics: objectives are milestones, rewards are prebound API executions.
@@ -746,7 +729,7 @@ public partial class QuestService : IQuestService
             QuestorCharacterIds = new List<Guid> { body.QuestorCharacterId },
             GameServiceId = definition.GameServiceId
         };
-        await _messageBus.TryPublishAsync(QuestTopics.QuestAccepted, acceptedEvent, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync(QuestPublishedTopics.QuestAccepted, acceptedEvent, cancellationToken: cancellationToken);
 
         _logger.LogInformation("Quest accepted: {QuestInstanceId} ({Code}) by character {CharacterId}",
             questInstanceId, definition.Code, body.QuestorCharacterId);
@@ -833,7 +816,7 @@ public partial class QuestService : IQuestService
                 QuestCode = instance.Code,
                 AbandoningCharacterId = body.QuestorCharacterId
             };
-            await _messageBus.TryPublishAsync(QuestTopics.QuestAbandoned, abandonedEvent, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync(QuestPublishedTopics.QuestAbandoned, abandonedEvent, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Quest abandoned: {QuestInstanceId} by character {CharacterId}",
                 body.QuestInstanceId, body.QuestorCharacterId);
@@ -1169,7 +1152,7 @@ public partial class QuestService : IQuestService
                 RequiredCount = progress.RequiredCount,
                 IsComplete = progress.IsComplete
             };
-            await _messageBus.TryPublishAsync(QuestTopics.QuestObjectiveProgressed, progressEvent, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync(QuestPublishedTopics.QuestObjectiveProgressed, progressEvent, cancellationToken: cancellationToken);
 
             // If milestone completed, notify Contract service
             if (milestoneCompleted)
@@ -1896,7 +1879,7 @@ public partial class QuestService : IQuestService
                 QuestorCharacterIds = current.QuestorCharacterIds,
                 GameServiceId = current.GameServiceId
             };
-            await _messageBus.TryPublishAsync(QuestTopics.QuestCompleted, completedEvent, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync(QuestPublishedTopics.QuestCompleted, completedEvent, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Quest completed: {QuestInstanceId} ({Code})",
                 instance.QuestInstanceId, current.Code);

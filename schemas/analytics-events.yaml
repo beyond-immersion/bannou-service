@@ -79,10 +79,13 @@ components:
     # Published Events
     # ============================================
     AnalyticsScoreUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an entity's score or statistic changes
       required:
+        - eventName
         - eventId
         - timestamp
         - gameServiceId
@@ -92,14 +95,10 @@ components:
         - newValue
         - delta
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the score was updated
+          default: analytics.score.updated
+          description: 'Event type identifier: analytics.score.updated'
         gameServiceId:
           type: string
           format: uuid
@@ -136,10 +135,13 @@ components:
           description: Game session ID where this occurred
 
     AnalyticsRatingUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an entity's Glicko-2 skill rating changes
       required:
+        - eventName
         - eventId
         - timestamp
         - gameServiceId
@@ -152,14 +154,10 @@ components:
         - newRatingDeviation
         - matchId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the rating was updated
+          default: analytics.rating.updated
+          description: 'Event type identifier: analytics.rating.updated'
         gameServiceId:
           type: string
           format: uuid
@@ -198,10 +196,13 @@ components:
           description: ID of the match that caused this update
 
     AnalyticsMilestoneReachedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an entity reaches a statistical milestone
       required:
+        - eventName
         - eventId
         - timestamp
         - gameServiceId
@@ -210,14 +211,10 @@ components:
         - milestoneType
         - milestoneValue
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the milestone was reached
+          default: analytics.milestone.reached
+          description: 'Event type identifier: analytics.milestone.reached'
         gameServiceId:
           type: string
           format: uuid
@@ -245,10 +242,13 @@ components:
           description: Human-readable milestone name (e.g., "Century Club")
 
     AnalyticsControllerRecordedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a controller possession or release event is recorded
       required:
+        - eventName
         - eventId
         - timestamp
         - gameServiceId
@@ -257,14 +257,10 @@ components:
         - targetEntityType
         - action
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the controller event was recorded
+          default: analytics.controller.recorded
+          description: 'Event type identifier: analytics.controller.recorded'
         gameServiceId:
           type: string
           format: uuid

@@ -26,6 +26,21 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Auth;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -37,6 +52,14 @@ using System = global::System;
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SessionInvalidatedEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: session.invalidated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "session.invalidated";
 
     /// <summary>
     /// ID of the account whose sessions were invalidated
@@ -77,6 +100,14 @@ public partial class SessionInvalidatedEvent : BaseServiceEvent
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SessionUpdatedEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: session.updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "session.updated";
 
     /// <summary>
     /// ID of the account whose session changed
@@ -129,6 +160,14 @@ public partial class AuthLoginSuccessfulEvent : BaseServiceEvent
 {
 
     /// <summary>
+    /// Event type identifier: auth.login.successful
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "auth.login.successful";
+
+    /// <summary>
     /// ID of the account that logged in
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
@@ -174,6 +213,14 @@ public partial class AuthLoginFailedEvent : BaseServiceEvent
 {
 
     /// <summary>
+    /// Event type identifier: auth.login.failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "auth.login.failed";
+
+    /// <summary>
     /// Display name of the account (never email; "(unknown)" if account not found)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("username")]
@@ -216,6 +263,14 @@ public partial class AuthLoginFailedEvent : BaseServiceEvent
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthRegistrationSuccessfulEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: auth.registration.successful
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "auth.registration.successful";
 
     /// <summary>
     /// ID of the newly created account
@@ -263,6 +318,14 @@ public partial class AuthRegistrationSuccessfulEvent : BaseServiceEvent
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthOAuthLoginSuccessfulEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: auth.oauth.successful
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "auth.oauth.successful";
 
     /// <summary>
     /// ID of the account that logged in
@@ -319,6 +382,14 @@ public partial class AuthSteamLoginSuccessfulEvent : BaseServiceEvent
 {
 
     /// <summary>
+    /// Event type identifier: auth.steam.successful
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "auth.steam.successful";
+
+    /// <summary>
     /// ID of the account that logged in
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
@@ -364,6 +435,14 @@ public partial class AuthPasswordResetSuccessfulEvent : BaseServiceEvent
 {
 
     /// <summary>
+    /// Event type identifier: auth.password-reset.successful
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "auth.password-reset.successful";
+
+    /// <summary>
     /// ID of the account whose password was reset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
@@ -387,6 +466,14 @@ public partial class AuthMfaEnabledEvent : BaseServiceEvent
 {
 
     /// <summary>
+    /// Event type identifier: auth.mfa.enabled
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "auth.mfa.enabled";
+
+    /// <summary>
     /// ID of the account that enabled MFA
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
@@ -402,6 +489,14 @@ public partial class AuthMfaEnabledEvent : BaseServiceEvent
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthMfaDisabledEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: auth.mfa.disabled
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "auth.mfa.disabled";
 
     /// <summary>
     /// ID of the account whose MFA was disabled
@@ -434,6 +529,14 @@ public partial class AuthMfaDisabledEvent : BaseServiceEvent
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthMfaVerifiedEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: auth.mfa.verified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "auth.mfa.verified";
 
     /// <summary>
     /// ID of the account that completed MFA verification
@@ -474,6 +577,14 @@ public partial class AuthMfaVerifiedEvent : BaseServiceEvent
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthMfaFailedEvent : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Event type identifier: auth.mfa.failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "auth.mfa.failed";
 
     /// <summary>
     /// ID of the account that failed MFA

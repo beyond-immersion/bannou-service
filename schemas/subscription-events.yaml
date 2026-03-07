@@ -31,6 +31,7 @@ components:
         Published when a subscription changes state (created, updated, cancelled, expired).
         Auth service subscribes to this event to update session authorizations.
       required:
+        - eventName
         - subscriptionId
         - accountId
         - serviceId
@@ -38,6 +39,10 @@ components:
         - action
         - isActive
       properties:
+        eventName:
+          type: string
+          default: subscription.updated
+          description: 'Event type identifier: subscription.updated'
         subscriptionId:
           type: string
           format: uuid

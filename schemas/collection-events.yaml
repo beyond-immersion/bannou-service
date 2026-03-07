@@ -89,8 +89,6 @@ x-lifecycle:
       category: { type: string, nullable: true, description: "Category within the collection type" }
       hideWhenLocked: { type: boolean, required: true, description: "Whether this entry is hidden until unlocked" }
       itemTemplateId: { type: string, format: uuid, required: true, description: "Item template used when granting this entry" }
-      createdAt: { type: string, format: date-time, required: true, description: "When this entry template was created" }
-      updatedAt: { type: string, format: date-time, nullable: true, description: "When this entry template was last updated" }
     sensitive: []
 
   CollectionAreaContentConfig:
@@ -100,8 +98,6 @@ x-lifecycle:
       collectionType: { $ref: 'collection-api.yaml#/components/schemas/CollectionType', required: true, description: "Type of collection this config applies to" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this config is scoped to" }
       defaultEntryCode: { type: string, required: true, description: "Default entry code when no matches found" }
-      createdAt: { type: string, format: date-time, required: true, description: "When this config was created" }
-      updatedAt: { type: string, format: date-time, nullable: true, description: "When this config was last updated" }
     sensitive: []
 
   Collection:
@@ -112,7 +108,6 @@ x-lifecycle:
       collectionType: { $ref: 'collection-api.yaml#/components/schemas/CollectionType', required: true, description: "Type of collection" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this collection is scoped to" }
       containerId: { type: string, format: uuid, required: true, description: "Inventory container holding unlocked entry items" }
-      createdAt: { type: string, format: date-time, required: true, description: "When this collection was created" }
     sensitive: []
 
 paths: {}  # Events don't have HTTP paths
@@ -128,10 +123,13 @@ components:
     # =========================================================================
 
     CollectionEntryUnlockedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an entry is successfully unlocked in a collection
       required:
+      - eventName
       - eventId
       - timestamp
       - collectionId
@@ -143,14 +141,10 @@ components:
       - displayName
       - isFirstGlobal
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the unlock occurred
+          default: collection.entry-unlocked
+          description: 'Event type identifier: collection.entry-unlocked'
         collectionId:
           type: string
           format: uuid
@@ -190,10 +184,13 @@ components:
           description: Whether this is the first time any owner has unlocked this entry
 
     CollectionEntryGrantFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a grant attempt fails
       required:
+      - eventName
       - eventId
       - timestamp
       - ownerId
@@ -201,14 +198,10 @@ components:
       - entryCode
       - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the failure occurred
+          default: collection.entry-grant-failed
+          description: 'Event type identifier: collection.entry-grant-failed'
         collectionId:
           type: string
           format: uuid
@@ -229,10 +222,13 @@ components:
           description: Why the grant attempt failed
 
     CollectionMilestoneReachedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a completion milestone is reached (25%, 50%, 75%, 100%)
       required:
+      - eventName
       - eventId
       - timestamp
       - collectionId
@@ -243,14 +239,10 @@ components:
       - milestone
       - completionPercentage
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the milestone was reached
+          default: collection.milestone-reached
+          description: 'Event type identifier: collection.milestone-reached'
         collectionId:
           type: string
           format: uuid
@@ -278,10 +270,13 @@ components:
           description: Actual completion percentage when milestone was reached
 
     CollectionDiscoveryAdvancedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when progressive discovery level is advanced
       required:
+      - eventName
       - eventId
       - timestamp
       - collectionId
@@ -291,14 +286,10 @@ components:
       - newLevel
       - reveals
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the discovery was advanced
+          default: collection.discovery-advanced
+          description: 'Event type identifier: collection.discovery-advanced'
         collectionId:
           type: string
           format: uuid

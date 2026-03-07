@@ -123,12 +123,18 @@ public partial class GameSessionCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset? ReservationExpiresAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the session was created
+    /// Timestamp when the game session was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the game session was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -224,12 +230,18 @@ public partial class GameSessionUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset? ReservationExpiresAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the session was created
+    /// Timestamp when the game session was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the game session was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -333,12 +345,18 @@ public partial class GameSessionDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset? ReservationExpiresAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the session was created
+    /// Timestamp when the game session was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the game session was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

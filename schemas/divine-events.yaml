@@ -92,8 +92,6 @@ x-lifecycle:
       seedId: { type: string, format: uuid, nullable: true, description: "Domain power seed ID" }
       currencyWalletId: { type: string, format: uuid, nullable: true, description: "Divinity currency wallet ID" }
       realmId: { type: string, format: uuid, nullable: true, description: "Home realm for this deity" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the deity was created" }
-      updatedAt: { type: string, format: date-time, required: true, description: "When the deity was last updated" }
     sensitive: [personalityTraits]
 
 paths: {}  # Events don't have HTTP paths
@@ -105,14 +103,16 @@ components:
   schemas:
     # =========================================================================
     # Custom Published Events (non-lifecycle)
-    # Flat structure per SCHEMA-RULES.md: inline eventId/timestamp, no allOf
     # =========================================================================
 
     DivineBlessingGrantedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a god grants a blessing to an entity
       required:
+        - eventName
         - eventId
         - timestamp
         - deityId
@@ -122,14 +122,10 @@ components:
         - tier
         - itemInstanceId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: divine.blessing.granted
+          description: 'Event type identifier: divine.blessing.granted'
         deityId:
           type: string
           format: uuid
@@ -154,10 +150,13 @@ components:
           description: The item instance created for this blessing
 
     DivineBlessingRevokedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a blessing is revoked
       required:
+        - eventName
         - eventId
         - timestamp
         - blessingId
@@ -166,14 +165,10 @@ components:
         - entityType
         - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: divine.blessing.revoked
+          description: 'Event type identifier: divine.blessing.revoked'
         blessingId:
           type: string
           format: uuid
@@ -194,24 +189,23 @@ components:
           description: Why the blessing was revoked
 
     DivineDivinityCreditedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when divinity is earned by a deity from mortal actions or direct grant
       required:
+        - eventName
         - eventId
         - timestamp
         - deityId
         - amount
         - source
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: divine.divinity.credited
+          description: 'Event type identifier: divine.divinity.credited'
         deityId:
           type: string
           format: uuid
@@ -230,24 +224,23 @@ components:
           description: The triggering event if applicable
 
     DivineDivinityDebitedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when divinity is spent by a deity for blessings or other purposes
       required:
+        - eventName
         - eventId
         - timestamp
         - deityId
         - amount
         - purpose
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: divine.divinity.debited
+          description: 'Event type identifier: divine.divinity.debited'
         deityId:
           type: string
           format: uuid
@@ -266,24 +259,23 @@ components:
           description: Target character if blessing-related
 
     DivineFollowerRegisteredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character becomes a follower of a deity
       required:
+        - eventName
         - eventId
         - timestamp
         - deityId
         - characterId
         - relationshipId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: divine.follower.registered
+          description: 'Event type identifier: divine.follower.registered'
         deityId:
           type: string
           format: uuid
@@ -298,23 +290,22 @@ components:
           description: The Relationship record for this bond
 
     DivineFollowerRemovedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character is removed as a follower
       required:
+        - eventName
         - eventId
         - timestamp
         - deityId
         - characterId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: divine.follower.removed
+          description: 'Event type identifier: divine.follower.removed'
         deityId:
           type: string
           format: uuid
@@ -325,23 +316,22 @@ components:
           description: The removed follower
 
     DivineDeityActivatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a deity becomes active in the world
       required:
+        - eventName
         - eventId
         - timestamp
         - deityId
         - gameServiceId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: divine.deity.activated
+          description: 'Event type identifier: divine.deity.activated'
         deityId:
           type: string
           format: uuid
@@ -352,23 +342,22 @@ components:
           description: The game service scope
 
     DivineDeityDormantEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a deity goes dormant
       required:
+        - eventName
         - eventId
         - timestamp
         - deityId
         - gameServiceId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: divine.deity.dormant
+          description: 'Event type identifier: divine.deity.dormant'
         deityId:
           type: string
           format: uuid

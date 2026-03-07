@@ -107,7 +107,7 @@ public partial class CollectionEntryTemplateCreatedEvent : BaseServiceEvent
     public System.Guid ItemTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// When this entry template was created
+    /// Timestamp when the collection entry template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -115,7 +115,7 @@ public partial class CollectionEntryTemplateCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When this entry template was last updated
+    /// Timestamp when the collection entry template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -198,7 +198,7 @@ public partial class CollectionEntryTemplateUpdatedEvent : BaseServiceEvent
     public System.Guid ItemTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// When this entry template was created
+    /// Timestamp when the collection entry template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -206,7 +206,7 @@ public partial class CollectionEntryTemplateUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When this entry template was last updated
+    /// Timestamp when the collection entry template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -297,7 +297,7 @@ public partial class CollectionEntryTemplateDeletedEvent : BaseServiceEvent
     public System.Guid ItemTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// When this entry template was created
+    /// Timestamp when the collection entry template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -305,7 +305,7 @@ public partial class CollectionEntryTemplateDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When this entry template was last updated
+    /// Timestamp when the collection entry template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -374,7 +374,7 @@ public partial class CollectionAreaContentConfigCreatedEvent : BaseServiceEvent
     public string DefaultEntryCode { get; set; } = default!;
 
     /// <summary>
-    /// When this config was created
+    /// Timestamp when the collection area content config was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -382,7 +382,7 @@ public partial class CollectionAreaContentConfigCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When this config was last updated
+    /// Timestamp when the collection area content config was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -445,7 +445,7 @@ public partial class CollectionAreaContentConfigUpdatedEvent : BaseServiceEvent
     public string DefaultEntryCode { get; set; } = default!;
 
     /// <summary>
-    /// When this config was created
+    /// Timestamp when the collection area content config was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -453,7 +453,7 @@ public partial class CollectionAreaContentConfigUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When this config was last updated
+    /// Timestamp when the collection area content config was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -524,7 +524,7 @@ public partial class CollectionAreaContentConfigDeletedEvent : BaseServiceEvent
     public string DefaultEntryCode { get; set; } = default!;
 
     /// <summary>
-    /// When this config was created
+    /// Timestamp when the collection area content config was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -532,7 +532,7 @@ public partial class CollectionAreaContentConfigDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When this config was last updated
+    /// Timestamp when the collection area content config was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -610,12 +610,18 @@ public partial class CollectionCreatedEvent : BaseServiceEvent
     public System.Guid ContainerId { get; set; } = default!;
 
     /// <summary>
-    /// When this collection was created
+    /// Timestamp when the collection was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the collection was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -684,12 +690,18 @@ public partial class CollectionUpdatedEvent : BaseServiceEvent
     public System.Guid ContainerId { get; set; } = default!;
 
     /// <summary>
-    /// When this collection was created
+    /// Timestamp when the collection was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the collection was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -766,12 +778,18 @@ public partial class CollectionDeletedEvent : BaseServiceEvent
     public System.Guid ContainerId { get; set; } = default!;
 
     /// <summary>
-    /// When this collection was created
+    /// Timestamp when the collection was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the collection was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

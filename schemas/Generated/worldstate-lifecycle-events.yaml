@@ -26,6 +26,7 @@ components:
       - daysPerYear
       - monthsPerYear
       - seasonsPerYear
+      - createdAt
       properties:
         eventName:
           type: string
@@ -71,6 +72,15 @@ components:
           items:
             $ref: '../worldstate-api.yaml#/components/schemas/EraLabel'
           description: Optional era label definitions for year-range naming
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the calendar template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the calendar template was last updated
     CalendarTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -90,6 +100,7 @@ components:
       - daysPerYear
       - monthsPerYear
       - seasonsPerYear
+      - createdAt
       - changedFields
       properties:
         eventName:
@@ -106,6 +117,15 @@ components:
         monthsPerYear: *id008
         seasonsPerYear: *id009
         eraLabels: *id010
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the calendar template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the calendar template was last updated
         changedFields:
           type: array
           items:
@@ -130,6 +150,7 @@ components:
       - daysPerYear
       - monthsPerYear
       - seasonsPerYear
+      - createdAt
       properties:
         eventName:
           type: string
@@ -145,6 +166,15 @@ components:
         monthsPerYear: *id008
         seasonsPerYear: *id009
         eraLabels: *id010
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the calendar template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the calendar template was last updated
         deletedReason:
           type: string
           nullable: true
@@ -166,6 +196,7 @@ components:
       - downtimePolicy
       - realmEpoch
       - isActive
+      - createdAt
       properties:
         eventName:
           type: string
@@ -196,6 +227,15 @@ components:
         isActive: &id017
           type: boolean
           description: Whether the realm clock is initialized and active
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the realm config was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the realm config was last updated
     RealmConfigUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -213,6 +253,7 @@ components:
       - downtimePolicy
       - realmEpoch
       - isActive
+      - createdAt
       - changedFields
       properties:
         eventName:
@@ -226,6 +267,15 @@ components:
         downtimePolicy: *id015
         realmEpoch: *id016
         isActive: *id017
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the realm config was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the realm config was last updated
         changedFields:
           type: array
           items:
@@ -248,6 +298,7 @@ components:
       - downtimePolicy
       - realmEpoch
       - isActive
+      - createdAt
       properties:
         eventName:
           type: string
@@ -260,6 +311,15 @@ components:
         downtimePolicy: *id015
         realmEpoch: *id016
         isActive: *id017
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the realm config was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the realm config was last updated
         deletedReason:
           type: string
           nullable: true

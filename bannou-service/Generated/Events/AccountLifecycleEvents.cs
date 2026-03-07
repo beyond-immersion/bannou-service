@@ -85,6 +85,18 @@ public partial class AccountCreatedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<AuthMethodInfo>? AuthMethods { get; set; } = default!;
 
     /// <summary>
+    /// Whether multi-factor authentication is enabled for the account
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
+    public bool MfaEnabled { get; set; } = default!;
+
+    /// <summary>
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
     /// Timestamp when the account was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
@@ -97,18 +109,6 @@ public partial class AccountCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether multi-factor authentication is enabled for the account
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
-    public bool MfaEnabled { get; set; } = default!;
-
-    /// <summary>
-    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
 
 }
 
@@ -166,6 +166,18 @@ public partial class AccountUpdatedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<AuthMethodInfo>? AuthMethods { get; set; } = default!;
 
     /// <summary>
+    /// Whether multi-factor authentication is enabled for the account
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
+    public bool MfaEnabled { get; set; } = default!;
+
+    /// <summary>
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
     /// Timestamp when the account was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
@@ -178,18 +190,6 @@ public partial class AccountUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether multi-factor authentication is enabled for the account
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
-    public bool MfaEnabled { get; set; } = default!;
-
-    /// <summary>
-    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -255,6 +255,18 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<AuthMethodInfo>? AuthMethods { get; set; } = default!;
 
     /// <summary>
+    /// Whether multi-factor authentication is enabled for the account
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
+    public bool MfaEnabled { get; set; } = default!;
+
+    /// <summary>
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
     /// Timestamp when the account was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
@@ -267,18 +279,6 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether multi-factor authentication is enabled for the account
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
-    public bool MfaEnabled { get; set; } = default!;
-
-    /// <summary>
-    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

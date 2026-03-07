@@ -130,6 +130,16 @@ else
 fi
 echo ""
 
+# Generate published event topic constants from x-event-publications
+echo -e "${BLUE}📢 Generating published event topic constants...${NC}"
+if python3 "$SCRIPT_DIR/generate-published-topics.py"; then
+    echo -e "${GREEN}✅ Published topic constants generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate published topic constants${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate client events (server-to-client push events via WebSocket)
 echo -e "${BLUE}🌟 Generating client events...${NC}"
 if ./generate-client-events.sh; then

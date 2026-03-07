@@ -47,10 +47,15 @@ components:
         maxCount: &id006
           type: integer
           description: "Maximum players for a match"
-        createdAt: &id007
+        createdAt:
           type: string
           format: date-time
-          description: "When the queue was created"
+          description: Timestamp when the matchmaking queue was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the matchmaking queue was last updated
     MatchmakingQueueUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -80,7 +85,15 @@ components:
         enabled: *id004
         minCount: *id005
         maxCount: *id006
-        createdAt: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the matchmaking queue was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the matchmaking queue was last updated
         changedFields:
           type: array
           items:
@@ -114,7 +127,15 @@ components:
         enabled: *id004
         minCount: *id005
         maxCount: *id006
-        createdAt: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the matchmaking queue was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the matchmaking queue was last updated
         deletedReason:
           type: string
           nullable: true

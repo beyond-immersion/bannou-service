@@ -260,7 +260,7 @@ public partial class EscrowService
                 FullyFunded = fullyFunded,
                 DepositedAt = now
             };
-            await _messageBus.TryPublishAsync(EscrowTopics.EscrowDepositReceived, depositEvent, cancellationToken);
+            await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowDepositReceived, depositEvent, cancellationToken);
 
             if (fullyFunded)
             {
@@ -272,7 +272,7 @@ public partial class EscrowService
                     TotalDeposits = agreementModel.Deposits?.Count ?? 0,
                     FundedAt = now
                 };
-                await _messageBus.TryPublishAsync(EscrowTopics.EscrowFunded, fundedEvent, cancellationToken);
+                await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowFunded, fundedEvent, cancellationToken);
             }
 
             _logger.LogInformation(

@@ -116,7 +116,7 @@ public partial class ContractTemplateCreatedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the template was created
+    /// Timestamp when the contract template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -124,7 +124,7 @@ public partial class ContractTemplateCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the template was last updated
+    /// Timestamp when the contract template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -216,7 +216,7 @@ public partial class ContractTemplateUpdatedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the template was created
+    /// Timestamp when the contract template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -224,7 +224,7 @@ public partial class ContractTemplateUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the template was last updated
+    /// Timestamp when the contract template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -324,7 +324,7 @@ public partial class ContractTemplateDeletedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the template was created
+    /// Timestamp when the contract template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -332,7 +332,7 @@ public partial class ContractTemplateDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the template was last updated
+    /// Timestamp when the contract template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -424,7 +424,7 @@ public partial class ContractInstanceCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset? TerminatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the instance was created
+    /// Timestamp when the contract instance was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -432,7 +432,7 @@ public partial class ContractInstanceCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the instance was last updated
+    /// Timestamp when the contract instance was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -518,7 +518,7 @@ public partial class ContractInstanceUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset? TerminatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the instance was created
+    /// Timestamp when the contract instance was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -526,7 +526,7 @@ public partial class ContractInstanceUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the instance was last updated
+    /// Timestamp when the contract instance was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -620,7 +620,7 @@ public partial class ContractInstanceDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset? TerminatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the instance was created
+    /// Timestamp when the contract instance was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -628,7 +628,7 @@ public partial class ContractInstanceDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the instance was last updated
+    /// Timestamp when the contract instance was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;

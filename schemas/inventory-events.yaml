@@ -91,7 +91,6 @@ x-lifecycle:
       tags: { type: array, items: { type: string }, nullable: true, description: "Container tags for categorization" }
       metadata: { type: object, nullable: true, description: "Game-specific container metadata" }
       realmId: { type: string, format: uuid, nullable: true, description: "Realm ID this container belongs to" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the container was created" }
       modifiedAt: { type: string, format: date-time, nullable: true, description: "When the container was last modified" }
     sensitive: []
 
@@ -100,10 +99,13 @@ components:
     # Non-lifecycle events
 
     InventoryItemPlacedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event when an item is placed in a container
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - instanceId
@@ -113,14 +115,10 @@ components:
       - ownerType
       - quantity
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: inventory.item.placed
+          description: 'Event type identifier: inventory.item.placed'
         instanceId:
           type: string
           format: uuid
@@ -158,10 +156,13 @@ components:
           description: Grid Y position if applicable
 
     InventoryItemRemovedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event when an item is removed from a container
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - instanceId
@@ -170,14 +171,10 @@ components:
       - ownerId
       - ownerType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: inventory.item.removed
+          description: 'Event type identifier: inventory.item.removed'
         instanceId:
           type: string
           format: uuid
@@ -203,10 +200,13 @@ components:
           description: Reason for removal
 
     InventoryItemMovedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event when an item moves between slots or containers
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - instanceId
@@ -215,14 +215,10 @@ components:
       - targetContainerId
       - quantity
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: inventory.item.moved
+          description: 'Event type identifier: inventory.item.moved'
         instanceId:
           type: string
           format: uuid
@@ -277,10 +273,13 @@ components:
           description: New grid Y
 
     InventoryItemTransferredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event when item ownership transfers
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - instanceId
@@ -293,14 +292,10 @@ components:
       - targetOwnerType
       - quantityTransferred
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: inventory.item.transferred
+          description: 'Event type identifier: inventory.item.transferred'
         instanceId:
           type: string
           format: uuid
@@ -337,10 +332,13 @@ components:
           description: Quantity transferred
 
     InventoryItemStackedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event when items are stacked together
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - sourceInstanceId
@@ -350,14 +348,10 @@ components:
       - quantityAdded
       - newTotalQuantity
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: inventory.item.stacked
+          description: 'Event type identifier: inventory.item.stacked'
         sourceInstanceId:
           type: string
           format: uuid
@@ -384,10 +378,13 @@ components:
           description: New total in target stack
 
     InventoryItemSplitEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event when a stack is split
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - originalInstanceId
@@ -397,14 +394,10 @@ components:
       - quantitySplit
       - originalRemaining
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: inventory.item.split
+          description: 'Event type identifier: inventory.item.split'
         originalInstanceId:
           type: string
           format: uuid
@@ -431,10 +424,13 @@ components:
           description: Quantity remaining in original
 
     InventoryContainerFullEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event when container reaches capacity
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - containerId
@@ -443,14 +439,10 @@ components:
       - containerType
       - constraintType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: inventory.container.full
+          description: 'Event type identifier: inventory.container.full'
         containerId:
           type: string
           format: uuid

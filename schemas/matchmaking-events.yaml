@@ -70,7 +70,6 @@ x-lifecycle:
       enabled: { type: boolean, required: true, description: "Whether the queue is accepting tickets" }
       minCount: { type: integer, required: true, description: "Minimum players for a match" }
       maxCount: { type: integer, required: true, description: "Maximum players for a match" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the queue was created" }
 
 paths: {}  # Events don't have HTTP paths
 
@@ -81,24 +80,23 @@ components:
     # =========================================================================
 
     MatchmakingTicketCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a new matchmaking ticket is created
       required:
+        - eventName
         - eventId
         - timestamp
         - ticketId
         - queueId
         - webSocketSessionId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the ticket was created
+          default: matchmaking.ticket-created
+          description: 'Event type identifier: matchmaking.ticket-created'
         ticketId:
           type: string
           format: uuid
@@ -125,24 +123,23 @@ components:
           description: Effective skill rating for matching
 
     MatchmakingTicketUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a matchmaking ticket status changes
       required:
+        - eventName
         - eventId
         - timestamp
         - ticketId
         - previousStatus
         - newStatus
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the status changed
+          default: matchmaking.ticket-updated
+          description: 'Event type identifier: matchmaking.ticket-updated'
         ticketId:
           type: string
           format: uuid
@@ -163,10 +160,13 @@ components:
           description: Current skill matching range
 
     MatchmakingTicketCancelledEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a matchmaking ticket is cancelled
       required:
+        - eventName
         - eventId
         - timestamp
         - ticketId
@@ -174,14 +174,10 @@ components:
         - webSocketSessionId
         - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the ticket was cancelled
+          default: matchmaking.ticket-cancelled
+          description: 'Event type identifier: matchmaking.ticket-cancelled'
         ticketId:
           type: string
           format: uuid
@@ -211,10 +207,13 @@ components:
     # =========================================================================
 
     MatchmakingMatchFormedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a match is successfully formed from tickets
       required:
+        - eventName
         - eventId
         - timestamp
         - matchId
@@ -223,14 +222,10 @@ components:
         - playerCount
         - acceptDeadline
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the match was formed
+          default: matchmaking.match-formed
+          description: 'Event type identifier: matchmaking.match-formed'
         matchId:
           type: string
           format: uuid
@@ -260,10 +255,13 @@ components:
           description: Deadline for all players to accept
 
     MatchmakingMatchAcceptedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when all players accept a match
       required:
+        - eventName
         - eventId
         - timestamp
         - matchId
@@ -271,14 +269,10 @@ components:
         - gameSessionId
         - playerCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the match was fully accepted
+          default: matchmaking.match-accepted
+          description: 'Event type identifier: matchmaking.match-accepted'
         matchId:
           type: string
           format: uuid
@@ -299,24 +293,23 @@ components:
           description: Average time players waited for this match
 
     MatchmakingMatchDeclinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player declines a match or match is cancelled due to session disconnect
       required:
+        - eventName
         - eventId
         - timestamp
         - matchId
         - queueId
         - affectedTicketIds
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the match was declined
+          default: matchmaking.match-declined
+          description: 'Event type identifier: matchmaking.match-declined'
         matchId:
           type: string
           format: uuid
@@ -348,22 +341,21 @@ components:
     # =========================================================================
 
     MatchmakingStatsEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published periodically with queue statistics for monitoring
       required:
+        - eventName
         - eventId
         - timestamp
         - stats
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When stats were collected
+          default: matchmaking.stats
+          description: 'Event type identifier: matchmaking.stats'
         stats:
           type: array
           items:

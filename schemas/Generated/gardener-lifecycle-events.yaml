@@ -25,7 +25,6 @@ components:
       - connectivityMode
       - status
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -53,14 +52,15 @@ components:
         status: &id007
           $ref: ../gardener-api.yaml#/components/schemas/TemplateStatus
           description: "Current lifecycle status"
-        createdAt: &id008
+        createdAt:
           type: string
           format: date-time
-          description: "When the template was created"
-        updatedAt: &id009
+          description: Timestamp when the scenario template was created
+        updatedAt:
           type: string
           format: date-time
-          description: "When the template was last updated"
+          nullable: true
+          description: Timestamp when the scenario template was last updated
     ScenarioTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -79,7 +79,6 @@ components:
       - connectivityMode
       - status
       - createdAt
-      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -93,8 +92,15 @@ components:
         category: *id005
         connectivityMode: *id006
         status: *id007
-        createdAt: *id008
-        updatedAt: *id009
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the scenario template was last updated
         changedFields:
           type: array
           items:
@@ -118,7 +124,6 @@ components:
       - connectivityMode
       - status
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -131,8 +136,15 @@ components:
         category: *id005
         connectivityMode: *id006
         status: *id007
-        createdAt: *id008
-        updatedAt: *id009
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the scenario template was last updated
         deletedReason:
           type: string
           nullable: true

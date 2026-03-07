@@ -67,7 +67,6 @@ x-lifecycle:
       owner: { type: string, format: uuid, nullable: true, description: "Account ID of the session owner" }  # NRT: Optional property MUST be nullable
       gameSettings: { type: object, additionalProperties: true, nullable: true, description: "Game-specific configuration settings" }  # NRT: Optional property MUST be nullable
       reservationExpiresAt: { type: string, format: date-time, nullable: true, description: "For matchmade sessions - when reservations expire" }  # NRT: Optional property MUST be nullable
-      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the session was created" }
 
 paths: {}  # Events don't have HTTP paths
 
@@ -80,23 +79,22 @@ components:
     # Custom Player Participation Events (not lifecycle - manually defined)
     # =========================================================================
     GameSessionPlayerJoinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player joins a game session
       required:
+        - eventName
         - eventId
         - timestamp
         - sessionId
         - accountId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the player joined
+          default: game-session.player-joined
+          description: 'Event type identifier: game-session.player-joined'
         sessionId:
           type: string
           format: uuid
@@ -107,23 +105,22 @@ components:
           description: ID of the account that joined
 
     GameSessionPlayerLeftEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player leaves a game session
       required:
+        - eventName
         - eventId
         - timestamp
         - sessionId
         - accountId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the player left
+          default: game-session.player-left
+          description: 'Event type identifier: game-session.player-left'
         sessionId:
           type: string
           format: uuid
@@ -142,23 +139,22 @@ components:
           description: Reason for leaving/being kicked (if applicable)
 
     GameSessionCancelledEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a matchmade session is cancelled due to reservation expiry
       required:
+        - eventName
         - eventId
         - timestamp
         - sessionId
         - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the session was cancelled
+          default: game-session.cancelled
+          description: 'Event type identifier: game-session.cancelled'
         sessionId:
           type: string
           format: uuid
@@ -168,10 +164,13 @@ components:
           description: Reason for cancellation
 
     GameSessionActionPerformedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a game action is performed in a session
       required:
+        - eventName
         - eventId
         - timestamp
         - sessionId
@@ -179,14 +178,10 @@ components:
         - actionId
         - actionType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the action was performed
+          default: game-session.action.performed
+          description: 'Event type identifier: game-session.action.performed'
         sessionId:
           type: string
           format: uuid

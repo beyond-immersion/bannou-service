@@ -46,10 +46,13 @@ components:
   schemas:
     # === PUBLISHED EVENTS ===
     QuestAcceptedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character accepts a quest
       required:
+        - eventName
         - eventId
         - timestamp
         - questInstanceId
@@ -58,14 +61,10 @@ components:
         - questorCharacterIds
         - gameServiceId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: quest.accepted
+          description: 'Event type identifier: quest.accepted'
         questInstanceId:
           type: string
           format: uuid
@@ -90,6 +89,8 @@ components:
           description: Game service ID
 
     QuestObjectiveProgressedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when objective progress changes
@@ -97,6 +98,7 @@ components:
         name: quest_objective_progressed
         topic: quest.objective.progressed
       required:
+        - eventName
         - eventId
         - timestamp
         - questInstanceId
@@ -106,14 +108,10 @@ components:
         - requiredCount
         - isComplete
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: quest.objective.progressed
+          description: 'Event type identifier: quest.objective.progressed'
         questInstanceId:
           type: string
           format: uuid
@@ -137,10 +135,13 @@ components:
           description: Whether objective is now complete
 
     QuestCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when quest is completed successfully
       required:
+        - eventName
         - eventId
         - timestamp
         - questInstanceId
@@ -149,14 +150,10 @@ components:
         - questorCharacterIds
         - gameServiceId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: quest.completed
+          description: 'Event type identifier: quest.completed'
         questInstanceId:
           type: string
           format: uuid
@@ -181,10 +178,13 @@ components:
           description: Game service ID
 
     QuestFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when quest fails
       required:
+        - eventName
         - eventId
         - timestamp
         - questInstanceId
@@ -192,14 +192,10 @@ components:
         - questorCharacterIds
         - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: quest.failed
+          description: 'Event type identifier: quest.failed'
         questInstanceId:
           type: string
           format: uuid
@@ -220,24 +216,23 @@ components:
           description: Failure reason
 
     QuestAbandonedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when quest is voluntarily abandoned
       required:
+        - eventName
         - eventId
         - timestamp
         - questInstanceId
         - questCode
         - abandoningCharacterId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: quest.abandoned
+          description: 'Event type identifier: quest.abandoned'
         questInstanceId:
           type: string
           format: uuid

@@ -166,15 +166,20 @@ components:
           format: uuid
           nullable: true
           description: "Realm ID this container belongs to"
-        createdAt: &id033
-          type: string
-          format: date-time
-          description: "When the container was created"
-        modifiedAt: &id034
+        modifiedAt: &id033
           type: string
           format: date-time
           nullable: true
           description: "When the container was last modified"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the inventory container was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the inventory container was last updated
     InventoryContainerUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -237,8 +242,16 @@ components:
         tags: *id030
         metadata: *id031
         realmId: *id032
-        createdAt: *id033
-        modifiedAt: *id034
+        modifiedAt: *id033
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the inventory container was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the inventory container was last updated
         changedFields:
           type: array
           items:
@@ -305,8 +318,16 @@ components:
         tags: *id030
         metadata: *id031
         realmId: *id032
-        createdAt: *id033
-        modifiedAt: *id034
+        modifiedAt: *id033
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the inventory container was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the inventory container was last updated
         deletedReason:
           type: string
           nullable: true

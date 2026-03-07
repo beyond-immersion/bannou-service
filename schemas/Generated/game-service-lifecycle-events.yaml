@@ -49,15 +49,15 @@ components:
           type: boolean
           description: Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game 
             service
-        createdAt: &id007
+        createdAt:
           type: string
           format: date-time
-          description: When the service was created
-        updatedAt: &id008
+          description: Timestamp when the game service was created
+        updatedAt:
           type: string
           format: date-time
           nullable: true
-          description: When the service was last updated
+          description: Timestamp when the game service was last updated
     GameServiceUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -86,8 +86,15 @@ components:
         description: *id004
         isActive: *id005
         autoLobbyEnabled: *id006
-        createdAt: *id007
-        updatedAt: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the game service was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the game service was last updated
         changedFields:
           type: array
           items:
@@ -120,8 +127,15 @@ components:
         description: *id004
         isActive: *id005
         autoLobbyEnabled: *id006
-        createdAt: *id007
-        updatedAt: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the game service was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the game service was last updated
         deletedReason:
           type: string
           nullable: true

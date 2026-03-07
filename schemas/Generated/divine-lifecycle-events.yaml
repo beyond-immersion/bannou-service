@@ -27,7 +27,6 @@ components:
       - followerCount
       - maxAttentionSlots
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -84,14 +83,15 @@ components:
           format: uuid
           nullable: true
           description: "Home realm for this deity"
-        createdAt: &id014
+        createdAt:
           type: string
           format: date-time
-          description: "When the deity was created"
-        updatedAt: &id015
+          description: Timestamp when the deity was created
+        updatedAt:
           type: string
           format: date-time
-          description: "When the deity was last updated"
+          nullable: true
+          description: Timestamp when the deity was last updated
     DeityUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -112,7 +112,6 @@ components:
       - followerCount
       - maxAttentionSlots
       - createdAt
-      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -132,8 +131,15 @@ components:
         seedId: *id011
         currencyWalletId: *id012
         realmId: *id013
-        createdAt: *id014
-        updatedAt: *id015
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the deity was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the deity was last updated
         changedFields:
           type: array
           items:
@@ -159,7 +165,6 @@ components:
       - followerCount
       - maxAttentionSlots
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -178,8 +183,15 @@ components:
         seedId: *id011
         currencyWalletId: *id012
         realmId: *id013
-        createdAt: *id014
-        updatedAt: *id015
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the deity was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the deity was last updated
         deletedReason:
           type: string
           nullable: true

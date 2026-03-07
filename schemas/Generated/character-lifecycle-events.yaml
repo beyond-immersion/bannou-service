@@ -57,11 +57,11 @@ components:
           allOf:
           - $ref: '../character-api.yaml#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character (alive, dead, dormant)
-        createdAt: &id008
+        createdAt:
           type: string
           format: date-time
           description: Timestamp when the character was created
-        updatedAt: &id009
+        updatedAt:
           type: string
           format: date-time
           nullable: true
@@ -101,8 +101,15 @@ components:
         birthDate: *id005
         deathDate: *id006
         status: *id007
-        createdAt: *id008
-        updatedAt: *id009
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the character was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the character was last updated
         changedFields:
           type: array
           items:
@@ -142,8 +149,15 @@ components:
         birthDate: *id005
         deathDate: *id006
         status: *id007
-        createdAt: *id008
-        updatedAt: *id009
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the character was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the character was last updated
         deletedReason:
           type: string
           nullable: true

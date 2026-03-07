@@ -97,10 +97,13 @@ components:
     # =========================================================================
 
     EscrowCreatedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a new escrow agreement is created
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
@@ -111,14 +114,10 @@ components:
       - expiresAt
       - createdAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.created
+          description: 'Event type identifier: escrow.created'
         escrowId:
           type: string
           format: uuid
@@ -161,10 +160,13 @@ components:
           description: When the escrow was created
 
     EscrowDepositReceivedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a deposit is received
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
@@ -177,14 +179,10 @@ components:
       - fullyFunded
       - depositedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.deposit.received
+          description: 'Event type identifier: escrow.deposit.received'
         escrowId:
           type: string
           format: uuid
@@ -218,24 +216,23 @@ components:
           description: When the deposit was made
 
     EscrowFundedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when all expected deposits are received
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
       - totalDeposits
       - fundedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.funded
+          description: 'Event type identifier: escrow.funded'
         escrowId:
           type: string
           format: uuid
@@ -253,10 +250,13 @@ components:
     # =========================================================================
 
     EscrowConsentReceivedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a party consents
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
@@ -267,14 +267,10 @@ components:
       - consentsRequired
       - consentedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.consent.received
+          description: 'Event type identifier: escrow.consent.received'
         escrowId:
           type: string
           format: uuid
@@ -301,24 +297,23 @@ components:
           description: When consent was given
 
     EscrowFinalizingEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when finalization begins
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
       - finalizerCount
       - startedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.finalizing
+          description: 'Event type identifier: escrow.finalizing'
         escrowId:
           type: string
           format: uuid
@@ -341,6 +336,8 @@ components:
     # =========================================================================
 
     EscrowReleasingEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Event published when escrow transitions to Releasing state.
@@ -348,20 +345,17 @@ components:
         Parties may also need to confirm receipt depending on ReleaseMode.
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
       - releaseMode
       - allocations
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the release was initiated
+          default: escrow.releasing
+          description: 'Event type identifier: escrow.releasing'
         escrowId:
           type: string
           format: uuid
@@ -428,6 +422,8 @@ components:
             specific keys from this field by convention.
 
     EscrowRefundingEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Event published when escrow transitions to Refunding state.
@@ -435,20 +431,17 @@ components:
         Parties may also need to confirm receipt depending on RefundMode.
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
       - refundMode
       - deposits
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the refund was initiated
+          default: escrow.refunding
+          description: 'Event type identifier: escrow.refunding'
         escrowId:
           type: string
           format: uuid
@@ -467,10 +460,13 @@ components:
           description: Reason for refund
 
     EscrowReleasedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when assets are released
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
@@ -478,14 +474,10 @@ components:
       - resolution
       - completedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.released
+          description: 'Event type identifier: escrow.released'
         escrowId:
           type: string
           format: uuid
@@ -504,10 +496,13 @@ components:
           description: When release completed
 
     EscrowRefundedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when assets are refunded
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
@@ -515,14 +510,10 @@ components:
       - resolution
       - completedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.refunded
+          description: 'Event type identifier: escrow.refunded'
         escrowId:
           type: string
           format: uuid
@@ -549,24 +540,23 @@ components:
     # =========================================================================
 
     EscrowDisputedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a party raises a dispute
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
       - reason
       - disputedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.disputed
+          description: 'Event type identifier: escrow.disputed'
         escrowId:
           type: string
           format: uuid
@@ -590,10 +580,13 @@ components:
           description: When dispute was raised
 
     EscrowResolvedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when an arbiter resolves a dispute
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
@@ -602,14 +595,10 @@ components:
       - resolution
       - resolvedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.resolved
+          description: 'Event type identifier: escrow.resolved'
         escrowId:
           type: string
           format: uuid
@@ -638,10 +627,13 @@ components:
     # =========================================================================
 
     EscrowExpiredEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when escrow times out
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
@@ -649,14 +641,10 @@ components:
       - autoRefunded
       - expiredAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.expired
+          description: 'Event type identifier: escrow.expired'
         escrowId:
           type: string
           format: uuid
@@ -673,24 +661,23 @@ components:
           description: When expiration occurred
 
     EscrowCancelledEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when escrow is cancelled
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
       - depositsRefunded
       - cancelledAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.cancelled
+          description: 'Event type identifier: escrow.cancelled'
         escrowId:
           type: string
           format: uuid
@@ -721,24 +708,23 @@ components:
     # =========================================================================
 
     EscrowValidationFailedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when validation detects asset changes
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
       - failures
       - detectedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.validation.failed
+          description: 'Event type identifier: escrow.validation.failed'
         escrowId:
           type: string
           format: uuid
@@ -754,10 +740,13 @@ components:
           description: When failures were detected
 
     EscrowValidationReaffirmedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a party reaffirms after validation failure
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - escrowId
@@ -766,14 +755,10 @@ components:
       - allReaffirmed
       - reaffirmedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: escrow.validation.reaffirmed
+          description: 'Event type identifier: escrow.validation.reaffirmed'
         escrowId:
           type: string
           format: uuid

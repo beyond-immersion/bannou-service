@@ -127,7 +127,7 @@ public partial class StatusTemplateCreatedEvent : BaseServiceEvent
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
-    /// When this template was created
+    /// Timestamp when the status template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -135,7 +135,7 @@ public partial class StatusTemplateCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When this template was last updated
+    /// Timestamp when the status template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -238,7 +238,7 @@ public partial class StatusTemplateUpdatedEvent : BaseServiceEvent
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
-    /// When this template was created
+    /// Timestamp when the status template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -246,7 +246,7 @@ public partial class StatusTemplateUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When this template was last updated
+    /// Timestamp when the status template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -357,7 +357,7 @@ public partial class StatusTemplateDeletedEvent : BaseServiceEvent
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
-    /// When this template was created
+    /// Timestamp when the status template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -365,7 +365,7 @@ public partial class StatusTemplateDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When this template was last updated
+    /// Timestamp when the status template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;

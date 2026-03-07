@@ -88,6 +88,8 @@ components:
     # ==========================================================================
 
     PersonalityEvolvedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character's personality evolves due to experience
@@ -96,6 +98,7 @@ components:
         resource_id_field: characterId
         source_type: character-personality
       required:
+        - eventName
         - eventId
         - timestamp
         - characterId
@@ -104,14 +107,10 @@ components:
         - version
         - affectedTraits
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: personality.evolved
+          description: 'Event type identifier: personality.evolved'
         characterId:
           type: string
           format: uuid
@@ -133,6 +132,8 @@ components:
           description: List of trait axes that were affected by the evolution
 
     CombatPreferencesEvolvedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character's combat preferences evolve due to combat experience
@@ -141,6 +142,7 @@ components:
         resource_id_field: characterId
         source_type: character-personality
       required:
+        - eventName
         - eventId
         - timestamp
         - characterId
@@ -148,14 +150,10 @@ components:
         - intensity
         - version
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: combat-preferences.evolved
+          description: 'Event type identifier: combat-preferences.evolved'
         characterId:
           type: string
           format: uuid

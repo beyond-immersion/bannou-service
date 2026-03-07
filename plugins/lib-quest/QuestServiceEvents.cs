@@ -37,19 +37,19 @@ public partial class QuestService
         // Self-subscribe to our own events for cache invalidation.
         // When quest state changes, invalidate the cache so running actors get fresh data.
         eventConsumer.RegisterHandler<IQuestService, QuestAcceptedEvent>(
-            QuestTopics.QuestAccepted,
+            QuestPublishedTopics.QuestAccepted,
             async (svc, evt) => await ((QuestService)svc).HandleQuestAcceptedForCacheAsync(evt));
 
         eventConsumer.RegisterHandler<IQuestService, QuestCompletedEvent>(
-            QuestTopics.QuestCompleted,
+            QuestPublishedTopics.QuestCompleted,
             async (svc, evt) => await ((QuestService)svc).HandleQuestCompletedForCacheAsync(evt));
 
         eventConsumer.RegisterHandler<IQuestService, QuestFailedEvent>(
-            QuestTopics.QuestFailed,
+            QuestPublishedTopics.QuestFailed,
             async (svc, evt) => await ((QuestService)svc).HandleQuestFailedForCacheAsync(evt));
 
         eventConsumer.RegisterHandler<IQuestService, QuestAbandonedEvent>(
-            QuestTopics.QuestAbandoned,
+            QuestPublishedTopics.QuestAbandoned,
             async (svc, evt) => await ((QuestService)svc).HandleQuestAbandonedForCacheAsync(evt));
     }
 
@@ -134,7 +134,7 @@ public partial class QuestService
                     IsComplete = true
                 };
                 await _messageBus.TryPublishAsync(
-                    QuestTopics.QuestObjectiveProgressed,
+                    QuestPublishedTopics.QuestObjectiveProgressed,
                     progressEvent,
                     cancellationToken: CancellationToken.None);
 
@@ -335,7 +335,7 @@ public partial class QuestService
                     AbandoningCharacterId = current.QuestorCharacterIds.FirstOrDefault()
                 };
                 await _messageBus.TryPublishAsync(
-                    QuestTopics.QuestAbandoned,
+                    QuestPublishedTopics.QuestAbandoned,
                     abandonedEvent,
                     cancellationToken: CancellationToken.None);
 
@@ -356,7 +356,7 @@ public partial class QuestService
                     Reason = reason
                 };
                 await _messageBus.TryPublishAsync(
-                    QuestTopics.QuestFailed,
+                    QuestPublishedTopics.QuestFailed,
                     failedEvent,
                     cancellationToken: CancellationToken.None);
 

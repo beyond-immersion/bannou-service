@@ -106,15 +106,15 @@ components:
           format: uuid
           nullable: true
           description: "Template ID to migrate existing instances to"
-        createdAt: &id021
+        createdAt:
           type: string
           format: date-time
-          description: "When the template was created"
-        updatedAt: &id022
+          description: Timestamp when the item template was created
+        updatedAt:
           type: string
           format: date-time
           nullable: true
-          description: "When the template was last modified"
+          description: Timestamp when the item template was last updated
     ItemTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -167,8 +167,15 @@ components:
         deprecatedAt: *id018
         deprecationReason: *id019
         migrationTargetId: *id020
-        createdAt: *id021
-        updatedAt: *id022
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the item template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the item template was last updated
         changedFields:
           type: array
           items:
@@ -225,8 +232,15 @@ components:
         deprecatedAt: *id018
         deprecationReason: *id019
         migrationTargetId: *id020
-        createdAt: *id021
-        updatedAt: *id022
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the item template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the item template was last updated
         deletedReason:
           type: string
           nullable: true
@@ -252,78 +266,83 @@ components:
           type: string
           default: item.instance.created
           description: 'Event type identifier: item.instance.created'
-        instanceId: &id023
+        instanceId: &id021
           type: string
           format: uuid
           description: "Unique identifier for this item instance"
-        templateId: &id024
+        templateId: &id022
           type: string
           format: uuid
           description: "Reference to the item template"
-        containerId: &id025
+        containerId: &id023
           type: string
           format: uuid
           nullable: true
           description: "Container holding this item (ownership derived from container). Null when removed from all containers."
-        realmId: &id026
+        realmId: &id024
           type: string
           format: uuid
           description: "Realm this instance exists in"
-        quantity: &id027
+        quantity: &id025
           type: number
           format: double
           description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)"
-        slotIndex: &id028
+        slotIndex: &id026
           type: integer
           nullable: true
           description: "Slot position in slot-based containers"
-        slotX: &id029
+        slotX: &id027
           type: integer
           nullable: true
           description: "X position in grid-based containers"
-        slotY: &id030
+        slotY: &id028
           type: integer
           nullable: true
           description: "Y position in grid-based containers"
-        rotated: &id031
+        rotated: &id029
           type: boolean
           nullable: true
           description: "Whether item is rotated in grid-based containers"
-        currentDurability: &id032
+        currentDurability: &id030
           type: integer
           nullable: true
           description: "Current durability value"
-        boundToId: &id033
+        boundToId: &id031
           type: string
           format: uuid
           nullable: true
           description: "Character ID this item is bound to (if soulbound)"
-        boundAt: &id034
+        boundAt: &id032
           type: string
           format: date-time
           nullable: true
           description: "When the item was bound to a character"
-        customName: &id035
+        customName: &id033
           type: string
           nullable: true
           description: "Player-assigned custom name for this instance"
-        originType: &id036
+        originType: &id034
           $ref: ../item-api.yaml#/components/schemas/ItemOriginType
           description: "How this item instance was created"
-        originId: &id037
+        originId: &id035
           type: string
           format: uuid
           nullable: true
           description: "Source entity ID for the origin (e.g., crafting recipe, vendor)"
-        createdAt: &id038
-          type: string
-          format: date-time
-          description: "When the instance was created"
-        modifiedAt: &id039
+        modifiedAt: &id036
           type: string
           format: date-time
           nullable: true
           description: "When the instance was last modified"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the item instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the item instance was last updated
     ItemInstanceUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -346,23 +365,31 @@ components:
           type: string
           default: item.instance.updated
           description: 'Event type identifier: item.instance.updated'
-        instanceId: *id023
-        templateId: *id024
-        containerId: *id025
-        realmId: *id026
-        quantity: *id027
-        slotIndex: *id028
-        slotX: *id029
-        slotY: *id030
-        rotated: *id031
-        currentDurability: *id032
-        boundToId: *id033
-        boundAt: *id034
-        customName: *id035
-        originType: *id036
-        originId: *id037
-        createdAt: *id038
-        modifiedAt: *id039
+        instanceId: *id021
+        templateId: *id022
+        containerId: *id023
+        realmId: *id024
+        quantity: *id025
+        slotIndex: *id026
+        slotX: *id027
+        slotY: *id028
+        rotated: *id029
+        currentDurability: *id030
+        boundToId: *id031
+        boundAt: *id032
+        customName: *id033
+        originType: *id034
+        originId: *id035
+        modifiedAt: *id036
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the item instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the item instance was last updated
         changedFields:
           type: array
           items:
@@ -389,23 +416,31 @@ components:
           type: string
           default: item.instance.deleted
           description: 'Event type identifier: item.instance.deleted'
-        instanceId: *id023
-        templateId: *id024
-        containerId: *id025
-        realmId: *id026
-        quantity: *id027
-        slotIndex: *id028
-        slotX: *id029
-        slotY: *id030
-        rotated: *id031
-        currentDurability: *id032
-        boundToId: *id033
-        boundAt: *id034
-        customName: *id035
-        originType: *id036
-        originId: *id037
-        createdAt: *id038
-        modifiedAt: *id039
+        instanceId: *id021
+        templateId: *id022
+        containerId: *id023
+        realmId: *id024
+        quantity: *id025
+        slotIndex: *id026
+        slotX: *id027
+        slotY: *id028
+        rotated: *id029
+        currentDurability: *id030
+        boundToId: *id031
+        boundAt: *id032
+        customName: *id033
+        originType: *id034
+        originId: *id035
+        modifiedAt: *id036
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the item instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the item instance was last updated
         deletedReason:
           type: string
           nullable: true

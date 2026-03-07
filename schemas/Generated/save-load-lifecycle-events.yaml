@@ -28,7 +28,6 @@ components:
       - versionCount
       - totalSizeBytes
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -75,14 +74,15 @@ components:
           type: integer
           format: int64
           description: "Total storage used by all versions"
-        createdAt: &id013
+        createdAt:
           type: string
           format: date-time
-          description: "Slot creation timestamp"
-        updatedAt: &id014
+          description: Timestamp when the save slot was created
+        updatedAt:
           type: string
           format: date-time
-          description: "Last modification timestamp"
+          nullable: true
+          description: Timestamp when the save slot was last updated
     SaveSlotUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -104,7 +104,6 @@ components:
       - versionCount
       - totalSizeBytes
       - createdAt
-      - updatedAt
       - changedFields
       properties:
         eventName:
@@ -123,8 +122,15 @@ components:
         versionCount: *id010
         latestVersion: *id011
         totalSizeBytes: *id012
-        createdAt: *id013
-        updatedAt: *id014
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the save slot was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the save slot was last updated
         changedFields:
           type: array
           items:
@@ -151,7 +157,6 @@ components:
       - versionCount
       - totalSizeBytes
       - createdAt
-      - updatedAt
       properties:
         eventName:
           type: string
@@ -169,8 +174,15 @@ components:
         versionCount: *id010
         latestVersion: *id011
         totalSizeBytes: *id012
-        createdAt: *id013
-        updatedAt: *id014
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the save slot was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the save slot was last updated
         deletedReason:
           type: string
           nullable: true

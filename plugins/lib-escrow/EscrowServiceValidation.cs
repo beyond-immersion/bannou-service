@@ -121,7 +121,7 @@ public partial class EscrowService
                         },
                     DetectedAt = now
                 };
-                await _messageBus.TryPublishAsync(EscrowTopics.EscrowValidationFailed, failedEvent, cancellationToken);
+                await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowValidationFailed, failedEvent, cancellationToken);
             }
 
             if (previousStatus != newStatus)
@@ -151,7 +151,7 @@ public partial class EscrowService
                     FinalizerCount = 0,
                     StartedAt = now
                 };
-                await _messageBus.TryPublishAsync(EscrowTopics.EscrowFinalizing, finalizingEvent, cancellationToken);
+                await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowFinalizing, finalizingEvent, cancellationToken);
             }
 
             _logger.LogInformation("Condition verified for escrow {EscrowId}: met={ConditionMet}, status={Status}",
@@ -281,7 +281,7 @@ public partial class EscrowService
                     }).ToList(),
                     DetectedAt = now
                 };
-                await _messageBus.TryPublishAsync(EscrowTopics.EscrowValidationFailed, failedEvent, cancellationToken);
+                await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowValidationFailed, failedEvent, cancellationToken);
             }
 
             _logger.LogInformation("Validation completed for escrow {EscrowId}: valid={IsValid}",
@@ -401,7 +401,7 @@ public partial class EscrowService
                     AllReaffirmed = true,
                     ReaffirmedAt = now
                 };
-                await _messageBus.TryPublishAsync(EscrowTopics.EscrowValidationReaffirmed, reaffirmedEvent, cancellationToken);
+                await _messageBus.TryPublishAsync(EscrowPublishedTopics.EscrowValidationReaffirmed, reaffirmedEvent, cancellationToken);
             }
 
             if (previousStatus != newStatus)

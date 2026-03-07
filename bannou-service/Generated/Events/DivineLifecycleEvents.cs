@@ -140,7 +140,7 @@ public partial class DeityCreatedEvent : BaseServiceEvent
     public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
-    /// When the deity was created
+    /// Timestamp when the deity was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -148,12 +148,10 @@ public partial class DeityCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the deity was last updated
+    /// Timestamp when the deity was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -266,7 +264,7 @@ public partial class DeityUpdatedEvent : BaseServiceEvent
     public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
-    /// When the deity was created
+    /// Timestamp when the deity was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -274,12 +272,10 @@ public partial class DeityUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the deity was last updated
+    /// Timestamp when the deity was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -400,7 +396,7 @@ public partial class DeityDeletedEvent : BaseServiceEvent
     public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
-    /// When the deity was created
+    /// Timestamp when the deity was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -408,12 +404,10 @@ public partial class DeityDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the deity was last updated
+    /// Timestamp when the deity was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

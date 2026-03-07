@@ -67,8 +67,6 @@ x-lifecycle:
       version: { type: string, required: true, description: "Semantic version (MAJOR.MINOR.PATCH)" }
       tags: { type: array, items: { type: string }, description: "Searchable tags" }
       nodeCount: { type: integer, required: true, description: "Total number of nodes in scene" }
-      createdAt: { type: string, format: date-time, required: true, description: "Creation timestamp" }
-      updatedAt: { type: string, format: date-time, required: true, description: "Last update timestamp" }
     sensitive: []
 
 paths: {}
@@ -79,12 +77,15 @@ components:
     # ========== INSTANTIATION EVENTS ==========
 
     SceneInstantiatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when a scene is instantiated in the game world.
         Consumers (Mapping, Actor, etc.) react to spawn spatial objects and NPCs.
       required:
+        - eventName
         - eventId
         - timestamp
         - instanceId
@@ -96,14 +97,10 @@ components:
         - regionId
         - worldTransform
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: scene.instantiated
+          description: 'Event type identifier: scene.instantiated'
         instanceId:
           type: string
           format: uuid
@@ -144,22 +141,21 @@ components:
           description: App-id of the instantiator
 
     SceneDestroyedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scene instance is removed from the game world
       required:
+        - eventName
         - eventId
         - timestamp
         - instanceId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: scene.destroyed
+          description: 'Event type identifier: scene.destroyed'
         instanceId:
           type: string
           format: uuid
@@ -189,10 +185,13 @@ components:
     # ========== CHECKOUT WORKFLOW EVENTS ==========
 
     SceneCheckedOutEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scene is locked for editing
       required:
+        - eventName
         - eventId
         - timestamp
         - sceneId
@@ -200,14 +199,10 @@ components:
         - checkedOutById
         - expiresAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: scene.checked-out
+          description: 'Event type identifier: scene.checked-out'
         sceneId:
           type: string
           format: uuid
@@ -234,10 +229,13 @@ components:
           description: When the checkout lock expires
 
     SceneCommittedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when checkout changes are committed
       required:
+        - eventName
         - eventId
         - timestamp
         - sceneId
@@ -245,14 +243,10 @@ components:
         - committedByType
         - committedById
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: scene.committed
+          description: 'Event type identifier: scene.committed'
         sceneId:
           type: string
           format: uuid
@@ -290,24 +284,23 @@ components:
           description: Node count after commit
 
     SceneCheckoutDiscardedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a checkout is discarded without saving
       required:
+        - eventName
         - eventId
         - timestamp
         - sceneId
         - discardedByType
         - discardedById
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: scene.checkout-discarded
+          description: 'Event type identifier: scene.checkout-discarded'
         sceneId:
           type: string
           format: uuid
@@ -332,23 +325,22 @@ components:
     # ========== VALIDATION EVENTS ==========
 
     SceneValidationRulesUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when validation rules are registered or updated
       required:
+        - eventName
         - eventId
         - timestamp
         - gameId
         - sceneType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: scene.validation-rules-updated
+          description: 'Event type identifier: scene.validation-rules-updated'
         gameId:
           type: string
           description: Game ID for the rules

@@ -71,10 +71,15 @@ components:
           format: date-time
           nullable: true
           description: "For matchmade sessions - when reservations expire"
-        createdAt: &id012
+        createdAt:
           type: string
           format: date-time
-          description: "Timestamp when the session was created"
+          description: Timestamp when the game session was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the game session was last updated
     GameSessionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -107,7 +112,15 @@ components:
         owner: *id009
         gameSettings: *id010
         reservationExpiresAt: *id011
-        createdAt: *id012
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the game session was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the game session was last updated
         changedFields:
           type: array
           items:
@@ -144,7 +157,15 @@ components:
         owner: *id009
         gameSettings: *id010
         reservationExpiresAt: *id011
-        createdAt: *id012
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the game session was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the game session was last updated
         deletedReason:
           type: string
           nullable: true

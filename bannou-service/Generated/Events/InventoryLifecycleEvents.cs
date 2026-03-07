@@ -254,7 +254,13 @@ public partial class InventoryContainerCreatedEvent : BaseServiceEvent
     public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
-    /// When the container was created
+    /// When the container was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the inventory container was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -262,10 +268,10 @@ public partial class InventoryContainerCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the container was last modified
+    /// Timestamp when the inventory container was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -492,7 +498,13 @@ public partial class InventoryContainerUpdatedEvent : BaseServiceEvent
     public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
-    /// When the container was created
+    /// When the container was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the inventory container was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -500,10 +512,10 @@ public partial class InventoryContainerUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the container was last modified
+    /// Timestamp when the inventory container was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -738,7 +750,13 @@ public partial class InventoryContainerDeletedEvent : BaseServiceEvent
     public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
-    /// When the container was created
+    /// When the container was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the inventory container was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -746,10 +764,10 @@ public partial class InventoryContainerDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the container was last modified
+    /// Timestamp when the inventory container was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

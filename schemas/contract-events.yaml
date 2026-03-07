@@ -123,8 +123,6 @@ x-lifecycle:
       defaultEnforcementMode: { $ref: 'contract-api.yaml#/components/schemas/EnforcementMode', required: true, description: "Default enforcement mode for instances" }
       transferable: { type: boolean, required: true, description: "Whether contracts can be transferred" }
       isActive: { type: boolean, required: true, description: "Whether template is active" }
-      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the template was created" }
-      updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the template was last updated" }
 
   ContractInstance:
     model:
@@ -137,8 +135,6 @@ x-lifecycle:
       effectiveFrom: { type: string, format: date-time, nullable: true, description: "When contract became active" }
       effectiveUntil: { type: string, format: date-time, nullable: true, description: "When contract expires" }
       terminatedAt: { type: string, format: date-time, nullable: true, description: "When contract was terminated early" }
-      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the instance was created" }
-      updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the instance was last updated" }
 
 paths: {}  # Events don't have HTTP paths
 
@@ -149,10 +145,13 @@ components:
     # =========================================================================
 
     ContractProposedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a contract is proposed to parties
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
@@ -160,14 +159,10 @@ components:
       - templateCode
       - parties
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.proposed
+          description: 'Event type identifier: contract.proposed'
         contractId:
           type: string
           format: uuid
@@ -186,10 +181,13 @@ components:
           description: Parties awaiting consent
 
     ContractConsentReceivedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when one party consents
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
@@ -198,14 +196,10 @@ components:
       - role
       - remainingConsentsNeeded
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.consent-received
+          description: 'Event type identifier: contract.consent-received'
         contractId:
           type: string
           format: uuid
@@ -225,24 +219,23 @@ components:
           description: How many more consents are needed
 
     ContractAcceptedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when all required parties consent
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
       - templateCode
       - parties
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.accepted
+          description: 'Event type identifier: contract.accepted'
         contractId:
           type: string
           format: uuid
@@ -262,24 +255,23 @@ components:
           description: When contract will become active
 
     ContractActivatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when contract becomes active
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
       - templateCode
       - parties
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.activated
+          description: 'Event type identifier: contract.activated'
         contractId:
           type: string
           format: uuid
@@ -299,10 +291,13 @@ components:
           description: When contract expires
 
     ContractMilestoneCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a milestone is completed
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
@@ -310,14 +305,10 @@ components:
       - milestoneName
       - preboundApisExecuted
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.milestone.completed
+          description: 'Event type identifier: contract.milestone.completed'
         contractId:
           type: string
           format: uuid
@@ -338,10 +329,13 @@ components:
           description: Number of prebound APIs executed
 
     ContractMilestoneFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a milestone fails
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
@@ -351,14 +345,10 @@ components:
       - wasRequired
       - triggeredBreach
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.milestone.failed
+          description: 'Event type identifier: contract.milestone.failed'
         contractId:
           type: string
           format: uuid
@@ -380,24 +370,23 @@ components:
           description: Whether this failure triggered a breach
 
     ContractBreachDetectedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a breach is recorded
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
       - breachId
       - breachType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.breach.detected
+          description: 'Event type identifier: contract.breach.detected'
         contractId:
           type: string
           format: uuid
@@ -430,23 +419,22 @@ components:
           description: Deadline to cure the breach
 
     ContractBreachCuredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a breach is cured
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
       - breachId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.breach.cured
+          description: 'Event type identifier: contract.breach.cured'
         contractId:
           type: string
           format: uuid
@@ -461,10 +449,13 @@ components:
           description: Evidence of cure
 
     ContractFulfilledEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when all required milestones complete
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
@@ -472,14 +463,10 @@ components:
       - parties
       - milestonesCompleted
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.fulfilled
+          description: 'Event type identifier: contract.fulfilled'
         contractId:
           type: string
           format: uuid
@@ -497,23 +484,22 @@ components:
           description: Number of milestones completed
 
     ContractTerminatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when contract is terminated early
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
       - wasBreachRelated
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.terminated
+          description: 'Event type identifier: contract.terminated'
         contractId:
           type: string
           format: uuid
@@ -537,23 +523,22 @@ components:
           description: Whether termination was due to breach
 
     ContractExpiredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when contract reaches natural expiration
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
       - templateCode
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.expired
+          description: 'Event type identifier: contract.expired'
         contractId:
           type: string
           format: uuid
@@ -567,10 +552,13 @@ components:
           description: When contract was set to expire
 
     ContractPaymentDueEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a contract payment is due based on payment schedule terms
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
@@ -578,14 +566,10 @@ components:
       - paymentSchedule
       - paymentNumber
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.payment.due
+          description: 'Event type identifier: contract.payment.due'
         contractId:
           type: string
           format: uuid
@@ -615,10 +599,13 @@ components:
     # =========================================================================
 
     ContractPreboundApiExecutedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a prebound API is executed
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
@@ -627,14 +614,10 @@ components:
       - endpoint
       - statusCode
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.prebound-api.executed
+          description: 'Event type identifier: contract.prebound-api.executed'
         contractId:
           type: string
           format: uuid
@@ -653,10 +636,13 @@ components:
           description: HTTP status code returned
 
     ContractPreboundApiFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a prebound API call fails
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
@@ -665,14 +651,10 @@ components:
       - endpoint
       - errorMessage
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.prebound-api.failed
+          description: 'Event type identifier: contract.prebound-api.failed'
         contractId:
           type: string
           format: uuid
@@ -695,10 +677,13 @@ components:
           description: HTTP status code if available
 
     ContractPreboundApiValidationFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a prebound API response fails validation
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
@@ -707,14 +692,10 @@ components:
       - endpoint
       - validationOutcome
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.prebound-api.validation-failed
+          description: 'Event type identifier: contract.prebound-api.validation-failed'
         contractId:
           type: string
           format: uuid
@@ -744,24 +725,23 @@ components:
     # =========================================================================
 
     ContractLockedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a contract is locked under guardian custody
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
       - guardianId
       - guardianType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.locked
+          description: 'Event type identifier: contract.locked'
         contractId:
           type: string
           format: uuid
@@ -775,22 +755,21 @@ components:
           description: Guardian entity type identifier (e.g., escrow)
 
     ContractUnlockedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a contract is released from guardian custody
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.unlocked
+          description: 'Event type identifier: contract.unlocked'
         contractId:
           type: string
           format: uuid
@@ -806,10 +785,13 @@ components:
           description: Previous guardian entity type identifier
 
     ContractPartyTransferredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a party role is transferred to new entity
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
@@ -819,14 +801,10 @@ components:
       - toEntityId
       - toEntityType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.party.transferred
+          description: 'Event type identifier: contract.party.transferred'
         contractId:
           type: string
           format: uuid
@@ -850,10 +828,13 @@ components:
           description: New entity type
 
     ClauseTypeRegisteredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a new clause type is registered
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - typeCode
@@ -861,14 +842,10 @@ components:
       - category
       - isBuiltIn
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.clausetype.registered
+          description: 'Event type identifier: contract.clausetype.registered'
         typeCode:
           type: string
           description: Clause type code
@@ -883,24 +860,23 @@ components:
           description: Whether this is a built-in type
 
     ContractTemplateValuesSetEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when template values are set on a contract instance
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
       - keys
       - valueCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.templatevalues.set
+          description: 'Event type identifier: contract.templatevalues.set'
         contractId:
           type: string
           format: uuid
@@ -915,10 +891,13 @@ components:
           description: Total value count after setting
 
     ContractExecutedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when contract clauses are executed (distributions made), providing per-clause distribution results for escrow verification.
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - contractId
@@ -926,14 +905,10 @@ components:
       - distributionCount
       - distributionResults
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: contract.executed
+          description: 'Event type identifier: contract.executed'
         contractId:
           type: string
           format: uuid

@@ -108,23 +108,22 @@ components:
 
     # Analytics events
     DocumentationQueriedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when documentation is queried with natural language
       required:
+        - eventName
         - eventId
         - timestamp
         - namespace
         - query
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the query was executed
+          default: documentation.queried
+          description: 'Event type identifier: documentation.queried'
         namespace:
           type: string
           description: The namespace that was queried
@@ -151,23 +150,22 @@ components:
           description: Relevance score of the top result, if applicable
 
     DocumentationSearchedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when documentation is searched with keywords
       required:
+        - eventName
         - eventId
         - timestamp
         - namespace
         - searchTerm
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the search was executed
+          default: documentation.searched
+          description: 'Event type identifier: documentation.searched'
         namespace:
           type: string
           description: The namespace that was searched
@@ -186,24 +184,23 @@ components:
 
     # Repository binding events
     DocumentationBindingCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a repository binding is created
       required:
+        - eventName
         - eventId
         - timestamp
         - namespace
         - bindingId
         - repositoryUrl
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the binding was created
+          default: documentation-binding.created
+          description: 'Event type identifier: documentation-binding.created'
         namespace:
           type: string
           description: The namespace the repository is bound to
@@ -220,23 +217,22 @@ components:
           description: Git branch to sync documentation from
 
     DocumentationBindingRemovedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a repository binding is removed
       required:
+        - eventName
         - eventId
         - timestamp
         - namespace
         - bindingId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the binding was removed
+          default: documentation-binding.removed
+          description: 'Event type identifier: documentation-binding.removed'
         namespace:
           type: string
           description: The namespace the repository was bound to
@@ -251,10 +247,13 @@ components:
 
     # Sync events
     DocumentationSyncStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a repository sync starts
       required:
+        - eventName
         - eventId
         - timestamp
         - namespace
@@ -262,14 +261,10 @@ components:
         - syncId
         - triggeredBy
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the sync operation started
+          default: documentation-sync.started
+          description: 'Event type identifier: documentation-sync.started'
         namespace:
           type: string
           description: The namespace being synced
@@ -286,10 +281,13 @@ components:
           description: How the sync was triggered (manual user action or scheduled job)
 
     DocumentationSyncCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a repository sync completes
       required:
+        - eventName
         - eventId
         - timestamp
         - namespace
@@ -297,14 +295,10 @@ components:
         - syncId
         - status
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the sync operation completed
+          default: documentation-sync.completed
+          description: 'Event type identifier: documentation-sync.completed'
         namespace:
           type: string
           description: The namespace that was synced
@@ -346,23 +340,22 @@ components:
 
     # Archive events
     DocumentationArchiveCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a documentation archive is created
       required:
+        - eventName
         - eventId
         - timestamp
         - namespace
         - archiveId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the archive was created
+          default: documentation-archive.created
+          description: 'Event type identifier: documentation-archive.created'
         namespace:
           type: string
           description: The namespace the archive was created for

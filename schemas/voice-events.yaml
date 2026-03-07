@@ -60,19 +60,17 @@ components:
     # ============================================
 
     VoiceRoomCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a voice room is created
-      required: [eventId, timestamp, roomId, sessionId, tier, maxParticipants]
+      required: [eventName, eventId, timestamp, roomId, sessionId, tier, maxParticipants]
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: voice.room.created
+          description: 'Event type identifier: voice.room.created'
         roomId:
           type: string
           format: uuid
@@ -89,19 +87,17 @@ components:
           description: Maximum participants configured for the room
 
     VoiceRoomDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a voice room is deleted
-      required: [eventId, timestamp, roomId, reason]
+      required: [eventName, eventId, timestamp, roomId, reason]
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: voice.room.deleted
+          description: 'Event type identifier: voice.room.deleted'
         roomId:
           type: string
           format: uuid
@@ -111,19 +107,17 @@ components:
           description: Reason the room was deleted
 
     VoiceRoomTierUpgradedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a room upgrades from P2P to scaled tier
-      required: [eventId, timestamp, roomId, previousTier, newTier]
+      required: [eventName, eventId, timestamp, roomId, previousTier, newTier]
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: voice.room.tier-upgraded
+          description: 'Event type identifier: voice.room.tier-upgraded'
         roomId:
           type: string
           format: uuid
@@ -144,19 +138,17 @@ components:
     # ============================================
 
     VoicePeerJoinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a peer joins a room
-      required: [eventId, timestamp, roomId, peerSessionId, currentCount]
+      required: [eventName, eventId, timestamp, roomId, peerSessionId, currentCount]
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: voice.peer.joined
+          description: 'Event type identifier: voice.peer.joined'
         roomId:
           type: string
           format: uuid
@@ -170,19 +162,17 @@ components:
           description: Total peers after join
 
     VoicePeerLeftEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a peer leaves a room
-      required: [eventId, timestamp, roomId, peerSessionId, remainingCount]
+      required: [eventName, eventId, timestamp, roomId, peerSessionId, remainingCount]
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: voice.peer.left
+          description: 'Event type identifier: voice.peer.left'
         roomId:
           type: string
           format: uuid
@@ -200,21 +190,19 @@ components:
     # ============================================
 
     VoiceBroadcastApprovedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: >
         All participants consented to broadcasting. lib-stream subscribes
         to this to start RTMP output from the room's audio source.
-      required: [eventId, timestamp, roomId]
+      required: [eventName, eventId, timestamp, roomId]
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: voice.broadcast.approved
+          description: 'Event type identifier: voice.broadcast.approved'
         roomId:
           type: string
           format: uuid
@@ -230,19 +218,17 @@ components:
           description: RTP endpoint for mixed audio (for lib-stream to connect RTMP output)
 
     VoiceBroadcastDeclinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: A participant declined broadcast consent
-      required: [eventId, timestamp, roomId]
+      required: [eventName, eventId, timestamp, roomId]
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: voice.broadcast.declined
+          description: 'Event type identifier: voice.broadcast.declined'
         roomId:
           type: string
           format: uuid
@@ -254,19 +240,17 @@ components:
           description: Session ID of the participant who declined (null if auto-declined by consent timeout)
 
     VoiceBroadcastStoppedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Broadcasting stopped
-      required: [eventId, timestamp, roomId, reason]
+      required: [eventName, eventId, timestamp, roomId, reason]
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: voice.broadcast.stopped
+          description: 'Event type identifier: voice.broadcast.stopped'
         roomId:
           type: string
           format: uuid

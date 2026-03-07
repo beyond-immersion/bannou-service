@@ -47,8 +47,6 @@ x-lifecycle:
       traitModifiers: { type: object, additionalProperties: true, nullable: true, description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention." }
       realmIds: { type: array, items: { type: string, format: uuid }, nullable: true, description: "IDs of realms where this species can exist" }
       metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention." }
-      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the species was created" }
-      updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the species was last updated" }
 
 paths: {}  # Events don't have HTTP paths
 
@@ -62,10 +60,15 @@ components:
       additionalProperties: false
       description: Published when two species are merged, with the source species being deprecated
       required:
+        - eventName
         - sourceSpeciesId
         - targetSpeciesId
         - mergedCharacterCount
       properties:
+        eventName:
+          type: string
+          default: species.merged
+          description: 'Event type identifier: species.merged'
         sourceSpeciesId:
           type: string
           format: uuid

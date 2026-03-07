@@ -46,22 +46,21 @@ paths: {}
 components:
   schemas:
     BehaviorInvalidatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when behavior documents are invalidated from cache
       required:
+        - eventName
         - eventId
         - timestamp
         - invalidatedCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: puppetmaster.behavior.invalidated
+          description: 'Event type identifier: puppetmaster.behavior.invalidated'
         behaviorRef:
           type: string
           nullable: true
@@ -71,24 +70,23 @@ components:
           description: Number of behaviors invalidated
 
     WatcherStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a regional watcher is started
       required:
+        - eventName
         - eventId
         - timestamp
         - watcherId
         - realmId
         - watcherType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: puppetmaster.watcher.started
+          description: 'Event type identifier: puppetmaster.watcher.started'
         watcherId:
           type: string
           format: uuid
@@ -111,24 +109,23 @@ components:
           description: Actor instance ID running this watcher's behavior
 
     WatcherStoppedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a regional watcher is stopped
       required:
+        - eventName
         - eventId
         - timestamp
         - watcherId
         - realmId
         - watcherType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: puppetmaster.watcher.stopped
+          description: 'Event type identifier: puppetmaster.watcher.stopped'
         watcherId:
           type: string
           format: uuid

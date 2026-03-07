@@ -70,15 +70,15 @@ components:
           type: string
           nullable: true
           description: "Why this template was deprecated"
-        createdAt: &id012
+        createdAt:
           type: string
           format: date-time
-          description: "When this template was created"
-        updatedAt: &id013
+          description: Timestamp when the status template was created
+        updatedAt:
           type: string
           format: date-time
           nullable: true
-          description: "When this template was last updated"
+          description: Timestamp when the status template was last updated
     StatusTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -116,8 +116,15 @@ components:
         isDeprecated: *id009
         deprecatedAt: *id010
         deprecationReason: *id011
-        createdAt: *id012
-        updatedAt: *id013
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the status template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the status template was last updated
         changedFields:
           type: array
           items:
@@ -159,8 +166,15 @@ components:
         isDeprecated: *id009
         deprecatedAt: *id010
         deprecationReason: *id011
-        createdAt: *id012
-        updatedAt: *id013
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the status template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the status template was last updated
         deletedReason:
           type: string
           nullable: true

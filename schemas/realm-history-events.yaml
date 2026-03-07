@@ -37,6 +37,8 @@ paths: {}  # Events don't have HTTP paths
 components:
   schemas:
     RealmParticipationRecordedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a realm's participation in a historical event is recorded
@@ -45,6 +47,7 @@ components:
         resource_id_field: realmId
         source_type: realm-history
       required:
+        - eventName
         - eventId
         - timestamp
         - realmId
@@ -52,14 +55,10 @@ components:
         - participationId
         - role
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: realm-history.participation.recorded
+          description: 'Event type identifier: realm-history.participation.recorded'
         realmId:
           type: string
           format: uuid
@@ -77,24 +76,23 @@ components:
           description: Role the realm played in the event
 
     RealmParticipationDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a realm's participation record is deleted
       required:
+        - eventName
         - eventId
         - timestamp
         - participationId
         - realmId
         - historicalEventId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: realm-history.participation.deleted
+          description: 'Event type identifier: realm-history.participation.deleted'
         participationId:
           type: string
           format: uuid
@@ -109,6 +107,8 @@ components:
           description: ID of the historical event
 
     RealmLoreCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a realm's lore is first created
@@ -117,19 +117,16 @@ components:
         resource_id_field: realmId
         source_type: realm-history
       required:
+        - eventName
         - eventId
         - timestamp
         - realmId
         - elementCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: realm-history.lore.created
+          description: 'Event type identifier: realm-history.lore.created'
         realmId:
           type: string
           format: uuid
@@ -139,6 +136,8 @@ components:
           description: Number of lore elements created
 
     RealmLoreUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a realm's lore is updated
@@ -147,19 +146,16 @@ components:
         resource_id_field: realmId
         source_type: realm-history
       required:
+        - eventName
         - eventId
         - timestamp
         - realmId
         - elementCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: realm-history.lore.updated
+          description: 'Event type identifier: realm-history.lore.updated'
         realmId:
           type: string
           format: uuid
@@ -173,46 +169,44 @@ components:
           description: Whether existing elements were replaced
 
     RealmLoreDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a realm's lore is deleted
       required:
+        - eventName
         - eventId
         - timestamp
         - realmId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: realm-history.lore.deleted
+          description: 'Event type identifier: realm-history.lore.deleted'
         realmId:
           type: string
           format: uuid
           description: ID of the realm whose lore was deleted
 
     RealmHistoryDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when all history data for a realm is deleted
       required:
+        - eventName
         - eventId
         - timestamp
         - realmId
         - participationsDeleted
         - loreDeleted
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: realm-history.deleted
+          description: 'Event type identifier: realm-history.deleted'
         realmId:
           type: string
           format: uuid

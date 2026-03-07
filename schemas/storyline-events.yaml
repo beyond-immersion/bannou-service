@@ -63,6 +63,8 @@ x-events:
 components:
   schemas:
     StorylineComposedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a storyline plan is generated
@@ -70,12 +72,19 @@ components:
         name: storyline_composed
         topic: storyline.composed
       required:
-      - planId
-      - goal
-      - arcType
-      - confidence
-      - composedAt
+        - eventName
+        - eventId
+        - timestamp
+        - planId
+        - goal
+        - arcType
+        - confidence
+        - composedAt
       properties:
+        eventName:
+          type: string
+          default: storyline.composed
+          description: 'Event type identifier: storyline.composed'
         planId:
           type: string
           format: uuid
@@ -146,16 +155,25 @@ components:
     # Scenario Events
 
     ScenarioTriggeredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a scenario starts executing for a character
       required:
+        - eventName
+        - eventId
+        - timestamp
         - executionId
         - scenarioId
         - scenarioCode
         - primaryCharacterId
         - triggeredAt
       properties:
+        eventName:
+          type: string
+          default: storyline.scenario.triggered
+          description: 'Event type identifier: storyline.scenario.triggered'
         executionId:
           type: string
           format: uuid
@@ -208,10 +226,15 @@ components:
           description: When the scenario was triggered
 
     ScenarioPhaseCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a phase within a multi-phase scenario completes
       required:
+        - eventName
+        - eventId
+        - timestamp
         - executionId
         - scenarioId
         - primaryCharacterId
@@ -219,6 +242,10 @@ components:
         - phaseName
         - completedAt
       properties:
+        eventName:
+          type: string
+          default: storyline.scenario.phase-completed
+          description: 'Event type identifier: storyline.scenario.phase-completed'
         executionId:
           type: string
           format: uuid
@@ -259,10 +286,15 @@ components:
           description: When the phase completed
 
     ScenarioCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a scenario finishes successfully
       required:
+        - eventName
+        - eventId
+        - timestamp
         - executionId
         - scenarioId
         - scenarioCode
@@ -270,6 +302,10 @@ components:
         - startedAt
         - completedAt
       properties:
+        eventName:
+          type: string
+          default: storyline.scenario.completed
+          description: 'Event type identifier: storyline.scenario.completed'
         executionId:
           type: string
           format: uuid
@@ -340,10 +376,15 @@ components:
           description: When the scenario execution completed
 
     ScenarioFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a scenario fails during execution
       required:
+        - eventName
+        - eventId
+        - timestamp
         - executionId
         - scenarioId
         - scenarioCode
@@ -351,6 +392,10 @@ components:
         - failureReason
         - failedAt
       properties:
+        eventName:
+          type: string
+          default: storyline.scenario.failed
+          description: 'Event type identifier: storyline.scenario.failed'
         executionId:
           type: string
           format: uuid
@@ -406,14 +451,23 @@ components:
           description: When the scenario execution failed
 
     ScenarioAvailableEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when new scenarios become available for a character
       required:
+        - eventName
+        - eventId
+        - timestamp
         - characterId
         - availableScenarioIds
         - detectedAt
       properties:
+        eventName:
+          type: string
+          default: storyline.scenario.available
+          description: 'Event type identifier: storyline.scenario.available'
         characterId:
           type: string
           format: uuid

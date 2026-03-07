@@ -88,7 +88,7 @@ public partial class MusicService : IMusicService
 
         // Determine key signature (PitchClass has x-sdk-type, no conversion needed)
         var key = body.Key != null
-            ? new Scale(body.Key.Tonic, ToModeType(body.Key.Mode))
+            ? new Scale(body.Key.Tonic, TestableToModeType(body.Key.Mode))
             : new Scale(
                 (PitchClass)random.Next(12),
                 style.ModeDistribution.Select(random));
@@ -168,7 +168,7 @@ public partial class MusicService : IMusicService
                 Key = new KeySignature
                 {
                     Tonic = key.Root,
-                    Mode = ToApiMode(key.Mode)
+                    Mode = TestableToApiMode(key.Mode)
                 },
                 Tempo = tempo,
                 Bars = totalBars,
@@ -412,7 +412,7 @@ public partial class MusicService : IMusicService
         _logger.LogDebug("Generating progression in {Tonic} {Mode}", body.Key.Tonic, body.Key.Mode);
 
         var seed = body.Seed ?? Environment.TickCount;
-        var scale = new Scale(body.Key.Tonic, ToModeType(body.Key.Mode));
+        var scale = new Scale(body.Key.Tonic, TestableToModeType(body.Key.Mode));
         var generator = new ProgressionGenerator(seed);
 
         var length = body.Length ?? _configuration.DefaultProgressionLength;
@@ -853,7 +853,8 @@ public partial class MusicService : IMusicService
 
     // ToPitchClass and ToApiPitchClass removed - PitchClass has x-sdk-type (identity conversion)
 
-    private static ModeType ToModeType(KeyMode mode) => mode switch
+    // internal for switch coverage unit testing via EnumMappingValidator
+    internal static ModeType TestableToModeType(KeyMode mode) => mode switch
     {
         KeyMode.Major => ModeType.Major,
         KeyMode.Minor => ModeType.Minor,
@@ -866,7 +867,8 @@ public partial class MusicService : IMusicService
         _ => ModeType.Major
     };
 
-    private static KeyMode ToApiMode(ModeType mode) => mode switch
+    // internal for switch coverage unit testing via EnumMappingValidator
+    internal static KeyMode TestableToApiMode(ModeType mode) => mode switch
     {
         ModeType.Major => KeyMode.Major,
         ModeType.Minor => KeyMode.Minor,
@@ -878,59 +880,21 @@ public partial class MusicService : IMusicService
         _ => KeyMode.Major
     };
 
-    private static SdkChordQuality ToSdkChordQuality(ChordQuality quality) => quality switch
-    {
-        ChordQuality.Major => SdkChordQuality.Major,
-        ChordQuality.Minor => SdkChordQuality.Minor,
-        ChordQuality.Diminished => SdkChordQuality.Diminished,
-        ChordQuality.Augmented => SdkChordQuality.Augmented,
-        ChordQuality.Dominant7 => SdkChordQuality.Dominant7,
-        ChordQuality.Major7 => SdkChordQuality.Major7,
-        ChordQuality.Minor7 => SdkChordQuality.Minor7,
-        ChordQuality.Diminished7 => SdkChordQuality.Diminished7,
-        ChordQuality.HalfDiminished7 => SdkChordQuality.HalfDiminished7,
-        ChordQuality.Augmented7 => SdkChordQuality.Augmented7,
-        ChordQuality.Sus2 => SdkChordQuality.Sus2,
-        ChordQuality.Sus4 => SdkChordQuality.Sus4,
-        _ => SdkChordQuality.Major
-    };
+    // Schema is subset of SDK — every schema value has a matching name in SDK
+    private static SdkChordQuality ToSdkChordQuality(ChordQuality quality) =>
+        quality.MapByName<ChordQuality, SdkChordQuality>();
 
-    private static ChordQuality ToApiChordQuality(SdkChordQuality quality) => quality switch
-    {
-        SdkChordQuality.Major => ChordQuality.Major,
-        SdkChordQuality.Minor => ChordQuality.Minor,
-        SdkChordQuality.Diminished => ChordQuality.Diminished,
-        SdkChordQuality.Augmented => ChordQuality.Augmented,
-        SdkChordQuality.Dominant7 => ChordQuality.Dominant7,
-        SdkChordQuality.Major7 => ChordQuality.Major7,
-        SdkChordQuality.Minor7 => ChordQuality.Minor7,
-        SdkChordQuality.Diminished7 => ChordQuality.Diminished7,
-        SdkChordQuality.HalfDiminished7 => ChordQuality.HalfDiminished7,
-        SdkChordQuality.Augmented7 => ChordQuality.Augmented7,
-        SdkChordQuality.Sus2 => ChordQuality.Sus2,
-        SdkChordQuality.Sus4 => ChordQuality.Sus4,
-        _ => ChordQuality.Major
-    };
+    // SDK is superset (has MinorMajor7, Power) — extras fall back to Major
+    private static ChordQuality ToApiChordQuality(SdkChordQuality quality) =>
+        quality.MapByNameOrDefault(ChordQuality.Major);
 
-    private static SdkContourShape ToSdkContourShape(ContourShape contour) => contour switch
-    {
-        ContourShape.Arch => SdkContourShape.Arch,
-        ContourShape.Wave => SdkContourShape.Wave,
-        ContourShape.Ascending => SdkContourShape.Ascending,
-        ContourShape.Descending => SdkContourShape.Descending,
-        ContourShape.Static => SdkContourShape.Static,
-        _ => SdkContourShape.Arch
-    };
+    // Schema is subset of SDK — every schema value has a matching name in SDK
+    private static SdkContourShape ToSdkContourShape(ContourShape contour) =>
+        contour.MapByName<ContourShape, SdkContourShape>();
 
-    private static ContourShape ToApiContourShape(SdkContourShape contour) => contour switch
-    {
-        SdkContourShape.Arch => ContourShape.Arch,
-        SdkContourShape.Wave => ContourShape.Wave,
-        SdkContourShape.Ascending => ContourShape.Ascending,
-        SdkContourShape.Descending => ContourShape.Descending,
-        SdkContourShape.Static => ContourShape.Static,
-        _ => ContourShape.Arch
-    };
+    // SDK is superset (has InvertedArch, Free) — extras fall back to Arch
+    private static ContourShape ToApiContourShape(SdkContourShape contour) =>
+        contour.MapByNameOrDefault(ContourShape.Arch);
 
     /// <summary>
     /// Derives functional analysis from scale degree.

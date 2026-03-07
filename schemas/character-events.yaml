@@ -95,23 +95,22 @@ paths: {}  # Events don't have HTTP paths
 components:
   schemas:
     CharacterRealmJoinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a character joins a realm (creation or transfer)
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - characterId
       - realmId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: character.realm.joined
+          description: 'Event type identifier: character.realm.joined'
         characterId:
           type: string
           format: uuid
@@ -127,24 +126,23 @@ components:
           description: Previous realm ID (populated for transfers, null for initial creation)
 
     CharacterRealmLeftEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a character leaves a realm (deletion or transfer)
       additionalProperties: false
       required:
+      - eventName
       - eventId
       - timestamp
       - characterId
       - realmId
       - reason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: character.realm.left
+          description: 'Event type identifier: character.realm.left'
         characterId:
           type: string
           format: uuid
@@ -159,23 +157,22 @@ components:
           description: Reason the character left the realm
 
     CharacterCompressedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character is compressed to archive format
       required:
+        - eventName
         - eventId
         - timestamp
         - characterId
         - deletedSourceData
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the compression occurred
+          default: character.compressed
+          description: 'Event type identifier: character.compressed'
         characterId:
           type: string
           format: uuid

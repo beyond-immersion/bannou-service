@@ -53,23 +53,23 @@ components:
             null."
           items:
             $ref: '../account-api.yaml#/components/schemas/AuthMethodInfo'
-        createdAt: &id007
-          type: string
-          format: date-time
-          description: "Timestamp when the account was created"
-        updatedAt: &id008
-          type: string
-          format: date-time
-          nullable: true
-          description: "Timestamp when the account was last updated"
-        mfaEnabled: &id009
+        mfaEnabled: &id007
           type: boolean
           description: "Whether multi-factor authentication is enabled for the account"
-        metadata: &id010
+        metadata: &id008
           type: object
           additionalProperties: true
           nullable: true
           description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the account was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the account was last updated
     AccountUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -95,10 +95,17 @@ components:
         emailVerified: *id004
         roles: *id005
         authMethods: *id006
-        createdAt: *id007
-        updatedAt: *id008
-        mfaEnabled: *id009
-        metadata: *id010
+        mfaEnabled: *id007
+        metadata: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the account was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the account was last updated
         changedFields:
           type: array
           items:
@@ -128,10 +135,17 @@ components:
         emailVerified: *id004
         roles: *id005
         authMethods: *id006
-        createdAt: *id007
-        updatedAt: *id008
-        mfaEnabled: *id009
-        metadata: *id010
+        mfaEnabled: *id007
+        metadata: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the account was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the account was last updated
         deletedReason:
           type: string
           nullable: true

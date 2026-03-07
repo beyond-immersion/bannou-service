@@ -51,6 +51,31 @@ public static class EnumMapping
     }
 
     /// <summary>
+    /// Maps a source enum value to a target enum value by matching their string names.
+    /// Returns <paramref name="fallback"/> if the source value has no name match in the target enum.
+    /// </summary>
+    /// <remarks>
+    /// Use this for superset-to-subset mappings where the source enum (e.g., an SDK) has values
+    /// that intentionally don't exist in the target enum (e.g., schema-generated). The overlapping
+    /// values map by name; extras map to the fallback. Pair with
+    /// <c>EnumMappingValidator.AssertSupersetToSubsetMapping</c> to catch unexpected new extras.
+    /// </remarks>
+    /// <typeparam name="TSource">The source (superset) enum type.</typeparam>
+    /// <typeparam name="TTarget">The target (subset) enum type.</typeparam>
+    /// <param name="source">The source enum value to map.</param>
+    /// <param name="fallback">The value to return when no name match exists in the target.</param>
+    /// <returns>The target enum value with the matching name, or <paramref name="fallback"/> if none.</returns>
+    public static TTarget MapByNameOrDefault<TSource, TTarget>(this TSource source, TTarget fallback)
+        where TSource : struct, Enum
+        where TTarget : struct, Enum
+    {
+        if (Enum.TryParse<TTarget>(source.ToString(), ignoreCase: false, out var result))
+            return result;
+
+        return fallback;
+    }
+
+    /// <summary>
     /// Attempts to map a source enum value to a target enum value by matching their string names.
     /// Returns <c>false</c> if the source value has no name match in the target enum.
     /// </summary>

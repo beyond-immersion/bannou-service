@@ -24,6 +24,7 @@ public static class StorylineEventTemplates
         Topic: "storyline.composed",
         EventType: typeof(StorylineComposedEvent),
         PayloadTemplate: @"{
+    ""eventName"": ""{{eventName}}"",
     ""planId"": ""{{planId}}"",
     ""realmId"": {{realmId}},
     ""goal"": ""{{goal}}"",

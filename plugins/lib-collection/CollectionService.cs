@@ -17,21 +17,6 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.Collection;
 
 /// <summary>
-/// Topic constants for collection events.
-/// </summary>
-public static class CollectionTopics
-{
-    /// <summary>Entry unlocked event topic.</summary>
-    public const string EntryUnlocked = "collection.entry-unlocked";
-    /// <summary>Entry grant failed event topic.</summary>
-    public const string EntryGrantFailed = "collection.entry-grant-failed";
-    /// <summary>Milestone reached event topic.</summary>
-    public const string MilestoneReached = "collection.milestone-reached";
-    /// <summary>Discovery advanced event topic.</summary>
-    public const string DiscoveryAdvanced = "collection.discovery-advanced";
-}
-
-/// <summary>
 /// Implementation of the Collection service.
 /// Manages collectible content (voice galleries, scene archives, music libraries, bestiaries, etc.)
 /// using the items-in-inventories pattern: entry templates define what can be collected,
@@ -541,7 +526,7 @@ public partial class CollectionService : ICollectionService
             if (previousPercentage < milestone && percentage >= milestone)
             {
                 await _messageBus.TryPublishAsync(
-                    CollectionTopics.MilestoneReached,
+                    CollectionPublishedTopics.CollectionMilestoneReached,
                     new CollectionMilestoneReachedEvent
                     {
                         EventId = Guid.NewGuid(),
@@ -1296,7 +1281,7 @@ public partial class CollectionService : ICollectionService
                 body.EntryCode, body.CollectionType, body.GameServiceId);
 
             await _messageBus.TryPublishAsync(
-                CollectionTopics.EntryGrantFailed,
+                CollectionPublishedTopics.CollectionEntryGrantFailed,
                 new CollectionEntryGrantFailedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -1319,7 +1304,7 @@ public partial class CollectionService : ICollectionService
                 body.EntryCode, body.OwnerType, body.OwnerId);
 
             await _messageBus.TryPublishAsync(
-                CollectionTopics.EntryGrantFailed,
+                CollectionPublishedTopics.CollectionEntryGrantFailed,
                 new CollectionEntryGrantFailedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -1407,7 +1392,7 @@ public partial class CollectionService : ICollectionService
                 collection.CollectionId, _configuration.MaxEntriesPerCollection);
 
             await _messageBus.TryPublishAsync(
-                CollectionTopics.EntryGrantFailed,
+                CollectionPublishedTopics.CollectionEntryGrantFailed,
                 new CollectionEntryGrantFailedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -1447,7 +1432,7 @@ public partial class CollectionService : ICollectionService
                 body.EntryCode, collection.CollectionId);
 
             await _messageBus.TryPublishAsync(
-                CollectionTopics.EntryGrantFailed,
+                CollectionPublishedTopics.CollectionEntryGrantFailed,
                 new CollectionEntryGrantFailedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -1527,7 +1512,7 @@ public partial class CollectionService : ICollectionService
 
         // Publish entry-unlocked event (for external/distributed consumers)
         await _messageBus.TryPublishAsync(
-            CollectionTopics.EntryUnlocked,
+            CollectionPublishedTopics.CollectionEntryUnlocked,
             new CollectionEntryUnlockedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2313,7 +2298,7 @@ public partial class CollectionService : ICollectionService
 
         // Publish discovery advanced event
         await _messageBus.TryPublishAsync(
-            CollectionTopics.DiscoveryAdvanced,
+            CollectionPublishedTopics.CollectionDiscoveryAdvanced,
             new CollectionDiscoveryAdvancedEvent
             {
                 EventId = Guid.NewGuid(),

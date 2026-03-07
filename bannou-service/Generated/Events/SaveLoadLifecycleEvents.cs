@@ -136,7 +136,7 @@ public partial class SaveSlotCreatedEvent : BaseServiceEvent
     public long TotalSizeBytes { get; set; } = default!;
 
     /// <summary>
-    /// Slot creation timestamp
+    /// Timestamp when the save slot was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -144,12 +144,10 @@ public partial class SaveSlotCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Last modification timestamp
+    /// Timestamp when the save slot was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -258,7 +256,7 @@ public partial class SaveSlotUpdatedEvent : BaseServiceEvent
     public long TotalSizeBytes { get; set; } = default!;
 
     /// <summary>
-    /// Slot creation timestamp
+    /// Timestamp when the save slot was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -266,12 +264,10 @@ public partial class SaveSlotUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Last modification timestamp
+    /// Timestamp when the save slot was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -388,7 +384,7 @@ public partial class SaveSlotDeletedEvent : BaseServiceEvent
     public long TotalSizeBytes { get; set; } = default!;
 
     /// <summary>
-    /// Slot creation timestamp
+    /// Timestamp when the save slot was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -396,12 +392,10 @@ public partial class SaveSlotDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Last modification timestamp
+    /// Timestamp when the save slot was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

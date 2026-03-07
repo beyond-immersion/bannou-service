@@ -190,7 +190,7 @@ public partial class ItemTemplateCreatedEvent : BaseServiceEvent
     public System.Guid? MigrationTargetId { get; set; } = default!;
 
     /// <summary>
-    /// When the template was created
+    /// Timestamp when the item template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -198,7 +198,7 @@ public partial class ItemTemplateCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the template was last modified
+    /// Timestamp when the item template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -364,7 +364,7 @@ public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
     public System.Guid? MigrationTargetId { get; set; } = default!;
 
     /// <summary>
-    /// When the template was created
+    /// Timestamp when the item template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -372,7 +372,7 @@ public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the template was last modified
+    /// Timestamp when the item template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -546,7 +546,7 @@ public partial class ItemTemplateDeletedEvent : BaseServiceEvent
     public System.Guid? MigrationTargetId { get; set; } = default!;
 
     /// <summary>
-    /// When the template was created
+    /// Timestamp when the item template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -554,7 +554,7 @@ public partial class ItemTemplateDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the template was last modified
+    /// Timestamp when the item template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
@@ -682,7 +682,13 @@ public partial class ItemInstanceCreatedEvent : BaseServiceEvent
     public System.Guid? OriginId { get; set; } = default!;
 
     /// <summary>
-    /// When the instance was created
+    /// When the instance was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the item instance was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -690,10 +696,10 @@ public partial class ItemInstanceCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the instance was last modified
+    /// Timestamp when the item instance was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -812,7 +818,13 @@ public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
     public System.Guid? OriginId { get; set; } = default!;
 
     /// <summary>
-    /// When the instance was created
+    /// When the instance was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the item instance was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -820,10 +832,10 @@ public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the instance was last modified
+    /// Timestamp when the item instance was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -950,7 +962,13 @@ public partial class ItemInstanceDeletedEvent : BaseServiceEvent
     public System.Guid? OriginId { get; set; } = default!;
 
     /// <summary>
-    /// When the instance was created
+    /// When the instance was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the item instance was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -958,10 +976,10 @@ public partial class ItemInstanceDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// When the instance was last modified
+    /// Timestamp when the item instance was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

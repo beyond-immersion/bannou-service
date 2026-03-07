@@ -19,6 +19,7 @@ components:
       - timestamp
       - characterId
       - version
+      - createdAt
       properties:
         eventName:
           type: string
@@ -31,6 +32,15 @@ components:
         version: &id002
           type: integer
           description: Version number of the personality data
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the personality was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the personality was last updated
       x-resource-mapping:
         resource_type: character
         resource_id_field: characterId
@@ -48,6 +58,7 @@ components:
       - timestamp
       - characterId
       - version
+      - createdAt
       - changedFields
       properties:
         eventName:
@@ -56,6 +67,15 @@ components:
           description: 'Event type identifier: personality.updated'
         characterId: *id001
         version: *id002
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the personality was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the personality was last updated
         changedFields:
           type: array
           items:
@@ -78,6 +98,7 @@ components:
       - timestamp
       - characterId
       - version
+      - createdAt
       properties:
         eventName:
           type: string
@@ -85,6 +106,15 @@ components:
           description: 'Event type identifier: personality.deleted'
         characterId: *id001
         version: *id002
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the personality was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the personality was last updated
         deletedReason:
           type: string
           nullable: true
@@ -106,6 +136,7 @@ components:
       - timestamp
       - characterId
       - version
+      - createdAt
       properties:
         eventName:
           type: string
@@ -118,6 +149,15 @@ components:
         version: &id004
           type: integer
           description: Version number of the combat preferences data
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the combat preferences was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the combat preferences was last updated
       x-resource-mapping:
         resource_type: character
         resource_id_field: characterId
@@ -135,6 +175,7 @@ components:
       - timestamp
       - characterId
       - version
+      - createdAt
       - changedFields
       properties:
         eventName:
@@ -143,6 +184,15 @@ components:
           description: 'Event type identifier: combat-preferences.updated'
         characterId: *id003
         version: *id004
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the combat preferences was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the combat preferences was last updated
         changedFields:
           type: array
           items:
@@ -165,6 +215,7 @@ components:
       - timestamp
       - characterId
       - version
+      - createdAt
       properties:
         eventName:
           type: string
@@ -172,6 +223,15 @@ components:
           description: 'Event type identifier: combat-preferences.deleted'
         characterId: *id003
         version: *id004
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the combat preferences was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the combat preferences was last updated
         deletedReason:
           type: string
           nullable: true

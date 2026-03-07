@@ -77,10 +77,13 @@ components:
     # ==========================================================================
 
     AssetUploadRequestedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a new upload is initiated via requestUpload API
       required:
+        - eventName
         - eventId
         - timestamp
         - uploadId
@@ -90,14 +93,10 @@ components:
         - size
         - contentType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.upload.requested
+          description: 'Event type identifier: asset.upload.requested'
         uploadId:
           type: string
           format: uuid
@@ -134,10 +133,13 @@ components:
           description: Whether this is a multipart upload
 
     AssetUploadCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an upload is completed and file is stored
       required:
+        - eventName
         - eventId
         - timestamp
         - assetId
@@ -149,14 +151,10 @@ components:
         - size
         - contentHash
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.upload.completed
+          description: 'Event type identifier: asset.upload.completed'
         assetId:
           type: string
           description: Assigned asset identifier
@@ -195,23 +193,22 @@ components:
     # ==========================================================================
 
     AssetProcessingQueuedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an asset is queued for processing
       required:
+        - eventName
         - eventId
         - timestamp
         - assetId
         - processingType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.processing.queued
+          description: 'Event type identifier: asset.processing.queued'
         assetId:
           type: string
           description: Asset identifier
@@ -232,24 +229,23 @@ components:
           description: Estimated processing duration
 
     AssetProcessingCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when asset processing completes
       required:
+        - eventName
         - eventId
         - timestamp
         - assetId
         - processingType
         - success
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.processing.completed
+          description: 'Event type identifier: asset.processing.completed'
         assetId:
           type: string
           description: Asset identifier
@@ -279,10 +275,13 @@ components:
     # ==========================================================================
 
     AssetReadyEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an asset is fully processed and available
       required:
+        - eventName
         - eventId
         - timestamp
         - assetId
@@ -290,14 +289,10 @@ components:
         - key
         - contentHash
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.ready
+          description: 'Event type identifier: asset.ready'
         assetId:
           type: string
           description: Asset identifier
@@ -337,10 +332,13 @@ components:
     # ==========================================================================
 
     BundleCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a bundle is successfully created
       required:
+        - eventName
         - eventId
         - timestamp
         - bundleId
@@ -349,14 +347,10 @@ components:
         - key
         - assetCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.bundle.created
+          description: 'Event type identifier: asset.bundle.created'
         bundleId:
           type: string
           description: Human-readable bundle identifier
@@ -391,10 +385,13 @@ components:
           description: Owner identifier - session ID or service name (null for system-owned bundles)
 
     MetabundleCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a metabundle is successfully created from source bundles
       required:
+        - eventName
         - eventId
         - timestamp
         - metabundleId
@@ -404,14 +401,10 @@ components:
         - bucket
         - key
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.metabundle.created
+          description: 'Event type identifier: asset.metabundle.created'
         metabundleId:
           type: string
           description: Human-readable metabundle identifier
@@ -461,10 +454,13 @@ components:
           description: Owner identifier - session ID or service name (null for system-owned metabundles)
 
     BundleUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when bundle metadata is updated
       required:
+        - eventName
         - eventId
         - timestamp
         - bundleId
@@ -473,14 +469,10 @@ components:
         - changes
         - updatedBy
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.bundle.updated
+          description: 'Event type identifier: asset.bundle.updated'
         bundleId:
           type: string
           description: Human-readable bundle identifier
@@ -509,24 +501,23 @@ components:
           description: Game realm of the bundle. Null for cross-realm bundles.
 
     BundleDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a bundle is soft-deleted or permanently deleted
       required:
+        - eventName
         - eventId
         - timestamp
         - bundleId
         - permanent
         - deletedBy
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.bundle.deleted
+          description: 'Event type identifier: asset.bundle.deleted'
         bundleId:
           type: string
           description: Human-readable bundle identifier
@@ -552,24 +543,23 @@ components:
           description: Game realm of the bundle. Null for cross-realm bundles.
 
     BundleRestoredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a soft-deleted bundle is restored
       required:
+        - eventName
         - eventId
         - timestamp
         - bundleId
         - restoredFromVersion
         - restoredBy
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.bundle.restored
+          description: 'Event type identifier: asset.bundle.restored'
         bundleId:
           type: string
           description: Human-readable bundle identifier
@@ -594,12 +584,15 @@ components:
     # ==========================================================================
 
     AssetProcessingJobDispatchedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Event published when an asset processing job is dispatched to a processor
         in a specific pool. Topic includes pool type suffix (e.g., asset.processing.job.audio).
       required:
+        - eventName
         - eventId
         - timestamp
         - jobId
@@ -612,14 +605,10 @@ components:
         - appId
         - expiresAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: "asset.processing.job.{poolType}"
+          description: 'Event type identifier: asset.processing.job.{poolType}'
         jobId:
           type: string
           format: uuid
@@ -686,10 +675,13 @@ components:
           description: When the processor lease expires
 
     AssetProcessingRetryEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when asset processing needs to be retried after no processors are available
       required:
+        - eventName
         - eventId
         - timestamp
         - assetId
@@ -700,14 +692,10 @@ components:
         - maxRetries
         - retryDelaySeconds
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.processing.retry
+          description: 'Event type identifier: asset.processing.retry'
         assetId:
           type: string
           description: Asset identifier
@@ -735,10 +723,13 @@ components:
     # ==========================================================================
 
     BundleCreationJobQueuedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a bundle creation job is queued for the processing pool
       required:
+        - eventName
         - eventId
         - timestamp
         - jobId
@@ -747,14 +738,10 @@ components:
         - assetIds
         - compression
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.bundle.create
+          description: 'Event type identifier: asset.bundle.create'
         jobId:
           type: string
           format: uuid
@@ -775,10 +762,13 @@ components:
           description: Compression type to use
 
     MetabundleJobQueuedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a metabundle creation job is queued for async processing
       required:
+        - eventName
         - eventId
         - timestamp
         - jobId
@@ -787,14 +777,10 @@ components:
         - assetCount
         - estimatedSizeBytes
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: asset.metabundle.job.queued
+          description: 'Event type identifier: asset.metabundle.job.queued'
         jobId:
           type: string
           format: uuid

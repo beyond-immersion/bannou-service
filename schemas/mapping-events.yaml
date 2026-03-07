@@ -81,8 +81,6 @@ x-lifecycle:
       authorityExpiresAt: { type: string, format: date-time, nullable: true, description: "When current authority expires" }
       nonAuthorityHandling: { $ref: 'mapping-api.yaml#/components/schemas/NonAuthorityHandlingMode', required: true, description: "How to handle non-authority publishes" }
       version: { type: integer, format: int64, required: true, description: "Current version number" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the channel was created" }
-      updatedAt: { type: string, format: date-time, required: true, description: "When the channel was last updated" }
 
 paths: {}
 
@@ -90,6 +88,8 @@ components:
   schemas:
     # ========== INGEST EVENT (Authority -> Service) ==========
     MapIngestEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
@@ -97,19 +97,21 @@ components:
         lib-mapping validates authority and broadcasts to consumers.
         Published to: map.ingest.{channelId}
       required:
-        - authorityToken
+        - eventName
+        - eventId
         - timestamp
+        - authorityToken
         - payloads
       properties:
+        eventName:
+          type: string
+          default: map.ingest
+          description: 'Event type identifier: map.ingest'
         authorityToken:
           type: string
           minLength: 1
           maxLength: 500
           description: Token proving authority over this channel
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was created
         payloads:
           type: array
           maxItems: 100
@@ -156,25 +158,24 @@ components:
 
     # ========== BROADCAST EVENTS (Service -> Consumers) ==========
     MapUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when map layer data changes.
         Topic: map.{regionId}.{kind}.updated
       required:
+        - eventName
         - eventId
         - timestamp
         - regionId
         - kind
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the update occurred
+          default: map.updated
+          description: 'Event type identifier: map.updated'
         regionId:
           type: string
           format: uuid
@@ -219,26 +220,25 @@ components:
           nullable: true
 
     MapSnapshotEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when a full snapshot is available.
         Topic: map.{regionId}.{kind}.snapshot
       required:
+        - eventName
         - eventId
         - timestamp
         - regionId
         - kind
         - version
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the snapshot was created
+          default: map.snapshot
+          description: 'Event type identifier: map.snapshot'
         regionId:
           type: string
           format: uuid
@@ -277,26 +277,25 @@ components:
           nullable: true
 
     MapObjectsChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when metadata objects change in a map.
         Topic: map.{regionId}.{kind}.objects.changed
       required:
+        - eventName
         - eventId
         - timestamp
         - regionId
         - kind
         - changes
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the changes occurred
+          default: map.objects.changed
+          description: 'Event type identifier: map.objects.changed'
         regionId:
           type: string
           format: uuid
@@ -322,10 +321,10 @@ components:
         changes:
           type: array
           items:
-            $ref: '#/components/schemas/ObjectChangeEvent'
+            $ref: '#/components/schemas/ObjectChangeRecord'
           description: List of object changes
 
-    ObjectChangeEvent:
+    ObjectChangeRecord:
       type: object
       additionalProperties: false
       description: A single object change in an event
@@ -368,26 +367,25 @@ components:
 
     # ========== WARNING EVENTS ==========
     MapUnauthorizedPublishWarning:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when a non-authority attempts to publish.
         Topic: map.warnings.unauthorized-publish
       required:
+        - eventName
         - eventId
         - timestamp
         - channelId
         - attemptedPublisher
         - handlingMode
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the attempt occurred
+          default: map.warnings.unauthorized-publish
+          description: 'Event type identifier: map.warnings.unauthorized-publish'
         channelId:
           type: string
           format: uuid
@@ -426,12 +424,15 @@ components:
 
     # ========== AUTHORITY LIFECYCLE EVENTS ==========
     MappingAuthorityGrantedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when authority is granted over a mapping channel.
         Topic: mapping.authority.granted
       required:
+        - eventName
         - eventId
         - timestamp
         - channelId
@@ -439,14 +440,10 @@ components:
         - kind
         - authorityAppId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When authority was granted
+          default: mapping.authority.granted
+          description: 'Event type identifier: mapping.authority.granted'
         channelId:
           type: string
           format: uuid
@@ -472,25 +469,24 @@ components:
           description: True if this is a new channel, false if takeover
 
     MappingAuthorityReleasedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when authority is explicitly released over a mapping channel.
         Topic: mapping.authority.released
       required:
+        - eventName
         - eventId
         - timestamp
         - channelId
         - authorityAppId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When authority was released
+          default: mapping.authority.released
+          description: 'Event type identifier: mapping.authority.released'
         channelId:
           type: string
           format: uuid
@@ -512,25 +508,24 @@ components:
           description: App-id that released authority
 
     MappingAuthorityExpiredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when authority expires (detected during validation).
         Topic: mapping.authority.expired
       required:
+        - eventName
         - eventId
         - timestamp
         - channelId
         - expiredAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When expiration was detected
+          default: mapping.authority.expired
+          description: 'Event type identifier: mapping.authority.expired'
         channelId:
           type: string
           format: uuid

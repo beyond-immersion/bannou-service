@@ -186,7 +186,15 @@ public partial class TransitConnectionCreatedEvent : BaseServiceEvent
     public bool CrossRealm { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the connection was created
+    /// Timestamp when the connection was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the transit connection was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -194,12 +202,10 @@ public partial class TransitConnectionCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the connection was last modified
+    /// Timestamp when the transit connection was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -358,7 +364,15 @@ public partial class TransitConnectionUpdatedEvent : BaseServiceEvent
     public bool CrossRealm { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the connection was created
+    /// Timestamp when the connection was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the transit connection was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -366,12 +380,10 @@ public partial class TransitConnectionUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the connection was last modified
+    /// Timestamp when the transit connection was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -538,7 +550,15 @@ public partial class TransitConnectionDeletedEvent : BaseServiceEvent
     public bool CrossRealm { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the connection was created
+    /// Timestamp when the connection was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the transit connection was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -546,12 +566,10 @@ public partial class TransitConnectionDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the connection was last modified
+    /// Timestamp when the transit connection was last updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset ModifiedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

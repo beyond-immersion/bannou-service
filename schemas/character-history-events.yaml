@@ -37,6 +37,8 @@ paths: {}  # Events don't have HTTP paths
 components:
   schemas:
     CharacterParticipationRecordedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character's participation in a historical event is recorded
@@ -45,6 +47,7 @@ components:
         resource_id_field: characterId
         source_type: character-history
       required:
+        - eventName
         - eventId
         - timestamp
         - characterId
@@ -55,14 +58,10 @@ components:
         - eventCategory
         - significance
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: character-history.participation.recorded
+          description: 'Event type identifier: character-history.participation.recorded'
         characterId:
           type: string
           format: uuid
@@ -90,6 +89,8 @@ components:
           description: How significant this event was for the character (0.0 to 1.0)
 
     CharacterParticipationDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character's participation record is deleted
@@ -98,20 +99,17 @@ components:
         resource_id_field: characterId
         source_type: character-history
       required:
+        - eventName
         - eventId
         - timestamp
         - participationId
         - characterId
         - historicalEventId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: character-history.participation.deleted
+          description: 'Event type identifier: character-history.participation.deleted'
         participationId:
           type: string
           format: uuid
@@ -126,6 +124,8 @@ components:
           description: ID of the historical event
 
     CharacterBackstoryCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character's backstory is first created
@@ -134,19 +134,16 @@ components:
         resource_id_field: characterId
         source_type: character-history
       required:
+        - eventName
         - eventId
         - timestamp
         - characterId
         - elementCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: character-history.backstory.created
+          description: 'Event type identifier: character-history.backstory.created'
         characterId:
           type: string
           format: uuid
@@ -156,6 +153,8 @@ components:
           description: Number of backstory elements created
 
     CharacterBackstoryUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character's backstory is updated
@@ -164,20 +163,17 @@ components:
         resource_id_field: characterId
         source_type: character-history
       required:
+        - eventName
         - eventId
         - timestamp
         - characterId
         - elementCount
         - replaceExisting
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: character-history.backstory.updated
+          description: 'Event type identifier: character-history.backstory.updated'
         characterId:
           type: string
           format: uuid
@@ -190,6 +186,8 @@ components:
           description: Whether existing elements were replaced
 
     CharacterBackstoryDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a character's backstory is deleted
@@ -198,24 +196,23 @@ components:
         resource_id_field: characterId
         source_type: character-history
       required:
+        - eventName
         - eventId
         - timestamp
         - characterId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: character-history.backstory.deleted
+          description: 'Event type identifier: character-history.backstory.deleted'
         characterId:
           type: string
           format: uuid
           description: ID of the character whose backstory was deleted
 
     CharacterHistoryDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when all history data for a character is deleted
@@ -224,20 +221,17 @@ components:
         resource_id_field: characterId
         source_type: character-history
       required:
+        - eventName
         - eventId
         - timestamp
         - characterId
         - participationsDeleted
         - backstoryDeleted
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
+          default: character-history.deleted
+          description: 'Event type identifier: character-history.deleted'
         characterId:
           type: string
           format: uuid

@@ -1769,7 +1769,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Assert - should publish abandoned event (reason contains "abandoned" and "player")
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            QuestTopics.QuestAbandoned,
+            QuestPublishedTopics.QuestAbandoned,
             It.IsAny<QuestAbandonedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -1834,7 +1834,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Assert - should publish failed event (reason does not contain "abandoned" or "player")
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            QuestTopics.QuestFailed,
+            QuestPublishedTopics.QuestFailed,
             It.IsAny<QuestFailedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -1940,7 +1940,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Assert - should publish completed event
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            QuestTopics.QuestCompleted,
+            QuestPublishedTopics.QuestCompleted,
             It.IsAny<QuestCompletedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -1998,7 +1998,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Assert - progress updated and event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            QuestTopics.QuestObjectiveProgressed,
+            QuestPublishedTopics.QuestObjectiveProgressed,
             It.IsAny<QuestObjectiveProgressedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -2774,7 +2774,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.Equal(QuestTopics.QuestAbandoned, capturedTopic);
+        Assert.Equal(QuestPublishedTopics.QuestAbandoned, capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<QuestAbandonedEvent>(capturedEvent);
         Assert.Equal(instanceId, typedEvent.QuestInstanceId);
@@ -3040,7 +3040,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         Assert.Equal(5, response.Objective.CurrentCount); // 3 + 2
 
         // Verify progress event was published
-        Assert.Contains(QuestTopics.QuestObjectiveProgressed, capturedTopics);
+        Assert.Contains(QuestPublishedTopics.QuestObjectiveProgressed, capturedTopics);
         var progressEvent = capturedEvents.OfType<QuestObjectiveProgressedEvent>().FirstOrDefault();
         Assert.NotNull(progressEvent);
         Assert.Equal(instanceId, progressEvent.QuestInstanceId);
@@ -3250,7 +3250,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify completed event was published
-        Assert.Contains(QuestTopics.QuestCompleted, capturedTopics);
+        Assert.Contains(QuestPublishedTopics.QuestCompleted, capturedTopics);
         var completedEvent = capturedEvents.OfType<QuestCompletedEvent>().FirstOrDefault();
         Assert.NotNull(completedEvent);
         Assert.Equal(instanceId, completedEvent.QuestInstanceId);

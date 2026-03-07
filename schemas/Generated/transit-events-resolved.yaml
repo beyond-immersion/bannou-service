@@ -104,7 +104,6 @@ x-lifecycle:
       fromRealmId: {type: string, format: uuid, required: true, description: "Realm of the origin location"}
       toRealmId: {type: string, format: uuid, required: true, description: "Realm of the destination location"}
       crossRealm: {type: boolean, required: true, description: "Whether this connection spans realm boundaries"}
-      createdAt: {type: string, format: date-time, required: true, description: "Timestamp when the connection was created"}
       modifiedAt: {type: string, format: date-time, required: true, description: "Timestamp when the connection was last modified"}
 
 components:
@@ -112,10 +111,13 @@ components:
     # === Custom Connection Events ===
 
     TransitConnectionStatusChangedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a connection's operational status changes
       required:
+      - eventName
       - eventId
       - timestamp
       - connectionId
@@ -128,14 +130,10 @@ components:
       - toRealmId
       - crossRealm
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: transit.connection.status-changed
+          description: 'Event type identifier: transit.connection.status-changed'
         connectionId:
           type: string
           format: uuid
@@ -178,10 +176,13 @@ components:
     # === Journey Lifecycle Events ===
 
     TransitJourneyDepartedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an entity begins traveling
       required:
+      - eventName
       - eventId
       - timestamp
       - journeyId
@@ -194,14 +195,10 @@ components:
       - partySize
       - crossRealm
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: transit.journey.departed
+          description: 'Event type identifier: transit.journey.departed'
         journeyId:
           type: string
           format: uuid
@@ -246,10 +243,13 @@ components:
           description: Whether the journey crosses realm boundaries
 
     TransitJourneyWaypointReachedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a traveling entity reaches an intermediate waypoint
       required:
+      - eventName
       - eventId
       - timestamp
       - journeyId
@@ -262,14 +262,10 @@ components:
       - connectionId
       - crossedRealmBoundary
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: transit.journey.waypoint-reached
+          description: 'Event type identifier: transit.journey.waypoint-reached'
         journeyId:
           type: string
           format: uuid
@@ -309,10 +305,13 @@ components:
           description: Whether the completed leg crossed a realm boundary
 
     TransitJourneyArrivedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a traveling entity reaches its destination
       required:
+      - eventName
       - eventId
       - timestamp
       - journeyId
@@ -327,14 +326,10 @@ components:
       - legsCompleted
       - crossRealm
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: transit.journey.arrived
+          description: 'Event type identifier: transit.journey.arrived'
         journeyId:
           type: string
           format: uuid
@@ -386,10 +381,13 @@ components:
           description: Whether the journey crossed realm boundaries
 
     TransitJourneyInterruptedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a journey is interrupted (combat, event, breakdown)
       required:
+      - eventName
       - eventId
       - timestamp
       - journeyId
@@ -398,14 +396,10 @@ components:
       - currentLocationId
       - currentLegIndex
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: transit.journey.interrupted
+          description: 'Event type identifier: transit.journey.interrupted'
         journeyId:
           type: string
           format: uuid
@@ -435,10 +429,13 @@ components:
           description: Realm of the current location, or null if realm resolution failed
 
     TransitJourneyResumedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when an interrupted journey is resumed
       required:
+      - eventName
       - eventId
       - timestamp
       - journeyId
@@ -450,14 +447,10 @@ components:
       - remainingLegs
       - modeCode
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: transit.journey.resumed
+          description: 'Event type identifier: transit.journey.resumed'
         journeyId:
           type: string
           format: uuid
@@ -493,10 +486,13 @@ components:
           description: Realm of the current location, or null if realm resolution failed
 
     TransitJourneyAbandonedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a journey is abandoned before reaching destination
       required:
+      - eventName
       - eventId
       - timestamp
       - journeyId
@@ -509,14 +505,10 @@ components:
       - totalLegs
       - crossRealm
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: transit.journey.abandoned
+          description: 'Event type identifier: transit.journey.abandoned'
         journeyId:
           type: string
           format: uuid
@@ -572,10 +564,13 @@ components:
     # === Discovery Events ===
 
     TransitDiscoveryRevealedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a discoverable connection is revealed to an entity
       required:
+      - eventName
       - eventId
       - timestamp
       - entityId
@@ -587,14 +582,10 @@ components:
       - toRealmId
       - crossRealm
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: transit.discovery.revealed
+          description: 'Event type identifier: transit.discovery.revealed'
         entityId:
           type: string
           format: uuid
@@ -629,10 +620,13 @@ components:
     # === Mode Events (Custom -- register/update semantics, not standard CRUD lifecycle) ===
 
     TransitModeRegisteredEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a new transit mode is registered
       required:
+      - eventName
       - eventId
       - timestamp
       - code
@@ -649,14 +643,10 @@ components:
       - createdAt
       - modifiedAt
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: transit.mode.registered
+          description: 'Event type identifier: transit.mode.registered'
         code:
           type: string
           description: Unique identifier code for the transit mode
@@ -746,24 +736,23 @@ components:
           description: When the mode was last modified
 
     TransitModeUpdatedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a transit mode is updated (covers property changes and deprecation state via 
         changedFields)
       required:
+      - eventName
       - eventId
       - timestamp
       - mode
       - changedFields
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: transit.mode.updated
+          description: 'Event type identifier: transit.mode.updated'
         mode:
           allOf:
           - $ref: '#/components/schemas/TransitMode'
@@ -775,23 +764,22 @@ components:
             type: string
 
     TransitModeDeletedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a deprecated transit mode is permanently deleted
       required:
+      - eventName
       - eventId
       - timestamp
       - code
       - deletedReason
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
+          default: transit.mode.deleted
+          description: 'Event type identifier: transit.mode.deleted'
         code:
           type: string
           description: The deleted mode's code (full entity no longer exists)

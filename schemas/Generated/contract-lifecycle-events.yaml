@@ -65,15 +65,15 @@ components:
         isActive: &id010
           type: boolean
           description: "Whether template is active"
-        createdAt: &id011
+        createdAt:
           type: string
           format: date-time
-          description: "Timestamp when the template was created"
-        updatedAt: &id012
+          description: Timestamp when the contract template was created
+        updatedAt:
           type: string
           format: date-time
           nullable: true
-          description: "Timestamp when the template was last updated"
+          description: Timestamp when the contract template was last updated
     ContractTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -109,8 +109,15 @@ components:
         defaultEnforcementMode: *id008
         transferable: *id009
         isActive: *id010
-        createdAt: *id011
-        updatedAt: *id012
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the contract template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the contract template was last updated
         changedFields:
           type: array
           items:
@@ -150,8 +157,15 @@ components:
         defaultEnforcementMode: *id008
         transferable: *id009
         isActive: *id010
-        createdAt: *id011
-        updatedAt: *id012
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the contract template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the contract template was last updated
         deletedReason:
           type: string
           nullable: true
@@ -176,54 +190,54 @@ components:
           type: string
           default: contract.instance.created
           description: 'Event type identifier: contract.instance.created'
-        contractId: &id013
+        contractId: &id011
           type: string
           format: uuid
           description: "Unique identifier for the contract instance"
-        templateId: &id014
+        templateId: &id012
           type: string
           format: uuid
           description: "Reference to the source template"
-        templateCode: &id015
+        templateCode: &id013
           type: string
           description: "Template code for reference"
-        status: &id016
+        status: &id014
           $ref: ../contract-api.yaml#/components/schemas/ContractStatus
           description: "Current contract status"
-        proposedAt: &id017
+        proposedAt: &id015
           type: string
           format: date-time
           nullable: true
           description: "When contract was proposed to parties"
-        acceptedAt: &id018
+        acceptedAt: &id016
           type: string
           format: date-time
           nullable: true
           description: "When all parties consented"
-        effectiveFrom: &id019
+        effectiveFrom: &id017
           type: string
           format: date-time
           nullable: true
           description: "When contract became active"
-        effectiveUntil: &id020
+        effectiveUntil: &id018
           type: string
           format: date-time
           nullable: true
           description: "When contract expires"
-        terminatedAt: &id021
+        terminatedAt: &id019
           type: string
           format: date-time
           nullable: true
           description: "When contract was terminated early"
-        createdAt: &id022
+        createdAt:
           type: string
           format: date-time
-          description: "Timestamp when the instance was created"
-        updatedAt: &id023
+          description: Timestamp when the contract instance was created
+        updatedAt:
           type: string
           format: date-time
           nullable: true
-          description: "Timestamp when the instance was last updated"
+          description: Timestamp when the contract instance was last updated
     ContractInstanceUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -245,17 +259,24 @@ components:
           type: string
           default: contract.instance.updated
           description: 'Event type identifier: contract.instance.updated'
-        contractId: *id013
-        templateId: *id014
-        templateCode: *id015
-        status: *id016
-        proposedAt: *id017
-        acceptedAt: *id018
-        effectiveFrom: *id019
-        effectiveUntil: *id020
-        terminatedAt: *id021
-        createdAt: *id022
-        updatedAt: *id023
+        contractId: *id011
+        templateId: *id012
+        templateCode: *id013
+        status: *id014
+        proposedAt: *id015
+        acceptedAt: *id016
+        effectiveFrom: *id017
+        effectiveUntil: *id018
+        terminatedAt: *id019
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the contract instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the contract instance was last updated
         changedFields:
           type: array
           items:
@@ -281,17 +302,24 @@ components:
           type: string
           default: contract.instance.deleted
           description: 'Event type identifier: contract.instance.deleted'
-        contractId: *id013
-        templateId: *id014
-        templateCode: *id015
-        status: *id016
-        proposedAt: *id017
-        acceptedAt: *id018
-        effectiveFrom: *id019
-        effectiveUntil: *id020
-        terminatedAt: *id021
-        createdAt: *id022
-        updatedAt: *id023
+        contractId: *id011
+        templateId: *id012
+        templateCode: *id013
+        status: *id014
+        proposedAt: *id015
+        acceptedAt: *id016
+        effectiveFrom: *id017
+        effectiveUntil: *id018
+        terminatedAt: *id019
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the contract instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the contract instance was last updated
         deletedReason:
           type: string
           nullable: true

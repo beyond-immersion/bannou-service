@@ -24,6 +24,7 @@ components:
       - updateMode
       - isSeasonal
       - isPublic
+      - createdAt
       properties:
         eventName:
           type: string
@@ -51,6 +52,15 @@ components:
         isPublic: &id007
           type: boolean
           description: "Whether the leaderboard is publicly visible"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the leaderboard definition was last updated
     LeaderboardDefinitionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -68,6 +78,7 @@ components:
       - updateMode
       - isSeasonal
       - isPublic
+      - createdAt
       - changedFields
       properties:
         eventName:
@@ -81,6 +92,15 @@ components:
         updateMode: *id005
         isSeasonal: *id006
         isPublic: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the leaderboard definition was last updated
         changedFields:
           type: array
           items:
@@ -103,6 +123,7 @@ components:
       - updateMode
       - isSeasonal
       - isPublic
+      - createdAt
       properties:
         eventName:
           type: string
@@ -115,6 +136,15 @@ components:
         updateMode: *id005
         isSeasonal: *id006
         isPublic: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the leaderboard definition was last updated
         deletedReason:
           type: string
           nullable: true
