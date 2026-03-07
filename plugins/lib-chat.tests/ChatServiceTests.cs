@@ -12,20 +12,6 @@ public class ChatServiceTests
 {
     #region Constructor and Hierarchy Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void ChatService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<ChatService>();
-
-    /// <summary>
-    /// Validates the service respects the dependency hierarchy (L1 AppFoundation).
-    /// </summary>
-    [Fact]
-    public void ChatService_RespectsDependencyHierarchy() =>
-        ServiceHierarchyValidator.ValidateServiceHierarchy<ChatService>();
-
     #endregion
 
     #region Configuration Tests

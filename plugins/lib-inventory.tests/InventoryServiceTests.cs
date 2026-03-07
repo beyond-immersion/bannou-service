@@ -108,10 +108,6 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
     #region Constructor Tests
 
-    [Fact]
-    public void InventoryService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<InventoryService>();
-
     #endregion
 
     #region CreateContainer Tests

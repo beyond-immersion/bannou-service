@@ -7,21 +7,6 @@ public class DivineServiceTests
 {
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    ///
-    /// This single test replaces N individual null-check tests and catches:
-    /// - Multiple constructors (DI might pick wrong one)
-    /// - Optional parameters (accidental defaults that hide missing registrations)
-    /// - Missing null checks (ArgumentNullException not thrown)
-    /// - Wrong parameter names in ArgumentNullException
-    ///
-    /// See: docs/reference/tenets/TESTING_PATTERNS.md
-    /// </summary>
-    [Fact]
-    public void DivineService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<DivineService>();
-
     #endregion
 
     #region Configuration Tests

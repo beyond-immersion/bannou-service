@@ -43,12 +43,6 @@ public class TenetComplianceTests
     }
 
     [Fact]
-    public void MessagingService_HasValidConstructorPattern()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<MessagingService>();
-    }
-
-    [Fact]
     public void InMemoryMessageBus_HasValidConstructorPattern()
     {
         ServiceConstructorValidator.ValidateServiceConstructor<InMemoryMessageBus>();

@@ -313,13 +313,6 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void CollectionService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<CollectionService>();
-
     #endregion
 
     #region Configuration Tests

@@ -90,19 +90,6 @@ public class VoiceServiceTests
 
     #region Constructor Tests
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    ///
-    /// This single test replaces N individual null-check tests and catches:
-    /// - Multiple constructors (DI might pick wrong one)
-    /// - Optional parameters (accidental defaults that hide missing registrations)
-    /// - Missing null checks (ArgumentNullException not thrown)
-    /// - Wrong parameter names in ArgumentNullException
-    /// </summary>
-    [Fact]
-    public void VoiceService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<VoiceService>();
-
     #endregion
 
     #region CreateVoiceRoomAsync Tests

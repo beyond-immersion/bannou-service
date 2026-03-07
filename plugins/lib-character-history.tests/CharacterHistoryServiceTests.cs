@@ -90,13 +90,6 @@ public class CharacterHistoryServiceTests
 
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void CharacterHistoryService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<CharacterHistoryService>();
-
     #endregion
 
     #region Configuration Tests

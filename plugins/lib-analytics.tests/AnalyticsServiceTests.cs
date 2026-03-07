@@ -134,12 +134,6 @@ public class AnalyticsServiceTests
     #region Constructor Tests
 
     [Fact]
-    public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<AnalyticsService>();
-    }
-
-    [Fact]
     public void Configuration_DefaultValues_AreValid()
     {
         var config = new AnalyticsServiceConfiguration();

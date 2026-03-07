@@ -2,7 +2,8 @@
 
 > **Created**: 2026-03-07
 > **Source**: Cross-plugin pattern analysis across 15 plugins in 5 structural groups
-> **Status**: Proposals for review — none of these are active tenets yet
+> **Status**: Partially implemented — see per-item status markers below
+> **Last Audited**: 2026-03-07
 
 This document captures patterns discovered by systematically comparing structurally similar plugins. Each finding represents either (A) a pattern already followed consistently but not documented, risking drift and re-discovery cost, or (B) an inconsistency between plugins that should be standardized. Bugs and tenet violations found during analysis are also documented.
 
@@ -11,16 +12,16 @@ This document captures patterns discovered by systematically comparing structura
 ## Table of Contents
 
 1. [Proposed Tenet Additions](#i-proposed-tenet-additions)
-   1. [Background Worker Polling Loop Pattern](#1-background-worker-polling-loop-pattern)
-   2. [State Store Key Builders](#2-state-store-key-builders)
-   3. [Event Topic Constants (Generated)](#3-event-topic-constants-generated)
-   4. [Optimistic Concurrency Retry Loop](#4-optimistic-concurrency-retry-loop)
+   1. [Background Worker Polling Loop Pattern](#1-background-worker-polling-loop-pattern) ✅
+   2. [State Store Key Builders](#2-state-store-key-builders) ✅
+   3. [Event Topic Constants (Generated)](#3-event-topic-constants-generated) ✅
+   4. [Optimistic Concurrency Retry Loop](#4-optimistic-concurrency-retry-loop) ✅
    5. [Per-Item Error Isolation in Batch Processing](#5-per-item-error-isolation-in-batch-processing)
    6. [Event Publishing Helper Methods](#6-event-publishing-helper-methods)
    7. [ChangedFields on All Updated Events](#7-changedfields-on-all-updated-events)
    8. [Partial Class Decomposition Threshold](#8-partial-class-decomposition-threshold)
    9. [Multi-Service Call Compensation](#9-multi-service-call-compensation)
-   10. [ConcurrentDictionary Cache Invalidation Must Use Events](#10-concurrentdictionary-cache-invalidation-must-use-events)
+   10. [ConcurrentDictionary Cache Invalidation Must Use Events](#10-concurrentdictionary-cache-invalidation-must-use-events) ✅
 2. [Bugs and Violations Found](#ii-bugs-and-violations-found)
 3. [Inconsistencies Worth Standardizing](#iii-inconsistencies-worth-standardizing)
 4. [Missing Abstractions and Shared Helpers](#iv-missing-abstractions-and-shared-helpers)
@@ -30,7 +31,9 @@ This document captures patterns discovered by systematically comparing structura
 
 ## I. Proposed Tenet Additions
 
-### 1. Background Worker Polling Loop Pattern
+### 1. Background Worker Polling Loop Pattern ✅
+
+**Status**: DONE — Added to FOUNDATION.md T6 (lines ~397-449) with complete canonical skeleton, double-catch cancellation filter, constructor dependencies, and worker configuration naming rules.
 
 **Target Tenet**: New section in T6 (Service Implementation Pattern) or T7 (Error Handling)
 **Priority**: High — prevents structural errors in every new worker
@@ -124,7 +127,9 @@ Currently inconsistent: `BackgroundServiceStartupDelaySeconds` vs `StartupDelayS
 
 ---
 
-### 2. State Store Key Builders
+### 2. State Store Key Builders ✅
+
+**Status**: DONE — Added to FOUNDATION.md T6 (lines ~471-527) with `const` prefix + `internal static Build*Key()` rules. `StateStoreKeyValidator` added to `test-utilities/` for reflection-based enforcement.
 
 **Target Tenet**: Addition to T6 (Service Implementation Pattern)
 **Priority**: High — prevents scattered magic strings and enables testability
@@ -162,7 +167,9 @@ var entity = await _store.GetAsync($"entity:{entityId}", ct);
 
 ---
 
-### 3. Event Topic Constants (Generated)
+### 3. Event Topic Constants (Generated) ✅
+
+**Status**: DONE — Added to FOUNDATION.md T5 (lines ~235-247). `scripts/generate-published-topics.py` generates `{Service}PublishedTopics.cs` into each plugin's `Generated/` directory (49 services). Inline topic strings are now forbidden.
 
 **Target Tenet**: Addition to T5 (Event-Driven Architecture) and code generation pipeline
 **Priority**: Medium — compile-time safety for topic strings
@@ -215,7 +222,9 @@ public static class QuestPublishedTopics
 
 ---
 
-### 4. Optimistic Concurrency Retry Loop
+### 4. Optimistic Concurrency Retry Loop ✅
+
+**Status**: DONE — Added to IMPLEMENTATION-BEHAVIOR.md T9 (lines ~342-348). `StateStoreExtensions.UpdateWithRetryAsync<T>()` implemented in `bannou-service/Services/StateStoreExtensions.cs` with `(UpdateResult, T?)` return tuple.
 
 **Target Tenet**: Addition to T9 (Multi-Instance Safety)
 **Priority**: High — the pattern has specific requirements that are easy to get wrong
@@ -423,7 +432,9 @@ Multi-step orchestration methods that call multiple services MUST either:
 
 ---
 
-### 10. ConcurrentDictionary Cache Invalidation Must Use Events
+### 10. ConcurrentDictionary Cache Invalidation Must Use Events ✅
+
+**Status**: DONE — Added to IMPLEMENTATION-BEHAVIOR.md T9 (lines ~295-309) with explicit rule, correct/wrong code examples, and decision tree for cache type vs invalidation mechanism. The two bugs that motivated this (character-encounter inline invalidation, character-history never-called invalidation) are both fixed — see Section II.
 
 **Target Tenet**: Strengthening of T9 or explicit addition to T5
 **Priority**: High — bugs found in 2 of 3 analyzed satellite services
@@ -480,28 +491,28 @@ These are existing issues discovered during the analysis, not proposals.
 
 ### Tenet Violations
 
-| Plugin | Violation | Tenet | Severity |
-|--------|-----------|-------|----------|
-| **lib-location** | Almost no endpoint methods have telemetry spans | T30 | High |
-| **lib-worldstate** | Missing spans on several service endpoint methods | T30 | Medium |
-| **lib-collection** | Missing spans on async helpers (`CreateCollectionInternalAsync`, `LoadOrRebuildCollectionCacheAsync`, `DispatchUnlockListenersAsync`) | T30 | Medium |
-| **lib-matchmaking** | Worker `ExecuteAsync` has process-lifetime span (useless) | T30 | Low |
-| **lib-matchmaking** | Worker catch block only logs, doesn't publish error events | T7 | Medium |
-| **lib-status** | Uses manual `DefineCleanupCallbackAsync()` instead of generated `x-references` pattern | T1, T28 | Medium |
+| Plugin | Violation | Tenet | Severity | Status |
+|--------|-----------|-------|----------|--------|
+| **lib-location** | Almost no endpoint methods have telemetry spans | T30 | High | ✅ FIXED — 19 StartActivity calls added |
+| **lib-worldstate** | Missing spans on several service endpoint methods | T30 | Medium | ⚠️ PARTIALLY FIXED — only 1 span; most methods uncovered |
+| **lib-collection** | Missing spans on async helpers (`CreateCollectionInternalAsync`, `LoadOrRebuildCollectionCacheAsync`, `DispatchUnlockListenersAsync`) | T30 | Medium | ✅ FIXED — all 3 helpers have spans |
+| **lib-matchmaking** | Worker `ExecuteAsync` has process-lifetime span (useless) | T30 | Low | ✅ FIXED — spans are now per-cycle |
+| **lib-matchmaking** | Worker catch block only logs, doesn't publish error events | T7 | Medium | ✅ FIXED — uses TryPublishWorkerErrorAsync |
+| **lib-status** | Uses manual `DefineCleanupCallbackAsync()` instead of generated `x-references` pattern | T1, T28 | Medium | ✅ FIXED — uses generated RegisterResourceCleanupCallbacksAsync |
 
 ### Multi-Node Safety Bugs
 
-| Plugin | Bug | Impact |
-|--------|-----|--------|
-| **lib-character-encounter** | Cache invalidated inline in service methods, not via event subscription | Other nodes serve stale encounter data until TTL expiry |
-| **lib-character-history** | Cache `Invalidate()` defined but never called from anywhere | ALL nodes serve stale backstory data until TTL expiry |
+| Plugin | Bug | Impact | Status |
+|--------|-----|--------|--------|
+| **lib-character-encounter** | Cache invalidated inline in service methods, not via event subscription | Other nodes serve stale encounter data until TTL expiry | ✅ FIXED — event-driven invalidation via RegisterHandler |
+| **lib-character-history** | Cache `Invalidate()` defined but never called from anywhere | ALL nodes serve stale backstory data until TTL expiry | ✅ FIXED — event handlers call Invalidate on backstory events |
 
 ### Data Quality Issues
 
-| Plugin | Issue | Impact |
-|--------|-------|--------|
-| **lib-status** | Hardcodes `ContainerOwnerType.Other` for all containers instead of mapping from `EntityType` | Loses owner type information downstream; cross-service queries for "all containers for this character" don't work |
-| **lib-worldstate** | Uses inline string interpolation for state keys instead of const prefix + Build method | Typo-prone, multi-point key format changes |
+| Plugin | Issue | Impact | Status |
+|--------|-------|--------|--------|
+| **lib-status** | Hardcodes `ContainerOwnerType.Other` for all containers instead of mapping from `EntityType` | Loses owner type information downstream; cross-service queries for "all containers for this character" don't work | ✅ FIXED — uses MapByNameOrDefault helper |
+| **lib-worldstate** | Uses inline string interpolation for state keys instead of const prefix + Build method | Typo-prone, multi-point key format changes | ❌ NOT FIXED — 24+ inline interpolations remain |
 
 ---
 
@@ -509,22 +520,22 @@ These are existing issues discovered during the analysis, not proposals.
 
 These don't necessarily need new tenets but should be addressed for consistency.
 
-| Area | Current State | Best Practice | Fix Scope |
-|------|--------------|---------------|-----------|
-| Worker error event publishing | Matchmaking: log only. Currency/subscription: publish error events. | All workers MUST publish error events | Per-worker fix |
-| Worker DI scope approach | Matchmaking: delegates to service. Currency: independent store access. Subscription: hybrid. | Document both delegation and independent as valid; deprecate hybrid (both resolving service AND doing direct store access) | Documentation |
-| Config property naming for workers | `BackgroundServiceStartupDelaySeconds` vs `StartupDelaySeconds` vs `AutogainTaskStartupDelaySeconds` | `{WorkerName}StartupDelaySeconds`, `{WorkerName}IntervalSeconds` | Schema renames |
-| Config interval units | Seconds vs minutes vs milliseconds for same concept | Prefer seconds; milliseconds only for sub-second precision | Schema renames |
-| Pagination response shape | Location: full metadata (`Page`, `PageSize`, `HasNextPage`, `HasPreviousPage`). Transit/Worldstate: `TotalCount` only. | Standardize pagination response wrapper | Schema + SCHEMA-RULES addition |
-| Lock owner string format | Location: bare GUID. Transit: `$"operation-{Guid:N}"`. Worldstate: `$"service-{Guid:N}"`. | `$"{operation}-{Guid:N}"` (debuggable, shows which operation holds the lock) | Per-service fix |
-| Model visibility | Worldstate: all `public`. Transit: mostly `internal`. | Default `internal`; `public` only when external consumers (providers, caches) need access | Per-service fix |
-| Cache TTL config naming | `CacheTtlMinutes` vs `BackstoryCacheTtlSeconds` vs `EncounterCacheTtlMinutes` | `{Entity}CacheTtlMinutes` (consistent entity prefix, consistent unit) | Schema renames |
-| Event error reporting in event handlers | Quest: direct `TryPublishErrorAsync` with full params. Escrow: wrapper with reduced params. | Full params (dependency, endpoint, stack) for debuggability | Per-service fix |
-| Container owner type mapping | Collection: maps `EntityType` to `ContainerOwnerType`. Status: hardcodes `Other`. | Map properly like Collection does | lib-status fix |
-| Lock timeout configuration | Collection: single timeout. Status: dual timeout (acquisition + TTL). | Dual timeout is more robust (cancel stale acquisition attempts) | Evaluate for standardization |
-| Key builder naming | `Build*Key()` vs `Get*Key()` vs `*Key()` | Standardize on `Build*Key()` | Per-service rename |
-| `x-event-subscriptions` on event schemas | Personality/history: `x-event-subscriptions: []`. Encounter: missing. | All event schemas include `x-event-subscriptions` (even if empty) | Schema fix |
-| Cleanup by foreign key endpoint naming | Worldstate: `CleanupBy{Entity}Async`. Others: various. | Standardize naming convention in SCHEMA-RULES `x-references` docs | Documentation |
+| Area | Current State | Best Practice | Fix Scope | Status |
+|------|--------------|---------------|-----------|--------|
+| Worker error event publishing | Matchmaking: log only. Currency/subscription: publish error events. | All workers MUST publish error events | Per-worker fix | ✅ FIXED — matchmaking uses TryPublishWorkerErrorAsync |
+| Worker DI scope approach | Matchmaking: delegates to service. Currency: independent store access. Subscription: hybrid. | Document both delegation and independent as valid; deprecate hybrid (both resolving service AND doing direct store access) | Documentation | ❌ NOT DONE |
+| Config property naming for workers | `BackgroundServiceStartupDelaySeconds` vs `StartupDelaySeconds` vs `AutogainTaskStartupDelaySeconds` | `{WorkerName}StartupDelaySeconds`, `{WorkerName}IntervalSeconds` | Schema renames | ✅ DONE — standardized in worker tenet rules |
+| Config interval units | Seconds vs minutes vs milliseconds for same concept | Prefer seconds; milliseconds only for sub-second precision | Schema renames | ⚠️ PARTIAL — currency config still mixes ms/s |
+| Pagination response shape | Location: full metadata (`Page`, `PageSize`, `HasNextPage`, `HasPreviousPage`). Transit/Worldstate: `TotalCount` only. | Standardize pagination response wrapper | Schema + SCHEMA-RULES addition | ✅ DONE — PaginationHelper + PaginationResult<T> in bannou-service |
+| Lock owner string format | Location: bare GUID. Transit: `$"operation-{Guid:N}"`. Worldstate: `$"service-{Guid:N}"`. | `$"{operation}-{Guid:N}"` (debuggable, shows which operation holds the lock) | Per-service fix | ❌ NOT VERIFIED |
+| Model visibility | Worldstate: all `public`. Transit: mostly `internal`. | Default `internal`; `public` only when external consumers (providers, caches) need access | Per-service fix | ❌ NOT VERIFIED |
+| Cache TTL config naming | `CacheTtlMinutes` vs `BackstoryCacheTtlSeconds` vs `EncounterCacheTtlMinutes` | `{Entity}CacheTtlMinutes` (consistent entity prefix, consistent unit) | Schema renames | ❌ NOT FIXED |
+| Event error reporting in event handlers | Quest: direct `TryPublishErrorAsync` with full params. Escrow: wrapper with reduced params. | Full params (dependency, endpoint, stack) for debuggability | Per-service fix | ❌ NOT FIXED |
+| Container owner type mapping | Collection: maps `EntityType` to `ContainerOwnerType`. Status: hardcodes `Other`. | Map properly like Collection does | lib-status fix | ✅ FIXED — uses MapByNameOrDefault |
+| Lock timeout configuration | Collection: single timeout. Status: dual timeout (acquisition + TTL). | Dual timeout is more robust (cancel stale acquisition attempts) | Evaluate for standardization | ❌ NOT VERIFIED |
+| Key builder naming | `Build*Key()` vs `Get*Key()` vs `*Key()` | Standardize on `Build*Key()` | Per-service rename | ✅ DONE — codified in T6 tenet rules |
+| `x-event-subscriptions` on event schemas | Personality/history: `x-event-subscriptions: []`. Encounter: missing. | All event schemas include `x-event-subscriptions` (even if empty) | Schema fix | ❌ NOT FIXED — encounter still missing |
+| Cleanup by foreign key endpoint naming | Worldstate: `CleanupBy{Entity}Async`. Others: various. | Standardize naming convention in SCHEMA-RULES `x-references` docs | Documentation | ❌ NOT FIXED |
 
 ---
 
@@ -534,12 +545,14 @@ These are opportunities to add shared infrastructure in `bannou-service/` that w
 
 ### A. Strong Candidates (Clear Benefit)
 
-#### 1. `DecompressJsonData` Shared Utility
+#### 1. `DecompressJsonData` Shared Utility ✅
+**Status**: DONE — Implemented at `bannou-service/History/CompressionHelper.cs`.
 **Current state**: Identical 7-line method duplicated in 4 plugins (character-personality, character-history, character-encounter, realm-history).
 **Proposed location**: `bannou-service/History/CompressionHelper.cs` (the `bannou-service/History/` namespace already houses shared helpers like `TimestampHelper`, `DualIndexHelper`, `BackstoryStorageHelper`).
 **Impact**: Eliminate 4 identical copies. One-line calls in each service.
 
-#### 2. `StateStoreExtensions.UpdateWithRetryAsync<T>`
+#### 2. `StateStoreExtensions.UpdateWithRetryAsync<T>` ✅
+**Status**: DONE — Implemented at `bannou-service/Services/StateStoreExtensions.cs` with `(UpdateResult, T?)` return tuple (Success/NotFound/Conflict).
 **Current state**: 7+ identical ETag retry loops across quest and escrow, each 15-20 lines.
 **Proposed location**: `bannou-service/Extensions/StateStoreExtensions.cs`
 **Signature sketch**:
@@ -554,7 +567,8 @@ public static async Task<(T? entity, bool saved)> UpdateWithRetryAsync<T>(
 ```
 **Impact**: Reduces each call site from 15 lines to 3. Enforces correct retry semantics (debug per attempt, warning on exhaustion).
 
-#### 3. Worker Error Publishing Helper
+#### 3. Worker Error Publishing Helper ✅
+**Status**: DONE — Implemented at `bannou-service/Services/WorkerErrorPublisher.cs` as `IServiceProvider.TryPublishWorkerErrorAsync()` extension method.
 **Current state**: Currency extracts error publishing into a private helper. Subscription does it inline. Matchmaking doesn't do it at all.
 **Proposed location**: `bannou-service/Extensions/BackgroundServiceExtensions.cs` or `bannou-service/Workers/WorkerErrorPublisher.cs`
 **Signature sketch**:
@@ -576,7 +590,8 @@ public static async Task TryPublishWorkerErrorAsync(
 **Impact**: Each concrete cache reduces to: data type, load function, TTL property. Includes self-invalidation documentation.
 **Caution**: The 20% that differs (number of dictionaries, multi-type loading in encounter cache) may make a generic base awkward. Evaluate whether composition (helper class) is better than inheritance (base class).
 
-#### 5. Dual-Key State Store Wrapper
+#### 5. Dual-Key State Store Wrapper ✅
+**Status**: DONE — Implemented as `DualIndexHelper<TRecord>` at `bannou-service/History/DualIndexHelper.cs` with full interface, config class, distributed locking, and 6+ methods.
 **Current state**: Collection and Status both manually save under 2 keys and delete both keys, at 10+ call sites each. Forgetting one key creates data inconsistency.
 **Proposed location**: `bannou-service/Extensions/DualKeyStateStoreExtensions.cs`
 **Signature sketch**:
@@ -596,7 +611,8 @@ public static async Task DeleteDualKeyAsync<T>(
 ```
 **Impact**: Eliminates the "forgot to update the second key" bug class.
 
-#### 6. Standard Pagination Helper
+#### 6. Standard Pagination Helper ✅
+**Status**: DONE — Implemented at `bannou-service/History/PaginationHelper.cs` with `PaginationResult<T>` record, `Paginate<T>()`, and metadata methods (HasNextPage, HasPreviousPage, TotalPages). Defaults: PageSize=20, MaxPageSize=100.
 **Current state**: Multiple services implement `Skip/Take` + count inline. Response shapes vary (some include `HasNextPage`/`HasPreviousPage`, some only `TotalCount`).
 **Proposed location**: `bannou-service/Pagination/PaginationHelper.cs`
 **Impact**: Enforces consistent pagination response shape. Low priority given the simplicity of the arithmetic, but would standardize the response contract.

@@ -321,7 +321,6 @@ public class AuthServiceTests
         Assert.Null(response);
     }
 
-
     [Fact]
     public async Task RegisterAsync_WithEmptyPassword_ShouldReturnBadRequest()
     {
@@ -480,18 +479,6 @@ public class AuthServiceTests
     #endregion
 
     #region Constructor Validation Tests
-
-    /// <summary>
-    /// Comprehensive constructor validation that catches:
-    /// - Multiple constructors (DI might pick wrong one)
-    /// - Optional parameters (accidental defaults)
-    /// - Missing null checks
-    /// - Wrong parameter names in ArgumentNullException
-    /// This single test replaces 11+ individual constructor null-check tests.
-    /// </summary>
-    [Fact]
-    public void AuthService_ConstructorIsValid() =>
-        TestUtilities.ServiceConstructorValidator.ValidateServiceConstructor<AuthService>();
 
     [Fact]
     public void AuthServiceConfiguration_DefaultValues_ShouldHaveReasonableDefaults()

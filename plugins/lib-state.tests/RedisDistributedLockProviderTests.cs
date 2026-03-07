@@ -38,7 +38,6 @@ public class RedisDistributedLockProviderTests
         return new RedisDistributedLockProvider(_mockStateStoreFactory.Object, _mockLogger.Object);
     }
 
-
     /// <summary>
     /// Document the lock owner ID formats that should work correctly.
     /// These formats all contain characters that are special in Lua patterns.

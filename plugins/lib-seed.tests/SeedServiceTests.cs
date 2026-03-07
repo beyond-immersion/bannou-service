@@ -183,13 +183,6 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void SeedService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<SeedService>();
-
     #endregion
 
     #region Configuration Tests

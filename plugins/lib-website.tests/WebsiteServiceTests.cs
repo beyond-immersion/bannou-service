@@ -43,7 +43,6 @@ public class WebsiteServiceTests
         Assert.NotNull(service);
     }
 
-
     // Note: WebsiteService methods are not yet implemented - planned for future release.
     // Additional tests will be added when service implementation begins.
 }

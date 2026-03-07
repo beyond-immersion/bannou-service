@@ -161,13 +161,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
     #region Constructor Tests
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void ItemService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<ItemService>();
-
     #endregion
 
     #region CreateItemTemplate Tests

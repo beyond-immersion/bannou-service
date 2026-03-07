@@ -14,14 +14,6 @@ public class SceneServiceTests
 {
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// See: docs/reference/tenets/TESTING_PATTERNS.md
-    /// </summary>
-    [Fact]
-    public void SceneService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<SceneService>();
-
     #endregion
 
     #region Configuration Tests

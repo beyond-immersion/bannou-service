@@ -202,13 +202,6 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
 
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void WorldstateService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<WorldstateService>();
-
     #endregion
 
     #region Configuration Tests

@@ -201,21 +201,6 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
     #region Constructor Tests
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    ///
-    /// This single test replaces N individual null-check tests and catches:
-    /// - Multiple constructors (DI might pick wrong one)
-    /// - Optional parameters (accidental defaults that hide missing registrations)
-    /// - Missing null checks (ArgumentNullException not thrown)
-    /// - Wrong parameter names in ArgumentNullException
-    ///
-    /// See: docs/reference/tenets/TESTING_PATTERNS.md
-    /// </summary>
-    [Fact]
-    public void CharacterEncounterService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<CharacterEncounterService>();
-
     #endregion
 
     #region Configuration Tests

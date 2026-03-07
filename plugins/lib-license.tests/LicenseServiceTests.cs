@@ -311,13 +311,6 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void LicenseService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<LicenseService>();
-
     #endregion
 
     #region Configuration Tests

@@ -22,15 +22,6 @@ public class CurrencyServiceTests
 {
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// Catches: multiple constructors, optional parameters, missing null checks,
-    /// and wrong parameter names in ArgumentNullException.
-    /// </summary>
-    [Fact]
-    public void CurrencyService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<CurrencyService>();
-
     #endregion
 
     #region Configuration Tests

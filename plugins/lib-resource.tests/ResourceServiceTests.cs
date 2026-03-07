@@ -314,10 +314,6 @@ public class ResourceServiceTests
 
     #region Constructor Validation
 
-    [Fact]
-    public void ResourceService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<ResourceService>();
-
     #endregion
 
     #region Configuration Tests

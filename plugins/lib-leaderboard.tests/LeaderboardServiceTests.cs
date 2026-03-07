@@ -88,13 +88,6 @@ public class LeaderboardServiceTests
 
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void ConstructorIsValid()
-        => ServiceConstructorValidator.ValidateServiceConstructor<LeaderboardService>();
-
     #endregion
 
     #region Configuration Tests

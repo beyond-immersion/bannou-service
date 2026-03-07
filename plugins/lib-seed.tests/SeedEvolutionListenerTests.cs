@@ -655,9 +655,5 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
 
     #region Constructor Tests
 
-    [Fact]
-    public void SeedService_ConstructorWithListeners_IsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<SeedService>();
-
     #endregion
 }

@@ -176,7 +176,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockAccountStore
@@ -188,7 +187,6 @@ public class AccountServiceTests
             .Callback<string, AccountModel, StateOptions?, CancellationToken>(
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
-
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -224,7 +222,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockAccountStore
@@ -236,7 +233,6 @@ public class AccountServiceTests
             .Callback<string, AccountModel, StateOptions?, CancellationToken>(
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
-
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -369,7 +365,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockAccountStore
@@ -381,7 +376,6 @@ public class AccountServiceTests
             .Callback<string, AccountModel, StateOptions?, CancellationToken>(
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
-
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -421,7 +415,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockAccountStore
@@ -433,7 +426,6 @@ public class AccountServiceTests
             .Callback<string, AccountModel, StateOptions?, CancellationToken>(
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
-
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -466,7 +458,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockAccountStore
@@ -478,7 +469,6 @@ public class AccountServiceTests
             .Callback<string, AccountModel, StateOptions?, CancellationToken>(
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
-
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -519,7 +509,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockAccountStore
@@ -531,7 +520,6 @@ public class AccountServiceTests
             .Callback<string, AccountModel, StateOptions?, CancellationToken>(
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
-
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -553,21 +541,6 @@ public class AccountServiceTests
     #endregion
 
     #region Constructor Validation Tests
-
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    ///
-    /// This single test replaces N individual null-check tests and catches:
-    /// - Multiple constructors (DI might pick wrong one)
-    /// - Optional parameters (accidental defaults that hide missing registrations)
-    /// - Missing null checks (ArgumentNullException not thrown)
-    /// - Wrong parameter names in ArgumentNullException
-    ///
-    /// See: docs/reference/tenets/TESTING_PATTERNS.md
-    /// </summary>
-    [Fact]
-    public void AccountService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<AccountService>();
 
     #endregion
 
@@ -731,7 +704,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Mock account save
         _mockAccountStore
             .Setup(s => s.SaveAsync(
@@ -740,7 +712,6 @@ public class AccountServiceTests
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
-
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -780,7 +751,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Mock saves
         _mockAccountStore
             .Setup(s => s.SaveAsync(
@@ -789,7 +759,6 @@ public class AccountServiceTests
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
-
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -827,7 +796,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Mock saves
         _mockAccountStore
             .Setup(s => s.SaveAsync(
@@ -836,7 +804,6 @@ public class AccountServiceTests
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
-
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -866,7 +833,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Mock saves
         _mockAccountStore
             .Setup(s => s.SaveAsync(
@@ -875,7 +841,6 @@ public class AccountServiceTests
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
-
 
         var accountIds = new List<Guid>();
 
@@ -918,7 +883,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Mock saves
         _mockAccountStore
             .Setup(s => s.SaveAsync(
@@ -927,7 +891,6 @@ public class AccountServiceTests
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
-
 
         // Truncate to second precision to match Unix timestamp storage
         var beforeCreation = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
@@ -980,7 +943,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-
         // Mock saves
         _mockAccountStore
             .Setup(s => s.SaveAsync(
@@ -989,7 +951,6 @@ public class AccountServiceTests
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
-
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);

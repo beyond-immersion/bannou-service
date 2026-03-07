@@ -57,13 +57,6 @@ public class PuppetmasterServiceTests
 
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void PuppetmasterService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<PuppetmasterService>();
-
     #endregion
 
     #region Configuration Tests

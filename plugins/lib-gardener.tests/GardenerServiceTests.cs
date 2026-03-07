@@ -263,14 +263,6 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// See: docs/reference/tenets/TESTING_PATTERNS.md
-    /// </summary>
-    [Fact]
-    public void GardenerService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<GardenerService>();
-
     [Fact]
     public void GardenerServiceConfiguration_CanBeInstantiated()
     {

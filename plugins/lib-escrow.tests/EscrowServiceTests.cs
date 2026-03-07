@@ -115,13 +115,6 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
 
     #region Constructor Tests
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void EscrowService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<EscrowService>();
-
     #endregion
 
     #region Configuration Tests

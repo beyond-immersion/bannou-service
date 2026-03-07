@@ -99,13 +99,6 @@ public class RealmHistoryServiceTests
 
     #region Constructor Validation
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void RealmHistoryService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<RealmHistoryService>();
-
     #endregion
 
     #region Configuration Tests

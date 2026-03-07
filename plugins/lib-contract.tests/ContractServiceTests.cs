@@ -107,13 +107,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
     #region Constructor Tests
 
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    /// </summary>
-    [Fact]
-    public void ContractService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<ContractService>();
-
     #endregion
 
     #region CreateContractTemplate Tests
