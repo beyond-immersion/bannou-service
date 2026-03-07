@@ -590,7 +590,7 @@ public class AssetQueryService
 // In your service's DI registration
 services.AddSingleton<IAssetClient>(sp =>
 {
-    var meshClient = sp.GetRequiredService<IMeshClient>();
+    var meshClient = sp.GetRequiredService<IMeshInvocationClient>();
     return new AssetClient(meshClient);  // Generated client
 });
 

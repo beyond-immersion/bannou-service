@@ -57,27 +57,27 @@ internal static class SdkTypeMapper
     /// <summary>
     /// Converts a generated ArcType to the SDK equivalent.
     /// </summary>
-    internal static SdkArcType ToSdk(ArcType arcType) => (SdkArcType)(int)arcType;
+    internal static SdkArcType ToSdk(ArcType arcType) => arcType.MapByName<ArcType, SdkArcType>();
 
     /// <summary>
     /// Converts an SDK ArcType to the generated equivalent.
     /// </summary>
-    internal static ArcType FromSdk(SdkArcType arcType) => (ArcType)(int)arcType;
+    internal static ArcType FromSdk(SdkArcType arcType) => arcType.MapByName<SdkArcType, ArcType>();
 
     /// <summary>
     /// Converts a generated SpectrumType to the SDK equivalent.
     /// </summary>
-    internal static SdkSpectrumType ToSdk(SpectrumType spectrumType) => (SdkSpectrumType)(int)spectrumType;
+    internal static SdkSpectrumType ToSdk(SpectrumType spectrumType) => spectrumType.MapByName<SpectrumType, SdkSpectrumType>();
 
     /// <summary>
     /// Converts an SDK SpectrumType to the generated equivalent.
     /// </summary>
-    internal static SpectrumType FromSdk(SdkSpectrumType spectrumType) => (SpectrumType)(int)spectrumType;
+    internal static SpectrumType FromSdk(SdkSpectrumType spectrumType) => spectrumType.MapByName<SdkSpectrumType, SpectrumType>();
 
     /// <summary>
     /// Converts a generated PlanningUrgency to the SDK equivalent.
     /// </summary>
-    internal static SdkPlanningUrgency ToSdk(PlanningUrgency urgency) => (SdkPlanningUrgency)(int)urgency;
+    internal static SdkPlanningUrgency ToSdk(PlanningUrgency urgency) => urgency.MapByName<PlanningUrgency, SdkPlanningUrgency>();
 
     /// <summary>
     /// Converts an SDK StorylinePlan's phases to generated StorylinePlanPhase list.
@@ -127,7 +127,7 @@ internal static class SdkTypeMapper
         {
             Key = sdkEffect.Key,
             Value = sdkEffect.Value,
-            Cardinality = (EffectCardinality)(int)sdkEffect.Cardinality
+            Cardinality = sdkEffect.Cardinality.MapByName<SdkEffectCardinality, EffectCardinality>()
         };
     }
 

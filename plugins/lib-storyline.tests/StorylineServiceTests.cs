@@ -182,6 +182,63 @@ public class StorylineServiceTests
 
     #endregion
 
+    #region Enum Boundary Mapping Validation
+
+    /// <summary>
+    /// Validates that the schema-generated ArcType enum and the SDK ArcType enum
+    /// have identical value names. This catches drift when either the schema or the
+    /// SDK adds/removes/renames values without updating the other.
+    /// </summary>
+    [Fact]
+    public void ArcType_SchemaAndSdk_HaveFullCoverage() =>
+        EnumMappingValidator.AssertFullCoverage<Storyline.ArcType, ArcType>();
+
+    /// <summary>
+    /// Validates that the schema-generated SpectrumType enum and the SDK SpectrumType enum
+    /// have identical value names.
+    /// </summary>
+    [Fact]
+    public void SpectrumType_SchemaAndSdk_HaveFullCoverage() =>
+        EnumMappingValidator.AssertFullCoverage<Storyline.SpectrumType, SpectrumType>();
+
+    /// <summary>
+    /// Validates that the schema-generated PlanningUrgency enum and the SDK PlanningUrgency enum
+    /// have identical value names.
+    /// </summary>
+    [Fact]
+    public void PlanningUrgency_SchemaAndSdk_HaveFullCoverage() =>
+        EnumMappingValidator.AssertFullCoverage<Storyline.PlanningUrgency, PlanningUrgency>();
+
+    /// <summary>
+    /// Validates that the schema-generated EffectCardinality enum and the SDK EffectCardinality enum
+    /// have identical value names.
+    /// </summary>
+    [Fact]
+    public void EffectCardinality_SchemaAndSdk_HaveFullCoverage() =>
+        EnumMappingValidator.AssertFullCoverage<Storyline.EffectCardinality, EffectCardinality>();
+
+    /// <summary>
+    /// Validates that MapByName round-trips correctly for all ArcType values.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllArcTypes))]
+    public void ArcType_MapByName_RoundTrips(Storyline.ArcType schemaValue)
+    {
+        var sdk = schemaValue.MapByName<Storyline.ArcType, ArcType>();
+        var roundTripped = sdk.MapByName<ArcType, Storyline.ArcType>();
+        Assert.Equal(schemaValue, roundTripped);
+    }
+
+    public static TheoryData<Storyline.ArcType> AllArcTypes()
+    {
+        var data = new TheoryData<Storyline.ArcType>();
+        foreach (var value in Enum.GetValues<Storyline.ArcType>())
+            data.Add(value);
+        return data;
+    }
+
+    #endregion
+
     #region StorylineGoal Tests
 
     [Theory]
