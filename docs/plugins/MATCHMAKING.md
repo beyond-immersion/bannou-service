@@ -107,6 +107,8 @@ Every polymorphic "type" or "kind" field in the Matchmaking domain falls into on
 | `BackgroundServiceStartupDelaySeconds` | `MATCHMAKING_BACKGROUND_SERVICE_STARTUP_DELAY_SECONDS` | `5` | Delay before background processing starts |
 | `DefaultReservationTtlSeconds` | `MATCHMAKING_DEFAULT_RESERVATION_TTL_SECONDS` | `120` | TTL for game session reservations |
 | `DefaultJoinDeadlineSeconds` | `MATCHMAKING_DEFAULT_JOIN_DEADLINE_SECONDS` | `120` | Deadline for players to join after match confirmation |
+| `MatchLockTimeoutSeconds` | `MATCHMAKING_MATCH_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout for match processing operations |
+| `ListLockTimeoutSeconds` | `MATCHMAKING_LIST_LOCK_TIMEOUT_SECONDS` | `15` | Distributed lock timeout for list/query operations |
 
 ---
 
@@ -115,7 +117,7 @@ Every polymorphic "type" or "kind" field in the Matchmaking domain falls into on
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<MatchmakingService>` | Scoped | Structured logging |
-| `MatchmakingServiceConfiguration` | Singleton | All 12 config properties |
+| `MatchmakingServiceConfiguration` | Singleton | All 14 config properties |
 | `IStateStoreFactory` | Singleton | Redis state store access |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event handler registration (used in constructor only) |
@@ -254,6 +256,7 @@ Reconnection Support
 1. **Queue statistics are placeholder**: `MatchesFormedLastHour`, `AverageWaitSeconds`, `MedianWaitSeconds`, `TimeoutRatePercent`, `CancelRatePercent` fields exist on `QueueModel` but are not actively computed or updated during match processing. The `matchmaking.stats` event sets `MatchesFormedSinceLastSnapshot = 0` with a TODO comment.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/225 -->
 2. **Tournament support declared but minimal**: `TournamentIdRequired` and `TournamentId` on tickets exist as fields but no tournament-specific matching logic is implemented.
+<!-- AUDIT:NEEDS_ISSUE:2026-03-06:Tournament dead fields need design decision or removal -->
 3. **MatchmakingTicketUpdatedEvent defined but never published**: The events schema defines `MatchmakingTicketUpdatedEvent` but the service never publishes to `matchmaking.ticket-updated`. Only created and cancelled events fire.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/225 -->
 
@@ -272,7 +275,19 @@ Reconnection Support
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Reconnection does not republish accept/decline shortcuts**~~: **FIXED** (2026-03-03) - Added `PublishMatchShortcutsAsync` call after the `MatchFoundClientEvent` publish in `HandleSessionReconnectedAsync`. Players now receive both the match notification and pre-bound shortcuts on reconnection.
+1. ~~**Reconnection does not republish accept/decline shortcuts**~~: **FIXED** (2026-03-03) - Added `PublishMatchShortcutsAsync` call in reconnection handler.
+
+**Hardening pass fixes (2026-03-06)**:
+- Fixed T32/T26: `MatchmakingMatchDeclinedEvent` now uses ticket IDs (`DeclinedByTicketId`, `AffectedTicketIds`, `RequeuingTicketIds`) instead of account IDs. Removed `Guid.Empty` sentinel.
+- Fixed T21: Lock timeouts in `MatchmakingService.cs` now use `MatchLockTimeoutSeconds` and `ListLockTimeoutSeconds` configuration properties instead of hardcoded values.
+- Fixed T10: `MatchmakingAlgorithm.MatchesQuery` now logs query parse exceptions at Debug level instead of silently swallowing them.
+- Fixed NRT: `QueueResponse.sessionGameType` added to required array; `CreateQueueRequest.partySkillAggregation` marked nullable; `MatchFoundClientEvent.acceptTimeoutSeconds` added to required array.
+- Added validation keywords (minimum/maximum) to all configuration integer properties and minLength to ServerSalt.
+
+**Validation pass fixes (2026-03-06)**:
+- Fixed T32: `MatchFoundClientEvent.partyMembersMatched` (array of account UUIDs) replaced with `partyId` (single party UUID). Account IDs must not leak to clients.
+- Fixed T8: Removed echoed `queueId` from `JoinMatchmakingResponse` — caller already knows the queue they joined.
+- Fixed T8: Removed echoed `matchId` from `AcceptMatchResponse` — caller already knows the match they accepted.
 
 ### Intentional Quirks
 
@@ -297,6 +312,20 @@ Reconnection Support
 4. **Algorithm is internal and inline**: `MatchmakingAlgorithm` is constructed directly in the service constructor (not DI-registered). `InternalsVisibleTo` enables unit testing, but integration tests can't substitute it.
 
 5. **ListQueues loads all queue IDs then fetches each**: `ListQueuesAsync` loads all queue IDs from `queue-list`, then iterates and loads each queue individually. No batch loading. With many queues, this is N+1 database calls.
+
+### Design Decisions (Require User Input)
+
+<!-- AUDIT:DESIGN_DECISION:2026-03-06 -->
+**B1: Account Identity Boundary (T32)**: Shortcut-gated endpoints (`Join`, `Leave`, `Status`, `Accept`, `Decline`) accept `accountId` in the request body, but these are server-injected via the shortcut system — the client never sends `accountId` directly. This is T32-compliant by design. The `_sessionAccountMap` in `MatchmakingServiceEvents.cs` maps session→account for internal use.
+
+<!-- AUDIT:DESIGN_DECISION:2026-03-06 -->
+**B2: `_sessionAccountMap` is authoritative in-memory state (T9)**: `MatchmakingServiceEvents.cs` maintains a `ConcurrentDictionary<Guid, Guid>` mapping session IDs to account IDs, populated from `session.connected` events. This is NOT loaded from distributed state at startup — if the service restarts, the map is empty until new connect events arrive. This is a T9 violation. Options: (a) call Connect API at startup to load active sessions, (b) use Redis as backing store, (c) accept the gap since disconnect events will still fire for sessions that connected before restart.
+
+<!-- AUDIT:DESIGN_DECISION:2026-03-06 -->
+**B3: Plugin lifecycle telemetry**: Plugin lifecycle methods (`OnRunningAsync`, background service `ExecuteAsync`) do not have `StartActivity` spans. T30 applies to async service endpoint methods; framework lifecycle callbacks are not covered. Not a violation, but could improve observability.
+
+<!-- AUDIT:DESIGN_DECISION:2026-03-06 -->
+**B4: Configuration validation**: Config integer properties now have minimum/maximum in the schema, but there is no runtime validation on startup (e.g., `MatchLockTimeoutSeconds < 5` would be accepted). Best practice but not a tenet violation — schema validation keywords document intent for operators.
 
 ---
 

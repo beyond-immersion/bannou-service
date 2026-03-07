@@ -76,26 +76,44 @@ x-service-configuration:
 
     # Norm Resolution Configuration
     NormResolutionMode:
-      type: string
-      description: |
-        How norm-based obligation costs are resolved when the Hearsay service is unavailable.
-        PerfectKnowledge: Query Faction directly for ground-truth norms (NPC knows all applicable norms instantly).
-        UncertaintySimulation: Apply a configurable random variance to norm penalties, simulating imperfect social knowledge without Hearsay's full belief propagation system.
-        When Hearsay IS available, this setting is ignored and belief-filtered costs are used instead.
+      $ref: './obligation-api.yaml#/components/schemas/NormResolutionMode'
+      description: How norm-based obligation costs are resolved when Hearsay is unavailable. PerfectKnowledge queries Faction directly; UncertaintySimulation applies random variance to penalties. Ignored when Hearsay is available.
       default: PerfectKnowledge
-      enum:
-        - PerfectKnowledge
-        - UncertaintySimulation
       env: OBLIGATION_NORM_RESOLUTION_MODE
 
     NormUncertaintyVariance:
       type: number
       format: float
-      description: |
-        Maximum variance applied to norm penalties when NormResolutionMode is UncertaintySimulation.
-        A value of 0.3 means penalties are randomly adjusted by up to +/-30% per evaluation.
-        Only used when NormResolutionMode is UncertaintySimulation; ignored in PerfectKnowledge mode.
+      description: Maximum variance (+/-) applied to norm penalties in UncertaintySimulation mode. A value of 0.3 means penalties are adjusted by up to +/-30%. Only used when NormResolutionMode is UncertaintySimulation.
       default: 0.2
       minimum: 0.0
       maximum: 0.5
       env: OBLIGATION_NORM_UNCERTAINTY_VARIANCE
+
+    # Cleanup Configuration
+    CleanupBatchSize:
+      type: integer
+      description: Number of obligation entries to delete per batch during character cleanup
+      default: 100
+      minimum: 10
+      maximum: 1000
+      env: OBLIGATION_CLEANUP_BATCH_SIZE
+
+    # Compression Configuration
+    MaxCompressionQueryResults:
+      type: integer
+      description: Maximum number of obligation entries to include in compression data for archival
+      default: 10000
+      minimum: 100
+      maximum: 100000
+      env: OBLIGATION_MAX_COMPRESSION_QUERY_RESULTS
+
+    # Personality Weighting Configuration
+    PersonalityWeightMultiplier:
+      type: number
+      format: float
+      description: Multiplier applied to personality-weighted moral reasoning scores when enriching obligation costs. Higher values increase the influence of personality traits on obligation cost modifiers.
+      default: 0.5
+      minimum: 0.0
+      maximum: 1.0
+      env: OBLIGATION_PERSONALITY_WEIGHT_MULTIPLIER

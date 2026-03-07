@@ -230,7 +230,6 @@ public partial class ObligationService : IObligationService
 
         return (StatusCodes.OK, new QueryObligationsResponse
         {
-            CharacterId = body.CharacterId,
             Obligations = manifest.Obligations.Select(MapToObligationEntry).ToList(),
             ViolationCostMap = manifest.ViolationCostMap,
             TotalActiveContracts = manifest.TotalActiveContracts,
@@ -258,9 +257,19 @@ public partial class ObligationService : IObligationService
         }
         else
         {
-            var character = await _characterClient.GetCharacterAsync(
-                new GetCharacterRequest { CharacterId = body.CharacterId }, cancellationToken);
-            realmId = character.RealmId;
+            try
+            {
+                var character = await _characterClient.GetCharacterAsync(
+                    new GetCharacterRequest { CharacterId = body.CharacterId }, cancellationToken);
+                realmId = character.RealmId;
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to resolve character {CharacterId} for realm lookup, status {Status}",
+                    body.CharacterId, ex.StatusCode);
+                return (StatusCodes.BadRequest, null);
+            }
         }
 
         // Get obligations (cache-first)
@@ -324,7 +333,6 @@ public partial class ObligationService : IObligationService
 
         return (StatusCodes.OK, new EvaluateActionResponse
         {
-            CharacterId = body.CharacterId,
             Evaluations = evaluations,
             MoralWeightingApplied = moralWeightingApplied
         });
@@ -359,7 +367,6 @@ public partial class ObligationService : IObligationService
                     return (StatusCodes.OK, new ReportViolationResponse
                     {
                         ViolationId = existingViolation.ViolationId,
-                        CharacterId = existingViolation.CharacterId,
                         BreachReported = existingViolation.BreachReported,
                         BreachId = existingViolation.BreachId
                     });
@@ -443,7 +450,7 @@ public partial class ObligationService : IObligationService
             ViolationId = violationId,
             CharacterId = body.CharacterId,
             ContractId = body.ContractId,
-            TemplateCode = matchingObligation?.TemplateCode ?? "unknown",
+            TemplateCode = matchingObligation?.TemplateCode,
             ClauseCode = body.ClauseCode,
             ViolationType = body.ViolationType,
             ActionTag = body.ActionTag,
@@ -453,7 +460,7 @@ public partial class ObligationService : IObligationService
             BreachId = breachId,
             TargetEntityId = body.TargetEntityId,
             TargetEntityType = body.TargetEntityType,
-            ContractRole = matchingObligation?.ContractRole ?? "unknown"
+            ContractRole = matchingObligation?.ContractRole
         }, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
@@ -463,7 +470,6 @@ public partial class ObligationService : IObligationService
         return (StatusCodes.OK, new ReportViolationResponse
         {
             ViolationId = violationId,
-            CharacterId = body.CharacterId,
             BreachReported = breachReported,
             BreachId = breachId
         });
@@ -534,9 +540,7 @@ public partial class ObligationService : IObligationService
 
         return (StatusCodes.OK, new InvalidateCacheResponse
         {
-            CharacterId = body.CharacterId,
-            ObligationsRefreshed = manifest.Obligations.Count,
-            Success = true
+            ObligationsRefreshed = manifest.Obligations.Count
         });
     }
 
@@ -562,7 +566,7 @@ public partial class ObligationService : IObligationService
             new QueryCondition { Path = "$.CharacterId", Operator = QueryOperator.Equals, Value = body.CharacterId.ToString() }
         };
 
-        const int cleanupBatchSize = 100;
+        var cleanupBatchSize = _configuration.CleanupBatchSize;
         var violationsRemoved = 0;
         int fetched;
         do
@@ -584,9 +588,7 @@ public partial class ObligationService : IObligationService
 
         return (StatusCodes.OK, new CleanupByCharacterResponse
         {
-            ObligationsRemoved = 1,
-            ViolationsRemoved = violationsRemoved,
-            Success = true
+            ViolationsRemoved = violationsRemoved
         });
     }
 
@@ -609,7 +611,7 @@ public partial class ObligationService : IObligationService
         };
 
         var result = await _violationJsonStore.JsonQueryPagedAsync(
-            conditions, 0, 10000, cancellationToken: cancellationToken);
+            conditions, 0, _configuration.MaxCompressionQueryResults, cancellationToken: cancellationToken);
 
         var violations = result.Items.Select(r => MapToViolationRecord(r.Value)).ToList();
 
@@ -675,9 +677,7 @@ public partial class ObligationService : IObligationService
 
         return (StatusCodes.OK, new RestoreFromArchiveResponse
         {
-            CharacterId = body.CharacterId,
-            ViolationsRestored = violationsRestored,
-            Success = true
+            ViolationsRestored = violationsRestored
         });
     }
 
@@ -759,14 +759,14 @@ public partial class ObligationService : IObligationService
 
             contractCount++;
             var party = contract.Parties.FirstOrDefault(p => p.EntityId == characterId);
-            var role = party?.Role ?? "unknown";
+            var role = party?.Role;
 
             foreach (var clause in clauses)
             {
                 obligations.Add(new ObligationEntryModel
                 {
                     ContractId = contract.ContractId,
-                    TemplateCode = contract.TemplateCode ?? "unknown",
+                    TemplateCode = contract.TemplateCode,
                     ClauseCode = clause.ClauseCode,
                     ViolationType = clause.ViolationType,
                     BasePenalty = clause.BasePenalty,
@@ -937,9 +937,9 @@ public partial class ObligationService : IObligationService
     /// <summary>
     /// Computes the personality-based weight for a violation type.
     /// Higher relevant trait values increase the penalty (character cares more about the obligation).
-    /// Weight ranges from 0.5 (trait = -1.0) to 1.5 (trait = 1.0).
+    /// Weight range depends on PersonalityWeightMultiplier config (default 0.5: 0.5x to 1.5x).
     /// </summary>
-    private static float ComputePersonalityWeight(
+    private float ComputePersonalityWeight(
         string violationType, Dictionary<string, float> personalityTraits)
     {
         var relevantTraits = ViolationTypeTraitMap.TryGetValue(violationType, out var traits)
@@ -959,8 +959,8 @@ public partial class ObligationService : IObligationService
 
         var averageTraitValue = count > 0 ? totalTraitValue / count : 0f;
 
-        // Weight: -1.0 trait → 0.5x penalty, 0.0 → 1.0x, 1.0 → 1.5x
-        return 1.0f + (averageTraitValue * 0.5f);
+        // Weight: -1.0 trait → (1-multiplier)x penalty, 0.0 → 1.0x, 1.0 → (1+multiplier)x
+        return 1.0f + (averageTraitValue * _configuration.PersonalityWeightMultiplier);
     }
 
     // ========================================================================

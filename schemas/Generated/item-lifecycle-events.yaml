@@ -1,0 +1,412 @@
+openapi: 3.0.4
+info:
+  title: Item Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for item service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: item-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ItemTemplateCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item.template.created when a itemtemplate is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - code
+      - gameId
+      - name
+      - category
+      - rarity
+      - quantityModel
+      - maxStackSize
+      - scope
+      - soulboundType
+      - tradeable
+      - destroyable
+      - hasDurability
+      - isActive
+      - isDeprecated
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: item.template.created
+          description: 'Event type identifier: item.template.created'
+        templateId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the item template"
+        code: &id002
+          type: string
+          description: "Unique item code within game"
+        gameId: &id003
+          type: string
+          description: "Game service this template belongs to"
+        name: &id004
+          type: string
+          description: "Human-readable display name"
+        description: &id005
+          type: string
+          nullable: true
+          description: "Detailed item description"
+        category: &id006
+          $ref: ../item-api.yaml#/components/schemas/ItemCategory
+          description: "Item classification category"
+        rarity: &id007
+          $ref: ../item-api.yaml#/components/schemas/ItemRarity
+          description: "Item rarity tier"
+        quantityModel: &id008
+          $ref: ../item-api.yaml#/components/schemas/QuantityModel
+          description: "How quantities are tracked"
+        maxStackSize: &id009
+          type: integer
+          description: "Maximum stack size for this item"
+        scope: &id010
+          $ref: ../item-api.yaml#/components/schemas/ItemScope
+          description: "Realm availability scope"
+        soulboundType: &id011
+          $ref: ../item-api.yaml#/components/schemas/SoulboundType
+          description: "When item becomes bound to a character"
+        tradeable: &id012
+          type: boolean
+          description: "Whether item can be traded between characters"
+        destroyable: &id013
+          type: boolean
+          description: "Whether item can be destroyed by the owner"
+        hasDurability: &id014
+          type: boolean
+          description: "Whether item has durability system"
+        maxDurability: &id015
+          type: integer
+          nullable: true
+          description: "Maximum durability value (if hasDurability is true)"
+        isActive: &id016
+          type: boolean
+          description: "Whether template is currently active"
+        isDeprecated: &id017
+          type: boolean
+          description: "Whether template is deprecated"
+        deprecatedAt: &id018
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the template was deprecated"
+        deprecationReason: &id019
+          type: string
+          nullable: true
+          description: "Reason for deprecation"
+        migrationTargetId: &id020
+          type: string
+          format: uuid
+          nullable: true
+          description: "Template ID to migrate existing instances to"
+        createdAt: &id021
+          type: string
+          format: date-time
+          description: "When the template was created"
+        updatedAt: &id022
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the template was last modified"
+    ItemTemplateUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item.template.updated when a itemtemplate is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - code
+      - gameId
+      - name
+      - category
+      - rarity
+      - quantityModel
+      - maxStackSize
+      - scope
+      - soulboundType
+      - tradeable
+      - destroyable
+      - hasDurability
+      - isActive
+      - isDeprecated
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: item.template.updated
+          description: 'Event type identifier: item.template.updated'
+        templateId: *id001
+        code: *id002
+        gameId: *id003
+        name: *id004
+        description: *id005
+        category: *id006
+        rarity: *id007
+        quantityModel: *id008
+        maxStackSize: *id009
+        scope: *id010
+        soulboundType: *id011
+        tradeable: *id012
+        destroyable: *id013
+        hasDurability: *id014
+        maxDurability: *id015
+        isActive: *id016
+        isDeprecated: *id017
+        deprecatedAt: *id018
+        deprecationReason: *id019
+        migrationTargetId: *id020
+        createdAt: *id021
+        updatedAt: *id022
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ItemTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item.template.deleted when a itemtemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - code
+      - gameId
+      - name
+      - category
+      - rarity
+      - quantityModel
+      - maxStackSize
+      - scope
+      - soulboundType
+      - tradeable
+      - destroyable
+      - hasDurability
+      - isActive
+      - isDeprecated
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: item.template.deleted
+          description: 'Event type identifier: item.template.deleted'
+        templateId: *id001
+        code: *id002
+        gameId: *id003
+        name: *id004
+        description: *id005
+        category: *id006
+        rarity: *id007
+        quantityModel: *id008
+        maxStackSize: *id009
+        scope: *id010
+        soulboundType: *id011
+        tradeable: *id012
+        destroyable: *id013
+        hasDurability: *id014
+        maxDurability: *id015
+        isActive: *id016
+        isDeprecated: *id017
+        deprecatedAt: *id018
+        deprecationReason: *id019
+        migrationTargetId: *id020
+        createdAt: *id021
+        updatedAt: *id022
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    ItemInstanceCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item.instance.created when a iteminstance is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - realmId
+      - quantity
+      - originType
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: item.instance.created
+          description: 'Event type identifier: item.instance.created'
+        instanceId: &id023
+          type: string
+          format: uuid
+          description: "Unique identifier for this item instance"
+        templateId: &id024
+          type: string
+          format: uuid
+          description: "Reference to the item template"
+        containerId: &id025
+          type: string
+          format: uuid
+          nullable: true
+          description: "Container holding this item (ownership derived from container). Null when removed from all containers."
+        realmId: &id026
+          type: string
+          format: uuid
+          description: "Realm this instance exists in"
+        quantity: &id027
+          type: number
+          format: double
+          description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)"
+        slotIndex: &id028
+          type: integer
+          nullable: true
+          description: "Slot position in slot-based containers"
+        slotX: &id029
+          type: integer
+          nullable: true
+          description: "X position in grid-based containers"
+        slotY: &id030
+          type: integer
+          nullable: true
+          description: "Y position in grid-based containers"
+        rotated: &id031
+          type: boolean
+          nullable: true
+          description: "Whether item is rotated in grid-based containers"
+        currentDurability: &id032
+          type: integer
+          nullable: true
+          description: "Current durability value"
+        boundToId: &id033
+          type: string
+          format: uuid
+          nullable: true
+          description: "Character ID this item is bound to (if soulbound)"
+        boundAt: &id034
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the item was bound to a character"
+        customName: &id035
+          type: string
+          nullable: true
+          description: "Player-assigned custom name for this instance"
+        originType: &id036
+          $ref: ../item-api.yaml#/components/schemas/ItemOriginType
+          description: "How this item instance was created"
+        originId: &id037
+          type: string
+          format: uuid
+          nullable: true
+          description: "Source entity ID for the origin (e.g., crafting recipe, vendor)"
+        createdAt: &id038
+          type: string
+          format: date-time
+          description: "When the instance was created"
+        modifiedAt: &id039
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the instance was last modified"
+    ItemInstanceUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item.instance.updated when a iteminstance is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - realmId
+      - quantity
+      - originType
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: item.instance.updated
+          description: 'Event type identifier: item.instance.updated'
+        instanceId: *id023
+        templateId: *id024
+        containerId: *id025
+        realmId: *id026
+        quantity: *id027
+        slotIndex: *id028
+        slotX: *id029
+        slotY: *id030
+        rotated: *id031
+        currentDurability: *id032
+        boundToId: *id033
+        boundAt: *id034
+        customName: *id035
+        originType: *id036
+        originId: *id037
+        createdAt: *id038
+        modifiedAt: *id039
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ItemInstanceDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item.instance.deleted when a iteminstance is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - realmId
+      - quantity
+      - originType
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: item.instance.deleted
+          description: 'Event type identifier: item.instance.deleted'
+        instanceId: *id023
+        templateId: *id024
+        containerId: *id025
+        realmId: *id026
+        quantity: *id027
+        slotIndex: *id028
+        slotX: *id029
+        slotY: *id030
+        rotated: *id031
+        currentDurability: *id032
+        boundToId: *id033
+        boundAt: *id034
+        customName: *id035
+        originType: *id036
+        originId: *id037
+        createdAt: *id038
+        modifiedAt: *id039
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

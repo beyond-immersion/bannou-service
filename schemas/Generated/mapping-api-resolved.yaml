@@ -1,0 +1,1772 @@
+openapi: 3.0.4
+info:
+  title: Bannou Mapping Service API
+  description: |
+    Spatial data management service for game worlds.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    The Mapping service enables:
+    - Game servers (authority) to publish live spatial data via RPC AND lib-messaging
+    - Event actors to subscribe to region-wide map data for orchestrating events
+    - NPC actors to receive perception-filtered spatial context
+    - Design tools to author and edit map templates
+    - Event Brain to query affordances for procedural scene orchestration
+
+    **Authority Model**: Authority over a map channel (region + kind) is established at
+    creation or checkout. Publishers must include authorityToken in requests.
+
+    **Game-Specific Payloads**: Map object data uses additionalProperties: true for
+    game-specific spatial data. No Bannou plugin reads specific keys by convention;
+    only objectType is indexed. lib-mapping passes data through without validation.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+x-service-layer: GameFeatures
+
+paths:
+  # ========== AUTHORITY MANAGEMENT APIs ==========
+  /mapping/create-channel:
+    post:
+      summary: Create a new map channel and become its authority
+      description: |
+        Creates a new region+kind channel and grants authority to caller.
+        Returns ingestTopic for high-throughput event publishing.
+        If channel already exists with active authority, returns Conflict.
+      operationId: createChannel
+      tags:
+      - Authority
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChannelRequest'
+      responses:
+        '200':
+          description: Channel created, authority granted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorityGrant'
+        '409':
+          description: Channel already exists with active authority
+
+  /mapping/release-authority:
+    post:
+      summary: Release authority over a channel
+      description: |
+        Voluntarily releases authority. Channel becomes unassigned.
+        Only the current authority can release.
+      operationId: releaseAuthority
+      tags:
+      - Authority
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReleaseAuthorityRequest'
+      responses:
+        '200':
+          description: Authority released successfully
+        '403':
+          description: Not the current authority
+
+  /mapping/authority-heartbeat:
+    post:
+      summary: Maintain authority over channel
+      description: |
+        Keep-alive for authority. Must be called periodically (default every 30s).
+        Failure to heartbeat results in authority expiration.
+      operationId: authorityHeartbeat
+      tags:
+      - Authority
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorityHeartbeatRequest'
+      responses:
+        '200':
+          description: Heartbeat acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorityHeartbeatResponse'
+        '403':
+          description: Invalid or expired authority token
+
+  # ========== RUNTIME PUBLISHING APIs ==========
+  /mapping/publish:
+    post:
+      summary: Publish map data update (RPC path)
+      description: |
+        Game servers use this to push authoritative spatial updates.
+        Validates authority token, stores update, and broadcasts to consumers.
+        For high-throughput scenarios, use event publishing via ingestTopic instead.
+      operationId: publishMapUpdate
+      tags:
+      - Runtime
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishMapUpdateRequest'
+      responses:
+        '200':
+          description: Update published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishMapUpdateResponse'
+        '403':
+          description: Not authority for this channel
+
+  /mapping/publish-objects:
+    post:
+      summary: Publish metadata object changes (batch)
+      description: |
+        Game servers use this to push object state changes.
+        Efficiently batches multiple object changes into one event.
+        Max 100 changes per request.
+      operationId: publishObjectChanges
+      tags:
+      - Runtime
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishObjectChangesRequest'
+      responses:
+        '200':
+          description: Object changes published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishObjectChangesResponse'
+        '403':
+          description: Not authority for this channel
+
+  /mapping/request-snapshot:
+    post:
+      summary: Request full snapshot for cold start
+      description: |
+        Consumers use this when starting up to get initial state.
+        Returns current snapshot of requested region/kinds.
+        For very large maps, payloadRef points to lib-asset storage.
+      operationId: requestSnapshot
+      tags:
+      - Runtime
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestSnapshotRequest'
+      responses:
+        '200':
+          description: Snapshot returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestSnapshotResponse'
+        '404':
+          description: Region not found
+
+  # ========== QUERY APIs ==========
+  /mapping/query/point:
+    post:
+      summary: Query map data at a specific point
+      description: |
+        Returns all map data at a point across requested kinds.
+        Used by behavior stacks for contextual decisions.
+        Optionally includes objects within radius.
+      operationId: queryPoint
+      tags:
+      - Query
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryPointRequest'
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryPointResponse'
+
+  /mapping/query/bounds:
+    post:
+      summary: Query map data within bounds
+      description: |
+        Returns map data within a bounding box.
+        For event actors needing region overview.
+        Limited to maxObjects per kind.
+      operationId: queryBounds
+      tags:
+      - Query
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryBoundsRequest'
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryBoundsResponse'
+
+  /mapping/query/objects-by-type:
+    post:
+      summary: Find all objects of a type in region
+      description: |
+        Returns all objects matching an objectType filter.
+        For event actors asking "where are all the boulder clusters?"
+      operationId: queryObjectsByType
+      tags:
+      - Query
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryObjectsByTypeRequest'
+      responses:
+        '200':
+          description: Matching objects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryObjectsByTypeResponse'
+
+  /mapping/query/affordance:
+    post:
+      summary: Find locations that afford a specific action or scene type
+      description: |
+        Affordance queries answer "where can I do X?" by combining
+        multiple map kinds and applying game-specific scoring logic.
+
+        Used by Event Brain for procedural scene orchestration:
+        - "Find ambush locations"
+        - "Find dramatic reveal spots"
+        - "Find sheltered rest areas"
+
+        Well-known types have predefined scoring; use affordanceType=custom
+        with customAffordance for novel scenarios.
+      operationId: queryAffordance
+      tags:
+      - Query
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AffordanceQueryRequest'
+      responses:
+        '200':
+          description: Scored locations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffordanceQueryResponse'
+
+  # ========== AUTHORING APIs ==========
+  /mapping/authoring/checkout:
+    post:
+      summary: Acquire exclusive edit lock for design-time editing
+      description: |
+        For level editors and design tools only.
+        Game servers do NOT use this - they use create-channel for implicit authority.
+        Returns authority token for publishing edits.
+      operationId: checkoutForAuthoring
+      tags:
+      - Authoring
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthoringCheckoutRequest'
+      responses:
+        '200':
+          description: Checkout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthoringCheckoutResponse'
+        '409':
+          description: Already checked out by another editor
+
+  /mapping/authoring/commit:
+    post:
+      summary: Commit design-time changes
+      description: |
+        Commits pending changes and releases the checkout lock.
+        Optionally includes a commit message for history.
+      operationId: commitAuthoring
+      tags:
+      - Authoring
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthoringCommitRequest'
+      responses:
+        '200':
+          description: Changes committed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthoringCommitResponse'
+        '403':
+          description: Invalid checkout token
+
+  /mapping/authoring/release:
+    post:
+      summary: Release authoring checkout without committing
+      description: |
+        Discards pending changes and releases the checkout lock.
+        Use when abandoning edits.
+      operationId: releaseAuthoring
+      tags:
+      - Authoring
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthoringReleaseRequest'
+      responses:
+        '200':
+          description: Checkout released
+
+  /mapping/definition/create:
+    post:
+      summary: Create a map definition template
+      description: |
+        Creates a new map definition (template) that describes the structure
+        of a region. Definitions are templates that can be used to bootstrap
+        channels with predefined layer configurations.
+      operationId: createDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDefinitionRequest'
+      responses:
+        '200':
+          description: Definition created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapDefinition'
+        '409':
+          description: Definition with this name already exists
+
+  /mapping/definition/get:
+    post:
+      summary: Get a map definition by ID
+      description: Returns the full map definition including all layer configurations.
+      operationId: getDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDefinitionRequest'
+      responses:
+        '200':
+          description: Definition found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapDefinition'
+        '404':
+          description: Definition not found
+
+  /mapping/definition/list:
+    post:
+      summary: List map definitions with optional filters
+      description: Returns a paginated list of map definitions.
+      operationId: listDefinitions
+      tags:
+      - Definition
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListDefinitionsRequest'
+      responses:
+        '200':
+          description: Definitions list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDefinitionsResponse'
+
+  /mapping/definition/update:
+    post:
+      summary: Update a map definition
+      description: |
+        Updates an existing map definition. Cannot change the definition ID.
+        Layer configurations can be modified.
+      operationId: updateDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDefinitionRequest'
+      responses:
+        '200':
+          description: Definition updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapDefinition'
+        '404':
+          description: Definition not found
+
+  /mapping/definition/delete:
+    post:
+      summary: Delete a map definition
+      description: Deletes a map definition. Cannot delete if active channels reference it.
+      operationId: deleteDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteDefinitionRequest'
+      responses:
+        '200':
+          description: Definition deleted
+        '404':
+          description: Definition not found
+        '409':
+          description: Definition in use by active channels
+
+components:
+  schemas:
+    # ========== ENUMS ==========
+    MapKind:
+      type: string
+      description: The category of spatial data this map contains. Different kinds have different update frequencies, 
+        storage models, and TTLs.
+      enum:
+        # Static (rarely changes, durable)
+      - Terrain
+      - StaticGeometry
+      - Navigation
+        # Semi-static (changes on authoring, not runtime)
+      - Resources
+      - SpawnPoints
+      - PointsOfInterest
+        # Dynamic (changes at runtime, cached)
+      - DynamicObjects
+      - Hazards
+      - WeatherEffects
+      - Ownership
+        # Ephemeral (short-lived, high-frequency)
+      - CombatEffects
+      - VisualEffects
+
+    NonAuthorityHandlingMode:
+      type: string
+      description: How to handle publish attempts from non-authority sources
+      enum:
+      - RejectAndAlert
+      - AcceptAndAlert
+      - RejectSilent
+      default: RejectAndAlert
+
+    AuthorityTakeoverMode:
+      type: string
+      description: Policy for handling authority takeover when creating a channel that already has expired authority. 
+        Controls what happens to existing data.
+      enum:
+      - PreserveAndDiff
+      - Reset
+      - RequireConsume
+      default: PreserveAndDiff
+
+    AffordanceType:
+      type: string
+      description: Well-known affordance types with predefined scoring logic. Use Custom for novel affordance 
+        definitions.
+      enum:
+      - Ambush
+      - Shelter
+      - Vista
+      - ChokePoint
+      - GatheringSpot
+      - DramaticReveal
+      - HiddenPath
+      - DefensiblePosition
+      - Custom
+
+    AffordanceFreshness:
+      type: string
+      description: Controls caching behavior for affordance queries
+      enum:
+      - Fresh
+      - Cached
+      - AggressiveCache
+      default: Cached
+
+    ActorSize:
+      type: string
+      description: Size classification affecting cover requirements and passage width
+      enum:
+      - Tiny
+      - Small
+      - Medium
+      - Large
+      - Huge
+      default: Medium
+
+    DeltaType:
+      type: string
+      description: Whether an update is incremental or a full snapshot
+      enum:
+      - Delta
+      - Snapshot
+      default: Delta
+
+    ObjectAction:
+      type: string
+      description: Type of change to a map object
+      enum:
+      - Created
+      - Updated
+      - Deleted
+
+    StorageMode:
+      type: string
+      description: How layer data should be stored
+      enum:
+      - Durable
+      - Cached
+      - Ephemeral
+      default: Cached
+
+    # ========== SPATIAL PRIMITIVES ==========
+    # Position3D and Bounds are defined in common-api.yaml
+    # All references below use $ref to common-api directly
+
+    # ========== PAYLOAD TYPES ==========
+    MapPayload:
+      type: object
+      description: Schema-less payload. Only envelope fields are validated. The data field can contain anything the 
+        publisher wants. lib-mapping does not validate contents.
+      additionalProperties: false
+      required:
+      - objectType
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: Unique ID for this object (generated if not provided)
+          nullable: true
+        objectType:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Publisher-defined type (used for indexing and filtering)
+        position:
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
+          description: Position for point objects
+          nullable: true
+        bounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: Bounds for area objects
+          nullable: true
+        data:
+          type: object
+          additionalProperties: true
+          description: >-
+            Game-specific spatial object data. lib-mapping stores and returns this as-is.
+            No Bannou plugin reads specific keys from this field by convention.
+          nullable: true
+
+    MapObject:
+      type: object
+      description: A stored map object with full metadata
+      additionalProperties: false
+      required:
+      - objectId
+      - regionId
+      - kind
+      - objectType
+      - version
+      - createdAt
+      - updatedAt
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: Unique identifier for this object
+        regionId:
+          type: string
+          format: uuid
+          description: Region this object belongs to
+        kind:
+          $ref: '#/components/schemas/MapKind'
+          description: Map kind this object is stored under
+        objectType:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Publisher-defined type
+        position:
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
+          description: Position for point objects
+          nullable: true
+        bounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: Bounding box for area objects
+          nullable: true
+        data:
+          type: object
+          additionalProperties: true
+          description: >-
+            Game-specific spatial object data.
+            No Bannou plugin reads specific keys from this field by convention.
+          nullable: true
+        version:
+          type: integer
+          format: int64
+          description: Monotonic version for ordering
+        createdAt:
+          type: string
+          format: date-time
+          description: When the object was first created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the object was last updated
+
+    ObjectChange:
+      type: object
+      description: A single change to a map object
+      additionalProperties: false
+      required:
+      - objectId
+      - action
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: ID of the object being changed
+        action:
+          $ref: '#/components/schemas/ObjectAction'
+          description: Type of change
+        objectType:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Object type (required for created)
+          nullable: true
+        position:
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
+          description: Object position (for create/update)
+          nullable: true
+        bounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: Object bounds (for create/update)
+          nullable: true
+        data:
+          type: object
+          additionalProperties: true
+          description: >-
+            Game-specific object state data.
+            No Bannou plugin reads specific keys from this field by convention.
+          nullable: true
+
+    # ========== AUTHORITY TYPES ==========
+    AuthorityGrant:
+      type: object
+      description: Granted authority over a map channel
+      additionalProperties: false
+      required:
+      - channelId
+      - authorityToken
+      - ingestTopic
+      - expiresAt
+      - regionId
+      - kind
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: The channel (region+kind) you have authority over
+        authorityToken:
+          type: string
+          minLength: 1
+          description: Opaque token proving your authority (include in publishes)
+        ingestTopic:
+          type: string
+          minLength: 1
+          description: Topic for direct lib-messaging publishes (map.ingest.{channelId})
+        expiresAt:
+          type: string
+          format: date-time
+          description: When authority expires (must heartbeat to extend)
+        regionId:
+          type: string
+          format: uuid
+          description: Region ID for this channel
+        kind:
+          $ref: '#/components/schemas/MapKind'
+          description: Map kind for this channel
+
+    NonAuthorityAlertConfig:
+      type: object
+      description: Configuration for non-authority publish alerts
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+          default: true
+          description: Whether to emit warning events
+        alertTopic:
+          type: string
+          maxLength: 512
+          description: Custom topic for warnings (default map.warnings.unauthorized-publish)
+          nullable: true
+        includePayloadSummary:
+          type: boolean
+          default: false
+          description: Include truncated payload in warning for debugging
+
+    ActorCapabilities:
+      type: object
+      description: Actor-specific capabilities that affect affordance evaluation. Same location may afford different 
+        actions to different actor types.
+      additionalProperties: false
+      properties:
+        size:
+          $ref: '#/components/schemas/ActorSize'
+          description: Affects cover requirements and passage width
+        height:
+          type: number
+          minimum: 0
+          description: Actor height in meters (affects cover, sightlines)
+          nullable: true
+        canClimb:
+          type: boolean
+          default: false
+          description: Can reach elevated positions
+        canSwim:
+          type: boolean
+          default: false
+          description: Includes water-based positions
+        canFly:
+          type: boolean
+          default: false
+          description: Includes aerial positions
+        perceptionRange:
+          type: number
+          minimum: 0
+          description: Affects sightline distance requirements
+          nullable: true
+        movementSpeed:
+          type: number
+          minimum: 0
+          description: Affects escape route viability calculations
+          nullable: true
+        stealthRating:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Affects ambush/hidden_path affordance scoring
+          nullable: true
+
+    # ========== CUSTOM AFFORDANCE TYPES ==========
+    CustomAffordance:
+      type: object
+      description: Custom affordance definition for novel scenarios
+      additionalProperties: false
+      properties:
+        description:
+          type: string
+          maxLength: 1024
+          description: Human-readable description of this affordance
+          nullable: true
+        requires:
+          type: object
+          additionalProperties: true
+          description: >-
+            Game-specific required criteria for affordance matching.
+            No Bannou plugin reads specific keys from this field by convention.
+          nullable: true
+        prefers:
+          type: object
+          additionalProperties: true
+          description: >-
+            Game-specific preferred criteria (boost score but not required).
+            No Bannou plugin reads specific keys from this field by convention.
+          nullable: true
+        excludes:
+          type: object
+          additionalProperties: true
+          description: >-
+            Game-specific exclusion criteria for affordance matching.
+            No Bannou plugin reads specific keys from this field by convention.
+          nullable: true
+
+    # ========== AUTHORITY REQUEST/RESPONSE ==========
+    CreateChannelRequest:
+      type: object
+      description: Request to create a new map channel
+      additionalProperties: false
+      required:
+      - regionId
+      - kind
+      - sourceAppId
+      properties:
+        sourceAppId:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: App-id of the caller taking authority (used for event metadata)
+        regionId:
+          type: string
+          format: uuid
+          description: Region for this channel
+        kind:
+          $ref: '#/components/schemas/MapKind'
+          description: Map kind for this channel
+        nonAuthorityHandling:
+          $ref: '#/components/schemas/NonAuthorityHandlingMode'
+          description: How to handle non-authority publishes
+        takeoverMode:
+          $ref: '#/components/schemas/AuthorityTakeoverMode'
+          description: Policy for authority takeover when channel exists with expired authority
+        alertConfig:
+          $ref: '#/components/schemas/NonAuthorityAlertConfig'
+          description: Configuration for non-authority publish alerts
+          nullable: true
+        initialSnapshot:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapPayload'
+          description: Optional initial data to populate channel
+          nullable: true
+
+    ReleaseAuthorityRequest:
+      type: object
+      description: Request to release authority over a channel
+      additionalProperties: false
+      required:
+      - channelId
+      - authorityToken
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: Channel to release
+        authorityToken:
+          type: string
+          minLength: 1
+          description: Current authority token
+
+    AuthorityHeartbeatRequest:
+      type: object
+      description: Request to maintain authority
+      additionalProperties: false
+      required:
+      - channelId
+      - authorityToken
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: Channel to heartbeat
+        authorityToken:
+          type: string
+          minLength: 1
+          description: Current authority token
+
+    AuthorityHeartbeatResponse:
+      type: object
+      description: Response to authority heartbeat
+      additionalProperties: false
+      required:
+      - expiresAt
+      properties:
+        expiresAt:
+          type: string
+          format: date-time
+          description: Updated expiration time
+        warning:
+          type: string
+          maxLength: 512
+          description: Optional warning (e.g., authority expiring soon, increase heartbeat frequency)
+          nullable: true
+
+    # ========== RUNTIME REQUEST/RESPONSE ==========
+    PublishMapUpdateRequest:
+      type: object
+      description: Request to publish map data update
+      additionalProperties: false
+      required:
+      - channelId
+      - authorityToken
+      - payload
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: Channel to publish to
+        authorityToken:
+          type: string
+          minLength: 1
+          description: Authority token for validation
+        sourceAppId:
+          type: string
+          maxLength: 256
+          description: App-id of caller (for warnings on non-authority attempts)
+          nullable: true
+        bounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: Affected area (null means entire region)
+          nullable: true
+        deltaType:
+          $ref: '#/components/schemas/DeltaType'
+          description: Whether this is incremental or full
+        payload:
+          $ref: '#/components/schemas/MapPayload'
+          description: The payload to publish
+        payloadAssetRef:
+          type: string
+          maxLength: 1024
+          description: For large payloads, lib-asset reference instead of inline
+          nullable: true
+
+    PublishMapUpdateResponse:
+      type: object
+      description: Response to publish request
+      additionalProperties: false
+      required:
+      - version
+      properties:
+        version:
+          type: integer
+          format: int64
+          description: Assigned version number
+        warning:
+          type: string
+          maxLength: 512
+          description: Optional warning message
+          nullable: true
+
+    PublishObjectChangesRequest:
+      type: object
+      description: Request to publish object changes (batch)
+      additionalProperties: false
+      required:
+      - channelId
+      - authorityToken
+      - changes
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: Channel to publish to
+        authorityToken:
+          type: string
+          minLength: 1
+          description: Authority token for validation
+        sourceAppId:
+          type: string
+          maxLength: 256
+          description: App-id of caller (for warnings on non-authority attempts)
+          nullable: true
+        changes:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ObjectChange'
+          description: Object changes to publish
+
+    PublishObjectChangesResponse:
+      type: object
+      description: Response to object changes publish
+      additionalProperties: false
+      required:
+      - acceptedCount
+      - rejectedCount
+      - version
+      properties:
+        acceptedCount:
+          type: integer
+          minimum: 0
+          description: Number of changes accepted
+        rejectedCount:
+          type: integer
+          minimum: 0
+          description: Number of changes rejected
+        version:
+          type: integer
+          format: int64
+          description: Assigned version number
+        warning:
+          type: string
+          maxLength: 512
+          description: Optional warning message
+          nullable: true
+
+    RequestSnapshotRequest:
+      type: object
+      description: Request for full snapshot
+      additionalProperties: false
+      required:
+      - regionId
+      properties:
+        regionId:
+          type: string
+          format: uuid
+          description: Region to snapshot
+        kinds:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapKind'
+          description: Which kinds to include (default all)
+          nullable: true
+        bounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: Optional bounds filter
+          nullable: true
+        authorityToken:
+          type: string
+          minLength: 1
+          description: Optional authority token to clear RequiresConsumeBeforePublish flag for require_consume takeover 
+            mode
+          nullable: true
+
+    RequestSnapshotResponse:
+      type: object
+      description: Snapshot response
+      additionalProperties: false
+      required:
+      - objects
+      - version
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapObject'
+          description: All objects in snapshot
+        payloadRef:
+          type: string
+          maxLength: 1024
+          description: For large snapshots, lib-asset reference (objects will be empty when this is set)
+          nullable: true
+        version:
+          type: integer
+          format: int64
+          description: Snapshot version
+
+    # ========== QUERY REQUEST/RESPONSE ==========
+    QueryPointRequest:
+      type: object
+      description: Query map data at a point
+      additionalProperties: false
+      required:
+      - regionId
+      - position
+      properties:
+        regionId:
+          type: string
+          format: uuid
+          description: Region to query
+        position:
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
+          description: Point to query at
+        kinds:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapKind'
+          description: Kinds to query (default all)
+          nullable: true
+        radius:
+          type: number
+          minimum: 0
+          description: Include objects within this radius
+          nullable: true
+
+    QueryPointResponse:
+      type: object
+      description: Point query results
+      additionalProperties: false
+      required:
+      - objects
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapObject'
+          description: Objects at/near the point
+
+    QueryBoundsRequest:
+      type: object
+      description: Query map data within bounds
+      additionalProperties: false
+      required:
+      - regionId
+      - bounds
+      properties:
+        regionId:
+          type: string
+          format: uuid
+          description: Region to query
+        bounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: Bounding box to query
+        kinds:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapKind'
+          description: Kinds to query (default all)
+          nullable: true
+        maxObjects:
+          type: integer
+          minimum: 1
+          default: 500
+          maximum: 5000
+          description: Maximum objects to return
+
+    QueryBoundsResponse:
+      type: object
+      description: Bounds query results
+      additionalProperties: false
+      required:
+      - objects
+      - truncated
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapObject'
+          description: Objects within bounds
+        truncated:
+          type: boolean
+          description: Whether results were truncated by maxObjects limit
+
+    QueryObjectsByTypeRequest:
+      type: object
+      description: Query objects by type
+      additionalProperties: false
+      required:
+      - regionId
+      - objectType
+      properties:
+        regionId:
+          type: string
+          format: uuid
+          description: Region to query
+        objectType:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Object type to filter by
+        bounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: Optional bounds filter
+          nullable: true
+        maxObjects:
+          type: integer
+          minimum: 1
+          default: 500
+          maximum: 5000
+          description: Maximum objects to return
+
+    QueryObjectsByTypeResponse:
+      type: object
+      description: Object type query results
+      additionalProperties: false
+      required:
+      - objects
+      - truncated
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapObject'
+          description: Matching objects
+        truncated:
+          type: boolean
+          description: Whether results were truncated by maxObjects limit
+
+    # ========== AFFORDANCE REQUEST/RESPONSE ==========
+    AffordanceQueryRequest:
+      type: object
+      description: Query for locations that afford a specific action
+      additionalProperties: false
+      required:
+      - regionId
+      - affordanceType
+      properties:
+        regionId:
+          type: string
+          format: uuid
+          description: Region to search
+        affordanceType:
+          $ref: '#/components/schemas/AffordanceType'
+          description: Type of affordance to search for
+        customAffordance:
+          $ref: '#/components/schemas/CustomAffordance'
+          description: Custom affordance definition (when affordanceType=Custom)
+          nullable: true
+        bounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: Optional bounds to search within
+          nullable: true
+        maxResults:
+          type: integer
+          minimum: 1
+          default: 10
+          maximum: 100
+          description: Maximum locations to return
+        minScore:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.5
+          description: Minimum affordance score to include
+        participantCount:
+          type: integer
+          minimum: 1
+          description: Expected participants (affects space requirements)
+          nullable: true
+        excludePositions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position3D'
+          description: Positions to exclude (e.g., player current location)
+          nullable: true
+        actorCapabilities:
+          $ref: '#/components/schemas/ActorCapabilities'
+          description: Actor capabilities affecting evaluation
+          nullable: true
+        freshness:
+          $ref: '#/components/schemas/AffordanceFreshness'
+          description: Cache freshness level
+        maxAgeSeconds:
+          type: integer
+          minimum: 0
+          maximum: 3600
+          description: Max age of cached results (for Cached/AggressiveCache)
+          nullable: true
+
+    AffordanceLocation:
+      type: object
+      description: A location that affords the requested action
+      additionalProperties: false
+      required:
+      - position
+      - score
+      properties:
+        position:
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
+          description: Location position
+        bounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: Area bounds if affordance spans an area
+          nullable: true
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: How well this location affords the action (0-1)
+        features:
+          type: object
+          additionalProperties: true
+          description: >-
+            Game-specific features of this affordance result.
+            No Bannou plugin reads specific keys from this field by convention.
+          nullable: true
+        objectIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Map objects contributing to this affordance
+          nullable: true
+
+    AffordanceQueryResponse:
+      type: object
+      description: Affordance query results
+      additionalProperties: false
+      required:
+      - locations
+      properties:
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffordanceLocation'
+          description: Scored locations (highest score first)
+
+    # ========== AUTHORING REQUEST/RESPONSE ==========
+    AuthoringCheckoutRequest:
+      type: object
+      description: Request to checkout for authoring
+      additionalProperties: false
+      required:
+      - regionId
+      - kind
+      - editorId
+      properties:
+        regionId:
+          type: string
+          format: uuid
+          description: Region to checkout
+        kind:
+          $ref: '#/components/schemas/MapKind'
+          description: Map kind to checkout
+        editorId:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Identifier for the editor/user
+
+    AuthoringCheckoutResponse:
+      type: object
+      description: Checkout response
+      additionalProperties: false
+      properties:
+        authorityToken:
+          type: string
+          description: Token for publishing changes (if successful)
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the checkout expires
+          nullable: true
+        lockedBy:
+          type: string
+          description: Who has the lock (if checkout failed)
+          nullable: true
+        lockedAt:
+          type: string
+          format: date-time
+          description: When the lock was acquired (if checkout failed)
+          nullable: true
+
+    AuthoringCommitRequest:
+      type: object
+      description: Request to commit authoring changes
+      additionalProperties: false
+      required:
+      - regionId
+      - kind
+      - authorityToken
+      properties:
+        regionId:
+          type: string
+          format: uuid
+          description: Region being edited
+        kind:
+          $ref: '#/components/schemas/MapKind'
+          description: Map kind being edited
+        authorityToken:
+          type: string
+          minLength: 1
+          description: Checkout authority token
+        commitMessage:
+          type: string
+          maxLength: 1024
+          description: Optional commit message for history
+          nullable: true
+
+    AuthoringCommitResponse:
+      type: object
+      description: Commit response
+      additionalProperties: false
+      required:
+      - version
+      properties:
+        version:
+          type: integer
+          format: int64
+          description: Committed version number
+
+    AuthoringReleaseRequest:
+      type: object
+      description: Request to release authoring checkout
+      additionalProperties: false
+      required:
+      - regionId
+      - kind
+      - authorityToken
+      properties:
+        regionId:
+          type: string
+          format: uuid
+          description: Region being edited
+        kind:
+          $ref: '#/components/schemas/MapKind'
+          description: Map kind being edited
+        authorityToken:
+          type: string
+          minLength: 1
+          description: Checkout authority token
+
+    # ========== MAP DEFINITION MODELS ==========
+    MapDefinition:
+      type: object
+      description: A map definition template that describes the structure of a region
+      additionalProperties: false
+      required:
+      - definitionId
+      - name
+      - createdAt
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Unique identifier for this definition
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Human-readable name
+        description:
+          type: string
+          maxLength: 2048
+          description: Description of the map template
+          nullable: true
+        layers:
+          type: array
+          items:
+            $ref: '#/components/schemas/LayerDefinition'
+          description: Layer configurations for this map
+          nullable: true
+        defaultBounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: Default bounds for regions using this definition
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          description: >-
+            Client-provided definition metadata.
+            No Bannou plugin reads specific keys from this field by convention.
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          description: When the definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the definition was last updated
+          nullable: true
+
+    LayerDefinition:
+      type: object
+      description: Configuration for a specific layer within a map definition
+      additionalProperties: false
+      required:
+      - kind
+      properties:
+        kind:
+          $ref: '#/components/schemas/MapKind'
+          description: The layer kind
+        storageMode:
+          $ref: '#/components/schemas/StorageMode'
+          description: How this layer's data should be stored
+        ttlSeconds:
+          type: integer
+          minimum: 0
+          description: TTL for cached/ephemeral data (0 = use default from config)
+          nullable: true
+        defaultNonAuthorityHandling:
+          $ref: '#/components/schemas/NonAuthorityHandlingMode'
+          description: Default non-authority handling for channels using this layer
+        cellSize:
+          type: number
+          format: double
+          minimum: 1
+          description: Spatial cell size for indexing (default from config if not set)
+          nullable: true
+
+    CreateDefinitionRequest:
+      type: object
+      description: Request to create a map definition
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Human-readable name
+        description:
+          type: string
+          maxLength: 2048
+          description: Description of the map template
+          nullable: true
+        layers:
+          type: array
+          items:
+            $ref: '#/components/schemas/LayerDefinition'
+          description: Layer configurations
+          nullable: true
+        defaultBounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: Default bounds for regions using this definition
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          description: >-
+            Client-provided definition metadata.
+            No Bannou plugin reads specific keys from this field by convention.
+          nullable: true
+
+    GetDefinitionRequest:
+      type: object
+      description: Request to get a map definition
+      additionalProperties: false
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition ID to retrieve
+
+    ListDefinitionsRequest:
+      type: object
+      description: Request to list map definitions
+      additionalProperties: false
+      properties:
+        nameFilter:
+          type: string
+          maxLength: 256
+          description: Filter by name (partial match)
+          nullable: true
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Pagination offset
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+          description: Max results to return
+
+    ListDefinitionsResponse:
+      type: object
+      description: Response containing list of map definitions
+      additionalProperties: false
+      required:
+      - definitions
+      - total
+      properties:
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapDefinition'
+          description: List of definitions
+        total:
+          type: integer
+          minimum: 0
+          description: Total count matching filter
+
+    UpdateDefinitionRequest:
+      type: object
+      description: Request to update a map definition
+      additionalProperties: false
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition ID to update
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: New name (optional)
+          nullable: true
+        description:
+          type: string
+          maxLength: 2048
+          description: New description (optional)
+          nullable: true
+        layers:
+          type: array
+          items:
+            $ref: '#/components/schemas/LayerDefinition'
+          description: New layer configurations (replaces existing)
+          nullable: true
+        defaultBounds:
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
+          description: New default bounds
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          description: >-
+            Updated client-provided definition metadata (replaces existing).
+            No Bannou plugin reads specific keys from this field by convention.
+          nullable: true
+
+    DeleteDefinitionRequest:
+      type: object
+      description: Request to delete a map definition
+      additionalProperties: false
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition ID to delete
+    Bounds:
+      type: object
+      additionalProperties: false
+      description: Axis-aligned bounding box as min/max Position3D corners in world coordinates (meters, Y-up, 
+        right-handed). Preferred for spatial queries and operations where corners are treated as points (e.g., mapping 
+        spatial indexing, affordance queries).
+      required:
+      - min
+      - max
+      properties:
+        min:
+          $ref: '#/components/schemas/Position3D'
+          description: Minimum corner (lowest x, y, z values)
+        max:
+          $ref: '#/components/schemas/Position3D'
+          description: Maximum corner (highest x, y, z values)
+
+    # ==========================================================================
+    # Archive Base Types
+    # ==========================================================================
+
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: Position in world coordinates (meters, Y-up, right-handed)
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate in world space (meters)
+        y:
+          type: number
+          format: float
+          description: Y coordinate (up axis) in world space (meters)
+        z:
+          type: number
+          format: float
+          description: Z coordinate in world space (meters)
+
+x-inlined-types:
+- Bounds
+- Position3D

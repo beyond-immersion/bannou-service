@@ -364,8 +364,7 @@ paths:
       description: |
         Called by Resource service during character compression.
         Returns violation history and cached obligation state for archival.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -392,9 +391,7 @@ paths:
         Called by Resource service during character decompression.
         Restores violation history from archive data. Obligation cache
         is rebuilt automatically from active contracts, not from archive.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -426,8 +423,7 @@ paths:
         Removes cached obligation manifests and violation history for the
         specified character. This endpoint is designed for internal
         service-to-service calls during cascading resource cleanup.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -548,6 +544,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ActionMappingResponse'
+          maxItems: 100
           description: Action tag mappings for this page
         nextCursor:
           type: string
@@ -581,11 +578,9 @@ components:
       additionalProperties: false
       required:
       - contractId
-      - templateCode
       - clauseCode
       - violationType
       - basePenalty
-      - contractRole
       properties:
         contractId:
           type: string
@@ -595,7 +590,8 @@ components:
           type: string
           minLength: 1
           maxLength: 128
-          description: Template code of the source contract
+          nullable: true
+          description: Template code of the source contract (null if contract has no template)
         clauseCode:
           type: string
           minLength: 1
@@ -620,7 +616,8 @@ components:
           type: string
           minLength: 1
           maxLength: 128
-          description: The character's role in the contract (e.g., "member", "merchant")
+          nullable: true
+          description: The character's role in the contract (null if role not determinable)
         effectiveUntil:
           type: string
           format: date-time
@@ -648,21 +645,17 @@ components:
       description: Active obligations for a character with pre-computed violation cost map
       additionalProperties: false
       required:
-      - characterId
       - obligations
       - violationCostMap
       - totalActiveContracts
       - totalObligations
       - lastRefreshedAt
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character these obligations belong to
         obligations:
           type: array
           items:
             $ref: '#/components/schemas/ObligationEntry'
+          maxItems: 10000
           description: All active obligations for the character
         violationCostMap:
           type: object
@@ -695,12 +688,10 @@ components:
       additionalProperties: false
       required:
       - contractId
-      - templateCode
       - clauseCode
       - violationType
       - basePenalty
       - weightedPenalty
-      - contractRole
       properties:
         contractId:
           type: string
@@ -710,7 +701,8 @@ components:
           type: string
           minLength: 1
           maxLength: 128
-          description: Template code of the source contract
+          nullable: true
+          description: Template code of the source contract (null if contract has no template)
         clauseCode:
           type: string
           minLength: 1
@@ -735,7 +727,8 @@ components:
           type: string
           minLength: 1
           maxLength: 128
-          description: The character's role in the contract
+          nullable: true
+          description: The character's role in the contract (null if role not determinable)
 
     ActionEvaluation:
       type: object
@@ -764,6 +757,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ObligationCostDetail'
+          maxItems: 1000
           description: Per-obligation breakdown of cost contributions
 
     EvaluateActionRequest:
@@ -815,18 +809,14 @@ components:
       description: Obligation cost evaluation results for proposed actions
       additionalProperties: false
       required:
-      - characterId
       - evaluations
       - moralWeightingApplied
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character evaluated
         evaluations:
           type: array
           items:
             $ref: '#/components/schemas/ActionEvaluation'
+          maxItems: 50
           description: Per-action evaluation results (one per input tag)
         moralWeightingApplied:
           type: boolean
@@ -980,17 +970,12 @@ components:
       additionalProperties: false
       required:
       - violationId
-      - characterId
       - breachReported
       properties:
         violationId:
           type: string
           format: uuid
           description: ID of the created violation record
-        characterId:
-          type: string
-          format: uuid
-          description: Character who committed the violation
         breachReported:
           type: boolean
           description: Whether a breach was successfully filed with the contract service
@@ -1050,6 +1035,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ViolationRecord'
+          maxItems: 100
           description: Violation records for this page
         nextCursor:
           type: string
@@ -1081,22 +1067,13 @@ components:
       description: Result of cache invalidation and rebuild
       additionalProperties: false
       required:
-      - characterId
       - obligationsRefreshed
-      - success
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character whose cache was rebuilt
         obligationsRefreshed:
           type: integer
           minimum: 0
           maximum: 10000
           description: Number of obligations found and cached
-        success:
-          type: boolean
-          description: Whether the cache rebuild completed successfully
 
     # =========================================================================
     # Resource Cleanup Models
@@ -1119,23 +1096,13 @@ components:
       description: Result of character obligation data cleanup
       additionalProperties: false
       required:
-      - obligationsRemoved
       - violationsRemoved
-      - success
       properties:
-        obligationsRemoved:
-          type: integer
-          minimum: 0
-          maximum: 10000
-          description: Number of cached obligation entries removed
         violationsRemoved:
           type: integer
           minimum: 0
           maximum: 100000
           description: Number of violation history records removed
-        success:
-          type: boolean
-          description: Whether cleanup completed successfully
 
     # =========================================================================
     # Compression Models
@@ -1185,6 +1152,7 @@ components:
           nullable: true
           items:
             $ref: '#/components/schemas/ViolationRecord'
+          maxItems: 100000
           description: Violation history records (null if hasViolations=false)
 
     RestoreFromArchiveRequest:
@@ -1201,6 +1169,7 @@ components:
           description: ID of the character to restore data for
         data:
           type: string
+          minLength: 1
           description: Base64-encoded gzipped ObligationArchive JSON
 
     RestoreFromArchiveResponse:
@@ -1208,17 +1177,19 @@ components:
       description: Result of restoration from archive
       additionalProperties: false
       required:
-      - characterId
       - violationsRestored
-      - success
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character data was restored for
         violationsRestored:
           type: boolean
           description: Whether violation history was restored
-        success:
-          type: boolean
-          description: Whether the restoration completed successfully
+
+    # =========================================================================
+    # Enums
+    # =========================================================================
+
+    NormResolutionMode:
+      type: string
+      description: How norm-based obligation costs are resolved when the Hearsay service is unavailable
+      enum:
+        - PerfectKnowledge
+        - UncertaintySimulation

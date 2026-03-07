@@ -5,9 +5,21 @@ namespace BeyondImmersion.BannouService.Mapping.Helpers;
 /// <summary>
 /// Scores map objects for affordance queries.
 /// Extracted from MappingService for improved testability.
+/// All scoring weights come from MappingServiceConfiguration per IMPLEMENTATION TENETS.
 /// </summary>
 public class AffordanceScorer : IAffordanceScorer
 {
+    private readonly MappingServiceConfiguration _config;
+
+    /// <summary>
+    /// Initializes a new instance of the AffordanceScorer.
+    /// </summary>
+    /// <param name="config">Service configuration containing scoring weights.</param>
+    public AffordanceScorer(MappingServiceConfiguration config)
+    {
+        _config = config;
+    }
+
     /// <inheritdoc/>
     public IReadOnlyList<MapKind> GetKindsForAffordanceType(AffordanceType type)
     {
@@ -29,17 +41,15 @@ public class AffordanceScorer : IAffordanceScorer
     /// <inheritdoc/>
     public double ScoreAffordance(MapObject candidate, AffordanceType type, CustomAffordance? custom, ActorCapabilities? actor)
     {
-        // Base score from object data
-        var score = 0.5;
+        var score = _config.AffordanceBaseScore;
 
         if (candidate.Data is JsonElement data && data.ValueKind == JsonValueKind.Object)
         {
-            // Check for common affordance-related properties
             if (TryGetJsonDouble(data, "cover_rating", out var cr))
             {
                 if (type == AffordanceType.Ambush || type == AffordanceType.Shelter || type == AffordanceType.DefensiblePosition)
                 {
-                    score += cr * 0.3;
+                    score += cr * _config.AffordanceCoverRatingWeight;
                 }
             }
 
@@ -47,7 +57,7 @@ public class AffordanceScorer : IAffordanceScorer
             {
                 if (type == AffordanceType.Vista || type == AffordanceType.DramaticReveal)
                 {
-                    score += Math.Min(el / 100.0, 0.3);
+                    score += Math.Min(el / _config.AffordanceElevationDivisor, _config.AffordanceElevationMaxContribution);
                 }
             }
 
@@ -55,7 +65,7 @@ public class AffordanceScorer : IAffordanceScorer
             {
                 if (type == AffordanceType.Ambush || type == AffordanceType.Vista)
                 {
-                    score += Math.Min(sl * 0.05, 0.2);
+                    score += Math.Min(sl * _config.AffordanceSightlinesMultiplier, _config.AffordanceSightlinesMaxContribution);
                 }
             }
         }
@@ -63,24 +73,22 @@ public class AffordanceScorer : IAffordanceScorer
         // Apply actor capability modifiers
         if (actor != null)
         {
-            // Size affects cover requirements
             if (type == AffordanceType.Shelter || type == AffordanceType.Ambush)
             {
                 score *= actor.Size switch
                 {
-                    ActorSize.Tiny => 1.2,
-                    ActorSize.Small => 1.1,
-                    ActorSize.Medium => 1.0,
-                    ActorSize.Large => 0.9,
-                    ActorSize.Huge => 0.8,
-                    _ => 1.0
+                    ActorSize.Tiny => _config.AffordanceSizeTinyMultiplier,
+                    ActorSize.Small => _config.AffordanceSizeSmallMultiplier,
+                    ActorSize.Medium => _config.AffordanceSizeMediumMultiplier,
+                    ActorSize.Large => _config.AffordanceSizeLargeMultiplier,
+                    ActorSize.Huge => _config.AffordanceSizeHugeMultiplier,
+                    _ => _config.AffordanceSizeMediumMultiplier
                 };
             }
 
-            // Stealth rating affects ambush scoring
             if (type == AffordanceType.Ambush && actor.StealthRating.HasValue)
             {
-                score *= 1.0 + actor.StealthRating.Value * 0.2;
+                score *= 1.0 + actor.StealthRating.Value * _config.AffordanceStealthRatingMultiplier;
             }
         }
 
@@ -142,9 +150,9 @@ public class AffordanceScorer : IAffordanceScorer
     /// <summary>
     /// Scores a map object against a custom affordance definition.
     /// </summary>
-    private static double ScoreCustomAffordance(MapObject candidate, CustomAffordance custom)
+    private double ScoreCustomAffordance(MapObject candidate, CustomAffordance custom)
     {
-        var score = 0.5;
+        var score = _config.AffordanceBaseScore;
 
         var hasData = candidate.Data is JsonElement data && data.ValueKind == JsonValueKind.Object;
 
@@ -194,7 +202,7 @@ public class AffordanceScorer : IAffordanceScorer
             {
                 if (dataElement.TryGetProperty(pref.Name, out _))
                 {
-                    score += 0.1;
+                    score += _config.AffordancePreferenceBoost;
                 }
             }
         }

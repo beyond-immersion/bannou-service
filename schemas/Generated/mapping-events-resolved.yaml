@@ -633,11 +633,13 @@ components:
           maxLength: 256
           description: Publisher-defined type
         position:
-          $ref: '#/components/schemas/Position3D'
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
           description: Position for point objects
           nullable: true
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
           description: Bounding box for area objects
           nullable: true
         data:

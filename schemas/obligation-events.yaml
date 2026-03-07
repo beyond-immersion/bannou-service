@@ -73,14 +73,12 @@ components:
         - violationId
         - characterId
         - contractId
-        - templateCode
         - clauseCode
         - violationType
         - actionTag
         - motivationScore
         - violationCost
         - breachReported
-        - contractRole
       properties:
         eventId:
           type: string
@@ -106,6 +104,7 @@ components:
           type: string
           minLength: 1
           maxLength: 128
+          nullable: true
           description: Template code of the violated contract
         clauseCode:
           type: string
@@ -154,6 +153,7 @@ components:
           type: string
           minLength: 1
           maxLength: 128
+          nullable: true
           description: The violating character's role in the contract
 
     ObligationCacheRebuiltEvent:

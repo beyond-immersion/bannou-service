@@ -86,6 +86,7 @@ public partial class MatchmakingService : IMatchmakingService
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<MatchmakingService> logger,
+        ILoggerFactory loggerFactory,
         MatchmakingServiceConfiguration configuration,
         IEventConsumer eventConsumer,
         IClientEventPublisher clientEventPublisher,
@@ -104,7 +105,7 @@ public partial class MatchmakingService : IMatchmakingService
         _telemetryProvider = telemetryProvider;
         // Instantiate directly since internal types are used
         // Tests can access via InternalsVisibleTo
-        _algorithm = new MatchmakingAlgorithm();
+        _algorithm = new MatchmakingAlgorithm(loggerFactory.CreateLogger<MatchmakingAlgorithm>());
 
         // Constructor-cache all state stores per FOUNDATION TENETS
         _queueStore = stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking);
@@ -226,7 +227,7 @@ public partial class MatchmakingService : IMatchmakingService
                 Intervals = s.Intervals,
                 Range = s.Range
             }).ToList(),
-            PartySkillAggregation = body.PartySkillAggregation,
+            PartySkillAggregation = body.PartySkillAggregation ?? PartySkillAggregation.Average,
             PartySkillWeights = body.PartySkillWeights?.ToList(),
             PartyMaxSize = body.PartyMaxSize,
             AllowConcurrent = body.AllowConcurrent,
@@ -596,7 +597,6 @@ public partial class MatchmakingService : IMatchmakingService
         return (StatusCodes.OK, new JoinMatchmakingResponse
         {
             TicketId = ticketId,
-            QueueId = queueId,
             EstimatedWaitSeconds = queue.AverageWaitSeconds > 0 ? (int?)queue.AverageWaitSeconds : null
         });
     }
@@ -681,7 +681,7 @@ public partial class MatchmakingService : IMatchmakingService
 
         // Acquire lock on match (multiple players accept concurrently)
         await using var matchLock = await _lockProvider.LockAsync(
-            StateStoreDefinitions.MatchmakingLock, matchId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, matchId.ToString(), Guid.NewGuid().ToString(), _configuration.MatchLockTimeoutSeconds, cancellationToken);
         if (!matchLock.Success)
         {
             _logger.LogWarning("Could not acquire match lock for {MatchId}", matchId);
@@ -739,7 +739,6 @@ public partial class MatchmakingService : IMatchmakingService
 
             return (StatusCodes.OK, new AcceptMatchResponse
             {
-                MatchId = matchId,
                 AllAccepted = true,
                 AcceptedCount = match.AcceptedPlayers.Count,
                 TotalCount = match.MatchedTickets.Count,
@@ -749,7 +748,6 @@ public partial class MatchmakingService : IMatchmakingService
 
         return (StatusCodes.OK, new AcceptMatchResponse
         {
-            MatchId = matchId,
             AllAccepted = false,
             AcceptedCount = match.AcceptedPlayers.Count,
             TotalCount = match.MatchedTickets.Count
@@ -956,7 +954,8 @@ public partial class MatchmakingService : IMatchmakingService
                 PlayerCount = tickets.Count,
                 AcceptDeadline = acceptDeadline,
                 AcceptTimeoutSeconds = queue.MatchAcceptTimeoutSeconds,
-                AverageSkillRating = match.AverageSkillRating
+                AverageSkillRating = match.AverageSkillRating,
+                PartyId = ticket.PartyId
             }, cancellationToken);
 
             // Publish accept/decline shortcuts
@@ -1188,16 +1187,19 @@ public partial class MatchmakingService : IMatchmakingService
         // Delete match
         await DeleteMatchAsync(match.MatchId, cancellationToken);
 
-        // Publish event
+        // Publish event — use ticket IDs, not account IDs (per FOUNDATION TENETS: account identity boundary)
+        var declinedByTicketId = declinedBy.HasValue
+            ? match.MatchedTickets.FirstOrDefault(t => t.AccountId == declinedBy.Value)?.TicketId
+            : null;
         await _messageBus.TryPublishAsync(MATCH_DECLINED_TOPIC, new MatchmakingMatchDeclinedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             MatchId = match.MatchId,
             QueueId = match.QueueId,
-            DeclinedBy = declinedBy ?? Guid.Empty,
-            AffectedPlayers = match.MatchedTickets.Select(t => t.AccountId).ToList(),
-            RequeuingPlayers = playersToRequeue.Select(t => t.AccountId).ToList()
+            DeclinedByTicketId = declinedByTicketId,
+            AffectedTicketIds = match.MatchedTickets.Select(t => t.TicketId).ToList(),
+            RequeuingTicketIds = playersToRequeue.Select(t => t.TicketId).ToList()
         }, cancellationToken: cancellationToken);
     }
 
@@ -1467,7 +1469,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.AddToQueueListAsync");
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.MatchmakingLock, QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, QUEUE_LIST_KEY, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire queue list lock");
@@ -1486,7 +1488,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.RemoveFromQueueListAsync");
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.MatchmakingLock, QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, QUEUE_LIST_KEY, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire queue list lock");
@@ -1559,7 +1561,7 @@ public partial class MatchmakingService : IMatchmakingService
         using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.AddToPlayerTicketsAsync");
         var key = PLAYER_TICKETS_PREFIX + accountId;
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire player tickets lock for {AccountId}", accountId);
@@ -1579,7 +1581,7 @@ public partial class MatchmakingService : IMatchmakingService
         using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.RemoveFromPlayerTicketsAsync");
         var key = PLAYER_TICKETS_PREFIX + accountId;
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire player tickets lock for {AccountId}", accountId);
@@ -1611,7 +1613,7 @@ public partial class MatchmakingService : IMatchmakingService
         using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.AddToQueueTicketsAsync");
         var key = QUEUE_TICKETS_PREFIX + queueId;
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire queue tickets lock for {QueueId}", queueId);
@@ -1631,7 +1633,7 @@ public partial class MatchmakingService : IMatchmakingService
         using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.RemoveFromQueueTicketsAsync");
         var key = QUEUE_TICKETS_PREFIX + queueId;
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire queue tickets lock for {QueueId}", queueId);

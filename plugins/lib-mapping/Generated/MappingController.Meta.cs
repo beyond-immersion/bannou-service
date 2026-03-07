@@ -25,6 +25,7 @@ public partial class MappingController
         "CreateChannelRequest": {
             "type": "object",
             "description": "Request to create a new map channel",
+            "additionalProperties": false,
             "required": [
                 "regionId",
                 "kind",
@@ -33,6 +34,8 @@ public partial class MappingController
             "properties": {
                 "sourceAppId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "App-id of the caller taking authority (used for event metadata)"
                 },
                 "regionId": {
@@ -50,7 +53,7 @@ public partial class MappingController
                 },
                 "takeoverMode": {
                     "$ref": "#/$defs/AuthorityTakeoverMode",
-                    "description": "Policy for authority takeover when channel exists with expired authority.\npreserve_and_diff (default): Keep existing data, new authority sends updates.\nreset: Clear all channel data before new authority takes over.\nrequire_consume: New authority must call RequestSnapshot before publishing.\n"
+                    "description": "Policy for authority takeover when channel exists with expired authority"
                 },
                 "alertConfig": {
                     "$ref": "#/$defs/NonAuthorityAlertConfig",
@@ -69,7 +72,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -97,7 +100,7 @@ public partial class MappingController
         },
         "AuthorityTakeoverMode": {
             "type": "string",
-            "description": "Policy for handling authority takeover when creating a channel that\nalready has expired authority. Controls what happens to existing data.\n",
+            "description": "Policy for handling authority takeover when creating a channel that already has expired authority. Controls what happens to existing data.",
             "enum": [
                 "PreserveAndDiff",
                 "Reset",
@@ -108,6 +111,7 @@ public partial class MappingController
         "NonAuthorityAlertConfig": {
             "type": "object",
             "description": "Configuration for non-authority publish alerts",
+            "additionalProperties": false,
             "properties": {
                 "enabled": {
                     "type": "boolean",
@@ -116,6 +120,7 @@ public partial class MappingController
                 },
                 "alertTopic": {
                     "type": "string",
+                    "maxLength": 512,
                     "description": "Custom topic for warnings (default map.warnings.unauthorized-publish)",
                     "nullable": true
                 },
@@ -128,7 +133,8 @@ public partial class MappingController
         },
         "MapPayload": {
             "type": "object",
-            "description": "Schema-less payload. Only envelope fields are validated.\nThe 'data' field can contain ANYTHING the publisher wants.\nlib-mapping does not validate contents - only publisher and consumer care.\n",
+            "description": "Schema-less payload. Only envelope fields are validated. The data field can contain anything the publisher wants. lib-mapping does not validate contents.",
+            "additionalProperties": false,
             "required": [
                 "objectType"
             ],
@@ -136,19 +142,22 @@ public partial class MappingController
                 "objectId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Unique ID for this object (generated if not provided)"
+                    "description": "Unique ID for this object (generated if not provided)",
+                    "nullable": true
                 },
                 "objectType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Publisher-defined type (used for indexing and filtering)"
                 },
                 "position": {
-                    "$ref": "#/$defs/Position3D",
+                    "type": "object",
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Bounds for area objects",
                     "nullable": true
                 },
@@ -157,50 +166,6 @@ public partial class MappingController
                     "additionalProperties": true,
                     "description": "Game-specific spatial object data. lib-mapping stores and returns this as-is. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
                 }
             }
         }
@@ -216,6 +181,7 @@ public partial class MappingController
         "AuthorityGrant": {
             "type": "object",
             "description": "Granted authority over a map channel",
+            "additionalProperties": false,
             "required": [
                 "channelId",
                 "authorityToken",
@@ -232,10 +198,12 @@ public partial class MappingController
                 },
                 "authorityToken": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Opaque token proving your authority (include in publishes)"
                 },
                 "ingestTopic": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Topic for direct lib-messaging publishes (map.ingest.{channelId})"
                 },
                 "expiresAt": {
@@ -256,7 +224,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -340,6 +308,7 @@ public partial class MappingController
         "ReleaseAuthorityRequest": {
             "type": "object",
             "description": "Request to release authority over a channel",
+            "additionalProperties": false,
             "required": [
                 "channelId",
                 "authorityToken"
@@ -352,6 +321,7 @@ public partial class MappingController
                 },
                 "authorityToken": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current authority token"
                 }
             }
@@ -361,22 +331,7 @@ public partial class MappingController
 """;
 
     private static readonly string _ReleaseAuthority_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ReleaseAuthorityResponse",
-    "$defs": {
-        "ReleaseAuthorityResponse": {
-            "type": "object",
-            "description": "Response to authority release",
-            "properties": {
-                "released": {
-                    "type": "boolean",
-                    "description": "Whether authority was successfully released"
-                }
-            }
-        }
-    }
-}
+{}
 """;
 
     private static readonly string _ReleaseAuthority_Info = """
@@ -443,6 +398,7 @@ public partial class MappingController
         "AuthorityHeartbeatRequest": {
             "type": "object",
             "description": "Request to maintain authority",
+            "additionalProperties": false,
             "required": [
                 "channelId",
                 "authorityToken"
@@ -455,6 +411,7 @@ public partial class MappingController
                 },
                 "authorityToken": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current authority token"
                 }
             }
@@ -471,11 +428,11 @@ public partial class MappingController
         "AuthorityHeartbeatResponse": {
             "type": "object",
             "description": "Response to authority heartbeat",
+            "additionalProperties": false,
+            "required": [
+                "expiresAt"
+            ],
             "properties": {
-                "valid": {
-                    "type": "boolean",
-                    "description": "Whether your authority is still valid"
-                },
                 "expiresAt": {
                     "type": "string",
                     "format": "date-time",
@@ -483,7 +440,8 @@ public partial class MappingController
                 },
                 "warning": {
                     "type": "string",
-                    "description": "Optional warning (e.g., \"authority expiring soon\")",
+                    "maxLength": 512,
+                    "description": "Optional warning (e.g., authority expiring soon, increase heartbeat frequency)",
                     "nullable": true
                 }
             }
@@ -556,6 +514,7 @@ public partial class MappingController
         "PublishMapUpdateRequest": {
             "type": "object",
             "description": "Request to publish map data update",
+            "additionalProperties": false,
             "required": [
                 "channelId",
                 "authorityToken",
@@ -569,15 +528,17 @@ public partial class MappingController
                 },
                 "authorityToken": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Authority token for validation"
                 },
                 "sourceAppId": {
                     "type": "string",
+                    "maxLength": 256,
                     "description": "App-id of caller (for warnings on non-authority attempts)",
                     "nullable": true
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Affected area (null means entire region)",
                     "nullable": true
                 },
@@ -591,52 +552,9 @@ public partial class MappingController
                 },
                 "payloadAssetRef": {
                     "type": "string",
+                    "maxLength": 1024,
                     "description": "For large payloads, lib-asset reference instead of inline",
                     "nullable": true
-                }
-            }
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
                 }
             }
         },
@@ -651,7 +569,8 @@ public partial class MappingController
         },
         "MapPayload": {
             "type": "object",
-            "description": "Schema-less payload. Only envelope fields are validated.\nThe 'data' field can contain ANYTHING the publisher wants.\nlib-mapping does not validate contents - only publisher and consumer care.\n",
+            "description": "Schema-less payload. Only envelope fields are validated. The data field can contain anything the publisher wants. lib-mapping does not validate contents.",
+            "additionalProperties": false,
             "required": [
                 "objectType"
             ],
@@ -659,19 +578,22 @@ public partial class MappingController
                 "objectId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Unique ID for this object (generated if not provided)"
+                    "description": "Unique ID for this object (generated if not provided)",
+                    "nullable": true
                 },
                 "objectType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Publisher-defined type (used for indexing and filtering)"
                 },
                 "position": {
-                    "$ref": "#/$defs/Position3D",
+                    "type": "object",
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Bounds for area objects",
                     "nullable": true
                 },
@@ -695,11 +617,11 @@ public partial class MappingController
         "PublishMapUpdateResponse": {
             "type": "object",
             "description": "Response to publish request",
+            "additionalProperties": false,
+            "required": [
+                "version"
+            ],
             "properties": {
-                "accepted": {
-                    "type": "boolean",
-                    "description": "Whether the update was accepted"
-                },
                 "version": {
                     "type": "integer",
                     "format": "int64",
@@ -707,6 +629,7 @@ public partial class MappingController
                 },
                 "warning": {
                     "type": "string",
+                    "maxLength": 512,
                     "description": "Optional warning message",
                     "nullable": true
                 }
@@ -780,6 +703,7 @@ public partial class MappingController
         "PublishObjectChangesRequest": {
             "type": "object",
             "description": "Request to publish object changes (batch)",
+            "additionalProperties": false,
             "required": [
                 "channelId",
                 "authorityToken",
@@ -793,15 +717,18 @@ public partial class MappingController
                 },
                 "authorityToken": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Authority token for validation"
                 },
                 "sourceAppId": {
                     "type": "string",
+                    "maxLength": 256,
                     "description": "App-id of caller (for warnings on non-authority attempts)",
                     "nullable": true
                 },
                 "changes": {
                     "type": "array",
+                    "minItems": 1,
                     "maxItems": 100,
                     "items": {
                         "$ref": "#/$defs/ObjectChange"
@@ -813,6 +740,7 @@ public partial class MappingController
         "ObjectChange": {
             "type": "object",
             "description": "A single change to a map object",
+            "additionalProperties": false,
             "required": [
                 "objectId",
                 "action"
@@ -829,16 +757,18 @@ public partial class MappingController
                 },
                 "objectType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Object type (required for created)",
                     "nullable": true
                 },
                 "position": {
-                    "$ref": "#/$defs/Position3D",
+                    "type": "object",
                     "description": "Object position (for create/update)",
                     "nullable": true
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Object bounds (for create/update)",
                     "nullable": true
                 },
@@ -858,50 +788,6 @@ public partial class MappingController
                 "Updated",
                 "Deleted"
             ]
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
         }
     }
 }
@@ -915,17 +801,21 @@ public partial class MappingController
         "PublishObjectChangesResponse": {
             "type": "object",
             "description": "Response to object changes publish",
+            "additionalProperties": false,
+            "required": [
+                "acceptedCount",
+                "rejectedCount",
+                "version"
+            ],
             "properties": {
-                "accepted": {
-                    "type": "boolean",
-                    "description": "Whether the changes were accepted"
-                },
                 "acceptedCount": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of changes accepted"
                 },
                 "rejectedCount": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of changes rejected"
                 },
                 "version": {
@@ -935,6 +825,7 @@ public partial class MappingController
                 },
                 "warning": {
                     "type": "string",
+                    "maxLength": 512,
                     "description": "Optional warning message",
                     "nullable": true
                 }
@@ -1008,6 +899,7 @@ public partial class MappingController
         "RequestSnapshotRequest": {
             "type": "object",
             "description": "Request for full snapshot",
+            "additionalProperties": false,
             "required": [
                 "regionId"
             ],
@@ -1026,20 +918,21 @@ public partial class MappingController
                     "nullable": true
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Optional bounds filter",
                     "nullable": true
                 },
                 "authorityToken": {
                     "type": "string",
-                    "description": "Optional authority token. If provided and valid, clears the\nRequiresConsumeBeforePublish flag for require_consume takeover mode.\n",
+                    "minLength": 1,
+                    "description": "Optional authority token to clear RequiresConsumeBeforePublish flag for require_consume takeover mode",
                     "nullable": true
                 }
             }
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -1054,50 +947,6 @@ public partial class MappingController
                 "CombatEffects",
                 "VisualEffects"
             ]
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
         }
     }
 }
@@ -1111,12 +960,12 @@ public partial class MappingController
         "RequestSnapshotResponse": {
             "type": "object",
             "description": "Snapshot response",
+            "additionalProperties": false,
+            "required": [
+                "objects",
+                "version"
+            ],
             "properties": {
-                "regionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Region ID"
-                },
                 "objects": {
                     "type": "array",
                     "items": {
@@ -1126,7 +975,8 @@ public partial class MappingController
                 },
                 "payloadRef": {
                     "type": "string",
-                    "description": "For large snapshots, lib-asset reference",
+                    "maxLength": 1024,
+                    "description": "For large snapshots, lib-asset reference (objects will be empty when this is set)",
                     "nullable": true
                 },
                 "version": {
@@ -1139,11 +989,13 @@ public partial class MappingController
         "MapObject": {
             "type": "object",
             "description": "A stored map object with full metadata",
+            "additionalProperties": false,
             "required": [
                 "objectId",
                 "regionId",
                 "kind",
                 "objectType",
+                "version",
                 "createdAt",
                 "updatedAt"
             ],
@@ -1164,15 +1016,17 @@ public partial class MappingController
                 },
                 "objectType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Publisher-defined type"
                 },
                 "position": {
-                    "$ref": "#/$defs/Position3D",
+                    "type": "object",
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Bounding box for area objects",
                     "nullable": true
                 },
@@ -1201,7 +1055,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -1216,50 +1070,6 @@ public partial class MappingController
                 "CombatEffects",
                 "VisualEffects"
             ]
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
         }
     }
 }
@@ -1329,6 +1139,7 @@ public partial class MappingController
         "QueryPointRequest": {
             "type": "object",
             "description": "Query map data at a point",
+            "additionalProperties": false,
             "required": [
                 "regionId",
                 "position"
@@ -1340,7 +1151,7 @@ public partial class MappingController
                     "description": "Region to query"
                 },
                 "position": {
-                    "$ref": "#/$defs/Position3D",
+                    "type": "object",
                     "description": "Point to query at"
                 },
                 "kinds": {
@@ -1353,40 +1164,15 @@ public partial class MappingController
                 },
                 "radius": {
                     "type": "number",
+                    "minimum": 0,
                     "description": "Include objects within this radius",
                     "nullable": true
                 }
             }
         },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
-        },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -1414,6 +1200,10 @@ public partial class MappingController
         "QueryPointResponse": {
             "type": "object",
             "description": "Point query results",
+            "additionalProperties": false,
+            "required": [
+                "objects"
+            ],
             "properties": {
                 "objects": {
                     "type": "array",
@@ -1421,26 +1211,19 @@ public partial class MappingController
                         "$ref": "#/$defs/MapObject"
                     },
                     "description": "Objects at/near the point"
-                },
-                "position": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Queried position"
-                },
-                "radius": {
-                    "type": "number",
-                    "description": "Applied radius filter",
-                    "nullable": true
                 }
             }
         },
         "MapObject": {
             "type": "object",
             "description": "A stored map object with full metadata",
+            "additionalProperties": false,
             "required": [
                 "objectId",
                 "regionId",
                 "kind",
                 "objectType",
+                "version",
                 "createdAt",
                 "updatedAt"
             ],
@@ -1461,15 +1244,17 @@ public partial class MappingController
                 },
                 "objectType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Publisher-defined type"
                 },
                 "position": {
-                    "$ref": "#/$defs/Position3D",
+                    "type": "object",
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Bounding box for area objects",
                     "nullable": true
                 },
@@ -1498,7 +1283,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -1513,50 +1298,6 @@ public partial class MappingController
                 "CombatEffects",
                 "VisualEffects"
             ]
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
         }
     }
 }
@@ -1626,6 +1367,7 @@ public partial class MappingController
         "QueryBoundsRequest": {
             "type": "object",
             "description": "Query map data within bounds",
+            "additionalProperties": false,
             "required": [
                 "regionId",
                 "bounds"
@@ -1637,7 +1379,7 @@ public partial class MappingController
                     "description": "Region to query"
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Bounding box to query"
                 },
                 "kinds": {
@@ -1650,59 +1392,16 @@ public partial class MappingController
                 },
                 "maxObjects": {
                     "type": "integer",
+                    "minimum": 1,
                     "default": 500,
                     "maximum": 5000,
                     "description": "Maximum objects to return"
                 }
             }
         },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
-        },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -1730,6 +1429,11 @@ public partial class MappingController
         "QueryBoundsResponse": {
             "type": "object",
             "description": "Bounds query results",
+            "additionalProperties": false,
+            "required": [
+                "objects",
+                "truncated"
+            ],
             "properties": {
                 "objects": {
                     "type": "array",
@@ -1738,24 +1442,22 @@ public partial class MappingController
                     },
                     "description": "Objects within bounds"
                 },
-                "bounds": {
-                    "$ref": "#/$defs/Bounds",
-                    "description": "Queried bounds"
-                },
                 "truncated": {
                     "type": "boolean",
-                    "description": "Whether results were truncated"
+                    "description": "Whether results were truncated by maxObjects limit"
                 }
             }
         },
         "MapObject": {
             "type": "object",
             "description": "A stored map object with full metadata",
+            "additionalProperties": false,
             "required": [
                 "objectId",
                 "regionId",
                 "kind",
                 "objectType",
+                "version",
                 "createdAt",
                 "updatedAt"
             ],
@@ -1776,15 +1478,17 @@ public partial class MappingController
                 },
                 "objectType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Publisher-defined type"
                 },
                 "position": {
-                    "$ref": "#/$defs/Position3D",
+                    "type": "object",
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Bounding box for area objects",
                     "nullable": true
                 },
@@ -1813,7 +1517,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -1828,50 +1532,6 @@ public partial class MappingController
                 "CombatEffects",
                 "VisualEffects"
             ]
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
         }
     }
 }
@@ -1941,6 +1601,7 @@ public partial class MappingController
         "QueryObjectsByTypeRequest": {
             "type": "object",
             "description": "Query objects by type",
+            "additionalProperties": false,
             "required": [
                 "regionId",
                 "objectType"
@@ -1953,62 +1614,21 @@ public partial class MappingController
                 },
                 "objectType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Object type to filter by"
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Optional bounds filter",
                     "nullable": true
                 },
                 "maxObjects": {
                     "type": "integer",
+                    "minimum": 1,
                     "default": 500,
                     "maximum": 5000,
                     "description": "Maximum objects to return"
-                }
-            }
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
                 }
             }
         }
@@ -2024,6 +1644,11 @@ public partial class MappingController
         "QueryObjectsByTypeResponse": {
             "type": "object",
             "description": "Object type query results",
+            "additionalProperties": false,
+            "required": [
+                "objects",
+                "truncated"
+            ],
             "properties": {
                 "objects": {
                     "type": "array",
@@ -2032,24 +1657,22 @@ public partial class MappingController
                     },
                     "description": "Matching objects"
                 },
-                "objectType": {
-                    "type": "string",
-                    "description": "Queried object type"
-                },
                 "truncated": {
                     "type": "boolean",
-                    "description": "Whether results were truncated"
+                    "description": "Whether results were truncated by maxObjects limit"
                 }
             }
         },
         "MapObject": {
             "type": "object",
             "description": "A stored map object with full metadata",
+            "additionalProperties": false,
             "required": [
                 "objectId",
                 "regionId",
                 "kind",
                 "objectType",
+                "version",
                 "createdAt",
                 "updatedAt"
             ],
@@ -2070,15 +1693,17 @@ public partial class MappingController
                 },
                 "objectType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Publisher-defined type"
                 },
                 "position": {
-                    "$ref": "#/$defs/Position3D",
+                    "type": "object",
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Bounding box for area objects",
                     "nullable": true
                 },
@@ -2107,7 +1732,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -2122,50 +1747,6 @@ public partial class MappingController
                 "CombatEffects",
                 "VisualEffects"
             ]
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
         }
     }
 }
@@ -2235,6 +1816,7 @@ public partial class MappingController
         "AffordanceQueryRequest": {
             "type": "object",
             "description": "Query for locations that afford a specific action",
+            "additionalProperties": false,
             "required": [
                 "regionId",
                 "affordanceType"
@@ -2251,16 +1833,17 @@ public partial class MappingController
                 },
                 "customAffordance": {
                     "$ref": "#/$defs/CustomAffordance",
-                    "description": "Custom affordance definition (when affordanceType=custom)",
+                    "description": "Custom affordance definition (when affordanceType=Custom)",
                     "nullable": true
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Optional bounds to search within",
                     "nullable": true
                 },
                 "maxResults": {
                     "type": "integer",
+                    "minimum": 1,
                     "default": 10,
                     "maximum": 100,
                     "description": "Maximum locations to return"
@@ -2274,15 +1857,16 @@ public partial class MappingController
                 },
                 "participantCount": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Expected participants (affects space requirements)",
                     "nullable": true
                 },
                 "excludePositions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/Position3D"
+                        "type": "object"
                     },
-                    "description": "Positions to exclude (e.g., player's current location)",
+                    "description": "Positions to exclude (e.g., player current location)",
                     "nullable": true
                 },
                 "actorCapabilities": {
@@ -2298,14 +1882,14 @@ public partial class MappingController
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 3600,
-                    "description": "Max age of cached results (for cached/aggressive_cache)",
+                    "description": "Max age of cached results (for Cached/AggressiveCache)",
                     "nullable": true
                 }
             }
         },
         "AffordanceType": {
             "type": "string",
-            "description": "Well-known affordance types with predefined scoring logic.\nUse 'custom' for novel affordance definitions.\n",
+            "description": "Well-known affordance types with predefined scoring logic. Use Custom for novel affordance definitions.",
             "enum": [
                 "Ambush",
                 "Shelter",
@@ -2321,9 +1905,11 @@ public partial class MappingController
         "CustomAffordance": {
             "type": "object",
             "description": "Custom affordance definition for novel scenarios",
+            "additionalProperties": false,
             "properties": {
                 "description": {
                     "type": "string",
+                    "maxLength": 1024,
                     "description": "Human-readable description of this affordance",
                     "nullable": true
                 },
@@ -2347,53 +1933,10 @@ public partial class MappingController
                 }
             }
         },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
-        },
         "ActorCapabilities": {
             "type": "object",
-            "description": "Actor-specific capabilities that affect affordance evaluation.\nSame location may afford different actions to different actor types.\n",
+            "description": "Actor-specific capabilities that affect affordance evaluation. Same location may afford different actions to different actor types.",
+            "additionalProperties": false,
             "properties": {
                 "size": {
                     "$ref": "#/$defs/ActorSize",
@@ -2401,6 +1944,7 @@ public partial class MappingController
                 },
                 "height": {
                     "type": "number",
+                    "minimum": 0,
                     "description": "Actor height in meters (affects cover, sightlines)",
                     "nullable": true
                 },
@@ -2421,11 +1965,13 @@ public partial class MappingController
                 },
                 "perceptionRange": {
                     "type": "number",
+                    "minimum": 0,
                     "description": "Affects sightline distance requirements",
                     "nullable": true
                 },
                 "movementSpeed": {
                     "type": "number",
+                    "minimum": 0,
                     "description": "Affects escape route viability calculations",
                     "nullable": true
                 },
@@ -2472,6 +2018,10 @@ public partial class MappingController
         "AffordanceQueryResponse": {
             "type": "object",
             "description": "Affordance query results",
+            "additionalProperties": false,
+            "required": [
+                "locations"
+            ],
             "properties": {
                 "locations": {
                     "type": "array",
@@ -2479,24 +2029,24 @@ public partial class MappingController
                         "$ref": "#/$defs/AffordanceLocation"
                     },
                     "description": "Scored locations (highest score first)"
-                },
-                "queryMetadata": {
-                    "$ref": "#/$defs/AffordanceQueryMetadata",
-                    "description": "Metadata about query execution (optional)",
-                    "nullable": true
                 }
             }
         },
         "AffordanceLocation": {
             "type": "object",
             "description": "A location that affords the requested action",
+            "additionalProperties": false,
+            "required": [
+                "position",
+                "score"
+            ],
             "properties": {
                 "position": {
-                    "$ref": "#/$defs/Position3D",
+                    "type": "object",
                     "description": "Location position"
                 },
                 "bounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Area bounds if affordance spans an area",
                     "nullable": true
                 },
@@ -2520,80 +2070,6 @@ public partial class MappingController
                     },
                     "description": "Map objects contributing to this affordance",
                     "nullable": true
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "AffordanceQueryMetadata": {
-            "type": "object",
-            "description": "Metadata about the affordance query execution",
-            "properties": {
-                "kindsSearched": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "Map kinds that were queried",
-                    "nullable": true
-                },
-                "objectsEvaluated": {
-                    "type": "integer",
-                    "description": "Number of candidate objects evaluated"
-                },
-                "candidatesGenerated": {
-                    "type": "integer",
-                    "description": "Number of candidate positions generated"
-                },
-                "searchDurationMs": {
-                    "type": "integer",
-                    "description": "Query execution time in milliseconds"
-                },
-                "cacheHit": {
-                    "type": "boolean",
-                    "description": "Whether results came from cache"
                 }
             }
         }
@@ -2665,6 +2141,7 @@ public partial class MappingController
         "AuthoringCheckoutRequest": {
             "type": "object",
             "description": "Request to checkout for authoring",
+            "additionalProperties": false,
             "required": [
                 "regionId",
                 "kind",
@@ -2682,13 +2159,15 @@ public partial class MappingController
                 },
                 "editorId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Identifier for the editor/user"
                 }
             }
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -2716,6 +2195,7 @@ public partial class MappingController
         "AuthoringCheckoutResponse": {
             "type": "object",
             "description": "Checkout response",
+            "additionalProperties": false,
             "properties": {
                 "authorityToken": {
                     "type": "string",
@@ -2809,6 +2289,7 @@ public partial class MappingController
         "AuthoringCommitRequest": {
             "type": "object",
             "description": "Request to commit authoring changes",
+            "additionalProperties": false,
             "required": [
                 "regionId",
                 "kind",
@@ -2826,10 +2307,12 @@ public partial class MappingController
                 },
                 "authorityToken": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Checkout authority token"
                 },
                 "commitMessage": {
                     "type": "string",
+                    "maxLength": 1024,
                     "description": "Optional commit message for history",
                     "nullable": true
                 }
@@ -2837,7 +2320,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -2865,12 +2348,15 @@ public partial class MappingController
         "AuthoringCommitResponse": {
             "type": "object",
             "description": "Commit response",
+            "additionalProperties": false,
+            "required": [
+                "version"
+            ],
             "properties": {
                 "version": {
                     "type": "integer",
                     "format": "int64",
-                    "description": "Committed version number",
-                    "nullable": true
+                    "description": "Committed version number"
                 }
             }
         }
@@ -2942,6 +2428,7 @@ public partial class MappingController
         "AuthoringReleaseRequest": {
             "type": "object",
             "description": "Request to release authoring checkout",
+            "additionalProperties": false,
             "required": [
                 "regionId",
                 "kind",
@@ -2959,13 +2446,14 @@ public partial class MappingController
                 },
                 "authorityToken": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Checkout authority token"
                 }
             }
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -2986,22 +2474,7 @@ public partial class MappingController
 """;
 
     private static readonly string _ReleaseAuthoring_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/AuthoringReleaseResponse",
-    "$defs": {
-        "AuthoringReleaseResponse": {
-            "type": "object",
-            "description": "Release response",
-            "properties": {
-                "released": {
-                    "type": "boolean",
-                    "description": "Whether checkout was released"
-                }
-            }
-        }
-    }
-}
+{}
 """;
 
     private static readonly string _ReleaseAuthoring_Info = """
@@ -3068,16 +2541,20 @@ public partial class MappingController
         "CreateDefinitionRequest": {
             "type": "object",
             "description": "Request to create a map definition",
+            "additionalProperties": false,
             "required": [
                 "name"
             ],
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Human-readable name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2048,
                     "description": "Description of the map template",
                     "nullable": true
                 },
@@ -3090,7 +2567,7 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Default bounds for regions using this definition",
                     "nullable": true
                 },
@@ -3105,6 +2582,7 @@ public partial class MappingController
         "LayerDefinition": {
             "type": "object",
             "description": "Configuration for a specific layer within a map definition",
+            "additionalProperties": false,
             "required": [
                 "kind"
             ],
@@ -3114,18 +2592,13 @@ public partial class MappingController
                     "description": "The layer kind"
                 },
                 "storageMode": {
-                    "type": "string",
-                    "enum": [
-                        "Durable",
-                        "Cached",
-                        "Ephemeral"
-                    ],
-                    "default": "Cached",
+                    "$ref": "#/$defs/StorageMode",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
                     "type": "integer",
-                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "minimum": 0,
+                    "description": "TTL for cached/ephemeral data (0 = use default from config)",
                     "nullable": true
                 },
                 "defaultNonAuthorityHandling": {
@@ -3135,6 +2608,7 @@ public partial class MappingController
                 "cellSize": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 1,
                     "description": "Spatial cell size for indexing (default from config if not set)",
                     "nullable": true
                 }
@@ -3142,7 +2616,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -3158,6 +2632,16 @@ public partial class MappingController
                 "VisualEffects"
             ]
         },
+        "StorageMode": {
+            "type": "string",
+            "description": "How layer data should be stored",
+            "enum": [
+                "Durable",
+                "Cached",
+                "Ephemeral"
+            ],
+            "default": "Cached"
+        },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
@@ -3167,50 +2651,6 @@ public partial class MappingController
                 "RejectSilent"
             ],
             "default": "RejectAndAlert"
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
         }
     }
 }
@@ -3224,6 +2664,7 @@ public partial class MappingController
         "MapDefinition": {
             "type": "object",
             "description": "A map definition template that describes the structure of a region",
+            "additionalProperties": false,
             "required": [
                 "definitionId",
                 "name",
@@ -3237,10 +2678,13 @@ public partial class MappingController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Human-readable name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2048,
                     "description": "Description of the map template",
                     "nullable": true
                 },
@@ -3253,7 +2697,7 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Default bounds for regions using this definition",
                     "nullable": true
                 },
@@ -3279,6 +2723,7 @@ public partial class MappingController
         "LayerDefinition": {
             "type": "object",
             "description": "Configuration for a specific layer within a map definition",
+            "additionalProperties": false,
             "required": [
                 "kind"
             ],
@@ -3288,18 +2733,13 @@ public partial class MappingController
                     "description": "The layer kind"
                 },
                 "storageMode": {
-                    "type": "string",
-                    "enum": [
-                        "Durable",
-                        "Cached",
-                        "Ephemeral"
-                    ],
-                    "default": "Cached",
+                    "$ref": "#/$defs/StorageMode",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
                     "type": "integer",
-                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "minimum": 0,
+                    "description": "TTL for cached/ephemeral data (0 = use default from config)",
                     "nullable": true
                 },
                 "defaultNonAuthorityHandling": {
@@ -3309,6 +2749,7 @@ public partial class MappingController
                 "cellSize": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 1,
                     "description": "Spatial cell size for indexing (default from config if not set)",
                     "nullable": true
                 }
@@ -3316,7 +2757,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -3332,6 +2773,16 @@ public partial class MappingController
                 "VisualEffects"
             ]
         },
+        "StorageMode": {
+            "type": "string",
+            "description": "How layer data should be stored",
+            "enum": [
+                "Durable",
+                "Cached",
+                "Ephemeral"
+            ],
+            "default": "Cached"
+        },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
@@ -3341,50 +2792,6 @@ public partial class MappingController
                 "RejectSilent"
             ],
             "default": "RejectAndAlert"
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
         }
     }
 }
@@ -3454,6 +2861,7 @@ public partial class MappingController
         "GetDefinitionRequest": {
             "type": "object",
             "description": "Request to get a map definition",
+            "additionalProperties": false,
             "required": [
                 "definitionId"
             ],
@@ -3477,6 +2885,7 @@ public partial class MappingController
         "MapDefinition": {
             "type": "object",
             "description": "A map definition template that describes the structure of a region",
+            "additionalProperties": false,
             "required": [
                 "definitionId",
                 "name",
@@ -3490,10 +2899,13 @@ public partial class MappingController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Human-readable name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2048,
                     "description": "Description of the map template",
                     "nullable": true
                 },
@@ -3506,7 +2918,7 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Default bounds for regions using this definition",
                     "nullable": true
                 },
@@ -3532,6 +2944,7 @@ public partial class MappingController
         "LayerDefinition": {
             "type": "object",
             "description": "Configuration for a specific layer within a map definition",
+            "additionalProperties": false,
             "required": [
                 "kind"
             ],
@@ -3541,18 +2954,13 @@ public partial class MappingController
                     "description": "The layer kind"
                 },
                 "storageMode": {
-                    "type": "string",
-                    "enum": [
-                        "Durable",
-                        "Cached",
-                        "Ephemeral"
-                    ],
-                    "default": "Cached",
+                    "$ref": "#/$defs/StorageMode",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
                     "type": "integer",
-                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "minimum": 0,
+                    "description": "TTL for cached/ephemeral data (0 = use default from config)",
                     "nullable": true
                 },
                 "defaultNonAuthorityHandling": {
@@ -3562,6 +2970,7 @@ public partial class MappingController
                 "cellSize": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 1,
                     "description": "Spatial cell size for indexing (default from config if not set)",
                     "nullable": true
                 }
@@ -3569,7 +2978,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -3585,6 +2994,16 @@ public partial class MappingController
                 "VisualEffects"
             ]
         },
+        "StorageMode": {
+            "type": "string",
+            "description": "How layer data should be stored",
+            "enum": [
+                "Durable",
+                "Cached",
+                "Ephemeral"
+            ],
+            "default": "Cached"
+        },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
@@ -3594,50 +3013,6 @@ public partial class MappingController
                 "RejectSilent"
             ],
             "default": "RejectAndAlert"
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
         }
     }
 }
@@ -3707,19 +3082,24 @@ public partial class MappingController
         "ListDefinitionsRequest": {
             "type": "object",
             "description": "Request to list map definitions",
+            "additionalProperties": false,
             "properties": {
                 "nameFilter": {
                     "type": "string",
+                    "maxLength": 256,
                     "description": "Filter by name (partial match)",
                     "nullable": true
                 },
                 "offset": {
                     "type": "integer",
+                    "minimum": 0,
                     "default": 0,
                     "description": "Pagination offset"
                 },
                 "limit": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200,
                     "default": 50,
                     "description": "Max results to return"
                 }
@@ -3737,6 +3117,11 @@ public partial class MappingController
         "ListDefinitionsResponse": {
             "type": "object",
             "description": "Response containing list of map definitions",
+            "additionalProperties": false,
+            "required": [
+                "definitions",
+                "total"
+            ],
             "properties": {
                 "definitions": {
                     "type": "array",
@@ -3747,21 +3132,15 @@ public partial class MappingController
                 },
                 "total": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Total count matching filter"
-                },
-                "offset": {
-                    "type": "integer",
-                    "description": "Current offset"
-                },
-                "limit": {
-                    "type": "integer",
-                    "description": "Results limit used"
                 }
             }
         },
         "MapDefinition": {
             "type": "object",
             "description": "A map definition template that describes the structure of a region",
+            "additionalProperties": false,
             "required": [
                 "definitionId",
                 "name",
@@ -3775,10 +3154,13 @@ public partial class MappingController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Human-readable name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2048,
                     "description": "Description of the map template",
                     "nullable": true
                 },
@@ -3791,7 +3173,7 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Default bounds for regions using this definition",
                     "nullable": true
                 },
@@ -3817,6 +3199,7 @@ public partial class MappingController
         "LayerDefinition": {
             "type": "object",
             "description": "Configuration for a specific layer within a map definition",
+            "additionalProperties": false,
             "required": [
                 "kind"
             ],
@@ -3826,18 +3209,13 @@ public partial class MappingController
                     "description": "The layer kind"
                 },
                 "storageMode": {
-                    "type": "string",
-                    "enum": [
-                        "Durable",
-                        "Cached",
-                        "Ephemeral"
-                    ],
-                    "default": "Cached",
+                    "$ref": "#/$defs/StorageMode",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
                     "type": "integer",
-                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "minimum": 0,
+                    "description": "TTL for cached/ephemeral data (0 = use default from config)",
                     "nullable": true
                 },
                 "defaultNonAuthorityHandling": {
@@ -3847,6 +3225,7 @@ public partial class MappingController
                 "cellSize": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 1,
                     "description": "Spatial cell size for indexing (default from config if not set)",
                     "nullable": true
                 }
@@ -3854,7 +3233,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -3870,6 +3249,16 @@ public partial class MappingController
                 "VisualEffects"
             ]
         },
+        "StorageMode": {
+            "type": "string",
+            "description": "How layer data should be stored",
+            "enum": [
+                "Durable",
+                "Cached",
+                "Ephemeral"
+            ],
+            "default": "Cached"
+        },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
@@ -3879,50 +3268,6 @@ public partial class MappingController
                 "RejectSilent"
             ],
             "default": "RejectAndAlert"
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
         }
     }
 }
@@ -3992,6 +3337,7 @@ public partial class MappingController
         "UpdateDefinitionRequest": {
             "type": "object",
             "description": "Request to update a map definition",
+            "additionalProperties": false,
             "required": [
                 "definitionId"
             ],
@@ -4003,11 +3349,14 @@ public partial class MappingController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "New name (optional)",
                     "nullable": true
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2048,
                     "description": "New description (optional)",
                     "nullable": true
                 },
@@ -4020,7 +3369,7 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "New default bounds",
                     "nullable": true
                 },
@@ -4035,6 +3384,7 @@ public partial class MappingController
         "LayerDefinition": {
             "type": "object",
             "description": "Configuration for a specific layer within a map definition",
+            "additionalProperties": false,
             "required": [
                 "kind"
             ],
@@ -4044,18 +3394,13 @@ public partial class MappingController
                     "description": "The layer kind"
                 },
                 "storageMode": {
-                    "type": "string",
-                    "enum": [
-                        "Durable",
-                        "Cached",
-                        "Ephemeral"
-                    ],
-                    "default": "Cached",
+                    "$ref": "#/$defs/StorageMode",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
                     "type": "integer",
-                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "minimum": 0,
+                    "description": "TTL for cached/ephemeral data (0 = use default from config)",
                     "nullable": true
                 },
                 "defaultNonAuthorityHandling": {
@@ -4065,6 +3410,7 @@ public partial class MappingController
                 "cellSize": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 1,
                     "description": "Spatial cell size for indexing (default from config if not set)",
                     "nullable": true
                 }
@@ -4072,7 +3418,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -4088,6 +3434,16 @@ public partial class MappingController
                 "VisualEffects"
             ]
         },
+        "StorageMode": {
+            "type": "string",
+            "description": "How layer data should be stored",
+            "enum": [
+                "Durable",
+                "Cached",
+                "Ephemeral"
+            ],
+            "default": "Cached"
+        },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
@@ -4097,50 +3453,6 @@ public partial class MappingController
                 "RejectSilent"
             ],
             "default": "RejectAndAlert"
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
         }
     }
 }
@@ -4154,6 +3466,7 @@ public partial class MappingController
         "MapDefinition": {
             "type": "object",
             "description": "A map definition template that describes the structure of a region",
+            "additionalProperties": false,
             "required": [
                 "definitionId",
                 "name",
@@ -4167,10 +3480,13 @@ public partial class MappingController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Human-readable name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2048,
                     "description": "Description of the map template",
                     "nullable": true
                 },
@@ -4183,7 +3499,7 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "$ref": "#/$defs/Bounds",
+                    "type": "object",
                     "description": "Default bounds for regions using this definition",
                     "nullable": true
                 },
@@ -4209,6 +3525,7 @@ public partial class MappingController
         "LayerDefinition": {
             "type": "object",
             "description": "Configuration for a specific layer within a map definition",
+            "additionalProperties": false,
             "required": [
                 "kind"
             ],
@@ -4218,18 +3535,13 @@ public partial class MappingController
                     "description": "The layer kind"
                 },
                 "storageMode": {
-                    "type": "string",
-                    "enum": [
-                        "Durable",
-                        "Cached",
-                        "Ephemeral"
-                    ],
-                    "default": "Cached",
+                    "$ref": "#/$defs/StorageMode",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
                     "type": "integer",
-                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "minimum": 0,
+                    "description": "TTL for cached/ephemeral data (0 = use default from config)",
                     "nullable": true
                 },
                 "defaultNonAuthorityHandling": {
@@ -4239,6 +3551,7 @@ public partial class MappingController
                 "cellSize": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 1,
                     "description": "Spatial cell size for indexing (default from config if not set)",
                     "nullable": true
                 }
@@ -4246,7 +3559,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.",
             "enum": [
                 "Terrain",
                 "StaticGeometry",
@@ -4262,6 +3575,16 @@ public partial class MappingController
                 "VisualEffects"
             ]
         },
+        "StorageMode": {
+            "type": "string",
+            "description": "How layer data should be stored",
+            "enum": [
+                "Durable",
+                "Cached",
+                "Ephemeral"
+            ],
+            "default": "Cached"
+        },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
@@ -4271,50 +3594,6 @@ public partial class MappingController
                 "RejectSilent"
             ],
             "default": "RejectAndAlert"
-        },
-        "Bounds": {
-            "type": "object",
-            "description": "An axis-aligned bounding box in 3D space",
-            "required": [
-                "min",
-                "max"
-            ],
-            "properties": {
-                "min": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Minimum corner (lowest x, y, z values)"
-                },
-                "max": {
-                    "$ref": "#/$defs/Position3D",
-                    "description": "Maximum corner (highest x, y, z values)"
-                }
-            }
-        },
-        "Position3D": {
-            "type": "object",
-            "description": "A point in 3D space",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "X coordinate (typically east-west)"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Y coordinate (typically up-down / elevation)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "double",
-                    "description": "Z coordinate (typically north-south)"
-                }
-            }
         }
     }
 }
@@ -4384,6 +3663,7 @@ public partial class MappingController
         "DeleteDefinitionRequest": {
             "type": "object",
             "description": "Request to delete a map definition",
+            "additionalProperties": false,
             "required": [
                 "definitionId"
             ],
@@ -4400,22 +3680,7 @@ public partial class MappingController
 """;
 
     private static readonly string _DeleteDefinition_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DeleteDefinitionResponse",
-    "$defs": {
-        "DeleteDefinitionResponse": {
-            "type": "object",
-            "description": "Response to delete request",
-            "properties": {
-                "deleted": {
-                    "type": "boolean",
-                    "description": "Whether the definition was deleted"
-                }
-            }
-        }
-    }
-}
+{}
 """;
 
     private static readonly string _DeleteDefinition_Info = """

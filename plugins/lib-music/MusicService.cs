@@ -15,8 +15,8 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
+using SdkChordQuality = BeyondImmersion.Bannou.MusicTheory.Collections.ChordQuality;
+using SdkContourShape = BeyondImmersion.Bannou.MusicTheory.Melody.ContourShape;
 
 namespace BeyondImmersion.BannouService.Music;
 
@@ -62,7 +62,6 @@ public partial class MusicService : IMusicService
         CancellationToken cancellationToken)
     {
         _logger.LogDebug("Generating composition with style {StyleId}", body.StyleId);
-        var stopwatch = Stopwatch.StartNew();
 
         // Get the style definition
         var style = GetStyleDefinition(body.StyleId);
@@ -79,9 +78,6 @@ public partial class MusicService : IMusicService
             if (cached != null)
             {
                 _logger.LogDebug("Cache hit for composition {CacheKey}", cacheKey);
-                stopwatch.Stop();
-                // Update generation time to reflect cache hit
-                cached.GenerationTimeMs = (int)stopwatch.ElapsedMilliseconds;
                 return (StatusCodes.OK, cached);
             }
         }
@@ -98,7 +94,7 @@ public partial class MusicService : IMusicService
                 style.ModeDistribution.Select(random));
 
         // Determine tempo
-        var tempo = body.Tempo > 0 ? body.Tempo : style.DefaultTempo;
+        var tempo = body.Tempo.HasValue ? body.Tempo.Value : style.DefaultTempo;
 
         // Get meter from tune type or style default
         var meter = style.DefaultMeter;
@@ -161,15 +157,11 @@ public partial class MusicService : IMusicService
             ticksPerBeat,
             $"Generated {style.Name} Composition");
 
-        stopwatch.Stop();
-
         // Build response with narrative metadata
-        var compositionId = Guid.NewGuid();
         var response = new GenerateCompositionResponse
         {
-            CompositionId = compositionId.ToString(),
+            CompositionId = Guid.NewGuid(),
             MidiJson = midiJson,
-            GenerationTimeMs = (int)stopwatch.ElapsedMilliseconds,
             Metadata = new CompositionMetadata
             {
                 StyleId = body.StyleId,
@@ -423,7 +415,7 @@ public partial class MusicService : IMusicService
         var scale = new Scale(body.Key.Tonic, ToModeType(body.Key.Mode));
         var generator = new ProgressionGenerator(seed);
 
-        var length = body.Length > 0 ? body.Length : 8;
+        var length = body.Length ?? _configuration.DefaultProgressionLength;
         var progression = generator.Generate(scale, length);
 
         // Convert to API response
@@ -486,7 +478,7 @@ public partial class MusicService : IMusicService
 
         // Convert harmony to SDK progression (PitchClass has x-sdk-type, no conversion needed)
         var progression = body.Harmony?.Select((ce, i) => new ProgressionChord(
-            new Chord(ce.Chord.Root, ToChordQuality(ce.Chord.Quality)),
+            new Chord(ce.Chord.Root, ToSdkChordQuality(ce.Chord.Quality)),
             ce.RomanNumeral ?? GetRomanNumeral(i),
             i + 1,
             ce.DurationTicks / 480.0
@@ -500,8 +492,8 @@ public partial class MusicService : IMusicService
             : PitchRange.Vocal.Soprano;
 
         var contour = body.Contour.HasValue
-            ? ToContourShape(body.Contour.Value)
-            : ContourShape.Arch;
+            ? ToSdkContourShape(body.Contour.Value)
+            : SdkContourShape.Arch;
 
         var options = new MelodyOptions
         {
@@ -528,7 +520,7 @@ public partial class MusicService : IMusicService
         var analysis = new MelodyAnalysis
         {
             NoteCount = notes.Count,
-            Contour = contour.ToString().ToLowerInvariant(),
+            Contour = ToApiContourShape(contour),
             AverageNoteDuration = notes.Count > 0
                 ? (float)notes.Average(n => n.DurationTicks)
                 : 0
@@ -565,7 +557,7 @@ public partial class MusicService : IMusicService
 
         // Convert API chords to SDK chords (PitchClass has x-sdk-type, no conversion needed)
         var chords = body.Chords?.Select(cs =>
-            new Chord(cs.Root, ToChordQuality(cs.Quality), cs.Bass)
+            new Chord(cs.Root, ToSdkChordQuality(cs.Quality), cs.Bass)
         ).ToList() ?? [];
 
         // Set up voice leading rules
@@ -655,23 +647,23 @@ public partial class MusicService : IMusicService
         // triumphant → TensionAndRelease + Climax→Resolution
         var (templateId, initialEmotion, targetEmotion) = body.Mood switch
         {
-            GenerateCompositionRequestMood.Bright => (
+            Mood.Bright => (
                 "simple_arc",
                 EmotionalState.Presets.Joyful,
                 (EmotionalState?)null),
-            GenerateCompositionRequestMood.Dark => (
+            Mood.Dark => (
                 "tension_and_release",
                 EmotionalState.Presets.Tense,
                 (EmotionalState?)null),
-            GenerateCompositionRequestMood.Neutral => (
+            Mood.Neutral => (
                 "journey_and_return",
                 EmotionalState.Presets.Neutral,
                 (EmotionalState?)null),
-            GenerateCompositionRequestMood.Melancholic => (
+            Mood.Melancholic => (
                 "simple_arc",
                 EmotionalState.Presets.Melancholic,
                 (EmotionalState?)null),
-            GenerateCompositionRequestMood.Triumphant => (
+            Mood.Triumphant => (
                 "tension_and_release",
                 EmotionalState.Presets.Climax,
                 EmotionalState.Presets.Resolution),
@@ -710,43 +702,43 @@ public partial class MusicService : IMusicService
     /// Maps narrative arc to contour shape.
     /// Uses configuration for thresholds per IMPLEMENTATION TENETS (no hardcoded magic numbers).
     /// </summary>
-    private ContourShape GetContourFromStoryResult(CompositionResult result)
+    private SdkContourShape GetContourFromStoryResult(CompositionResult result)
     {
         // Use the emotional trajectory to determine contour
         var finalTension = result.FinalState.Emotional.Tension;
         var initialTension = result.Sections.FirstOrDefault()?.Plan.Goal.TargetState
             .Get<double>(WorldState.Keys.Tension);
 
-        // Use configuration values for thresholds (T21 compliant)
+        // Use configuration values for thresholds (per IMPLEMENTATION TENETS)
         var defaultTension = _configuration.ContourDefaultTension;
         var tensionThreshold = _configuration.ContourTensionThreshold;
 
         // If tension generally increases, use ascending contour
         if (finalTension > (initialTension ?? defaultTension) + tensionThreshold)
         {
-            return ContourShape.Ascending;
+            return SdkContourShape.Ascending;
         }
 
         // If tension generally decreases, use descending contour
         if (finalTension < (initialTension ?? defaultTension) - tensionThreshold)
         {
-            return ContourShape.Descending;
+            return SdkContourShape.Descending;
         }
 
         // For dramatic arcs (tension_and_release), use arch
         if (result.Narrative.Id == "tension_and_release")
         {
-            return ContourShape.Arch;
+            return SdkContourShape.Arch;
         }
 
         // For journey narratives, use wave
         if (result.Narrative.Id == "journey_and_return")
         {
-            return ContourShape.Wave;
+            return SdkContourShape.Wave;
         }
 
         // Default to arch for most pleasing melodic shape
-        return ContourShape.Arch;
+        return SdkContourShape.Arch;
     }
 
     /// <summary>
@@ -762,7 +754,7 @@ public partial class MusicService : IMusicService
                 s.Plan.Goal.TargetState.Get<double>(WorldState.Keys.Energy))
             : _configuration.DefaultEmotionalEnergy;
 
-        // Map energy to density using configuration (T21 compliant)
+        // Map energy to density using configuration (per IMPLEMENTATION TENETS)
         return _configuration.DensityMinimum + avgEnergy * _configuration.DensityEnergyMultiplier;
     }
 
@@ -861,72 +853,82 @@ public partial class MusicService : IMusicService
 
     // ToPitchClass and ToApiPitchClass removed - PitchClass has x-sdk-type (identity conversion)
 
-    private static ModeType ToModeType(KeySignatureMode mode) => mode switch
+    private static ModeType ToModeType(KeyMode mode) => mode switch
     {
-        KeySignatureMode.Major => ModeType.Major,
-        KeySignatureMode.Minor => ModeType.Minor,
-        KeySignatureMode.Dorian => ModeType.Dorian,
-        KeySignatureMode.Phrygian => ModeType.Phrygian,
-        KeySignatureMode.Lydian => ModeType.Lydian,
-        KeySignatureMode.Mixolydian => ModeType.Mixolydian,
-        KeySignatureMode.Aeolian => ModeType.Minor,
-        KeySignatureMode.Locrian => ModeType.Locrian,
+        KeyMode.Major => ModeType.Major,
+        KeyMode.Minor => ModeType.Minor,
+        KeyMode.Dorian => ModeType.Dorian,
+        KeyMode.Phrygian => ModeType.Phrygian,
+        KeyMode.Lydian => ModeType.Lydian,
+        KeyMode.Mixolydian => ModeType.Mixolydian,
+        KeyMode.Aeolian => ModeType.Minor,
+        KeyMode.Locrian => ModeType.Locrian,
         _ => ModeType.Major
     };
 
-    private static KeySignatureMode ToApiMode(ModeType mode) => mode switch
+    private static KeyMode ToApiMode(ModeType mode) => mode switch
     {
-        ModeType.Major => KeySignatureMode.Major,
-        ModeType.Minor => KeySignatureMode.Minor,
-        ModeType.Dorian => KeySignatureMode.Dorian,
-        ModeType.Phrygian => KeySignatureMode.Phrygian,
-        ModeType.Lydian => KeySignatureMode.Lydian,
-        ModeType.Mixolydian => KeySignatureMode.Mixolydian,
-        ModeType.Locrian => KeySignatureMode.Locrian,
-        _ => KeySignatureMode.Major
+        ModeType.Major => KeyMode.Major,
+        ModeType.Minor => KeyMode.Minor,
+        ModeType.Dorian => KeyMode.Dorian,
+        ModeType.Phrygian => KeyMode.Phrygian,
+        ModeType.Lydian => KeyMode.Lydian,
+        ModeType.Mixolydian => KeyMode.Mixolydian,
+        ModeType.Locrian => KeyMode.Locrian,
+        _ => KeyMode.Major
     };
 
-    private static ChordQuality ToChordQuality(ChordSymbolQuality quality) => quality switch
+    private static SdkChordQuality ToSdkChordQuality(ChordQuality quality) => quality switch
     {
-        ChordSymbolQuality.Major => ChordQuality.Major,
-        ChordSymbolQuality.Minor => ChordQuality.Minor,
-        ChordSymbolQuality.Diminished => ChordQuality.Diminished,
-        ChordSymbolQuality.Augmented => ChordQuality.Augmented,
-        ChordSymbolQuality.Dominant7 => ChordQuality.Dominant7,
-        ChordSymbolQuality.Major7 => ChordQuality.Major7,
-        ChordSymbolQuality.Minor7 => ChordQuality.Minor7,
-        ChordSymbolQuality.Diminished7 => ChordQuality.Diminished7,
-        ChordSymbolQuality.HalfDiminished7 => ChordQuality.HalfDiminished7,
-        ChordSymbolQuality.Augmented7 => ChordQuality.Augmented7,
-        ChordSymbolQuality.Sus2 => ChordQuality.Sus2,
-        ChordSymbolQuality.Sus4 => ChordQuality.Sus4,
+        ChordQuality.Major => SdkChordQuality.Major,
+        ChordQuality.Minor => SdkChordQuality.Minor,
+        ChordQuality.Diminished => SdkChordQuality.Diminished,
+        ChordQuality.Augmented => SdkChordQuality.Augmented,
+        ChordQuality.Dominant7 => SdkChordQuality.Dominant7,
+        ChordQuality.Major7 => SdkChordQuality.Major7,
+        ChordQuality.Minor7 => SdkChordQuality.Minor7,
+        ChordQuality.Diminished7 => SdkChordQuality.Diminished7,
+        ChordQuality.HalfDiminished7 => SdkChordQuality.HalfDiminished7,
+        ChordQuality.Augmented7 => SdkChordQuality.Augmented7,
+        ChordQuality.Sus2 => SdkChordQuality.Sus2,
+        ChordQuality.Sus4 => SdkChordQuality.Sus4,
+        _ => SdkChordQuality.Major
+    };
+
+    private static ChordQuality ToApiChordQuality(SdkChordQuality quality) => quality switch
+    {
+        SdkChordQuality.Major => ChordQuality.Major,
+        SdkChordQuality.Minor => ChordQuality.Minor,
+        SdkChordQuality.Diminished => ChordQuality.Diminished,
+        SdkChordQuality.Augmented => ChordQuality.Augmented,
+        SdkChordQuality.Dominant7 => ChordQuality.Dominant7,
+        SdkChordQuality.Major7 => ChordQuality.Major7,
+        SdkChordQuality.Minor7 => ChordQuality.Minor7,
+        SdkChordQuality.Diminished7 => ChordQuality.Diminished7,
+        SdkChordQuality.HalfDiminished7 => ChordQuality.HalfDiminished7,
+        SdkChordQuality.Augmented7 => ChordQuality.Augmented7,
+        SdkChordQuality.Sus2 => ChordQuality.Sus2,
+        SdkChordQuality.Sus4 => ChordQuality.Sus4,
         _ => ChordQuality.Major
     };
 
-    private static ChordSymbolQuality ToApiChordQuality(ChordQuality quality) => quality switch
+    private static SdkContourShape ToSdkContourShape(ContourShape contour) => contour switch
     {
-        ChordQuality.Major => ChordSymbolQuality.Major,
-        ChordQuality.Minor => ChordSymbolQuality.Minor,
-        ChordQuality.Diminished => ChordSymbolQuality.Diminished,
-        ChordQuality.Augmented => ChordSymbolQuality.Augmented,
-        ChordQuality.Dominant7 => ChordSymbolQuality.Dominant7,
-        ChordQuality.Major7 => ChordSymbolQuality.Major7,
-        ChordQuality.Minor7 => ChordSymbolQuality.Minor7,
-        ChordQuality.Diminished7 => ChordSymbolQuality.Diminished7,
-        ChordQuality.HalfDiminished7 => ChordSymbolQuality.HalfDiminished7,
-        ChordQuality.Augmented7 => ChordSymbolQuality.Augmented7,
-        ChordQuality.Sus2 => ChordSymbolQuality.Sus2,
-        ChordQuality.Sus4 => ChordSymbolQuality.Sus4,
-        _ => ChordSymbolQuality.Major
+        ContourShape.Arch => SdkContourShape.Arch,
+        ContourShape.Wave => SdkContourShape.Wave,
+        ContourShape.Ascending => SdkContourShape.Ascending,
+        ContourShape.Descending => SdkContourShape.Descending,
+        ContourShape.Static => SdkContourShape.Static,
+        _ => SdkContourShape.Arch
     };
 
-    private static ContourShape ToContourShape(GenerateMelodyRequestContour contour) => contour switch
+    private static ContourShape ToApiContourShape(SdkContourShape contour) => contour switch
     {
-        GenerateMelodyRequestContour.Arch => ContourShape.Arch,
-        GenerateMelodyRequestContour.Wave => ContourShape.Wave,
-        GenerateMelodyRequestContour.Ascending => ContourShape.Ascending,
-        GenerateMelodyRequestContour.Descending => ContourShape.Descending,
-        GenerateMelodyRequestContour.Static => ContourShape.Static,
+        SdkContourShape.Arch => ContourShape.Arch,
+        SdkContourShape.Wave => ContourShape.Wave,
+        SdkContourShape.Ascending => ContourShape.Ascending,
+        SdkContourShape.Descending => ContourShape.Descending,
+        SdkContourShape.Static => ContourShape.Static,
         _ => ContourShape.Arch
     };
 
@@ -1010,7 +1012,7 @@ public partial class MusicService : IMusicService
             }).ToList(),
             HarmonyStyle = style.HarmonyStyle != null ? new HarmonyStyle
             {
-                PrimaryCadence = HarmonyStylePrimaryCadence.Authentic,
+                PrimaryCadence = CadenceType.Authentic,
                 DominantPrepProbability = (float)style.HarmonyStyle.DominantPrepProbability,
                 SecondaryDominantProbability = (float)style.HarmonyStyle.SecondaryDominantProbability,
                 ModalInterchangeProbability = (float)style.HarmonyStyle.ModalInterchangeProbability,
@@ -1038,9 +1040,9 @@ public partial class MusicService : IMusicService
             keyParts.Add($"key:{request.Key.Tonic}:{request.Key.Mode}");
         }
 
-        if (request.Tempo > 0)
+        if (request.Tempo.HasValue)
         {
-            keyParts.Add($"tempo:{request.Tempo}");
+            keyParts.Add($"tempo:{request.Tempo.Value}");
         }
 
         if (!string.IsNullOrEmpty(request.TuneType))
@@ -1073,7 +1075,7 @@ public partial class MusicService : IMusicService
         catch (Exception ex)
         {
             // Cache miss or error - proceed with generation
-            _logger.LogDebug(ex, "Cache lookup failed for {CacheKey}", cacheKey);
+            _logger.LogWarning(ex, "Cache lookup failed for {CacheKey}", cacheKey);
             return null;
         }
     }

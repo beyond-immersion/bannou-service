@@ -421,6 +421,7 @@ components:
       required:
       - queueId
       - gameId
+      - sessionGameType
       - displayName
       - enabled
       - minCount
@@ -477,7 +478,8 @@ components:
           description: Skill window expansion steps
         partySkillAggregation:
           $ref: '#/components/schemas/PartySkillAggregation'
-          description: How to calculate party skill rating
+          nullable: true
+          description: How to calculate party skill rating (null if party matching not configured)
         partySkillWeights:
           type: array
           items:
@@ -598,6 +600,7 @@ components:
           description: Skill window expansion steps
         partySkillAggregation:
           $ref: '#/components/schemas/PartySkillAggregation'
+          nullable: true
           description: How to calculate party skill rating
         partySkillWeights:
           type: array
@@ -832,16 +835,12 @@ components:
       additionalProperties: false
       required:
       - ticketId
-      - queueId
       - estimatedWaitSeconds
       properties:
         ticketId:
           type: string
           format: uuid
           description: Unique identifier for this matchmaking ticket
-        queueId:
-          type: string
-          description: Queue that was joined
         estimatedWaitSeconds:
           type: integer
           nullable: true
@@ -969,13 +968,8 @@ components:
       description: Response after accepting a match
       additionalProperties: false
       required:
-      - matchId
       - allAccepted
       properties:
-        matchId:
-          type: string
-          format: uuid
-          description: Match identifier
         allAccepted:
           type: boolean
           description: Whether all players have accepted

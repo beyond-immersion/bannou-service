@@ -645,11 +645,13 @@ components:
           maxLength: 256
           description: Publisher-defined type (used for indexing and filtering)
         position:
-          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Position for point objects
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Bounds for area objects
           nullable: true
         data:
@@ -690,11 +692,13 @@ components:
           maxLength: 256
           description: Publisher-defined type
         position:
-          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Position for point objects
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Bounding box for area objects
           nullable: true
         data:
@@ -739,11 +743,13 @@ components:
           description: Object type (required for created)
           nullable: true
         position:
-          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Object position (for create/update)
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Object bounds (for create/update)
           nullable: true
         data:
@@ -999,7 +1005,8 @@ components:
           description: App-id of caller (for warnings on non-authority attempts)
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Affected area (null means entire region)
           nullable: true
         deltaType:
@@ -1106,7 +1113,8 @@ components:
           description: Which kinds to include (default all)
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Optional bounds filter
           nullable: true
         authorityToken:
@@ -1152,7 +1160,8 @@ components:
           format: uuid
           description: Region to query
         position:
-          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Point to query at
         kinds:
           type: array
@@ -1192,7 +1201,8 @@ components:
           format: uuid
           description: Region to query
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Bounding box to query
         kinds:
           type: array
@@ -1242,7 +1252,8 @@ components:
           maxLength: 256
           description: Object type to filter by
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Optional bounds filter
           nullable: true
         maxObjects:
@@ -1290,7 +1301,8 @@ components:
           description: Custom affordance definition (when affordanceType=Custom)
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Optional bounds to search within
           nullable: true
         maxResults:
@@ -1339,10 +1351,12 @@ components:
       - score
       properties:
         position:
-          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Location position
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Area bounds if affordance spans an area
           nullable: true
         score:
@@ -1515,7 +1529,8 @@ components:
           description: Layer configurations for this map
           nullable: true
         defaultBounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Default bounds for regions using this definition
           nullable: true
         metadata:
@@ -1587,7 +1602,8 @@ components:
           description: Layer configurations
           nullable: true
         defaultBounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Default bounds for regions using this definition
           nullable: true
         metadata:
@@ -1679,7 +1695,8 @@ components:
           description: New layer configurations (replaces existing)
           nullable: true
         defaultBounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: New default bounds
           nullable: true
         metadata:

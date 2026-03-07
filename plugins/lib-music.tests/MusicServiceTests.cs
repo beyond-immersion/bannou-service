@@ -126,11 +126,11 @@ public class MusicServiceTests
         Assert.Equal(0.8, config.DefaultEmotionalStability);
         Assert.Equal(0.5, config.DefaultEmotionalValence);
 
-        // Contour detection defaults (T21 compliant)
+        // Contour detection defaults (per IMPLEMENTATION TENETS)
         Assert.Equal(0.2, config.ContourTensionThreshold);
         Assert.Equal(0.5, config.ContourDefaultTension);
 
-        // Density calculation defaults (T21 compliant)
+        // Density calculation defaults (per IMPLEMENTATION TENETS)
         Assert.Equal(0.4, config.DensityMinimum);
         Assert.Equal(0.5, config.DensityEnergyMultiplier);
     }

@@ -72,7 +72,9 @@ public partial class ObligationService
                 await _messageBus.TryPublishErrorAsync(
                     "obligation", "cache_rebuild",
                     "cache_rebuild_failed",
-                    $"Failed to rebuild cache for character {characterId} on contract.activated: {ex.Message}");
+                    "Failed to rebuild obligation cache after contract activation",
+                    endpoint: characterId.ToString(),
+                    stack: ex.StackTrace);
             }
         }
     }
@@ -104,7 +106,9 @@ public partial class ObligationService
                 await _messageBus.TryPublishErrorAsync(
                     "obligation", "cache_rebuild",
                     "cache_rebuild_failed",
-                    $"Failed to rebuild cache for character {characterId} on contract.terminated: {ex.Message}");
+                    "Failed to rebuild obligation cache after contract termination",
+                    endpoint: characterId.ToString(),
+                    stack: ex.StackTrace);
             }
         }
     }
@@ -140,7 +144,9 @@ public partial class ObligationService
                 await _messageBus.TryPublishErrorAsync(
                     "obligation", "cache_rebuild",
                     "cache_rebuild_failed",
-                    $"Failed to rebuild cache for character {characterId} on contract.fulfilled: {ex.Message}");
+                    "Failed to rebuild obligation cache after contract fulfillment",
+                    endpoint: characterId.ToString(),
+                    stack: ex.StackTrace);
             }
         }
     }
@@ -172,7 +178,9 @@ public partial class ObligationService
                 await _messageBus.TryPublishErrorAsync(
                     "obligation", "cache_rebuild",
                     "cache_rebuild_failed",
-                    $"Failed to rebuild cache for character {characterId} on contract.expired: {ex.Message}");
+                    "Failed to rebuild obligation cache after contract expiry",
+                    endpoint: characterId.ToString(),
+                    stack: ex.StackTrace);
             }
         }
     }

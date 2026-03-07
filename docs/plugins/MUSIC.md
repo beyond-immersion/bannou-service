@@ -60,6 +60,7 @@ This plugin does not consume external events.
 |----------|---------|---------|---------|
 | `CompositionCacheTtlSeconds` | `MUSIC_COMPOSITION_CACHE_TTL_SECONDS` | `86400` | TTL for cached deterministic compositions (24 hours) |
 | `DefaultTicksPerBeat` | `MUSIC_DEFAULT_TICKS_PER_BEAT` | `480` | MIDI ticks per beat (PPQN) for composition rendering |
+| `DefaultProgressionLength` | `MUSIC_DEFAULT_PROGRESSION_LENGTH` | `8` | Default number of chords in a generated progression |
 | `DefaultChordsPerBar` | `MUSIC_DEFAULT_CHORDS_PER_BAR` | `1` | Number of chords per bar in generated progressions |
 | `DefaultVoiceCount` | `MUSIC_DEFAULT_VOICE_COUNT` | `4` | Number of voices for chord voicing |
 | `DefaultBeatsPerChord` | `MUSIC_DEFAULT_BEATS_PER_CHORD` | `4.0` | Beats per chord in progression generation |
@@ -71,6 +72,10 @@ This plugin does not consume external events.
 | `DefaultEmotionalWarmth` | `MUSIC_DEFAULT_EMOTIONAL_WARMTH` | `0.5` | Default emotional warmth (0.0-1.0) |
 | `DefaultEmotionalStability` | `MUSIC_DEFAULT_EMOTIONAL_STABILITY` | `0.8` | Default emotional stability (0.0-1.0) |
 | `DefaultEmotionalValence` | `MUSIC_DEFAULT_EMOTIONAL_VALENCE` | `0.5` | Default emotional valence (0.0-1.0) |
+| `ContourTensionThreshold` | `MUSIC_CONTOUR_TENSION_THRESHOLD` | `0.2` | Tension delta threshold for ascending/descending contour detection |
+| `ContourDefaultTension` | `MUSIC_CONTOUR_DEFAULT_TENSION` | `0.5` | Default initial tension when no section provides a value |
+| `DensityMinimum` | `MUSIC_DENSITY_MINIMUM` | `0.4` | Minimum melody density floor before energy scaling |
+| `DensityEnergyMultiplier` | `MUSIC_DENSITY_ENERGY_MULTIPLIER` | `0.5` | Energy multiplier for density calculation |
 
 ---
 
@@ -231,6 +236,10 @@ None identified.
 5. **No rate limiting on generation**: Composition generation is CPU-intensive (Storyteller + Theory + Rendering). No protection against burst requests exhausting compute resources.
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/206 -->
 
+6. **x-sdk-type migration scope**: 16 `x-sdk-type` annotations in `music-api.yaml` reference the MusicTheory SDK. The `x-sdk-type` mechanism is designed for the Core SDK only. These annotations work today but represent a legacy pattern that may need migration to `$ref`-based shared types or inline definitions if the generation pipeline changes. Low urgency — no functional impact.
+
+7. **Configuration validation constraints**: The 4 contour/density configuration properties have `minimum`/`maximum` constraints in the schema, but NSwag does not generate runtime validation for configuration classes. Consider adding manual validation in service startup if strict bounds enforcement is needed.
+
 ---
 
 ## Work Tracking
@@ -242,6 +251,19 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Design Consideration #2** (Hardcoded tunables): FIXED - Added 12 configuration properties to `music-configuration.yaml`. All magic numbers now read from `_configuration`.
 - **Design Consideration #3** (MusicServicePlugin lifecycle): FIXED - Removed dead code, simplified plugin from 141 to 60 lines.
 
+### Completed (2026-03-06) — Hardening Pass
+
+- **Schema enum compliance**: Extracted 9 named PascalCase enum schemas from 11 inline lowercase enums (`Mood`, `CadenceType`, `CadenceStrength`, `ContourShape`, `TensionProfile`, `ChordQuality`, `KeyMode`, `FunctionalAnalysis`, `ValidationErrorType`). All use `$ref` references.
+- **T8 filler removal**: Removed `generationTimeMs` from `GenerateCompositionResponse` and all associated `Stopwatch` code.
+- **T25 type safety**: Changed `compositionId` from `string` to `Guid` (`format: uuid`).
+- **NRT value type compliance**: Added `nullable: true` to `tempo`, added missing `required` entries for `warmth`/`stability`/`valence` on `EmotionalStateSnapshot` and `noteCount` on `MelodyAnalysis`.
+- **T0 tenet references**: Replaced all `(T21 compliant)` comments with `(per IMPLEMENTATION TENETS)` in service code, config schema, and tests.
+- **Config descriptions**: Collapsed 4 multi-line YAML descriptions to single-line format (contour/density config properties).
+- **Cache log level**: Changed cache lookup failure from `LogDebug` to `LogWarning` (transient infrastructure failure per T10).
+- **Unused using**: Removed `System.Runtime.CompilerServices` import.
+- **MelodyAnalysis.Contour**: Changed from `string` to `$ref: ContourShape` enum type.
+- **T21 progression length default**: Extracted hardcoded `8` to `DefaultProgressionLength` config property. Made `length` nullable in schema (was required with sentinel `> 0` check).
+
 ### Pending Design
 
 - **Stubs #1-2, Potential Extension #1, Design Consideration #1** (Unused state store / CreateStyle persistence): [#188](https://github.com/beyond-immersion/bannou-service/issues/188) - Requires decision on whether to implement custom styles or remove unused store
@@ -251,3 +273,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Potential Extension #5** (Composer Layer): [#431](https://github.com/beyond-immersion/bannou-service/issues/431) - Personality-driven generation layer with 5-dimension personality model, preference evolution, and ABML integration
 - **Design Consideration #4** (Event publishing): [#205](https://github.com/beyond-immersion/bannou-service/issues/205) - Needs decision on whether composition analytics are needed
 - **Design Consideration #5** (Rate limiting): [#206](https://github.com/beyond-immersion/bannou-service/issues/206) - Needs design for appropriate limits and enforcement point
+- **Design Consideration #6** (x-sdk-type migration): 16 annotations reference MusicTheory SDK; works today but is a legacy pattern outside the intended Core SDK scope
+- **Design Consideration #7** (Config validation constraints): Contour/density config properties have schema-level min/max but no runtime enforcement in generated config class

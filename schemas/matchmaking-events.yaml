@@ -221,6 +221,7 @@ components:
         - queueId
         - tickets
         - playerCount
+        - acceptDeadline
       properties:
         eventId:
           type: string
@@ -268,6 +269,7 @@ components:
         - matchId
         - queueId
         - gameSessionId
+        - playerCount
       properties:
         eventId:
           type: string
@@ -299,13 +301,13 @@ components:
     MatchmakingMatchDeclinedEvent:
       type: object
       additionalProperties: false
-      description: Published when a player declines a match
+      description: Published when a player declines a match or match is cancelled due to session disconnect
       required:
         - eventId
         - timestamp
         - matchId
         - queueId
-        - declinedBy
+        - affectedTicketIds
       properties:
         eventId:
           type: string
@@ -322,23 +324,24 @@ components:
         queueId:
           type: string
           description: Queue the match was from
-        declinedBy:
+        declinedByTicketId:
           type: string
           format: uuid
-          description: Account that declined
-        affectedPlayers:
+          nullable: true
+          description: Ticket ID of the player who declined (null if cancelled due to session disconnect or timeout)
+        affectedTicketIds:
           type: array
           items:
             type: string
             format: uuid
-          description: Account IDs of all affected players
-        requeuingPlayers:
+          description: Ticket IDs of all affected players in the match
+        requeuingTicketIds:
           type: array
           items:
             type: string
             format: uuid
           nullable: true
-          description: Players who will be automatically requeued
+          description: Ticket IDs of players who will be automatically requeued
 
     # =========================================================================
     # Statistics Event

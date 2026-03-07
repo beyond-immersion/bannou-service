@@ -112,6 +112,38 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ---
 
+## ⛔ HEAVY COMMAND OUTPUT CAPTURE (MANDATORY) ⛔
+
+**When running any command that takes more than 10 seconds or produces substantial output, you MUST redirect all output to a file FIRST, then read the file.**
+
+**Pattern:**
+```bash
+command > /tmp/output.txt 2>&1
+```
+Then use the Read tool on `/tmp/output.txt`.
+
+**Rules:**
+1. **NEVER run a heavy command twice.** If you need to examine different parts of the output, read the file with different offsets — do not re-execute the command.
+2. **NEVER re-run a command just to grep its output differently.** Capture once, read many times.
+3. **Set timeouts proportional to the command.** Full regeneration (`generate-all-services.sh`) needs 300000ms minimum. Full builds need 120000ms. Do not use the default 120000ms timeout for commands you know are longer.
+4. **If a background command completed, read its output file** — do not re-run the command to see what happened.
+
+**Why this rule exists:** Claude repeatedly ran `generate-all-services.sh` (a 3+ minute command touching 55 services) three times in succession — once to generate, then twice more just to grep different patterns from the output. Each re-run wasted 3+ minutes and put unnecessary load on the system. One redirect-to-file would have made the output available for unlimited examination at zero cost.
+
+**The pattern to avoid:**
+```bash
+# WRONG: Run heavy command, see partial output, run it AGAIN with grep
+heavy_command 2>&1 | tail -30        # Run 1: see end
+heavy_command 2>&1 | grep "FAIL"     # Run 2: find failures (WHY ARE YOU RUNNING IT AGAIN?)
+heavy_command 2>&1 | grep -v SUCCESS # Run 3: filter differently (STOP)
+
+# CORRECT: Capture once, examine freely
+heavy_command > /tmp/output.txt 2>&1  # Run once
+# Then use Read tool on /tmp/output.txt with offset/limit as needed
+```
+
+---
+
 ## ⛔ UNEXPECTED CONSEQUENCES = HARD STOP ⛔
 
 **If a change you made produces unexpected errors, unexpected behavior, or unexpected side effects: STOP IMMEDIATELY. Do not attempt to work around it. Do not layer fixes on top of a surprise. Present the unexpected result to the user and ask for directions.**

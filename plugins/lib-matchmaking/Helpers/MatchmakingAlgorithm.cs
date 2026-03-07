@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace BeyondImmersion.BannouService.Matchmaking.Helpers;
 
 /// <summary>
@@ -6,6 +8,13 @@ namespace BeyondImmersion.BannouService.Matchmaking.Helpers;
 /// </summary>
 internal class MatchmakingAlgorithm : IMatchmakingAlgorithm
 {
+    private readonly ILogger<MatchmakingAlgorithm> _logger;
+
+    public MatchmakingAlgorithm(ILogger<MatchmakingAlgorithm> logger)
+    {
+        _logger = logger;
+    }
+
     /// <inheritdoc/>
     public List<TicketModel>? TryMatchTickets(List<TicketModel> tickets, QueueModel queue, int? skillRange)
     {
@@ -122,9 +131,9 @@ internal class MatchmakingAlgorithm : IMatchmakingAlgorithm
             }
             return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // On parse/format error, allow the match (best effort query matching)
+            _logger.LogDebug(ex, "Query parse error for query {Query}, treating as compatible", query);
             return true;
         }
     }

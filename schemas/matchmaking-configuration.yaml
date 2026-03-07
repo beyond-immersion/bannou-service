@@ -16,36 +16,49 @@ x-service-configuration:
   properties:
     ServerSalt:
       type: string
+      minLength: 16
       description: Server salt for GUID generation. Must be shared across all instances for matchmaking GUIDs to work correctly. Change in production.
       env: MATCHMAKING_SERVER_SALT
       default: "bannou-dev-matchmaking-salt-change-in-production"
     ProcessingIntervalSeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       description: Default interval between match processing cycles
       default: 15
       env: MATCHMAKING_PROCESSING_INTERVAL_SECONDS
     DefaultMaxIntervals:
       type: integer
+      minimum: 1
+      maximum: 100
       description: Default maximum intervals before timeout/relaxation
       default: 6
       env: MATCHMAKING_DEFAULT_MAX_INTERVALS
     MaxConcurrentTicketsPerPlayer:
       type: integer
+      minimum: 1
+      maximum: 10
       description: Maximum number of concurrent tickets a player can have
       default: 3
       env: MATCHMAKING_MAX_CONCURRENT_TICKETS_PER_PLAYER
     DefaultMatchAcceptTimeoutSeconds:
       type: integer
+      minimum: 5
+      maximum: 300
       description: Default time for players to accept a formed match
       default: 30
       env: MATCHMAKING_DEFAULT_MATCH_ACCEPT_TIMEOUT_SECONDS
     StatsPublishIntervalSeconds:
       type: integer
+      minimum: 10
+      maximum: 3600
       description: Interval between stats event publications
       default: 60
       env: MATCHMAKING_STATS_PUBLISH_INTERVAL_SECONDS
     PendingMatchRedisKeyTtlSeconds:
       type: integer
+      minimum: 30
+      maximum: 3600
       description: TTL for pending match data in Redis (for reconnection handling)
       default: 300
       env: MATCHMAKING_PENDING_MATCH_REDIS_KEY_TTL_SECONDS
@@ -61,16 +74,36 @@ x-service-configuration:
       env: MATCHMAKING_AUTO_REQUEUE_ON_DECLINE
     BackgroundServiceStartupDelaySeconds:
       type: integer
+      minimum: 0
+      maximum: 60
       description: Delay before background service starts processing (allows other services to initialize)
       default: 5
       env: MATCHMAKING_BACKGROUND_SERVICE_STARTUP_DELAY_SECONDS
     DefaultReservationTtlSeconds:
       type: integer
+      minimum: 10
+      maximum: 600
       description: Default TTL for player reservations in game sessions created by matchmaking
       default: 120
       env: MATCHMAKING_DEFAULT_RESERVATION_TTL_SECONDS
     DefaultJoinDeadlineSeconds:
       type: integer
+      minimum: 10
+      maximum: 600
       description: Default deadline for players to join the game session after match confirmation
       default: 120
       env: MATCHMAKING_DEFAULT_JOIN_DEADLINE_SECONDS
+    MatchLockTimeoutSeconds:
+      type: integer
+      minimum: 5
+      maximum: 120
+      description: Distributed lock timeout for match processing operations (accept, decline, timeout)
+      default: 30
+      env: MATCHMAKING_MATCH_LOCK_TIMEOUT_SECONDS
+    ListLockTimeoutSeconds:
+      type: integer
+      minimum: 5
+      maximum: 60
+      description: Distributed lock timeout for list/query operations on matchmaking state
+      default: 15
+      env: MATCHMAKING_LIST_LOCK_TIMEOUT_SECONDS

@@ -91,6 +91,7 @@ components:
         - queueDisplayName
         - playerCount
         - acceptDeadline
+        - acceptTimeoutSeconds
       properties:
         eventName:
           type: string
@@ -124,13 +125,11 @@ components:
           type: integer
           nullable: true
           description: Team number the player is assigned to (for team games)
-        partyMembersMatched:
-          type: array
-          items:
-            type: string
-            format: uuid
+        partyId:
+          type: string
+          format: uuid
           nullable: true
-          description: Account IDs of party members who are also in this match
+          description: Party ID if this player was matched as part of a party
 
     # ============================================
     # Match Accepted Events

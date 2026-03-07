@@ -55,42 +55,49 @@ public class MatchmakingServiceConfiguration : BaseServiceConfiguration
     /// Server salt for GUID generation. Must be shared across all instances for matchmaking GUIDs to work correctly. Change in production.
     /// Environment variable: MATCHMAKING_SERVER_SALT
     /// </summary>
+    [ConfigStringLength(MinLength = 16)]
     public string ServerSalt { get; set; } = "bannou-dev-matchmaking-salt-change-in-production";
 
     /// <summary>
     /// Default interval between match processing cycles
     /// Environment variable: MATCHMAKING_PROCESSING_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int ProcessingIntervalSeconds { get; set; } = 15;
 
     /// <summary>
     /// Default maximum intervals before timeout/relaxation
     /// Environment variable: MATCHMAKING_DEFAULT_MAX_INTERVALS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int DefaultMaxIntervals { get; set; } = 6;
 
     /// <summary>
     /// Maximum number of concurrent tickets a player can have
     /// Environment variable: MATCHMAKING_MAX_CONCURRENT_TICKETS_PER_PLAYER
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
     public int MaxConcurrentTicketsPerPlayer { get; set; } = 3;
 
     /// <summary>
     /// Default time for players to accept a formed match
     /// Environment variable: MATCHMAKING_DEFAULT_MATCH_ACCEPT_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
     public int DefaultMatchAcceptTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Interval between stats event publications
     /// Environment variable: MATCHMAKING_STATS_PUBLISH_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 3600)]
     public int StatsPublishIntervalSeconds { get; set; } = 60;
 
     /// <summary>
     /// TTL for pending match data in Redis (for reconnection handling)
     /// Environment variable: MATCHMAKING_PENDING_MATCH_REDIS_KEY_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 30, Maximum = 3600)]
     public int PendingMatchRedisKeyTtlSeconds { get; set; } = 300;
 
     /// <summary>
@@ -109,18 +116,35 @@ public class MatchmakingServiceConfiguration : BaseServiceConfiguration
     /// Delay before background service starts processing (allows other services to initialize)
     /// Environment variable: MATCHMAKING_BACKGROUND_SERVICE_STARTUP_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 60)]
     public int BackgroundServiceStartupDelaySeconds { get; set; } = 5;
 
     /// <summary>
     /// Default TTL for player reservations in game sessions created by matchmaking
     /// Environment variable: MATCHMAKING_DEFAULT_RESERVATION_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
     public int DefaultReservationTtlSeconds { get; set; } = 120;
 
     /// <summary>
     /// Default deadline for players to join the game session after match confirmation
     /// Environment variable: MATCHMAKING_DEFAULT_JOIN_DEADLINE_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
     public int DefaultJoinDeadlineSeconds { get; set; } = 120;
+
+    /// <summary>
+    /// Distributed lock timeout for match processing operations (accept, decline, timeout)
+    /// Environment variable: MATCHMAKING_MATCH_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 120)]
+    public int MatchLockTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Distributed lock timeout for list/query operations on matchmaking state
+    /// Environment variable: MATCHMAKING_LIST_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 60)]
+    public int ListLockTimeoutSeconds { get; set; } = 15;
 
 }

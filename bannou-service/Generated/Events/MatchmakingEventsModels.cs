@@ -26,6 +26,21 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Matchmaking;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -300,6 +315,8 @@ public partial class MatchmakingMatchFormedEvent
     /// Deadline for all players to accept
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("acceptDeadline")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset AcceptDeadline { get; set; } = default!;
 
 }
@@ -366,7 +383,7 @@ public partial class MatchmakingMatchAcceptedEvent
 }
 
 /// <summary>
-/// Published when a player declines a match
+/// Published when a player declines a match or match is cancelled due to session disconnect
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MatchmakingMatchDeclinedEvent
@@ -405,24 +422,24 @@ public partial class MatchmakingMatchDeclinedEvent
     public string QueueId { get; set; } = default!;
 
     /// <summary>
-    /// Account that declined
+    /// Ticket ID of the player who declined (null if cancelled due to session disconnect or timeout)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("declinedBy")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonPropertyName("declinedByTicketId")]
+    public System.Guid? DeclinedByTicketId { get; set; } = default!;
+
+    /// <summary>
+    /// Ticket IDs of all affected players in the match
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("affectedTicketIds")]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DeclinedBy { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid> AffectedTicketIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
-    /// Account IDs of all affected players
+    /// Ticket IDs of players who will be automatically requeued
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("affectedPlayers")]
-    public System.Collections.Generic.ICollection<System.Guid> AffectedPlayers { get; set; } = default!;
-
-    /// <summary>
-    /// Players who will be automatically requeued
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("requeuingPlayers")]
-    public System.Collections.Generic.ICollection<System.Guid>? RequeuingPlayers { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("requeuingTicketIds")]
+    public System.Collections.Generic.ICollection<System.Guid>? RequeuingTicketIds { get; set; } = default!;
 
 }
 

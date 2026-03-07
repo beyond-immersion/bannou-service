@@ -94,9 +94,9 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Lexicon](#lexicon-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): deep dive hardened — T31 Category A deprecation (triple-field, 3 new endpoints), T29 typed StrategyPrecondition (replaced object? preconditions), T4 ICollectionClient hard dependency, T30 ITelemetryProvider, T5 x-lifecycle events annotated, T28 bidirectional resource cleanup documented. 6 design decisions deferred (AUDIT:NEEDS_DESIGN). No schema, no code. |
 | [License](#license-status) | L4 | 95% | 0 | L4-hardened. Zero code tenet violations. Schema validation constraints, PascalCase enum fixes, x-permissions corrected, currentLp type fixed. 59 tests, 0 warnings. Only respec pending (#356). |
 | [Mapping](#mapping-status) | L4 | 80% | 2 | Spatial indexing works. Version counter race, non-atomic index ops. N+1 query pattern. |
-| [Matchmaking](#matchmaking-status) | L4 | 73% | 1 | Core loop works. Queue stats all zeros, tournament stub, reconnect shortcut bug. |
+| [Matchmaking](#matchmaking-status) | L4 | 85% | 0 | Production-hardened. T32/T26/T21/T10/T8/NRT compliant, configurable lock timeouts, client event account IDs removed. Queue stats stub, tournament stub, _sessionAccountMap T9 design decision open. |
 | [Music](#music-status) | L4 | 88% | 0 | Full composition pipeline. Storyteller + MusicTheory SDKs. Custom style persistence missing. |
-| [Obligation](#obligation-status) | L4 | 85% | 1 | Contract-aware cost modifiers work. Personality weighting operational. Hardcoded trait map bug. |
+| [Obligation](#obligation-status) | L4 | 92% | 0 | L4-audited (2026-03-06): T8/T13/T21/T26/T7 fixes. All 11 endpoints production-ready. 2 feature gaps (event templates, ref tracking), 4 design considerations. |
 | [Puppetmaster](#puppetmaster-status) | L4 | 55% | 0 | Architecture designed. Watchers never spawn actors (core purpose stubbed). All state in-memory. |
 | [Realm History](#realm-history-status) | L4 | 90% | 0 | Feature-complete. Participations, lore, summarization, compression. Same quality as Character History. |
 | [Save-Load](#save-load-status) | L4 | 78% | 0 | Two-tier storage works. Delta saves, migration. Binary deltas stubbed, quota enforcement gap. |
@@ -1927,19 +1927,19 @@ gh issue list --search "Mapping:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [MATCHMAKING.md](plugins/MATCHMAKING.md)
 
-### Production Readiness: 73%
+### Production Readiness: 85%
 
-The core matchmaking loop works: ticket creation, background queue processing with skill window expansion, match formation, accept/decline flow with distributed locks, reconnection support, game session creation, and join shortcut publishing. However, queue statistics are entirely placeholder (all zeros), tournament support is declared but unimplemented, a defined event type is never published, and there is a real bug where reconnecting players do not receive accept/decline shortcuts.
+The core matchmaking loop works: ticket creation, background queue processing with skill window expansion, match formation, accept/decline flow with distributed locks, reconnection support, game session creation, and join shortcut publishing. Queue statistics are placeholder (stub #225), tournament support is declared but unimplemented, and a defined event type is never published. Two hardening passes completed: initial pass fixed T32 account identity in events, T26 sentinel values, T21 hardcoded lock timeouts, T10 silent exception swallowing, NRT compliance; validation pass fixed T32 client event account leak (`partyMembersMatched` → `partyId`), T8 echoed fields (`queueId` in JoinMatchmakingResponse, `matchId` in AcceptMatchResponse). One design decision remains open: `_sessionAccountMap` in-memory state (T9).
 
-### Bug Count: 1
+**Last audit**: 2026-03-06
+
+### Bug Count: 0
+
+All bugs resolved. Reconnection shortcut bug fixed 2026-03-03. T32/T26/T21/T10 violations fixed 2026-03-06. T32/T8 validation pass fixes 2026-03-06.
 
 ### Top 3 Bugs
 
-| # | Bug | Description | Issue |
-|---|-----|-------------|-------|
-| 1 | **Reconnection does not republish accept/decline shortcuts** | When a player reconnects to a pending match, `MatchFoundEvent` is sent but `PublishMatchShortcutsAsync` is not called. The player has no way to accept or decline. | No issue |
-| 2 | *(No further bugs)* | | |
-| 3 | | | |
+*(None — all resolved)*
 
 ### Top 3 Enhancements
 
@@ -1947,7 +1947,7 @@ The core matchmaking loop works: ticket creation, background queue processing wi
 |---|-------------|-------------|-------|
 | 1 | **Queue statistics computation** | `MatchesFormedLastHour`, `AverageWaitSeconds`, `MedianWaitSeconds`, `TimeoutRatePercent`, `CancelRatePercent` are all placeholder zeros. Critical for operational visibility. | [#225](https://github.com/beyond-immersion/bannou-service/issues/225) |
 | 2 | **Tournament support** | `TournamentIdRequired` and `TournamentId` fields exist on tickets but no tournament-specific matching logic is implemented. | No issue |
-| 3 | **Skill rating integration** | Currently requires skill ratings in the join request. Could fetch Glicko-2 ratings from Analytics automatically, reducing client-side burden. | No issue |
+| 3 | **Fix `_sessionAccountMap` T9 violation** | `ConcurrentDictionary` in `MatchmakingServiceEvents.cs` is authoritative in-memory state not loaded at startup. Needs design decision on fix approach. | See deep dive B2 |
 
 ### GH Issues
 
@@ -1961,9 +1961,9 @@ gh issue list --search "Matchmaking:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [MUSIC.md](plugins/MUSIC.md)
 
-### Production Readiness: 88%
+### Production Readiness: 92%
 
-Fully functional composition pipeline: the Generate endpoint produces complete compositions via the Storyteller and MusicTheory SDKs with harmony, melody, voice leading, and MIDI-JSON output. All 8 endpoints work except CreateStyle which does not persist. Deterministic seed-based caching is operational. All configuration tunables have been externalized. The only meaningful gaps are the unpersisted custom styles (CreateStyle is a stub, MySQL store declared but unused) and the lack of rate limiting on CPU-intensive generation.
+Fully functional composition pipeline with full tenet compliance (hardened 2026-03-06). All 8 endpoints work except CreateStyle which does not persist. Schema enums extracted to named PascalCase types with `$ref` reuse. All filler properties removed (T8). Type safety enforced (CompositionId is Guid, Contour is enum). NRT compliance verified. 203 unit tests pass. Zero build warnings. The remaining gaps are the unpersisted custom styles (CreateStyle is a stub, MySQL store declared but unused), no rate limiting on CPU-intensive generation, and the x-sdk-type legacy annotations (16 MusicTheory types, functional but outside intended Core SDK scope).
 
 ### Bug Count: 0
 
@@ -1993,19 +1993,15 @@ gh issue list --search "Music:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [OBLIGATION.md](plugins/OBLIGATION.md)
 
-### Production Readiness: 85%
+### Production Readiness: 92%
 
-All 11 endpoints are fully implemented with complete business logic. Contract-driven obligation extraction, personality-weighted cost computation, violation reporting with idempotency, event-driven cache management (listening to contract lifecycle events), and the `IVariableProviderFactory` (`${obligations.*}` namespace) all work end-to-end. The two-layer design (standalone with raw penalties, enriched with personality when available) is operational. One bug exists (hardcoded personality trait mapping). Remaining work is integration connections (cognition stage in Actor, faction norm flow, post-violation feedback loops).
+All 11 endpoints are fully implemented with complete business logic. L4-audited (2026-03-06): T8 filler removed (Success booleans from 3 responses, CharacterId echoes from 5 responses), T13 x-permissions fixed on 3 service-to-service endpoints, T26 sentinel values eliminated (4x `?? "unknown"` replaced with nullable types across API/events/internal models), T21 hardcoded tunables moved to config (CleanupBatchSize, MaxCompressionQueryResults, PersonalityWeightMultiplier), T7 ApiException catch added on inter-service call, schema validation improved (maxItems on 6 arrays, minLength on archive data). Contract-driven obligation extraction, personality-weighted cost computation, violation reporting with idempotency, event-driven cache management, and the `IVariableProviderFactory` (`${obligations.*}` namespace) all work end-to-end. Remaining work: 2 feature gaps (event template registration, reference tracking helpers), 4 design considerations (ViolationTypeTraitMap mechanism, contract clause format, faction bridge, multi-channel costs), and integration connections.
 
-### Bug Count: 1
+### Bug Count: 0
 
 ### Top 3 Bugs
 
-| # | Bug | Description | Issue |
-|---|-----|-------------|-------|
-| 1 | **Hardcoded personality trait mapping** | A static dictionary (10 entries) maps violation types to personality traits. Conflicts with violation types being opaque strings -- any new type silently falls through to a default, degrading moral reasoning quality. Should be data-driven or configurable. | [#410](https://github.com/beyond-immersion/bannou-service/issues/410) |
-| 2 | *(No further bugs)* | | |
-| 3 | | | |
+*(None — former hardcoded trait map bug reclassified as design consideration after PersonalityWeightMultiplier made configurable)*
 
 ### Top 3 Enhancements
 

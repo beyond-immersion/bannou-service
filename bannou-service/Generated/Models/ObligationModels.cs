@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Obligation;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Obligation;
 
@@ -157,6 +172,7 @@ public partial class ListActionMappingsResponse
     [System.Text.Json.Serialization.JsonPropertyName("mappings")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<ActionMappingResponse> Mappings { get; set; } = new System.Collections.ObjectModel.Collection<ActionMappingResponse>();
 
     /// <summary>
@@ -208,13 +224,11 @@ public partial class ObligationEntry
     public System.Guid ContractId { get; set; } = default!;
 
     /// <summary>
-    /// Template code of the source contract
+    /// Template code of the source contract (null if contract has no template)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string TemplateCode { get; set; } = default!;
+    public string? TemplateCode { get; set; } = default!;
 
     /// <summary>
     /// Code of the behavioral clause defining this obligation
@@ -249,13 +263,11 @@ public partial class ObligationEntry
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// The character's role in the contract (e.g., "member", "merchant")
+    /// The character's role in the contract (null if role not determinable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contractRole")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string ContractRole { get; set; } = default!;
+    public string? ContractRole { get; set; } = default!;
 
     /// <summary>
     /// When this obligation expires (null if indefinite)
@@ -296,19 +308,12 @@ public partial class QueryObligationsResponse
 {
 
     /// <summary>
-    /// Character these obligations belong to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
     /// All active obligations for the character
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("obligations")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(10000)]
     public System.Collections.Generic.ICollection<ObligationEntry> Obligations { get; set; } = new System.Collections.ObjectModel.Collection<ObligationEntry>();
 
     /// <summary>
@@ -359,13 +364,11 @@ public partial class ObligationCostDetail
     public System.Guid ContractId { get; set; } = default!;
 
     /// <summary>
-    /// Template code of the source contract
+    /// Template code of the source contract (null if contract has no template)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string TemplateCode { get; set; } = default!;
+    public string? TemplateCode { get; set; } = default!;
 
     /// <summary>
     /// Code of the violated behavioral clause
@@ -400,13 +403,11 @@ public partial class ObligationCostDetail
     public float WeightedPenalty { get; set; } = default!;
 
     /// <summary>
-    /// The character's role in the contract
+    /// The character's role in the contract (null if role not determinable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contractRole")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string ContractRole { get; set; } = default!;
+    public string? ContractRole { get; set; } = default!;
 
 }
 
@@ -445,6 +446,7 @@ public partial class ActionEvaluation
     [System.Text.Json.Serialization.JsonPropertyName("obligationDetails")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(1000)]
     public System.Collections.Generic.ICollection<ObligationCostDetail> ObligationDetails { get; set; } = new System.Collections.ObjectModel.Collection<ObligationCostDetail>();
 
 }
@@ -509,19 +511,12 @@ public partial class EvaluateActionResponse
 {
 
     /// <summary>
-    /// Character evaluated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
     /// Per-action evaluation results (one per input tag)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("evaluations")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(50)]
     public System.Collections.Generic.ICollection<ActionEvaluation> Evaluations { get; set; } = new System.Collections.ObjectModel.Collection<ActionEvaluation>();
 
     /// <summary>
@@ -741,14 +736,6 @@ public partial class ReportViolationResponse
     public System.Guid ViolationId { get; set; } = default!;
 
     /// <summary>
-    /// Character who committed the violation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
     /// Whether a breach was successfully filed with the contract service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("breachReported")]
@@ -825,6 +812,7 @@ public partial class QueryViolationsResponse
     [System.Text.Json.Serialization.JsonPropertyName("violations")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<ViolationRecord> Violations { get; set; } = new System.Collections.ObjectModel.Collection<ViolationRecord>();
 
     /// <summary>
@@ -867,25 +855,11 @@ public partial class InvalidateCacheResponse
 {
 
     /// <summary>
-    /// Character whose cache was rebuilt
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
     /// Number of obligations found and cached
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("obligationsRefreshed")]
     [System.ComponentModel.DataAnnotations.Range(0, 10000)]
     public int ObligationsRefreshed { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the cache rebuild completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
 }
 
@@ -914,24 +888,11 @@ public partial class CleanupByCharacterResponse
 {
 
     /// <summary>
-    /// Number of cached obligation entries removed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("obligationsRemoved")]
-    [System.ComponentModel.DataAnnotations.Range(0, 10000)]
-    public int ObligationsRemoved { get; set; } = default!;
-
-    /// <summary>
     /// Number of violation history records removed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("violationsRemoved")]
     [System.ComponentModel.DataAnnotations.Range(0, 100000)]
     public int ViolationsRemoved { get; set; } = default!;
-
-    /// <summary>
-    /// Whether cleanup completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
 }
 
@@ -987,6 +948,7 @@ public partial class ObligationArchive : ResourceArchiveBase
     /// Violation history records (null if hasViolations=false)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("violations")]
+    [System.ComponentModel.DataAnnotations.MaxLength(100000)]
     public System.Collections.Generic.ICollection<ViolationRecord>? Violations { get; set; } = default!;
 
 }
@@ -1010,7 +972,7 @@ public partial class RestoreFromArchiveRequest
     /// Base64-encoded gzipped ObligationArchive JSON
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Data { get; set; } = default!;
 
@@ -1024,26 +986,29 @@ public partial class RestoreFromArchiveResponse
 {
 
     /// <summary>
-    /// Character data was restored for
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
     /// Whether violation history was restored
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("violationsRestored")]
     public bool ViolationsRestored { get; set; } = default!;
 
-    /// <summary>
-    /// Whether the restoration completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
+}
+
+/// <summary>
+/// How norm-based obligation costs are resolved when the Hearsay service is unavailable
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum NormResolutionMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PerfectKnowledge")]
+    PerfectKnowledge = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"UncertaintySimulation")]
+    UncertaintySimulation = 1,
 
 }
+#pragma warning restore CS1591
 
 
 

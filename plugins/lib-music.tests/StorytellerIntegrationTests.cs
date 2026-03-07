@@ -76,7 +76,7 @@ public class StorytellerIntegrationTests
         {
             StyleId = "celtic",
             DurationBars = 16,
-            Mood = GenerateCompositionRequestMood.Bright
+            Mood = Mood.Bright
         };
 
         // Act
@@ -100,7 +100,7 @@ public class StorytellerIntegrationTests
         {
             StyleId = "celtic",
             DurationBars = 16,
-            Mood = GenerateCompositionRequestMood.Dark
+            Mood = Mood.Dark
         };
 
         // Act
@@ -124,7 +124,7 @@ public class StorytellerIntegrationTests
         {
             StyleId = "celtic",
             DurationBars = 16,
-            Mood = GenerateCompositionRequestMood.Neutral
+            Mood = Mood.Neutral
         };
 
         // Act
@@ -148,7 +148,7 @@ public class StorytellerIntegrationTests
         {
             StyleId = "celtic",
             DurationBars = 16,
-            Mood = GenerateCompositionRequestMood.Melancholic
+            Mood = Mood.Melancholic
         };
 
         // Act
@@ -172,7 +172,7 @@ public class StorytellerIntegrationTests
         {
             StyleId = "celtic",
             DurationBars = 16,
-            Mood = GenerateCompositionRequestMood.Triumphant
+            Mood = Mood.Triumphant
         };
 
         // Act
@@ -200,7 +200,7 @@ public class StorytellerIntegrationTests
         {
             StyleId = "celtic",
             DurationBars = 16,
-            Mood = GenerateCompositionRequestMood.Bright, // Would normally use simple_arc
+            Mood = Mood.Bright, // Would normally use simple_arc
             Narrative = new NarrativeOptions
             {
                 TemplateId = "journey_and_return" // Override with different template
@@ -361,7 +361,7 @@ public class StorytellerIntegrationTests
         {
             StyleId = "celtic",
             DurationBars = 32,
-            Mood = GenerateCompositionRequestMood.Neutral // Uses journey_and_return with multiple phases
+            Mood = Mood.Neutral // Uses journey_and_return with multiple phases
         };
 
         // Act

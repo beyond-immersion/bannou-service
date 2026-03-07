@@ -57,8 +57,8 @@ internal class ObligationEntryModel
     /// <summary>Contract this obligation originates from.</summary>
     public Guid ContractId { get; set; }
 
-    /// <summary>Template code of the originating contract.</summary>
-    public string TemplateCode { get; set; } = string.Empty;
+    /// <summary>Template code of the originating contract (null if not available from contract).</summary>
+    public string? TemplateCode { get; set; }
 
     /// <summary>Behavioral clause code within the contract.</summary>
     public string ClauseCode { get; set; } = string.Empty;
@@ -72,8 +72,8 @@ internal class ObligationEntryModel
     /// <summary>Human-readable description of the obligation.</summary>
     public string? Description { get; set; }
 
-    /// <summary>Role of the character in the contract that created this obligation.</summary>
-    public string ContractRole { get; set; } = string.Empty;
+    /// <summary>Role of the character in the contract that created this obligation (null if not available from contract).</summary>
+    public string? ContractRole { get; set; }
 
     /// <summary>When the originating contract expires (null = no expiration).</summary>
     public DateTimeOffset? EffectiveUntil { get; set; }

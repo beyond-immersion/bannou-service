@@ -45,7 +45,7 @@ public partial class MappingService : IMappingService
     private readonly IMessageSubscriber _messageSubscriber;
     private readonly ILogger<MappingService> _logger;
     private readonly MappingServiceConfiguration _configuration;
-    private readonly IAssetClient _assetClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IAffordanceScorer _affordanceScorer;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -59,10 +59,13 @@ public partial class MappingService : IMappingService
     /// <summary>State store for map objects (spatial entities with position/bounds).</summary>
     private readonly IStateStore<MapObject> _objectStore;
 
-    /// <summary>State store for GUID list indexes (spatial, type, and region indexes).</summary>
-    private readonly IStateStore<List<Guid>> _guidListStore;
+    /// <summary>Cacheable store for GUID set indexes (spatial, type, and region indexes).</summary>
+    private readonly ICacheableStateStore<MapObject> _indexStore;
 
-    /// <summary>State store for version counters (channel version tracking).</summary>
+    /// <summary>Redis operations for atomic version counters.</summary>
+    private readonly IRedisOperations? _redisOps;
+
+    /// <summary>State store for version counters (InMemory fallback only).</summary>
     private readonly IStateStore<LongWrapper> _versionStore;
 
     /// <summary>State store for checkout records (authoring lock management).</summary>
@@ -109,7 +112,7 @@ public partial class MappingService : IMappingService
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Service configuration.</param>
     /// <param name="eventConsumer">Event consumer for registering handlers.</param>
-    /// <param name="assetClient">Asset client for large payload storage.</param>
+    /// <param name="serviceProvider">Service provider for resolving optional L3 dependencies.</param>
     /// <param name="httpClientFactory">HTTP client factory for uploading to presigned URLs.</param>
     /// <param name="affordanceScorer">Affordance scoring helper for affordance queries.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
@@ -120,7 +123,7 @@ public partial class MappingService : IMappingService
         ILogger<MappingService> logger,
         MappingServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        IAssetClient assetClient,
+        IServiceProvider serviceProvider,
         IHttpClientFactory httpClientFactory,
         IAffordanceScorer affordanceScorer,
         ITelemetryProvider telemetryProvider)
@@ -129,7 +132,7 @@ public partial class MappingService : IMappingService
         _messageSubscriber = messageSubscriber;
         _logger = logger;
         _configuration = configuration;
-        _assetClient = assetClient;
+        _serviceProvider = serviceProvider;
         _httpClientFactory = httpClientFactory;
         _affordanceScorer = affordanceScorer;
         _telemetryProvider = telemetryProvider;
@@ -138,7 +141,8 @@ public partial class MappingService : IMappingService
         _channelStore = stateStoreFactory.GetStore<ChannelRecord>(StateStoreDefinitions.Mapping);
         _authorityStore = stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping);
         _objectStore = stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping);
-        _guidListStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping);
+        _indexStore = stateStoreFactory.GetCacheableStore<MapObject>(StateStoreDefinitions.Mapping);
+        _redisOps = stateStoreFactory.GetRedisOperations();
         _versionStore = stateStoreFactory.GetStore<LongWrapper>(StateStoreDefinitions.Mapping);
         _checkoutStore = stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping);
         _definitionIndexStore = stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
@@ -254,7 +258,7 @@ public partial class MappingService : IMappingService
         return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(tokenData));
     }
 
-    private static (bool valid, Guid channelId, DateTimeOffset expiresAt) ParseAuthorityToken(string token)
+    private static (Guid? channelId, DateTimeOffset? expiresAt) ParseAuthorityToken(string token)
     {
         try
         {
@@ -262,26 +266,26 @@ public partial class MappingService : IMappingService
             var parts = decoded.Split(':');
             if (parts.Length < 2)
             {
-                return (false, Guid.Empty, default);
+                return (null, null);
             }
 
             if (!Guid.TryParse(parts[0], out var channelId))
             {
-                return (false, Guid.Empty, default);
+                return (null, null);
             }
 
             if (!DateTimeOffset.TryParse(parts[1], out var expiresAt))
             {
-                return (false, Guid.Empty, default);
+                return (null, null);
             }
 
-            return (true, channelId, expiresAt);
+            return (channelId, expiresAt);
         }
         catch
         {
             // Intentionally swallowing: any decode/parse exception means token is invalid
-            // Callers handle the (false, _, _) return and log appropriately
-            return (false, Guid.Empty, default);
+            // Callers handle the (null, _) return and log appropriately
+            return (null, null);
         }
     }
 
@@ -292,6 +296,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, AuthorityGrant?)> CreateChannelAsync(CreateChannelRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.CreateChannelAsync");
         _logger.LogDebug("Creating channel for region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
         {
@@ -417,11 +422,12 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<StatusCodes> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.ReleaseAuthorityAsync");
         _logger.LogDebug("Releasing authority for channel {ChannelId}", body.ChannelId);
 
         {
-            var (valid, tokenChannelId, _) = ParseAuthorityToken(body.AuthorityToken);
-            if (!valid || tokenChannelId != body.ChannelId)
+            var (tokenChannelId, _) = ParseAuthorityToken(body.AuthorityToken);
+            if (tokenChannelId == null || tokenChannelId != body.ChannelId)
             {
                 _logger.LogWarning("Invalid authority token for channel {ChannelId}", body.ChannelId);
                 return StatusCodes.Unauthorized;
@@ -469,11 +475,12 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, AuthorityHeartbeatResponse?)> AuthorityHeartbeatAsync(AuthorityHeartbeatRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.AuthorityHeartbeatAsync");
         _logger.LogDebug("Processing heartbeat for channel {ChannelId}", body.ChannelId);
 
         {
-            var (valid, tokenChannelId, _) = ParseAuthorityToken(body.AuthorityToken);
-            if (!valid || tokenChannelId != body.ChannelId)
+            var (tokenChannelId, _) = ParseAuthorityToken(body.AuthorityToken);
+            if (tokenChannelId == null || tokenChannelId != body.ChannelId)
             {
                 _logger.LogWarning("Invalid authority token for heartbeat on channel {ChannelId}", body.ChannelId);
                 return (StatusCodes.Unauthorized, null);
@@ -526,10 +533,11 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, PublishMapUpdateResponse?)> PublishMapUpdateAsync(PublishMapUpdateRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.PublishMapUpdateAsync");
         _logger.LogDebug("Publishing map update to channel {ChannelId}", body.ChannelId);
 
         // Check payload size limit (MVP: reject large payloads; full impl would use lib-asset)
-        var payloadSize = BannouJson.Serialize(body.Payload).Length;
+        var payloadSize = System.Text.Encoding.UTF8.GetByteCount(BannouJson.Serialize(body.Payload));
         if (payloadSize > _configuration.InlinePayloadMaxBytes)
         {
             _logger.LogWarning("Payload size {Size} exceeds limit {Limit} for channel {ChannelId}",
@@ -568,6 +576,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, PublishObjectChangesResponse?)> PublishObjectChangesAsync(PublishObjectChangesRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.PublishObjectChangesAsync");
         _logger.LogDebug("Publishing {Count} object changes to channel {ChannelId}", body.Changes.Count, body.ChannelId);
 
         // Validate authority
@@ -610,8 +619,8 @@ public partial class MappingService : IMappingService
                         ObjectId = change.ObjectId,
                         Action = change.Action,
                         ObjectType = change.ObjectType,
-                        Position = ToCommonPosition(change.Position),
-                        Bounds = ToCommonBounds(change.Bounds),
+                        Position = change.Position,
+                        Bounds = change.Bounds,
                         Data = change.Data
                     });
                 }
@@ -717,6 +726,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, RequestSnapshotResponse?)> RequestSnapshotAsync(RequestSnapshotRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.RequestSnapshotAsync");
         _logger.LogDebug("Requesting snapshot for region {RegionId}", body.RegionId);
 
         {
@@ -796,11 +806,12 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, QueryPointResponse?)> QueryPointAsync(QueryPointRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.QueryPointAsync");
         _logger.LogDebug("Querying point at ({X}, {Y}, {Z}) in region {RegionId}",
             body.Position.X, body.Position.Y, body.Position.Z, body.RegionId);
 
         var objects = new List<MapObject>();
-        var radius = body.Radius ?? _configuration.DefaultSpatialCellSize;
+        var radius = (float)(body.Radius ?? _configuration.DefaultSpatialCellSize);
         var kindsToQuery = body.Kinds ?? Enum.GetValues<MapKind>().ToList();
 
         // Calculate cells to query based on position and radius
@@ -860,6 +871,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, QueryBoundsResponse?)> QueryBoundsAsync(QueryBoundsRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.QueryBoundsAsync");
         _logger.LogDebug("Querying bounds in region {RegionId}", body.RegionId);
 
         var objects = new List<MapObject>();
@@ -895,11 +907,12 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, QueryObjectsByTypeResponse?)> QueryObjectsByTypeAsync(QueryObjectsByTypeRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.QueryObjectsByTypeAsync");
         _logger.LogDebug("Querying objects of type {ObjectType} in region {RegionId}", body.ObjectType, body.RegionId);
 
         var typeIndexKey = BuildTypeIndexKey(body.RegionId, body.ObjectType);
-        var objectIds = await _guidListStore
-            .GetAsync(typeIndexKey, cancellationToken) ?? new List<Guid>();
+        var objectIds = await _indexStore
+            .GetSetAsync<Guid>(typeIndexKey, cancellationToken);
 
         var objects = new List<MapObject>();
         var truncated = false;
@@ -944,6 +957,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, AffordanceQueryResponse?)> QueryAffordanceAsync(AffordanceQueryRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.QueryAffordanceAsync");
         _logger.LogDebug("Querying affordance {AffordanceType} in region {RegionId}", body.AffordanceType, body.RegionId);
         var stopwatch = Stopwatch.StartNew();
 
@@ -1038,6 +1052,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, AuthoringCheckoutResponse?)> CheckoutForAuthoringAsync(AuthoringCheckoutRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.CheckoutForAuthoringAsync");
         _logger.LogDebug("Checkout for authoring - region {RegionId}, kind {Kind}, editor {EditorId}",
             body.RegionId, body.Kind, body.EditorId);
 
@@ -1091,6 +1106,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, AuthoringCommitResponse?)> CommitAuthoringAsync(AuthoringCommitRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.CommitAuthoringAsync");
         _logger.LogDebug("Committing authoring changes - region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
         var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
@@ -1123,6 +1139,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<StatusCodes> ReleaseAuthoringAsync(AuthoringReleaseRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.ReleaseAuthoringAsync");
         _logger.LogDebug("Releasing authoring checkout - region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
         var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
@@ -1151,6 +1168,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, MapDefinition?)> CreateDefinitionAsync(CreateDefinitionRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.CreateDefinitionAsync");
         _logger.LogDebug("Creating map definition: {Name}", body.Name);
 
         // Check for duplicate name by scanning existing definitions
@@ -1201,6 +1219,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, MapDefinition?)> GetDefinitionAsync(GetDefinitionRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.GetDefinitionAsync");
         _logger.LogDebug("Getting map definition: {DefinitionId}", body.DefinitionId);
 
         var key = BuildDefinitionKey(body.DefinitionId);
@@ -1218,6 +1237,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, ListDefinitionsResponse?)> ListDefinitionsAsync(ListDefinitionsRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.ListDefinitionsAsync");
         _logger.LogDebug("Listing map definitions with filter: {Filter}", body.NameFilter);
 
         var index = await _definitionIndexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
@@ -1266,6 +1286,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<(StatusCodes, MapDefinition?)> UpdateDefinitionAsync(UpdateDefinitionRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.UpdateDefinitionAsync");
         _logger.LogDebug("Updating map definition: {DefinitionId}", body.DefinitionId);
 
         var key = BuildDefinitionKey(body.DefinitionId);
@@ -1311,6 +1332,7 @@ public partial class MappingService : IMappingService
     /// <inheritdoc />
     public async Task<StatusCodes> DeleteDefinitionAsync(DeleteDefinitionRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.DeleteDefinitionAsync");
         _logger.LogDebug("Deleting map definition: {DefinitionId}", body.DefinitionId);
 
         var key = BuildDefinitionKey(body.DefinitionId);
@@ -1382,8 +1404,8 @@ public partial class MappingService : IMappingService
 
         // Opaque token validation: parse only to extract channelId for basic validation,
         // but expiry is checked ONLY against AuthorityRecord.ExpiresAt (which is updated by heartbeat)
-        var (valid, tokenChannelId, _) = ParseAuthorityToken(authorityToken);
-        if (!valid || tokenChannelId != channelId)
+        var (tokenChannelId, _) = ParseAuthorityToken(authorityToken);
+        if (tokenChannelId == null || tokenChannelId != channelId)
         {
             return (false, channel, null, "Invalid authority token");
         }
@@ -1658,15 +1680,7 @@ public partial class MappingService : IMappingService
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.UpdateSpatialIndexAsync");
         var cell = GetCellCoordinates(position);
         var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
-        var objectIds = await _guidListStore
-            .GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
-
-        if (!objectIds.Contains(objectId))
-        {
-            objectIds.Add(objectId);
-            await _guidListStore
-                .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
-        }
+        await _indexStore.AddToSetAsync<Guid>(indexKey, objectId, cancellationToken: cancellationToken);
     }
 
     private async Task UpdateSpatialIndexForBoundsAsync(Guid regionId, MapKind kind, Guid objectId, Bounds bounds, CancellationToken cancellationToken)
@@ -1676,15 +1690,7 @@ public partial class MappingService : IMappingService
         foreach (var cell in cells)
         {
             var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
-            var objectIds = await _guidListStore
-                .GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
-
-            if (!objectIds.Contains(objectId))
-            {
-                objectIds.Add(objectId);
-                await _guidListStore
-                    .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
-            }
+            await _indexStore.AddToSetAsync<Guid>(indexKey, objectId, cancellationToken: cancellationToken);
         }
     }
 
@@ -1692,15 +1698,7 @@ public partial class MappingService : IMappingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.UpdateTypeIndexAsync");
         var indexKey = BuildTypeIndexKey(regionId, objectType);
-        var objectIds = await _guidListStore
-            .GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
-
-        if (!objectIds.Contains(objectId))
-        {
-            objectIds.Add(objectId);
-            await _guidListStore
-                .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
-        }
+        await _indexStore.AddToSetAsync<Guid>(indexKey, objectId, cancellationToken: cancellationToken);
     }
 
     private static string BuildRegionIndexKey(Guid regionId, MapKind kind) => $"map:region-index:{regionId}:{kind}";
@@ -1709,30 +1707,14 @@ public partial class MappingService : IMappingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.AddToRegionIndexAsync");
         var indexKey = BuildRegionIndexKey(regionId, kind);
-        var objectIds = await _guidListStore
-            .GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
-
-        if (!objectIds.Contains(objectId))
-        {
-            objectIds.Add(objectId);
-            await _guidListStore
-                .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
-        }
+        await _indexStore.AddToSetAsync<Guid>(indexKey, objectId, cancellationToken: cancellationToken);
     }
 
     private async Task RemoveFromRegionIndexAsync(Guid regionId, MapKind kind, Guid objectId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.RemoveFromRegionIndexAsync");
         var indexKey = BuildRegionIndexKey(regionId, kind);
-        var objectIds = await _guidListStore
-            .GetAsync(indexKey, cancellationToken);
-
-        if (objectIds != null && objectIds.Contains(objectId))
-        {
-            objectIds.Remove(objectId);
-            await _guidListStore
-                .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
-        }
+        await _indexStore.RemoveFromSetAsync<Guid>(indexKey, objectId, cancellationToken: cancellationToken);
     }
 
     private async Task RemoveFromSpatialIndexAsync(Guid regionId, MapKind kind, Guid objectId, Position3D position, CancellationToken cancellationToken)
@@ -1740,15 +1722,7 @@ public partial class MappingService : IMappingService
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.RemoveFromSpatialIndexAsync");
         var cell = GetCellCoordinates(position);
         var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
-        var objectIds = await _guidListStore
-            .GetAsync(indexKey, cancellationToken);
-
-        if (objectIds != null && objectIds.Contains(objectId))
-        {
-            objectIds.Remove(objectId);
-            await _guidListStore
-                .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
-        }
+        await _indexStore.RemoveFromSetAsync<Guid>(indexKey, objectId, cancellationToken: cancellationToken);
     }
 
     private async Task RemoveFromSpatialIndexForBoundsAsync(Guid regionId, MapKind kind, Guid objectId, Bounds bounds, CancellationToken cancellationToken)
@@ -1758,15 +1732,7 @@ public partial class MappingService : IMappingService
         foreach (var cell in cells)
         {
             var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
-            var objectIds = await _guidListStore
-                .GetAsync(indexKey, cancellationToken);
-
-            if (objectIds != null && objectIds.Contains(objectId))
-            {
-                objectIds.Remove(objectId);
-                await _guidListStore
-                    .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
-            }
+            await _indexStore.RemoveFromSetAsync<Guid>(indexKey, objectId, cancellationToken: cancellationToken);
         }
     }
 
@@ -1774,15 +1740,7 @@ public partial class MappingService : IMappingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.RemoveFromTypeIndexAsync");
         var indexKey = BuildTypeIndexKey(regionId, objectType);
-        var objectIds = await _guidListStore
-            .GetAsync(indexKey, cancellationToken);
-
-        if (objectIds != null && objectIds.Contains(objectId))
-        {
-            objectIds.Remove(objectId);
-            await _guidListStore
-                .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
-        }
+        await _indexStore.RemoveFromSetAsync<Guid>(indexKey, objectId, cancellationToken: cancellationToken);
     }
 
     private const string MapDataContentType = "application/json";
@@ -1790,6 +1748,15 @@ public partial class MappingService : IMappingService
     private async Task<string?> UploadLargePayloadToAssetAsync(byte[] data, string filename, Guid regionId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.UploadLargePayloadToAssetAsync");
+
+        // Asset service is L3 (optional) - graceful degradation if unavailable
+        var assetClient = _serviceProvider.GetService<IAssetClient>();
+        if (assetClient == null)
+        {
+            _logger.LogDebug("Asset service not available, skipping large payload upload for region {RegionId}", regionId);
+            return null;
+        }
+
         try
         {
             var uploadRequest = new UploadRequest
@@ -1807,7 +1774,7 @@ public partial class MappingService : IMappingService
                 }
             };
 
-            var uploadResponse = await _assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
+            var uploadResponse = await assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
 
             // Upload the data to the presigned URL
             using var httpClient = _httpClientFactory.CreateClient();
@@ -1827,7 +1794,7 @@ public partial class MappingService : IMappingService
                 UploadId = uploadResponse.UploadId
             };
 
-            var assetMetadata = await _assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
+            var assetMetadata = await assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
 
             _logger.LogDebug("Uploaded large payload as asset {AssetId} for region {RegionId}", assetMetadata.AssetId, regionId);
             return assetMetadata.AssetId.ToString();
@@ -1841,6 +1808,10 @@ public partial class MappingService : IMappingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error uploading large payload to lib-asset for region {RegionId}", regionId);
+            await _messageBus.TryPublishErrorAsync(
+                "mapping", "UploadLargePayloadToAsset", "upload_failed", ex.Message,
+                dependency: "asset", endpoint: "presigned-url-upload",
+                details: $"RegionId={regionId}", stack: ex.StackTrace);
             return null;
         }
     }
@@ -1870,8 +1841,8 @@ public partial class MappingService : IMappingService
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.ClearChannelDataAsync");
         // Get the region index to find all objects
         var regionIndexKey = BuildRegionIndexKey(regionId, kind);
-        var objectIds = await _guidListStore
-            .GetAsync(regionIndexKey, cancellationToken) ?? new List<Guid>();
+        var objectIds = await _indexStore
+            .GetSetAsync<Guid>(regionIndexKey, cancellationToken);
 
         _logger.LogDebug("Clearing {Count} objects from channel {ChannelId}", objectIds.Count, channelId);
 
@@ -1904,8 +1875,8 @@ public partial class MappingService : IMappingService
         }
 
         // Clear region index
-        await _guidListStore
-            .DeleteAsync(regionIndexKey, cancellationToken);
+        await _indexStore
+            .DeleteSetAsync(regionIndexKey, cancellationToken);
 
         // Reset version counter
         var versionKey = BuildVersionKey(channelId);
@@ -1917,12 +1888,17 @@ public partial class MappingService : IMappingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.IncrementVersionAsync");
         var versionKey = BuildVersionKey(channelId);
-        var versionWrapper = await _versionStore
-            .GetAsync(versionKey, cancellationToken);
-        var currentVersion = versionWrapper?.Value ?? 0;
-        var newVersion = currentVersion + 1;
-        await _versionStore
-            .SaveAsync(versionKey, new LongWrapper { Value = newVersion }, cancellationToken: cancellationToken);
+
+        // Atomic increment via Redis INCR — multi-instance safe per IMPLEMENTATION TENETS
+        if (_redisOps != null)
+        {
+            return await _redisOps.IncrementAsync(versionKey, cancellationToken: cancellationToken);
+        }
+
+        // InMemory fallback: non-atomic read-write (acceptable for single-instance testing only)
+        var versionWrapper = await _versionStore.GetAsync(versionKey, cancellationToken);
+        var newVersion = (versionWrapper?.Value ?? 0) + 1;
+        await _versionStore.SaveAsync(versionKey, new LongWrapper { Value = newVersion }, cancellationToken: cancellationToken);
         return newVersion;
     }
 
@@ -1936,8 +1912,8 @@ public partial class MappingService : IMappingService
 
         // Full region query - use region index that tracks all objects in a region+kind
         var regionIndexKey = BuildRegionIndexKey(regionId, kind);
-        var objectIds = await _guidListStore
-            .GetAsync(regionIndexKey, cancellationToken) ?? new List<Guid>();
+        var objectIds = await _indexStore
+            .GetSetAsync<Guid>(regionIndexKey, cancellationToken);
 
         var objects = new List<MapObject>();
         foreach (var objectId in objectIds.Take(maxObjects))
@@ -1969,8 +1945,8 @@ public partial class MappingService : IMappingService
             }
 
             var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
-            var objectIds = await _guidListStore
-                .GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
+            var objectIds = await _indexStore
+                .GetSetAsync<Guid>(indexKey, cancellationToken);
 
             foreach (var objectId in objectIds)
             {

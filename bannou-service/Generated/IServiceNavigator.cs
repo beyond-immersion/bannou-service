@@ -33,7 +33,6 @@ using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
 using BeyondImmersion.BannouService.License;
 using BeyondImmersion.BannouService.Location;
-using BeyondImmersion.BannouService.Mapping;
 using BeyondImmersion.BannouService.Matchmaking;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Messaging;
@@ -207,11 +206,6 @@ public partial interface IServiceNavigator
     /// Gets the Location service client.
     /// </summary>
     ILocationClient Location { get; }
-
-    /// <summary>
-    /// Gets the Mapping service client.
-    /// </summary>
-    IMappingClient Mapping { get; }
 
     /// <summary>
     /// Gets the Matchmaking service client.

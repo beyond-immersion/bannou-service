@@ -170,6 +170,9 @@ Every polymorphic "type" or "kind" field in the Obligation domain falls into one
 | `MaxActiveContractsQuery` | `OBLIGATION_MAX_ACTIVE_CONTRACTS_QUERY` | `100` | Maximum number of active contracts to query per character during cache rebuild (range: 10-500) |
 | `NormResolutionMode` | `OBLIGATION_NORM_RESOLUTION_MODE` | `PerfectKnowledge` | How norm costs are resolved when Hearsay is unavailable: `PerfectKnowledge` (query Faction directly) or `UncertaintySimulation` (apply random variance to simulate imperfect knowledge). **Stub scaffolding — not yet referenced in service code** |
 | `NormUncertaintyVariance` | `OBLIGATION_NORM_UNCERTAINTY_VARIANCE` | `0.2` | Max variance (+/-) applied to norm penalties in UncertaintySimulation mode (range: 0.0-0.5; only used when NormResolutionMode is UncertaintySimulation). **Stub scaffolding — not yet referenced in service code** |
+| `CleanupBatchSize` | `OBLIGATION_CLEANUP_BATCH_SIZE` | `100` | Number of obligation entries to delete per batch during character cleanup (range: 10-1000) |
+| `MaxCompressionQueryResults` | `OBLIGATION_MAX_COMPRESSION_QUERY_RESULTS` | `10000` | Maximum number of obligation entries to include in compression data for archival (range: 100-100000) |
+| `PersonalityWeightMultiplier` | `OBLIGATION_PERSONALITY_WEIGHT_MULTIPLIER` | `0.5` | Multiplier applied to personality-weighted moral reasoning scores; controls trait influence on obligation cost modifiers (range: 0.0-1.0) |
 
 ---
 
@@ -338,11 +341,9 @@ All 11 API endpoints are fully implemented. The following supporting integration
 
 ### Bugs (Fix Immediately)
 
-1. **Hardcoded personality trait mapping**: The personality weight computation maps violation types to traits via a hardcoded static dictionary (10 entries: `theft`→honesty+conscientiousness, `deception`→honesty, `violence`→agreeableness, `honor_combat`→conscientiousness+loyalty, `betrayal`→loyalty, `exploitation`→agreeableness+honesty, `oath_breaking`→loyalty+conscientiousness, `trespass`→conscientiousness, `disrespect`→agreeableness, `contraband`→conscientiousness; everything else→conscientiousness). This is in tension with violation types being opaque strings that "grow organically" -- any new type falls through to the default, silently degrading moral reasoning quality. The mapping should be data-driven (part of action mapping store or behavioral clause definitions) or at minimum configurable.
+1. **Event templates not registered at startup**: `ObligationEventTemplates.RegisterAll()` is generated but never called in `ObligationServicePlugin.OnRunningAsync`. The `obligation_violation_reported` event template is unavailable at runtime, meaning ABML `emit_event:obligation_violation_reported` actions would fail. Fix: add `ObligationEventTemplates.RegisterAll(registry)` call to `OnRunningAsync` (requires resolving `IEventTemplateRegistry` from DI).
 
-2. **Event templates not registered at startup**: `ObligationEventTemplates.RegisterAll()` is generated but never called in `ObligationServicePlugin.OnRunningAsync`. The `obligation_violation_reported` event template is unavailable at runtime, meaning ABML `emit_event:obligation_violation_reported` actions would fail. Fix: add `ObligationEventTemplates.RegisterAll(registry)` call to `OnRunningAsync` (requires resolving `IEventTemplateRegistry` from DI).
-
-3. **Reference tracking helpers never invoked**: `RegisterCharacterReferenceAsync` / `UnregisterCharacterReferenceAsync` are generated from `x-references` but never called when violations are recorded or cleaned up. The cleanup callback IS registered (CASCADE works), but lib-resource has no individual reference records for obligation→character. Pre-deletion reference count checks via `/resource/check` will not include obligation as a reference holder. Fix: call `RegisterCharacterReferenceAsync` when first recording a violation for a character, and `UnregisterCharacterReferenceAsync` during `CleanupByCharacter`.
+2. **Reference tracking helpers never invoked**: `RegisterCharacterReferenceAsync` / `UnregisterCharacterReferenceAsync` are generated from `x-references` but never called when violations are recorded or cleaned up. The cleanup callback IS registered (CASCADE works), but lib-resource has no individual reference records for obligation→character. Pre-deletion reference count checks via `/resource/check` will not include obligation as a reference holder. Fix: call `RegisterCharacterReferenceAsync` when first recording a violation for a character, and `UnregisterCharacterReferenceAsync` during `CleanupByCharacter`.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -371,6 +372,9 @@ All 11 API endpoints are fully implemented. The following supporting integration
 
 - **Faction-to-contract bridge**: Faction norms (violation types + base penalties + severity) need to flow into the obligation system through the contract pipeline. The #410 design represents social norms as implicit contract templates -- faction membership automatically creates contracts with behavioral clauses matching the faction's norms. The mechanism for this automatic contract creation on faction join/leave is not yet implemented. This is the bridge that makes faction norms visible to obligation's cost computation without a direct faction dependency.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/410 -->
+
+- **ViolationTypeTraitMap mechanism**: The personality weight computation maps violation types to traits via a hardcoded static dictionary (10 entries). While the `PersonalityWeightMultiplier` config controls the influence magnitude, the violation-type-to-trait bindings themselves are hardcoded. This is in tension with violation types being opaque strings that "grow organically" — any new type falls through to the default `conscientiousness`, silently degrading moral reasoning quality. Options: (a) make mappings part of the action mapping store, (b) define them in behavioral clause definitions from contracts, (c) make them configurable seed data. The personality multiplier is now configurable (was hardcoded `0.5f`), but the trait selection mechanism still needs design.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06:https://github.com/beyond-immersion/bannou-service/issues/410 -->
 
 - **Multi-channel obligation costs (authority-tagged)**: When faction sovereignty is implemented (see [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning)), obligation costs should be tagged by authority channel based on the source faction's `authorityLevel`:
 

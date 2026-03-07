@@ -1,0 +1,313 @@
+openapi: 3.0.4
+info:
+  title: Inventory Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for inventory service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: inventory-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    InventoryContainerCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to inventory.container.created when a inventorycontainer is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - containerId
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      - isEquipmentSlot
+      - nestingDepth
+      - canContainContainers
+      - selfWeight
+      - weightContribution
+      - slotCost
+      - contentsWeight
+      - totalWeight
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: inventory.container.created
+          description: 'Event type identifier: inventory.container.created'
+        containerId: &id001
+          type: string
+          format: uuid
+          description: "Container unique identifier"
+        ownerId: &id002
+          type: string
+          format: uuid
+          description: "Owner entity ID"
+        ownerType: &id003
+          $ref: ../inventory-api.yaml#/components/schemas/ContainerOwnerType
+          description: "Owner type (character, account, location, etc.)"
+        containerType: &id004
+          type: string
+          description: "Game-defined container type"
+        constraintModel: &id005
+          $ref: ../inventory-api.yaml#/components/schemas/ContainerConstraintModel
+          description: "Container capacity constraint model"
+        isEquipmentSlot: &id006
+          type: boolean
+          description: "Whether this is an equipment slot"
+        equipmentSlotName: &id007
+          type: string
+          nullable: true
+          description: "Equipment slot name if isEquipmentSlot is true"
+        maxSlots: &id008
+          type: integer
+          nullable: true
+          description: "Maximum slot count for slot-based constraints"
+        usedSlots: &id009
+          type: integer
+          nullable: true
+          description: "Current number of used slots"
+        maxWeight: &id010
+          type: number
+          format: double
+          nullable: true
+          description: "Maximum weight capacity"
+        gridWidth: &id011
+          type: integer
+          nullable: true
+          description: "Grid width for grid-based containers"
+        gridHeight: &id012
+          type: integer
+          nullable: true
+          description: "Grid height for grid-based containers"
+        maxVolume: &id013
+          type: number
+          format: double
+          nullable: true
+          description: "Maximum volume for volumetric containers"
+        currentVolume: &id014
+          type: number
+          format: double
+          nullable: true
+          description: "Current volume used"
+        parentContainerId: &id015
+          type: string
+          format: uuid
+          nullable: true
+          description: "Parent container ID for nested containers"
+        nestingDepth: &id016
+          type: integer
+          description: "Depth level in container hierarchy"
+        canContainContainers: &id017
+          type: boolean
+          description: "Whether this container can hold other containers"
+        maxNestingDepth: &id018
+          type: integer
+          nullable: true
+          description: "Maximum allowed nesting depth for child containers"
+        selfWeight: &id019
+          type: number
+          format: double
+          description: "Weight of the empty container itself"
+        weightContribution: &id020
+          $ref: ../inventory-api.yaml#/components/schemas/WeightContribution
+          description: "How container weight propagates to parent"
+        slotCost: &id021
+          type: integer
+          description: "Number of slots this container uses in its parent"
+        parentGridWidth: &id022
+          type: integer
+          nullable: true
+          description: "Width this container occupies in parent grid"
+        parentGridHeight: &id023
+          type: integer
+          nullable: true
+          description: "Height this container occupies in parent grid"
+        parentVolume: &id024
+          type: number
+          format: double
+          nullable: true
+          description: "Volume this container occupies in parent"
+        contentsWeight: &id025
+          type: number
+          format: double
+          description: "Total weight of direct contents"
+        totalWeight: &id026
+          type: number
+          format: double
+          description: "Total weight including self and contents"
+        allowedCategories: &id027
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Item categories allowed in this container"
+        forbiddenCategories: &id028
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Item categories forbidden from this container"
+        allowedTags: &id029
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Required tags for items in this container"
+        tags: &id030
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Container tags for categorization"
+        metadata: &id031
+          type: object
+          nullable: true
+          description: "Game-specific container metadata"
+        realmId: &id032
+          type: string
+          format: uuid
+          nullable: true
+          description: "Realm ID this container belongs to"
+        createdAt: &id033
+          type: string
+          format: date-time
+          description: "When the container was created"
+        modifiedAt: &id034
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the container was last modified"
+    InventoryContainerUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to inventory.container.updated when a inventorycontainer is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - containerId
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      - isEquipmentSlot
+      - nestingDepth
+      - canContainContainers
+      - selfWeight
+      - weightContribution
+      - slotCost
+      - contentsWeight
+      - totalWeight
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: inventory.container.updated
+          description: 'Event type identifier: inventory.container.updated'
+        containerId: *id001
+        ownerId: *id002
+        ownerType: *id003
+        containerType: *id004
+        constraintModel: *id005
+        isEquipmentSlot: *id006
+        equipmentSlotName: *id007
+        maxSlots: *id008
+        usedSlots: *id009
+        maxWeight: *id010
+        gridWidth: *id011
+        gridHeight: *id012
+        maxVolume: *id013
+        currentVolume: *id014
+        parentContainerId: *id015
+        nestingDepth: *id016
+        canContainContainers: *id017
+        maxNestingDepth: *id018
+        selfWeight: *id019
+        weightContribution: *id020
+        slotCost: *id021
+        parentGridWidth: *id022
+        parentGridHeight: *id023
+        parentVolume: *id024
+        contentsWeight: *id025
+        totalWeight: *id026
+        allowedCategories: *id027
+        forbiddenCategories: *id028
+        allowedTags: *id029
+        tags: *id030
+        metadata: *id031
+        realmId: *id032
+        createdAt: *id033
+        modifiedAt: *id034
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    InventoryContainerDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to inventory.container.deleted when a inventorycontainer is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - containerId
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      - isEquipmentSlot
+      - nestingDepth
+      - canContainContainers
+      - selfWeight
+      - weightContribution
+      - slotCost
+      - contentsWeight
+      - totalWeight
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: inventory.container.deleted
+          description: 'Event type identifier: inventory.container.deleted'
+        containerId: *id001
+        ownerId: *id002
+        ownerType: *id003
+        containerType: *id004
+        constraintModel: *id005
+        isEquipmentSlot: *id006
+        equipmentSlotName: *id007
+        maxSlots: *id008
+        usedSlots: *id009
+        maxWeight: *id010
+        gridWidth: *id011
+        gridHeight: *id012
+        maxVolume: *id013
+        currentVolume: *id014
+        parentContainerId: *id015
+        nestingDepth: *id016
+        canContainContainers: *id017
+        maxNestingDepth: *id018
+        selfWeight: *id019
+        weightContribution: *id020
+        slotCost: *id021
+        parentGridWidth: *id022
+        parentGridHeight: *id023
+        parentVolume: *id024
+        contentsWeight: *id025
+        totalWeight: *id026
+        allowedCategories: *id027
+        forbiddenCategories: *id028
+        allowedTags: *id029
+        tags: *id030
+        metadata: *id031
+        realmId: *id032
+        createdAt: *id033
+        modifiedAt: *id034
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

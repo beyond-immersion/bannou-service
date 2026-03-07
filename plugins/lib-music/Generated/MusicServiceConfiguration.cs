@@ -64,6 +64,12 @@ public class MusicServiceConfiguration : BaseServiceConfiguration
     public int DefaultTicksPerBeat { get; set; } = 480;
 
     /// <summary>
+    /// Default number of chords in a generated progression when not specified by caller
+    /// Environment variable: MUSIC_DEFAULT_PROGRESSION_LENGTH
+    /// </summary>
+    public int DefaultProgressionLength { get; set; } = 8;
+
+    /// <summary>
     /// Default number of chords per bar in generated progressions
     /// Environment variable: MUSIC_DEFAULT_CHORDS_PER_BAR
     /// </summary>
@@ -130,9 +136,7 @@ public class MusicServiceConfiguration : BaseServiceConfiguration
     public double DefaultEmotionalValence { get; set; } = 0.5;
 
     /// <summary>
-    /// Tension delta threshold for determining ascending/descending contour.
-    /// If final tension exceeds initial by this amount, contour is ascending.
-    /// If it's below initial by this amount, contour is descending.
+    /// Tension delta threshold for determining ascending/descending contour. If final tension exceeds initial by this amount, contour is ascending; if below by this amount, descending.
     /// Environment variable: MUSIC_CONTOUR_TENSION_THRESHOLD
     /// </summary>
     [ConfigRange(Minimum = 0.05, Maximum = 0.5)]
@@ -153,8 +157,7 @@ public class MusicServiceConfiguration : BaseServiceConfiguration
     public double DensityMinimum { get; set; } = 0.4;
 
     /// <summary>
-    /// Multiplier applied to energy for density calculation.
-    /// Final density = DensityMinimum + (energy * DensityEnergyMultiplier).
+    /// Multiplier applied to energy for density calculation. Final density equals DensityMinimum plus energy times DensityEnergyMultiplier.
     /// Environment variable: MUSIC_DENSITY_ENERGY_MULTIPLIER
     /// </summary>
     [ConfigRange(Minimum = 0.1, Maximum = 0.8)]

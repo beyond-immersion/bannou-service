@@ -120,51 +120,6 @@ public static class ObligationPermissionRegistration
             }
         });
 
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/obligation/get-compress-data",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getCompressData",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/obligation/restore-from-archive",
-            Method = ServiceEndpointMethod.Post,
-            Description = "restoreFromArchive",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/obligation/cleanup-by-character",
-            Method = ServiceEndpointMethod.Post,
-            Description = "cleanupByCharacter",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
         return endpoints;
     }
 
