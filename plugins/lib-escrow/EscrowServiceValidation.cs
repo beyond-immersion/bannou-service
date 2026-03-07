@@ -16,7 +16,7 @@ public partial class EscrowService
         VerifyConditionRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -87,7 +87,7 @@ public partial class EscrowService
             }
 
             // Agreement saved successfully - update secondary stores
-            var validationKey = GetValidationKey(body.EscrowId);
+            var validationKey = BuildValidationKey(body.EscrowId);
             var validationTracking = await _validationStore.GetAsync(validationKey, cancellationToken)
                 ?? new ValidationTrackingEntry { EscrowId = body.EscrowId };
 
@@ -126,10 +126,10 @@ public partial class EscrowService
 
             if (previousStatus != newStatus)
             {
-                var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+                var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{body.EscrowId}";
                 await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-                var newStatusKey = $"{GetStatusIndexKey(newStatus)}:{body.EscrowId}";
+                var newStatusKey = $"{BuildStatusIndexKey(newStatus)}:{body.EscrowId}";
                 var statusEntry = new StatusIndexEntry
                 {
                     EscrowId = body.EscrowId,
@@ -177,7 +177,7 @@ public partial class EscrowService
         ValidateEscrowRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -238,7 +238,7 @@ public partial class EscrowService
             }
 
             // Agreement saved successfully - update secondary stores
-            var validationKey = GetValidationKey(body.EscrowId);
+            var validationKey = BuildValidationKey(body.EscrowId);
             var validationTracking = await _validationStore.GetAsync(validationKey, cancellationToken)
                 ?? new ValidationTrackingEntry { EscrowId = body.EscrowId };
 
@@ -253,10 +253,10 @@ public partial class EscrowService
             {
                 if (previousStatus != agreementModel.Status)
                 {
-                    var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+                    var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{body.EscrowId}";
                     await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-                    var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.ValidationFailed)}:{body.EscrowId}";
+                    var newStatusKey = $"{BuildStatusIndexKey(EscrowStatus.ValidationFailed)}:{body.EscrowId}";
                     var statusEntry = new StatusIndexEntry
                     {
                         EscrowId = body.EscrowId,
@@ -308,7 +308,7 @@ public partial class EscrowService
         ReaffirmRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -383,7 +383,7 @@ public partial class EscrowService
             // Agreement saved successfully - update secondary stores
             if (allReaffirmed)
             {
-                var validationKey = GetValidationKey(body.EscrowId);
+                var validationKey = BuildValidationKey(body.EscrowId);
                 var validationTracking = await _validationStore.GetAsync(validationKey, cancellationToken);
                 if (validationTracking != null)
                 {
@@ -406,10 +406,10 @@ public partial class EscrowService
 
             if (previousStatus != newStatus)
             {
-                var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+                var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{body.EscrowId}";
                 await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-                var newStatusKey = $"{GetStatusIndexKey(newStatus)}:{body.EscrowId}";
+                var newStatusKey = $"{BuildStatusIndexKey(newStatus)}:{body.EscrowId}";
                 var statusEntry = new StatusIndexEntry
                 {
                     EscrowId = body.EscrowId,

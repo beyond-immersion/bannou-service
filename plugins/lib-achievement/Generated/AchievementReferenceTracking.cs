@@ -7,6 +7,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Resource;
 
 namespace BeyondImmersion.BannouService.Achievement;
@@ -21,6 +22,7 @@ namespace BeyondImmersion.BannouService.Achievement;
 /// Call RegisterResourceCleanupCallbacksAsync() during service startup to register cleanup callbacks.
 /// </para>
 /// </remarks>
+[ResourceCleanupRequired("CleanupByCharacterAsync")]
 public partial class AchievementService
 {
 

@@ -39,6 +39,34 @@ public partial class RealmHistoryService : IRealmHistoryService
     private const string PARTICIPATION_INDEX_KEY_PREFIX = "realm-participation-index-";
 
     /// <summary>
+    /// Builds the key for a participation record.
+    /// Format: {PARTICIPATION_KEY_PREFIX}{participationId}
+    /// </summary>
+    internal static string BuildParticipationKey(string participationId)
+        => $"{PARTICIPATION_KEY_PREFIX}{participationId}";
+
+    /// <summary>
+    /// Builds the key for a participation-by-event index entry.
+    /// Format: {PARTICIPATION_BY_EVENT_KEY_PREFIX}{eventId}
+    /// </summary>
+    internal static string BuildParticipationByEventKey(string eventId)
+        => $"{PARTICIPATION_BY_EVENT_KEY_PREFIX}{eventId}";
+
+    /// <summary>
+    /// Builds the key for a lore record.
+    /// Format: {LORE_KEY_PREFIX}{realmId}
+    /// </summary>
+    internal static string BuildLoreKey(string realmId)
+        => $"{LORE_KEY_PREFIX}{realmId}";
+
+    /// <summary>
+    /// Builds the key for a participation index entry.
+    /// Format: {PARTICIPATION_INDEX_KEY_PREFIX}{realmId}
+    /// </summary>
+    internal static string BuildParticipationIndexKey(string realmId)
+        => $"{PARTICIPATION_INDEX_KEY_PREFIX}{realmId}";
+
+    /// <summary>
     /// Initializes the RealmHistory service with required dependencies.
     /// </summary>
     public RealmHistoryService(

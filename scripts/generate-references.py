@@ -120,6 +120,15 @@ def extract_references(schema: Dict[str, Any]) -> List[ReferenceInfo]:
     return references
 
 
+def get_operation_id(schema: Dict[str, Any], endpoint_path: str) -> Optional[str]:
+    """Look up the operationId for a given endpoint path in the schema's paths section."""
+    paths = schema.get('paths', {})
+    path_item = paths.get(endpoint_path, {})
+    # Cleanup endpoints are always POST
+    post_op = path_item.get('post', {})
+    return post_op.get('operationId')
+
+
 def extract_resource_lifecycle(schema: Dict[str, Any]) -> Optional[ResourceLifecycleInfo]:
     """Extract x-resource-lifecycle declaration from an API schema."""
     info = schema.get('info', {})
@@ -137,7 +146,8 @@ def extract_resource_lifecycle(schema: Dict[str, Any]) -> Optional[ResourceLifec
 
 def generate_reference_tracking_code(
     service_name: str,
-    references: List[ReferenceInfo]
+    references: List[ReferenceInfo],
+    schema: Dict[str, Any]
 ) -> str:
     """Generate C# partial class with reference tracking helper methods."""
     service_pascal = to_pascal_case(service_name)
@@ -152,6 +162,7 @@ def generate_reference_tracking_code(
         "",
         "using BeyondImmersion.Bannou.Core;",
         "using BeyondImmersion.BannouService;",
+        "using BeyondImmersion.BannouService.Attributes;",
         "using BeyondImmersion.BannouService.Resource;",
         "",
         f"namespace BeyondImmersion.BannouService.{service_pascal};",
@@ -166,6 +177,28 @@ def generate_reference_tracking_code(
         "/// Call RegisterResourceCleanupCallbacksAsync() during service startup to register cleanup callbacks.",
         "/// </para>",
         "/// </remarks>",
+    ]
+
+    # Add [ResourceCleanupRequired] attributes for each unique cleanup endpoint.
+    # Multiple x-references targets may share the same endpoint (e.g., status uses
+    # cleanup-by-owner for both character and account targets).
+    # Method name is derived from the schema's operationId (what NSwag uses for C# method names).
+    seen_methods = set()
+    for ref in references:
+        if ref.cleanup_endpoint:
+            operation_id = get_operation_id(schema, ref.cleanup_endpoint)
+            if operation_id:
+                # operationId is camelCase (e.g., "cleanupByOwner") -> PascalCase + Async
+                method_name = operation_id[0].upper() + operation_id[1:] + "Async"
+            else:
+                # Fallback: derive from endpoint path segment
+                endpoint_suffix = ref.cleanup_endpoint.rsplit('/', 1)[-1]
+                method_name = to_pascal_case(endpoint_suffix) + "Async"
+            if method_name not in seen_methods:
+                seen_methods.add(method_name)
+                lines.append(f"[ResourceCleanupRequired(\"{method_name}\")]")
+
+    lines += [
         f"public partial class {service_pascal}Service",
         "{",
     ]
@@ -339,7 +372,7 @@ def main():
             output_file = generated_dir / f'{service_pascal}ReferenceTracking.cs'
 
             try:
-                code = generate_reference_tracking_code(service_name, references)
+                code = generate_reference_tracking_code(service_name, references, schema)
                 output_file.write_text(code)
                 generated_files.append((service_name, [r.target for r in references]))
                 print(f"  {service_name}: Generated reference tracking for {', '.join(r.target for r in references)}")

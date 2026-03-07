@@ -795,7 +795,7 @@ public partial class ResourceService : IResourceService
         await _cleanupStore.DeleteAsync(callbackKey, cancellationToken);
 
         // Remove from source type index
-        var indexKey = $"callback-index:{body.ResourceType}";
+        var indexKey = $"{CLEANUP_INDEX_KEY_PREFIX}{body.ResourceType}";
         await _cleanupCacheStore.RemoveFromSetAsync(indexKey, body.SourceType, cancellationToken);
 
         // Check if resource type has any remaining callbacks
@@ -1548,6 +1548,14 @@ public partial class ResourceService : IResourceService
     /// </summary>
     private const string MasterResourceTypeIndexKey = "callback-resource-types";
 
+    private const string RESOURCE_SOURCES_KEY_SUFFIX = ":sources";
+    private const string RESOURCE_GRACE_KEY_SUFFIX = ":grace";
+    private const string CLEANUP_KEY_PREFIX = "callback:";
+    private const string CLEANUP_INDEX_KEY_PREFIX = "callback-index:";
+    private const string COMPRESS_KEY_PREFIX = "compress-callback:";
+    private const string COMPRESS_INDEX_KEY_PREFIX = "compress-callback-index:";
+    private const string ARCHIVE_KEY_PREFIX = "archive:";
+
     // =========================================================================
     // Internal Helpers
     // =========================================================================
@@ -1555,20 +1563,20 @@ public partial class ResourceService : IResourceService
     /// <summary>
     /// Builds the Redis key for a resource's reference set.
     /// </summary>
-    private static string BuildResourceKey(string resourceType, Guid resourceId)
-        => $"{resourceType}:{resourceId}:sources";
+    internal static string BuildResourceKey(string resourceType, Guid resourceId)
+        => $"{resourceType}:{resourceId}{RESOURCE_SOURCES_KEY_SUFFIX}";
 
     /// <summary>
     /// Builds the Redis key for a resource's grace period record.
     /// </summary>
-    private static string BuildGraceKey(string resourceType, Guid resourceId)
-        => $"{resourceType}:{resourceId}:grace";
+    internal static string BuildGraceKey(string resourceType, Guid resourceId)
+        => $"{resourceType}:{resourceId}{RESOURCE_GRACE_KEY_SUFFIX}";
 
     /// <summary>
     /// Builds the Redis key for a cleanup callback definition.
     /// </summary>
-    private static string BuildCleanupKey(string resourceType, string sourceType)
-        => $"callback:{resourceType}:{sourceType}";
+    internal static string BuildCleanupKey(string resourceType, string sourceType)
+        => $"{CLEANUP_KEY_PREFIX}{resourceType}:{sourceType}";
 
     /// <summary>
     /// Gets all cleanup callbacks for a resource type.
@@ -1581,7 +1589,7 @@ public partial class ResourceService : IResourceService
             "bannou.resource", "ResourceService.GetCleanupCallbacksAsync");
 
         // Get the callback index for this resource type
-        var indexKey = $"callback-index:{resourceType}";
+        var indexKey = $"{CLEANUP_INDEX_KEY_PREFIX}{resourceType}";
         var sourceTypes = await _cleanupCacheStore.GetSetAsync<string>(indexKey, cancellationToken);
 
         var callbacks = new List<CleanupCallbackDefinition>();
@@ -1609,20 +1617,20 @@ public partial class ResourceService : IResourceService
     /// <summary>
     /// Builds the Redis key for a compression callback definition.
     /// </summary>
-    private static string BuildCompressKey(string resourceType, string sourceType)
-        => $"compress-callback:{resourceType}:{sourceType}";
+    internal static string BuildCompressKey(string resourceType, string sourceType)
+        => $"{COMPRESS_KEY_PREFIX}{resourceType}:{sourceType}";
 
     /// <summary>
     /// Builds the Redis key for the compression callback index.
     /// </summary>
-    private static string BuildCompressIndexKey(string resourceType)
-        => $"compress-callback-index:{resourceType}";
+    internal static string BuildCompressIndexKey(string resourceType)
+        => $"{COMPRESS_INDEX_KEY_PREFIX}{resourceType}";
 
     /// <summary>
     /// Builds the MySQL key for an archive.
     /// </summary>
-    private static string BuildArchiveKey(string resourceType, Guid resourceId)
-        => $"archive:{resourceType}:{resourceId}";
+    internal static string BuildArchiveKey(string resourceType, Guid resourceId)
+        => $"{ARCHIVE_KEY_PREFIX}{resourceType}:{resourceId}";
 
     /// <summary>
     /// Gets all compression callbacks for a resource type, sorted by priority.
@@ -1664,7 +1672,7 @@ public partial class ResourceService : IResourceService
             "bannou.resource", "ResourceService.MaintainCallbackIndexAsync");
 
         // Add to per-resource-type index
-        var indexKey = $"callback-index:{resourceType}";
+        var indexKey = $"{CLEANUP_INDEX_KEY_PREFIX}{resourceType}";
         await _cleanupCacheStore.AddToSetAsync(indexKey, sourceType, cancellationToken: cancellationToken);
 
         // Add to master resource type index (for listing all callbacks)

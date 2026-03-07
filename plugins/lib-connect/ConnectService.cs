@@ -65,6 +65,13 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
     private const string SESSION_TOPIC_PREFIX = "CONNECT_SESSION_";
 
     /// <summary>
+    /// Builds the session-specific topic key for RabbitMQ routing.
+    /// Format: {SESSION_TOPIC_PREFIX}{sessionId}
+    /// </summary>
+    internal static string BuildSessionTopicKey(string sessionId)
+        => $"{SESSION_TOPIC_PREFIX}{sessionId}";
+
+    /// <summary>
     /// Dedicated direct exchange for client events.
     /// Defined in provisioning/rabbitmq/definitions.json.
     /// </summary>

@@ -83,21 +83,21 @@ public partial class LocationService : ILocationService
 
     #region Key Building Helpers
 
-    private static string BuildLocationKey(Guid locationId) => $"{LOCATION_KEY_PREFIX}{locationId}";
-    private static string BuildCodeIndexKey(Guid realmId, string code) => $"{CODE_INDEX_PREFIX}{realmId}:{code.ToUpperInvariant()}";
-    private static string BuildRealmIndexKey(Guid realmId) => $"{REALM_INDEX_PREFIX}{realmId}";
-    private static string BuildParentIndexKey(Guid realmId, Guid parentId) => $"{PARENT_INDEX_PREFIX}{realmId}:{parentId}";
-    private static string BuildRootLocationsKey(Guid realmId) => $"{ROOT_LOCATIONS_PREFIX}{realmId}";
+    internal static string BuildLocationKey(Guid locationId) => $"{LOCATION_KEY_PREFIX}{locationId}";
+    internal static string BuildCodeIndexKey(Guid realmId, string code) => $"{CODE_INDEX_PREFIX}{realmId}:{code.ToUpperInvariant()}";
+    internal static string BuildRealmIndexKey(Guid realmId) => $"{REALM_INDEX_PREFIX}{realmId}";
+    internal static string BuildParentIndexKey(Guid realmId, Guid parentId) => $"{PARENT_INDEX_PREFIX}{realmId}:{parentId}";
+    internal static string BuildRootLocationsKey(Guid realmId) => $"{ROOT_LOCATIONS_PREFIX}{realmId}";
 
     private const string ENTITY_LOCATION_PREFIX = "entity-location:";
     private const string LOCATION_ENTITIES_PREFIX = "location-entities:";
     private const string LOCATION_ENTITIES_INDEX_KEY = "location-entities:__index__";
 
-    private static string BuildEntityLocationKey(string entityType, Guid entityId)
+    internal static string BuildEntityLocationKey(string entityType, Guid entityId)
         => $"{ENTITY_LOCATION_PREFIX}{entityType}:{entityId}";
-    private static string BuildLocationEntitiesKey(Guid locationId)
+    internal static string BuildLocationEntitiesKey(Guid locationId)
         => $"{LOCATION_ENTITIES_PREFIX}{locationId}";
-    private static string BuildEntitySetMember(string entityType, Guid entityId)
+    internal static string BuildEntitySetMember(string entityType, Guid entityId)
         => $"{entityType}:{entityId}";
 
     #endregion

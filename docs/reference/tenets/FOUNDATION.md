@@ -526,6 +526,26 @@ public void LocationService_HasValidKeyBuilders() =>
     StateStoreKeyValidator.ValidateKeyBuilders<LocationService>();
 ```
 
+### Partial Class Decomposition (GUIDELINE)
+
+T6 mandates the three-file partial class structure (`*Service.cs`, `*ServiceEvents.cs`, `*ServiceModels.cs`). When the main `{Service}Service.cs` exceeds approximately **500 lines of business logic**, decompose by domain operation into additional partial class files.
+
+**Naming convention**: `{Service}Service{DomainConcern}.cs` with PascalCase domain names.
+
+```
+plugins/lib-escrow/
+├── EscrowService.cs              # Core: topics, keys, constructor, shared helpers
+├── EscrowServiceLifecycle.cs     # Create, cancel, expire
+├── EscrowServiceDeposits.cs      # Deposit, release, refund
+├── EscrowServiceCompletion.cs    # Complete, distribute
+├── EscrowServiceConsent.cs       # Consent flows
+├── EscrowServiceValidation.cs    # Validation helpers
+├── EscrowServiceEvents.cs        # Event subscriptions
+└── EscrowServiceModels.cs        # Internal models
+```
+
+**Not a hard gate**: Services with simple CRUD (game-service at 5 endpoints) don't need decomposition. This is a readability guideline — use judgment based on the complexity and cohesion of the code.
+
 ---
 
 ## Tenet 13: X-Permissions Usage (DOCUMENTED)

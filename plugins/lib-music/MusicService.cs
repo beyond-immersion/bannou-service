@@ -27,6 +27,16 @@ namespace BeyondImmersion.BannouService.Music;
 [BannouService("music", typeof(IMusicService), lifetime: ServiceLifetime.Scoped)]
 public partial class MusicService : IMusicService
 {
+    #region Key Prefixes
+
+    private const string KEY_COMPONENT_PREFIX = "key:";
+    private const string TEMPO_COMPONENT_PREFIX = "tempo:";
+    private const string TUNE_COMPONENT_PREFIX = "tune:";
+    private const string MOOD_COMPONENT_PREFIX = "mood:";
+    private const string NARRATIVE_COMPONENT_PREFIX = "narrative:";
+
+    #endregion
+
     private readonly IMessageBus _messageBus;
     /// <summary>Redis-backed cache for deterministic compositions keyed by request parameters.</summary>
     private readonly IStateStore<GenerateCompositionResponse> _compositionCache;
@@ -989,7 +999,7 @@ public partial class MusicService : IMusicService
     /// Builds a deterministic cache key from composition request parameters.
     /// Only called when seed is explicitly provided (deterministic generation).
     /// </summary>
-    private static string BuildCompositionCacheKey(GenerateCompositionRequest request)
+    internal static string BuildCompositionCacheKey(GenerateCompositionRequest request)
     {
         // Include all parameters that affect output
         var keyParts = new List<string>
@@ -1001,24 +1011,24 @@ public partial class MusicService : IMusicService
 
         if (request.Key != null)
         {
-            keyParts.Add($"key:{request.Key.Tonic}:{request.Key.Mode}");
+            keyParts.Add($"{KEY_COMPONENT_PREFIX}{request.Key.Tonic}:{request.Key.Mode}");
         }
 
         if (request.Tempo.HasValue)
         {
-            keyParts.Add($"tempo:{request.Tempo.Value}");
+            keyParts.Add($"{TEMPO_COMPONENT_PREFIX}{request.Tempo.Value}");
         }
 
         if (!string.IsNullOrEmpty(request.TuneType))
         {
-            keyParts.Add($"tune:{request.TuneType}");
+            keyParts.Add($"{TUNE_COMPONENT_PREFIX}{request.TuneType}");
         }
 
-        keyParts.Add($"mood:{request.Mood}");
+        keyParts.Add($"{MOOD_COMPONENT_PREFIX}{request.Mood}");
 
         if (request.Narrative != null)
         {
-            keyParts.Add($"narrative:{request.Narrative.TemplateId}");
+            keyParts.Add($"{NARRATIVE_COMPONENT_PREFIX}{request.Narrative.TemplateId}");
         }
 
         return string.Join(":", keyParts);

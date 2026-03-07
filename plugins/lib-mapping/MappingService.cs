@@ -96,6 +96,7 @@ public partial class MappingService : IMappingService
     private const string VERSION_PREFIX = "map:version:";
     private const string AFFORDANCE_CACHE_PREFIX = "map:affordance-cache:";
     private const string DEFINITION_PREFIX = "map:definition:";
+    private const string REGION_INDEX_PREFIX = "map:region-index:";
     private const string DEFINITION_INDEX_KEY = "map:definition-index";
 
     /// <summary>
@@ -150,18 +151,18 @@ public partial class MappingService : IMappingService
 
     #region Key Building Helpers
 
-    private static string BuildChannelKey(Guid channelId) => $"{CHANNEL_PREFIX}{channelId}";
-    private static string BuildAuthorityKey(Guid channelId) => $"{AUTHORITY_PREFIX}{channelId}";
-    private static string BuildObjectKey(Guid regionId, Guid objectId) => $"{OBJECT_PREFIX}{regionId}:{objectId}";
-    private static string BuildSpatialIndexKey(Guid regionId, MapKind kind, int cellX, int cellY, int cellZ) =>
+    internal static string BuildChannelKey(Guid channelId) => $"{CHANNEL_PREFIX}{channelId}";
+    internal static string BuildAuthorityKey(Guid channelId) => $"{AUTHORITY_PREFIX}{channelId}";
+    internal static string BuildObjectKey(Guid regionId, Guid objectId) => $"{OBJECT_PREFIX}{regionId}:{objectId}";
+    internal static string BuildSpatialIndexKey(Guid regionId, MapKind kind, int cellX, int cellY, int cellZ) =>
         $"{SPATIAL_INDEX_PREFIX}{regionId}:{kind}:{cellX}_{cellY}_{cellZ}";
-    private static string BuildTypeIndexKey(Guid regionId, string objectType) =>
+    internal static string BuildTypeIndexKey(Guid regionId, string objectType) =>
         $"{TYPE_INDEX_PREFIX}{regionId}:{objectType}";
-    private static string BuildCheckoutKey(Guid regionId, MapKind kind) => $"{CHECKOUT_PREFIX}{regionId}:{kind}";
-    private static string BuildVersionKey(Guid channelId) => $"{VERSION_PREFIX}{channelId}";
-    private static string BuildAffordanceCacheKey(Guid regionId, AffordanceType type, string boundsHash) =>
+    internal static string BuildCheckoutKey(Guid regionId, MapKind kind) => $"{CHECKOUT_PREFIX}{regionId}:{kind}";
+    internal static string BuildVersionKey(Guid channelId) => $"{VERSION_PREFIX}{channelId}";
+    internal static string BuildAffordanceCacheKey(Guid regionId, AffordanceType type, string boundsHash) =>
         $"{AFFORDANCE_CACHE_PREFIX}{regionId}:{type}:{boundsHash}";
-    private static string BuildDefinitionKey(Guid definitionId) => $"{DEFINITION_PREFIX}{definitionId}";
+    internal static string BuildDefinitionKey(Guid definitionId) => $"{DEFINITION_PREFIX}{definitionId}";
 
     private (int cellX, int cellY, int cellZ) GetCellCoordinates(Position3D position)
     {
@@ -1696,7 +1697,7 @@ public partial class MappingService : IMappingService
         await _indexStore.AddToSetAsync<Guid>(indexKey, objectId, cancellationToken: cancellationToken);
     }
 
-    private static string BuildRegionIndexKey(Guid regionId, MapKind kind) => $"map:region-index:{regionId}:{kind}";
+    internal static string BuildRegionIndexKey(Guid regionId, MapKind kind) => $"{REGION_INDEX_PREFIX}{regionId}:{kind}";
 
     private async Task AddToRegionIndexAsync(Guid regionId, MapKind kind, Guid objectId, CancellationToken cancellationToken)
     {

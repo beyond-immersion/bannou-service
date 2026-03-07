@@ -2003,7 +2003,7 @@ public partial class InventoryService : IInventoryService
     /// <summary>
     /// Builds the owner index key for state store lookups.
     /// </summary>
-    private static string BuildOwnerIndexKey(ContainerOwnerType ownerType, Guid ownerId)
+    internal static string BuildOwnerIndexKey(ContainerOwnerType ownerType, Guid ownerId)
     {
         return $"{CONT_OWNER_INDEX}{ownerType}:{ownerId}";
     }

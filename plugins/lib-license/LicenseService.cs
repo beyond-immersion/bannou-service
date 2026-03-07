@@ -62,15 +62,26 @@ public partial class LicenseService : ILicenseService
     /// <summary>Cache state store for board unlock state (Redis-backed with TTL).</summary>
     private readonly IStateStore<BoardCacheModel> _boardCache;
 
+    #region Key Prefixes
+
+    private const string TEMPLATE_KEY_PREFIX = "board-tpl:";
+    private const string DEFINITION_KEY_PREFIX = "lic-def:";
+    private const string BOARD_KEY_PREFIX = "board:";
+    private const string BOARD_OWNER_KEY_PREFIX = "board-owner:";
+    private const string BOARD_CACHE_KEY_PREFIX = "cache:";
+    private const string TEMPLATE_LOCK_KEY_PREFIX = "tpl:";
+
+    #endregion
+
     #region Key Building
 
-    private static string BuildTemplateKey(Guid boardTemplateId) => $"board-tpl:{boardTemplateId}";
-    private static string BuildDefinitionKey(Guid boardTemplateId, string code) => $"lic-def:{boardTemplateId}:{code}";
-    private static string BuildBoardKey(Guid boardId) => $"board:{boardId}";
-    private static string BuildBoardByOwnerKey(EntityType ownerType, Guid ownerId, Guid boardTemplateId) => $"board-owner:{ownerType.ToString().ToLowerInvariant()}:{ownerId}:{boardTemplateId}";
-    private static string BuildBoardCacheKey(Guid boardId) => $"cache:{boardId}";
-    private static string BuildBoardLockKey(Guid boardId) => $"board:{boardId}";
-    private static string BuildTemplateLockKey(Guid boardTemplateId) => $"tpl:{boardTemplateId}";
+    internal static string BuildTemplateKey(Guid boardTemplateId) => $"{TEMPLATE_KEY_PREFIX}{boardTemplateId}";
+    internal static string BuildDefinitionKey(Guid boardTemplateId, string code) => $"{DEFINITION_KEY_PREFIX}{boardTemplateId}:{code}";
+    internal static string BuildBoardKey(Guid boardId) => $"{BOARD_KEY_PREFIX}{boardId}";
+    internal static string BuildBoardByOwnerKey(EntityType ownerType, Guid ownerId, Guid boardTemplateId) => $"{BOARD_OWNER_KEY_PREFIX}{ownerType.ToString().ToLowerInvariant()}:{ownerId}:{boardTemplateId}";
+    internal static string BuildBoardCacheKey(Guid boardId) => $"{BOARD_CACHE_KEY_PREFIX}{boardId}";
+    internal static string BuildBoardLockKey(Guid boardId) => $"{BOARD_KEY_PREFIX}{boardId}";
+    internal static string BuildTemplateLockKey(Guid boardTemplateId) => $"{TEMPLATE_LOCK_KEY_PREFIX}{boardTemplateId}";
 
     #endregion
 

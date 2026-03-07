@@ -193,7 +193,7 @@ public partial class TransitService : ITransitService
     /// <summary>
     /// Builds the state store key for a transit mode by code.
     /// </summary>
-    private static string BuildModeKey(string code) => $"{MODE_KEY_PREFIX}{code}";
+    internal static string BuildModeKey(string code) => $"{MODE_KEY_PREFIX}{code}";
 
     /// <summary>
     /// Registers a new transit mode type. Mode codes must be unique.
@@ -1096,7 +1096,7 @@ public partial class TransitService : ITransitService
     /// <summary>
     /// Builds the state store key for a connection by code.
     /// </summary>
-    private static string BuildConnectionCodeKey(string code) => $"{CONNECTION_CODE_KEY_PREFIX}{code}";
+    internal static string BuildConnectionCodeKey(string code) => $"{CONNECTION_CODE_KEY_PREFIX}{code}";
 
     /// <summary>
     /// Creates a connection between two locations. Validates locations exist, derives realm IDs,
@@ -3678,20 +3678,21 @@ public partial class TransitService : ITransitService
     #region Discovery
 
     private const string DISCOVERY_KEY_PREFIX = "discovery:";
+    private const string DISCOVERY_CACHE_KEY_PREFIX = "discovery-cache:";
 
     /// <summary>
     /// Builds the state store key for a discovery record.
     /// Composite key: discovery:{entityId}:{connectionId}
     /// </summary>
-    private static string BuildDiscoveryKey(Guid entityId, Guid connectionId) =>
+    internal static string BuildDiscoveryKey(Guid entityId, Guid connectionId) =>
         $"{DISCOVERY_KEY_PREFIX}{entityId}:{connectionId}";
 
     /// <summary>
     /// Builds the cache key for an entity's discovered connections set.
     /// Key: discovery-cache:{entityId}
     /// </summary>
-    private static string BuildDiscoveryCacheKey(Guid entityId) =>
-        $"discovery-cache:{entityId}";
+    internal static string BuildDiscoveryCacheKey(Guid entityId) =>
+        $"{DISCOVERY_CACHE_KEY_PREFIX}{entityId}";
 
     /// <summary>
     /// Reveals a discoverable connection to an entity. If the connection has already been

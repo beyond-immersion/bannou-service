@@ -235,18 +235,18 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
     }
 
     [Fact]
-    public void GetAgreementKey_FormatsCorrectly()
+    public void BuildAgreementKey_FormatsCorrectly()
     {
         var id = Guid.NewGuid();
-        var key = EscrowService.GetAgreementKey(id);
+        var key = EscrowService.BuildAgreementKey(id);
         Assert.Equal($"agreement:{id}", key);
     }
 
     [Fact]
-    public void GetTokenKey_FormatsCorrectly()
+    public void BuildTokenKey_FormatsCorrectly()
     {
         var hash = "abc123hash";
-        var key = EscrowService.GetTokenKey(hash);
+        var key = EscrowService.BuildTokenKey(hash);
         Assert.Equal("token:abc123hash", key);
     }
 

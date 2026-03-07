@@ -413,7 +413,7 @@ public partial class AchievementService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.LoadAchievementDefinitionsAsync");
-        var indexKey = GetDefinitionIndexKey(gameServiceId);
+        var indexKey = BuildDefinitionIndexKey(gameServiceId);
         var achievementIds = await _definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
 
         if (achievementIds.Count == 0)
@@ -424,7 +424,7 @@ public partial class AchievementService
         var definitions = new List<AchievementDefinitionData>();
         foreach (var achievementId in achievementIds)
         {
-            var key = GetDefinitionKey(gameServiceId, achievementId);
+            var key = BuildDefinitionKey(gameServiceId, achievementId);
             var definition = await _definitionStore.GetAsync(key, cancellationToken);
             if (definition != null)
             {

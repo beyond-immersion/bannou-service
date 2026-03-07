@@ -43,6 +43,31 @@ public partial class SubscriptionService : ISubscriptionService
     private const string SERVICE_SUBSCRIPTIONS_PREFIX = "service-subscriptions:";
     internal const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
 
+    #region Key Building Helpers
+
+    /// <summary>
+    /// Builds the state store key for a subscription record.
+    /// </summary>
+    /// <param name="subscriptionId">The subscription ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildSubscriptionKey(Guid subscriptionId) => $"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}";
+
+    /// <summary>
+    /// Builds the state store key for an account's subscription index.
+    /// </summary>
+    /// <param name="accountId">The account ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildAccountSubscriptionsKey(Guid accountId) => $"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}";
+
+    /// <summary>
+    /// Builds the state store key for a game service's subscription index.
+    /// </summary>
+    /// <param name="serviceId">The game service ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildServiceSubscriptionsKey(Guid serviceId) => $"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}";
+
+    #endregion
+
     /// <summary>
     /// Creates a new instance of the SubscriptionService.
     /// </summary>

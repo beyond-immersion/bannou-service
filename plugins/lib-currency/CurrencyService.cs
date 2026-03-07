@@ -2498,9 +2498,14 @@ public partial class CurrencyService : ICurrencyService
         };
     }
 
-    private static string BuildOwnerKey(Guid ownerId, EntityType ownerType, Guid? realmId)
+    // State store key prefix per FOUNDATION TENETS (Build*Key pattern)
+    private const string OWNER_KEY_PREFIX = "owner:";
+
+    internal static string BuildOwnerKey(Guid ownerId, EntityType ownerType, Guid? realmId)
     {
-        return realmId.HasValue ? $"{ownerId}:{ownerType}:{realmId.Value}" : $"{ownerId}:{ownerType}";
+        return realmId.HasValue
+            ? $"{OWNER_KEY_PREFIX}{ownerId}:{ownerType}:{realmId.Value}"
+            : $"{OWNER_KEY_PREFIX}{ownerId}:{ownerType}";
     }
 
     private static DateTimeOffset GetNextWeeklyReset(TimeSpan resetTime = default)

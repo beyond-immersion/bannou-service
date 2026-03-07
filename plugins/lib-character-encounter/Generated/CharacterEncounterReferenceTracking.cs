@@ -7,6 +7,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Resource;
 
 namespace BeyondImmersion.BannouService.CharacterEncounter;
@@ -21,6 +22,7 @@ namespace BeyondImmersion.BannouService.CharacterEncounter;
 /// Call RegisterResourceCleanupCallbacksAsync() during service startup to register cleanup callbacks.
 /// </para>
 /// </remarks>
+[ResourceCleanupRequired("DeleteByCharacterAsync")]
 public partial class CharacterEncounterService
 {
 

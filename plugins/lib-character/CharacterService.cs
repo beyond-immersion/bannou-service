@@ -1296,10 +1296,10 @@ public partial class CharacterService : ICharacterService
 
     #region Helper Methods
 
-    private static string BuildCharacterKey(string realmId, string characterId)
+    internal static string BuildCharacterKey(string realmId, string characterId)
         => $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}";
 
-    private static string BuildRealmIndexKey(string realmId)
+    internal static string BuildRealmIndexKey(string realmId)
         => $"{REALM_INDEX_KEY_PREFIX}{realmId}";
 
     #region Validation Helpers

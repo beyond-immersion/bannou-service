@@ -67,9 +67,9 @@ public partial class SpeciesService : ISpeciesService
 
     #region Key Building Helpers
 
-    private static string BuildSpeciesKey(Guid speciesId) => $"{SPECIES_KEY_PREFIX}{speciesId}";
-    private static string BuildCodeIndexKey(string code) => $"{CODE_INDEX_PREFIX}{code.ToUpperInvariant()}";
-    private static string BuildRealmIndexKey(Guid realmId) => $"{REALM_INDEX_PREFIX}{realmId}";
+    internal static string BuildSpeciesKey(Guid speciesId) => $"{SPECIES_KEY_PREFIX}{speciesId}";
+    internal static string BuildCodeIndexKey(string code) => $"{CODE_INDEX_PREFIX}{code.ToUpperInvariant()}";
+    internal static string BuildRealmIndexKey(Guid realmId) => $"{REALM_INDEX_PREFIX}{realmId}";
 
     #endregion
 

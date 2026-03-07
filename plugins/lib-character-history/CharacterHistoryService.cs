@@ -39,6 +39,22 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     private const string BACKSTORY_KEY_PREFIX = "backstory-";
     private const string PARTICIPATION_INDEX_KEY_PREFIX = "participation-index-";
 
+    #region Key Building Helpers
+
+    internal static string BuildParticipationKey(Guid characterId)
+        => $"{PARTICIPATION_KEY_PREFIX}{characterId}";
+
+    internal static string BuildParticipationByEventKey(Guid eventId)
+        => $"{PARTICIPATION_BY_EVENT_KEY_PREFIX}{eventId}";
+
+    internal static string BuildBackstoryKey(Guid characterId)
+        => $"{BACKSTORY_KEY_PREFIX}{characterId}";
+
+    internal static string BuildParticipationIndexKey(Guid characterId)
+        => $"{PARTICIPATION_INDEX_KEY_PREFIX}{characterId}";
+
+    #endregion
+
     // Event topics - must match schema definitions in character-history-events.yaml
     private const string PARTICIPATION_RECORDED_TOPIC = "character-history.participation.recorded";
     private const string PARTICIPATION_DELETED_TOPIC = "character-history.participation.deleted";

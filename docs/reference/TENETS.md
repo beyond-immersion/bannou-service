@@ -215,7 +215,7 @@ Tenets are organized into categories based on when they're needed:
 | # | Name | Core Rule |
 |---|------|-----------|
 | **T3** | Event Consumer Fan-Out | Use IEventConsumer for multi-plugin event handling |
-| **T7** | Error Handling | Generated controller provides catch-all boundary (do not duplicate in service methods); ApiException catch only for inter-service calls; service try-catch only for specific recovery logic; TryPublishErrorAsync; instance identity from IMeshInstanceIdentifier only |
+| **T7** | Error Handling | Generated controller provides catch-all boundary (do not duplicate in service methods); ApiException catch only for inter-service calls; service try-catch only for specific recovery logic; TryPublishErrorAsync; instance identity from IMeshInstanceIdentifier only; per-item error isolation in batch processing; multi-service call compensation |
 | **T8** | Return Pattern | All methods return `(StatusCodes, TResponse?)` tuples; null payload for errors; no filler properties in success responses |
 | **T9** | Multi-Instance Safety | No in-memory authoritative state; use distributed locks |
 | **T17** | Client Event Schema Pattern | Use IClientEventPublisher for WebSocket push; not IMessageBus |
@@ -297,6 +297,10 @@ Tenets are organized into categories based on when they're needed:
 | Constructing `ServiceErrorEvent` directly | T7 | Use `TryPublishErrorAsync`; only `RabbitMQMessageBus` constructs the event |
 | Passing instance ID to `TryPublishErrorAsync` | T7 | Instance identity injected internally from `IMeshInstanceIdentifier` |
 | Using `Guid.NewGuid()` or fixed string for error event `ServiceId` | T7 | `ServiceId` comes from `IMeshInstanceIdentifier` (process-stable) |
+| Batch loop without per-item try-catch | T7 | Add per-item error isolation; one corrupt record must not block all processing |
+| Per-item batch failure logged at Error instead of Warning | T7 | Use Warning for per-item failures (expected/recoverable); Error is for cycle-level failures |
+| Multi-service orchestration with no compensation or self-healing | T7 | Implement catch-block compensation OR document specific self-healing mechanism |
+| Comment acknowledging orphaned state with no resolution mechanism | T7 | A comment is not a mechanism; implement compensation or document self-healing |
 | Using Microsoft.AspNetCore.Http.StatusCodes | T8 | Use BeyondImmersion.BannouService.StatusCodes |
 | Success boolean in response (`locked: true`, `deleted: true`) | T8 | Remove from schema; 200 OK already confirms success |
 | Confirmation message string in response | T8 | Remove from schema; status code communicates result |

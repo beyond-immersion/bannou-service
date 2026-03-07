@@ -33,6 +33,40 @@ public partial class AccountService : IAccountService
     private const string EMAIL_INDEX_KEY_PREFIX = "email-index-";
     private const string PROVIDER_INDEX_KEY_PREFIX = "provider-index-"; // provider:externalId -> accountId
     private const string AUTH_METHODS_KEY_PREFIX = "auth-methods-"; // accountId -> List<AuthMethodInfo>
+
+    #region Key Building Helpers
+
+    /// <summary>
+    /// Builds the state store key for an account record.
+    /// </summary>
+    /// <param name="accountId">The account ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildAccountKey(Guid accountId) => $"{ACCOUNT_KEY_PREFIX}{accountId}";
+
+    /// <summary>
+    /// Builds the state store key for an email-to-account index lookup.
+    /// </summary>
+    /// <param name="normalizedEmail">The lowercase-normalized email address.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildEmailIndexKey(string normalizedEmail) => $"{EMAIL_INDEX_KEY_PREFIX}{normalizedEmail}";
+
+    /// <summary>
+    /// Builds the state store key for a provider:externalId-to-account index lookup.
+    /// </summary>
+    /// <param name="provider">The authentication provider.</param>
+    /// <param name="externalId">The external ID from the provider.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildProviderIndexKey(OAuthProvider provider, string externalId) => $"{PROVIDER_INDEX_KEY_PREFIX}{provider}:{externalId}";
+
+    /// <summary>
+    /// Builds the state store key for an account's authentication methods list.
+    /// </summary>
+    /// <param name="accountId">The account ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildAuthMethodsKey(Guid accountId) => $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
+
+    #endregion
+
     private const string ACCOUNT_CREATED_TOPIC = "account.created";
     private const string ACCOUNT_UPDATED_TOPIC = "account.updated";
     private const string ACCOUNT_DELETED_TOPIC = "account.deleted";

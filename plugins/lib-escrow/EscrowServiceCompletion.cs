@@ -20,7 +20,7 @@ public partial class EscrowService
         ReleaseRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -77,10 +77,10 @@ public partial class EscrowService
                 }
 
                 // Update status index
-                var initiationOldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+                var initiationOldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{body.EscrowId}";
                 await _statusIndexStore.DeleteAsync(initiationOldStatusKey, cancellationToken);
 
-                var initiationNewStatusKey = $"{GetStatusIndexKey(EscrowStatus.Releasing)}:{body.EscrowId}";
+                var initiationNewStatusKey = $"{BuildStatusIndexKey(EscrowStatus.Releasing)}:{body.EscrowId}";
                 var initiationStatusEntry = new StatusIndexEntry
                 {
                     EscrowId = body.EscrowId,
@@ -161,10 +161,10 @@ public partial class EscrowService
             }
 
             // Agreement saved successfully - update secondary stores
-            var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+            var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{body.EscrowId}";
             await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-            var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Released)}:{body.EscrowId}";
+            var newStatusKey = $"{BuildStatusIndexKey(EscrowStatus.Released)}:{body.EscrowId}";
             var statusEntry = new StatusIndexEntry
             {
                 EscrowId = body.EscrowId,
@@ -226,7 +226,7 @@ public partial class EscrowService
         RefundRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -282,10 +282,10 @@ public partial class EscrowService
             }
 
             // Agreement saved successfully - update secondary stores
-            var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+            var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{body.EscrowId}";
             await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-            var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Refunded)}:{body.EscrowId}";
+            var newStatusKey = $"{BuildStatusIndexKey(EscrowStatus.Refunded)}:{body.EscrowId}";
             var statusEntry = new StatusIndexEntry
             {
                 EscrowId = body.EscrowId,
@@ -347,7 +347,7 @@ public partial class EscrowService
         CancelRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -400,10 +400,10 @@ public partial class EscrowService
             }
 
             // Agreement saved successfully - update secondary stores
-            var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+            var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{body.EscrowId}";
             await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-            var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Cancelled)}:{body.EscrowId}";
+            var newStatusKey = $"{BuildStatusIndexKey(EscrowStatus.Cancelled)}:{body.EscrowId}";
             var statusEntry = new StatusIndexEntry
             {
                 EscrowId = body.EscrowId,
@@ -454,7 +454,7 @@ public partial class EscrowService
         DisputeRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -512,10 +512,10 @@ public partial class EscrowService
             }
 
             // Agreement saved successfully - update secondary stores
-            var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+            var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{body.EscrowId}";
             await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-            var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Disputed)}:{body.EscrowId}";
+            var newStatusKey = $"{BuildStatusIndexKey(EscrowStatus.Disputed)}:{body.EscrowId}";
             var statusEntry = new StatusIndexEntry
             {
                 EscrowId = body.EscrowId,
@@ -560,7 +560,7 @@ public partial class EscrowService
         ResolveRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -667,10 +667,10 @@ public partial class EscrowService
             }
 
             // Agreement saved successfully - update secondary stores
-            var oldStatusKey = $"{GetStatusIndexKey(EscrowStatus.Disputed)}:{body.EscrowId}";
+            var oldStatusKey = $"{BuildStatusIndexKey(EscrowStatus.Disputed)}:{body.EscrowId}";
             await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-            var newStatusKey = $"{GetStatusIndexKey(agreementModel.Status)}:{body.EscrowId}";
+            var newStatusKey = $"{BuildStatusIndexKey(agreementModel.Status)}:{body.EscrowId}";
             var statusEntry = new StatusIndexEntry
             {
                 EscrowId = body.EscrowId,
@@ -724,7 +724,7 @@ public partial class EscrowService
         ConfirmReleaseRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -808,10 +808,10 @@ public partial class EscrowService
             if (allConfirmed)
             {
                 // Update status index
-                var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+                var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{body.EscrowId}";
                 await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-                var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Released)}:{body.EscrowId}";
+                var newStatusKey = $"{BuildStatusIndexKey(EscrowStatus.Released)}:{body.EscrowId}";
                 var statusEntry = new StatusIndexEntry
                 {
                     EscrowId = body.EscrowId,
@@ -862,7 +862,7 @@ public partial class EscrowService
         ConfirmRefundRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -939,10 +939,10 @@ public partial class EscrowService
             if (allConfirmed)
             {
                 // Update status index
-                var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+                var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{body.EscrowId}";
                 await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-                var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Refunded)}:{body.EscrowId}";
+                var newStatusKey = $"{BuildStatusIndexKey(EscrowStatus.Refunded)}:{body.EscrowId}";
                 var statusEntry = new StatusIndexEntry
                 {
                     EscrowId = body.EscrowId,

@@ -90,6 +90,20 @@ public partial class ItemService : IItemService
     private const string INST_TEMPLATE_INDEX = "inst-template:";
 
     /// <summary>
+    /// Builds the key for an item template.
+    /// Format: {TPL_PREFIX}{templateId}
+    /// </summary>
+    internal static string BuildTemplateKey(Guid templateId)
+        => $"{TPL_PREFIX}{templateId}";
+
+    /// <summary>
+    /// Builds the key for an item instance.
+    /// Format: {INST_PREFIX}{instanceId}
+    /// </summary>
+    internal static string BuildInstanceKey(Guid instanceId)
+        => $"{INST_PREFIX}{instanceId}";
+
+    /// <summary>
     /// Initializes a new instance of the ItemService.
     /// </summary>
     /// <param name="messageBus">Message bus for event publishing.</param>

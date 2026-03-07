@@ -123,6 +123,25 @@ public class StructuralTests
     }
 
     /// <summary>
+    /// Validates that services with [ResourceCleanupRequired] attributes have
+    /// corresponding CleanupBy{Target}Async methods implemented. The attributes
+    /// are generated from x-references cleanup declarations; a missing method
+    /// means lib-resource will call a non-existent endpoint at runtime.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_HasRequiredCleanupMethods(Type serviceType)
+    {
+        var missing = ResourceCleanupValidator.GetMissingCleanupMethods(serviceType);
+
+        Assert.True(
+            missing.Length == 0,
+            $"{serviceType.Name}: {missing.Length} cleanup method(s) required by " +
+            $"[ResourceCleanupRequired] (from x-references) but not found:\n" +
+            string.Join("\n", missing.Select(m => $"  - {m}")));
+    }
+
+    /// <summary>
     /// Validates that every plugin using EnumMapping helper methods (MapByName,
     /// MapByNameOrDefault, TryMapByName) has corresponding EnumMappingValidator
     /// tests in its test project. This is the safety guarantee documented in

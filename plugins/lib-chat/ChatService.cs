@@ -42,9 +42,9 @@ namespace BeyondImmersion.BannouService.Chat;
 [BannouService("chat", typeof(IChatService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFoundation)]
 public partial class ChatService : IChatService
 {
-    private const string TypeKeyPrefix = "type:";
-    private const string RoomKeyPrefix = "room:";
-    private const string BanKeyPrefix = "ban:";
+    private const string TYPE_KEY_PREFIX = "type:";
+    private const string ROOM_KEY_PREFIX = "room:";
+    private const string BAN_KEY_PREFIX = "ban:";
 
     private readonly IMessageBus _messageBus;
     private readonly IClientEventPublisher _clientEventPublisher;
@@ -433,7 +433,7 @@ public partial class ChatService : IChatService
             LastActivityAt = now,
         };
 
-        var roomKey = $"{RoomKeyPrefix}{roomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{roomId}";
         await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
 
@@ -520,7 +520,7 @@ public partial class ChatService : IChatService
     public async Task<(StatusCodes, ChatRoomResponse?)> UpdateRoomAsync(
         UpdateRoomRequest body, CancellationToken cancellationToken)
     {
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
 
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
@@ -595,7 +595,7 @@ public partial class ChatService : IChatService
             return (StatusCodes.Conflict, null);
         }
 
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         var model = await _roomStore.GetAsync(roomKey, cancellationToken);
         if (model == null)
         {
@@ -660,7 +660,7 @@ public partial class ChatService : IChatService
             return (StatusCodes.Conflict, null);
         }
 
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         var model = await _roomStore.GetAsync(roomKey, cancellationToken);
         if (model == null)
         {
@@ -729,7 +729,7 @@ public partial class ChatService : IChatService
             return (StatusCodes.Conflict, null);
         }
 
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         var model = await _roomStore.GetAsync(roomKey, cancellationToken);
         if (model == null)
         {
@@ -742,7 +742,7 @@ public partial class ChatService : IChatService
         }
 
         // Check ban
-        var banKey = $"{BanKeyPrefix}{body.RoomId}:{callerSessionId}";
+        var banKey = $"{BAN_KEY_PREFIX}{body.RoomId}:{callerSessionId}";
         var ban = await _banStore.GetAsync(banKey, cancellationToken);
         if (ban != null && (ban.ExpiresAt == null || ban.ExpiresAt > DateTimeOffset.UtcNow))
         {
@@ -847,7 +847,7 @@ public partial class ChatService : IChatService
             return (StatusCodes.Conflict, null);
         }
 
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         var model = await _roomStore.GetAsync(roomKey, cancellationToken);
         if (model == null)
         {
@@ -946,7 +946,7 @@ public partial class ChatService : IChatService
     public async Task<(StatusCodes, ParticipantsResponse?)> ListParticipantsAsync(
         ListParticipantsRequest body, CancellationToken cancellationToken)
     {
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         var room = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
         if (room == null)
         {
@@ -990,7 +990,7 @@ public partial class ChatService : IChatService
             return (StatusCodes.Conflict, null);
         }
 
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         var model = await _roomStore.GetAsync(roomKey, cancellationToken);
         if (model == null)
         {
@@ -1070,7 +1070,7 @@ public partial class ChatService : IChatService
             return (StatusCodes.Conflict, null);
         }
 
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         var model = await _roomStore.GetAsync(roomKey, cancellationToken);
         if (model == null)
         {
@@ -1096,7 +1096,7 @@ public partial class ChatService : IChatService
             BannedAt = now,
             ExpiresAt = body.DurationMinutes.HasValue ? now.AddMinutes(body.DurationMinutes.Value) : null,
         };
-        var banKey = $"{BanKeyPrefix}{body.RoomId}:{body.TargetSessionId}";
+        var banKey = $"{BAN_KEY_PREFIX}{body.RoomId}:{body.TargetSessionId}";
         await _banStore.SaveAsync(banKey, ban, cancellationToken: cancellationToken);
 
         // Kick if currently present
@@ -1158,7 +1158,7 @@ public partial class ChatService : IChatService
             return (StatusCodes.Conflict, null);
         }
 
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         var model = await _roomStore.GetAsync(roomKey, cancellationToken);
         if (model == null)
         {
@@ -1172,7 +1172,7 @@ public partial class ChatService : IChatService
             return (StatusCodes.Forbidden, null);
         }
 
-        var banKey = $"{BanKeyPrefix}{body.RoomId}:{body.TargetSessionId}";
+        var banKey = $"{BAN_KEY_PREFIX}{body.RoomId}:{body.TargetSessionId}";
         var ban = await _banStore.GetAsync(banKey, cancellationToken);
         if (ban == null)
         {
@@ -1224,7 +1224,7 @@ public partial class ChatService : IChatService
             return (StatusCodes.Conflict, null);
         }
 
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         var model = await _roomStore.GetAsync(roomKey, cancellationToken);
         if (model == null)
         {
@@ -1290,7 +1290,7 @@ public partial class ChatService : IChatService
             return (StatusCodes.Conflict, null);
         }
 
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         var model = await _roomStore.GetAsync(roomKey, cancellationToken);
         if (model == null)
         {
@@ -1359,7 +1359,7 @@ public partial class ChatService : IChatService
             return (StatusCodes.Conflict, null);
         }
 
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         var model = await _roomStore.GetAsync(roomKey, cancellationToken);
         if (model == null)
         {
@@ -1559,7 +1559,7 @@ public partial class ChatService : IChatService
         }
 
         // Update room last activity
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         model.LastActivityAt = now;
         await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
@@ -1719,7 +1719,7 @@ public partial class ChatService : IChatService
         }
 
         // Update room activity
-        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{body.RoomId}";
         model.LastActivityAt = now;
         await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
@@ -2107,7 +2107,7 @@ public partial class ChatService : IChatService
             }
 
             var roomType = await FindRoomTypeByCodeAsync(room.RoomTypeCode, cancellationToken);
-            var roomKey = $"{RoomKeyPrefix}{room.RoomId}";
+            var roomKey = $"{ROOM_KEY_PREFIX}{room.RoomId}";
 
             if (roomType?.PersistenceMode == PersistenceMode.Persistent && !room.IsArchived)
             {
@@ -2181,7 +2181,7 @@ public partial class ChatService : IChatService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.chat", "ChatService.ExecuteContractRoomAction");
 
-        var roomKey = $"{RoomKeyPrefix}{room.RoomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{room.RoomId}";
 
         switch (action)
         {
@@ -2281,11 +2281,15 @@ public partial class ChatService : IChatService
     // PRIVATE HELPERS
     // ============================================================================
 
-    private static string BuildRoomTypeKey(Guid? gameServiceId, string code)
+    internal static string BuildRoomTypeKey(Guid? gameServiceId, string code)
     {
         var scope = gameServiceId.HasValue ? gameServiceId.Value.ToString() : "global";
-        return $"{TypeKeyPrefix}{scope}:{code}";
+        return $"{TYPE_KEY_PREFIX}{scope}:{code}";
     }
+
+    internal static string BuildRoomKey(Guid roomId) => $"{ROOM_KEY_PREFIX}{roomId}";
+
+    internal static string BuildBanKey(Guid roomId, string sessionId) => $"{BAN_KEY_PREFIX}{roomId}:{sessionId}";
 
     private async Task<ChatRoomTypeModel?> FindRoomTypeByCodeAsync(string code, CancellationToken ct)
     {
@@ -2306,7 +2310,7 @@ public partial class ChatService : IChatService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.chat", "ChatService.GetRoomWithCache");
 
-        var roomKey = $"{RoomKeyPrefix}{roomId}";
+        var roomKey = $"{ROOM_KEY_PREFIX}{roomId}";
 
         // Try cache first
         var cached = await _roomCache.GetAsync(roomKey, ct);

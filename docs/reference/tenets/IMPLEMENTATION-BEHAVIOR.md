@@ -193,6 +193,98 @@ Services MUST distinguish: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404
 - **LogWarning**: Expected failures (timeouts, transient failures, downstream API errors)
 - **LogError**: Unexpected failures that should trigger error event emission
 
+### Per-Item Error Isolation in Batch Processing (MANDATORY)
+
+When a worker or batch operation iterates over a collection of independent items, each item's processing MUST be individually try-caught. Without transactional rollback (not practical across distributed state stores), the guarantee shifts to: **every item gets its chance to be processed regardless of what happens to other items.**
+
+```csharp
+// CORRECT: Per-item isolation — one corrupt record cannot block all processing
+var successCount = 0;
+var failureCount = 0;
+foreach (var item in items)
+{
+    try
+    {
+        await ProcessItemAsync(item, ct);
+        successCount++;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogWarning(ex, "Failed to process {ItemId}, continuing", item.Id);
+        failureCount++;
+    }
+}
+_logger.LogInformation("Batch complete: {Success} succeeded, {Failed} failed", successCount, failureCount);
+
+// FORBIDDEN: Single try-catch around entire loop — first failure aborts all remaining items
+try
+{
+    foreach (var item in items)
+        await ProcessItemAsync(item, ct);
+}
+catch (Exception ex)
+{
+    _logger.LogError(ex, "Batch processing failed");  // All remaining items abandoned
+}
+```
+
+**Rules**:
+
+| Rule | Why |
+|------|-----|
+| Per-item failures logged at **Warning**, not Error | Individual failures are expected/recoverable; the cycle continues |
+| Per-item log MUST include the item's identifier | Without identity, you can't diagnose which record is corrupt |
+| Track success and failure counts | Cycle-level summary at Information enables monitoring without per-item noise |
+| Applies to: background worker cycles, bulk seed operations, bulk update/delete, any `foreach` over independent entities | If iterations are independent, failures must be independent too |
+
+**No shared helper**: Unlike `UpdateWithRetryAsync` (which replaces 15-20 lines of subtle retry logic), per-item isolation is ~5 lines of straightforward try/catch. Processing functions, counting semantics, and return types vary too much across services for a useful generic abstraction. The tenet rule itself is the standardization mechanism.
+
+### Multi-Service Call Compensation (MANDATORY)
+
+Multi-step orchestration methods that call multiple services in sequence MUST handle partial failure. If step 3 fails after steps 1 and 2 succeeded, the system is in a partially-committed state. This is unacceptable without an explicit resolution mechanism.
+
+**Every multi-service orchestration MUST implement one of two strategies**:
+
+**Strategy 1: Catch-block compensation** (preferred for immediate consistency)
+```csharp
+// CORRECT: Track what was done, undo on failure
+var incrementedParties = new List<Guid>();
+try
+{
+    foreach (var party in parties)
+    {
+        await _partyClient.IncrementPendingAsync(party, ct);
+        incrementedParties.Add(party.PartyId);
+    }
+    await _contractClient.CreateAsync(contract, ct);
+}
+catch (Exception)
+{
+    // Compensate: undo what succeeded
+    foreach (var partyId in incrementedParties)
+        await _partyClient.DecrementPendingAsync(partyId, ct);
+    throw;
+}
+```
+
+**Strategy 2: Documented self-healing** (acceptable for eventual consistency)
+```csharp
+// ACCEPTABLE: Document which mechanism resolves the partial state
+// If consent fails after contract creation, the orphaned contract will be
+// cleaned up by ContractExpirationService within ExpirationCheckInterval (default: 60s).
+// The contract has a TTL and no consent, so it will expire naturally.
+await _contractClient.CreateAsync(contract, ct);
+await _contractClient.ConsentAsync(consentRequest, ct);  // May fail
+```
+
+**FORBIDDEN**: Acknowledging possible orphaned state in a code comment without implementing either compensation or self-healing. A comment is not a mechanism.
+
+```csharp
+// FORBIDDEN: Comment acknowledging the problem with no solution
+// NOTE: If this fails, an orphaned contract instance may exist
+await _contractClient.ConsentAsync(consentRequest, ct);
+```
+
 ---
 
 ## Tenet 8: Return Pattern (MANDATORY)

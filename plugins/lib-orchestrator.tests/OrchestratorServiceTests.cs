@@ -172,12 +172,11 @@ public class OrchestratorServiceTests
             .ReturnsAsync((true, "State stores healthy", TimeSpan.FromMilliseconds(1.5)));
 
         // Pub/sub unhealthy via IMessageBus publish failure
+        // Mock the 3-param overload that the generated event publisher extension method calls
         _mockMessageBus
             .Setup(x => x.TryPublishAsync(
                 "orchestrator.health-ping",
-                It.IsAny<object>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
+                It.IsAny<OrchestratorHealthPingEvent>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Message bus unavailable"));
 

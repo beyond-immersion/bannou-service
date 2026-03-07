@@ -16,11 +16,11 @@ This document captures patterns discovered by systematically comparing structura
    2. [State Store Key Builders](#2-state-store-key-builders) ✅
    3. [Event Topic Constants (Generated)](#3-event-topic-constants-generated) ✅
    4. [Optimistic Concurrency Retry Loop](#4-optimistic-concurrency-retry-loop) ✅
-   5. [Per-Item Error Isolation in Batch Processing](#5-per-item-error-isolation-in-batch-processing)
-   6. [Event Publishing Helper Methods](#6-event-publishing-helper-methods)
-   7. [ChangedFields on All Updated Events](#7-changedfields-on-all-updated-events)
-   8. [Partial Class Decomposition Threshold](#8-partial-class-decomposition-threshold)
-   9. [Multi-Service Call Compensation](#9-multi-service-call-compensation)
+   5. [Per-Item Error Isolation in Batch Processing](#5-per-item-error-isolation-in-batch-processing) ✅
+   6. [Event Publishing Helper Methods](#6-event-publishing-helper-methods) ✅
+   7. [ChangedFields on All Updated Events](#7-changedfields-on-all-updated-events) ✅
+   8. [Partial Class Decomposition Threshold](#8-partial-class-decomposition-threshold) ✅
+   9. [Multi-Service Call Compensation](#9-multi-service-call-compensation) ✅
    10. [ConcurrentDictionary Cache Invalidation Must Use Events](#10-concurrentdictionary-cache-invalidation-must-use-events) ✅
 2. [Bugs and Violations Found](#ii-bugs-and-violations-found)
 3. [Inconsistencies Worth Standardizing](#iii-inconsistencies-worth-standardizing)
@@ -290,7 +290,9 @@ if (!saved) return (StatusCodes.Conflict, null);
 
 ---
 
-### 5. Per-Item Error Isolation in Batch Processing
+### 5. Per-Item Error Isolation in Batch Processing ✅
+
+**Status**: DONE — Added to IMPLEMENTATION-BEHAVIOR.md T7 as "Per-Item Error Isolation in Batch Processing (MANDATORY)" with canonical correct/forbidden examples, rule table, and assessment that no shared helper is warranted (5 lines of boilerplate with too-varied processing logic for useful generic abstraction; tenet rule is the standardization mechanism). Two violation entries added to TENETS.md quick reference.
 
 **Target Tenet**: Addition to T7 (Error Handling)
 **Priority**: Medium — prevents one corrupt record from blocking all processing
@@ -322,7 +324,9 @@ foreach (var item in items)
 
 ---
 
-### 6. Event Publishing Helper Methods
+### 6. Event Publishing Helper Methods ✅
+
+**Status**: DONE — Exceeded the original proposal. Instead of a tenet rule recommending manual helper methods, the code generation pipeline now produces `{Service}EventPublisher` extension method classes (e.g., `LocationEventPublisher.PublishLocationCreatedAsync()`) for every service, generated from `x-event-publications` in event schemas. A structural test (`Service_CallsAllGeneratedEventPublishers`) in `structural-tests/` uses IL-level assembly metadata scanning (`AssemblyMetadataScanner`) to verify that every generated `Publish*Async` method is called from somewhere in the plugin assembly — an uncalled method means a declared event topic is never published. This test has already caught ~25 real failures across the codebase. The combination of generated type-safe publishers + compile-time topic pairing + structural validation makes the original "recommend helper methods" proposal obsolete.
 
 **Target Tenet**: Addition to T5 (Event-Driven Architecture)
 **Priority**: Medium — reduces method length and centralizes event construction
@@ -361,7 +365,9 @@ await _messageBus.TryPublishAsync("location.created", new LocationCreatedEvent
 
 ---
 
-### 7. ChangedFields on All Updated Events
+### 7. ChangedFields on All Updated Events ✅
+
+**Status**: DONE — Exceeded the original proposal. The `ILifecycleUpdatedEvent` interface in `sdks/core/ILifecycleEvent.cs` enforces non-nullable `ChangedFields` (`ICollection<string>`) at the type system level. All generated `*UpdatedEvent` classes implement this interface via companion partial class files (`*LifecycleEvents.Interfaces.cs`). T5 in FOUNDATION.md (line 277) already states: "All `*.updated` events — whether lifecycle-generated or custom — MUST include a `changedFields` property containing camelCase property names of the fields that changed." The interface makes this compile-time enforced for lifecycle events; the tenet rule covers custom events.
 
 **Target Tenet**: Generalization of T31's `changedFields` rule into T5
 **Priority**: Medium — already universal practice, just not documented as such
@@ -377,7 +383,9 @@ T31 (Deprecation Lifecycle) specifies that deprecation state changes should be p
 
 ---
 
-### 8. Partial Class Decomposition Threshold
+### 8. Partial Class Decomposition Threshold ✅
+
+**Status**: DONE — Added to FOUNDATION.md T6 as "Partial Class Decomposition (GUIDELINE)" with the ~500 line threshold, naming convention (`{Service}Service{DomainConcern}.cs`), escrow as reference example, and explicit note that it's a readability guideline not a hard gate.
 
 **Target Tenet**: Addition to T6 (Service Implementation Pattern)
 **Priority**: Medium — prevents monolithic service files
@@ -408,7 +416,9 @@ plugins/lib-escrow/
 
 ---
 
-### 9. Multi-Service Call Compensation
+### 9. Multi-Service Call Compensation ✅
+
+**Status**: DONE — Added to IMPLEMENTATION-BEHAVIOR.md T7 as "Multi-Service Call Compensation (MANDATORY)" with two strategies (catch-block compensation and documented self-healing), canonical code examples for each, and explicit prohibition of comment-only acknowledgment. Two violation entries added to TENETS.md quick reference.
 
 **Target Tenet**: Addition to IMPLEMENTATION-BEHAVIOR or new section in T7
 **Priority**: Medium — prevents silent orphaned state in orchestration layers
@@ -523,19 +533,19 @@ These don't necessarily need new tenets but should be addressed for consistency.
 | Area | Current State | Best Practice | Fix Scope | Status |
 |------|--------------|---------------|-----------|--------|
 | Worker error event publishing | Matchmaking: log only. Currency/subscription: publish error events. | All workers MUST publish error events | Per-worker fix | ✅ FIXED — matchmaking uses TryPublishWorkerErrorAsync |
-| Worker DI scope approach | Matchmaking: delegates to service. Currency: independent store access. Subscription: hybrid. | Document both delegation and independent as valid; deprecate hybrid (both resolving service AND doing direct store access) | Documentation | ❌ NOT DONE |
+| Worker DI scope approach | Matchmaking: delegates to service. Currency: independent store access. Subscription: hybrid. | Document both delegation and independent as valid; deprecate hybrid (both resolving service AND doing direct store access) | Documentation | ⏸️ DEFERRED — User needs more information before deciding on standardization |
 | Config property naming for workers | `BackgroundServiceStartupDelaySeconds` vs `StartupDelaySeconds` vs `AutogainTaskStartupDelaySeconds` | `{WorkerName}StartupDelaySeconds`, `{WorkerName}IntervalSeconds` | Schema renames | ✅ DONE — standardized in worker tenet rules |
 | Config interval units | Seconds vs minutes vs milliseconds for same concept | Prefer seconds; milliseconds only for sub-second precision | Schema renames | ✅ FIXED — currency `autogainTaskIntervalMs` renamed to `autogainTaskIntervalSeconds` |
 | Pagination response shape | Location: full metadata (`Page`, `PageSize`, `HasNextPage`, `HasPreviousPage`). Transit/Worldstate: `TotalCount` only. | Standardize pagination response wrapper | Schema + SCHEMA-RULES addition | ✅ DONE — PaginationHelper + PaginationResult<T> in bannou-service |
 | Lock owner string format | Location: bare GUID. Transit: `$"operation-{Guid:N}"`. Worldstate: `$"service-{Guid:N}"`. | `$"{operation}-{Guid:N}"` (debuggable, shows which operation holds the lock) | Per-service fix | ✅ FIXED — faction (13 sites) and obligation (1 site) changed from bare `Guid.NewGuid().ToString()` to `$"operation-{Guid:N}"` format |
 | Model visibility | Worldstate: all `public`. Transit: mostly `internal`. | Default `internal`; `public` only when external consumers (providers, caches) need access | Per-service fix | ✅ VERIFIED — worldstate models must be `public` because its DI helper interfaces (IWorldstateTimeCalculator, ICalendarTemplateCache, IRealmClockCache) reference them in method signatures, and those interfaces are injected into the generated `public` service constructor. Transit models can be `internal` because no public interface references them. Not inconsistent — structurally required. |
 | Cache TTL config naming | `CacheTtlMinutes` vs `BackstoryCacheTtlSeconds` vs `EncounterCacheTtlMinutes` | `{Entity}CacheTtlMinutes` (consistent entity prefix, consistent unit) | Schema renames | ✅ FIXED — personality `CacheTtlMinutes` → `PersonalityCacheTtlMinutes`; history `BackstoryCacheTtlSeconds` → `BackstoryCacheTtlMinutes` |
-| Event error reporting in event handlers | Quest: direct `TryPublishErrorAsync` with full params. Escrow: wrapper with reduced params. | Full params (dependency, endpoint, stack) for debuggability | Per-service fix | ❌ NOT FIXED |
+| Event error reporting in event handlers | Quest: direct `TryPublishErrorAsync` with full params. Escrow: wrapper with reduced params. | Full params (dependency, endpoint, stack) for debuggability; consider making more params required / removing overloads | Per-service fix | ✅ ASSESSED — No overloads exist (single method with optional params). Making params required is impractical: `endpoint` is N/A for workers, `dependency` is N/A for most endpoint errors. Both generated controllers and `WorkerErrorPublisher` already pass `stack` (the most important optional param). Current signature is correct; the tenet rule (T7) already says "full params for debuggability" which is the right level of guidance. |
 | Container owner type mapping | Collection: maps `EntityType` to `ContainerOwnerType`. Status: hardcodes `Other`. | Map properly like Collection does | lib-status fix | ✅ FIXED — uses MapByNameOrDefault |
 | Lock timeout configuration | Collection: single timeout. Status: dual timeout (acquisition + TTL). | Dual timeout is more robust (cancel stale acquisition attempts) | Evaluate for standardization | ✅ VERIFIED — Status intentionally uses dual timeout: `LockTimeoutSeconds` (30s TTL for the lock in Redis) + `LockAcquisitionTimeoutSeconds` (5s CancelAfter on CancellationTokenSource). This prevents 30s request blocking when a lock holder crashes. Most services use single timeout as both TTL and acquisition bound. Dual is more robust but standardizing across all services is a design decision, not a bug. |
 | Key builder naming | `Build*Key()` vs `Get*Key()` vs `*Key()` | Standardize on `Build*Key()` | Per-service rename | ✅ DONE — codified in T6 tenet rules |
 | `x-event-subscriptions` on event schemas | Personality/history: `x-event-subscriptions: []`. Encounter: missing. | All event schemas include `x-event-subscriptions` (even if empty) | Schema fix | ✅ FIXED — added to character-encounter, license, resource, and seed event schemas (all 4 missing files) |
-| Cleanup by foreign key endpoint naming | Worldstate: `CleanupBy{Entity}Async`. Others: various. | Standardize naming convention in SCHEMA-RULES `x-references` docs | Documentation | ❌ NOT FIXED |
+| Cleanup by foreign key endpoint naming | Worldstate: `CleanupBy{Entity}Async`. Others: various. | Standardize naming convention in SCHEMA-RULES `x-references` docs | Documentation | ✅ ASSESSED — Naming is already highly consistent: all 25 cleanup endpoints across 15 services use `/{service}/cleanup-by-{target}` path pattern. `operationId` naming is also consistent: `cleanupBy{Target}` → generated as `CleanupBy{Target}Async`. Schema endpoint+model generation from `x-references` was investigated but deferred: request models are ~identical (single `{target}Id` field) but response models vary per service (different counter fields reflecting domain-specific cleanup actions — e.g., `progressRecordsDeleted`, `violationsRemoved`, `personalityDeleted + combatPreferencesDeleted`). Generating request models saves trivial boilerplate; generating response models would require additional schema keywords to specify counter fields, adding complexity for marginal benefit. Implementation bodies are entirely domain-specific and cannot be generated. Current manual pattern is clean enough. |
 
 ---
 
@@ -584,11 +594,10 @@ public static async Task TryPublishWorkerErrorAsync(
 
 ### B. Worth Evaluating (Moderate Benefit)
 
-#### 4. `VariableProviderCache<TData>` Base Class
-**Current state**: 3+ cache implementations with ~80% identical boilerplate (ConcurrentDictionary, TTL check, stale fallback, scope-based loading, invalidation methods).
-**Proposed location**: `bannou-service/Providers/VariableProviderCache.cs`
-**Impact**: Each concrete cache reduces to: data type, load function, TTL property. Includes self-invalidation documentation.
-**Caution**: The 20% that differs (number of dictionaries, multi-type loading in encounter cache) may make a generic base awkward. Evaluate whether composition (helper class) is better than inheritance (base class).
+#### 4. `VariableProviderCacheBucket<TKey, TData>` Composition Helper ✅
+**Status**: DONE — Implemented at `bannou-service/Providers/VariableProviderCacheBucket.cs` as a composition helper (not a base class). Encapsulates ConcurrentDictionary + CachedEntry record + get-or-load with stale fallback + 404 handling + invalidate/invalidateWhere/invalidateAll. Concrete caches compose one or more buckets: BackstoryCache uses 1, PersonalityDataCache uses 2, EncounterDataCache uses 4. The base class approach was rejected because EncounterDataCache has 4 dictionaries with different key types (Guid vs string pair keys) and different data types — composition fits naturally, inheritance would be awkward.
+**Proposed location**: `bannou-service/Providers/VariableProviderCacheBucket.cs`
+**Impact**: Each concrete cache reduces to: bucket declarations, constructor wiring, and thin delegation methods. Eliminates 6 duplicate `CachedEntry` record types and ~80% of the get-or-load boilerplate. Includes event-driven invalidation documentation in XML remarks.
 
 #### 5. Dual-Key State Store Wrapper ✅
 **Status**: DONE — Implemented as `DualIndexHelper<TRecord>` at `bannou-service/History/DualIndexHelper.cs` with full interface, config class, distributed locking, and 6+ methods.

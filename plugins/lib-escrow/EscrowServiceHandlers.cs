@@ -15,7 +15,7 @@ public partial class EscrowService
         RegisterHandlerRequest body,
         CancellationToken cancellationToken = default)
     {
-        var handlerKey = GetHandlerKey(body.AssetType);
+        var handlerKey = BuildHandlerKey(body.AssetType);
         var existing = await _handlerStore.GetAsync(handlerKey, cancellationToken);
 
         if (existing != null)
@@ -84,7 +84,7 @@ public partial class EscrowService
         DeregisterHandlerRequest body,
         CancellationToken cancellationToken = default)
     {
-        var handlerKey = GetHandlerKey(body.AssetType);
+        var handlerKey = BuildHandlerKey(body.AssetType);
         var existing = await _handlerStore.GetAsync(handlerKey, cancellationToken);
 
         if (existing == null)

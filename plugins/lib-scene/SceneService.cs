@@ -68,6 +68,43 @@ public partial class SceneService : ISceneService
     private const string SCENE_GLOBAL_INDEX_KEY = "scene:global-index";
     private const string SCENE_VERSION_HISTORY_PREFIX = "scene:version-history:";
 
+    #region Key Building Helpers
+
+    internal static string BuildSceneIndexKey(string sceneId)
+        => $"{SCENE_INDEX_PREFIX}{sceneId}";
+
+    internal static string BuildSceneContentKey(Guid sceneId)
+        => $"{SCENE_CONTENT_PREFIX}{sceneId}";
+
+    internal static string BuildSceneByGameKey(string gameId)
+        => $"{SCENE_BY_GAME_PREFIX}{gameId}";
+
+    internal static string BuildSceneByTypeKey(string gameId, string sceneType)
+        => $"{SCENE_BY_TYPE_PREFIX}{gameId}:{sceneType}";
+
+    internal static string BuildSceneReferencesKey(string sceneId)
+        => $"{SCENE_REFERENCES_PREFIX}{sceneId}";
+
+    internal static string BuildSceneAssetsKey(string assetId)
+        => $"{SCENE_ASSETS_PREFIX}{assetId}";
+
+    internal static string BuildSceneCheckoutKey(string sceneId)
+        => $"{SCENE_CHECKOUT_PREFIX}{sceneId}";
+
+    internal static string BuildSceneCheckoutExtKey(string sceneId)
+        => $"{SCENE_CHECKOUT_EXT_PREFIX}{sceneId}";
+
+    internal static string BuildValidationRulesKey(string gameId, string sceneType)
+        => $"{VALIDATION_RULES_PREFIX}{gameId}:{sceneType}";
+
+    internal static string BuildVersionRetentionKey(string sceneId)
+        => $"{VERSION_RETENTION_PREFIX}{sceneId}";
+
+    internal static string BuildSceneVersionHistoryKey(Guid sceneId)
+        => $"{SCENE_VERSION_HISTORY_PREFIX}{sceneId}";
+
+    #endregion
+
     // YAML serializer/deserializer
     private static readonly ISerializer YamlSerializer = new SerializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)

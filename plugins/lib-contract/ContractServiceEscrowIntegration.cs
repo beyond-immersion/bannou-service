@@ -30,6 +30,25 @@ public partial class ContractService
     private const string ALL_CLAUSE_TYPES_KEY = "all-clause-types";
     private const string IDEMPOTENCY_PREFIX = "idempotency:";
 
+    #region Key Building Helpers (Escrow Integration)
+
+    /// <summary>
+    /// Builds the state store key for a clause type registration record.
+    /// </summary>
+    /// <param name="typeCode">The clause type code.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildClauseTypeKey(string typeCode) => $"{CLAUSE_TYPE_PREFIX}{typeCode}";
+
+    /// <summary>
+    /// Builds the state store key for an idempotency cache entry.
+    /// </summary>
+    /// <param name="operation">The operation type (e.g., "lock", "unlock", "transfer").</param>
+    /// <param name="key">The idempotency key.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildIdempotencyKey(string operation, string key) => $"{IDEMPOTENCY_PREFIX}{operation}:{key}";
+
+    #endregion
+
     // TTL for idempotency cache entries configured in contract-configuration.yaml
 
     // Regex for validating template value key format (alphanumeric + underscore)

@@ -52,7 +52,7 @@ public partial class EscrowService
         // Validate MaxPendingPerParty limits for all parties
         foreach (var partyInput in body.Parties)
         {
-            var partyKey = GetPartyPendingKey(partyInput.PartyId, partyInput.PartyType);
+            var partyKey = BuildPartyPendingKey(partyInput.PartyId, partyInput.PartyType);
             var existingCount = await _partyPendingStore.GetAsync(partyKey, cancellationToken);
             if (existingCount != null && existingCount.PendingCount >= _configuration.MaxPendingPerParty)
             {
@@ -184,16 +184,16 @@ public partial class EscrowService
             RefundMode = body.RefundMode ?? _configuration.DefaultRefundMode
         };
 
-        var agreementKey = GetAgreementKey(escrowId);
+        var agreementKey = BuildAgreementKey(escrowId);
         await _agreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
 
         foreach (var tokenRecord in tokenRecordsToSave)
         {
-            var tokenKey = GetTokenKey(tokenRecord.TokenHash);
+            var tokenKey = BuildTokenKey(tokenRecord.TokenHash);
             await _tokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken: cancellationToken);
         }
 
-        var statusIndexKey = $"{GetStatusIndexKey(EscrowStatus.PendingDeposits)}:{escrowId}";
+        var statusIndexKey = $"{BuildStatusIndexKey(EscrowStatus.PendingDeposits)}:{escrowId}";
         var statusEntry = new StatusIndexEntry
         {
             EscrowId = escrowId,
@@ -265,7 +265,7 @@ public partial class EscrowService
         GetEscrowRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
         var agreementModel = await _agreementStore.GetAsync(agreementKey, cancellationToken);
 
         if (agreementModel == null)
@@ -361,7 +361,7 @@ public partial class EscrowService
         GetMyTokenRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
         var agreementModel = await _agreementStore.GetAsync(agreementKey, cancellationToken);
 
         if (agreementModel == null)

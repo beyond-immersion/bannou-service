@@ -347,19 +347,19 @@ public class EntitySessionRegistry : IEntitySessionRegistry
     /// <summary>
     /// Builds the forward index key: entity-sessions:{entityType}:{entityId:N}.
     /// </summary>
-    private static string BuildForwardKey(string entityType, Guid entityId)
+    internal static string BuildForwardKey(string entityType, Guid entityId)
         => $"{ENTITY_SESSIONS_KEY_PREFIX}{entityType}:{entityId:N}";
 
     /// <summary>
     /// Builds the reverse index key: session-entities:{sessionId}.
     /// </summary>
-    private static string BuildReverseKey(string sessionId)
+    internal static string BuildReverseKey(string sessionId)
         => SESSION_ENTITIES_KEY_PREFIX + sessionId;
 
     /// <summary>
     /// Builds the reverse index value: "{entityType}:{entityId:N}".
     /// </summary>
-    private static string BuildReverseValue(string entityType, Guid entityId)
+    internal static string BuildReverseValue(string entityType, Guid entityId)
         => $"{entityType}:{entityId:N}";
 
     /// <summary>

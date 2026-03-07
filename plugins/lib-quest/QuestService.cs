@@ -68,15 +68,27 @@ public partial class QuestService : IQuestService
     /// <summary>State store for quest cooldown entries (Redis).</summary>
     private readonly IStateStore<CooldownEntry> _cooldownStore;
 
+    #region Key Prefixes
+
+    private const string DEFINITION_KEY_PREFIX = "def:";
+    private const string DEFINITION_CODE_KEY_PREFIX = "def:code:";
+    private const string INSTANCE_KEY_PREFIX = "inst:";
+    private const string PROGRESS_KEY_PREFIX = "prog:";
+    private const string CHARACTER_INDEX_KEY_PREFIX = "char:";
+    private const string COOLDOWN_KEY_PREFIX = "cd:";
+    private const string LOCK_KEY_PREFIX = "quest:lock:";
+
+    #endregion
+
     #region Key Building
 
-    private static string BuildDefinitionKey(Guid definitionId) => $"def:{definitionId}";
-    private static string BuildDefinitionCodeKey(string code) => $"def:code:{code.ToUpperInvariant()}";
-    private static string BuildInstanceKey(Guid instanceId) => $"inst:{instanceId}";
-    private static string BuildProgressKey(Guid instanceId, string objectiveCode) => $"prog:{instanceId}:{objectiveCode}";
-    private static string BuildCharacterIndexKey(Guid characterId) => $"char:{characterId}";
-    private static string BuildCooldownKey(Guid characterId, string questCode) => $"cd:{characterId}:{questCode}";
-    private static string BuildLockKey(string resource) => $"quest:lock:{resource}";
+    internal static string BuildDefinitionKey(Guid definitionId) => $"{DEFINITION_KEY_PREFIX}{definitionId}";
+    internal static string BuildDefinitionCodeKey(string code) => $"{DEFINITION_CODE_KEY_PREFIX}{code.ToUpperInvariant()}";
+    internal static string BuildInstanceKey(Guid instanceId) => $"{INSTANCE_KEY_PREFIX}{instanceId}";
+    internal static string BuildProgressKey(Guid instanceId, string objectiveCode) => $"{PROGRESS_KEY_PREFIX}{instanceId}:{objectiveCode}";
+    internal static string BuildCharacterIndexKey(Guid characterId) => $"{CHARACTER_INDEX_KEY_PREFIX}{characterId}";
+    internal static string BuildCooldownKey(Guid characterId, string questCode) => $"{COOLDOWN_KEY_PREFIX}{characterId}:{questCode}";
+    internal static string BuildLockKey(string resource) => $"{LOCK_KEY_PREFIX}{resource}";
 
     #endregion
 

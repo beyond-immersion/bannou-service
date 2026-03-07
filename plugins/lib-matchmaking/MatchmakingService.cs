@@ -70,6 +70,52 @@ public partial class MatchmakingService : IMatchmakingService
     private const string PENDING_MATCH_PREFIX = "pending-match:";
     private const string QUEUE_TICKETS_PREFIX = "queue-tickets:";
 
+    #region Key Building Helpers
+
+    /// <summary>
+    /// Builds the state store key for a matchmaking queue record.
+    /// </summary>
+    /// <param name="queueId">The queue ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildQueueKey(string queueId) => $"{QUEUE_KEY_PREFIX}{queueId}";
+
+    /// <summary>
+    /// Builds the state store key for a matchmaking ticket record.
+    /// </summary>
+    /// <param name="ticketId">The ticket ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildTicketKey(Guid ticketId) => $"{TICKET_KEY_PREFIX}{ticketId}";
+
+    /// <summary>
+    /// Builds the state store key for a match record.
+    /// </summary>
+    /// <param name="matchId">The match ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildMatchKey(Guid matchId) => $"{MATCH_KEY_PREFIX}{matchId}";
+
+    /// <summary>
+    /// Builds the state store key for a player's ticket index.
+    /// </summary>
+    /// <param name="accountId">The account ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildPlayerTicketsKey(Guid accountId) => $"{PLAYER_TICKETS_PREFIX}{accountId}";
+
+    /// <summary>
+    /// Builds the state store key for a pending match wrapper.
+    /// </summary>
+    /// <param name="accountId">The account ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildPendingMatchKey(Guid accountId) => $"{PENDING_MATCH_PREFIX}{accountId}";
+
+    /// <summary>
+    /// Builds the state store key for a queue's ticket index.
+    /// </summary>
+    /// <param name="queueId">The queue ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildQueueTicketsKey(string queueId) => $"{QUEUE_TICKETS_PREFIX}{queueId}";
+
+    #endregion
+
     private readonly string _serverSalt;
 
     /// <summary>

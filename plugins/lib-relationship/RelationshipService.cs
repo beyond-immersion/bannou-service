@@ -2065,20 +2065,20 @@ public partial class RelationshipService : IRelationshipService
 
     #region Relationship Instance Helpers
 
-    private static string BuildRelationshipKey(Guid relationshipId) =>
+    internal static string BuildRelationshipKey(Guid relationshipId) =>
         $"{RELATIONSHIP_KEY_PREFIX}{relationshipId}";
 
-    private static string BuildEntityIndexKey(EntityType entityType, Guid entityId) =>
+    internal static string BuildEntityIndexKey(EntityType entityType, Guid entityId) =>
         $"{ENTITY_INDEX_PREFIX}{entityType}:{entityId}";
 
-    private static string BuildTypeIndexKey(Guid relationshipTypeId) =>
+    internal static string BuildTypeIndexKey(Guid relationshipTypeId) =>
         $"{TYPE_INDEX_PREFIX}{relationshipTypeId}";
 
     /// <summary>
     /// Builds the composite uniqueness key for a relationship.
     /// Normalizes entity order to ensure consistent key regardless of entity order in request.
     /// </summary>
-    private static string BuildCompositeKey(
+    internal static string BuildCompositeKey(
         Guid entity1Id, EntityType entity1Type,
         Guid entity2Id, EntityType entity2Type,
         Guid relationshipTypeId)
@@ -2223,9 +2223,9 @@ public partial class RelationshipService : IRelationshipService
 
     #region Relationship Type Helpers
 
-    private static string BuildRtTypeKey(Guid typeId) => $"{RT_TYPE_KEY_PREFIX}{typeId}";
-    private static string BuildRtCodeIndexKey(string code) => $"{RT_CODE_INDEX_PREFIX}{code}";
-    private static string BuildRtParentIndexKey(Guid parentId) => $"{RT_PARENT_INDEX_PREFIX}{parentId}";
+    internal static string BuildRtTypeKey(Guid typeId) => $"{RT_TYPE_KEY_PREFIX}{typeId}";
+    internal static string BuildRtCodeIndexKey(string code) => $"{RT_CODE_INDEX_PREFIX}{code}";
+    internal static string BuildRtParentIndexKey(Guid parentId) => $"{RT_PARENT_INDEX_PREFIX}{parentId}";
 
     private async Task<List<Guid>> GetChildTypeIdsAsync(Guid parentId, bool recursive, CancellationToken cancellationToken, int currentDepth = 0)
     {

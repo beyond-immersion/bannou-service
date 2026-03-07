@@ -95,7 +95,7 @@ public partial class EscrowService
     private async Task TransitionToFinalizingForContractAsync(Guid escrowId, Guid contractId)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.TransitionToFinalizingForContractAsync");
-        var agreementKey = GetAgreementKey(escrowId);
+        var agreementKey = BuildAgreementKey(escrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -140,10 +140,10 @@ public partial class EscrowService
             }
 
             // Update status index
-            var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{escrowId}";
+            var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{escrowId}";
             await _statusIndexStore.DeleteAsync(oldStatusKey);
 
-            var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Finalizing)}:{escrowId}";
+            var newStatusKey = $"{BuildStatusIndexKey(EscrowStatus.Finalizing)}:{escrowId}";
             var statusEntry = new StatusIndexEntry
             {
                 EscrowId = escrowId,
@@ -154,7 +154,7 @@ public partial class EscrowService
             await _statusIndexStore.SaveAsync(newStatusKey, statusEntry);
 
             // Reset validation tracking
-            var validationKey = GetValidationKey(escrowId);
+            var validationKey = BuildValidationKey(escrowId);
             var validationTracking = await _validationStore.GetAsync(validationKey);
             if (validationTracking != null)
             {
@@ -192,7 +192,7 @@ public partial class EscrowService
     private async Task RefundForContractTerminationAsync(Guid escrowId, Guid contractId, string? reason)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.RefundForContractTerminationAsync");
-        var agreementKey = GetAgreementKey(escrowId);
+        var agreementKey = BuildAgreementKey(escrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -247,10 +247,10 @@ public partial class EscrowService
             }
 
             // Update status index
-            var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{escrowId}";
+            var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{escrowId}";
             await _statusIndexStore.DeleteAsync(oldStatusKey);
 
-            var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Refunded)}:{escrowId}";
+            var newStatusKey = $"{BuildStatusIndexKey(EscrowStatus.Refunded)}:{escrowId}";
             var statusEntry = new StatusIndexEntry
             {
                 EscrowId = escrowId,

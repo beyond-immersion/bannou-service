@@ -39,6 +39,16 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     private const string PERSONALITY_KEY_PREFIX = "personality-";
     private const string COMBAT_KEY_PREFIX = "combat-";
 
+    #region Key Building Helpers
+
+    internal static string BuildPersonalityKey(Guid characterId)
+        => $"{PERSONALITY_KEY_PREFIX}{characterId}";
+
+    internal static string BuildCombatKey(Guid characterId)
+        => $"{COMBAT_KEY_PREFIX}{characterId}";
+
+    #endregion
+
     // Event topics
     private const string PERSONALITY_CREATED_TOPIC = "personality.created";
     private const string PERSONALITY_UPDATED_TOPIC = "personality.updated";

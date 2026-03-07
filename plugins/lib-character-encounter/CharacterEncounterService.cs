@@ -1684,7 +1684,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task<List<Guid>> GetPairEncounterIdsAsync(Guid charA, Guid charB, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetPairEncounterIdsAsync");
-        var pairKey = GetPairKey(charA, charB);
+        var pairKey = BuildPairKey(charA, charB);
         var indexStore = _pairIndexStore;
         var index = await indexStore.GetAsync($"{PAIR_INDEX_PREFIX}{pairKey}", cancellationToken);
         return index?.EncounterIds.ToList() ?? new List<Guid>();
@@ -2221,7 +2221,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         {
             for (var j = i + 1; j < participantIds.Count; j++)
             {
-                var pairKey = GetPairKey(participantIds[i], participantIds[j]);
+                var pairKey = BuildPairKey(participantIds[i], participantIds[j]);
                 var key = $"{PAIR_INDEX_PREFIX}{pairKey}";
                 var charA = participantIds[i] < participantIds[j] ? participantIds[i] : participantIds[j];
                 var charB = participantIds[i] < participantIds[j] ? participantIds[j] : participantIds[i];
@@ -2260,7 +2260,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         {
             for (var j = i + 1; j < participantIds.Count; j++)
             {
-                var pairKey = GetPairKey(participantIds[i], participantIds[j]);
+                var pairKey = BuildPairKey(participantIds[i], participantIds[j]);
                 var key = $"{PAIR_INDEX_PREFIX}{pairKey}";
 
                 for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
@@ -2599,11 +2599,67 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         return result;
     }
 
-    private static string GetPairKey(Guid charA, Guid charB)
+    internal static string BuildPairKey(Guid charA, Guid charB)
     {
         // Always put the smaller GUID first for consistent keying
         return charA < charB ? $"{charA}:{charB}" : $"{charB}:{charA}";
     }
+
+    /// <summary>
+    /// Builds the key for an encounter record.
+    /// Format: {ENCOUNTER_KEY_PREFIX}{encounterId}
+    /// </summary>
+    internal static string BuildEncounterKey(Guid encounterId)
+        => $"{ENCOUNTER_KEY_PREFIX}{encounterId}";
+
+    /// <summary>
+    /// Builds the key for a perspective record.
+    /// Format: {PERSPECTIVE_KEY_PREFIX}{perspectiveId}
+    /// </summary>
+    internal static string BuildPerspectiveKey(Guid perspectiveId)
+        => $"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}";
+
+    /// <summary>
+    /// Builds the key for an encounter type.
+    /// Format: {TYPE_KEY_PREFIX}{code}
+    /// </summary>
+    internal static string BuildTypeKey(string code)
+        => $"{TYPE_KEY_PREFIX}{code.ToUpperInvariant()}";
+
+    /// <summary>
+    /// Builds the key for a character index entry.
+    /// Format: {CHAR_INDEX_PREFIX}{characterId}
+    /// </summary>
+    internal static string BuildCharacterIndexKey(Guid characterId)
+        => $"{CHAR_INDEX_PREFIX}{characterId}";
+
+    /// <summary>
+    /// Builds the key for a pair index entry.
+    /// Format: {PAIR_INDEX_PREFIX}{pairKey}
+    /// </summary>
+    internal static string BuildPairIndexKey(string pairKey)
+        => $"{PAIR_INDEX_PREFIX}{pairKey}";
+
+    /// <summary>
+    /// Builds the key for a location index entry.
+    /// Format: {LOCATION_INDEX_PREFIX}{locationId}
+    /// </summary>
+    internal static string BuildLocationIndexKey(Guid locationId)
+        => $"{LOCATION_INDEX_PREFIX}{locationId}";
+
+    /// <summary>
+    /// Builds the key for a type-encounter index entry.
+    /// Format: {TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}
+    /// </summary>
+    internal static string BuildTypeEncounterIndexKey(string typeCode)
+        => $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
+
+    /// <summary>
+    /// Builds the key for an encounter-perspective index entry.
+    /// Format: {ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}
+    /// </summary>
+    internal static string BuildEncounterPerspectiveIndexKey(Guid encounterId)
+        => $"{ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}";
 
     private async Task<List<EncounterPerspectiveModel>> GetEncounterPerspectivesAsync(Guid encounterId, CancellationToken cancellationToken)
     {

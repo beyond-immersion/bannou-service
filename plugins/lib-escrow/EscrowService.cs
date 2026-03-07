@@ -87,6 +87,60 @@ public partial class EscrowService : IEscrowService
 
     #endregion
 
+    #region Key Building Helpers
+
+    /// <summary>
+    /// Builds the state store key for an escrow agreement record.
+    /// </summary>
+    /// <param name="escrowId">The escrow ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildAgreementKey(Guid escrowId) => $"{AGREEMENT_PREFIX}{escrowId}";
+
+    /// <summary>
+    /// Builds the state store key for a token hash record.
+    /// </summary>
+    /// <param name="tokenHash">The hashed token.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildTokenKey(string tokenHash) => $"{TOKEN_PREFIX}{tokenHash}";
+
+    /// <summary>
+    /// Builds the state store key for an idempotency record.
+    /// </summary>
+    /// <param name="key">The idempotency key.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildIdempotencyKey(string key) => $"{IDEMPOTENCY_PREFIX}{key}";
+
+    /// <summary>
+    /// Builds the state store key for an asset handler registration.
+    /// </summary>
+    /// <param name="assetType">The custom asset type.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildHandlerKey(string assetType) => $"{HANDLER_PREFIX}{assetType}";
+
+    /// <summary>
+    /// Builds the state store key for a party's pending escrow count.
+    /// </summary>
+    /// <param name="partyId">The party ID.</param>
+    /// <param name="partyType">The party entity type.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildPartyPendingKey(Guid partyId, EntityType partyType) => $"{PARTY_PENDING_PREFIX}{partyType}:{partyId}";
+
+    /// <summary>
+    /// Builds the state store key for a status-based escrow index.
+    /// </summary>
+    /// <param name="status">The escrow status.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildStatusIndexKey(EscrowStatus status) => $"{STATUS_INDEX_PREFIX}{status}";
+
+    /// <summary>
+    /// Builds the state store key for a validation tracking entry.
+    /// </summary>
+    /// <param name="escrowId">The escrow ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildValidationKey(Guid escrowId) => $"{VALIDATION_PREFIX}{escrowId}";
+
+    #endregion
+
     #region State Machine
 
     /// <summary>
@@ -266,76 +320,6 @@ public partial class EscrowService : IEscrowService
         return Convert.ToBase64String(hashBytes);
     }
 
-    /// <summary>
-    /// Gets the agreement key for state store.
-    /// </summary>
-    /// <param name="escrowId">Escrow ID.</param>
-    /// <returns>State store key.</returns>
-    internal static string GetAgreementKey(Guid escrowId)
-    {
-        return $"{AGREEMENT_PREFIX}{escrowId}";
-    }
-
-    /// <summary>
-    /// Gets the token key for state store.
-    /// </summary>
-    /// <param name="tokenHash">Hashed token.</param>
-    /// <returns>State store key.</returns>
-    internal static string GetTokenKey(string tokenHash)
-    {
-        return $"{TOKEN_PREFIX}{tokenHash}";
-    }
-
-    /// <summary>
-    /// Gets the idempotency key for state store.
-    /// </summary>
-    /// <param name="key">Idempotency key.</param>
-    /// <returns>State store key.</returns>
-    internal static string GetIdempotencyKey(string key)
-    {
-        return $"{IDEMPOTENCY_PREFIX}{key}";
-    }
-
-    /// <summary>
-    /// Gets the handler key for state store.
-    /// </summary>
-    /// <param name="assetType">Custom asset type.</param>
-    /// <returns>State store key.</returns>
-    internal static string GetHandlerKey(string assetType)
-    {
-        return $"{HANDLER_PREFIX}{assetType}";
-    }
-
-    /// <summary>
-    /// Gets the party pending count key.
-    /// </summary>
-    /// <param name="partyId">Party ID.</param>
-    /// <param name="partyType">Party type.</param>
-    /// <returns>State store key.</returns>
-    internal static string GetPartyPendingKey(Guid partyId, EntityType partyType)
-    {
-        return $"{PARTY_PENDING_PREFIX}{partyType}:{partyId}";
-    }
-
-    /// <summary>
-    /// Gets the status index key.
-    /// </summary>
-    /// <param name="status">Escrow status.</param>
-    /// <returns>State store key.</returns>
-    internal static string GetStatusIndexKey(EscrowStatus status)
-    {
-        return $"{STATUS_INDEX_PREFIX}{status}";
-    }
-
-    /// <summary>
-    /// Gets the validation tracking key.
-    /// </summary>
-    /// <param name="escrowId">Escrow ID.</param>
-    /// <returns>State store key.</returns>
-    internal static string GetValidationKey(Guid escrowId)
-    {
-        return $"{VALIDATION_PREFIX}{escrowId}";
-    }
 
     /// <summary>
     /// Atomically increments the pending escrow count for a party using optimistic concurrency.
@@ -346,7 +330,7 @@ public partial class EscrowService : IEscrowService
     internal async Task IncrementPartyPendingCountAsync(Guid partyId, EntityType partyType, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.IncrementPartyPendingCountAsync");
-        var partyKey = GetPartyPendingKey(partyId, partyType);
+        var partyKey = BuildPartyPendingKey(partyId, partyType);
         var now = DateTimeOffset.UtcNow;
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
@@ -386,7 +370,7 @@ public partial class EscrowService : IEscrowService
     internal async Task DecrementPartyPendingCountAsync(Guid partyId, EntityType partyType, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.DecrementPartyPendingCountAsync");
-        var partyKey = GetPartyPendingKey(partyId, partyType);
+        var partyKey = BuildPartyPendingKey(partyId, partyType);
         var now = DateTimeOffset.UtcNow;
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)

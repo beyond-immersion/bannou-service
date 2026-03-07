@@ -186,5 +186,5 @@ internal sealed class TransitConnectionGraphCache : ITransitConnectionGraphCache
     /// </summary>
     /// <param name="realmId">The realm ID.</param>
     /// <returns>The cache key string.</returns>
-    private static string BuildGraphKey(Guid realmId) => $"{GRAPH_KEY_PREFIX}{realmId}";
+    internal static string BuildGraphKey(Guid realmId) => $"{GRAPH_KEY_PREFIX}{realmId}";
 }

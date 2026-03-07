@@ -51,8 +51,11 @@ public partial class AchievementService : IAchievementService
     private readonly IResourceClient _resourceClient;
     private readonly IStateStore<PlatformSyncTrackingData> _syncStore;
 
-    // State store key prefixes
+    // State store key prefixes per FOUNDATION TENETS (Build*Key pattern)
+    private const string DEFINITION_KEY_PREFIX = "achievement-def:";
     private const string DEFINITION_INDEX_PREFIX = "achievement-definitions";
+    private const string PROGRESS_KEY_PREFIX = "achievement-progress:";
+    private const string SYNC_KEY_PREFIX = "achievement-sync:";
     private const string GAME_SERVICE_INDEX_KEY = "achievement-game-services";
 
     /// <summary>
@@ -87,32 +90,32 @@ public partial class AchievementService : IAchievementService
     }
 
     /// <summary>
-    /// Generates the key for an achievement definition.
-    /// Format: gameServiceId:achievementId
+    /// Builds the key for an achievement definition.
+    /// Format: {DEFINITION_KEY_PREFIX}{gameServiceId}:{achievementId}
     /// </summary>
-    private static string GetDefinitionKey(Guid gameServiceId, string achievementId)
-        => $"{gameServiceId}:{achievementId}";
+    internal static string BuildDefinitionKey(Guid gameServiceId, string achievementId)
+        => $"{DEFINITION_KEY_PREFIX}{gameServiceId}:{achievementId}";
 
     /// <summary>
-    /// Generates the key for the achievement definition index.
-    /// Format: achievement-definitions:gameServiceId
+    /// Builds the key for the achievement definition index.
+    /// Format: {DEFINITION_INDEX_PREFIX}:{gameServiceId}
     /// </summary>
-    private static string GetDefinitionIndexKey(Guid gameServiceId)
+    internal static string BuildDefinitionIndexKey(Guid gameServiceId)
         => $"{DEFINITION_INDEX_PREFIX}:{gameServiceId}";
 
     /// <summary>
-    /// Generates the key for entity progress.
-    /// Format: gameServiceId:entityType:entityId
+    /// Builds the key for entity progress.
+    /// Format: {PROGRESS_KEY_PREFIX}{gameServiceId}:{entityType}:{entityId}
     /// </summary>
-    private static string GetEntityProgressKey(Guid gameServiceId, EntityType entityType, Guid entityId)
-        => $"{gameServiceId}:{entityType}:{entityId}";
+    internal static string BuildEntityProgressKey(Guid gameServiceId, EntityType entityType, Guid entityId)
+        => $"{PROGRESS_KEY_PREFIX}{gameServiceId}:{entityType}:{entityId}";
 
     /// <summary>
-    /// Generates the key for platform sync tracking.
-    /// Format: gameServiceId:entityId:platform
+    /// Builds the key for platform sync tracking.
+    /// Format: {SYNC_KEY_PREFIX}{gameServiceId}:{entityId}:{platform}
     /// </summary>
-    private static string GetSyncTrackingKey(Guid gameServiceId, Guid entityId, Platform platform)
-        => $"{gameServiceId}:{entityId}:{platform}";
+    internal static string BuildSyncTrackingKey(Guid gameServiceId, Guid entityId, Platform platform)
+        => $"{SYNC_KEY_PREFIX}{gameServiceId}:{entityId}:{platform}";
 
     /// <summary>
     /// Implementation of CreateAchievementDefinition operation.
@@ -123,7 +126,7 @@ public partial class AchievementService : IAchievementService
         _logger.LogDebug("Creating achievement {AchievementId} for game service {GameServiceId}",
             body.AchievementId, body.GameServiceId);
 
-        var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+        var key = BuildDefinitionKey(body.GameServiceId, body.AchievementId);
 
         // Check if already exists
         var existing = await _definitionStore.GetAsync(key, cancellationToken);
@@ -166,7 +169,7 @@ public partial class AchievementService : IAchievementService
 
         await _definitionStore.SaveAsync(key, definition, options: null, cancellationToken);
         await _definitionStore.AddToSetAsync(
-            GetDefinitionIndexKey(body.GameServiceId),
+            BuildDefinitionIndexKey(body.GameServiceId),
             body.AchievementId,
             cancellationToken: cancellationToken);
 
@@ -190,7 +193,7 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Getting achievement {AchievementId}", body.AchievementId);
 
-        var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+        var key = BuildDefinitionKey(body.GameServiceId, body.AchievementId);
 
         var definition = await _definitionStore.GetAsync(key, cancellationToken);
         if (definition == null)
@@ -209,7 +212,7 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Listing achievements for game service {GameServiceId}", body.GameServiceId);
 
-        var indexKey = GetDefinitionIndexKey(body.GameServiceId);
+        var indexKey = BuildDefinitionIndexKey(body.GameServiceId);
         var achievementIds = await _definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
 
         if (achievementIds.Count == 0)
@@ -224,7 +227,7 @@ public partial class AchievementService : IAchievementService
 
         foreach (var achievementId in achievementIds)
         {
-            var defKey = GetDefinitionKey(body.GameServiceId, achievementId);
+            var defKey = BuildDefinitionKey(body.GameServiceId, achievementId);
             var definition = await _definitionStore.GetAsync(defKey, cancellationToken);
             if (definition == null)
             {
@@ -280,7 +283,7 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Updating achievement {AchievementId}", body.AchievementId);
 
-        var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+        var key = BuildDefinitionKey(body.GameServiceId, body.AchievementId);
 
         var (definition, etag) = await _definitionStore.GetWithETagAsync(key, cancellationToken);
         if (definition == null)
@@ -376,7 +379,7 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Deprecating achievement {AchievementId}", body.AchievementId);
 
-        var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+        var key = BuildDefinitionKey(body.GameServiceId, body.AchievementId);
 
         var (definition, etag) = await _definitionStore.GetWithETagAsync(key, cancellationToken);
         if (definition == null)
@@ -420,7 +423,7 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Getting achievement progress for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
-        var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+        var progressKey = BuildEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
 
         var entityProgress = await _progressStore.GetAsync(progressKey, cancellationToken) ?? new EntityProgressData
         {
@@ -439,7 +442,7 @@ public partial class AchievementService : IAchievementService
             if (entityProgress.Achievements.TryGetValue(body.AchievementId, out var progress))
             {
                 // Verify definition still exists (skip orphaned progress from deleted definitions)
-                var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+                var defKey = BuildDefinitionKey(body.GameServiceId, body.AchievementId);
                 var definition = await _definitionStore.GetAsync(defKey, cancellationToken);
                 if (definition != null)
                 {
@@ -456,7 +459,7 @@ public partial class AchievementService : IAchievementService
             // Return all progress, filtering out orphaned entries from deleted definitions
             foreach (var kvp in entityProgress.Achievements)
             {
-                var defKey = GetDefinitionKey(body.GameServiceId, kvp.Key);
+                var defKey = BuildDefinitionKey(body.GameServiceId, kvp.Key);
                 var definition = await _definitionStore.GetAsync(defKey, cancellationToken);
                 if (definition == null)
                 {
@@ -491,7 +494,7 @@ public partial class AchievementService : IAchievementService
             body.AchievementId, body.EntityType, body.EntityId);
 
         // Get achievement definition
-        var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+        var defKey = BuildDefinitionKey(body.GameServiceId, body.AchievementId);
         var definition = await _definitionStore.GetAsync(defKey, cancellationToken);
 
         if (definition == null)
@@ -519,7 +522,7 @@ public partial class AchievementService : IAchievementService
         }
 
         // Acquire lock on progress key (compound operation: modifies both progress and definition)
-        var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+        var progressKey = BuildEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
 
         await using var progressLock = await _lockProvider.LockAsync(
             StateStoreDefinitions.AchievementLock, progressKey, Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
@@ -677,7 +680,7 @@ public partial class AchievementService : IAchievementService
             body.AchievementId, body.EntityType, body.EntityId);
 
         // Get achievement definition
-        var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+        var defKey = BuildDefinitionKey(body.GameServiceId, body.AchievementId);
         var definition = await _definitionStore.GetAsync(defKey, cancellationToken);
 
         if (definition == null)
@@ -701,7 +704,7 @@ public partial class AchievementService : IAchievementService
         // Check prerequisites
         if (definition.Prerequisites != null && definition.Prerequisites.Count > 0)
         {
-            var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+            var progressKey = BuildEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
             var entityProgress = await _progressStore.GetAsync(progressKey, cancellationToken);
 
             if (entityProgress == null)
@@ -721,7 +724,7 @@ public partial class AchievementService : IAchievementService
         }
 
         // Acquire lock on progress key (compound operation: modifies both progress and definition)
-        var key = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+        var key = BuildEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
 
         await using var progressLock = await _lockProvider.LockAsync(
             StateStoreDefinitions.AchievementLock, key, Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
@@ -806,7 +809,7 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Listing unlocked achievements for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
-        var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+        var progressKey = BuildEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
         var entityProgress = await _progressStore.GetAsync(progressKey, cancellationToken);
 
         if (entityProgress == null)
@@ -825,7 +828,7 @@ public partial class AchievementService : IAchievementService
 
         foreach (var kvp in entityProgress.Achievements.Where(a => a.Value.IsUnlocked))
         {
-            var defKey = GetDefinitionKey(body.GameServiceId, kvp.Key);
+            var defKey = BuildDefinitionKey(body.GameServiceId, kvp.Key);
             var definition = await _definitionStore.GetAsync(defKey, cancellationToken);
 
             if (definition == null)
@@ -927,7 +930,7 @@ public partial class AchievementService : IAchievementService
         }
 
         // Get entity progress
-        var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+        var progressKey = BuildEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
         var entityProgress = await _progressStore.GetAsync(progressKey, cancellationToken);
 
         if (entityProgress == null || entityProgress.Achievements.Count == 0)
@@ -946,7 +949,7 @@ public partial class AchievementService : IAchievementService
 
         foreach (var kvp in entityProgress.Achievements.Where(a => a.Value.IsUnlocked))
         {
-            var defKey = GetDefinitionKey(body.GameServiceId, kvp.Key);
+            var defKey = BuildDefinitionKey(body.GameServiceId, kvp.Key);
             var definition = await _definitionStore.GetAsync(defKey, cancellationToken);
 
             if (definition == null)
@@ -1093,7 +1096,7 @@ public partial class AchievementService : IAchievementService
             var isLinked = await syncProvider.IsLinkedAsync(body.EntityId, cancellationToken);
             var externalId = isLinked ? await syncProvider.GetExternalIdAsync(body.EntityId, cancellationToken) : null;
 
-            var syncKey = GetSyncTrackingKey(body.GameServiceId, body.EntityId, syncProvider.Platform);
+            var syncKey = BuildSyncTrackingKey(body.GameServiceId, body.EntityId, syncProvider.Platform);
             var syncTracking = await _syncStore.GetAsync(syncKey, cancellationToken);
 
             platforms.Add(new PlatformStatus
@@ -1141,7 +1144,7 @@ public partial class AchievementService : IAchievementService
             }
 
             // Progress key: {gameServiceId}:{entityType}:{entityId}
-            var progressKey = GetEntityProgressKey(gameServiceId, EntityType.Character, body.CharacterId);
+            var progressKey = BuildEntityProgressKey(gameServiceId, EntityType.Character, body.CharacterId);
             var existing = await _progressStore.GetAsync(progressKey, cancellationToken);
             if (existing != null)
             {
@@ -1216,7 +1219,7 @@ public partial class AchievementService : IAchievementService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.RecordSyncOutcomeAsync");
-        var key = GetSyncTrackingKey(gameServiceId, entityId, platform);
+        var key = BuildSyncTrackingKey(gameServiceId, entityId, platform);
         var maxAttempts = Math.Max(1, _configuration.SyncStatusRetryAttempts);
 
         for (var attempt = 1; attempt <= maxAttempts; attempt++)

@@ -37,6 +37,24 @@ public partial class GameServiceService : IGameServiceService
     private const string SERVICE_STUB_INDEX_PREFIX = "game-service-stub:";
     private const string SERVICE_LIST_KEY = "game-service-list";
 
+    #region Key Building Helpers
+
+    /// <summary>
+    /// Builds the state store key for a game service registry record.
+    /// </summary>
+    /// <param name="serviceId">The game service ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildServiceKey(Guid serviceId) => $"{SERVICE_KEY_PREFIX}{serviceId}";
+
+    /// <summary>
+    /// Builds the state store key for a stub-name-to-service-ID index lookup.
+    /// </summary>
+    /// <param name="normalizedStubName">The lowercase-normalized stub name.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildServiceStubIndexKey(string normalizedStubName) => $"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}";
+
+    #endregion
+
     public GameServiceService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,

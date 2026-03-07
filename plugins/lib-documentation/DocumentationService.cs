@@ -85,6 +85,37 @@ public partial class DocumentationService : IDocumentationService
     private const string ALL_NAMESPACES_KEY = "all-namespaces";
     private const string NAMESPACE_LAST_UPDATED_PREFIX = "ns-last-updated:";
 
+    #region Key Building Helpers
+
+    internal static string BuildDocKey(string namespaceId, Guid documentId)
+        => $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+
+    internal static string BuildSlugIndexKey(string namespaceId, string slug)
+        => $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
+
+    internal static string BuildNamespaceDocsKey(string namespaceId)
+        => $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
+
+    internal static string BuildTrashKey(string namespaceId, Guid documentId)
+        => $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
+
+    internal static string BuildBindingKey(string namespaceId)
+        => $"{BINDING_KEY_PREFIX}{namespaceId}";
+
+    internal static string BuildArchiveKey(Guid archiveId)
+        => $"{ARCHIVE_KEY_PREFIX}{archiveId}";
+
+    internal static string BuildArchiveListKey(string namespaceId)
+        => $"{ARCHIVE_KEY_PREFIX}list:{namespaceId}";
+
+    internal static string BuildSyncLockKey(string namespaceId)
+        => $"{SYNC_LOCK_PREFIX}{namespaceId}";
+
+    internal static string BuildNamespaceLastUpdatedKey(string namespaceId)
+        => $"{NAMESPACE_LAST_UPDATED_PREFIX}{namespaceId}";
+
+    #endregion
+
     // Static search result cache shared across scoped instances (performance optimization, not authoritative state)
     private static readonly SearchResultCache _searchCache = new();
 

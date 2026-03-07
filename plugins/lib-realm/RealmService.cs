@@ -74,8 +74,8 @@ public partial class RealmService : IRealmService
 
     #region Key Building Helpers
 
-    private static string BuildRealmKey(Guid realmId) => $"{REALM_KEY_PREFIX}{realmId}";
-    private static string BuildCodeIndexKey(string code) => $"{CODE_INDEX_PREFIX}{code.ToUpperInvariant()}";
+    internal static string BuildRealmKey(Guid realmId) => $"{REALM_KEY_PREFIX}{realmId}";
+    internal static string BuildCodeIndexKey(string code) => $"{CODE_INDEX_PREFIX}{code.ToUpperInvariant()}";
 
     #endregion
 

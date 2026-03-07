@@ -222,7 +222,7 @@ public partial class LeaderboardService
 
         foreach (var candidate in candidateIds)
         {
-            var candidateKey = GetDefinitionKey(gameServiceId, candidate);
+            var candidateKey = BuildDefinitionKey(gameServiceId, candidate);
             var direct = await _definitionStore.GetAsync(candidateKey, cancellationToken);
             if (direct != null)
             {
@@ -230,7 +230,7 @@ public partial class LeaderboardService
             }
         }
 
-        var indexKey = GetDefinitionIndexKey(gameServiceId);
+        var indexKey = BuildDefinitionIndexKey(gameServiceId);
         var definitionIds = await _definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
         if (definitionIds.Count == 0)
         {
@@ -240,7 +240,7 @@ public partial class LeaderboardService
         LeaderboardDefinitionData? matched = null;
         foreach (var leaderboardId in definitionIds)
         {
-            var key = GetDefinitionKey(gameServiceId, leaderboardId);
+            var key = BuildDefinitionKey(gameServiceId, leaderboardId);
             var definition = await _definitionStore.GetAsync(key, cancellationToken);
             if (definition == null)
             {

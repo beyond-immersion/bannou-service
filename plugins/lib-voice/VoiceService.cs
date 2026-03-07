@@ -67,6 +67,20 @@ public partial class VoiceService : IVoiceService
     private const string SESSION_ROOM_KEY_PREFIX = "voice:session-room:";
 
     /// <summary>
+    /// Builds the key for a voice room record.
+    /// Format: {ROOM_KEY_PREFIX}{roomId}
+    /// </summary>
+    internal static string BuildRoomKey(Guid roomId)
+        => $"{ROOM_KEY_PREFIX}{roomId}";
+
+    /// <summary>
+    /// Builds the key for a session-to-room mapping.
+    /// Format: {SESSION_ROOM_KEY_PREFIX}{sessionId}
+    /// </summary>
+    internal static string BuildSessionRoomKey(Guid sessionId)
+        => $"{SESSION_ROOM_KEY_PREFIX}{sessionId}";
+
+    /// <summary>
     /// Initializes a new instance of the VoiceService.
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for state operations.</param>

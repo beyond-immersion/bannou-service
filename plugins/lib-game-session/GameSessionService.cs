@@ -56,6 +56,19 @@ public partial class GameSessionService : IGameSessionService
     private const string LOBBY_KEY_PREFIX = "lobby:";
     private const string SUBSCRIBER_SESSIONS_PREFIX = "subscriber-sessions:";
 
+    #region Key Building Helpers
+
+    internal static string BuildSessionKey(Guid sessionId)
+        => $"{SESSION_KEY_PREFIX}{sessionId}";
+
+    internal static string BuildLobbyKey(string stubName)
+        => $"{LOBBY_KEY_PREFIX}{stubName}";
+
+    internal static string BuildSubscriberSessionsKey(Guid accountId)
+        => $"{SUBSCRIBER_SESSIONS_PREFIX}{accountId}";
+
+    #endregion
+
     /// <summary>
     /// Game service stub names that this service handles, populated from configuration.
     /// </summary>

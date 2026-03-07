@@ -80,20 +80,30 @@ public partial class CollectionService : ICollectionService
     /// <summary>Cacheable state store for collection cache set operations (Redis-backed).</summary>
     private readonly ICacheableStateStore<CollectionCacheModel> _cacheableCollectionCache;
 
+    #region Key Prefixes
+
+    private const string TEMPLATE_KEY_PREFIX = "tpl:";
+    private const string COLLECTION_KEY_PREFIX = "col:";
+    private const string AREA_CONTENT_KEY_PREFIX = "acc:";
+    private const string CACHE_KEY_PREFIX = "cache:";
+    private const string GLOBAL_UNLOCKS_KEY_PREFIX = "global-unlocks:";
+
+    #endregion
+
     #region Key Building
 
-    private static string BuildTemplateKey(Guid entryTemplateId) => $"tpl:{entryTemplateId}";
-    private static string BuildTemplateByCodeKey(Guid gameServiceId, string collectionType, string code) =>
-        $"tpl:{gameServiceId}:{collectionType}:{code}";
-    private static string BuildCollectionKey(Guid collectionId) => $"col:{collectionId}";
-    private static string BuildCollectionByOwnerKey(Guid ownerId, EntityType ownerType, Guid gameServiceId, string collectionType) =>
-        $"col:{ownerId}:{ownerType.ToString().ToLowerInvariant()}:{gameServiceId}:{collectionType}";
-    private static string BuildAreaContentKey(Guid areaConfigId) => $"acc:{areaConfigId}";
-    private static string BuildAreaContentByCodeKey(Guid gameServiceId, string collectionType, string areaCode) =>
-        $"acc:{gameServiceId}:{collectionType}:{areaCode}";
-    private static string BuildCacheKey(Guid collectionId) => $"cache:{collectionId}";
-    private static string BuildGlobalUnlocksSetKey(Guid gameServiceId, string collectionType) =>
-        $"global-unlocks:{gameServiceId}:{collectionType}";
+    internal static string BuildTemplateKey(Guid entryTemplateId) => $"{TEMPLATE_KEY_PREFIX}{entryTemplateId}";
+    internal static string BuildTemplateByCodeKey(Guid gameServiceId, string collectionType, string code) =>
+        $"{TEMPLATE_KEY_PREFIX}{gameServiceId}:{collectionType}:{code}";
+    internal static string BuildCollectionKey(Guid collectionId) => $"{COLLECTION_KEY_PREFIX}{collectionId}";
+    internal static string BuildCollectionByOwnerKey(Guid ownerId, EntityType ownerType, Guid gameServiceId, string collectionType) =>
+        $"{COLLECTION_KEY_PREFIX}{ownerId}:{ownerType.ToString().ToLowerInvariant()}:{gameServiceId}:{collectionType}";
+    internal static string BuildAreaContentKey(Guid areaConfigId) => $"{AREA_CONTENT_KEY_PREFIX}{areaConfigId}";
+    internal static string BuildAreaContentByCodeKey(Guid gameServiceId, string collectionType, string areaCode) =>
+        $"{AREA_CONTENT_KEY_PREFIX}{gameServiceId}:{collectionType}:{areaCode}";
+    internal static string BuildCacheKey(Guid collectionId) => $"{CACHE_KEY_PREFIX}{collectionId}";
+    internal static string BuildGlobalUnlocksSetKey(Guid gameServiceId, string collectionType) =>
+        $"{GLOBAL_UNLOCKS_KEY_PREFIX}{gameServiceId}:{collectionType}";
 
     #endregion
 

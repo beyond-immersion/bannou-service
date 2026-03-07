@@ -19,7 +19,7 @@ public partial class EscrowService
         CancellationToken cancellationToken = default)
     {
         // Check idempotency (outside retry loop - read-only check)
-        var idempotencyKey = GetIdempotencyKey(body.IdempotencyKey);
+        var idempotencyKey = BuildIdempotencyKey(body.IdempotencyKey);
         var existingRecord = await _idempotencyStore.GetAsync(idempotencyKey, cancellationToken);
         if (existingRecord != null)
         {
@@ -37,7 +37,7 @@ public partial class EscrowService
             }
         }
 
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
@@ -81,7 +81,7 @@ public partial class EscrowService
                 }
 
                 var tokenHash = HashToken(body.DepositToken);
-                var tokenKey = GetTokenKey(tokenHash);
+                var tokenKey = BuildTokenKey(tokenHash);
                 var tokenRecord = await _tokenStore.GetAsync(tokenKey, cancellationToken);
 
                 if (tokenRecord == null ||
@@ -181,7 +181,7 @@ public partial class EscrowService
             if (agreementModel.TrustMode == EscrowTrustMode.FullConsent && !string.IsNullOrEmpty(body.DepositToken))
             {
                 var tokenHash = HashToken(body.DepositToken);
-                var tokenKey = GetTokenKey(tokenHash);
+                var tokenKey = BuildTokenKey(tokenHash);
                 var tokenRecord = await _tokenStore.GetAsync(tokenKey, cancellationToken);
                 if (tokenRecord != null)
                 {
@@ -193,10 +193,10 @@ public partial class EscrowService
 
             if (previousStatus != newStatus)
             {
-                var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+                var oldStatusKey = $"{BuildStatusIndexKey(previousStatus)}:{body.EscrowId}";
                 await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-                var newStatusKey = $"{GetStatusIndexKey(newStatus)}:{body.EscrowId}";
+                var newStatusKey = $"{BuildStatusIndexKey(newStatus)}:{body.EscrowId}";
                 var statusEntry = new StatusIndexEntry
                 {
                     EscrowId = body.EscrowId,
@@ -297,7 +297,7 @@ public partial class EscrowService
         var validationErrors = new List<string>();
         var warnings = new List<string>();
 
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
         var agreementModel = await _agreementStore.GetAsync(agreementKey, cancellationToken);
 
         if (agreementModel == null)
@@ -343,7 +343,7 @@ public partial class EscrowService
         GetDepositStatusRequest body,
         CancellationToken cancellationToken = default)
     {
-        var agreementKey = GetAgreementKey(body.EscrowId);
+        var agreementKey = BuildAgreementKey(body.EscrowId);
         var agreementModel = await _agreementStore.GetAsync(agreementKey, cancellationToken);
 
         if (agreementModel == null)

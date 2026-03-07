@@ -73,6 +73,53 @@ public partial class ContractService : IContractService
     private const string STATUS_INDEX_PREFIX = "status-idx:";
     private const string ALL_TEMPLATES_KEY = "all-templates";
 
+    #region Key Building Helpers
+
+    /// <summary>
+    /// Builds the state store key for a contract template record.
+    /// </summary>
+    /// <param name="templateId">The template ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildTemplateKey(Guid templateId) => $"{TEMPLATE_PREFIX}{templateId}";
+
+    /// <summary>
+    /// Builds the state store key for a contract instance record.
+    /// </summary>
+    /// <param name="contractId">The contract instance ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildInstanceKey(Guid contractId) => $"{INSTANCE_PREFIX}{contractId}";
+
+    /// <summary>
+    /// Builds the state store key for a breach record.
+    /// </summary>
+    /// <param name="breachId">The breach ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildBreachKey(Guid breachId) => $"{BREACH_PREFIX}{breachId}";
+
+    /// <summary>
+    /// Builds the state store key for a party-to-contract index lookup.
+    /// </summary>
+    /// <param name="entityType">The party entity type.</param>
+    /// <param name="entityId">The party entity ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildPartyIndexKey(EntityType entityType, Guid entityId) => $"{PARTY_INDEX_PREFIX}{entityType}:{entityId}";
+
+    /// <summary>
+    /// Builds the state store key for a template-to-instances index lookup.
+    /// </summary>
+    /// <param name="templateId">The template ID.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildTemplateIndexKey(Guid templateId) => $"{TEMPLATE_INDEX_PREFIX}{templateId}";
+
+    /// <summary>
+    /// Builds the state store key for a status-based contract index.
+    /// </summary>
+    /// <param name="status">The lowercase contract status string.</param>
+    /// <returns>State store key.</returns>
+    internal static string BuildStatusIndexKey(string status) => $"{STATUS_INDEX_PREFIX}{status}";
+
+    #endregion
+
     /// <summary>
     /// Contract statuses that count as "active" for the MaxActiveContractsPerEntity limit.
     /// Draft, Proposed, Pending, and Active contracts count toward the limit.

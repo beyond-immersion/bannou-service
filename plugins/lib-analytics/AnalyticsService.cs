@@ -87,7 +87,10 @@ public partial class AnalyticsService : IAnalyticsService
     /// <summary>Whether the analytics summary store backend is Redis (required for buffered ingestion).</summary>
     private readonly bool _summaryStoreIsRedis;
 
-    // State store key prefixes (controller index prefix removed - MySQL handles queries natively)
+    // State store key prefixes per FOUNDATION TENETS (Build*Key pattern)
+    private const string ENTITY_KEY_PREFIX = "analytics-entity:";
+    private const string RATING_KEY_PREFIX = "analytics-rating:";
+    private const string CONTROLLER_KEY_PREFIX = "analytics-controller:";
     private const string EVENT_BUFFER_INDEX_KEY = "analytics-event-buffer-index";
     private const string EVENT_BUFFER_ENTRY_PREFIX = "analytics-event-buffer-entry";
     private const string SESSION_MAPPING_PREFIX = "analytics-session-mapping";
@@ -168,25 +171,25 @@ public partial class AnalyticsService : IAnalyticsService
     }
 
     /// <summary>
-    /// Generates a composite key for entity data using polymorphic pattern.
-    /// Format: gameServiceId:entityType:entityId
+    /// Builds a composite key for entity data using polymorphic pattern.
+    /// Format: {ENTITY_KEY_PREFIX}{gameServiceId}:{entityType}:{entityId}
     /// </summary>
-    private static string GetEntityKey(Guid gameServiceId, EntityType entityType, Guid entityId)
-        => $"{gameServiceId}:{entityType}:{entityId}";
+    internal static string BuildEntityKey(Guid gameServiceId, EntityType entityType, Guid entityId)
+        => $"{ENTITY_KEY_PREFIX}{gameServiceId}:{entityType}:{entityId}";
 
     /// <summary>
-    /// Generates a key for skill rating data.
-    /// Format: gameServiceId:ratingType:entityType:entityId
+    /// Builds a key for skill rating data.
+    /// Format: {RATING_KEY_PREFIX}{gameServiceId}:{ratingType}:{entityType}:{entityId}
     /// </summary>
-    private static string GetRatingKey(Guid gameServiceId, string ratingType, EntityType entityType, Guid entityId)
-        => $"{gameServiceId}:{ratingType}:{entityType}:{entityId}";
+    internal static string BuildRatingKey(Guid gameServiceId, string ratingType, EntityType entityType, Guid entityId)
+        => $"{RATING_KEY_PREFIX}{gameServiceId}:{ratingType}:{entityType}:{entityId}";
 
     /// <summary>
-    /// Generates a key for controller history.
-    /// Format: gameServiceId:controller:accountId:timestamp
+    /// Builds a key for controller history.
+    /// Format: {CONTROLLER_KEY_PREFIX}{gameServiceId}:{accountId}:{timestamp}
     /// </summary>
-    private static string GetControllerKey(Guid gameServiceId, Guid accountId, DateTimeOffset timestamp)
-        => $"{gameServiceId}:controller:{accountId}:{timestamp:o}";
+    internal static string BuildControllerKey(Guid gameServiceId, Guid accountId, DateTimeOffset timestamp)
+        => $"{CONTROLLER_KEY_PREFIX}{gameServiceId}:{accountId}:{timestamp:o}";
 
     /// <summary>
     /// Implementation of IngestEvent operation.
@@ -293,7 +296,7 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogDebug("Getting entity summary for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
         {
-            var entityKey = GetEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
+            var entityKey = BuildEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
 
             var summary = await _summaryDataStore.GetAsync(entityKey, cancellationToken);
             if (summary == null)
@@ -448,7 +451,7 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogDebug("Getting skill rating for {EntityType}:{EntityId}, type {RatingType}",
             body.EntityType, body.EntityId, body.RatingType);
 
-        var ratingKey = GetRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
+        var ratingKey = BuildRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
 
         var rating = await _ratingStore.GetAsync(ratingKey, cancellationToken);
         if (rating == null)
@@ -520,7 +523,7 @@ public partial class AnalyticsService : IAnalyticsService
         var currentRatings = new Dictionary<string, SkillRatingData>();
         foreach (var result in body.Results)
         {
-            var key = GetRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
+            var key = BuildRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
             var rating = await _ratingStore.GetAsync(key, cancellationToken);
             currentRatings[key] = rating ?? new SkillRatingData
             {
@@ -544,7 +547,7 @@ public partial class AnalyticsService : IAnalyticsService
         var calculatedResults = new List<(string Key, MatchResult Result, double NewRating, double NewRD, double NewVolatility, double PreviousRating)>();
         foreach (var result in body.Results)
         {
-            var key = GetRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
+            var key = BuildRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
             var playerRating = currentRatings[key];
             var previousRating = playerRating.Rating;
 
@@ -552,7 +555,7 @@ public partial class AnalyticsService : IAnalyticsService
             var opponents = body.Results.Where(r => r.EntityId != result.EntityId).ToList();
             var opponentData = opponents.Select(o =>
             {
-                var oppKey = GetRatingKey(body.GameServiceId, body.RatingType, o.EntityType, o.EntityId);
+                var oppKey = BuildRatingKey(body.GameServiceId, body.RatingType, o.EntityType, o.EntityId);
                 var oppOriginal = originalRatings[oppKey];
                 var opponentSnapshot = new SkillRatingData
                 {
@@ -631,7 +634,7 @@ public partial class AnalyticsService : IAnalyticsService
             body.Action, body.AccountId, body.TargetEntityType, body.TargetEntityId);
 
         var eventId = Guid.NewGuid();
-        var key = GetControllerKey(body.GameServiceId, body.AccountId, body.Timestamp);
+        var key = BuildControllerKey(body.GameServiceId, body.AccountId, body.Timestamp);
 
         var historyEvent = new ControllerHistoryData
         {
@@ -1007,25 +1010,37 @@ public partial class AnalyticsService : IAnalyticsService
 
     #endregion
 
-    #region Helper Methods
+    #region Key Building Helpers
 
     /// <summary>
     /// Builds the key for a buffered analytics event entry.
     /// </summary>
-    private static string GetEventBufferEntryKey(Guid eventId)
+    internal static string BuildEventBufferEntryKey(Guid eventId)
         => $"{EVENT_BUFFER_ENTRY_PREFIX}:{eventId}";
 
     /// <summary>
     /// Builds the cache key for a game service stub.
     /// </summary>
-    private static string GetGameServiceCacheKey(string stubName)
+    internal static string BuildGameServiceCacheKey(string stubName)
         => $"{GAME_SERVICE_CACHE_PREFIX}:{stubName}";
 
     /// <summary>
     /// Builds the cache key for a game session mapping.
     /// </summary>
-    private static string GetSessionMappingKey(Guid sessionId)
+    internal static string BuildSessionMappingKey(Guid sessionId)
         => $"{SESSION_MAPPING_PREFIX}:{sessionId}";
+
+    /// <summary>
+    /// Builds the cache key for a realm's game service lookup.
+    /// </summary>
+    internal static string BuildRealmGameServiceCacheKey(Guid realmId)
+        => $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{realmId}";
+
+    /// <summary>
+    /// Builds the cache key for a character's realm lookup.
+    /// </summary>
+    internal static string BuildCharacterRealmCacheKey(Guid characterId)
+        => $"{CHARACTER_REALM_CACHE_PREFIX}:{characterId}";
 
     private StateOptions? BuildResolutionCacheOptions()
     {
@@ -1097,7 +1112,7 @@ public partial class AnalyticsService : IAnalyticsService
         var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
-            var cacheKey = GetGameServiceCacheKey(stubName);
+            var cacheKey = BuildGameServiceCacheKey(stubName);
             var cached = await _gameServiceCacheStore.GetAsync(cacheKey, cancellationToken);
             if (cached != null)
             {
@@ -1121,7 +1136,7 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (cacheOptions != null)
             {
-                var cacheKey = GetGameServiceCacheKey(stubName);
+                var cacheKey = BuildGameServiceCacheKey(stubName);
                 await _gameServiceCacheStore.SaveAsync(cacheKey, new GameServiceCacheEntry
                 {
                     ServiceId = response.ServiceId,
@@ -1159,7 +1174,7 @@ public partial class AnalyticsService : IAnalyticsService
         using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.ResolveGameServiceIdForSessionAsync");
         try
         {
-            var mappingKey = GetSessionMappingKey(sessionId);
+            var mappingKey = BuildSessionMappingKey(sessionId);
             var mapping = await _sessionMappingStore.GetAsync(mappingKey, cancellationToken);
             if (mapping != null)
             {
@@ -1244,7 +1259,7 @@ public partial class AnalyticsService : IAnalyticsService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.SaveGameSessionMappingAsync");
-        var mappingKey = GetSessionMappingKey(sessionId);
+        var mappingKey = BuildSessionMappingKey(sessionId);
         var cacheOptions = BuildSessionMappingCacheOptions();
         await _sessionMappingStore.SaveAsync(mappingKey, new GameSessionMappingData
         {
@@ -1258,7 +1273,7 @@ public partial class AnalyticsService : IAnalyticsService
     private async Task RemoveGameSessionMappingAsync(Guid sessionId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.RemoveGameSessionMappingAsync");
-        var mappingKey = GetSessionMappingKey(sessionId);
+        var mappingKey = BuildSessionMappingKey(sessionId);
         await _sessionMappingStore.DeleteAsync(mappingKey, cancellationToken);
     }
 
@@ -1412,7 +1427,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            eventKey = GetEventBufferEntryKey(bufferedEvent.EventId);
+            eventKey = BuildEventBufferEntryKey(bufferedEvent.EventId);
 
             await _eventBufferStore.SaveAsync(eventKey, bufferedEvent, options: null, cancellationToken);
             await _eventBufferIndexStore.SortedSetAddAsync(
@@ -1648,7 +1663,7 @@ public partial class AnalyticsService : IAnalyticsService
             var eventsByEntity = new Dictionary<string, List<(string key, BufferedAnalyticsEvent evt)>>();
             foreach (var envelope in envelopes)
             {
-                var entityKey = GetEntityKey(envelope.evt.GameServiceId, envelope.evt.EntityType, envelope.evt.EntityId);
+                var entityKey = BuildEntityKey(envelope.evt.GameServiceId, envelope.evt.EntityType, envelope.evt.EntityId);
                 if (!eventsByEntity.TryGetValue(entityKey, out var list))
                 {
                     list = new List<(string key, BufferedAnalyticsEvent evt)>();
