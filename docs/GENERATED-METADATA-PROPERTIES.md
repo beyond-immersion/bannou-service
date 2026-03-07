@@ -29,10 +29,10 @@ Compliant properties include one of these phrases in their description:
 
 | Metric | Count |
 |--------|-------|
-| Total metadata bag properties | 167 |
+| Total metadata bag properties | 166 |
 | Compliant (has marker) | 149 |
-| Non-compliant (missing marker) | 18 |
-| Compliance rate | 89% |
+| Non-compliant (missing marker) | 17 |
+| Compliance rate | 90% |
 
 ## Properties by Service
 
@@ -333,7 +333,6 @@ Compliant properties include one of these phrases in their description:
 | `MapPayload` | `data` | `mapping-api.yaml` | Y | Game-specific spatial object data. lib-mapping stores and returns this as-is.... |
 | `ObjectChange` | `data` | `mapping-api.yaml` | Y | Game-specific object state data. No Bannou plugin reads specific keys from th... |
 | `UpdateDefinitionRequest` | `metadata` | `mapping-api.yaml` | Y | Updated client-provided definition metadata (replaces existing). No Bannou pl... |
-| `EventMapObject` | `data` | `mapping-events.yaml` | **N** | Schema-less object data (publisher-defined) |
 | `IngestPayload` | `data` | `mapping-events.yaml` | **N** | Schema-less object data (publisher-defined) |
 | `MapUpdatedEvent` | `payload` | `mapping-events.yaml` | **N** | Schema-less payload data |
 | `ObjectChangeEvent` | `data` | `mapping-events.yaml` | **N** | Object data (for created/updated) |
@@ -453,7 +452,6 @@ or is it being misused as a cross-service data contract?
 | Common | `MemoryUpdate` | `memoryValue` | `common-events.yaml` | Memory value (entity ID, context, intensity, etc.) |
 | Connect | `InternalProxyRequest` | `body` | `connect-api.yaml` | Request body to forward to target service (null for no body). Uses additional... |
 | Connect | `GetEndpointMetaResponse` | `data` | `connect-api.yaml` | Metadata payload whose structure varies by metaType (endpoint-info returns su... |
-| Mapping | `EventMapObject` | `data` | `mapping-events.yaml` | Schema-less object data (publisher-defined) |
 | Mapping | `IngestPayload` | `data` | `mapping-events.yaml` | Schema-less object data (publisher-defined) |
 | Mapping | `ObjectChangeEvent` | `data` | `mapping-events.yaml` | Object data (for created/updated) |
 | Mapping | `MapUpdatedEvent` | `payload` | `mapping-events.yaml` | Schema-less payload data |

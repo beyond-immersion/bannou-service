@@ -145,7 +145,7 @@ public class MappingServiceTests
             _mockLogger.Object,
             _configuration,
             _mockEventConsumer.Object,
-            _mockAssetClient.Object,
+            (IServiceProvider)_mockAssetClient.Object,
             _mockHttpClientFactory.Object,
             _mockAffordanceScorer.Object,
             Mock.Of<ITelemetryProvider>());

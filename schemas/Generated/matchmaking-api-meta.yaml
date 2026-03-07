@@ -123,46 +123,47 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueueResponse\"\
         ,\n    \"$defs\": {\n        \"QueueResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Full configuration details of a matchmaking queue\",\n            \"additionalProperties\": false,\n         \
-        \   \"required\": [\n                \"queueId\",\n                \"gameId\",\n                \"displayName\",\n\
-        \                \"enabled\",\n                \"minCount\",\n                \"maxCount\",\n                \"countMultiple\"\
-        ,\n                \"intervalSeconds\",\n                \"maxIntervals\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"queueId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique identifier for the queue\"\n                },\n                \"\
-        gameId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Game this queue is
-        for\"\n                },\n                \"sessionGameType\": {\n                    \"$ref\": \"#/$defs/SessionGameType\"\
-        ,\n                    \"description\": \"Game type for created sessions (maps to game-session service)\"\n      \
-        \          },\n                \"displayName\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Human-readable queue name\"\n                },\n                \"description\": {\n       \
-        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the queue\"\n                },\n                \"enabled\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether the queue is currently accepting tickets\"\n\
-        \                },\n                \"minCount\": {\n                    \"type\": \"integer\",\n               \
-        \     \"minimum\": 2,\n                    \"description\": \"Minimum players required for a match\"\n           \
-        \     },\n                \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"maximum\"\
-        : 200,\n                    \"description\": \"Maximum players in a match\"\n                },\n                \"\
-        countMultiple\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n            \
-        \        \"description\": \"Player count must be divisible by this (e.g., 2 for pairs)\"\n                },\n   \
-        \             \"intervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 1,\n                    \"description\": \"Seconds between match processing intervals\"\n                },\n  \
-        \              \"maxIntervals\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
-        \                    \"description\": \"Maximum intervals before relaxing to minCount\"\n                },\n    \
-        \            \"skillExpansion\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
-        \                       \"$ref\": \"#/$defs/SkillExpansionStep\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Skill window expansion steps\"\n                },\n             \
-        \   \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\",\n             \
-        \       \"description\": \"How to calculate party skill rating\"\n                },\n                \"partySkillWeights\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"number\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Weights for weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n    \
-        \                \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum party size for this queue\"\n                },\n                \"allowConcurrent\": {\n            \
+        \   \"required\": [\n                \"queueId\",\n                \"gameId\",\n                \"sessionGameType\"\
+        ,\n                \"displayName\",\n                \"enabled\",\n                \"minCount\",\n               \
+        \ \"maxCount\",\n                \"countMultiple\",\n                \"intervalSeconds\",\n                \"maxIntervals\"\
+        ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"queueId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for the queue\"\
+        \n                },\n                \"gameId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Game this queue is for\"\n                },\n                \"sessionGameType\": {\n    \
+        \                \"$ref\": \"#/$defs/SessionGameType\",\n                    \"description\": \"Game type for created
+        sessions (maps to game-session service)\"\n                },\n                \"displayName\": {\n              \
+        \      \"type\": \"string\",\n                    \"description\": \"Human-readable queue name\"\n               \
+        \ },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Detailed description of the queue\"\n                },\n        \
+        \        \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        the queue is currently accepting tickets\"\n                },\n                \"minCount\": {\n                \
+        \    \"type\": \"integer\",\n                    \"minimum\": 2,\n                    \"description\": \"Minimum players
+        required for a match\"\n                },\n                \"maxCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"maximum\": 200,\n                    \"description\": \"Maximum players in a match\"\n  \
+        \              },\n                \"countMultiple\": {\n                    \"type\": \"integer\",\n            \
+        \        \"minimum\": 1,\n                    \"description\": \"Player count must be divisible by this (e.g., 2 for
+        pairs)\"\n                },\n                \"intervalSeconds\": {\n                    \"type\": \"integer\",\n\
+        \                    \"minimum\": 1,\n                    \"description\": \"Seconds between match processing intervals\"\
+        \n                },\n                \"maxIntervals\": {\n                    \"type\": \"integer\",\n          \
+        \          \"minimum\": 1,\n                    \"description\": \"Maximum intervals before relaxing to minCount\"\
+        \n                },\n                \"skillExpansion\": {\n                    \"type\": \"array\",\n          \
+        \          \"items\": {\n                        \"$ref\": \"#/$defs/SkillExpansionStep\"\n                    },\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Skill window expansion steps\"\n\
+        \                },\n                \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How to calculate party skill rating
+        (null if party matching not configured)\"\n                },\n                \"partySkillWeights\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"number\"\n\
+        \                    },\n                    \"nullable\": true,\n                    \"description\": \"Weights for
+        weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum party
+        size for this queue\"\n                },\n                \"allowConcurrent\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether players can be
+        in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Exclusive group name (player
+        can only be in one queue of the group)\"\n                },\n                \"useSkillRating\": {\n            \
         \        \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        players can be in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Exclusive
-        group name (player can only be in one queue of the group)\"\n                },\n                \"useSkillRating\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether to use lib-analytics skill rating for matching\"\n                },\n                \"ratingCategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        to use lib-analytics skill rating for matching\"\n                },\n                \"ratingCategory\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"lib-analytics rating category to use\"\n                },\n                \"startWhenMinimumReached\": {\n \
         \                   \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
         : \"Start match with minCount after maxIntervals (for large lobbies)\"\n                },\n                \"requiresRegistration\"\
@@ -250,22 +251,22 @@ paths:
         \                   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/SkillExpansionStep\"\
         \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Skill window
         expansion steps\"\n                },\n                \"partySkillAggregation\": {\n                    \"$ref\"\
-        : \"#/$defs/PartySkillAggregation\",\n                    \"description\": \"How to calculate party skill rating\"\
-        \n                },\n                \"partySkillWeights\": {\n                    \"type\": \"array\",\n       \
-        \             \"items\": {\n                        \"type\": \"number\"\n                    },\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Weights for weighted party skill aggregation\"\n\
-        \                },\n                \"partyMaxSize\": {\n                    \"type\": \"integer\",\n           \
-        \         \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"Maximum
-        party size for this queue\"\n                },\n                \"allowConcurrent\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether players can
-        be in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n                    \"type\":
-        \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 64,\n                   \
-        \ \"description\": \"Exclusive group name\"\n                },\n                \"useSkillRating\": {\n         \
-        \           \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"\
-        Whether to use lib-analytics skill rating\"\n                },\n                \"ratingCategory\": {\n         \
-        \           \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        lib-analytics rating category to use\"\n                },\n                \"startWhenMinimumReached\": {\n     \
-        \               \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"#/$defs/PartySkillAggregation\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"How to calculate party skill rating\"\n                },\n                \"partySkillWeights\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"number\"\n\
+        \                    },\n                    \"nullable\": true,\n                    \"description\": \"Weights for
+        weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Maximum party size for this queue\"\n                },\n                \"allowConcurrent\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        : \"Whether players can be in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n     \
+        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 64,\n                    \"description\": \"Exclusive group name\"\n                },\n                \"useSkillRating\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        : \"Whether to use lib-analytics skill rating\"\n                },\n                \"ratingCategory\": {\n     \
+        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"lib-analytics rating category to use\"\n                },\n                \"startWhenMinimumReached\": {\n \
+        \                   \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
         : \"Start match with minCount after maxIntervals\"\n                },\n                \"requiresRegistration\":
         {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
         : \"Require tournament registration\"\n                },\n                \"tournamentIdRequired\": {\n         \
@@ -289,46 +290,47 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueueResponse\"\
         ,\n    \"$defs\": {\n        \"QueueResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Full configuration details of a matchmaking queue\",\n            \"additionalProperties\": false,\n         \
-        \   \"required\": [\n                \"queueId\",\n                \"gameId\",\n                \"displayName\",\n\
-        \                \"enabled\",\n                \"minCount\",\n                \"maxCount\",\n                \"countMultiple\"\
-        ,\n                \"intervalSeconds\",\n                \"maxIntervals\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"queueId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique identifier for the queue\"\n                },\n                \"\
-        gameId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Game this queue is
-        for\"\n                },\n                \"sessionGameType\": {\n                    \"$ref\": \"#/$defs/SessionGameType\"\
-        ,\n                    \"description\": \"Game type for created sessions (maps to game-session service)\"\n      \
-        \          },\n                \"displayName\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Human-readable queue name\"\n                },\n                \"description\": {\n       \
-        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the queue\"\n                },\n                \"enabled\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether the queue is currently accepting tickets\"\n\
-        \                },\n                \"minCount\": {\n                    \"type\": \"integer\",\n               \
-        \     \"minimum\": 2,\n                    \"description\": \"Minimum players required for a match\"\n           \
-        \     },\n                \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"maximum\"\
-        : 200,\n                    \"description\": \"Maximum players in a match\"\n                },\n                \"\
-        countMultiple\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n            \
-        \        \"description\": \"Player count must be divisible by this (e.g., 2 for pairs)\"\n                },\n   \
-        \             \"intervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 1,\n                    \"description\": \"Seconds between match processing intervals\"\n                },\n  \
-        \              \"maxIntervals\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
-        \                    \"description\": \"Maximum intervals before relaxing to minCount\"\n                },\n    \
-        \            \"skillExpansion\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
-        \                       \"$ref\": \"#/$defs/SkillExpansionStep\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Skill window expansion steps\"\n                },\n             \
-        \   \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\",\n             \
-        \       \"description\": \"How to calculate party skill rating\"\n                },\n                \"partySkillWeights\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"number\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Weights for weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n    \
-        \                \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum party size for this queue\"\n                },\n                \"allowConcurrent\": {\n            \
+        \   \"required\": [\n                \"queueId\",\n                \"gameId\",\n                \"sessionGameType\"\
+        ,\n                \"displayName\",\n                \"enabled\",\n                \"minCount\",\n               \
+        \ \"maxCount\",\n                \"countMultiple\",\n                \"intervalSeconds\",\n                \"maxIntervals\"\
+        ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"queueId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for the queue\"\
+        \n                },\n                \"gameId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Game this queue is for\"\n                },\n                \"sessionGameType\": {\n    \
+        \                \"$ref\": \"#/$defs/SessionGameType\",\n                    \"description\": \"Game type for created
+        sessions (maps to game-session service)\"\n                },\n                \"displayName\": {\n              \
+        \      \"type\": \"string\",\n                    \"description\": \"Human-readable queue name\"\n               \
+        \ },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Detailed description of the queue\"\n                },\n        \
+        \        \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        the queue is currently accepting tickets\"\n                },\n                \"minCount\": {\n                \
+        \    \"type\": \"integer\",\n                    \"minimum\": 2,\n                    \"description\": \"Minimum players
+        required for a match\"\n                },\n                \"maxCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"maximum\": 200,\n                    \"description\": \"Maximum players in a match\"\n  \
+        \              },\n                \"countMultiple\": {\n                    \"type\": \"integer\",\n            \
+        \        \"minimum\": 1,\n                    \"description\": \"Player count must be divisible by this (e.g., 2 for
+        pairs)\"\n                },\n                \"intervalSeconds\": {\n                    \"type\": \"integer\",\n\
+        \                    \"minimum\": 1,\n                    \"description\": \"Seconds between match processing intervals\"\
+        \n                },\n                \"maxIntervals\": {\n                    \"type\": \"integer\",\n          \
+        \          \"minimum\": 1,\n                    \"description\": \"Maximum intervals before relaxing to minCount\"\
+        \n                },\n                \"skillExpansion\": {\n                    \"type\": \"array\",\n          \
+        \          \"items\": {\n                        \"$ref\": \"#/$defs/SkillExpansionStep\"\n                    },\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Skill window expansion steps\"\n\
+        \                },\n                \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How to calculate party skill rating
+        (null if party matching not configured)\"\n                },\n                \"partySkillWeights\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"number\"\n\
+        \                    },\n                    \"nullable\": true,\n                    \"description\": \"Weights for
+        weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum party
+        size for this queue\"\n                },\n                \"allowConcurrent\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether players can be
+        in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Exclusive group name (player
+        can only be in one queue of the group)\"\n                },\n                \"useSkillRating\": {\n            \
         \        \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        players can be in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Exclusive
-        group name (player can only be in one queue of the group)\"\n                },\n                \"useSkillRating\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether to use lib-analytics skill rating for matching\"\n                },\n                \"ratingCategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        to use lib-analytics skill rating for matching\"\n                },\n                \"ratingCategory\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"lib-analytics rating category to use\"\n                },\n                \"startWhenMinimumReached\": {\n \
         \                   \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
         : \"Start match with minCount after maxIntervals (for large lobbies)\"\n                },\n                \"requiresRegistration\"\
@@ -430,46 +432,47 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueueResponse\"\
         ,\n    \"$defs\": {\n        \"QueueResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Full configuration details of a matchmaking queue\",\n            \"additionalProperties\": false,\n         \
-        \   \"required\": [\n                \"queueId\",\n                \"gameId\",\n                \"displayName\",\n\
-        \                \"enabled\",\n                \"minCount\",\n                \"maxCount\",\n                \"countMultiple\"\
-        ,\n                \"intervalSeconds\",\n                \"maxIntervals\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"queueId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique identifier for the queue\"\n                },\n                \"\
-        gameId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Game this queue is
-        for\"\n                },\n                \"sessionGameType\": {\n                    \"$ref\": \"#/$defs/SessionGameType\"\
-        ,\n                    \"description\": \"Game type for created sessions (maps to game-session service)\"\n      \
-        \          },\n                \"displayName\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Human-readable queue name\"\n                },\n                \"description\": {\n       \
-        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the queue\"\n                },\n                \"enabled\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether the queue is currently accepting tickets\"\n\
-        \                },\n                \"minCount\": {\n                    \"type\": \"integer\",\n               \
-        \     \"minimum\": 2,\n                    \"description\": \"Minimum players required for a match\"\n           \
-        \     },\n                \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"maximum\"\
-        : 200,\n                    \"description\": \"Maximum players in a match\"\n                },\n                \"\
-        countMultiple\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n            \
-        \        \"description\": \"Player count must be divisible by this (e.g., 2 for pairs)\"\n                },\n   \
-        \             \"intervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 1,\n                    \"description\": \"Seconds between match processing intervals\"\n                },\n  \
-        \              \"maxIntervals\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
-        \                    \"description\": \"Maximum intervals before relaxing to minCount\"\n                },\n    \
-        \            \"skillExpansion\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
-        \                       \"$ref\": \"#/$defs/SkillExpansionStep\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Skill window expansion steps\"\n                },\n             \
-        \   \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\",\n             \
-        \       \"description\": \"How to calculate party skill rating\"\n                },\n                \"partySkillWeights\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"number\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Weights for weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n    \
-        \                \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum party size for this queue\"\n                },\n                \"allowConcurrent\": {\n            \
+        \   \"required\": [\n                \"queueId\",\n                \"gameId\",\n                \"sessionGameType\"\
+        ,\n                \"displayName\",\n                \"enabled\",\n                \"minCount\",\n               \
+        \ \"maxCount\",\n                \"countMultiple\",\n                \"intervalSeconds\",\n                \"maxIntervals\"\
+        ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"queueId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for the queue\"\
+        \n                },\n                \"gameId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Game this queue is for\"\n                },\n                \"sessionGameType\": {\n    \
+        \                \"$ref\": \"#/$defs/SessionGameType\",\n                    \"description\": \"Game type for created
+        sessions (maps to game-session service)\"\n                },\n                \"displayName\": {\n              \
+        \      \"type\": \"string\",\n                    \"description\": \"Human-readable queue name\"\n               \
+        \ },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Detailed description of the queue\"\n                },\n        \
+        \        \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        the queue is currently accepting tickets\"\n                },\n                \"minCount\": {\n                \
+        \    \"type\": \"integer\",\n                    \"minimum\": 2,\n                    \"description\": \"Minimum players
+        required for a match\"\n                },\n                \"maxCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"maximum\": 200,\n                    \"description\": \"Maximum players in a match\"\n  \
+        \              },\n                \"countMultiple\": {\n                    \"type\": \"integer\",\n            \
+        \        \"minimum\": 1,\n                    \"description\": \"Player count must be divisible by this (e.g., 2 for
+        pairs)\"\n                },\n                \"intervalSeconds\": {\n                    \"type\": \"integer\",\n\
+        \                    \"minimum\": 1,\n                    \"description\": \"Seconds between match processing intervals\"\
+        \n                },\n                \"maxIntervals\": {\n                    \"type\": \"integer\",\n          \
+        \          \"minimum\": 1,\n                    \"description\": \"Maximum intervals before relaxing to minCount\"\
+        \n                },\n                \"skillExpansion\": {\n                    \"type\": \"array\",\n          \
+        \          \"items\": {\n                        \"$ref\": \"#/$defs/SkillExpansionStep\"\n                    },\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Skill window expansion steps\"\n\
+        \                },\n                \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How to calculate party skill rating
+        (null if party matching not configured)\"\n                },\n                \"partySkillWeights\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"number\"\n\
+        \                    },\n                    \"nullable\": true,\n                    \"description\": \"Weights for
+        weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum party
+        size for this queue\"\n                },\n                \"allowConcurrent\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether players can be
+        in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Exclusive group name (player
+        can only be in one queue of the group)\"\n                },\n                \"useSkillRating\": {\n            \
         \        \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        players can be in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Exclusive
-        group name (player can only be in one queue of the group)\"\n                },\n                \"useSkillRating\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether to use lib-analytics skill rating for matching\"\n                },\n                \"ratingCategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        to use lib-analytics skill rating for matching\"\n                },\n                \"ratingCategory\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"lib-analytics rating category to use\"\n                },\n                \"startWhenMinimumReached\": {\n \
         \                   \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
         : \"Start match with minCount after maxIntervals (for large lobbies)\"\n                },\n                \"requiresRegistration\"\
@@ -598,15 +601,14 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinMatchmakingResponse\"\
         ,\n    \"$defs\": {\n        \"JoinMatchmakingResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after joining a matchmaking queue\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"ticketId\",\n                \"queueId\",\n                \"estimatedWaitSeconds\"\n     \
-        \       ],\n            \"properties\": {\n                \"ticketId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this matchmaking
-        ticket\"\n                },\n                \"queueId\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Queue that was joined\"\n                },\n                \"estimatedWaitSeconds\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Estimated wait time based on current queue (null if unknown)\"\n                },\n                \"position\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Approximate position in queue (null if not tracked)\"\n                }\n            }\n        }\n    }\n}"
+        : [\n                \"ticketId\",\n                \"estimatedWaitSeconds\"\n            ],\n            \"properties\"\
+        : {\n                \"ticketId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for this matchmaking ticket\"\n                },\n\
+        \                \"estimatedWaitSeconds\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Estimated wait time based on current queue (null if unknown)\"\n \
+        \               },\n                \"position\": {\n                    \"type\": \"integer\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Approximate position in queue (null if not tracked)\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Join matchmaking queue\",\n    \"description\": \"Join a matchmaking queue
         with specified properties and query.\\nCreates a matchmaking ticket and begins searching for compatible players.\\
         nReturns immediately after ticket creation. Match results are delivered\\nvia WebSocket push events.\\n\",\n    \"\
@@ -760,10 +762,8 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AcceptMatchResponse\"\
         ,\n    \"$defs\": {\n        \"AcceptMatchResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after accepting a match\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"matchId\",\n                \"allAccepted\"\n            ],\n            \"properties\": {\n  \
-        \              \"matchId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Match identifier\"\n                },\n                \"allAccepted\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether all players have accepted\"\
+        \                \"allAccepted\"\n            ],\n            \"properties\": {\n                \"allAccepted\":
+        {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether all players have accepted\"\
         \n                },\n                \"acceptedCount\": {\n                    \"type\": \"integer\",\n         \
         \           \"nullable\": true,\n                    \"description\": \"Number of players who have accepted\"\n  \
         \              },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n               \
@@ -958,6 +958,7 @@ components:
       required:
       - queueId
       - gameId
+      - sessionGameType
       - displayName
       - enabled
       - minCount
@@ -1014,7 +1015,8 @@ components:
           description: Skill window expansion steps
         partySkillAggregation:
           $ref: '#/components/schemas/PartySkillAggregation'
-          description: How to calculate party skill rating
+          nullable: true
+          description: How to calculate party skill rating (null if party matching not configured)
         partySkillWeights:
           type: array
           items:
@@ -1135,6 +1137,7 @@ components:
           description: Skill window expansion steps
         partySkillAggregation:
           $ref: '#/components/schemas/PartySkillAggregation'
+          nullable: true
           description: How to calculate party skill rating
         partySkillWeights:
           type: array
@@ -1361,16 +1364,12 @@ components:
       additionalProperties: false
       required:
       - ticketId
-      - queueId
       - estimatedWaitSeconds
       properties:
         ticketId:
           type: string
           format: uuid
           description: Unique identifier for this matchmaking ticket
-        queueId:
-          type: string
-          description: Queue that was joined
         estimatedWaitSeconds:
           type: integer
           nullable: true
@@ -1497,13 +1496,8 @@ components:
       description: Response after accepting a match
       additionalProperties: false
       required:
-      - matchId
       - allAccepted
       properties:
-        matchId:
-          type: string
-          format: uuid
-          description: Match identifier
         allAccepted:
           type: boolean
           description: Whether all players have accepted

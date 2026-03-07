@@ -196,28 +196,29 @@ paths:
         \    \"required\": [\n                \"mappings\",\n                \"hasMore\"\n            ],\n            \"properties\"\
         : {\n                \"mappings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
         \                        \"$ref\": \"#/$defs/ActionMappingResponse\"\n                    },\n                   \
-        \ \"description\": \"Action tag mappings for this page\"\n                },\n                \"nextCursor\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 512,\n                    \"description\": \"Cursor for the next page (null if no more pages)\"\n              \
-        \  },\n                \"hasMore\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether more pages are available\"\n                }\n            }\n        },\n        \"ActionMappingResponse\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"A registered mapping from a GOAP action tag
-        to violation type codes\",\n            \"additionalProperties\": false,\n            \"required\": [\n          \
-        \      \"tag\",\n                \"violationTypes\",\n                \"createdAt\"\n            ],\n            \"\
-        properties\": {\n                \"tag\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"The GOAP action tag (e.g., \\\
-        \"steal_food\\\", \\\"deceive_merchant\\\")\"\n                },\n                \"violationTypes\": {\n       \
-        \             \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        ,\n                        \"minLength\": 1,\n                        \"maxLength\": 128\n                    },\n\
-        \                    \"minItems\": 1,\n                    \"maxItems\": 20,\n                    \"description\"\
-        : \"Violation type codes this tag maps to (e.g., [\\\"theft\\\", \\\"dishonesty\\\"])\"\n                },\n    \
-        \            \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"maxLength\": 512,\n                    \"description\": \"Human-readable description of what
-        this mapping represents\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this mapping
-        was first created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When this mapping was last modified\"\n                }\n            }\n        }\n    }\n}"
+        \ \"maxItems\": 100,\n                    \"description\": \"Action tag mappings for this page\"\n               \
+        \ },\n                \"nextCursor\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 512,\n                    \"description\": \"Cursor for the next page
+        (null if no more pages)\"\n                },\n                \"hasMore\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether more pages are available\"\n                }\n            }\n \
+        \       },\n        \"ActionMappingResponse\": {\n            \"type\": \"object\",\n            \"description\":
+        \"A registered mapping from a GOAP action tag to violation type codes\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"tag\",\n                \"violationTypes\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"tag\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
+        : \"The GOAP action tag (e.g., \\\"steal_food\\\", \\\"deceive_merchant\\\")\"\n                },\n             \
+        \   \"violationTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n          \
+        \              \"type\": \"string\",\n                        \"minLength\": 1,\n                        \"maxLength\"\
+        : 128\n                    },\n                    \"minItems\": 1,\n                    \"maxItems\": 20,\n     \
+        \               \"description\": \"Violation type codes this tag maps to (e.g., [\\\"theft\\\", \\\"dishonesty\\\"\
+        ])\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"maxLength\": 512,\n                    \"description\": \"\
+        Human-readable description of what this mapping represents\"\n                },\n                \"createdAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When this mapping was first created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When this mapping was last modified\"\n                }\n       \
+        \     }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List registered action tag mappings\",\n    \"description\": \"Returns
         all registered action tag to violation type mappings.\\nSupports cursor-based pagination and optional text search.\\\
         n\",\n    \"tags\": [\n        \"Action Mapping\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listActionMappings\"\
@@ -296,48 +297,46 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryObligationsResponse\"\
         ,\n    \"$defs\": {\n        \"QueryObligationsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Active obligations for a character with pre-computed violation cost map\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"characterId\",\n                \"obligations\",\n      \
-        \          \"violationCostMap\",\n                \"totalActiveContracts\",\n                \"totalObligations\"\
-        ,\n                \"lastRefreshedAt\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+        : false,\n            \"required\": [\n                \"obligations\",\n                \"violationCostMap\",\n \
+        \               \"totalActiveContracts\",\n                \"totalObligations\",\n                \"lastRefreshedAt\"\
+        \n            ],\n            \"properties\": {\n                \"obligations\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ObligationEntry\"\n  \
+        \                  },\n                    \"maxItems\": 10000,\n                    \"description\": \"All active
+        obligations for the character\"\n                },\n                \"violationCostMap\": {\n                   \
+        \ \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"number\"\
+        ,\n                        \"format\": \"float\"\n                    },\n                    \"description\": \"\
+        Pre-computed map of violation type code to total cost across all obligations\"\n                },\n             \
+        \   \"totalActiveContracts\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"maximum\": 1000,\n                    \"description\": \"Number of active contracts with behavioral
+        clauses\"\n                },\n                \"totalObligations\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"maximum\": 10000,\n                    \"description\"\
+        : \"Total number of individual obligation entries\"\n                },\n                \"lastRefreshedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When the obligation cache was last rebuilt\"\n                }\n            }\n        },\n    \
+        \    \"ObligationEntry\": {\n            \"type\": \"object\",\n            \"description\": \"A single obligation
+        derived from a behavioral clause in an active contract\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"contractId\",\n                \"clauseCode\",\n                \"violationType\"\
+        ,\n                \"basePenalty\"\n            ],\n            \"properties\": {\n                \"contractId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Character these obligations belong to\"\n                },\n                \"obligations\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/ObligationEntry\"\n                    },\n                    \"description\": \"All active obligations for
-        the character\"\n                },\n                \"violationCostMap\": {\n                    \"type\": \"object\"\
-        ,\n                    \"additionalProperties\": {\n                        \"type\": \"number\",\n              \
-        \          \"format\": \"float\"\n                    },\n                    \"description\": \"Pre-computed map
-        of violation type code to total cost across all obligations\"\n                },\n                \"totalActiveContracts\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
-        : 1000,\n                    \"description\": \"Number of active contracts with behavioral clauses\"\n           \
-        \     },\n                \"totalObligations\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"minimum\": 0,\n                    \"maximum\": 10000,\n                    \"description\": \"Total number of
-        individual obligation entries\"\n                },\n                \"lastRefreshedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
-        obligation cache was last rebuilt\"\n                }\n            }\n        },\n        \"ObligationEntry\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"A single obligation derived from a behavioral clause
-        in an active contract\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
-        \    \"contractId\",\n                \"templateCode\",\n                \"clauseCode\",\n                \"violationType\"\
-        ,\n                \"basePenalty\",\n                \"contractRole\"\n            ],\n            \"properties\"\
-        : {\n                \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"ID of the contract this obligation comes from\"\n            \
-        \    },\n                \"templateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Template code of the source
-        contract\"\n                },\n                \"clauseCode\": {\n                    \"type\": \"string\",\n   \
-        \                 \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
-        : \"Code of the behavioral clause defining this obligation\"\n                },\n                \"violationType\"\
+        description\": \"ID of the contract this obligation comes from\"\n                },\n                \"templateCode\"\
         : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 128,\n                    \"description\": \"Violation type code (e.g., \\\"theft\\\", \\\"deception\\\", \\\"violence\\\
-        \")\"\n                },\n                \"basePenalty\": {\n                    \"type\": \"number\",\n       \
-        \             \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"description\":
-        \"Base GOAP cost penalty for violating this obligation\"\n                },\n                \"description\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 1024,\n                    \"description\": \"Human-readable description of the obligation\"\n                },\n\
-        \                \"contractRole\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"The character's role in the
-        contract (e.g., \\\"member\\\", \\\"merchant\\\")\"\n                },\n                \"effectiveUntil\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"When this obligation expires (null if indefinite)\"\n  \
-        \              }\n            }\n        }\n    }\n}"
+        : 128,\n                    \"nullable\": true,\n                    \"description\": \"Template code of the source
+        contract (null if contract has no template)\"\n                },\n                \"clauseCode\": {\n           \
+        \         \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n\
+        \                    \"description\": \"Code of the behavioral clause defining this obligation\"\n               \
+        \ },\n                \"violationType\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Violation type code (e.g., \\\
+        \"theft\\\", \\\"deception\\\", \\\"violence\\\")\"\n                },\n                \"basePenalty\": {\n    \
+        \                \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\"\
+        : 0.0,\n                    \"description\": \"Base GOAP cost penalty for violating this obligation\"\n          \
+        \      },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 1024,\n                    \"description\": \"Human-readable description
+        of the obligation\"\n                },\n                \"contractRole\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"The character's role in the contract (null if role not determinable)\"\
+        \n                },\n                \"effectiveUntil\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When this obligation expires (null if indefinite)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query active obligations for a character\",\n    \"description\": \"Returns
         all active obligations for a character, derived from their active\\ncontracts with behavioral clauses. The response
         includes a pre-computed\\nviolation cost map keyed by violation type code.\\n\\nObligations are cached per character
@@ -410,49 +409,49 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EvaluateActionResponse\"\
         ,\n    \"$defs\": {\n        \"EvaluateActionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Obligation cost evaluation results for proposed actions\",\n            \"additionalProperties\": false,\n   \
-        \         \"required\": [\n                \"characterId\",\n                \"evaluations\",\n                \"\
-        moralWeightingApplied\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Character evaluated\"\n                },\n                \"evaluations\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ActionEvaluation\"\n     \
-        \               },\n                    \"description\": \"Per-action evaluation results (one per input tag)\"\n \
-        \               },\n                \"moralWeightingApplied\": {\n                    \"type\": \"boolean\",\n   \
-        \                 \"description\": \"Whether personality-weighted moral reasoning enriched the cost calculations\"\
-        \n                }\n            }\n        },\n        \"ActionEvaluation\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Obligation violation cost evaluation for a single GOAP action tag\",\n         \
-        \   \"additionalProperties\": false,\n            \"required\": [\n                \"actionTag\",\n              \
-        \  \"isViolation\",\n                \"totalViolationCost\",\n                \"obligationDetails\"\n            ],\n\
-        \            \"properties\": {\n                \"actionTag\": {\n                    \"type\": \"string\",\n    \
-        \                \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\":
-        \"The GOAP action tag that was evaluated\"\n                },\n                \"isViolation\": {\n             \
-        \       \"type\": \"boolean\",\n                    \"description\": \"Whether this action would violate any active
-        obligation\"\n                },\n                \"totalViolationCost\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"description\"\
-        : \"Sum of all weighted violation costs for this action\"\n                },\n                \"obligationDetails\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/ObligationCostDetail\"\n                    },\n                    \"description\": \"Per-obligation
-        breakdown of cost contributions\"\n                }\n            }\n        },\n        \"ObligationCostDetail\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Per-obligation cost contribution for a specific
-        action evaluation\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
-        contractId\",\n                \"templateCode\",\n                \"clauseCode\",\n                \"violationType\"\
-        ,\n                \"basePenalty\",\n                \"weightedPenalty\",\n                \"contractRole\"\n    \
-        \        ],\n            \"properties\": {\n                \"contractId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the contract producing
-        this cost\"\n                },\n                \"templateCode\": {\n                    \"type\": \"string\",\n\
-        \                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
-        : \"Template code of the source contract\"\n                },\n                \"clauseCode\": {\n              \
-        \      \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n   \
-        \                 \"description\": \"Code of the violated behavioral clause\"\n                },\n              \
-        \  \"violationType\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n      \
-        \              \"maxLength\": 128,\n                    \"description\": \"Violation type code matched\"\n       \
-        \         },\n                \"basePenalty\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"description\": \"Base penalty from
-        the contract clause\"\n                },\n                \"weightedPenalty\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                   \
-        \ \"description\": \"Penalty after personality-weighted moral reasoning (equals basePenalty when personality enrichment
-        unavailable)\"\n                },\n                \"contractRole\": {\n                    \"type\": \"string\"\
-        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
-        : \"The character's role in the contract\"\n                }\n            }\n        }\n    }\n}"
+        \         \"required\": [\n                \"evaluations\",\n                \"moralWeightingApplied\"\n         \
+        \   ],\n            \"properties\": {\n                \"evaluations\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ActionEvaluation\"\n            \
+        \        },\n                    \"maxItems\": 50,\n                    \"description\": \"Per-action evaluation results
+        (one per input tag)\"\n                },\n                \"moralWeightingApplied\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether personality-weighted moral reasoning enriched the cost
+        calculations\"\n                }\n            }\n        },\n        \"ActionEvaluation\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Obligation violation cost evaluation for a single GOAP action tag\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"actionTag\",\n   \
+        \             \"isViolation\",\n                \"totalViolationCost\",\n                \"obligationDetails\"\n \
+        \           ],\n            \"properties\": {\n                \"actionTag\": {\n                    \"type\": \"\
+        string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"\
+        description\": \"The GOAP action tag that was evaluated\"\n                },\n                \"isViolation\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this action would violate
+        any active obligation\"\n                },\n                \"totalViolationCost\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n               \
+        \     \"description\": \"Sum of all weighted violation costs for this action\"\n                },\n             \
+        \   \"obligationDetails\": {\n                    \"type\": \"array\",\n                    \"items\": {\n       \
+        \                 \"$ref\": \"#/$defs/ObligationCostDetail\"\n                    },\n                    \"maxItems\"\
+        : 1000,\n                    \"description\": \"Per-obligation breakdown of cost contributions\"\n               \
+        \ }\n            }\n        },\n        \"ObligationCostDetail\": {\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Per-obligation cost contribution for a specific action evaluation\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"contractId\",\n                \"clauseCode\",\n        \
+        \        \"violationType\",\n                \"basePenalty\",\n                \"weightedPenalty\"\n            ],\n\
+        \            \"properties\": {\n                \"contractId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"uuid\",\n                    \"description\": \"ID of the contract producing this
+        cost\"\n                },\n                \"templateCode\": {\n                    \"type\": \"string\",\n     \
+        \               \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Template code of the source contract (null if contract has no template)\"\n\
+        \                },\n                \"clauseCode\": {\n                    \"type\": \"string\",\n              \
+        \      \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Code of
+        the violated behavioral clause\"\n                },\n                \"violationType\": {\n                    \"\
+        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n            \
+        \        \"description\": \"Violation type code matched\"\n                },\n                \"basePenalty\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\"\
+        : 0.0,\n                    \"description\": \"Base penalty from the contract clause\"\n                },\n     \
+        \           \"weightedPenalty\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        float\",\n                    \"minimum\": 0.0,\n                    \"description\": \"Penalty after personality-weighted
+        moral reasoning (equals basePenalty when personality enrichment unavailable)\"\n                },\n             \
+        \   \"contractRole\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n      \
+        \              \"maxLength\": 128,\n                    \"nullable\": true,\n                    \"description\":
+        \"The character's role in the contract (null if role not determinable)\"\n                }\n            }\n     \
+        \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Evaluate obligation violation costs for proposed actions\",\n    \"description\"\
         : \"Non-mutating speculative query. Given a character and a set of GOAP action\\ntags, returns the computed violation
         costs for each tag based on the\\ncharacter's active obligations.\\n\\nEach action tag is resolved to violation types
@@ -537,16 +536,14 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ReportViolationResponse\"\
         ,\n    \"$defs\": {\n        \"ReportViolationResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of reporting an obligation violation\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"violationId\",\n                \"characterId\",\n                \"breachReported\"\n    \
-        \        ],\n            \"properties\": {\n                \"violationId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the created violation record\"\
-        \n                },\n                \"characterId\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"uuid\",\n                    \"description\": \"Character who committed the violation\"\n \
-        \               },\n                \"breachReported\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether a breach was successfully filed with the contract service\"\n              \
-        \  },\n                \"breachId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Breach record ID from
-        contract service (null if not reported or failed)\"\n                }\n            }\n        }\n    }\n}"
+        : [\n                \"violationId\",\n                \"breachReported\"\n            ],\n            \"properties\"\
+        : {\n                \"violationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"ID of the created violation record\"\n                },\n   \
+        \             \"breachReported\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether a breach was successfully filed with the contract service\"\n                },\n                \"breachId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Breach record ID from contract service (null if not reported
+        or failed)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Report a knowing obligation violation\",\n    \"description\": \"Records
         that a character knowingly violated an obligation. Called by the\\nactor cognition pipeline when an action marked
         as \\\"knowing_violation\\\"\\ncompletes execution.\\n\\nThis endpoint:\\n1. Saves a violation record to the violation
@@ -604,43 +601,43 @@ paths:
         : \"Paginated violation history for a character\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"violations\",\n                \"hasMore\"\n            ],\n            \"properties\": {\n\
         \                \"violations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
-        \                       \"$ref\": \"#/$defs/ViolationRecord\"\n                    },\n                    \"description\"\
-        : \"Violation records for this page\"\n                },\n                \"nextCursor\": {\n                   \
-        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 512,\n      \
-        \              \"description\": \"Cursor for the next page (null if no more pages)\"\n                },\n       \
-        \         \"hasMore\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        more pages are available\"\n                }\n            }\n        },\n        \"ViolationRecord\": {\n       \
-        \     \"type\": \"object\",\n            \"description\": \"Record of a knowing obligation violation by a character\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"violationId\",\n \
-        \               \"characterId\",\n                \"contractId\",\n                \"clauseCode\",\n             \
-        \   \"violationType\",\n                \"actionTag\",\n                \"motivationScore\",\n                \"violationCost\"\
-        ,\n                \"breachReported\",\n                \"timestamp\"\n            ],\n            \"properties\"\
-        : {\n                \"violationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Unique identifier for this violation record\"\n              \
-        \  },\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Character who committed the violation\"\n                },\n\
-        \                \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Contract that was violated\"\n                },\n               \
-        \ \"clauseCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n          \
-        \          \"maxLength\": 128,\n                    \"description\": \"Code of the behavioral clause that was violated\"\
-        \n                },\n                \"violationType\": {\n                    \"type\": \"string\",\n          \
-        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Violation
-        type code\"\n                },\n                \"actionTag\": {\n                    \"type\": \"string\",\n   \
-        \                 \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
-        : \"GOAP action tag that triggered the violation\"\n                },\n                \"motivationScore\": {\n \
-        \                   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\"\
-        : 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Goal urgency that overrode the
-        obligation (0.0-1.0)\"\n                },\n                \"violationCost\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                   \
-        \ \"description\": \"Total violation cost that was accepted\"\n                },\n                \"breachReported\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether a breach was filed
-        with the contract service\"\n                },\n                \"breachId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Breach record ID from contract service (null if breach not reported)\"\n                },\n\
-        \                \"targetEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Target entity of the
-        violating action (null if no specific target)\"\n                },\n                \"targetEntityType\": {\n   \
-        \                 \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        \                       \"$ref\": \"#/$defs/ViolationRecord\"\n                    },\n                    \"maxItems\"\
+        : 100,\n                    \"description\": \"Violation records for this page\"\n                },\n           \
+        \     \"nextCursor\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
+        \                \"maxLength\": 512,\n                    \"description\": \"Cursor for the next page (null if no
+        more pages)\"\n                },\n                \"hasMore\": {\n                    \"type\": \"boolean\",\n  \
+        \                  \"description\": \"Whether more pages are available\"\n                }\n            }\n     \
+        \   },\n        \"ViolationRecord\": {\n            \"type\": \"object\",\n            \"description\": \"Record of
+        a knowing obligation violation by a character\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"violationId\",\n                \"characterId\",\n                \"contractId\",\n       \
+        \         \"clauseCode\",\n                \"violationType\",\n                \"actionTag\",\n                \"\
+        motivationScore\",\n                \"violationCost\",\n                \"breachReported\",\n                \"timestamp\"\
+        \n            ],\n            \"properties\": {\n                \"violationId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier
+        for this violation record\"\n                },\n                \"characterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character who committed
+        the violation\"\n                },\n                \"contractId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Contract that was violated\"\n\
+        \                },\n                \"clauseCode\": {\n                    \"type\": \"string\",\n              \
+        \      \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Code of
+        the behavioral clause that was violated\"\n                },\n                \"violationType\": {\n            \
+        \        \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n \
+        \                   \"description\": \"Violation type code\"\n                },\n                \"actionTag\": {\n\
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"GOAP action tag that triggered the violation\"\n                },\n\
+        \                \"motivationScore\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"\
+        description\": \"Goal urgency that overrode the obligation (0.0-1.0)\"\n                },\n                \"violationCost\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"description\": \"Total violation cost that was accepted\"\n               \
+        \ },\n                \"breachReported\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether a breach was filed with the contract service\"\n                },\n                \"breachId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Breach record ID from contract service (null if breach not reported)\"\
+        \n                },\n                \"targetEntityId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Target entity of the violating action (null if no specific target)\"\n                },\n                \"targetEntityType\"\
+        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Entity type of the target\"\n                },\n                \"timestamp\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the violation
         occurred\"\n                }\n            }\n        }\n    }\n}"
@@ -686,14 +683,10 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InvalidateCacheResponse\"\
         ,\n    \"$defs\": {\n        \"InvalidateCacheResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of cache invalidation and rebuild\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"characterId\",\n                \"obligationsRefreshed\",\n                \"success\"\n  \
-        \          ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character whose cache
-        was rebuilt\"\n                },\n                \"obligationsRefreshed\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 0,\n                    \"maximum\": 10000,\n                    \"description\"\
-        : \"Number of obligations found and cached\"\n                },\n                \"success\": {\n               \
-        \     \"type\": \"boolean\",\n                    \"description\": \"Whether the cache rebuild completed successfully\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : [\n                \"obligationsRefreshed\"\n            ],\n            \"properties\": {\n                \"obligationsRefreshed\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 10000,\n                    \"description\": \"Number of obligations found and cached\"\n                }\n   \
+        \         }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Force obligation cache refresh for a character\",\n    \"description\"\
         : \"Forces a full cache rebuild for a character's obligation manifest.\\nQueries all active contracts for the character,
         extracts behavioral\\nclauses, and rebuilds the cached obligation state.\\n\\nNormally, the cache is maintained automatically
@@ -708,8 +701,7 @@ paths:
       description: |
         Called by Resource service during character compression.
         Returns violation history and cached obligation state for archival.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -747,38 +739,39 @@ paths:
         : 100000,\n                    \"description\": \"Number of violation records in archive\"\n                },\n \
         \               \"violations\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
         \                    \"items\": {\n                        \"$ref\": \"#/$defs/ViolationRecord\"\n               \
-        \     },\n                    \"description\": \"Violation history records (null if hasViolations=false)\"\n     \
-        \           }\n            }\n        },\n        \"ViolationRecord\": {\n            \"type\": \"object\",\n    \
-        \        \"description\": \"Record of a knowing obligation violation by a character\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"violationId\",\n                \"characterId\",\n      \
-        \          \"contractId\",\n                \"clauseCode\",\n                \"violationType\",\n                \"\
-        actionTag\",\n                \"motivationScore\",\n                \"violationCost\",\n                \"breachReported\"\
-        ,\n                \"timestamp\"\n            ],\n            \"properties\": {\n                \"violationId\":
-        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique identifier for this violation record\"\n                },\n                \"characterId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Character who committed the violation\"\n                },\n                \"contractId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Contract that was violated\"\n                },\n                \"clauseCode\": {\n                    \"type\"\
-        : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                  \
-        \  \"description\": \"Code of the behavioral clause that was violated\"\n                },\n                \"violationType\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 128,\n                    \"description\": \"Violation type code\"\n                },\n                \"actionTag\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 128,\n                    \"description\": \"GOAP action tag that triggered the violation\"\n                },\n\
-        \                \"motivationScore\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"\
-        description\": \"Goal urgency that overrode the obligation (0.0-1.0)\"\n                },\n                \"violationCost\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": 0.0,\n                    \"description\": \"Total violation cost that was accepted\"\n               \
-        \ },\n                \"breachReported\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether a breach was filed with the contract service\"\n                },\n                \"breachId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Breach record ID from contract service (null if breach not reported)\"\
-        \n                },\n                \"targetEntityId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Target entity of the violating action (null if no specific target)\"\n                },\n                \"targetEntityType\"\
-        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        \     },\n                    \"maxItems\": 100000,\n                    \"description\": \"Violation history records
+        (null if hasViolations=false)\"\n                }\n            }\n        },\n        \"ViolationRecord\": {\n  \
+        \          \"type\": \"object\",\n            \"description\": \"Record of a knowing obligation violation by a character\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"violationId\",\n \
+        \               \"characterId\",\n                \"contractId\",\n                \"clauseCode\",\n             \
+        \   \"violationType\",\n                \"actionTag\",\n                \"motivationScore\",\n                \"violationCost\"\
+        ,\n                \"breachReported\",\n                \"timestamp\"\n            ],\n            \"properties\"\
+        : {\n                \"violationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique identifier for this violation record\"\n              \
+        \  },\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Character who committed the violation\"\n                },\n\
+        \                \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Contract that was violated\"\n                },\n               \
+        \ \"clauseCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n          \
+        \          \"maxLength\": 128,\n                    \"description\": \"Code of the behavioral clause that was violated\"\
+        \n                },\n                \"violationType\": {\n                    \"type\": \"string\",\n          \
+        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Violation
+        type code\"\n                },\n                \"actionTag\": {\n                    \"type\": \"string\",\n   \
+        \                 \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
+        : \"GOAP action tag that triggered the violation\"\n                },\n                \"motivationScore\": {\n \
+        \                   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\"\
+        : 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Goal urgency that overrode the
+        obligation (0.0-1.0)\"\n                },\n                \"violationCost\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                   \
+        \ \"description\": \"Total violation cost that was accepted\"\n                },\n                \"breachReported\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether a breach was filed
+        with the contract service\"\n                },\n                \"breachId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Breach record ID from contract service (null if breach not reported)\"\n                },\n\
+        \                \"targetEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Target entity of the
+        violating action (null if no specific target)\"\n                },\n                \"targetEntityType\": {\n   \
+        \                 \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Entity type of the target\"\n                },\n                \"timestamp\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the violation
         occurred\"\n                }\n            }\n        }\n    }\n}"
@@ -796,9 +789,7 @@ paths:
         Called by Resource service during character decompression.
         Restores violation history from archive data. Obligation cache
         is rebuilt automatically from active contracts, not from archive.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -820,18 +811,15 @@ paths:
         \ \"required\": [\n                \"characterId\",\n                \"data\"\n            ],\n            \"properties\"\
         : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"description\": \"ID of the character to restore data for\"\n                },\n\
-        \                \"data\": {\n                    \"type\": \"string\",\n                    \"description\": \"Base64-encoded
-        gzipped ObligationArchive JSON\"\n                }\n            }\n        }\n    }\n}"
+        \                \"data\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n \
+        \                   \"description\": \"Base64-encoded gzipped ObligationArchive JSON\"\n                }\n      \
+        \      }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreFromArchiveResponse\"\
         ,\n    \"$defs\": {\n        \"RestoreFromArchiveResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Result of restoration from archive\",\n            \"additionalProperties\": false,\n           \
-        \ \"required\": [\n                \"characterId\",\n                \"violationsRestored\",\n                \"success\"\
-        \n            ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character data was
-        restored for\"\n                },\n                \"violationsRestored\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether violation history was restored\"\n                },\n         \
-        \       \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        the restoration completed successfully\"\n                }\n            }\n        }\n    }\n}"
+        \ \"required\": [\n                \"violationsRestored\"\n            ],\n            \"properties\": {\n       \
+        \         \"violationsRestored\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether violation history was restored\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore obligation data from archive\",\n    \"description\": \"Called
         by Resource service during character decompression.\\nRestores violation history from archive data. Obligation cache\\
         nis rebuilt automatically from active contracts, not from archive.\\n\",\n    \"tags\": [\n        \"Compression\"\
@@ -847,8 +835,7 @@ paths:
         Removes cached obligation manifests and violation history for the
         specified character. This endpoint is designed for internal
         service-to-service calls during cascading resource cleanup.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -872,15 +859,10 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterResponse\"\
         ,\n    \"$defs\": {\n        \"CleanupByCharacterResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Result of character obligation data cleanup\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"obligationsRemoved\",\n                \"violationsRemoved\",\n    \
-        \            \"success\"\n            ],\n            \"properties\": {\n                \"obligationsRemoved\": {\n\
-        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
-        : 10000,\n                    \"description\": \"Number of cached obligation entries removed\"\n                },\n\
+        \          \"required\": [\n                \"violationsRemoved\"\n            ],\n            \"properties\": {\n\
         \                \"violationsRemoved\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
         : 0,\n                    \"maximum\": 100000,\n                    \"description\": \"Number of violation history
-        records removed\"\n                },\n                \"success\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether cleanup completed successfully\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        records removed\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Cleanup all obligation data for a deleted character\",\n    \"description\"\
         : \"Called by lib-resource cleanup coordination when a character is deleted.\\nRemoves cached obligation manifests
         and violation history for the\\nspecified character. This endpoint is designed for internal\\nservice-to-service calls
@@ -985,6 +967,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ActionMappingResponse'
+          maxItems: 100
           description: Action tag mappings for this page
         nextCursor:
           type: string
@@ -1012,11 +995,9 @@ components:
       additionalProperties: false
       required:
       - contractId
-      - templateCode
       - clauseCode
       - violationType
       - basePenalty
-      - contractRole
       properties:
         contractId:
           type: string
@@ -1026,7 +1007,8 @@ components:
           type: string
           minLength: 1
           maxLength: 128
-          description: Template code of the source contract
+          nullable: true
+          description: Template code of the source contract (null if contract has no template)
         clauseCode:
           type: string
           minLength: 1
@@ -1051,7 +1033,8 @@ components:
           type: string
           minLength: 1
           maxLength: 128
-          description: The character's role in the contract (e.g., "member", "merchant")
+          nullable: true
+          description: The character's role in the contract (null if role not determinable)
         effectiveUntil:
           type: string
           format: date-time
@@ -1077,21 +1060,17 @@ components:
       description: Active obligations for a character with pre-computed violation cost map
       additionalProperties: false
       required:
-      - characterId
       - obligations
       - violationCostMap
       - totalActiveContracts
       - totalObligations
       - lastRefreshedAt
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character these obligations belong to
         obligations:
           type: array
           items:
             $ref: '#/components/schemas/ObligationEntry'
+          maxItems: 10000
           description: All active obligations for the character
         violationCostMap:
           type: object
@@ -1119,12 +1098,10 @@ components:
       additionalProperties: false
       required:
       - contractId
-      - templateCode
       - clauseCode
       - violationType
       - basePenalty
       - weightedPenalty
-      - contractRole
       properties:
         contractId:
           type: string
@@ -1134,7 +1111,8 @@ components:
           type: string
           minLength: 1
           maxLength: 128
-          description: Template code of the source contract
+          nullable: true
+          description: Template code of the source contract (null if contract has no template)
         clauseCode:
           type: string
           minLength: 1
@@ -1160,7 +1138,8 @@ components:
           type: string
           minLength: 1
           maxLength: 128
-          description: The character's role in the contract
+          nullable: true
+          description: The character's role in the contract (null if role not determinable)
     ActionEvaluation:
       type: object
       description: Obligation violation cost evaluation for a single GOAP action tag
@@ -1188,6 +1167,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ObligationCostDetail'
+          maxItems: 1000
           description: Per-obligation breakdown of cost contributions
     EvaluateActionRequest:
       type: object
@@ -1237,18 +1217,14 @@ components:
       description: Obligation cost evaluation results for proposed actions
       additionalProperties: false
       required:
-      - characterId
       - evaluations
       - moralWeightingApplied
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character evaluated
         evaluations:
           type: array
           items:
             $ref: '#/components/schemas/ActionEvaluation'
+          maxItems: 50
           description: Per-action evaluation results (one per input tag)
         moralWeightingApplied:
           type: boolean
@@ -1395,17 +1371,12 @@ components:
       additionalProperties: false
       required:
       - violationId
-      - characterId
       - breachReported
       properties:
         violationId:
           type: string
           format: uuid
           description: ID of the created violation record
-        characterId:
-          type: string
-          format: uuid
-          description: Character who committed the violation
         breachReported:
           type: boolean
           description: Whether a breach was successfully filed with the contract service
@@ -1463,6 +1434,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ViolationRecord'
+          maxItems: 100
           description: Violation records for this page
         nextCursor:
           type: string
@@ -1488,22 +1460,13 @@ components:
       description: Result of cache invalidation and rebuild
       additionalProperties: false
       required:
-      - characterId
       - obligationsRefreshed
-      - success
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character whose cache was rebuilt
         obligationsRefreshed:
           type: integer
           minimum: 0
           maximum: 10000
           description: Number of obligations found and cached
-        success:
-          type: boolean
-          description: Whether the cache rebuild completed successfully
     CleanupByCharacterRequest:
       type: object
       description: Request to cleanup all obligation data for a deleted character
@@ -1520,23 +1483,13 @@ components:
       description: Result of character obligation data cleanup
       additionalProperties: false
       required:
-      - obligationsRemoved
       - violationsRemoved
-      - success
       properties:
-        obligationsRemoved:
-          type: integer
-          minimum: 0
-          maximum: 10000
-          description: Number of cached obligation entries removed
         violationsRemoved:
           type: integer
           minimum: 0
           maximum: 100000
           description: Number of violation history records removed
-        success:
-          type: boolean
-          description: Whether cleanup completed successfully
     GetCompressDataRequest:
       type: object
       description: Request to get obligation data for compression
@@ -1580,6 +1533,7 @@ components:
           nullable: true
           items:
             $ref: '#/components/schemas/ViolationRecord'
+          maxItems: 100000
           description: Violation history records (null if hasViolations=false)
     RestoreFromArchiveRequest:
       type: object
@@ -1595,23 +1549,21 @@ components:
           description: ID of the character to restore data for
         data:
           type: string
+          minLength: 1
           description: Base64-encoded gzipped ObligationArchive JSON
     RestoreFromArchiveResponse:
       type: object
       description: Result of restoration from archive
       additionalProperties: false
       required:
-      - characterId
       - violationsRestored
-      - success
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character data was restored for
         violationsRestored:
           type: boolean
           description: Whether violation history was restored
-        success:
-          type: boolean
-          description: Whether the restoration completed successfully
+    NormResolutionMode:
+      type: string
+      description: How norm-based obligation costs are resolved when the Hearsay service is unavailable
+      enum:
+      - PerfectKnowledge
+      - UncertaintySimulation

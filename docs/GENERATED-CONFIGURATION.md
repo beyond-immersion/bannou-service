@@ -715,8 +715,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `LICENSE_BOARD_CACHE_TTL_SECONDS` | int | `300` | Redis TTL for board state cache in seconds |
-| `LICENSE_DEFAULT_ADJACENCY_MODE` | string | `eight_way` | Default adjacency mode for new board templates |
-| `LICENSE_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries (min 1, max 100) |
+| `LICENSE_DEFAULT_ADJACENCY_MODE` | string | `EightWay` | Default adjacency mode for new board templates |
+| `LICENSE_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries |
 | `LICENSE_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock TTL for board mutations in seconds |
 | `LICENSE_MAX_BOARDS_PER_OWNER` | int | `10` | Maximum number of active boards a single owner entity can ha... |
 | `LICENSE_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts |
@@ -742,8 +742,21 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `MAPPING_AFFORDANCE_BASE_SCORE` | double | `0.5` | Base score for all affordance evaluations before modifiers |
 | `MAPPING_AFFORDANCE_CACHE_TIMEOUT_SECONDS` | int | `60` | Default TTL for cached affordance query results |
+| `MAPPING_AFFORDANCE_COVER_RATING_WEIGHT` | double | `0.3` | Weight multiplier for cover_rating contribution to ambush/sh... |
+| `MAPPING_AFFORDANCE_ELEVATION_DIVISOR` | double | `100.0` | Divisor for normalizing elevation values in vista/dramatic-r... |
+| `MAPPING_AFFORDANCE_ELEVATION_MAX_CONTRIBUTION` | double | `0.3` | Maximum score contribution from elevation in vista/dramatic-... |
 | `MAPPING_AFFORDANCE_EXCLUSION_TOLERANCE_UNITS` | double | `1.0` | Distance tolerance in world units for position exclusion mat... |
+| `MAPPING_AFFORDANCE_PREFERENCE_BOOST` | double | `0.1` | Score boost per matching preference key in custom affordance... |
+| `MAPPING_AFFORDANCE_SIGHTLINES_MAX_CONTRIBUTION` | double | `0.2` | Maximum score contribution from sightlines in ambush/vista s... |
+| `MAPPING_AFFORDANCE_SIGHTLINES_MULTIPLIER` | double | `0.05` | Per-sightline score multiplier for ambush/vista scoring |
+| `MAPPING_AFFORDANCE_SIZE_HUGE_MULTIPLIER` | double | `0.8` | Score multiplier for huge-sized actors in shelter/ambush sco... |
+| `MAPPING_AFFORDANCE_SIZE_LARGE_MULTIPLIER` | double | `0.9` | Score multiplier for large-sized actors in shelter/ambush sc... |
+| `MAPPING_AFFORDANCE_SIZE_MEDIUM_MULTIPLIER` | double | `1.0` | Score multiplier for medium-sized actors in shelter/ambush s... |
+| `MAPPING_AFFORDANCE_SIZE_SMALL_MULTIPLIER` | double | `1.1` | Score multiplier for small-sized actors in shelter/ambush sc... |
+| `MAPPING_AFFORDANCE_SIZE_TINY_MULTIPLIER` | double | `1.2` | Score multiplier for tiny-sized actors in shelter/ambush sco... |
+| `MAPPING_AFFORDANCE_STEALTH_RATING_MULTIPLIER` | double | `0.2` | Multiplier applied to actor stealth rating for ambush scorin... |
 | `MAPPING_AUTHORITY_GRACE_PERIOD_SECONDS` | int | `30` | Grace period in seconds after missed heartbeat before author... |
 | `MAPPING_AUTHORITY_TIMEOUT_SECONDS` | int | `60` | Time in seconds before authority expires without heartbeat |
 | `MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS` | int | `3600` | Default TTL for cached layer data (ephemeral kinds) |
@@ -780,6 +793,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MATCHMAKING_DEFAULT_MAX_INTERVALS` | int | `6` | Default maximum intervals before timeout/relaxation |
 | `MATCHMAKING_DEFAULT_RESERVATION_TTL_SECONDS` | int | `120` | Default TTL for player reservations in game sessions created... |
 | `MATCHMAKING_IMMEDIATE_MATCH_CHECK_ENABLED` | bool | `true` | Enable immediate match check on ticket creation (quick match... |
+| `MATCHMAKING_LIST_LOCK_TIMEOUT_SECONDS` | int | `15` | Distributed lock timeout for list/query operations on matchm... |
+| `MATCHMAKING_MATCH_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock timeout for match processing operations (ac... |
 | `MATCHMAKING_MAX_CONCURRENT_TICKETS_PER_PLAYER` | int | `3` | Maximum number of concurrent tickets a player can have |
 | `MATCHMAKING_PENDING_MATCH_REDIS_KEY_TTL_SECONDS` | int | `300` | TTL for pending match data in Redis (for reconnection handli... |
 | `MATCHMAKING_PROCESSING_INTERVAL_SECONDS` | int | `15` | Default interval between match processing cycles |
@@ -884,12 +899,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MUSIC_DEFAULT_EMOTIONAL_WARMTH` | double | `0.5` | Default warmth value for emotional state (0.0-1.0) |
 | `MUSIC_DEFAULT_MELODY_DENSITY` | double | `0.7` | Default note density for melody generation (0.0-1.0) |
 | `MUSIC_DEFAULT_MELODY_SYNCOPATION` | double | `0.2` | Default syncopation amount for melody generation (0.0-1.0) |
+| `MUSIC_DEFAULT_PROGRESSION_LENGTH` | int | `8` | Default number of chords in a generated progression when not... |
 | `MUSIC_DEFAULT_TICKS_PER_BEAT` | int | `480` | Default MIDI ticks per beat (PPQN) for composition rendering |
 | `MUSIC_DEFAULT_VOICE_COUNT` | int | `4` | Default number of voices for chord voicing |
-| `MUSIC_DENSITY_ENERGY_MULTIPLIER` | double | `0.5` | Multiplier applied to energy for density calculation.
-Final ... |
-| `MUSIC_DENSITY_MINIMUM` | double | `0.4` | Minimum melody density (floor value before energy scaling).
- |
+| `MUSIC_DENSITY_ENERGY_MULTIPLIER` | double | `0.5` | Multiplier applied to energy for density calculation. Final ... |
+| `MUSIC_DENSITY_MINIMUM` | double | `0.4` | Minimum melody density (floor value before energy scaling). |
 
 ### Obligation
 
@@ -897,13 +911,16 @@ Final ... |
 |---------------------|------|---------|-------------|
 | `OBLIGATION_BREACH_REPORT_ENABLED` | bool | `true` | Whether to auto-report violations as breaches to the contrac... |
 | `OBLIGATION_CACHE_TTL_MINUTES` | int | `10` | TTL in minutes for obligation manifest cache entries per cha... |
+| `OBLIGATION_CLEANUP_BATCH_SIZE` | int | `100` | Number of obligation entries to delete per batch during char... |
 | `OBLIGATION_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries |
 | `OBLIGATION_IDEMPOTENCY_TTL_SECONDS` | int | `86400` | TTL in seconds for violation report idempotency keys |
 | `OBLIGATION_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed locks on obligation cache... |
 | `OBLIGATION_MAX_ACTIVE_CONTRACTS_QUERY` | int | `100` | Maximum number of active contracts to query per character du... |
+| `OBLIGATION_MAX_COMPRESSION_QUERY_RESULTS` | int | `10000` | Maximum number of obligation entries to include in compressi... |
 | `OBLIGATION_MAX_OBLIGATIONS_PER_CHARACTER` | int | `200` | Safety limit on cached obligations per character (prevents r... |
-| `OBLIGATION_NORM_RESOLUTION_MODE` | string | `PerfectKnowledge` | How norm-based obligation costs are resolved when the Hearsa... |
-| `OBLIGATION_NORM_UNCERTAINTY_VARIANCE` | double | `0.2` | Maximum variance applied to norm penalties when NormResoluti... |
+| `OBLIGATION_NORM_RESOLUTION_MODE` | string | `PerfectKnowledge` | How norm-based obligation costs are resolved when Hearsay is... |
+| `OBLIGATION_NORM_UNCERTAINTY_VARIANCE` | double | `0.2` | Maximum variance (+/-) applied to norm penalties in Uncertai... |
+| `OBLIGATION_PERSONALITY_WEIGHT_MULTIPLIER` | double | `0.5` | Multiplier applied to personality-weighted moral reasoning s... |
 
 ### Orchestrator
 
@@ -1280,9 +1297,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 984
+- **Total properties**: 1003
 - **Required (no default)**: 59
-- **Optional (has default)**: 925
+- **Optional (has default)**: 944
 
 ## Environment Variable Naming Convention
 

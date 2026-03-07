@@ -109,13 +109,15 @@ paths:
         \     \"nullable\": true\n                },\n                \"objectType\": {\n                    \"type\": \"\
         string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"\
         description\": \"Publisher-defined type (used for indexing and filtering)\"\n                },\n                \"\
-        position\": {\n                    \"type\": \"object\",\n                    \"description\": \"Position for point
-        objects\",\n                    \"nullable\": true\n                },\n                \"bounds\": {\n          \
-        \          \"type\": \"object\",\n                    \"description\": \"Bounds for area objects\",\n            \
-        \        \"nullable\": true\n                },\n                \"data\": {\n                    \"type\": \"object\"\
-        ,\n                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific spatial
-        object data. lib-mapping stores and returns this as-is. No Bannou plugin reads specific keys from this field by convention.\"\
-        ,\n                    \"nullable\": true\n                }\n            }\n        }\n    }\n}"
+        position\": {\n                    \"allOf\": [\n                        {\n                            \"type\":
+        \"object\"\n                        }\n                    ],\n                    \"description\": \"Position for
+        point objects\",\n                    \"nullable\": true\n                },\n                \"bounds\": {\n    \
+        \                \"allOf\": [\n                        {\n                            \"type\": \"object\"\n     \
+        \                   }\n                    ],\n                    \"description\": \"Bounds for area objects\",\n\
+        \                    \"nullable\": true\n                },\n                \"data\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific
+        spatial object data. lib-mapping stores and returns this as-is. No Bannou plugin reads specific keys from this field
+        by convention.\",\n                    \"nullable\": true\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthorityGrant\"\
         ,\n    \"$defs\": {\n        \"AuthorityGrant\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Granted authority over a map channel\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -258,13 +260,14 @@ paths:
         \     \"minLength\": 1,\n                    \"description\": \"Authority token for validation\"\n               \
         \ },\n                \"sourceAppId\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
         : 256,\n                    \"description\": \"App-id of caller (for warnings on non-authority attempts)\",\n    \
-        \                \"nullable\": true\n                },\n                \"bounds\": {\n                    \"type\"\
-        : \"object\",\n                    \"description\": \"Affected area (null means entire region)\",\n              \
-        \      \"nullable\": true\n                },\n                \"deltaType\": {\n                    \"$ref\": \"\
-        #/$defs/DeltaType\",\n                    \"description\": \"Whether this is incremental or full\"\n             \
-        \   },\n                \"payload\": {\n                    \"$ref\": \"#/$defs/MapPayload\",\n                  \
-        \  \"description\": \"The payload to publish\"\n                },\n                \"payloadAssetRef\": {\n     \
-        \               \"type\": \"string\",\n                    \"maxLength\": 1024,\n                    \"description\"\
+        \                \"nullable\": true\n                },\n                \"bounds\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"type\": \"object\"\n                        }\n    \
+        \                ],\n                    \"description\": \"Affected area (null means entire region)\",\n        \
+        \            \"nullable\": true\n                },\n                \"deltaType\": {\n                    \"$ref\"\
+        : \"#/$defs/DeltaType\",\n                    \"description\": \"Whether this is incremental or full\"\n         \
+        \       },\n                \"payload\": {\n                    \"$ref\": \"#/$defs/MapPayload\",\n              \
+        \      \"description\": \"The payload to publish\"\n                },\n                \"payloadAssetRef\": {\n \
+        \                   \"type\": \"string\",\n                    \"maxLength\": 1024,\n                    \"description\"\
         : \"For large payloads, lib-asset reference instead of inline\",\n                    \"nullable\": true\n       \
         \         }\n            }\n        },\n        \"DeltaType\": {\n            \"type\": \"string\",\n            \"\
         description\": \"Whether an update is incremental or a full snapshot\",\n            \"enum\": [\n               \
@@ -277,14 +280,16 @@ paths:
         (generated if not provided)\",\n                    \"nullable\": true\n                },\n                \"objectType\"\
         : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
         : 256,\n                    \"description\": \"Publisher-defined type (used for indexing and filtering)\"\n      \
-        \          },\n                \"position\": {\n                    \"type\": \"object\",\n                    \"\
-        description\": \"Position for point objects\",\n                    \"nullable\": true\n                },\n     \
-        \           \"bounds\": {\n                    \"type\": \"object\",\n                    \"description\": \"Bounds
-        for area objects\",\n                    \"nullable\": true\n                },\n                \"data\": {\n   \
-        \                 \"type\": \"object\",\n                    \"additionalProperties\": true,\n                   \
-        \ \"description\": \"Game-specific spatial object data. lib-mapping stores and returns this as-is. No Bannou plugin
-        reads specific keys from this field by convention.\",\n                    \"nullable\": true\n                }\n\
-        \            }\n        }\n    }\n}"
+        \          },\n                \"position\": {\n                    \"allOf\": [\n                        {\n    \
+        \                        \"type\": \"object\"\n                        }\n                    ],\n               \
+        \     \"description\": \"Position for point objects\",\n                    \"nullable\": true\n                },\n\
+        \                \"bounds\": {\n                    \"allOf\": [\n                        {\n                    \
+        \        \"type\": \"object\"\n                        }\n                    ],\n                    \"description\"\
+        : \"Bounds for area objects\",\n                    \"nullable\": true\n                },\n                \"data\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"description\": \"Game-specific spatial object data. lib-mapping stores and returns this as-is. No Bannou
+        plugin reads specific keys from this field by convention.\",\n                    \"nullable\": true\n           \
+        \     }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishMapUpdateResponse\"\
         ,\n    \"$defs\": {\n        \"PublishMapUpdateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response to publish request\",\n            \"additionalProperties\": false,\n            \"required\": [\n  \
@@ -346,14 +351,16 @@ paths:
         \       },\n                \"objectType\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
         : 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Object type (required for created)\"\
         ,\n                    \"nullable\": true\n                },\n                \"position\": {\n                 \
-        \   \"type\": \"object\",\n                    \"description\": \"Object position (for create/update)\",\n       \
-        \             \"nullable\": true\n                },\n                \"bounds\": {\n                    \"type\"\
-        : \"object\",\n                    \"description\": \"Object bounds (for create/update)\",\n                    \"\
-        nullable\": true\n                },\n                \"data\": {\n                    \"type\": \"object\",\n   \
-        \                 \"additionalProperties\": true,\n                    \"description\": \"Game-specific object state
-        data. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\": true\n\
-        \                }\n            }\n        },\n        \"ObjectAction\": {\n            \"type\": \"string\",\n  \
-        \          \"description\": \"Type of change to a map object\",\n            \"enum\": [\n                \"Created\"\
+        \   \"allOf\": [\n                        {\n                            \"type\": \"object\"\n                  \
+        \      }\n                    ],\n                    \"description\": \"Object position (for create/update)\",\n\
+        \                    \"nullable\": true\n                },\n                \"bounds\": {\n                    \"\
+        allOf\": [\n                        {\n                            \"type\": \"object\"\n                        }\n\
+        \                    ],\n                    \"description\": \"Object bounds (for create/update)\",\n           \
+        \         \"nullable\": true\n                },\n                \"data\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific object
+        state data. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        },\n        \"ObjectAction\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of change to a map object\",\n            \"enum\": [\n                \"Created\"\
         ,\n                \"Updated\",\n                \"Deleted\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishObjectChangesResponse\"\
         ,\n    \"$defs\": {\n        \"PublishObjectChangesResponse\": {\n            \"type\": \"object\",\n            \"\
@@ -408,18 +415,19 @@ paths:
         : \"Region to snapshot\"\n                },\n                \"kinds\": {\n                    \"type\": \"array\"\
         ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MapKind\"\n                    },\n\
         \                    \"description\": \"Which kinds to include (default all)\",\n                    \"nullable\"\
-        : true\n                },\n                \"bounds\": {\n                    \"type\": \"object\",\n           \
-        \         \"description\": \"Optional bounds filter\",\n                    \"nullable\": true\n                },\n\
-        \                \"authorityToken\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"description\": \"Optional authority token to clear RequiresConsumeBeforePublish flag for
-        require_consume takeover mode\",\n                    \"nullable\": true\n                }\n            }\n     \
-        \   },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\": \"The category of
-        spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.\",\n\
-        \            \"enum\": [\n                \"Terrain\",\n                \"StaticGeometry\",\n                \"Navigation\"\
-        ,\n                \"Resources\",\n                \"SpawnPoints\",\n                \"PointsOfInterest\",\n     \
-        \           \"DynamicObjects\",\n                \"Hazards\",\n                \"WeatherEffects\",\n             \
-        \   \"Ownership\",\n                \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n       \
-        \ }\n    }\n}"
+        : true\n                },\n                \"bounds\": {\n                    \"allOf\": [\n                    \
+        \    {\n                            \"type\": \"object\"\n                        }\n                    ],\n    \
+        \                \"description\": \"Optional bounds filter\",\n                    \"nullable\": true\n          \
+        \      },\n                \"authorityToken\": {\n                    \"type\": \"string\",\n                    \"\
+        minLength\": 1,\n                    \"description\": \"Optional authority token to clear RequiresConsumeBeforePublish
+        flag for require_consume takeover mode\",\n                    \"nullable\": true\n                }\n           \
+        \ }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\": \"The category
+        of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.\"\
+        ,\n            \"enum\": [\n                \"Terrain\",\n                \"StaticGeometry\",\n                \"\
+        Navigation\",\n                \"Resources\",\n                \"SpawnPoints\",\n                \"PointsOfInterest\"\
+        ,\n                \"DynamicObjects\",\n                \"Hazards\",\n                \"WeatherEffects\",\n      \
+        \          \"Ownership\",\n                \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RequestSnapshotResponse\"\
         ,\n    \"$defs\": {\n        \"RequestSnapshotResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Snapshot response\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
@@ -442,11 +450,13 @@ paths:
         \                    \"$ref\": \"#/$defs/MapKind\",\n                    \"description\": \"Map kind this object is
         stored under\"\n                },\n                \"objectType\": {\n                    \"type\": \"string\",\n\
         \                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\"\
-        : \"Publisher-defined type\"\n                },\n                \"position\": {\n                    \"type\": \"\
-        object\",\n                    \"description\": \"Position for point objects\",\n                    \"nullable\"\
-        : true\n                },\n                \"bounds\": {\n                    \"type\": \"object\",\n           \
-        \         \"description\": \"Bounding box for area objects\",\n                    \"nullable\": true\n          \
-        \      },\n                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : \"Publisher-defined type\"\n                },\n                \"position\": {\n                    \"allOf\":
+        [\n                        {\n                            \"type\": \"object\"\n                        }\n      \
+        \              ],\n                    \"description\": \"Position for point objects\",\n                    \"nullable\"\
+        : true\n                },\n                \"bounds\": {\n                    \"allOf\": [\n                    \
+        \    {\n                            \"type\": \"object\"\n                        }\n                    ],\n    \
+        \                \"description\": \"Bounding box for area objects\",\n                    \"nullable\": true\n   \
+        \             },\n                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : true,\n                    \"description\": \"Game-specific spatial object data. No Bannou plugin reads specific
         keys from this field by convention.\",\n                    \"nullable\": true\n                },\n             \
         \   \"version\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n     \
@@ -497,9 +507,10 @@ paths:
         \            \"regionId\",\n                \"position\"\n            ],\n            \"properties\": {\n        \
         \        \"regionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
         \                   \"description\": \"Region to query\"\n                },\n                \"position\": {\n  \
-        \                  \"type\": \"object\",\n                    \"description\": \"Point to query at\"\n           \
-        \     },\n                \"kinds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"$ref\": \"#/$defs/MapKind\"\n                    },\n                    \"description\"\
+        \                  \"allOf\": [\n                        {\n                            \"type\": \"object\"\n   \
+        \                     }\n                    ],\n                    \"description\": \"Point to query at\"\n    \
+        \            },\n                \"kinds\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/MapKind\"\n                    },\n                    \"description\"\
         : \"Kinds to query (default all)\",\n                    \"nullable\": true\n                },\n                \"\
         radius\": {\n                    \"type\": \"number\",\n                    \"minimum\": 0,\n                    \"\
         description\": \"Include objects within this radius\",\n                    \"nullable\": true\n                }\n\
@@ -528,25 +539,27 @@ paths:
         : \"Map kind this object is stored under\"\n                },\n                \"objectType\": {\n              \
         \      \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n   \
         \                 \"description\": \"Publisher-defined type\"\n                },\n                \"position\": {\n\
-        \                    \"type\": \"object\",\n                    \"description\": \"Position for point objects\",\n\
-        \                    \"nullable\": true\n                },\n                \"bounds\": {\n                    \"\
-        type\": \"object\",\n                    \"description\": \"Bounding box for area objects\",\n                   \
-        \ \"nullable\": true\n                },\n                \"data\": {\n                    \"type\": \"object\",\n\
-        \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific spatial
-        object data. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\"\
-        : true\n                },\n                \"version\": {\n                    \"type\": \"integer\",\n         \
-        \           \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\n    \
-        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\n       \
-        \         },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n            \
-        \    }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"The category of spatial data this map contains. Different kinds have different update frequencies, storage models,
-        and TTLs.\",\n            \"enum\": [\n                \"Terrain\",\n                \"StaticGeometry\",\n       \
-        \         \"Navigation\",\n                \"Resources\",\n                \"SpawnPoints\",\n                \"PointsOfInterest\"\
-        ,\n                \"DynamicObjects\",\n                \"Hazards\",\n                \"WeatherEffects\",\n      \
-        \          \"Ownership\",\n                \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n\
-        \        }\n    }\n}"
+        \                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\n \
+        \                       }\n                    ],\n                    \"description\": \"Position for point objects\"\
+        ,\n                    \"nullable\": true\n                },\n                \"bounds\": {\n                   \
+        \ \"allOf\": [\n                        {\n                            \"type\": \"object\"\n                    \
+        \    }\n                    ],\n                    \"description\": \"Bounding box for area objects\",\n        \
+        \            \"nullable\": true\n                },\n                \"data\": {\n                    \"type\": \"\
+        object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific
+        spatial object data. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"\
+        nullable\": true\n                },\n                \"version\": {\n                    \"type\": \"integer\",\n\
+        \                    \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\n  \
+        \              },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n      \
+        \          }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"The category of spatial data this map contains. Different kinds have different update frequencies,
+        storage models, and TTLs.\",\n            \"enum\": [\n                \"Terrain\",\n                \"StaticGeometry\"\
+        ,\n                \"Navigation\",\n                \"Resources\",\n                \"SpawnPoints\",\n           \
+        \     \"PointsOfInterest\",\n                \"DynamicObjects\",\n                \"Hazards\",\n                \"\
+        WeatherEffects\",\n                \"Ownership\",\n                \"CombatEffects\",\n                \"VisualEffects\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query map data at a specific point\",\n    \"description\": \"Returns all
         map data at a point across requested kinds.\\nUsed by behavior stacks for contextual decisions.\\nOptionally includes
         objects within radius.\\n\",\n    \"tags\": [\n        \"Query\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -583,19 +596,20 @@ paths:
         \               \"regionId\",\n                \"bounds\"\n            ],\n            \"properties\": {\n       \
         \         \"regionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
         \                    \"description\": \"Region to query\"\n                },\n                \"bounds\": {\n   \
-        \                 \"type\": \"object\",\n                    \"description\": \"Bounding box to query\"\n        \
-        \        },\n                \"kinds\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/MapKind\"\n                    },\n                    \"description\"\
-        : \"Kinds to query (default all)\",\n                    \"nullable\": true\n                },\n                \"\
-        maxObjects\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n               \
-        \     \"default\": 500,\n                    \"maximum\": 5000,\n                    \"description\": \"Maximum objects
-        to return\"\n                }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"The category of spatial data this map contains. Different kinds have different update
-        frequencies, storage models, and TTLs.\",\n            \"enum\": [\n                \"Terrain\",\n               \
-        \ \"StaticGeometry\",\n                \"Navigation\",\n                \"Resources\",\n                \"SpawnPoints\"\
-        ,\n                \"PointsOfInterest\",\n                \"DynamicObjects\",\n                \"Hazards\",\n    \
-        \            \"WeatherEffects\",\n                \"Ownership\",\n                \"CombatEffects\",\n           \
-        \     \"VisualEffects\"\n            ]\n        }\n    }\n}"
+        \                 \"allOf\": [\n                        {\n                            \"type\": \"object\"\n    \
+        \                    }\n                    ],\n                    \"description\": \"Bounding box to query\"\n \
+        \               },\n                \"kinds\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/MapKind\"\n                    },\n                    \"\
+        description\": \"Kinds to query (default all)\",\n                    \"nullable\": true\n                },\n   \
+        \             \"maxObjects\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
+        \                    \"default\": 500,\n                    \"maximum\": 5000,\n                    \"description\"\
+        : \"Maximum objects to return\"\n                }\n            }\n        },\n        \"MapKind\": {\n          \
+        \  \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains. Different
+        kinds have different update frequencies, storage models, and TTLs.\",\n            \"enum\": [\n                \"\
+        Terrain\",\n                \"StaticGeometry\",\n                \"Navigation\",\n                \"Resources\",\n\
+        \                \"SpawnPoints\",\n                \"PointsOfInterest\",\n                \"DynamicObjects\",\n  \
+        \              \"Hazards\",\n                \"WeatherEffects\",\n                \"Ownership\",\n               \
+        \ \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryBoundsResponse\"\
         ,\n    \"$defs\": {\n        \"QueryBoundsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Bounds query results\",\n            \"additionalProperties\": false,\n            \"required\": [\n         \
@@ -616,25 +630,27 @@ paths:
         : \"Map kind this object is stored under\"\n                },\n                \"objectType\": {\n              \
         \      \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n   \
         \                 \"description\": \"Publisher-defined type\"\n                },\n                \"position\": {\n\
-        \                    \"type\": \"object\",\n                    \"description\": \"Position for point objects\",\n\
-        \                    \"nullable\": true\n                },\n                \"bounds\": {\n                    \"\
-        type\": \"object\",\n                    \"description\": \"Bounding box for area objects\",\n                   \
-        \ \"nullable\": true\n                },\n                \"data\": {\n                    \"type\": \"object\",\n\
-        \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific spatial
-        object data. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\"\
-        : true\n                },\n                \"version\": {\n                    \"type\": \"integer\",\n         \
-        \           \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\n    \
-        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\n       \
-        \         },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n            \
-        \    }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"The category of spatial data this map contains. Different kinds have different update frequencies, storage models,
-        and TTLs.\",\n            \"enum\": [\n                \"Terrain\",\n                \"StaticGeometry\",\n       \
-        \         \"Navigation\",\n                \"Resources\",\n                \"SpawnPoints\",\n                \"PointsOfInterest\"\
-        ,\n                \"DynamicObjects\",\n                \"Hazards\",\n                \"WeatherEffects\",\n      \
-        \          \"Ownership\",\n                \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n\
-        \        }\n    }\n}"
+        \                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\n \
+        \                       }\n                    ],\n                    \"description\": \"Position for point objects\"\
+        ,\n                    \"nullable\": true\n                },\n                \"bounds\": {\n                   \
+        \ \"allOf\": [\n                        {\n                            \"type\": \"object\"\n                    \
+        \    }\n                    ],\n                    \"description\": \"Bounding box for area objects\",\n        \
+        \            \"nullable\": true\n                },\n                \"data\": {\n                    \"type\": \"\
+        object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific
+        spatial object data. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"\
+        nullable\": true\n                },\n                \"version\": {\n                    \"type\": \"integer\",\n\
+        \                    \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\n  \
+        \              },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n      \
+        \          }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"The category of spatial data this map contains. Different kinds have different update frequencies,
+        storage models, and TTLs.\",\n            \"enum\": [\n                \"Terrain\",\n                \"StaticGeometry\"\
+        ,\n                \"Navigation\",\n                \"Resources\",\n                \"SpawnPoints\",\n           \
+        \     \"PointsOfInterest\",\n                \"DynamicObjects\",\n                \"Hazards\",\n                \"\
+        WeatherEffects\",\n                \"Ownership\",\n                \"CombatEffects\",\n                \"VisualEffects\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query map data within bounds\",\n    \"description\": \"Returns map data
         within a bounding box.\\nFor event actors needing region overview.\\nLimited to maxObjects per kind.\\n\",\n    \"\
         tags\": [\n        \"Query\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryBounds\"\n}"
@@ -671,11 +687,12 @@ paths:
         \                 \"description\": \"Region to query\"\n                },\n                \"objectType\": {\n  \
         \                  \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
         : 256,\n                    \"description\": \"Object type to filter by\"\n                },\n                \"\
-        bounds\": {\n                    \"type\": \"object\",\n                    \"description\": \"Optional bounds filter\"\
-        ,\n                    \"nullable\": true\n                },\n                \"maxObjects\": {\n               \
-        \     \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\": 500,\n       \
-        \             \"maximum\": 5000,\n                    \"description\": \"Maximum objects to return\"\n           \
-        \     }\n            }\n        }\n    }\n}"
+        bounds\": {\n                    \"allOf\": [\n                        {\n                            \"type\": \"\
+        object\"\n                        }\n                    ],\n                    \"description\": \"Optional bounds
+        filter\",\n                    \"nullable\": true\n                },\n                \"maxObjects\": {\n       \
+        \             \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\": 500,\n\
+        \                    \"maximum\": 5000,\n                    \"description\": \"Maximum objects to return\"\n    \
+        \            }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryObjectsByTypeResponse\"\
         ,\n    \"$defs\": {\n        \"QueryObjectsByTypeResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Object type query results\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -696,25 +713,27 @@ paths:
         : \"Map kind this object is stored under\"\n                },\n                \"objectType\": {\n              \
         \      \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n   \
         \                 \"description\": \"Publisher-defined type\"\n                },\n                \"position\": {\n\
-        \                    \"type\": \"object\",\n                    \"description\": \"Position for point objects\",\n\
-        \                    \"nullable\": true\n                },\n                \"bounds\": {\n                    \"\
-        type\": \"object\",\n                    \"description\": \"Bounding box for area objects\",\n                   \
-        \ \"nullable\": true\n                },\n                \"data\": {\n                    \"type\": \"object\",\n\
-        \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific spatial
-        object data. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\"\
-        : true\n                },\n                \"version\": {\n                    \"type\": \"integer\",\n         \
-        \           \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\n    \
-        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\n       \
-        \         },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n            \
-        \    }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"The category of spatial data this map contains. Different kinds have different update frequencies, storage models,
-        and TTLs.\",\n            \"enum\": [\n                \"Terrain\",\n                \"StaticGeometry\",\n       \
-        \         \"Navigation\",\n                \"Resources\",\n                \"SpawnPoints\",\n                \"PointsOfInterest\"\
-        ,\n                \"DynamicObjects\",\n                \"Hazards\",\n                \"WeatherEffects\",\n      \
-        \          \"Ownership\",\n                \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n\
-        \        }\n    }\n}"
+        \                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\n \
+        \                       }\n                    ],\n                    \"description\": \"Position for point objects\"\
+        ,\n                    \"nullable\": true\n                },\n                \"bounds\": {\n                   \
+        \ \"allOf\": [\n                        {\n                            \"type\": \"object\"\n                    \
+        \    }\n                    ],\n                    \"description\": \"Bounding box for area objects\",\n        \
+        \            \"nullable\": true\n                },\n                \"data\": {\n                    \"type\": \"\
+        object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific
+        spatial object data. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"\
+        nullable\": true\n                },\n                \"version\": {\n                    \"type\": \"integer\",\n\
+        \                    \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\n  \
+        \              },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n      \
+        \          }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"The category of spatial data this map contains. Different kinds have different update frequencies,
+        storage models, and TTLs.\",\n            \"enum\": [\n                \"Terrain\",\n                \"StaticGeometry\"\
+        ,\n                \"Navigation\",\n                \"Resources\",\n                \"SpawnPoints\",\n           \
+        \     \"PointsOfInterest\",\n                \"DynamicObjects\",\n                \"Hazards\",\n                \"\
+        WeatherEffects\",\n                \"Ownership\",\n                \"CombatEffects\",\n                \"VisualEffects\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Find all objects of a type in region\",\n    \"description\": \"Returns
         all objects matching an objectType filter.\\nFor event actors asking \\\"where are all the boulder clusters?\\\"\\\
         n\",\n    \"tags\": [\n        \"Query\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryObjectsByType\"\
@@ -762,7 +781,8 @@ paths:
         \  \"description\": \"Type of affordance to search for\"\n                },\n                \"customAffordance\"\
         : {\n                    \"$ref\": \"#/$defs/CustomAffordance\",\n                    \"description\": \"Custom affordance
         definition (when affordanceType=Custom)\",\n                    \"nullable\": true\n                },\n         \
-        \       \"bounds\": {\n                    \"type\": \"object\",\n                    \"description\": \"Optional
+        \       \"bounds\": {\n                    \"allOf\": [\n                        {\n                            \"\
+        type\": \"object\"\n                        }\n                    ],\n                    \"description\": \"Optional
         bounds to search within\",\n                    \"nullable\": true\n                },\n                \"maxResults\"\
         : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\"\
         : 10,\n                    \"maximum\": 100,\n                    \"description\": \"Maximum locations to return\"\
@@ -835,19 +855,21 @@ paths:
         \          }\n            }\n        },\n        \"AffordanceLocation\": {\n            \"type\": \"object\",\n  \
         \          \"description\": \"A location that affords the requested action\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"position\",\n                \"score\"\n            ],\n\
-        \            \"properties\": {\n                \"position\": {\n                    \"type\": \"object\",\n     \
-        \               \"description\": \"Location position\"\n                },\n                \"bounds\": {\n      \
-        \              \"type\": \"object\",\n                    \"description\": \"Area bounds if affordance spans an area\"\
-        ,\n                    \"nullable\": true\n                },\n                \"score\": {\n                    \"\
-        type\": \"number\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                  \
-        \  \"description\": \"How well this location affords the action (0-1)\"\n                },\n                \"features\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"description\": \"Game-specific features of this affordance result. No Bannou plugin reads specific keys
-        from this field by convention.\",\n                    \"nullable\": true\n                },\n                \"\
-        objectIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                     \
-        \   \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n                \
-        \    \"description\": \"Map objects contributing to this affordance\",\n                    \"nullable\": true\n \
-        \               }\n            }\n        }\n    }\n}"
+        \            \"properties\": {\n                \"position\": {\n                    \"allOf\": [\n              \
+        \          {\n                            \"type\": \"object\"\n                        }\n                    ],\n\
+        \                    \"description\": \"Location position\"\n                },\n                \"bounds\": {\n \
+        \                   \"allOf\": [\n                        {\n                            \"type\": \"object\"\n  \
+        \                      }\n                    ],\n                    \"description\": \"Area bounds if affordance
+        spans an area\",\n                    \"nullable\": true\n                },\n                \"score\": {\n     \
+        \               \"type\": \"number\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n\
+        \                    \"description\": \"How well this location affords the action (0-1)\"\n                },\n  \
+        \              \"features\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Game-specific features of this affordance result. No Bannou plugin
+        reads specific keys from this field by convention.\",\n                    \"nullable\": true\n                },\n\
+        \                \"objectIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n  \
+        \                      \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n\
+        \                    \"description\": \"Map objects contributing to this affordance\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Find locations that afford a specific action or scene type\",\n    \"description\"\
         : \"Affordance queries answer \\\"where can I do X?\\\" by combining\\nmultiple map kinds and applying game-specific
         scoring logic.\\n\\nUsed by Event Brain for procedural scene orchestration:\\n- \\\"Find ambush locations\\\"\\n-
@@ -1048,10 +1070,11 @@ paths:
         \   \"layers\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                  \
         \      \"$ref\": \"#/$defs/LayerDefinition\"\n                    },\n                    \"description\": \"Layer
         configurations\",\n                    \"nullable\": true\n                },\n                \"defaultBounds\":
-        {\n                    \"type\": \"object\",\n                    \"description\": \"Default bounds for regions using
-        this definition\",\n                    \"nullable\": true\n                },\n                \"metadata\": {\n\
-        \                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n                \
-        \    \"description\": \"Client-provided definition metadata. No Bannou plugin reads specific keys from this field
+        {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\n\
+        \                        }\n                    ],\n                    \"description\": \"Default bounds for regions
+        using this definition\",\n                    \"nullable\": true\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"description\": \"Client-provided definition metadata. No Bannou plugin reads specific keys from this field
         by convention.\",\n                    \"nullable\": true\n                }\n            }\n        },\n        \"\
         LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific
         layer within a map definition\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
@@ -1091,41 +1114,42 @@ paths:
         template\",\n                    \"nullable\": true\n                },\n                \"layers\": {\n         \
         \           \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\
         \n                    },\n                    \"description\": \"Layer configurations for this map\",\n          \
-        \          \"nullable\": true\n                },\n                \"defaultBounds\": {\n                    \"type\"\
-        : \"object\",\n                    \"description\": \"Default bounds for regions using this definition\",\n      \
-        \              \"nullable\": true\n                },\n                \"metadata\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Client-provided
-        definition metadata. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"\
-        nullable\": true\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"When the definition was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the definition was last updated\",\n\
-        \                    \"nullable\": true\n                }\n            }\n        },\n        \"LayerDefinition\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific layer within a
-        map definition\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"kind\"\
-        \n            ],\n            \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\"\
-        ,\n                    \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n\
-        \                    \"$ref\": \"#/$defs/StorageMode\",\n                    \"description\": \"How this layer's data
-        should be stored\"\n                },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 0,\n                    \"description\": \"TTL for cached/ephemeral data (0 =
-        use default from config)\",\n                    \"nullable\": true\n                },\n                \"defaultNonAuthorityHandling\"\
-        : {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"\
-        Default non-authority handling for channels using this layer\"\n                },\n                \"cellSize\":
-        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        minimum\": 1,\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
-        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.
-        Different kinds have different update frequencies, storage models, and TTLs.\",\n            \"enum\": [\n       \
-        \         \"Terrain\",\n                \"StaticGeometry\",\n                \"Navigation\",\n                \"Resources\"\
-        ,\n                \"SpawnPoints\",\n                \"PointsOfInterest\",\n                \"DynamicObjects\",\n\
-        \                \"Hazards\",\n                \"WeatherEffects\",\n                \"Ownership\",\n             \
-        \   \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n        },\n        \"StorageMode\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How layer data should be stored\",\n          \
-        \  \"enum\": [\n                \"Durable\",\n                \"Cached\",\n                \"Ephemeral\"\n       \
-        \     ],\n            \"default\": \"Cached\"\n        },\n        \"NonAuthorityHandlingMode\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How to handle publish attempts from non-authority sources\",\n\
-        \            \"enum\": [\n                \"RejectAndAlert\",\n                \"AcceptAndAlert\",\n             \
-        \   \"RejectSilent\"\n            ],\n            \"default\": \"RejectAndAlert\"\n        }\n    }\n}"
+        \          \"nullable\": true\n                },\n                \"defaultBounds\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"type\": \"object\"\n                        }\n    \
+        \                ],\n                    \"description\": \"Default bounds for regions using this definition\",\n\
+        \                    \"nullable\": true\n                },\n                \"metadata\": {\n                   \
+        \ \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"description\"\
+        : \"Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.\",\n\
+        \                    \"nullable\": true\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the definition was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the definition
+        was last updated\",\n                    \"nullable\": true\n                }\n            }\n        },\n      \
+        \  \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific
+        layer within a map definition\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
+        \            \"kind\"\n            ],\n            \"properties\": {\n                \"kind\": {\n              \
+        \      \"$ref\": \"#/$defs/MapKind\",\n                    \"description\": \"The layer kind\"\n                },\n\
+        \                \"storageMode\": {\n                    \"$ref\": \"#/$defs/StorageMode\",\n                    \"\
+        description\": \"How this layer's data should be stored\"\n                },\n                \"ttlSeconds\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"TTL for cached/ephemeral data (0 = use default from config)\",\n                    \"nullable\": true\n     \
+        \           },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
+        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
+        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"minimum\": 1,\n                    \"description\": \"Spatial cell size for indexing
+        (default from config if not set)\",\n                    \"nullable\": true\n                }\n            }\n  \
+        \      },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\": \"The category
+        of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.\"\
+        ,\n            \"enum\": [\n                \"Terrain\",\n                \"StaticGeometry\",\n                \"\
+        Navigation\",\n                \"Resources\",\n                \"SpawnPoints\",\n                \"PointsOfInterest\"\
+        ,\n                \"DynamicObjects\",\n                \"Hazards\",\n                \"WeatherEffects\",\n      \
+        \          \"Ownership\",\n                \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n\
+        \        },\n        \"StorageMode\": {\n            \"type\": \"string\",\n            \"description\": \"How layer
+        data should be stored\",\n            \"enum\": [\n                \"Durable\",\n                \"Cached\",\n   \
+        \             \"Ephemeral\"\n            ],\n            \"default\": \"Cached\"\n        },\n        \"NonAuthorityHandlingMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish attempts from non-authority
+        sources\",\n            \"enum\": [\n                \"RejectAndAlert\",\n                \"AcceptAndAlert\",\n  \
+        \              \"RejectSilent\"\n            ],\n            \"default\": \"RejectAndAlert\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a map definition template\",\n    \"description\": \"Creates a new
         map definition (template) that describes the structure\\nof a region. Definitions are templates that can be used to
         bootstrap\\nchannels with predefined layer configurations.\\n\",\n    \"tags\": [\n        \"Definition\"\n    ],\n\
@@ -1174,41 +1198,42 @@ paths:
         template\",\n                    \"nullable\": true\n                },\n                \"layers\": {\n         \
         \           \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\
         \n                    },\n                    \"description\": \"Layer configurations for this map\",\n          \
-        \          \"nullable\": true\n                },\n                \"defaultBounds\": {\n                    \"type\"\
-        : \"object\",\n                    \"description\": \"Default bounds for regions using this definition\",\n      \
-        \              \"nullable\": true\n                },\n                \"metadata\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Client-provided
-        definition metadata. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"\
-        nullable\": true\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"When the definition was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the definition was last updated\",\n\
-        \                    \"nullable\": true\n                }\n            }\n        },\n        \"LayerDefinition\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific layer within a
-        map definition\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"kind\"\
-        \n            ],\n            \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\"\
-        ,\n                    \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n\
-        \                    \"$ref\": \"#/$defs/StorageMode\",\n                    \"description\": \"How this layer's data
-        should be stored\"\n                },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 0,\n                    \"description\": \"TTL for cached/ephemeral data (0 =
-        use default from config)\",\n                    \"nullable\": true\n                },\n                \"defaultNonAuthorityHandling\"\
-        : {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"\
-        Default non-authority handling for channels using this layer\"\n                },\n                \"cellSize\":
-        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        minimum\": 1,\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
-        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.
-        Different kinds have different update frequencies, storage models, and TTLs.\",\n            \"enum\": [\n       \
-        \         \"Terrain\",\n                \"StaticGeometry\",\n                \"Navigation\",\n                \"Resources\"\
-        ,\n                \"SpawnPoints\",\n                \"PointsOfInterest\",\n                \"DynamicObjects\",\n\
-        \                \"Hazards\",\n                \"WeatherEffects\",\n                \"Ownership\",\n             \
-        \   \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n        },\n        \"StorageMode\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How layer data should be stored\",\n          \
-        \  \"enum\": [\n                \"Durable\",\n                \"Cached\",\n                \"Ephemeral\"\n       \
-        \     ],\n            \"default\": \"Cached\"\n        },\n        \"NonAuthorityHandlingMode\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How to handle publish attempts from non-authority sources\",\n\
-        \            \"enum\": [\n                \"RejectAndAlert\",\n                \"AcceptAndAlert\",\n             \
-        \   \"RejectSilent\"\n            ],\n            \"default\": \"RejectAndAlert\"\n        }\n    }\n}"
+        \          \"nullable\": true\n                },\n                \"defaultBounds\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"type\": \"object\"\n                        }\n    \
+        \                ],\n                    \"description\": \"Default bounds for regions using this definition\",\n\
+        \                    \"nullable\": true\n                },\n                \"metadata\": {\n                   \
+        \ \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"description\"\
+        : \"Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.\",\n\
+        \                    \"nullable\": true\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the definition was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the definition
+        was last updated\",\n                    \"nullable\": true\n                }\n            }\n        },\n      \
+        \  \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific
+        layer within a map definition\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
+        \            \"kind\"\n            ],\n            \"properties\": {\n                \"kind\": {\n              \
+        \      \"$ref\": \"#/$defs/MapKind\",\n                    \"description\": \"The layer kind\"\n                },\n\
+        \                \"storageMode\": {\n                    \"$ref\": \"#/$defs/StorageMode\",\n                    \"\
+        description\": \"How this layer's data should be stored\"\n                },\n                \"ttlSeconds\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"TTL for cached/ephemeral data (0 = use default from config)\",\n                    \"nullable\": true\n     \
+        \           },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
+        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
+        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"minimum\": 1,\n                    \"description\": \"Spatial cell size for indexing
+        (default from config if not set)\",\n                    \"nullable\": true\n                }\n            }\n  \
+        \      },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\": \"The category
+        of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.\"\
+        ,\n            \"enum\": [\n                \"Terrain\",\n                \"StaticGeometry\",\n                \"\
+        Navigation\",\n                \"Resources\",\n                \"SpawnPoints\",\n                \"PointsOfInterest\"\
+        ,\n                \"DynamicObjects\",\n                \"Hazards\",\n                \"WeatherEffects\",\n      \
+        \          \"Ownership\",\n                \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n\
+        \        },\n        \"StorageMode\": {\n            \"type\": \"string\",\n            \"description\": \"How layer
+        data should be stored\",\n            \"enum\": [\n                \"Durable\",\n                \"Cached\",\n   \
+        \             \"Ephemeral\"\n            ],\n            \"default\": \"Cached\"\n        },\n        \"NonAuthorityHandlingMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish attempts from non-authority
+        sources\",\n            \"enum\": [\n                \"RejectAndAlert\",\n                \"AcceptAndAlert\",\n  \
+        \              \"RejectSilent\"\n            ],\n            \"default\": \"RejectAndAlert\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a map definition by ID\",\n    \"description\": \"Returns the full
         map definition including all layer configurations.\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getDefinition\"\n}"
@@ -1266,7 +1291,8 @@ paths:
         \   \"layers\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                  \
         \      \"$ref\": \"#/$defs/LayerDefinition\"\n                    },\n                    \"description\": \"Layer
         configurations for this map\",\n                    \"nullable\": true\n                },\n                \"defaultBounds\"\
-        : {\n                    \"type\": \"object\",\n                    \"description\": \"Default bounds for regions
+        : {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\
+        \n                        }\n                    ],\n                    \"description\": \"Default bounds for regions
         using this definition\",\n                    \"nullable\": true\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
         \        \"description\": \"Client-provided definition metadata. No Bannou plugin reads specific keys from this field
@@ -1344,9 +1370,10 @@ paths:
         \                },\n                \"layers\": {\n                    \"type\": \"array\",\n                   \
         \ \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\n                    },\n          \
         \          \"description\": \"New layer configurations (replaces existing)\",\n                    \"nullable\": true\n\
-        \                },\n                \"defaultBounds\": {\n                    \"type\": \"object\",\n           \
-        \         \"description\": \"New default bounds\",\n                    \"nullable\": true\n                },\n \
-        \               \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        \                },\n                \"defaultBounds\": {\n                    \"allOf\": [\n                    \
+        \    {\n                            \"type\": \"object\"\n                        }\n                    ],\n    \
+        \                \"description\": \"New default bounds\",\n                    \"nullable\": true\n              \
+        \  },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : true,\n                    \"description\": \"Updated client-provided definition metadata (replaces existing). No
         Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\": true\n    \
         \            }\n            }\n        },\n        \"LayerDefinition\": {\n            \"type\": \"object\",\n   \
@@ -1388,41 +1415,42 @@ paths:
         template\",\n                    \"nullable\": true\n                },\n                \"layers\": {\n         \
         \           \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\
         \n                    },\n                    \"description\": \"Layer configurations for this map\",\n          \
-        \          \"nullable\": true\n                },\n                \"defaultBounds\": {\n                    \"type\"\
-        : \"object\",\n                    \"description\": \"Default bounds for regions using this definition\",\n      \
-        \              \"nullable\": true\n                },\n                \"metadata\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Client-provided
-        definition metadata. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"\
-        nullable\": true\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"When the definition was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the definition was last updated\",\n\
-        \                    \"nullable\": true\n                }\n            }\n        },\n        \"LayerDefinition\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific layer within a
-        map definition\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"kind\"\
-        \n            ],\n            \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\"\
-        ,\n                    \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n\
-        \                    \"$ref\": \"#/$defs/StorageMode\",\n                    \"description\": \"How this layer's data
-        should be stored\"\n                },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 0,\n                    \"description\": \"TTL for cached/ephemeral data (0 =
-        use default from config)\",\n                    \"nullable\": true\n                },\n                \"defaultNonAuthorityHandling\"\
-        : {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"\
-        Default non-authority handling for channels using this layer\"\n                },\n                \"cellSize\":
-        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        minimum\": 1,\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
-        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.
-        Different kinds have different update frequencies, storage models, and TTLs.\",\n            \"enum\": [\n       \
-        \         \"Terrain\",\n                \"StaticGeometry\",\n                \"Navigation\",\n                \"Resources\"\
-        ,\n                \"SpawnPoints\",\n                \"PointsOfInterest\",\n                \"DynamicObjects\",\n\
-        \                \"Hazards\",\n                \"WeatherEffects\",\n                \"Ownership\",\n             \
-        \   \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n        },\n        \"StorageMode\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How layer data should be stored\",\n          \
-        \  \"enum\": [\n                \"Durable\",\n                \"Cached\",\n                \"Ephemeral\"\n       \
-        \     ],\n            \"default\": \"Cached\"\n        },\n        \"NonAuthorityHandlingMode\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How to handle publish attempts from non-authority sources\",\n\
-        \            \"enum\": [\n                \"RejectAndAlert\",\n                \"AcceptAndAlert\",\n             \
-        \   \"RejectSilent\"\n            ],\n            \"default\": \"RejectAndAlert\"\n        }\n    }\n}"
+        \          \"nullable\": true\n                },\n                \"defaultBounds\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"type\": \"object\"\n                        }\n    \
+        \                ],\n                    \"description\": \"Default bounds for regions using this definition\",\n\
+        \                    \"nullable\": true\n                },\n                \"metadata\": {\n                   \
+        \ \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"description\"\
+        : \"Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.\",\n\
+        \                    \"nullable\": true\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the definition was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the definition
+        was last updated\",\n                    \"nullable\": true\n                }\n            }\n        },\n      \
+        \  \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific
+        layer within a map definition\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
+        \            \"kind\"\n            ],\n            \"properties\": {\n                \"kind\": {\n              \
+        \      \"$ref\": \"#/$defs/MapKind\",\n                    \"description\": \"The layer kind\"\n                },\n\
+        \                \"storageMode\": {\n                    \"$ref\": \"#/$defs/StorageMode\",\n                    \"\
+        description\": \"How this layer's data should be stored\"\n                },\n                \"ttlSeconds\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"TTL for cached/ephemeral data (0 = use default from config)\",\n                    \"nullable\": true\n     \
+        \           },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
+        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
+        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"minimum\": 1,\n                    \"description\": \"Spatial cell size for indexing
+        (default from config if not set)\",\n                    \"nullable\": true\n                }\n            }\n  \
+        \      },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\": \"The category
+        of spatial data this map contains. Different kinds have different update frequencies, storage models, and TTLs.\"\
+        ,\n            \"enum\": [\n                \"Terrain\",\n                \"StaticGeometry\",\n                \"\
+        Navigation\",\n                \"Resources\",\n                \"SpawnPoints\",\n                \"PointsOfInterest\"\
+        ,\n                \"DynamicObjects\",\n                \"Hazards\",\n                \"WeatherEffects\",\n      \
+        \          \"Ownership\",\n                \"CombatEffects\",\n                \"VisualEffects\"\n            ]\n\
+        \        },\n        \"StorageMode\": {\n            \"type\": \"string\",\n            \"description\": \"How layer
+        data should be stored\",\n            \"enum\": [\n                \"Durable\",\n                \"Cached\",\n   \
+        \             \"Ephemeral\"\n            ],\n            \"default\": \"Cached\"\n        },\n        \"NonAuthorityHandlingMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish attempts from non-authority
+        sources\",\n            \"enum\": [\n                \"RejectAndAlert\",\n                \"AcceptAndAlert\",\n  \
+        \              \"RejectSilent\"\n            ],\n            \"default\": \"RejectAndAlert\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a map definition\",\n    \"description\": \"Updates an existing
         map definition. Cannot change the definition ID.\\nLayer configurations can be modified.\\n\",\n    \"tags\": [\n\
         \        \"Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateDefinition\"\n}"
@@ -1568,11 +1596,13 @@ components:
           maxLength: 256
           description: Publisher-defined type (used for indexing and filtering)
         position:
-          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Position for point objects
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Bounds for area objects
           nullable: true
         data:
@@ -1612,11 +1642,13 @@ components:
           maxLength: 256
           description: Publisher-defined type
         position:
-          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Position for point objects
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Bounding box for area objects
           nullable: true
         data:
@@ -1660,11 +1692,13 @@ components:
           description: Object type (required for created)
           nullable: true
         position:
-          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Object position (for create/update)
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Object bounds (for create/update)
           nullable: true
         data:
@@ -1908,7 +1942,8 @@ components:
           description: App-id of caller (for warnings on non-authority attempts)
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Affected area (null means entire region)
           nullable: true
         deltaType:
@@ -2011,7 +2046,8 @@ components:
           description: Which kinds to include (default all)
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Optional bounds filter
           nullable: true
         authorityToken:
@@ -2055,7 +2091,8 @@ components:
           format: uuid
           description: Region to query
         position:
-          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Point to query at
         kinds:
           type: array
@@ -2093,7 +2130,8 @@ components:
           format: uuid
           description: Region to query
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Bounding box to query
         kinds:
           type: array
@@ -2141,7 +2179,8 @@ components:
           maxLength: 256
           description: Object type to filter by
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Optional bounds filter
           nullable: true
         maxObjects:
@@ -2186,7 +2225,8 @@ components:
           description: Custom affordance definition (when affordanceType=Custom)
           nullable: true
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Optional bounds to search within
           nullable: true
         maxResults:
@@ -2234,10 +2274,12 @@ components:
       - score
       properties:
         position:
-          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           description: Location position
         bounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Area bounds if affordance spans an area
           nullable: true
         score:
@@ -2401,7 +2443,8 @@ components:
           description: Layer configurations for this map
           nullable: true
         defaultBounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Default bounds for regions using this definition
           nullable: true
         metadata:
@@ -2471,7 +2514,8 @@ components:
           description: Layer configurations
           nullable: true
         defaultBounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: Default bounds for regions using this definition
           nullable: true
         metadata:
@@ -2559,7 +2603,8 @@ components:
           description: New layer configurations (replaces existing)
           nullable: true
         defaultBounds:
-          $ref: 'common-api.yaml#/components/schemas/Bounds'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Bounds'
           description: New default bounds
           nullable: true
         metadata:

@@ -51,17 +51,11 @@ public partial class MusicController
                     "type": "integer",
                     "minimum": 40,
                     "maximum": 240,
+                    "nullable": true,
                     "description": "Tempo in BPM (uses style default if not specified)"
                 },
                 "mood": {
-                    "type": "string",
-                    "enum": [
-                        "bright",
-                        "dark",
-                        "neutral",
-                        "melancholic",
-                        "triumphant"
-                    ],
+                    "$ref": "#/$defs/Mood",
                     "nullable": true,
                     "description": "Mood constraint for generation"
                 },
@@ -97,17 +91,7 @@ public partial class MusicController
                     "description": "Tonic pitch class"
                 },
                 "mode": {
-                    "type": "string",
-                    "enum": [
-                        "major",
-                        "minor",
-                        "dorian",
-                        "phrygian",
-                        "lydian",
-                        "mixolydian",
-                        "aeolian",
-                        "locrian"
-                    ],
+                    "$ref": "#/$defs/KeyMode",
                     "description": "Mode/scale type"
                 }
             }
@@ -131,6 +115,31 @@ public partial class MusicController
                 "B"
             ]
         },
+        "KeyMode": {
+            "description": "Musical mode/scale type for key signatures",
+            "type": "string",
+            "enum": [
+                "Major",
+                "Minor",
+                "Dorian",
+                "Phrygian",
+                "Lydian",
+                "Mixolydian",
+                "Aeolian",
+                "Locrian"
+            ]
+        },
+        "Mood": {
+            "description": "Mood constraint for composition generation",
+            "type": "string",
+            "enum": [
+                "Bright",
+                "Dark",
+                "Neutral",
+                "Melancholic",
+                "Triumphant"
+            ]
+        },
         "NarrativeOptions": {
             "description": "Options for narrative-driven composition using the Storyteller engine",
             "type": "object",
@@ -152,14 +161,7 @@ public partial class MusicController
                     "description": "Target emotional state for the ending"
                 },
                 "tensionProfile": {
-                    "type": "string",
-                    "enum": [
-                        "gradual_build",
-                        "early_climax",
-                        "late_climax",
-                        "sustained",
-                        "wave"
-                    ],
+                    "$ref": "#/$defs/TensionProfile",
                     "nullable": true,
                     "description": "Preferred tension curve shape throughout the composition"
                 }
@@ -213,6 +215,17 @@ public partial class MusicController
                     "description": "Valence level (0=negative, 1=positive)"
                 }
             }
+        },
+        "TensionProfile": {
+            "description": "Tension curve shape for narrative-driven composition",
+            "type": "string",
+            "enum": [
+                "GradualBuild",
+                "EarlyClimax",
+                "LateClimax",
+                "Sustained",
+                "Wave"
+            ]
         }
     }
 }
@@ -234,6 +247,7 @@ public partial class MusicController
             "properties": {
                 "compositionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique identifier for the composition"
                 },
                 "midiJson": {
@@ -244,10 +258,6 @@ public partial class MusicController
                     "$ref": "#/$defs/CompositionMetadata",
                     "nullable": true,
                     "description": "Metadata about the generation"
-                },
-                "generationTimeMs": {
-                    "type": "integer",
-                    "description": "Time taken to generate in milliseconds"
                 },
                 "narrativeUsed": {
                     "type": "string",
@@ -629,20 +639,24 @@ public partial class MusicController
                     "description": "Tonic pitch class"
                 },
                 "mode": {
-                    "type": "string",
-                    "enum": [
-                        "major",
-                        "minor",
-                        "dorian",
-                        "phrygian",
-                        "lydian",
-                        "mixolydian",
-                        "aeolian",
-                        "locrian"
-                    ],
+                    "$ref": "#/$defs/KeyMode",
                     "description": "Mode/scale type"
                 }
             }
+        },
+        "KeyMode": {
+            "description": "Musical mode/scale type for key signatures",
+            "type": "string",
+            "enum": [
+                "Major",
+                "Minor",
+                "Dorian",
+                "Phrygian",
+                "Lydian",
+                "Mixolydian",
+                "Aeolian",
+                "Locrian"
+            ]
         },
         "EmotionalStateSnapshot": {
             "description": "Snapshot of emotional state at a specific point in the composition",
@@ -652,7 +666,10 @@ public partial class MusicController
                 "bar",
                 "tension",
                 "brightness",
-                "energy"
+                "energy",
+                "warmth",
+                "stability",
+                "valence"
             ],
             "properties": {
                 "bar": {
@@ -1129,13 +1146,7 @@ public partial class MusicController
             ],
             "properties": {
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "structure",
-                        "range",
-                        "timing",
-                        "format"
-                    ],
+                    "$ref": "#/$defs/ValidationErrorType",
                     "description": "Error type"
                 },
                 "message": {
@@ -1148,6 +1159,16 @@ public partial class MusicController
                     "description": "Path to problematic element"
                 }
             }
+        },
+        "ValidationErrorType": {
+            "description": "Type of MIDI-JSON validation error",
+            "type": "string",
+            "enum": [
+                "Structure",
+                "Range",
+                "Timing",
+                "Format"
+            ]
         }
     }
 }
@@ -1540,14 +1561,8 @@ public partial class MusicController
             "additionalProperties": false,
             "properties": {
                 "primaryCadence": {
-                    "type": "string",
-                    "enum": [
-                        "authentic",
-                        "plagal",
-                        "half",
-                        "deceptive"
-                    ],
-                    "default": "authentic",
+                    "$ref": "#/$defs/CadenceType",
+                    "default": "Authentic",
                     "description": "Most common cadence type"
                 },
                 "dominantPrepProbability": {
@@ -1583,6 +1598,16 @@ public partial class MusicController
                     "description": "Common chord progressions as roman numeral strings"
                 }
             }
+        },
+        "CadenceType": {
+            "description": "Type of harmonic cadence",
+            "type": "string",
+            "enum": [
+                "Authentic",
+                "Half",
+                "Plagal",
+                "Deceptive"
+            ]
         }
     }
 }
@@ -2137,14 +2162,8 @@ public partial class MusicController
             "additionalProperties": false,
             "properties": {
                 "primaryCadence": {
-                    "type": "string",
-                    "enum": [
-                        "authentic",
-                        "plagal",
-                        "half",
-                        "deceptive"
-                    ],
-                    "default": "authentic",
+                    "$ref": "#/$defs/CadenceType",
+                    "default": "Authentic",
                     "description": "Most common cadence type"
                 },
                 "dominantPrepProbability": {
@@ -2180,6 +2199,16 @@ public partial class MusicController
                     "description": "Common chord progressions as roman numeral strings"
                 }
             }
+        },
+        "CadenceType": {
+            "description": "Type of harmonic cadence",
+            "type": "string",
+            "enum": [
+                "Authentic",
+                "Half",
+                "Plagal",
+                "Deceptive"
+            ]
         }
     }
 }
@@ -2490,14 +2519,8 @@ public partial class MusicController
             "additionalProperties": false,
             "properties": {
                 "primaryCadence": {
-                    "type": "string",
-                    "enum": [
-                        "authentic",
-                        "plagal",
-                        "half",
-                        "deceptive"
-                    ],
-                    "default": "authentic",
+                    "$ref": "#/$defs/CadenceType",
+                    "default": "Authentic",
                     "description": "Most common cadence type"
                 },
                 "dominantPrepProbability": {
@@ -2533,6 +2556,16 @@ public partial class MusicController
                     "description": "Common chord progressions as roman numeral strings"
                 }
             }
+        },
+        "CadenceType": {
+            "description": "Type of harmonic cadence",
+            "type": "string",
+            "enum": [
+                "Authentic",
+                "Half",
+                "Plagal",
+                "Deceptive"
+            ]
         }
     }
 }
@@ -2604,8 +2637,7 @@ public partial class MusicController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "key",
-                "length"
+                "key"
             ],
             "properties": {
                 "key": {
@@ -2614,9 +2646,10 @@ public partial class MusicController
                 },
                 "length": {
                     "type": "integer",
+                    "nullable": true,
                     "minimum": 2,
                     "maximum": 64,
-                    "description": "Number of chords in the progression"
+                    "description": "Number of chords in the progression (defaults to configuration value when omitted)"
                 },
                 "styleId": {
                     "type": "string",
@@ -2634,13 +2667,7 @@ public partial class MusicController
                     "description": "Ending chord (roman numeral, e.g., \"I\")"
                 },
                 "cadenceType": {
-                    "type": "string",
-                    "enum": [
-                        "authentic",
-                        "half",
-                        "plagal",
-                        "deceptive"
-                    ],
+                    "$ref": "#/$defs/CadenceType",
                     "nullable": true,
                     "description": "Cadence type for ending"
                 },
@@ -2675,17 +2702,7 @@ public partial class MusicController
                     "description": "Tonic pitch class"
                 },
                 "mode": {
-                    "type": "string",
-                    "enum": [
-                        "major",
-                        "minor",
-                        "dorian",
-                        "phrygian",
-                        "lydian",
-                        "mixolydian",
-                        "aeolian",
-                        "locrian"
-                    ],
+                    "$ref": "#/$defs/KeyMode",
                     "description": "Mode/scale type"
                 }
             }
@@ -2707,6 +2724,30 @@ public partial class MusicController
                 "A",
                 "As",
                 "B"
+            ]
+        },
+        "KeyMode": {
+            "description": "Musical mode/scale type for key signatures",
+            "type": "string",
+            "enum": [
+                "Major",
+                "Minor",
+                "Dorian",
+                "Phrygian",
+                "Lydian",
+                "Mixolydian",
+                "Aeolian",
+                "Locrian"
+            ]
+        },
+        "CadenceType": {
+            "description": "Type of harmonic cadence",
+            "type": "string",
+            "enum": [
+                "Authentic",
+                "Half",
+                "Plagal",
+                "Deceptive"
             ]
         }
     }
@@ -2785,21 +2826,7 @@ public partial class MusicController
                     "description": "Chord root"
                 },
                 "quality": {
-                    "type": "string",
-                    "enum": [
-                        "major",
-                        "minor",
-                        "diminished",
-                        "augmented",
-                        "dominant7",
-                        "major7",
-                        "minor7",
-                        "diminished7",
-                        "halfDiminished7",
-                        "augmented7",
-                        "sus2",
-                        "sus4"
-                    ],
+                    "$ref": "#/$defs/ChordQuality",
                     "description": "Chord quality"
                 },
                 "bass": {
@@ -2836,6 +2863,24 @@ public partial class MusicController
                 "B"
             ]
         },
+        "ChordQuality": {
+            "description": "Chord quality type",
+            "type": "string",
+            "enum": [
+                "Major",
+                "Minor",
+                "Diminished",
+                "Augmented",
+                "Dominant7",
+                "Major7",
+                "Minor7",
+                "Diminished7",
+                "HalfDiminished7",
+                "Augmented7",
+                "Sus2",
+                "Sus4"
+            ]
+        },
         "ProgressionAnalysis": {
             "description": "Analysis of a chord progression",
             "type": "object",
@@ -2860,13 +2905,7 @@ public partial class MusicController
                 "functionalAnalysis": {
                     "type": "array",
                     "items": {
-                        "type": "string",
-                        "enum": [
-                            "tonic",
-                            "subdominant",
-                            "dominant",
-                            "predominant"
-                        ]
+                        "$ref": "#/$defs/FunctionalAnalysis"
                     },
                     "nullable": true,
                     "description": "Functional analysis per chord"
@@ -2883,13 +2922,7 @@ public partial class MusicController
             ],
             "properties": {
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "authentic",
-                        "half",
-                        "plagal",
-                        "deceptive"
-                    ],
+                    "$ref": "#/$defs/CadenceType",
                     "description": "Cadence type"
                 },
                 "position": {
@@ -2897,15 +2930,39 @@ public partial class MusicController
                     "description": "Chord index where cadence ends"
                 },
                 "strength": {
-                    "type": "string",
-                    "enum": [
-                        "perfect",
-                        "imperfect"
-                    ],
+                    "$ref": "#/$defs/CadenceStrength",
                     "nullable": true,
                     "description": "Cadence strength"
                 }
             }
+        },
+        "CadenceType": {
+            "description": "Type of harmonic cadence",
+            "type": "string",
+            "enum": [
+                "Authentic",
+                "Half",
+                "Plagal",
+                "Deceptive"
+            ]
+        },
+        "CadenceStrength": {
+            "description": "Strength of a cadence",
+            "type": "string",
+            "enum": [
+                "Perfect",
+                "Imperfect"
+            ]
+        },
+        "FunctionalAnalysis": {
+            "description": "Functional harmonic analysis classification",
+            "type": "string",
+            "enum": [
+                "Tonic",
+                "Subdominant",
+                "Dominant",
+                "Predominant"
+            ]
         }
     }
 }
@@ -2998,14 +3055,7 @@ public partial class MusicController
                     "description": "Pitch range for the melody"
                 },
                 "contour": {
-                    "type": "string",
-                    "enum": [
-                        "arch",
-                        "wave",
-                        "ascending",
-                        "descending",
-                        "static"
-                    ],
+                    "$ref": "#/$defs/ContourShape",
                     "nullable": true,
                     "description": "Overall melodic contour"
                 },
@@ -3077,21 +3127,7 @@ public partial class MusicController
                     "description": "Chord root"
                 },
                 "quality": {
-                    "type": "string",
-                    "enum": [
-                        "major",
-                        "minor",
-                        "diminished",
-                        "augmented",
-                        "dominant7",
-                        "major7",
-                        "minor7",
-                        "diminished7",
-                        "halfDiminished7",
-                        "augmented7",
-                        "sus2",
-                        "sus4"
-                    ],
+                    "$ref": "#/$defs/ChordQuality",
                     "description": "Chord quality"
                 },
                 "bass": {
@@ -3126,6 +3162,24 @@ public partial class MusicController
                 "A",
                 "As",
                 "B"
+            ]
+        },
+        "ChordQuality": {
+            "description": "Chord quality type",
+            "type": "string",
+            "enum": [
+                "Major",
+                "Minor",
+                "Diminished",
+                "Augmented",
+                "Dominant7",
+                "Major7",
+                "Minor7",
+                "Diminished7",
+                "HalfDiminished7",
+                "Augmented7",
+                "Sus2",
+                "Sus4"
             ]
         },
         "PitchRange": {
@@ -3175,6 +3229,17 @@ public partial class MusicController
                     "description": "MIDI note number (computed if not provided)"
                 }
             }
+        },
+        "ContourShape": {
+            "description": "Melodic contour shape",
+            "type": "string",
+            "enum": [
+                "Arch",
+                "Wave",
+                "Ascending",
+                "Descending",
+                "Static"
+            ]
         }
     }
 }
@@ -3291,6 +3356,9 @@ public partial class MusicController
             "description": "Analysis of a melody",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "noteCount"
+            ],
             "properties": {
                 "range": {
                     "$ref": "#/$defs/PitchRange",
@@ -3307,7 +3375,7 @@ public partial class MusicController
                     "description": "Distribution of interval sizes"
                 },
                 "contour": {
-                    "type": "string",
+                    "$ref": "#/$defs/ContourShape",
                     "nullable": true,
                     "description": "Detected contour shape"
                 },
@@ -3342,6 +3410,17 @@ public partial class MusicController
                     "description": "Highest pitch (inclusive)"
                 }
             }
+        },
+        "ContourShape": {
+            "description": "Melodic contour shape",
+            "type": "string",
+            "enum": [
+                "Arch",
+                "Wave",
+                "Ascending",
+                "Descending",
+                "Static"
+            ]
         }
     }
 }
@@ -3459,21 +3538,7 @@ public partial class MusicController
                     "description": "Chord root"
                 },
                 "quality": {
-                    "type": "string",
-                    "enum": [
-                        "major",
-                        "minor",
-                        "diminished",
-                        "augmented",
-                        "dominant7",
-                        "major7",
-                        "minor7",
-                        "diminished7",
-                        "halfDiminished7",
-                        "augmented7",
-                        "sus2",
-                        "sus4"
-                    ],
+                    "$ref": "#/$defs/ChordQuality",
                     "description": "Chord quality"
                 },
                 "bass": {
@@ -3508,6 +3573,24 @@ public partial class MusicController
                 "A",
                 "As",
                 "B"
+            ]
+        },
+        "ChordQuality": {
+            "description": "Chord quality type",
+            "type": "string",
+            "enum": [
+                "Major",
+                "Minor",
+                "Diminished",
+                "Augmented",
+                "Dominant7",
+                "Major7",
+                "Minor7",
+                "Diminished7",
+                "HalfDiminished7",
+                "Augmented7",
+                "Sus2",
+                "Sus4"
             ]
         },
         "PitchRange": {
@@ -3663,21 +3746,7 @@ public partial class MusicController
                     "description": "Chord root"
                 },
                 "quality": {
-                    "type": "string",
-                    "enum": [
-                        "major",
-                        "minor",
-                        "diminished",
-                        "augmented",
-                        "dominant7",
-                        "major7",
-                        "minor7",
-                        "diminished7",
-                        "halfDiminished7",
-                        "augmented7",
-                        "sus2",
-                        "sus4"
-                    ],
+                    "$ref": "#/$defs/ChordQuality",
                     "description": "Chord quality"
                 },
                 "bass": {
@@ -3712,6 +3781,24 @@ public partial class MusicController
                 "A",
                 "As",
                 "B"
+            ]
+        },
+        "ChordQuality": {
+            "description": "Chord quality type",
+            "type": "string",
+            "enum": [
+                "Major",
+                "Minor",
+                "Diminished",
+                "Augmented",
+                "Dominant7",
+                "Major7",
+                "Minor7",
+                "Diminished7",
+                "HalfDiminished7",
+                "Augmented7",
+                "Sus2",
+                "Sus4"
             ]
         },
         "Pitch": {

@@ -225,6 +225,7 @@ public partial class ObligationController
                     "items": {
                         "$ref": "#/$defs/ActionMappingResponse"
                     },
+                    "maxItems": 100,
                     "description": "Action tag mappings for this page"
                 },
                 "nextCursor": {
@@ -469,7 +470,6 @@ public partial class ObligationController
             "description": "Active obligations for a character with pre-computed violation cost map",
             "additionalProperties": false,
             "required": [
-                "characterId",
                 "obligations",
                 "violationCostMap",
                 "totalActiveContracts",
@@ -477,16 +477,12 @@ public partial class ObligationController
                 "lastRefreshedAt"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character these obligations belong to"
-                },
                 "obligations": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/ObligationEntry"
                     },
+                    "maxItems": 10000,
                     "description": "All active obligations for the character"
                 },
                 "violationCostMap": {
@@ -522,11 +518,9 @@ public partial class ObligationController
             "additionalProperties": false,
             "required": [
                 "contractId",
-                "templateCode",
                 "clauseCode",
                 "violationType",
-                "basePenalty",
-                "contractRole"
+                "basePenalty"
             ],
             "properties": {
                 "contractId": {
@@ -538,7 +532,8 @@ public partial class ObligationController
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128,
-                    "description": "Template code of the source contract"
+                    "nullable": true,
+                    "description": "Template code of the source contract (null if contract has no template)"
                 },
                 "clauseCode": {
                     "type": "string",
@@ -568,7 +563,8 @@ public partial class ObligationController
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128,
-                    "description": "The character's role in the contract (e.g., \"member\", \"merchant\")"
+                    "nullable": true,
+                    "description": "The character's role in the contract (null if role not determinable)"
                 },
                 "effectiveUntil": {
                     "type": "string",
@@ -707,21 +703,16 @@ public partial class ObligationController
             "description": "Obligation cost evaluation results for proposed actions",
             "additionalProperties": false,
             "required": [
-                "characterId",
                 "evaluations",
                 "moralWeightingApplied"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character evaluated"
-                },
                 "evaluations": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/ActionEvaluation"
                     },
+                    "maxItems": 50,
                     "description": "Per-action evaluation results (one per input tag)"
                 },
                 "moralWeightingApplied": {
@@ -762,6 +753,7 @@ public partial class ObligationController
                     "items": {
                         "$ref": "#/$defs/ObligationCostDetail"
                     },
+                    "maxItems": 1000,
                     "description": "Per-obligation breakdown of cost contributions"
                 }
             }
@@ -772,12 +764,10 @@ public partial class ObligationController
             "additionalProperties": false,
             "required": [
                 "contractId",
-                "templateCode",
                 "clauseCode",
                 "violationType",
                 "basePenalty",
-                "weightedPenalty",
-                "contractRole"
+                "weightedPenalty"
             ],
             "properties": {
                 "contractId": {
@@ -789,7 +779,8 @@ public partial class ObligationController
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128,
-                    "description": "Template code of the source contract"
+                    "nullable": true,
+                    "description": "Template code of the source contract (null if contract has no template)"
                 },
                 "clauseCode": {
                     "type": "string",
@@ -819,7 +810,8 @@ public partial class ObligationController
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128,
-                    "description": "The character's role in the contract"
+                    "nullable": true,
+                    "description": "The character's role in the contract (null if role not determinable)"
                 }
             }
         }
@@ -977,7 +969,6 @@ public partial class ObligationController
             "additionalProperties": false,
             "required": [
                 "violationId",
-                "characterId",
                 "breachReported"
             ],
             "properties": {
@@ -985,11 +976,6 @@ public partial class ObligationController
                     "type": "string",
                     "format": "uuid",
                     "description": "ID of the created violation record"
-                },
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character who committed the violation"
                 },
                 "breachReported": {
                     "type": "boolean",
@@ -1137,6 +1123,7 @@ public partial class ObligationController
                     "items": {
                         "$ref": "#/$defs/ViolationRecord"
                     },
+                    "maxItems": 100,
                     "description": "Violation records for this page"
                 },
                 "nextCursor": {
@@ -1336,25 +1323,14 @@ public partial class ObligationController
             "description": "Result of cache invalidation and rebuild",
             "additionalProperties": false,
             "required": [
-                "characterId",
-                "obligationsRefreshed",
-                "success"
+                "obligationsRefreshed"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character whose cache was rebuilt"
-                },
                 "obligationsRefreshed": {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 10000,
                     "description": "Number of obligations found and cached"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the cache rebuild completed successfully"
                 }
             }
         }
@@ -1484,6 +1460,7 @@ public partial class ObligationController
                     "items": {
                         "$ref": "#/$defs/ViolationRecord"
                     },
+                    "maxItems": 100000,
                     "description": "Violation history records (null if hasViolations=false)"
                 }
             }
@@ -1660,6 +1637,7 @@ public partial class ObligationController
                 },
                 "data": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Base64-encoded gzipped ObligationArchive JSON"
                 }
             }
@@ -1678,23 +1656,12 @@ public partial class ObligationController
             "description": "Result of restoration from archive",
             "additionalProperties": false,
             "required": [
-                "characterId",
-                "violationsRestored",
-                "success"
+                "violationsRestored"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character data was restored for"
-                },
                 "violationsRestored": {
                     "type": "boolean",
                     "description": "Whether violation history was restored"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the restoration completed successfully"
                 }
             }
         }
@@ -1792,26 +1759,14 @@ public partial class ObligationController
             "description": "Result of character obligation data cleanup",
             "additionalProperties": false,
             "required": [
-                "obligationsRemoved",
-                "violationsRemoved",
-                "success"
+                "violationsRemoved"
             ],
             "properties": {
-                "obligationsRemoved": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 10000,
-                    "description": "Number of cached obligation entries removed"
-                },
                 "violationsRemoved": {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 100000,
                     "description": "Number of violation history records removed"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether cleanup completed successfully"
                 }
             }
         }

@@ -65,143 +65,144 @@ paths:
         duration in bars\"\n                },\n                \"key\": {\n                    \"$ref\": \"#/$defs/KeySignature\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Key signature (random if not specified)\"\
         \n                },\n                \"tempo\": {\n                    \"type\": \"integer\",\n                 \
-        \   \"minimum\": 40,\n                    \"maximum\": 240,\n                    \"description\": \"Tempo in BPM (uses
-        style default if not specified)\"\n                },\n                \"mood\": {\n                    \"type\":
-        \"string\",\n                    \"enum\": [\n                        \"bright\",\n                        \"dark\"\
-        ,\n                        \"neutral\",\n                        \"melancholic\",\n                        \"triumphant\"\
-        \n                    ],\n                    \"nullable\": true,\n                    \"description\": \"Mood constraint
-        for generation\"\n                },\n                \"tuneType\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Style-specific tune type (e.g., \\\
-        \"reel\\\", \\\"jig\\\" for Celtic)\",\n                    \"example\": \"reel\"\n                },\n          \
-        \      \"seed\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Random seed for reproducible generation\"\n                },\n                \"\
-        narrative\": {\n                    \"$ref\": \"#/$defs/NarrativeOptions\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Narrative/emotional arc options for storyteller-driven composition.\\nIf omitted,
-        narrative is inferred from mood. When provided, enables\\nfine-grained control over emotional journey and tension
-        curves.\\n\"\n                }\n            }\n        },\n        \"KeySignature\": {\n            \"description\"\
-        : \"A key signature with tonic and mode\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"tonic\",\n                \"mode\"\n            ],\n    \
-        \        \"properties\": {\n                \"tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n\
-        \                    \"description\": \"Tonic pitch class\"\n                },\n                \"mode\": {\n   \
-        \                 \"type\": \"string\",\n                    \"enum\": [\n                        \"major\",\n   \
-        \                     \"minor\",\n                        \"dorian\",\n                        \"phrygian\",\n   \
-        \                     \"lydian\",\n                        \"mixolydian\",\n                        \"aeolian\",\n\
-        \                        \"locrian\"\n                    ],\n                    \"description\": \"Mode/scale type\"\
-        \n                }\n            }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
-        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
-        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
-        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
-        \    },\n        \"NarrativeOptions\": {\n            \"description\": \"Options for narrative-driven composition
-        using the Storyteller engine\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"properties\": {\n                \"templateId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Specific narrative template ID (e.g.,
-        'journey_and_return', 'tension_and_release', 'simple_arc').\\nIf not specified, template is inferred from mood or
-        defaults to 'simple_arc'.\\n\"\n                },\n                \"initialEmotion\": {\n                    \"\
-        $ref\": \"#/$defs/EmotionalStateInput\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Starting emotional state for the composition\"\n                },\n                \"targetEmotion\": {\n   \
-        \                 \"$ref\": \"#/$defs/EmotionalStateInput\",\n                    \"nullable\": true,\n          \
-        \          \"description\": \"Target emotional state for the ending\"\n                },\n                \"tensionProfile\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"gradual_build\"\
-        ,\n                        \"early_climax\",\n                        \"late_climax\",\n                        \"\
-        sustained\",\n                        \"wave\"\n                    ],\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Preferred tension curve shape throughout the composition\"\n             \
-        \   }\n            }\n        },\n        \"EmotionalStateInput\": {\n            \"description\": \"6-dimensional
-        emotional state input (all values 0-1)\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"tension\": {\n                    \"type\": \"number\"\
+        \   \"minimum\": 40,\n                    \"maximum\": 240,\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Tempo in BPM (uses style default if not specified)\"\n                },\n          \
+        \      \"mood\": {\n                    \"$ref\": \"#/$defs/Mood\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Mood constraint for generation\"\n                },\n                \"tuneType\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Style-specific tune type (e.g., \\\"reel\\\", \\\"jig\\\" for Celtic)\",\n                    \"example\": \"\
+        reel\"\n                },\n                \"seed\": {\n                    \"type\": \"integer\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Random seed for reproducible generation\"\n \
+        \               },\n                \"narrative\": {\n                    \"$ref\": \"#/$defs/NarrativeOptions\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Narrative/emotional arc options for
+        storyteller-driven composition.\\nIf omitted, narrative is inferred from mood. When provided, enables\\nfine-grained
+        control over emotional journey and tension curves.\\n\"\n                }\n            }\n        },\n        \"\
+        KeySignature\": {\n            \"description\": \"A key signature with tonic and mode\",\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"tonic\",\n\
+        \                \"mode\"\n            ],\n            \"properties\": {\n                \"tonic\": {\n         \
+        \           \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Tonic pitch class\"\n      \
+        \          },\n                \"mode\": {\n                    \"$ref\": \"#/$defs/KeyMode\",\n                 \
+        \   \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n        \"PitchClass\": {\n\
+        \            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n            \"description\"\
+        : \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n    \
+        \            \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\",\n                \"\
+        E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n                \"Gs\",\n         \
+        \       \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n        \"KeyMode\": {\n\
+        \            \"description\": \"Musical mode/scale type for key signatures\",\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"Major\",\n                \"Minor\",\n                \"Dorian\",\n  \
+        \              \"Phrygian\",\n                \"Lydian\",\n                \"Mixolydian\",\n                \"Aeolian\"\
+        ,\n                \"Locrian\"\n            ]\n        },\n        \"Mood\": {\n            \"description\": \"Mood
+        constraint for composition generation\",\n            \"type\": \"string\",\n            \"enum\": [\n           \
+        \     \"Bright\",\n                \"Dark\",\n                \"Neutral\",\n                \"Melancholic\",\n   \
+        \             \"Triumphant\"\n            ]\n        },\n        \"NarrativeOptions\": {\n            \"description\"\
+        : \"Options for narrative-driven composition using the Storyteller engine\",\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"properties\": {\n                \"templateId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Specific narrative template ID (e.g., 'journey_and_return', 'tension_and_release', 'simple_arc').\\nIf not specified,
+        template is inferred from mood or defaults to 'simple_arc'.\\n\"\n                },\n                \"initialEmotion\"\
+        : {\n                    \"$ref\": \"#/$defs/EmotionalStateInput\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Starting emotional state for the composition\"\n                },\n        \
+        \        \"targetEmotion\": {\n                    \"$ref\": \"#/$defs/EmotionalStateInput\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Target emotional state for the ending\"\n         \
+        \       },\n                \"tensionProfile\": {\n                    \"$ref\": \"#/$defs/TensionProfile\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Preferred tension curve shape throughout
+        the composition\"\n                }\n            }\n        },\n        \"EmotionalStateInput\": {\n            \"\
+        description\": \"6-dimensional emotional state input (all values 0-1)\",\n            \"type\": \"object\",\n    \
+        \        \"additionalProperties\": false,\n            \"properties\": {\n                \"tension\": {\n       \
+        \             \"type\": \"number\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Tension level (0=resolved, 1=maximum
+        tension)\"\n                },\n                \"brightness\": {\n                    \"type\": \"number\",\n   \
+        \                 \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Brightness level (0=dark, 1=bright)\"\n                },\n              \
+        \  \"energy\": {\n                    \"type\": \"number\",\n                    \"minimum\": 0,\n               \
+        \     \"maximum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"Energy level
+        (0=calm, 1=energetic)\"\n                },\n                \"warmth\": {\n                    \"type\": \"number\"\
         ,\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Tension level (0=resolved, 1=maximum tension)\"\n                },\n    \
-        \            \"brightness\": {\n                    \"type\": \"number\",\n                    \"minimum\": 0,\n \
-        \                   \"maximum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Brightness level (0=dark, 1=bright)\"\n                },\n                \"energy\": {\n                   \
-        \ \"type\": \"number\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Energy level (0=calm, 1=energetic)\"\n        \
-        \        },\n                \"warmth\": {\n                    \"type\": \"number\",\n                    \"minimum\"\
-        : 0,\n                    \"maximum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Warmth level (0=distant, 1=intimate)\"\n                },\n                \"stability\": {\n               \
-        \     \"type\": \"number\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Stability level (0=unstable, 1=grounded)\"\n\
-        \                },\n                \"valence\": {\n                    \"type\": \"number\",\n                 \
-        \   \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Valence level (0=negative, 1=positive)\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        \                    \"description\": \"Warmth level (0=distant, 1=intimate)\"\n                },\n             \
+        \   \"stability\": {\n                    \"type\": \"number\",\n                    \"minimum\": 0,\n           \
+        \         \"maximum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"Stability
+        level (0=unstable, 1=grounded)\"\n                },\n                \"valence\": {\n                    \"type\"\
+        : \"number\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Valence level (0=negative, 1=positive)\"\n                }\n    \
+        \        }\n        },\n        \"TensionProfile\": {\n            \"description\": \"Tension curve shape for narrative-driven
+        composition\",\n            \"type\": \"string\",\n            \"enum\": [\n                \"GradualBuild\",\n  \
+        \              \"EarlyClimax\",\n                \"LateClimax\",\n                \"Sustained\",\n               \
+        \ \"Wave\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateCompositionResponse\"\
         ,\n    \"$defs\": {\n        \"GenerateCompositionResponse\": {\n            \"description\": \"Response containing
         the generated composition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
         \          \"required\": [\n                \"compositionId\",\n                \"midiJson\"\n            ],\n   \
         \         \"properties\": {\n                \"compositionId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"description\": \"Unique identifier for the composition\"\n                },\n               \
-        \ \"midiJson\": {\n                    \"$ref\": \"#/$defs/MidiJson\",\n                    \"description\": \"Generated
-        MIDI-JSON output\"\n                },\n                \"metadata\": {\n                    \"$ref\": \"#/$defs/CompositionMetadata\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Metadata about the generation\"\
-        \n                },\n                \"generationTimeMs\": {\n                    \"type\": \"integer\",\n      \
-        \              \"description\": \"Time taken to generate in milliseconds\"\n                },\n                \"\
-        narrativeUsed\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"ID of the narrative template used for composition\"\n                },\n         \
-        \       \"emotionalJourney\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
-        \                    \"$ref\": \"#/$defs/EmotionalStateSnapshot\"\n                    },\n                    \"\
-        nullable\": true,\n                    \"description\": \"Emotional state at each section boundary\"\n           \
-        \     },\n                \"tensionCurve\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"number\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Tension values at bar boundaries (0-1 scale)\"\n                }\n      \
-        \      }\n        },\n        \"MidiJson\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.MidiJson\"\
-        ,\n            \"description\": \"MIDI-JSON format representation of a musical piece\",\n            \"type\": \"\
-        object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"tracks\",\n\
-        \                \"ticksPerBeat\"\n            ],\n            \"properties\": {\n                \"header\": {\n\
-        \                    \"$ref\": \"#/$defs/MidiHeader\",\n                    \"nullable\": true,\n                \
-        \    \"description\": \"MIDI header information\"\n                },\n                \"ticksPerBeat\": {\n     \
-        \               \"type\": \"integer\",\n                    \"minimum\": 24,\n                    \"maximum\": 960,\n\
-        \                    \"default\": 480,\n                    \"description\": \"Ticks per beat (PPQN)\"\n         \
-        \       },\n                \"tracks\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/MidiTrack\"\n                    },\n                    \"description\"\
-        : \"MIDI tracks\"\n                }\n            }\n        },\n        \"MidiHeader\": {\n            \"x-sdk-type\"\
-        : \"BeyondImmersion.Bannou.MusicTheory.Output.MidiHeader\",\n            \"description\": \"MIDI file header information\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
-        \                \"format\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
-        \                    \"maximum\": 2,\n                    \"default\": 1,\n                    \"description\": \"\
-        MIDI format type (0, 1, or 2)\"\n                },\n                \"name\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Composition name\"\n  \
-        \              },\n                \"tempos\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/TempoEvent\"\n                    },\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Tempo changes\"\n                },\n              \
-        \  \"timeSignatures\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
-        \             \"$ref\": \"#/$defs/TimeSignatureEvent\"\n                    },\n                    \"nullable\":
-        true,\n                    \"description\": \"Time signature changes\"\n                },\n                \"keySignatures\"\
+        \                 \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the composition\"\
+        \n                },\n                \"midiJson\": {\n                    \"$ref\": \"#/$defs/MidiJson\",\n     \
+        \               \"description\": \"Generated MIDI-JSON output\"\n                },\n                \"metadata\"\
+        : {\n                    \"$ref\": \"#/$defs/CompositionMetadata\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Metadata about the generation\"\n                },\n                \"narrativeUsed\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"ID of the narrative template used for composition\"\n                },\n                \"emotionalJourney\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/KeySignatureEvent\"\n                    },\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Key signature changes\"\n                }\n            }\n        },\n        \"TempoEvent\"\
-        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent\",\n            \"description\"\
-        : \"A tempo change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n   \
-        \         \"required\": [\n                \"tick\",\n                \"bpm\"\n            ],\n            \"properties\"\
-        : {\n                \"tick\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
-        \                    \"description\": \"Tick position\"\n                },\n                \"bpm\": {\n        \
-        \            \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 20,\n\
-        \                    \"maximum\": 400,\n                    \"description\": \"Tempo in BPM\"\n                }\n\
-        \            }\n        },\n        \"TimeSignatureEvent\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent\"\
-        ,\n            \"description\": \"A time signature change event\",\n            \"type\": \"object\",\n          \
-        \  \"additionalProperties\": false,\n            \"required\": [\n                \"tick\",\n                \"numerator\"\
-        ,\n                \"denominator\"\n            ],\n            \"properties\": {\n                \"tick\": {\n \
-        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Tick position\"\n                },\n                \"numerator\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
-        : \"Beats per measure\"\n                },\n                \"denominator\": {\n                    \"type\": \"\
-        integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
-        : \"Beat unit (4 = quarter, 8 = eighth)\"\n                }\n            }\n        },\n        \"KeySignatureEvent\"\
-        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent\",\n            \"\
-        description\": \"A key signature change event\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"tick\",\n                \"tonic\",\n                \"mode\"\
-        \n            ],\n            \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n\
-        \                \"tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
-        : \"Tonic pitch class\"\n                },\n                \"mode\": {\n                    \"$ref\": \"#/$defs/ModeType\"\
-        ,\n                    \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n      \
-        \  \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n     \
-        \       \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n      \
-        \      \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\"\
-        ,\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n             \
-        \   \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n \
-        \       \"ModeType\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Collections.ModeType\",\n\
-        \            \"description\": \"Musical mode/scale type\",\n            \"type\": \"string\",\n            \"enum\"\
+        : \"#/$defs/EmotionalStateSnapshot\"\n                    },\n                    \"nullable\": true,\n          \
+        \          \"description\": \"Emotional state at each section boundary\"\n                },\n                \"tensionCurve\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"number\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Tension values at bar boundaries (0-1 scale)\"\n                }\n            }\n        },\n        \"MidiJson\"\
+        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.MidiJson\",\n            \"description\"\
+        : \"MIDI-JSON format representation of a musical piece\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"tracks\",\n                \"ticksPerBeat\"\n           \
+        \ ],\n            \"properties\": {\n                \"header\": {\n                    \"$ref\": \"#/$defs/MidiHeader\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"MIDI header information\"\n   \
+        \             },\n                \"ticksPerBeat\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 24,\n                    \"maximum\": 960,\n                    \"default\": 480,\n          \
+        \          \"description\": \"Ticks per beat (PPQN)\"\n                },\n                \"tracks\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MidiTrack\"\
+        \n                    },\n                    \"description\": \"MIDI tracks\"\n                }\n            }\n\
+        \        },\n        \"MidiHeader\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.MidiHeader\"\
+        ,\n            \"description\": \"MIDI file header information\",\n            \"type\": \"object\",\n           \
+        \ \"additionalProperties\": false,\n            \"properties\": {\n                \"format\": {\n               \
+        \     \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 2,\n         \
+        \           \"default\": 1,\n                    \"description\": \"MIDI format type (0, 1, or 2)\"\n            \
+        \    },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Composition name\"\n                },\n                \"tempos\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/TempoEvent\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"Tempo changes\"\n                },\n                \"timeSignatures\": {\n                    \"\
+        type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TimeSignatureEvent\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Time signature
+        changes\"\n                },\n                \"keySignatures\": {\n                    \"type\": \"array\",\n  \
+        \                  \"items\": {\n                        \"$ref\": \"#/$defs/KeySignatureEvent\"\n               \
+        \     },\n                    \"nullable\": true,\n                    \"description\": \"Key signature changes\"\n\
+        \                }\n            }\n        },\n        \"TempoEvent\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent\"\
+        ,\n            \"description\": \"A tempo change event\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"tick\",\n                \"bpm\"\n            ],\n      \
+        \      \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n             \
+        \   \"bpm\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n          \
+        \          \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\": \"Tempo in
+        BPM\"\n                }\n            }\n        },\n        \"TimeSignatureEvent\": {\n            \"x-sdk-type\"\
+        : \"BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent\",\n            \"description\": \"A time signature
+        change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"tick\",\n                \"numerator\",\n                \"denominator\"\n            ],\n\
+        \            \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\",\n        \
+        \            \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n       \
+        \         \"numerator\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n    \
+        \                \"maximum\": 32,\n                    \"description\": \"Beats per measure\"\n                },\n\
+        \                \"denominator\": {\n                    \"type\": \"integer\",\n                    \"minimum\":
+        1,\n                    \"maximum\": 32,\n                    \"description\": \"Beat unit (4 = quarter, 8 = eighth)\"\
+        \n                }\n            }\n        },\n        \"KeySignatureEvent\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent\"\
+        ,\n            \"description\": \"A key signature change event\",\n            \"type\": \"object\",\n           \
+        \ \"additionalProperties\": false,\n            \"required\": [\n                \"tick\",\n                \"tonic\"\
+        ,\n                \"mode\"\n            ],\n            \"properties\": {\n                \"tick\": {\n        \
+        \            \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"\
+        Tick position\"\n                },\n                \"tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\"\
+        ,\n                    \"description\": \"Tonic pitch class\"\n                },\n                \"mode\": {\n \
+        \                   \"$ref\": \"#/$defs/ModeType\",\n                    \"description\": \"Mode/scale type\"\n  \
+        \              }\n            }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
+        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
+        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
+        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
+        \    },\n        \"ModeType\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Collections.ModeType\"\
+        ,\n            \"description\": \"Musical mode/scale type\",\n            \"type\": \"string\",\n            \"enum\"\
         : [\n                \"Major\",\n                \"Minor\",\n                \"Dorian\",\n                \"Phrygian\"\
         ,\n                \"Lydian\",\n                \"Mixolydian\",\n                \"Aeolian\",\n                \"\
         Locrian\",\n                \"HarmonicMinor\",\n                \"MelodicMinor\",\n                \"MajorPentatonic\"\
@@ -259,27 +260,28 @@ paths:
         \          \"additionalProperties\": false,\n            \"required\": [\n                \"tonic\",\n           \
         \     \"mode\"\n            ],\n            \"properties\": {\n                \"tonic\": {\n                    \"\
         $ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Tonic pitch class\"\n                },\n\
-        \                \"mode\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n       \
-        \                 \"major\",\n                        \"minor\",\n                        \"dorian\",\n          \
-        \              \"phrygian\",\n                        \"lydian\",\n                        \"mixolydian\",\n     \
-        \                   \"aeolian\",\n                        \"locrian\"\n                    ],\n                  \
-        \  \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n        \"EmotionalStateSnapshot\"\
-        : {\n            \"description\": \"Snapshot of emotional state at a specific point in the composition\",\n      \
-        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
-        \        \"bar\",\n                \"tension\",\n                \"brightness\",\n                \"energy\"\n   \
-        \         ],\n            \"properties\": {\n                \"bar\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Bar number where this snapshot was taken\"\n                },\n       \
-        \         \"phaseName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Name of the narrative phase at this point\"\n                },\n         \
-        \       \"tension\": {\n                    \"type\": \"number\",\n                    \"description\": \"Tension
-        level (0-1)\"\n                },\n                \"brightness\": {\n                    \"type\": \"number\",\n\
-        \                    \"description\": \"Brightness level (0-1)\"\n                },\n                \"energy\":
-        {\n                    \"type\": \"number\",\n                    \"description\": \"Energy level (0-1)\"\n      \
-        \          },\n                \"warmth\": {\n                    \"type\": \"number\",\n                    \"description\"\
-        : \"Warmth level (0-1)\"\n                },\n                \"stability\": {\n                    \"type\": \"number\"\
-        ,\n                    \"description\": \"Stability level (0-1)\"\n                },\n                \"valence\"\
-        : {\n                    \"type\": \"number\",\n                    \"description\": \"Valence level (0-1)\"\n   \
-        \             }\n            }\n        }\n    }\n}"
+        \                \"mode\": {\n                    \"$ref\": \"#/$defs/KeyMode\",\n                    \"description\"\
+        : \"Mode/scale type\"\n                }\n            }\n        },\n        \"KeyMode\": {\n            \"description\"\
+        : \"Musical mode/scale type for key signatures\",\n            \"type\": \"string\",\n            \"enum\": [\n  \
+        \              \"Major\",\n                \"Minor\",\n                \"Dorian\",\n                \"Phrygian\",\n\
+        \                \"Lydian\",\n                \"Mixolydian\",\n                \"Aeolian\",\n                \"Locrian\"\
+        \n            ]\n        },\n        \"EmotionalStateSnapshot\": {\n            \"description\": \"Snapshot of emotional
+        state at a specific point in the composition\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"bar\",\n                \"tension\",\n                \"\
+        brightness\",\n                \"energy\",\n                \"warmth\",\n                \"stability\",\n        \
+        \        \"valence\"\n            ],\n            \"properties\": {\n                \"bar\": {\n                \
+        \    \"type\": \"integer\",\n                    \"description\": \"Bar number where this snapshot was taken\"\n \
+        \               },\n                \"phaseName\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Name of the narrative phase at this point\"\n   \
+        \             },\n                \"tension\": {\n                    \"type\": \"number\",\n                    \"\
+        description\": \"Tension level (0-1)\"\n                },\n                \"brightness\": {\n                  \
+        \  \"type\": \"number\",\n                    \"description\": \"Brightness level (0-1)\"\n                },\n  \
+        \              \"energy\": {\n                    \"type\": \"number\",\n                    \"description\": \"Energy
+        level (0-1)\"\n                },\n                \"warmth\": {\n                    \"type\": \"number\",\n    \
+        \                \"description\": \"Warmth level (0-1)\"\n                },\n                \"stability\": {\n \
+        \                   \"type\": \"number\",\n                    \"description\": \"Stability level (0-1)\"\n      \
+        \          },\n                \"valence\": {\n                    \"type\": \"number\",\n                    \"description\"\
+        : \"Valence level (0-1)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Generate composition from style and constraints\",\n    \"description\"\
         : \"Generates a complete musical composition using the specified style definition\\nand compositional constraints.
         Returns MIDI-JSON format output.\\n\",\n    \"tags\": [\n        \"Generation\"\n    ],\n    \"deprecated\": false,\n\
@@ -429,13 +431,14 @@ paths:
         \   \"ValidationError\": {\n            \"description\": \"A validation error\",\n            \"type\": \"object\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\",\n        \
         \        \"message\"\n            ],\n            \"properties\": {\n                \"type\": {\n               \
-        \     \"type\": \"string\",\n                    \"enum\": [\n                        \"structure\",\n           \
-        \             \"range\",\n                        \"timing\",\n                        \"format\"\n              \
-        \      ],\n                    \"description\": \"Error type\"\n                },\n                \"message\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Error message\"\n             \
-        \   },\n                \"path\": {\n                    \"type\": \"string\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Path to problematic element\"\n                }\n            }\n  \
-        \      }\n    }\n}"
+        \     \"$ref\": \"#/$defs/ValidationErrorType\",\n                    \"description\": \"Error type\"\n          \
+        \      },\n                \"message\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Error message\"\n                },\n                \"path\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Path to problematic element\"\n \
+        \               }\n            }\n        },\n        \"ValidationErrorType\": {\n            \"description\": \"\
+        Type of MIDI-JSON validation error\",\n            \"type\": \"string\",\n            \"enum\": [\n              \
+        \  \"Structure\",\n                \"Range\",\n                \"Timing\",\n                \"Format\"\n         \
+        \   ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Validate MIDI-JSON structure\",\n    \"description\": \"Validates a MIDI-JSON
         structure for correctness including note ranges,\\ntiming, and format compliance.\\n\",\n    \"tags\": [\n       \
         \ \"Validation\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"ValidateMidiJson\"\n}"
@@ -576,23 +579,24 @@ paths:
         \                    \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\"\
         : \"Maximum tempo\"\n                }\n            }\n        },\n        \"HarmonyStyle\": {\n            \"description\"\
         : \"Harmonic progression style preferences\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"primaryCadence\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"authentic\",\n                        \"plagal\",\n\
-        \                        \"half\",\n                        \"deceptive\"\n                    ],\n              \
-        \      \"default\": \"authentic\",\n                    \"description\": \"Most common cadence type\"\n          \
-        \      },\n                \"dominantPrepProbability\": {\n                    \"type\": \"number\",\n           \
-        \         \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n \
-        \                   \"default\": 0.6,\n                    \"description\": \"Probability of pre-dominant before dominant\"\
-        \n                },\n                \"secondaryDominantProbability\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.3,\n                    \"description\": \"Probability of secondary dominants\"\
-        \n                },\n                \"modalInterchangeProbability\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.1,\n                    \"description\": \"Probability of borrowed chords\"\
-        \n                },\n                \"commonProgressions\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Common chord progressions as roman numeral strings\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"properties\": {\n                \"primaryCadence\": {\n                    \"$ref\": \"#/$defs/CadenceType\"\
+        ,\n                    \"default\": \"Authentic\",\n                    \"description\": \"Most common cadence type\"\
+        \n                },\n                \"dominantPrepProbability\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.6,\n                    \"description\": \"Probability of pre-dominant
+        before dominant\"\n                },\n                \"secondaryDominantProbability\": {\n                    \"\
+        type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n         \
+        \           \"maximum\": 1.0,\n                    \"default\": 0.3,\n                    \"description\": \"Probability
+        of secondary dominants\"\n                },\n                \"modalInterchangeProbability\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n \
+        \                   \"maximum\": 1.0,\n                    \"default\": 0.1,\n                    \"description\"\
+        : \"Probability of borrowed chords\"\n                },\n                \"commonProgressions\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n  \
+        \                  },\n                    \"nullable\": true,\n                    \"description\": \"Common chord
+        progressions as roman numeral strings\"\n                }\n            }\n        },\n        \"CadenceType\": {\n\
+        \            \"description\": \"Type of harmonic cadence\",\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"Authentic\",\n                \"Half\",\n                \"Plagal\",\n                \"Deceptive\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get style definition\",\n    \"description\": \"Retrieves a style definition
         by ID or name. Styles define mode preferences,\\ninterval rules, form templates, and genre-specific parameters.\\\
         n\",\n    \"tags\": [\n        \"Styles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GetStyle\"\n\
@@ -797,23 +801,24 @@ paths:
         \                    \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\"\
         : \"Maximum tempo\"\n                }\n            }\n        },\n        \"HarmonyStyle\": {\n            \"description\"\
         : \"Harmonic progression style preferences\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"primaryCadence\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"authentic\",\n                        \"plagal\",\n\
-        \                        \"half\",\n                        \"deceptive\"\n                    ],\n              \
-        \      \"default\": \"authentic\",\n                    \"description\": \"Most common cadence type\"\n          \
-        \      },\n                \"dominantPrepProbability\": {\n                    \"type\": \"number\",\n           \
-        \         \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n \
-        \                   \"default\": 0.6,\n                    \"description\": \"Probability of pre-dominant before dominant\"\
-        \n                },\n                \"secondaryDominantProbability\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.3,\n                    \"description\": \"Probability of secondary dominants\"\
-        \n                },\n                \"modalInterchangeProbability\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.1,\n                    \"description\": \"Probability of borrowed chords\"\
-        \n                },\n                \"commonProgressions\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Common chord progressions as roman numeral strings\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"properties\": {\n                \"primaryCadence\": {\n                    \"$ref\": \"#/$defs/CadenceType\"\
+        ,\n                    \"default\": \"Authentic\",\n                    \"description\": \"Most common cadence type\"\
+        \n                },\n                \"dominantPrepProbability\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.6,\n                    \"description\": \"Probability of pre-dominant
+        before dominant\"\n                },\n                \"secondaryDominantProbability\": {\n                    \"\
+        type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n         \
+        \           \"maximum\": 1.0,\n                    \"default\": 0.3,\n                    \"description\": \"Probability
+        of secondary dominants\"\n                },\n                \"modalInterchangeProbability\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n \
+        \                   \"maximum\": 1.0,\n                    \"default\": 0.1,\n                    \"description\"\
+        : \"Probability of borrowed chords\"\n                },\n                \"commonProgressions\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n  \
+        \                  },\n                    \"nullable\": true,\n                    \"description\": \"Common chord
+        progressions as roman numeral strings\"\n                }\n            }\n        },\n        \"CadenceType\": {\n\
+        \            \"description\": \"Type of harmonic cadence\",\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"Authentic\",\n                \"Half\",\n                \"Plagal\",\n                \"Deceptive\"\
+        \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StyleDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"StyleDefinitionResponse\": {\n            \"description\": \"Response containing a
         style definition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
@@ -917,23 +922,24 @@ paths:
         \                    \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\"\
         : \"Maximum tempo\"\n                }\n            }\n        },\n        \"HarmonyStyle\": {\n            \"description\"\
         : \"Harmonic progression style preferences\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"primaryCadence\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"authentic\",\n                        \"plagal\",\n\
-        \                        \"half\",\n                        \"deceptive\"\n                    ],\n              \
-        \      \"default\": \"authentic\",\n                    \"description\": \"Most common cadence type\"\n          \
-        \      },\n                \"dominantPrepProbability\": {\n                    \"type\": \"number\",\n           \
-        \         \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n \
-        \                   \"default\": 0.6,\n                    \"description\": \"Probability of pre-dominant before dominant\"\
-        \n                },\n                \"secondaryDominantProbability\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.3,\n                    \"description\": \"Probability of secondary dominants\"\
-        \n                },\n                \"modalInterchangeProbability\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.1,\n                    \"description\": \"Probability of borrowed chords\"\
-        \n                },\n                \"commonProgressions\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Common chord progressions as roman numeral strings\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"properties\": {\n                \"primaryCadence\": {\n                    \"$ref\": \"#/$defs/CadenceType\"\
+        ,\n                    \"default\": \"Authentic\",\n                    \"description\": \"Most common cadence type\"\
+        \n                },\n                \"dominantPrepProbability\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.6,\n                    \"description\": \"Probability of pre-dominant
+        before dominant\"\n                },\n                \"secondaryDominantProbability\": {\n                    \"\
+        type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n         \
+        \           \"maximum\": 1.0,\n                    \"default\": 0.3,\n                    \"description\": \"Probability
+        of secondary dominants\"\n                },\n                \"modalInterchangeProbability\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n \
+        \                   \"maximum\": 1.0,\n                    \"default\": 0.1,\n                    \"description\"\
+        : \"Probability of borrowed chords\"\n                },\n                \"commonProgressions\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n  \
+        \                  },\n                    \"nullable\": true,\n                    \"description\": \"Common chord
+        progressions as roman numeral strings\"\n                }\n            }\n        },\n        \"CadenceType\": {\n\
+        \            \"description\": \"Type of harmonic cadence\",\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"Authentic\",\n                \"Half\",\n                \"Plagal\",\n                \"Deceptive\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new style definition\",\n    \"description\": \"Creates a new style
         definition. Only accessible to admin users.\\n\",\n    \"tags\": [\n        \"Styles\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"CreateStyle\"\n}"
@@ -968,41 +974,43 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateProgressionRequest\"\
         ,\n    \"$defs\": {\n        \"GenerateProgressionRequest\": {\n            \"description\": \"Request to generate
         a chord progression\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
-        \    \"required\": [\n                \"key\",\n                \"length\"\n            ],\n            \"properties\"\
-        : {\n                \"key\": {\n                    \"$ref\": \"#/$defs/KeySignature\",\n                    \"description\"\
-        : \"Key for the progression\"\n                },\n                \"length\": {\n                    \"type\": \"\
-        integer\",\n                    \"minimum\": 2,\n                    \"maximum\": 64,\n                    \"description\"\
-        : \"Number of chords in the progression\"\n                },\n                \"styleId\": {\n                  \
-        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Style to
-        use for harmonic preferences\"\n                },\n                \"startChord\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Starting chord (roman
-        numeral, e.g., \\\"I\\\")\"\n                },\n                \"endChord\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Ending chord (roman numeral,
-        e.g., \\\"I\\\")\"\n                },\n                \"cadenceType\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"authentic\",\n                        \"half\",\n  \
-        \                      \"plagal\",\n                        \"deceptive\"\n                    ],\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Cadence type for ending\"\n                },\n\
-        \                \"allowSecondaryDominants\": {\n                    \"type\": \"boolean\",\n                    \"\
-        default\": true,\n                    \"description\": \"Allow secondary dominant chords\"\n                },\n \
-        \               \"allowModalInterchange\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Allow borrowed chords from parallel modes\"\n                },\n\
-        \                \"seed\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Random seed for reproducibility\"\n                }\n            }\n    \
-        \    },\n        \"KeySignature\": {\n            \"description\": \"A key signature with tonic and mode\",\n    \
-        \        \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n      \
-        \          \"tonic\",\n                \"mode\"\n            ],\n            \"properties\": {\n                \"\
-        tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Tonic pitch
-        class\"\n                },\n                \"mode\": {\n                    \"type\": \"string\",\n            \
-        \        \"enum\": [\n                        \"major\",\n                        \"minor\",\n                   \
-        \     \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n                  \
-        \      \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n              \
-        \      ],\n                    \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n\
-        \        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n\
-        \            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n               \
-        \ \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n     \
-        \           \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n     \
-        \   }\n    }\n}"
+        \    \"required\": [\n                \"key\"\n            ],\n            \"properties\": {\n                \"key\"\
+        : {\n                    \"$ref\": \"#/$defs/KeySignature\",\n                    \"description\": \"Key for the progression\"\
+        \n                },\n                \"length\": {\n                    \"type\": \"integer\",\n                \
+        \    \"nullable\": true,\n                    \"minimum\": 2,\n                    \"maximum\": 64,\n            \
+        \        \"description\": \"Number of chords in the progression (defaults to configuration value when omitted)\"\n\
+        \                },\n                \"styleId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Style to use for harmonic preferences\"\n        \
+        \        },\n                \"startChord\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Starting chord (roman numeral, e.g., \\\"I\\\")\"\n    \
+        \            },\n                \"endChord\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Ending chord (roman numeral, e.g., \\\"I\\\")\"\n      \
+        \          },\n                \"cadenceType\": {\n                    \"$ref\": \"#/$defs/CadenceType\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Cadence type for ending\"\n           \
+        \     },\n                \"allowSecondaryDominants\": {\n                    \"type\": \"boolean\",\n           \
+        \         \"default\": true,\n                    \"description\": \"Allow secondary dominant chords\"\n         \
+        \       },\n                \"allowModalInterchange\": {\n                    \"type\": \"boolean\",\n           \
+        \         \"default\": false,\n                    \"description\": \"Allow borrowed chords from parallel modes\"\n\
+        \                },\n                \"seed\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Random seed for reproducibility\"\n                }\n\
+        \            }\n        },\n        \"KeySignature\": {\n            \"description\": \"A key signature with tonic
+        and mode\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"tonic\",\n                \"mode\"\n            ],\n            \"properties\": {\n       \
+        \         \"tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
+        : \"Tonic pitch class\"\n                },\n                \"mode\": {\n                    \"$ref\": \"#/$defs/KeyMode\"\
+        ,\n                    \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n      \
+        \  \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n     \
+        \       \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n      \
+        \      \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\"\
+        ,\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n             \
+        \   \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n \
+        \       \"KeyMode\": {\n            \"description\": \"Musical mode/scale type for key signatures\",\n           \
+        \ \"type\": \"string\",\n            \"enum\": [\n                \"Major\",\n                \"Minor\",\n       \
+        \         \"Dorian\",\n                \"Phrygian\",\n                \"Lydian\",\n                \"Mixolydian\"\
+        ,\n                \"Aeolian\",\n                \"Locrian\"\n            ]\n        },\n        \"CadenceType\":
+        {\n            \"description\": \"Type of harmonic cadence\",\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"Authentic\",\n                \"Half\",\n                \"Plagal\",\n                \"Deceptive\"\
+        \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateProgressionResponse\"\
         ,\n    \"$defs\": {\n        \"GenerateProgressionResponse\": {\n            \"description\": \"Response containing
         a generated chord progression\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -1026,22 +1034,22 @@ paths:
         : false,\n            \"required\": [\n                \"root\",\n                \"quality\"\n            ],\n  \
         \          \"properties\": {\n                \"root\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n\
         \                    \"description\": \"Chord root\"\n                },\n                \"quality\": {\n       \
-        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"major\",\n       \
-        \                 \"minor\",\n                        \"diminished\",\n                        \"augmented\",\n  \
-        \                      \"dominant7\",\n                        \"major7\",\n                        \"minor7\",\n\
-        \                        \"diminished7\",\n                        \"halfDiminished7\",\n                        \"\
-        augmented7\",\n                        \"sus2\",\n                        \"sus4\"\n                    ],\n     \
-        \               \"description\": \"Chord quality\"\n                },\n                \"bass\": {\n            \
-        \        \"$ref\": \"#/$defs/PitchClass\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Bass note (for inversions/slash chords)\"\n                },\n                \"extensions\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n \
-        \                   },\n                    \"nullable\": true,\n                    \"description\": \"Chord extensions
-        (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\")\"\n                }\n            }\n        },\n        \"PitchClass\"\
-        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n            \"description\"\
-        : \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n    \
-        \            \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\",\n                \"\
-        E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n                \"Gs\",\n         \
-        \       \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n        \"ProgressionAnalysis\"\
+        \             \"$ref\": \"#/$defs/ChordQuality\",\n                    \"description\": \"Chord quality\"\n      \
+        \          },\n                \"bass\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Bass note (for inversions/slash chords)\"\n   \
+        \             },\n                \"extensions\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Chord extensions (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\")\"\n   \
+        \             }\n            }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
+        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
+        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
+        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
+        \    },\n        \"ChordQuality\": {\n            \"description\": \"Chord quality type\",\n            \"type\":
+        \"string\",\n            \"enum\": [\n                \"Major\",\n                \"Minor\",\n                \"Diminished\"\
+        ,\n                \"Augmented\",\n                \"Dominant7\",\n                \"Major7\",\n                \"\
+        Minor7\",\n                \"Diminished7\",\n                \"HalfDiminished7\",\n                \"Augmented7\"\
+        ,\n                \"Sus2\",\n                \"Sus4\"\n            ]\n        },\n        \"ProgressionAnalysis\"\
         : {\n            \"description\": \"Analysis of a chord progression\",\n            \"type\": \"object\",\n      \
         \      \"additionalProperties\": false,\n            \"properties\": {\n                \"romanNumerals\": {\n   \
         \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
@@ -1050,21 +1058,24 @@ paths:
         \              \"items\": {\n                        \"$ref\": \"#/$defs/CadenceInfo\"\n                    },\n \
         \                   \"nullable\": true,\n                    \"description\": \"Detected cadences\"\n            \
         \    },\n                \"functionalAnalysis\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"type\": \"string\",\n                        \"enum\": [\n             \
-        \               \"tonic\",\n                            \"subdominant\",\n                            \"dominant\"\
-        ,\n                            \"predominant\"\n                        ]\n                    },\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Functional analysis per chord\"\n             \
-        \   }\n            }\n        },\n        \"CadenceInfo\": {\n            \"description\": \"Information about a cadence\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"type\",\n                \"position\"\n            ],\n            \"properties\": {\n        \
-        \        \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n               \
-        \         \"authentic\",\n                        \"half\",\n                        \"plagal\",\n               \
-        \         \"deceptive\"\n                    ],\n                    \"description\": \"Cadence type\"\n         \
-        \       },\n                \"position\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Chord index where cadence ends\"\n                },\n                \"strength\": {\n                    \"\
-        type\": \"string\",\n                    \"enum\": [\n                        \"perfect\",\n                     \
-        \   \"imperfect\"\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Cadence strength\"\n                }\n            }\n        }\n    }\n}"
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/FunctionalAnalysis\"\n                    },\n       \
+        \             \"nullable\": true,\n                    \"description\": \"Functional analysis per chord\"\n      \
+        \          }\n            }\n        },\n        \"CadenceInfo\": {\n            \"description\": \"Information about
+        a cadence\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"type\",\n                \"position\"\n            ],\n            \"properties\": {\n    \
+        \            \"type\": {\n                    \"$ref\": \"#/$defs/CadenceType\",\n                    \"description\"\
+        : \"Cadence type\"\n                },\n                \"position\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Chord index where cadence ends\"\n                },\n                \"\
+        strength\": {\n                    \"$ref\": \"#/$defs/CadenceStrength\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Cadence strength\"\n                }\n            }\n        },\n       \
+        \ \"CadenceType\": {\n            \"description\": \"Type of harmonic cadence\",\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"Authentic\",\n                \"Half\",\n                \"Plagal\"\
+        ,\n                \"Deceptive\"\n            ]\n        },\n        \"CadenceStrength\": {\n            \"description\"\
+        : \"Strength of a cadence\",\n            \"type\": \"string\",\n            \"enum\": [\n                \"Perfect\"\
+        ,\n                \"Imperfect\"\n            ]\n        },\n        \"FunctionalAnalysis\": {\n            \"description\"\
+        : \"Functional harmonic analysis classification\",\n            \"type\": \"string\",\n            \"enum\": [\n \
+        \               \"Tonic\",\n                \"Subdominant\",\n                \"Dominant\",\n                \"Predominant\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Generate chord progression\",\n    \"description\": \"Generates a chord
         progression using harmonic function theory.\\nSupports multiple harmonic styles including functional harmony,\\nmodal
         interchange, and jazz voicings.\\n\",\n    \"tags\": [\n        \"Theory\"\n    ],\n    \"deprecated\": false,\n \
@@ -1106,10 +1117,8 @@ paths:
         \                 \"nullable\": true,\n                    \"description\": \"Style for melodic preferences\"\n  \
         \              },\n                \"range\": {\n                    \"$ref\": \"#/$defs/PitchRange\",\n         \
         \           \"nullable\": true,\n                    \"description\": \"Pitch range for the melody\"\n           \
-        \     },\n                \"contour\": {\n                    \"type\": \"string\",\n                    \"enum\"\
-        : [\n                        \"arch\",\n                        \"wave\",\n                        \"ascending\",\n\
-        \                        \"descending\",\n                        \"static\"\n                    ],\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Overall melodic contour\"\n                },\n\
+        \     },\n                \"contour\": {\n                    \"$ref\": \"#/$defs/ContourShape\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Overall melodic contour\"\n                },\n\
         \                \"rhythmDensity\": {\n                    \"type\": \"number\",\n                    \"format\":
         \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
         : true,\n                    \"description\": \"Note density (0=sparse, 1=dense)\"\n                },\n         \
@@ -1132,23 +1141,23 @@ paths:
         : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"root\"\
         ,\n                \"quality\"\n            ],\n            \"properties\": {\n                \"root\": {\n     \
         \               \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Chord root\"\n         \
-        \       },\n                \"quality\": {\n                    \"type\": \"string\",\n                    \"enum\"\
-        : [\n                        \"major\",\n                        \"minor\",\n                        \"diminished\"\
-        ,\n                        \"augmented\",\n                        \"dominant7\",\n                        \"major7\"\
-        ,\n                        \"minor7\",\n                        \"diminished7\",\n                        \"halfDiminished7\"\
-        ,\n                        \"augmented7\",\n                        \"sus2\",\n                        \"sus4\"\n\
-        \                    ],\n                    \"description\": \"Chord quality\"\n                },\n            \
-        \    \"bass\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Bass note (for inversions/slash chords)\"\n                },\n          \
-        \      \"extensions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
-        \             \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n            \
-        \        \"description\": \"Chord extensions (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\")\"\n                }\n    \
-        \        }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
-        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
-        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
-        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
-        \    },\n        \"PitchRange\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange\"\
+        \       },\n                \"quality\": {\n                    \"$ref\": \"#/$defs/ChordQuality\",\n            \
+        \        \"description\": \"Chord quality\"\n                },\n                \"bass\": {\n                   \
+        \ \"$ref\": \"#/$defs/PitchClass\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Bass note (for inversions/slash chords)\"\n                },\n                \"extensions\": {\n           \
+        \         \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n \
+        \                   },\n                    \"nullable\": true,\n                    \"description\": \"Chord extensions
+        (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\")\"\n                }\n            }\n        },\n        \"PitchClass\"\
+        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n            \"description\"\
+        : \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n    \
+        \            \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\",\n                \"\
+        E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n                \"Gs\",\n         \
+        \       \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n        \"ChordQuality\"\
+        : {\n            \"description\": \"Chord quality type\",\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"Major\",\n                \"Minor\",\n                \"Diminished\",\n                \"Augmented\"\
+        ,\n                \"Dominant7\",\n                \"Major7\",\n                \"Minor7\",\n                \"Diminished7\"\
+        ,\n                \"HalfDiminished7\",\n                \"Augmented7\",\n                \"Sus2\",\n            \
+        \    \"Sus4\"\n            ]\n        },\n        \"PitchRange\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange\"\
         ,\n            \"description\": \"A pitch range from low to high\",\n            \"type\": \"object\",\n         \
         \   \"additionalProperties\": false,\n            \"required\": [\n                \"low\",\n                \"high\"\
         \n            ],\n            \"properties\": {\n                \"low\": {\n                    \"$ref\": \"#/$defs/Pitch\"\
@@ -1163,7 +1172,10 @@ paths:
         \    \"minimum\": 0,\n                    \"maximum\": 9,\n                    \"description\": \"Octave number (middle
         C = C4)\"\n                },\n                \"midiNumber\": {\n                    \"type\": \"integer\",\n   \
         \                 \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"description\": \"\
-        MIDI note number (computed if not provided)\"\n                }\n            }\n        }\n    }\n}"
+        MIDI note number (computed if not provided)\"\n                }\n            }\n        },\n        \"ContourShape\"\
+        : {\n            \"description\": \"Melodic contour shape\",\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"Arch\",\n                \"Wave\",\n                \"Ascending\",\n                \"Descending\"\
+        ,\n                \"Static\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateMelodyResponse\"\
         ,\n    \"$defs\": {\n        \"GenerateMelodyResponse\": {\n            \"description\": \"Response containing a generated
         melody\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1198,25 +1210,28 @@ paths:
         \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
         \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
         \    },\n        \"MelodyAnalysis\": {\n            \"description\": \"Analysis of a melody\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"range\"\
-        : {\n                    \"$ref\": \"#/$defs/PitchRange\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"Pitch range used\"\n                },\n                \"intervalDistribution\": {\n\
-        \                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                    \
-        \    \"type\": \"number\",\n                        \"format\": \"float\"\n                    },\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Distribution of interval sizes\"\n            \
-        \    },\n                \"contour\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Detected contour shape\"\n                },\n                \"noteCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total number of notes\"\n\
-        \                },\n                \"averageNoteDuration\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"float\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Average note duration in ticks\"\n                }\n            }\n        },\n        \"PitchRange\": {\n  \
-        \          \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange\",\n            \"description\":
-        \"A pitch range from low to high\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"low\",\n                \"high\"\n            ],\n            \"properties\"\
-        : {\n                \"low\": {\n                    \"$ref\": \"#/$defs/Pitch\",\n                    \"description\"\
-        : \"Lowest pitch (inclusive)\"\n                },\n                \"high\": {\n                    \"$ref\": \"\
-        #/$defs/Pitch\",\n                    \"description\": \"Highest pitch (inclusive)\"\n                }\n        \
-        \    }\n        }\n    }\n}"
+        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"noteCount\"\
+        \n            ],\n            \"properties\": {\n                \"range\": {\n                    \"$ref\": \"#/$defs/PitchRange\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Pitch range used\"\n          \
+        \      },\n                \"intervalDistribution\": {\n                    \"type\": \"object\",\n              \
+        \      \"additionalProperties\": {\n                        \"type\": \"number\",\n                        \"format\"\
+        : \"float\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Distribution of interval sizes\"\n                },\n                \"contour\": {\n                    \"$ref\"\
+        : \"#/$defs/ContourShape\",\n                    \"nullable\": true,\n                    \"description\": \"Detected
+        contour shape\"\n                },\n                \"noteCount\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Total number of notes\"\n                },\n                \"averageNoteDuration\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Average note duration in ticks\"\n                }\n  \
+        \          }\n        },\n        \"PitchRange\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange\"\
+        ,\n            \"description\": \"A pitch range from low to high\",\n            \"type\": \"object\",\n         \
+        \   \"additionalProperties\": false,\n            \"required\": [\n                \"low\",\n                \"high\"\
+        \n            ],\n            \"properties\": {\n                \"low\": {\n                    \"$ref\": \"#/$defs/Pitch\"\
+        ,\n                    \"description\": \"Lowest pitch (inclusive)\"\n                },\n                \"high\"\
+        : {\n                    \"$ref\": \"#/$defs/Pitch\",\n                    \"description\": \"Highest pitch (inclusive)\"\
+        \n                }\n            }\n        },\n        \"ContourShape\": {\n            \"description\": \"Melodic
+        contour shape\",\n            \"type\": \"string\",\n            \"enum\": [\n                \"Arch\",\n        \
+        \        \"Wave\",\n                \"Ascending\",\n                \"Descending\",\n                \"Static\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Generate melody over harmony\",\n    \"description\": \"Generates a melodic
         line over a chord progression using contour rules,\\ninterval preferences, and rhythmic patterns from the specified
         style.\\n\",\n    \"tags\": [\n        \"Theory\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GenerateMelody\"\
@@ -1266,24 +1281,24 @@ paths:
         \            \"required\": [\n                \"root\",\n                \"quality\"\n            ],\n           \
         \ \"properties\": {\n                \"root\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n        \
         \            \"description\": \"Chord root\"\n                },\n                \"quality\": {\n               \
-        \     \"type\": \"string\",\n                    \"enum\": [\n                        \"major\",\n               \
-        \         \"minor\",\n                        \"diminished\",\n                        \"augmented\",\n          \
-        \              \"dominant7\",\n                        \"major7\",\n                        \"minor7\",\n        \
-        \                \"diminished7\",\n                        \"halfDiminished7\",\n                        \"augmented7\"\
-        ,\n                        \"sus2\",\n                        \"sus4\"\n                    ],\n                 \
-        \   \"description\": \"Chord quality\"\n                },\n                \"bass\": {\n                    \"$ref\"\
-        : \"#/$defs/PitchClass\",\n                    \"nullable\": true,\n                    \"description\": \"Bass note
-        (for inversions/slash chords)\"\n                },\n                \"extensions\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
-        \ },\n                    \"nullable\": true,\n                    \"description\": \"Chord extensions (e.g., \\\"\
-        9\\\", \\\"11\\\", \\\"13\\\")\"\n                }\n            }\n        },\n        \"PitchClass\": {\n      \
-        \      \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n            \"description\": \"A
-        pitch class (note name without octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n          \
-        \      \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\",\n                \"E\",\n\
-        \                \"F\",\n                \"Fs\",\n                \"G\",\n                \"Gs\",\n              \
-        \  \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n        \"PitchRange\": {\n\
-        \            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange\",\n            \"description\"\
-        : \"A pitch range from low to high\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \     \"$ref\": \"#/$defs/ChordQuality\",\n                    \"description\": \"Chord quality\"\n              \
+        \  },\n                \"bass\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Bass note (for inversions/slash chords)\"\n            \
+        \    },\n                \"extensions\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Chord extensions (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\")\"\n           \
+        \     }\n            }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
+        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
+        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
+        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
+        \    },\n        \"ChordQuality\": {\n            \"description\": \"Chord quality type\",\n            \"type\":
+        \"string\",\n            \"enum\": [\n                \"Major\",\n                \"Minor\",\n                \"Diminished\"\
+        ,\n                \"Augmented\",\n                \"Dominant7\",\n                \"Major7\",\n                \"\
+        Minor7\",\n                \"Diminished7\",\n                \"HalfDiminished7\",\n                \"Augmented7\"\
+        ,\n                \"Sus2\",\n                \"Sus4\"\n            ]\n        },\n        \"PitchRange\": {\n   \
+        \         \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange\",\n            \"description\": \"\
+        A pitch range from low to high\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"low\",\n                \"high\"\n            ],\n            \"properties\"\
         : {\n                \"low\": {\n                    \"$ref\": \"#/$defs/Pitch\",\n                    \"description\"\
         : \"Lowest pitch (inclusive)\"\n                },\n                \"high\": {\n                    \"$ref\": \"\
@@ -1331,50 +1346,51 @@ paths:
         root and quality\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"root\",\n                \"quality\"\n            ],\n            \"properties\"\
         : {\n                \"root\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
-        : \"Chord root\"\n                },\n                \"quality\": {\n                    \"type\": \"string\",\n\
-        \                    \"enum\": [\n                        \"major\",\n                        \"minor\",\n       \
-        \                 \"diminished\",\n                        \"augmented\",\n                        \"dominant7\",\n\
-        \                        \"major7\",\n                        \"minor7\",\n                        \"diminished7\"\
-        ,\n                        \"halfDiminished7\",\n                        \"augmented7\",\n                       \
-        \ \"sus2\",\n                        \"sus4\"\n                    ],\n                    \"description\": \"Chord
-        quality\"\n                },\n                \"bass\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Bass note (for inversions/slash chords)\"\
-        \n                },\n                \"extensions\": {\n                    \"type\": \"array\",\n              \
-        \      \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"\
-        nullable\": true,\n                    \"description\": \"Chord extensions (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\"\
-        )\"\n                }\n            }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
-        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
-        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
-        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
-        \    },\n        \"Pitch\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch\",\n \
-        \           \"description\": \"A specific pitch with pitch class and octave\",\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"required\": [\n                \"pitchClass\",\n    \
-        \            \"octave\"\n            ],\n            \"properties\": {\n                \"pitchClass\": {\n      \
-        \              \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Pitch class (note name)\"\
-        \n                },\n                \"octave\": {\n                    \"type\": \"integer\",\n                \
-        \    \"minimum\": 0,\n                    \"maximum\": 9,\n                    \"description\": \"Octave number (middle
-        C = C4)\"\n                },\n                \"midiNumber\": {\n                    \"type\": \"integer\",\n   \
-        \                 \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"description\": \"\
-        MIDI note number (computed if not provided)\"\n                }\n            }\n        },\n        \"VoiceLeadingViolation\"\
-        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolation\",\n         \
-        \   \"description\": \"A voice leading rule violation\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"type\",\n                \"position\",\n                \"\
-        voices\",\n                \"isError\",\n                \"message\"\n            ],\n            \"properties\":
-        {\n                \"type\": {\n                    \"$ref\": \"#/$defs/VoiceLeadingViolationType\",\n           \
-        \         \"description\": \"Type of violation\"\n                },\n                \"position\": {\n          \
-        \          \"type\": \"integer\",\n                    \"description\": \"Position in the progression (0-based)\"\n\
-        \                },\n                \"voices\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"type\": \"integer\"\n                    },\n                    \"description\"\
-        : \"Voice indices involved (0 = bass)\"\n                },\n                \"isError\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Severity (true = error, false = warning)\"\n        \
-        \        },\n                \"message\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable description\"\n                }\n            }\n        },\n        \"VoiceLeadingViolationType\"\
-        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType\",\n     \
-        \       \"description\": \"Type of voice leading rule violation\",\n            \"type\": \"string\",\n          \
-        \  \"enum\": [\n                \"ParallelFifths\",\n                \"ParallelOctaves\",\n                \"VoiceCrossing\"\
-        ,\n                \"VoiceOverlap\",\n                \"LargeLeap\",\n                \"UnresolvedLeap\",\n      \
-        \          \"DoubledLeadingTone\"\n            ]\n        }\n    }\n}"
+        : \"Chord root\"\n                },\n                \"quality\": {\n                    \"$ref\": \"#/$defs/ChordQuality\"\
+        ,\n                    \"description\": \"Chord quality\"\n                },\n                \"bass\": {\n     \
+        \               \"$ref\": \"#/$defs/PitchClass\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Bass note (for inversions/slash chords)\"\n                },\n                \"extensions\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
+        string\"\n                    },\n                    \"nullable\": true,\n                    \"description\": \"\
+        Chord extensions (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\")\"\n                }\n            }\n        },\n     \
+        \   \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n    \
+        \        \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n     \
+        \       \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\"\
+        ,\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n             \
+        \   \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n \
+        \       \"ChordQuality\": {\n            \"description\": \"Chord quality type\",\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"Major\",\n                \"Minor\",\n                \"Diminished\"\
+        ,\n                \"Augmented\",\n                \"Dominant7\",\n                \"Major7\",\n                \"\
+        Minor7\",\n                \"Diminished7\",\n                \"HalfDiminished7\",\n                \"Augmented7\"\
+        ,\n                \"Sus2\",\n                \"Sus4\"\n            ]\n        },\n        \"Pitch\": {\n        \
+        \    \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch\",\n            \"description\": \"A specific
+        pitch with pitch class and octave\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"pitchClass\",\n                \"octave\"\n            ],\n      \
+        \      \"properties\": {\n                \"pitchClass\": {\n                    \"$ref\": \"#/$defs/PitchClass\"\
+        ,\n                    \"description\": \"Pitch class (note name)\"\n                },\n                \"octave\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 9,\n                    \"description\": \"Octave number (middle C = C4)\"\n                },\n               \
+        \ \"midiNumber\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n           \
+        \         \"maximum\": 127,\n                    \"description\": \"MIDI note number (computed if not provided)\"\n\
+        \                }\n            }\n        },\n        \"VoiceLeadingViolation\": {\n            \"x-sdk-type\": \"\
+        BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolation\",\n            \"description\": \"A voice leading
+        rule violation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"type\",\n                \"position\",\n                \"voices\",\n           \
+        \     \"isError\",\n                \"message\"\n            ],\n            \"properties\": {\n                \"\
+        type\": {\n                    \"$ref\": \"#/$defs/VoiceLeadingViolationType\",\n                    \"description\"\
+        : \"Type of violation\"\n                },\n                \"position\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Position in the progression (0-based)\"\n                },\n          \
+        \      \"voices\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
+        \         \"type\": \"integer\"\n                    },\n                    \"description\": \"Voice indices involved
+        (0 = bass)\"\n                },\n                \"isError\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Severity (true = error, false = warning)\"\n                },\n            \
+        \    \"message\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        description\"\n                }\n            }\n        },\n        \"VoiceLeadingViolationType\": {\n          \
+        \  \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType\",\n            \"description\"\
+        : \"Type of voice leading rule violation\",\n            \"type\": \"string\",\n            \"enum\": [\n        \
+        \        \"ParallelFifths\",\n                \"ParallelOctaves\",\n                \"VoiceCrossing\",\n         \
+        \       \"VoiceOverlap\",\n                \"LargeLeap\",\n                \"UnresolvedLeap\",\n                \"\
+        DoubledLeadingTone\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Apply voice leading to chords\",\n    \"description\": \"Applies voice
         leading rules to a chord sequence, ensuring smooth\\npart-writing according to traditional or style-specific rules.\\\
         n\",\n    \"tags\": [\n        \"Theory\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"ApplyVoiceLeading\"\
@@ -1406,15 +1422,10 @@ components:
           type: integer
           minimum: 40
           maximum: 240
+          nullable: true
           description: Tempo in BPM (uses style default if not specified)
         mood:
-          type: string
-          enum:
-          - bright
-          - dark
-          - neutral
-          - melancholic
-          - triumphant
+          $ref: '#/components/schemas/Mood'
           nullable: true
           description: Mood constraint for generation
         tuneType:
@@ -1541,16 +1552,16 @@ components:
       additionalProperties: false
       required:
       - key
-      - length
       properties:
         key:
           $ref: '#/components/schemas/KeySignature'
           description: Key for the progression
         length:
           type: integer
+          nullable: true
           minimum: 2
           maximum: 64
-          description: Number of chords in the progression
+          description: Number of chords in the progression (defaults to configuration value when omitted)
         styleId:
           type: string
           nullable: true
@@ -1564,12 +1575,7 @@ components:
           nullable: true
           description: Ending chord (roman numeral, e.g., "I")
         cadenceType:
-          type: string
-          enum:
-          - authentic
-          - half
-          - plagal
-          - deceptive
+          $ref: '#/components/schemas/CadenceType'
           nullable: true
           description: Cadence type for ending
         allowSecondaryDominants:
@@ -1605,13 +1611,7 @@ components:
           nullable: true
           description: Pitch range for the melody
         contour:
-          type: string
-          enum:
-          - arch
-          - wave
-          - ascending
-          - descending
-          - static
+          $ref: '#/components/schemas/ContourShape'
           nullable: true
           description: Overall melodic contour
         rhythmDensity:
@@ -1670,6 +1670,7 @@ components:
       properties:
         compositionId:
           type: string
+          format: uuid
           description: Unique identifier for the composition
         midiJson:
           $ref: '#/components/schemas/MidiJson'
@@ -1678,9 +1679,6 @@ components:
           $ref: '#/components/schemas/CompositionMetadata'
           nullable: true
           description: Metadata about the generation
-        generationTimeMs:
-          type: integer
-          description: Time taken to generate in milliseconds
         narrativeUsed:
           type: string
           nullable: true
@@ -1854,13 +1852,7 @@ components:
           nullable: true
           description: Target emotional state for the ending
         tensionProfile:
-          type: string
-          enum:
-          - gradual_build
-          - early_climax
-          - late_climax
-          - sustained
-          - wave
+          $ref: '#/components/schemas/TensionProfile'
           nullable: true
           description: Preferred tension curve shape throughout the composition
     EmotionalStateInput:
@@ -1913,6 +1905,9 @@ components:
       - tension
       - brightness
       - energy
+      - warmth
+      - stability
+      - valence
       properties:
         bar:
           type: integer
@@ -2139,20 +2134,7 @@ components:
           $ref: '#/components/schemas/PitchClass'
           description: Chord root
         quality:
-          type: string
-          enum:
-          - major
-          - minor
-          - diminished
-          - augmented
-          - dominant7
-          - major7
-          - minor7
-          - diminished7
-          - halfDiminished7
-          - augmented7
-          - sus2
-          - sus4
+          $ref: '#/components/schemas/ChordQuality'
           description: Chord quality
         bass:
           $ref: '#/components/schemas/PitchClass'
@@ -2246,16 +2228,7 @@ components:
           $ref: '#/components/schemas/PitchClass'
           description: Tonic pitch class
         mode:
-          type: string
-          enum:
-          - major
-          - minor
-          - dorian
-          - phrygian
-          - lydian
-          - mixolydian
-          - aeolian
-          - locrian
+          $ref: '#/components/schemas/KeyMode'
           description: Mode/scale type
     TempoEvent:
       x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent
@@ -2542,13 +2515,8 @@ components:
       additionalProperties: false
       properties:
         primaryCadence:
-          type: string
-          enum:
-          - authentic
-          - plagal
-          - half
-          - deceptive
-          default: authentic
+          $ref: '#/components/schemas/CadenceType'
+          default: Authentic
           description: Most common cadence type
         dominantPrepProbability:
           type: number
@@ -2619,12 +2587,7 @@ components:
         functionalAnalysis:
           type: array
           items:
-            type: string
-            enum:
-            - tonic
-            - subdominant
-            - dominant
-            - predominant
+            $ref: '#/components/schemas/FunctionalAnalysis'
           nullable: true
           description: Functional analysis per chord
     CadenceInfo:
@@ -2636,27 +2599,21 @@ components:
       - position
       properties:
         type:
-          type: string
-          enum:
-          - authentic
-          - half
-          - plagal
-          - deceptive
+          $ref: '#/components/schemas/CadenceType'
           description: Cadence type
         position:
           type: integer
           description: Chord index where cadence ends
         strength:
-          type: string
-          enum:
-          - perfect
-          - imperfect
+          $ref: '#/components/schemas/CadenceStrength'
           nullable: true
           description: Cadence strength
     MelodyAnalysis:
       description: Analysis of a melody
       type: object
       additionalProperties: false
+      required:
+      - noteCount
       properties:
         range:
           $ref: '#/components/schemas/PitchRange'
@@ -2670,7 +2627,7 @@ components:
           nullable: true
           description: Distribution of interval sizes
         contour:
-          type: string
+          $ref: '#/components/schemas/ContourShape'
           nullable: true
           description: Detected contour shape
         noteCount:
@@ -2788,12 +2745,7 @@ components:
       - message
       properties:
         type:
-          type: string
-          enum:
-          - structure
-          - range
-          - timing
-          - format
+          $ref: '#/components/schemas/ValidationErrorType'
           description: Error type
         message:
           type: string
@@ -2802,6 +2754,91 @@ components:
           type: string
           nullable: true
           description: Path to problematic element
+    Mood:
+      description: Mood constraint for composition generation
+      type: string
+      enum:
+      - Bright
+      - Dark
+      - Neutral
+      - Melancholic
+      - Triumphant
+    CadenceType:
+      description: Type of harmonic cadence
+      type: string
+      enum:
+      - Authentic
+      - Half
+      - Plagal
+      - Deceptive
+    CadenceStrength:
+      description: Strength of a cadence
+      type: string
+      enum:
+      - Perfect
+      - Imperfect
+    ContourShape:
+      description: Melodic contour shape
+      type: string
+      enum:
+      - Arch
+      - Wave
+      - Ascending
+      - Descending
+      - Static
+    TensionProfile:
+      description: Tension curve shape for narrative-driven composition
+      type: string
+      enum:
+      - GradualBuild
+      - EarlyClimax
+      - LateClimax
+      - Sustained
+      - Wave
+    ChordQuality:
+      description: Chord quality type
+      type: string
+      enum:
+      - Major
+      - Minor
+      - Diminished
+      - Augmented
+      - Dominant7
+      - Major7
+      - Minor7
+      - Diminished7
+      - HalfDiminished7
+      - Augmented7
+      - Sus2
+      - Sus4
+    KeyMode:
+      description: Musical mode/scale type for key signatures
+      type: string
+      enum:
+      - Major
+      - Minor
+      - Dorian
+      - Phrygian
+      - Lydian
+      - Mixolydian
+      - Aeolian
+      - Locrian
+    FunctionalAnalysis:
+      description: Functional harmonic analysis classification
+      type: string
+      enum:
+      - Tonic
+      - Subdominant
+      - Dominant
+      - Predominant
+    ValidationErrorType:
+      description: Type of MIDI-JSON validation error
+      type: string
+      enum:
+      - Structure
+      - Range
+      - Timing
+      - Format
 tags:
 - name: Generation
   description: High-level composition generation

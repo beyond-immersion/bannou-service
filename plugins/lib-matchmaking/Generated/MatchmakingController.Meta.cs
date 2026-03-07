@@ -209,6 +209,7 @@ public partial class MatchmakingController
             "required": [
                 "queueId",
                 "gameId",
+                "sessionGameType",
                 "displayName",
                 "enabled",
                 "minCount",
@@ -279,7 +280,8 @@ public partial class MatchmakingController
                 },
                 "partySkillAggregation": {
                     "$ref": "#/$defs/PartySkillAggregation",
-                    "description": "How to calculate party skill rating"
+                    "nullable": true,
+                    "description": "How to calculate party skill rating (null if party matching not configured)"
                 },
                 "partySkillWeights": {
                     "type": "array",
@@ -528,6 +530,7 @@ public partial class MatchmakingController
                 },
                 "partySkillAggregation": {
                     "$ref": "#/$defs/PartySkillAggregation",
+                    "nullable": true,
                     "description": "How to calculate party skill rating"
                 },
                 "partySkillWeights": {
@@ -640,6 +643,7 @@ public partial class MatchmakingController
             "required": [
                 "queueId",
                 "gameId",
+                "sessionGameType",
                 "displayName",
                 "enabled",
                 "minCount",
@@ -710,7 +714,8 @@ public partial class MatchmakingController
                 },
                 "partySkillAggregation": {
                     "$ref": "#/$defs/PartySkillAggregation",
-                    "description": "How to calculate party skill rating"
+                    "nullable": true,
+                    "description": "How to calculate party skill rating (null if party matching not configured)"
                 },
                 "partySkillWeights": {
                     "type": "array",
@@ -1013,6 +1018,7 @@ public partial class MatchmakingController
             "required": [
                 "queueId",
                 "gameId",
+                "sessionGameType",
                 "displayName",
                 "enabled",
                 "minCount",
@@ -1083,7 +1089,8 @@ public partial class MatchmakingController
                 },
                 "partySkillAggregation": {
                     "$ref": "#/$defs/PartySkillAggregation",
-                    "description": "How to calculate party skill rating"
+                    "nullable": true,
+                    "description": "How to calculate party skill rating (null if party matching not configured)"
                 },
                 "partySkillWeights": {
                     "type": "array",
@@ -1431,7 +1438,6 @@ public partial class MatchmakingController
             "additionalProperties": false,
             "required": [
                 "ticketId",
-                "queueId",
                 "estimatedWaitSeconds"
             ],
             "properties": {
@@ -1439,10 +1445,6 @@ public partial class MatchmakingController
                     "type": "string",
                     "format": "uuid",
                     "description": "Unique identifier for this matchmaking ticket"
-                },
-                "queueId": {
-                    "type": "string",
-                    "description": "Queue that was joined"
                 },
                 "estimatedWaitSeconds": {
                     "type": "integer",
@@ -1822,15 +1824,9 @@ public partial class MatchmakingController
             "description": "Response after accepting a match",
             "additionalProperties": false,
             "required": [
-                "matchId",
                 "allAccepted"
             ],
             "properties": {
-                "matchId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Match identifier"
-                },
                 "allAccepted": {
                     "type": "boolean",
                     "description": "Whether all players have accepted"

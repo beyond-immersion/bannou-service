@@ -1474,14 +1474,14 @@ Spatial data management service for game worlds.
 |--------|---------|----------|---------|
 | `CheckoutforauthoringAsync` | `AuthoringCheckoutRequest` | `AuthoringCheckoutResponse` | Acquire exclusive edit lock for design-time editing |
 | `CommitauthoringAsync` | `AuthoringCommitRequest` | `AuthoringCommitResponse` | Commit design-time changes |
-| `ReleaseauthoringAsync` | `AuthoringReleaseRequest` | `AuthoringReleaseResponse` | Release authoring checkout without committing |
+| `ReleaseauthoringEventAsync` | `AuthoringReleaseRequest` | *(fire-and-forget)* | Release authoring checkout without committing |
 
 ### Authority
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `CreateChannelAsync` | `CreateChannelRequest` | `AuthorityGrant` | Create a new map channel and become its authority |
-| `ReleaseauthorityAsync` | `ReleaseAuthorityRequest` | `ReleaseAuthorityResponse` | Release authority over a channel |
+| `ReleaseauthorityEventAsync` | `ReleaseAuthorityRequest` | *(fire-and-forget)* | Release authority over a channel |
 | `AuthorityheartbeatAsync` | `AuthorityHeartbeatRequest` | `AuthorityHeartbeatResponse` | Maintain authority over channel |
 
 ### Definition
@@ -1492,7 +1492,7 @@ Spatial data management service for game worlds.
 | `GetDefinitionAsync` | `GetDefinitionRequest` | `MapDefinition` | Get a map definition by ID |
 | `ListDefinitionsAsync` | `ListDefinitionsRequest` | `ListDefinitionsResponse` | List map definitions with optional filters |
 | `UpdateDefinitionAsync` | `UpdateDefinitionRequest` | `MapDefinition` | Update a map definition |
-| `DeleteDefinitionAsync` | `DeleteDefinitionRequest` | `DeleteDefinitionResponse` | Delete a map definition |
+| `DeleteDefinitionEventAsync` | `DeleteDefinitionRequest` | *(fire-and-forget)* | Delete a map definition |
 
 ### Query
 

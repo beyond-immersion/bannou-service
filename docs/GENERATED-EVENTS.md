@@ -461,13 +461,10 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `EventBounds` | Custom | `event-bounds` | An axis-aligned bounding box in 3D space (event ve... |
-| `EventMapObject` | Custom | `event-map-object` | A map object in an event |
-| `EventPosition3D` | Custom | `event-position3-d` | A point in 3D space (event version) |
 | `MapIngestEvent` | Custom | `map-ingest` | Event published by authority to ingest topic for h... |
 | `MapObjectsChangedEvent` | Custom | `map-objects-changed` | Published when metadata objects change in a map. |
 | `MapSnapshotEvent` | Custom | `map-snapshot` | Published when a full snapshot is available. |
-| `MapSnapshotRequestedEvent` | Custom | `map-snapshot-requested` | Published when a consumer needs a full snapshot. |
+| `MapUnauthorizedPublishWarning` | Custom | `map-unauthorized-publish-warning` | Published when a non-authority attempts to publish... |
 | `MapUpdatedEvent` | Lifecycle (Updated) | `map.updated` | Published when map layer data changes. |
 | `MappingAuthorityExpiredEvent` | Expiration | `mapping-authority.expired` | Published when authority expires (detected during ... |
 | `MappingAuthorityGrantedEvent` | Custom | `mapping-authority-granted` | Published when authority is granted over a mapping... |
@@ -479,7 +476,7 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `MatchmakingMatchAcceptedEvent` | Custom | `matchmaking-match-accepted` | Published when all players accept a match |
-| `MatchmakingMatchDeclinedEvent` | Custom | `matchmaking-match-declined` | Published when a player declines a match |
+| `MatchmakingMatchDeclinedEvent` | Custom | `matchmaking-match-declined` | Published when a player declines a match or match ... |
 | `MatchmakingMatchFormedEvent` | Custom | `matchmaking-match-formed` | Published when a match is successfully formed from... |
 | `MatchmakingStatsEvent` | Custom | `matchmaking-stats` | Published periodically with queue statistics for m... |
 | `MatchmakingTicketCancelledEvent` | Custom | `matchmaking-ticket-cancelled` | Published when a matchmaking ticket is cancelled |

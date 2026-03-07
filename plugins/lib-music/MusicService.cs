@@ -94,7 +94,7 @@ public partial class MusicService : IMusicService
                 style.ModeDistribution.Select(random));
 
         // Determine tempo
-        var tempo = body.Tempo.HasValue ? body.Tempo.Value : style.DefaultTempo;
+        var tempo = body.Tempo ?? style.DefaultTempo;
 
         // Get meter from tune type or style default
         var meter = style.DefaultMeter;

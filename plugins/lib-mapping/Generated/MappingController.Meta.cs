@@ -152,12 +152,20 @@ public partial class MappingController
                     "description": "Publisher-defined type (used for indexing and filtering)"
                 },
                 "position": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Bounds for area objects",
                     "nullable": true
                 },
@@ -538,7 +546,11 @@ public partial class MappingController
                     "nullable": true
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Affected area (null means entire region)",
                     "nullable": true
                 },
@@ -588,12 +600,20 @@ public partial class MappingController
                     "description": "Publisher-defined type (used for indexing and filtering)"
                 },
                 "position": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Bounds for area objects",
                     "nullable": true
                 },
@@ -763,12 +783,20 @@ public partial class MappingController
                     "nullable": true
                 },
                 "position": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Object position (for create/update)",
                     "nullable": true
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Object bounds (for create/update)",
                     "nullable": true
                 },
@@ -918,7 +946,11 @@ public partial class MappingController
                     "nullable": true
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Optional bounds filter",
                     "nullable": true
                 },
@@ -1021,12 +1053,20 @@ public partial class MappingController
                     "description": "Publisher-defined type"
                 },
                 "position": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Bounding box for area objects",
                     "nullable": true
                 },
@@ -1151,7 +1191,11 @@ public partial class MappingController
                     "description": "Region to query"
                 },
                 "position": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Point to query at"
                 },
                 "kinds": {
@@ -1249,12 +1293,20 @@ public partial class MappingController
                     "description": "Publisher-defined type"
                 },
                 "position": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Bounding box for area objects",
                     "nullable": true
                 },
@@ -1379,7 +1431,11 @@ public partial class MappingController
                     "description": "Region to query"
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Bounding box to query"
                 },
                 "kinds": {
@@ -1483,12 +1539,20 @@ public partial class MappingController
                     "description": "Publisher-defined type"
                 },
                 "position": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Bounding box for area objects",
                     "nullable": true
                 },
@@ -1619,7 +1683,11 @@ public partial class MappingController
                     "description": "Object type to filter by"
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Optional bounds filter",
                     "nullable": true
                 },
@@ -1698,12 +1766,20 @@ public partial class MappingController
                     "description": "Publisher-defined type"
                 },
                 "position": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Bounding box for area objects",
                     "nullable": true
                 },
@@ -1837,7 +1913,11 @@ public partial class MappingController
                     "nullable": true
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Optional bounds to search within",
                     "nullable": true
                 },
@@ -2042,11 +2122,19 @@ public partial class MappingController
             ],
             "properties": {
                 "position": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Location position"
                 },
                 "bounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Area bounds if affordance spans an area",
                     "nullable": true
                 },
@@ -2567,7 +2655,11 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Default bounds for regions using this definition",
                     "nullable": true
                 },
@@ -2697,7 +2789,11 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Default bounds for regions using this definition",
                     "nullable": true
                 },
@@ -2918,7 +3014,11 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Default bounds for regions using this definition",
                     "nullable": true
                 },
@@ -3173,7 +3273,11 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Default bounds for regions using this definition",
                     "nullable": true
                 },
@@ -3369,7 +3473,11 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "New default bounds",
                     "nullable": true
                 },
@@ -3499,7 +3607,11 @@ public partial class MappingController
                     "nullable": true
                 },
                 "defaultBounds": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "description": "Default bounds for regions using this definition",
                     "nullable": true
                 },

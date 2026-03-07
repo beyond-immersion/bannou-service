@@ -29,7 +29,7 @@ public static class ObligationEventTemplates
     ""violationId"": ""{{violationId}}"",
     ""characterId"": ""{{characterId}}"",
     ""contractId"": ""{{contractId}}"",
-    ""templateCode"": ""{{templateCode}}"",
+    ""templateCode"": {{templateCode}},
     ""clauseCode"": ""{{clauseCode}}"",
     ""violationType"": ""{{violationType}}"",
     ""actionTag"": ""{{actionTag}}"",
@@ -39,7 +39,7 @@ public static class ObligationEventTemplates
     ""breachId"": {{breachId}},
     ""targetEntityId"": {{targetEntityId}},
     ""targetEntityType"": {{targetEntityType}},
-    ""contractRole"": ""{{contractRole}}""
+    ""contractRole"": {{contractRole}}
 }",
         Description: "Published when a character knowingly violates an obligation");
 

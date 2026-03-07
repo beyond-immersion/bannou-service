@@ -7357,34 +7357,6 @@ paths:
         '409':
           description: Target already has a board for this template, or max 
             boards exceeded
-  /license/cleanup-by-owner:
-    post:
-      operationId: license_cleanupByOwner
-      tags:
-      - Cleanup
-      summary: Cleanup boards referencing a deleted owner
-      description: |
-        Called by lib-resource cleanup coordination when an owner entity is deleted.
-        Deletes all board instances for the specified owner (ownerType + ownerId),
-        destroying their inventory containers and all contained license items.
-        This endpoint is designed for internal service-to-service calls during
-        cascading resource cleanup.
-      x-permissions:
-      - role: developer
-        states: {}
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CleanupByOwnerRequest'
-      responses:
-        '200':
-          description: Cleanup completed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CleanupByOwnerResponse'
   /location/create:
     post:
       summary: Create new location
@@ -7851,10 +7823,6 @@ paths:
       responses:
         '200':
           description: Checkout released
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthoringReleaseResponse'
   /mapping/definition/create:
     post:
       summary: Create a map definition template
@@ -8499,58 +8467,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InvalidateCacheResponse'
-  /obligation/get-compress-data:
-    post:
-      summary: Get obligation data for character archival compression
-      operationId: obligation_getCompressData
-      tags:
-      - Compression
-      description: |
-        Called by Resource service during character compression.
-        Returns violation history and cached obligation state for archival.
-      x-permissions:
-      - role: developer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetCompressDataRequest'
-      responses:
-        '200':
-          description: Compressed data returned
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ObligationArchive'
-        '404':
-          description: No obligation data for character
-  /obligation/cleanup-by-character:
-    post:
-      summary: Cleanup all obligation data for a deleted character
-      operationId: obligation_cleanupByCharacter
-      tags:
-      - Resource Cleanup
-      description: |
-        Called by lib-resource cleanup coordination when a character is deleted.
-        Removes cached obligation manifests and violation history for the
-        specified character. This endpoint is designed for internal
-        service-to-service calls during cascading resource cleanup.
-      x-permissions:
-      - role: developer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CleanupByCharacterRequest'
-      responses:
-        '200':
-          description: Cleanup completed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CleanupByCharacterResponse'
   /puppetmaster/watchers/start:
     post:
       summary: Manually start a regional watcher
@@ -13410,13 +13326,8 @@ components:
       description: Response after accepting a match
       additionalProperties: false
       required:
-      - matchId
       - allAccepted
       properties:
-        matchId:
-          type: string
-          format: uuid
-          description: Match identifier
         allAccepted:
           type: boolean
           description: Whether all players have accepted
@@ -13851,15 +13762,17 @@ components:
           description: The seed to activate.
     ActorCapabilities:
       type: object
-      description: |
-        Actor-specific capabilities that affect affordance evaluation.
-        Same location may afford different actions to different actor types.
+      description: Actor-specific capabilities that affect affordance 
+        evaluation. Same location may afford different actions to different 
+        actor types.
+      additionalProperties: false
       properties:
         size:
           $ref: '#/components/schemas/ActorSize'
           description: Affects cover requirements and passage width
         height:
           type: number
+          minimum: 0
           description: Actor height in meters (affects cover, sightlines)
           nullable: true
         canClimb:
@@ -13876,10 +13789,12 @@ components:
           description: Includes aerial positions
         perceptionRange:
           type: number
+          minimum: 0
           description: Affects sightline distance requirements
           nullable: true
         movementSpeed:
           type: number
+          minimum: 0
           description: Affects escape route viability calculations
           nullable: true
         stealthRating:
@@ -13983,6 +13898,7 @@ components:
           description: Board template to add this definition to
         code:
           type: string
+          minLength: 1
           maxLength: 64
           description: Unique license code within this board template
         position:
@@ -14037,8 +13953,8 @@ components:
       type: string
       description: |
         Grid traversal adjacency mode for a board template.
-        - four_way: Orthogonal only (up, down, left, right)
-        - eight_way: Orthogonal + diagonal (all 8 surrounding cells)
+        - FourWay: Orthogonal only (up, down, left, right)
+        - EightWay: Orthogonal + diagonal (all 8 surrounding cells)
       enum:
       - FourWay
       - EightWay
@@ -14212,12 +14128,18 @@ components:
     AffordanceLocation:
       type: object
       description: A location that affords the requested action
+      additionalProperties: false
+      required:
+      - position
+      - score
       properties:
         position:
-          $ref: '#/components/schemas/Position3D'
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
           description: Location position
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
           description: Area bounds if affordance spans an area
           nullable: true
         score:
@@ -14239,31 +14161,10 @@ components:
             format: uuid
           description: Map objects contributing to this affordance
           nullable: true
-    AffordanceQueryMetadata:
-      type: object
-      description: Metadata about the affordance query execution
-      properties:
-        kindsSearched:
-          type: array
-          items:
-            type: string
-          description: Map kinds that were queried
-          nullable: true
-        objectsEvaluated:
-          type: integer
-          description: Number of candidate objects evaluated
-        candidatesGenerated:
-          type: integer
-          description: Number of candidate positions generated
-        searchDurationMs:
-          type: integer
-          description: Query execution time in milliseconds
-        cacheHit:
-          type: boolean
-          description: Whether results came from cache
     AffordanceQueryRequest:
       type: object
       description: Query for locations that afford a specific action
+      additionalProperties: false
       required:
       - regionId
       - affordanceType
@@ -14277,14 +14178,16 @@ components:
           description: Type of affordance to search for
         customAffordance:
           $ref: '#/components/schemas/CustomAffordance'
-          description: Custom affordance definition (when affordanceType=custom)
+          description: Custom affordance definition (when affordanceType=Custom)
           nullable: true
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
           description: Optional bounds to search within
           nullable: true
         maxResults:
           type: integer
+          minimum: 1
           default: 10
           maximum: 100
           description: Maximum locations to return
@@ -14296,13 +14199,14 @@ components:
           description: Minimum affordance score to include
         participantCount:
           type: integer
+          minimum: 1
           description: Expected participants (affects space requirements)
           nullable: true
         excludePositions:
           type: array
           items:
             $ref: '#/components/schemas/Position3D'
-          description: Positions to exclude (e.g., player's current location)
+          description: Positions to exclude (e.g., player current location)
           nullable: true
         actorCapabilities:
           $ref: '#/components/schemas/ActorCapabilities'
@@ -14315,26 +14219,24 @@ components:
           type: integer
           minimum: 0
           maximum: 3600
-          description: Max age of cached results (for cached/aggressive_cache)
+          description: Max age of cached results (for Cached/AggressiveCache)
           nullable: true
     AffordanceQueryResponse:
       type: object
       description: Affordance query results
+      additionalProperties: false
+      required:
+      - locations
       properties:
         locations:
           type: array
           items:
             $ref: '#/components/schemas/AffordanceLocation'
           description: Scored locations (highest score first)
-        queryMetadata:
-          $ref: '#/components/schemas/AffordanceQueryMetadata'
-          description: Metadata about query execution (optional)
-          nullable: true
     AffordanceType:
       type: string
-      description: |
-        Well-known affordance types with predefined scoring logic.
-        Use 'custom' for novel affordance definitions.
+      description: Well-known affordance types with predefined scoring logic. 
+        Use Custom for novel affordance definitions.
       enum:
       - Ambush
       - Shelter
@@ -15040,6 +14942,7 @@ components:
     AuthoringCheckoutRequest:
       type: object
       description: Request to checkout for authoring
+      additionalProperties: false
       required:
       - regionId
       - kind
@@ -15054,10 +14957,13 @@ components:
           description: Map kind to checkout
         editorId:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Identifier for the editor/user
     AuthoringCheckoutResponse:
       type: object
       description: Checkout response
+      additionalProperties: false
       properties:
         authorityToken:
           type: string
@@ -15080,6 +14986,7 @@ components:
     AuthoringCommitRequest:
       type: object
       description: Request to commit authoring changes
+      additionalProperties: false
       required:
       - regionId
       - kind
@@ -15094,23 +15001,28 @@ components:
           description: Map kind being edited
         authorityToken:
           type: string
+          minLength: 1
           description: Checkout authority token
         commitMessage:
           type: string
+          maxLength: 1024
           description: Optional commit message for history
           nullable: true
     AuthoringCommitResponse:
       type: object
       description: Commit response
+      additionalProperties: false
+      required:
+      - version
       properties:
         version:
           type: integer
           format: int64
           description: Committed version number
-          nullable: true
     AuthoringReleaseRequest:
       type: object
       description: Request to release authoring checkout
+      additionalProperties: false
       required:
       - regionId
       - kind
@@ -15125,14 +15037,8 @@ components:
           description: Map kind being edited
         authorityToken:
           type: string
+          minLength: 1
           description: Checkout authority token
-    AuthoringReleaseResponse:
-      type: object
-      description: Release response
-      properties:
-        released:
-          type: boolean
-          description: Whether checkout was released
     AutoSpawnConfig:
       type: object
       additionalProperties: false
@@ -15882,8 +15788,9 @@ components:
     BoundingBox3D:
       type: object
       additionalProperties: false
-      description: Axis-aligned bounding box in world coordinates (meters, Y-up,
-        right-handed)
+      description: Axis-aligned bounding box as flat fields in world coordinates
+        (meters, Y-up, right-handed). Preferred for simple spatial containment 
+        checks where individual axis access is common (e.g., location bounds).
       required:
       - minX
       - minY
@@ -15918,7 +15825,11 @@ components:
           description: Maximum Z bound in world space
     Bounds:
       type: object
-      description: An axis-aligned bounding box in 3D space
+      additionalProperties: false
+      description: Axis-aligned bounding box as min/max Position3D corners in 
+        world coordinates (meters, Y-up, right-handed). Preferred for spatial 
+        queries and operations where corners are treated as points (e.g., 
+        mapping spatial indexing, affordance queries).
       required:
       - min
       - max
@@ -16695,23 +16606,29 @@ components:
       - position
       properties:
         type:
-          type: string
-          enum:
-          - authentic
-          - half
-          - plagal
-          - deceptive
+          $ref: '#/components/schemas/CadenceType'
           description: Cadence type
         position:
           type: integer
           description: Chord index where cadence ends
         strength:
-          type: string
-          enum:
-          - perfect
-          - imperfect
+          $ref: '#/components/schemas/CadenceStrength'
           nullable: true
           description: Cadence strength
+    CadenceStrength:
+      description: Strength of a cadence
+      type: string
+      enum:
+      - Perfect
+      - Imperfect
+    CadenceType:
+      description: Type of harmonic cadence
+      type: string
+      enum:
+      - Authentic
+      - Half
+      - Plagal
+      - Deceptive
     CalculateConversionRequest:
       type: object
       description: Request to preview a currency conversion
@@ -17699,7 +17616,7 @@ components:
           description: Whether the owner has enough LP. Null if LP check is not 
             applicable for this owner type.
         currentLp:
-          type: number
+          type: integer
           nullable: true
           description: Current LP balance of the owner (null if balance check 
             failed or not applicable)
@@ -17773,6 +17690,22 @@ components:
           type: string
           nullable: true
           description: Roman numeral analysis (e.g., "IV", "V7")
+    ChordQuality:
+      description: Chord quality type
+      type: string
+      enum:
+      - Major
+      - Minor
+      - Diminished
+      - Augmented
+      - Dominant7
+      - Major7
+      - Minor7
+      - Diminished7
+      - HalfDiminished7
+      - Augmented7
+      - Sus2
+      - Sus4
     ChordSymbol:
       description: A chord symbol with root and quality
       type: object
@@ -17785,20 +17718,7 @@ components:
           $ref: '#/components/schemas/PitchClass'
           description: Chord root
         quality:
-          type: string
-          enum:
-          - major
-          - minor
-          - diminished
-          - augmented
-          - dominant7
-          - major7
-          - minor7
-          - diminished7
-          - halfDiminished7
-          - augmented7
-          - sus2
-          - sus4
+          $ref: '#/components/schemas/ChordQuality'
           description: Chord quality
         bass:
           $ref: '#/components/schemas/PitchClass'
@@ -17923,29 +17843,6 @@ components:
         isBuiltIn:
           type: boolean
           description: Whether this is a built-in type
-    CleanupByCharacterRequest:
-      type: object
-      description: Request to delete all achievement progress for a character
-      additionalProperties: false
-      required:
-      - characterId
-      properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character whose achievement progress should be deleted
-    CleanupByCharacterResponse:
-      type: object
-      description: Response from cleanup-by-character operation
-      additionalProperties: false
-      required:
-      - progressRecordsDeleted
-      properties:
-        progressRecordsDeleted:
-          type: integer
-          minimum: 0
-          description: Number of progress records deleted across all game 
-            services
     CleanupByOwnerRequest:
       type: object
       description: Request to cleanup all boards for a deleted owner entity
@@ -17961,25 +17858,6 @@ components:
           type: string
           format: uuid
           description: ID of the entity whose boards should be cleaned up
-    CleanupByOwnerResponse:
-      type: object
-      description: Result of owner board cleanup
-      additionalProperties: false
-      required:
-      - ownerType
-      - ownerId
-      - boardsDeleted
-      properties:
-        ownerType:
-          $ref: '#/components/schemas/EntityType'
-          description: Type of entity that was cleaned up
-        ownerId:
-          type: string
-          format: uuid
-          description: ID of the entity that was cleaned up
-        boardsDeleted:
-          type: integer
-          description: Number of boards deleted during cleanup
     CleanupResponse:
       type: object
       description: Result of an owner cleanup operation
@@ -19492,6 +19370,15 @@ components:
         No Bannou service reads specific keys by convention (T29 compliant) —
         this schema is consumed by the ActorRunner interpreter at runtime.
       additionalProperties: true
+    ContourShape:
+      description: Melodic contour shape
+      type: string
+      enum:
+      - Arch
+      - Wave
+      - Ascending
+      - Descending
+      - Static
     ContractBindingType:
       type: string
       description: |
@@ -20462,6 +20349,8 @@ components:
           description: Game service this board template belongs to
         name:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Display name for the board template
         description:
           type: string
@@ -20493,7 +20382,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/AdjacencyMode'
           nullable: true
-          description: Grid traversal mode. Defaults to eight_way if not 
+          description: Grid traversal mode. Defaults to EightWay if not 
             specified.
         allowedOwnerTypes:
           type: array
@@ -20859,14 +20748,18 @@ components:
     CreateDefinitionRequest:
       type: object
       description: Request to create a map definition
+      additionalProperties: false
       required:
       - name
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Human-readable name
         description:
           type: string
+          maxLength: 2048
           description: Description of the map template
           nullable: true
         layers:
@@ -20876,7 +20769,8 @@ components:
           description: Layer configurations
           nullable: true
         defaultBounds:
-          $ref: '#/components/schemas/Bounds'
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
           description: Default bounds for regions using this definition
           nullable: true
         metadata:
@@ -22585,9 +22479,11 @@ components:
     CustomAffordance:
       type: object
       description: Custom affordance definition for novel scenarios
+      additionalProperties: false
       properties:
         description:
           type: string
+          maxLength: 1024
           description: Human-readable description of this affordance
           nullable: true
         requires:
@@ -23935,6 +23831,9 @@ components:
       - tension
       - brightness
       - energy
+      - warmth
+      - stability
+      - valence
       properties:
         bar:
           type: integer
@@ -25478,6 +25377,14 @@ components:
           maximum: 64
           default: 8
           description: Default bars per section
+    FunctionalAnalysis:
+      description: Functional harmonic analysis classification
+      type: string
+      enum:
+      - Tonic
+      - Subdominant
+      - Dominant
+      - Predominant
     GameActionRequest:
       description: Request to perform a game action such as movement or combat
       type: object
@@ -25804,15 +25711,10 @@ components:
           type: integer
           minimum: 40
           maximum: 240
+          nullable: true
           description: Tempo in BPM (uses style default if not specified)
         mood:
-          type: string
-          enum:
-          - bright
-          - dark
-          - neutral
-          - melancholic
-          - triumphant
+          $ref: '#/components/schemas/Mood'
           nullable: true
           description: Mood constraint for generation
         tuneType:
@@ -25841,6 +25743,7 @@ components:
       properties:
         compositionId:
           type: string
+          format: uuid
           description: Unique identifier for the composition
         midiJson:
           $ref: '#/components/schemas/MidiJson'
@@ -25849,9 +25752,6 @@ components:
           $ref: '#/components/schemas/CompositionMetadata'
           nullable: true
           description: Metadata about the generation
-        generationTimeMs:
-          type: integer
-          description: Time taken to generate in milliseconds
         narrativeUsed:
           type: string
           nullable: true
@@ -25889,13 +25789,7 @@ components:
           nullable: true
           description: Pitch range for the melody
         contour:
-          type: string
-          enum:
-          - arch
-          - wave
-          - ascending
-          - descending
-          - static
+          $ref: '#/components/schemas/ContourShape'
           nullable: true
           description: Overall melodic contour
         rhythmDensity:
@@ -25938,16 +25832,17 @@ components:
       additionalProperties: false
       required:
       - key
-      - length
       properties:
         key:
           $ref: '#/components/schemas/KeySignature'
           description: Key for the progression
         length:
           type: integer
+          nullable: true
           minimum: 2
           maximum: 64
-          description: Number of chords in the progression
+          description: Number of chords in the progression (defaults to 
+            configuration value when omitted)
         styleId:
           type: string
           nullable: true
@@ -25961,12 +25856,7 @@ components:
           nullable: true
           description: Ending chord (roman numeral, e.g., "I")
         cadenceType:
-          type: string
-          enum:
-          - authentic
-          - half
-          - plagal
-          - deceptive
+          $ref: '#/components/schemas/CadenceType'
           nullable: true
           description: Cadence type for ending
         allowSecondaryDominants:
@@ -26513,6 +26403,7 @@ components:
     GetDefinitionRequest:
       type: object
       description: Request to get a map definition
+      additionalProperties: false
       required:
       - definitionId
       properties:
@@ -28069,9 +27960,11 @@ components:
       properties:
         x:
           type: integer
+          minimum: 0
           description: Horizontal grid coordinate (zero-indexed)
         y:
           type: integer
+          minimum: 0
           description: Vertical grid coordinate (zero-indexed)
     GroupRole:
       type: string
@@ -28173,13 +28066,8 @@ components:
       additionalProperties: false
       properties:
         primaryCadence:
-          type: string
-          enum:
-          - authentic
-          - plagal
-          - half
-          - deceptive
-          default: authentic
+          $ref: '#/components/schemas/CadenceType'
+          default: Authentic
           description: Most common cadence type
         dominantPrepProbability:
           type: number
@@ -28727,22 +28615,13 @@ components:
       description: Result of cache invalidation and rebuild
       additionalProperties: false
       required:
-      - characterId
       - obligationsRefreshed
-      - success
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character whose cache was rebuilt
         obligationsRefreshed:
           type: integer
           minimum: 0
           maximum: 10000
           description: Number of obligations found and cached
-        success:
-          type: boolean
-          description: Whether the cache rebuild completed successfully
     ItemCategory:
       type: string
       description: Item classification category
@@ -29187,16 +29066,12 @@ components:
       additionalProperties: false
       required:
       - ticketId
-      - queueId
       - estimatedWaitSeconds
       properties:
         ticketId:
           type: string
           format: uuid
           description: Unique identifier for this matchmaking ticket
-        queueId:
-          type: string
-          description: Queue that was joined
         estimatedWaitSeconds:
           type: integer
           nullable: true
@@ -29387,6 +29262,18 @@ components:
           description: Source path (for move/copy operations)
         value:
           description: Value to use (for add/replace/test operations)
+    KeyMode:
+      description: Musical mode/scale type for key signatures
+      type: string
+      enum:
+      - Major
+      - Minor
+      - Dorian
+      - Phrygian
+      - Lydian
+      - Mixolydian
+      - Aeolian
+      - Locrian
     KeySignature:
       description: A key signature with tonic and mode
       type: object
@@ -29399,16 +29286,7 @@ components:
           $ref: '#/components/schemas/PitchClass'
           description: Tonic pitch class
         mode:
-          type: string
-          enum:
-          - major
-          - minor
-          - dorian
-          - phrygian
-          - lydian
-          - mixolydian
-          - aeolian
-          - locrian
+          $ref: '#/components/schemas/KeyMode'
           description: Mode/scale type
     KeySignatureEvent:
       x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent
@@ -29453,6 +29331,7 @@ components:
     LayerDefinition:
       type: object
       description: Configuration for a specific layer within a map definition
+      additionalProperties: false
       required:
       - kind
       properties:
@@ -29460,16 +29339,13 @@ components:
           $ref: '#/components/schemas/MapKind'
           description: The layer kind
         storageMode:
-          type: string
-          enum:
-          - Durable
-          - Cached
-          - Ephemeral
-          default: Cached
+          $ref: '#/components/schemas/StorageMode'
           description: How this layer's data should be stored
         ttlSeconds:
           type: integer
-          description: TTL for cached/ephemeral data (0 = no TTL)
+          minimum: 0
+          description: TTL for cached/ephemeral data (0 = use default from 
+            config)
           nullable: true
         defaultNonAuthorityHandling:
           $ref: '#/components/schemas/NonAuthorityHandlingMode'
@@ -29478,6 +29354,7 @@ components:
         cellSize:
           type: number
           format: double
+          minimum: 1
           description: Spatial cell size for indexing (default from config if 
             not set)
           nullable: true
@@ -29787,9 +29664,9 @@ components:
       type: string
       description: |
         Unlock status of a license node on a board.
-        - locked: Not adjacent to any unlocked node (cannot be unlocked)
-        - unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
-        - unlocked: Already unlocked (item placed at this position)
+        - Locked: Not adjacent to any unlocked node (cannot be unlocked)
+        - Unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
+        - Unlocked: Already unlocked (item placed at this position)
       enum:
       - Locked
       - Unlockable
@@ -29870,6 +29747,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ActionMappingResponse'
+          maxItems: 100
           description: Action tag mappings for this page
         nextCursor:
           type: string
@@ -30287,22 +30165,31 @@ components:
     ListDefinitionsRequest:
       type: object
       description: Request to list map definitions
+      additionalProperties: false
       properties:
         nameFilter:
           type: string
+          maxLength: 256
           description: Filter by name (partial match)
           nullable: true
         offset:
           type: integer
+          minimum: 0
           default: 0
           description: Pagination offset
         limit:
           type: integer
+          minimum: 1
+          maximum: 200
           default: 50
           description: Max results to return
     ListDefinitionsResponse:
       type: object
       description: Response containing list of map definitions
+      additionalProperties: false
+      required:
+      - definitions
+      - total
       properties:
         definitions:
           type: array
@@ -30311,13 +30198,8 @@ components:
           description: List of definitions
         total:
           type: integer
+          minimum: 0
           description: Total count matching filter
-        offset:
-          type: integer
-          description: Current offset
-        limit:
-          type: integer
-          description: Results limit used
     ListDiscoveriesRequest:
       type: object
       additionalProperties: false
@@ -32311,6 +32193,7 @@ components:
       type: object
       description: A map definition template that describes the structure of a 
         region
+      additionalProperties: false
       required:
       - definitionId
       - name
@@ -32322,9 +32205,12 @@ components:
           description: Unique identifier for this definition
         name:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Human-readable name
         description:
           type: string
+          maxLength: 2048
           description: Description of the map template
           nullable: true
         layers:
@@ -32334,7 +32220,8 @@ components:
           description: Layer configurations for this map
           nullable: true
         defaultBounds:
-          $ref: '#/components/schemas/Bounds'
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
           description: Default bounds for regions using this definition
           nullable: true
         metadata:
@@ -32355,9 +32242,8 @@ components:
           nullable: true
     MapKind:
       type: string
-      description: |
-        The category of spatial data this map contains.
-        Different kinds have different update frequencies, storage models, and TTLs.
+      description: The category of spatial data this map contains. Different 
+        kinds have different update frequencies, storage models, and TTLs.
       enum:
       - Terrain
       - StaticGeometry
@@ -32374,11 +32260,13 @@ components:
     MapObject:
       type: object
       description: A stored map object with full metadata
+      additionalProperties: false
       required:
       - objectId
       - regionId
       - kind
       - objectType
+      - version
       - createdAt
       - updatedAt
       properties:
@@ -32395,13 +32283,17 @@ components:
           description: Map kind this object is stored under
         objectType:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Publisher-defined type
         position:
-          $ref: '#/components/schemas/Position3D'
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
           description: Position for point objects
           nullable: true
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
           description: Bounding box for area objects
           nullable: true
         data:
@@ -32531,6 +32423,8 @@ components:
       description: Analysis of a melody
       type: object
       additionalProperties: false
+      required:
+      - noteCount
       properties:
         range:
           $ref: '#/components/schemas/PitchRange'
@@ -32544,7 +32438,7 @@ components:
           nullable: true
           description: Distribution of interval sizes
         contour:
-          type: string
+          $ref: '#/components/schemas/ContourShape'
           nullable: true
           description: Detected contour shape
         noteCount:
@@ -33378,6 +33272,15 @@ components:
           maxLength: 64
           description: Season code this month belongs to (must reference a 
             defined season)
+    Mood:
+      description: Mood constraint for composition generation
+      type: string
+      enum:
+      - Bright
+      - Dark
+      - Neutral
+      - Melancholic
+      - Triumphant
     MoveItemRequest:
       type: object
       description: Request to move item
@@ -33568,13 +33471,7 @@ components:
           nullable: true
           description: Target emotional state for the ending
         tensionProfile:
-          type: string
-          enum:
-          - gradual_build
-          - early_climax
-          - late_climax
-          - sustained
-          - wave
+          $ref: '#/components/schemas/TensionProfile'
           nullable: true
           description: Preferred tension curve shape throughout the composition
     NavigationItem:
@@ -33947,39 +33844,6 @@ components:
       - Defend
       - Custom
       description: Type of objective determining progress tracking logic
-    ObligationArchive:
-      type: object
-      x-archive-type: true
-      description: |
-        Complete obligation data for archive storage and storyline SDK consumption.
-        Inherits base archive properties from ResourceArchiveBase.
-        The characterId field equals resourceId for convenience.
-      allOf:
-      - $ref: '#/components/schemas/ResourceArchiveBase'
-      additionalProperties: false
-      required:
-      - characterId
-      - hasViolations
-      - violationCount
-      properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character this data belongs to (equals resourceId)
-        hasViolations:
-          type: boolean
-          description: Whether any violation records exist
-        violationCount:
-          type: integer
-          minimum: 0
-          maximum: 100000
-          description: Number of violation records in archive
-        violations:
-          type: array
-          nullable: true
-          items:
-            $ref: '#/components/schemas/ViolationRecord'
-          description: Violation history records (null if hasViolations=false)
     PageContent:
       description: Full content and metadata for a CMS-managed page
       type: object
@@ -34956,12 +34820,7 @@ components:
         functionalAnalysis:
           type: array
           items:
-            type: string
-            enum:
-            - tonic
-            - subdominant
-            - dominant
-            - predominant
+            $ref: '#/components/schemas/FunctionalAnalysis'
           nullable: true
           description: Functional analysis per chord
     PromoteVersionRequest:
@@ -35152,6 +35011,7 @@ components:
     QueryBoundsRequest:
       type: object
       description: Query map data within bounds
+      additionalProperties: false
       required:
       - regionId
       - bounds
@@ -35161,7 +35021,8 @@ components:
           format: uuid
           description: Region to query
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
           description: Bounding box to query
         kinds:
           type: array
@@ -35171,24 +35032,26 @@ components:
           nullable: true
         maxObjects:
           type: integer
+          minimum: 1
           default: 500
           maximum: 5000
           description: Maximum objects to return
     QueryBoundsResponse:
       type: object
       description: Bounds query results
+      additionalProperties: false
+      required:
+      - objects
+      - truncated
       properties:
         objects:
           type: array
           items:
             $ref: '#/components/schemas/MapObject'
           description: Objects within bounds
-        bounds:
-          $ref: '#/components/schemas/Bounds'
-          description: Queried bounds
         truncated:
           type: boolean
-          description: Whether results were truncated
+          description: Whether results were truncated by maxObjects limit
     QueryBundlesByAssetRequest:
       type: object
       additionalProperties: false
@@ -35700,6 +35563,7 @@ components:
     QueryObjectsByTypeRequest:
       type: object
       description: Query objects by type
+      additionalProperties: false
       required:
       - regionId
       - objectType
@@ -35710,34 +35574,40 @@ components:
           description: Region to query
         objectType:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Object type to filter by
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
           description: Optional bounds filter
           nullable: true
         maxObjects:
           type: integer
+          minimum: 1
           default: 500
           maximum: 5000
           description: Maximum objects to return
     QueryObjectsByTypeResponse:
       type: object
       description: Object type query results
+      additionalProperties: false
+      required:
+      - objects
+      - truncated
       properties:
         objects:
           type: array
           items:
             $ref: '#/components/schemas/MapObject'
           description: Matching objects
-        objectType:
-          type: string
-          description: Queried object type
         truncated:
           type: boolean
-          description: Whether results were truncated
+          description: Whether results were truncated by maxObjects limit
     QueryPointRequest:
       type: object
       description: Query map data at a point
+      additionalProperties: false
       required:
       - regionId
       - position
@@ -35747,7 +35617,8 @@ components:
           format: uuid
           description: Region to query
         position:
-          $ref: '#/components/schemas/Position3D'
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
           description: Point to query at
         kinds:
           type: array
@@ -35757,24 +35628,21 @@ components:
           nullable: true
         radius:
           type: number
+          minimum: 0
           description: Include objects within this radius
           nullable: true
     QueryPointResponse:
       type: object
       description: Point query results
+      additionalProperties: false
+      required:
+      - objects
       properties:
         objects:
           type: array
           items:
             $ref: '#/components/schemas/MapObject'
           description: Objects at/near the point
-        position:
-          $ref: '#/components/schemas/Position3D'
-          description: Queried position
-        radius:
-          type: number
-          description: Applied radius filter
-          nullable: true
     QueryResultItem:
       type: object
       description: Item in query results
@@ -35940,6 +35808,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ViolationRecord'
+          maxItems: 100
           description: Violation records for this page
         nextCursor:
           type: string
@@ -36226,6 +36095,7 @@ components:
       required:
       - queueId
       - gameId
+      - sessionGameType
       - displayName
       - enabled
       - minCount
@@ -36284,7 +36154,9 @@ components:
           description: Skill window expansion steps
         partySkillAggregation:
           $ref: '#/components/schemas/PartySkillAggregation'
-          description: How to calculate party skill rating
+          nullable: true
+          description: How to calculate party skill rating (null if party 
+            matching not configured)
         partySkillWeights:
           type: array
           items:
@@ -37688,6 +37560,7 @@ components:
     RequestSnapshotRequest:
       type: object
       description: Request for full snapshot
+      additionalProperties: false
       required:
       - regionId
       properties:
@@ -37702,23 +37575,24 @@ components:
           description: Which kinds to include (default all)
           nullable: true
         bounds:
-          $ref: '#/components/schemas/Bounds'
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
           description: Optional bounds filter
           nullable: true
         authorityToken:
           type: string
-          description: |
-            Optional authority token. If provided and valid, clears the
-            RequiresConsumeBeforePublish flag for require_consume takeover mode.
+          minLength: 1
+          description: Optional authority token to clear 
+            RequiresConsumeBeforePublish flag for require_consume takeover mode
           nullable: true
     RequestSnapshotResponse:
       type: object
       description: Snapshot response
+      additionalProperties: false
+      required:
+      - objects
+      - version
       properties:
-        regionId:
-          type: string
-          format: uuid
-          description: Region ID
         objects:
           type: array
           items:
@@ -37726,7 +37600,9 @@ components:
           description: All objects in snapshot
         payloadRef:
           type: string
-          description: For large snapshots, lib-asset reference
+          maxLength: 1024
+          description: For large snapshots, lib-asset reference (objects will be
+            empty when this is set)
           nullable: true
         version:
           type: integer
@@ -39608,6 +39484,7 @@ components:
           description: Board template to seed with definitions
         definitions:
           type: array
+          minItems: 1
           items:
             $ref: '#/components/schemas/AddLicenseDefinitionRequest'
           description: License definitions to add (boardTemplateId in each is 
@@ -41171,6 +41048,14 @@ components:
         stopped:
           type: boolean
           description: True if the watcher was found and stopped
+    StorageMode:
+      type: string
+      description: How layer data should be stored
+      enum:
+      - Durable
+      - Cached
+      - Ephemeral
+      default: Cached
     StorylineArchive:
       type: object
       x-archive-type: true
@@ -41673,6 +41558,15 @@ components:
           minimum: 20
           maximum: 400
           description: Maximum tempo
+    TensionProfile:
+      description: Tension curve shape for narrative-driven composition
+      type: string
+      enum:
+      - GradualBuild
+      - EarlyClimax
+      - LateClimax
+      - Sustained
+      - Wave
     TerminateContractInstanceRequest:
       type: object
       description: Request to terminate a contract
@@ -43792,6 +43686,7 @@ components:
     UpdateDefinitionRequest:
       type: object
       description: Request to update a map definition
+      additionalProperties: false
       required:
       - definitionId
       properties:
@@ -43801,10 +43696,13 @@ components:
           description: Definition ID to update
         name:
           type: string
+          minLength: 1
+          maxLength: 256
           description: New name (optional)
           nullable: true
         description:
           type: string
+          maxLength: 2048
           description: New description (optional)
           nullable: true
         layers:
@@ -43814,7 +43712,8 @@ components:
           description: New layer configurations (replaces existing)
           nullable: true
         defaultBounds:
-          $ref: '#/components/schemas/Bounds'
+          allOf:
+          - $ref: '#/components/schemas/Bounds'
           description: New default bounds
           nullable: true
         metadata:

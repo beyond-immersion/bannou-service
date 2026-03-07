@@ -1144,7 +1144,7 @@ Sent to all matched players when a match is formed.
 | `acceptTimeoutSeconds` | Seconds remaining to accept |
 | `averageSkillRating` | Average skill rating of matched players (if using  |
 | `matchId` | Unique identifier for this match |
-| `partyMembersMatched` | Account IDs of party members who are also in this  |
+| `partyId` | Party ID if this player was matched as part of a p |
 | `playerCount` | Total number of players in the match |
 | `queueDisplayName` | Human-readable queue name |
 | `queueId` | Queue the match was formed from |
