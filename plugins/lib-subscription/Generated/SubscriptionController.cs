@@ -39,9 +39,12 @@ public interface ISubscriptionController : BeyondImmersion.BannouService.Control
     /// Returns all subscriptions for a given account, with optional filtering.
     /// </remarks>
 
+
+
     /// <returns>Subscriptions retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionListResponse>> GetAccountSubscriptionsAsync(GetAccountSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionListResponse>> GetAccountSubscriptions(GetAccountSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query current (active, non-expired) subscriptions
@@ -56,9 +59,12 @@ public interface ISubscriptionController : BeyondImmersion.BannouService.Control
     /// <br/>Used by Auth service during session creation and GameSession service for subscriber discovery.
     /// </remarks>
 
+
+
     /// <returns>Subscriptions retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuerySubscriptionsResponse>> QueryCurrentSubscriptionsAsync(QueryCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuerySubscriptionsResponse>> QueryCurrentSubscriptions(QueryCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a specific subscription by ID
@@ -67,7 +73,8 @@ public interface ISubscriptionController : BeyondImmersion.BannouService.Control
 
     /// <returns>Subscription retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> GetSubscriptionAsync(GetSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> GetSubscription(GetSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a new subscription
@@ -77,9 +84,12 @@ public interface ISubscriptionController : BeyondImmersion.BannouService.Control
     /// Admin-only endpoint to create a new subscription for an account.
     /// </remarks>
 
+
+
     /// <returns>Subscription created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> CreateSubscriptionAsync(CreateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> CreateSubscription(CreateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a subscription
@@ -89,9 +99,12 @@ public interface ISubscriptionController : BeyondImmersion.BannouService.Control
     /// Admin-only endpoint to update an existing subscription.
     /// </remarks>
 
+
+
     /// <returns>Subscription updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> UpdateSubscriptionAsync(UpdateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> UpdateSubscription(UpdateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cancel a subscription
@@ -102,9 +115,12 @@ public interface ISubscriptionController : BeyondImmersion.BannouService.Control
     /// <br/>admins can cancel any subscription.
     /// </remarks>
 
+
+
     /// <returns>Subscription cancelled successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> CancelSubscriptionAsync(CancelSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> CancelSubscription(CancelSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Renew or extend a subscription
@@ -114,15 +130,18 @@ public interface ISubscriptionController : BeyondImmersion.BannouService.Control
     /// Admin-only endpoint to renew or extend an existing subscription.
     /// </remarks>
 
+
+
     /// <returns>Subscription renewed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> RenewSubscriptionAsync(RenewSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> RenewSubscription(RenewSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ISubscriptionService))]
+public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.ControllerBase, ISubscriptionController
 {
     private ISubscriptionService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

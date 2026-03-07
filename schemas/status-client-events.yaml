@@ -7,7 +7,7 @@ info:
     delivered via WebSocket through the Entity Session Registry.
 
     All events inherit from BaseClientEvent (common-client-events.yaml) and use
-    the "status.{event_type}" naming convention.
+    the "status.{compound-action}" naming convention (Pattern A).
 
     Entity routing uses the entity's own type (e.g., "character") with the entity's ID,
     so sessions already watching a character for inventory/collection changes also
@@ -69,6 +69,7 @@ components:
           description: Type of entity (character, account, etc.)
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Template code identifying the status effect type
         statusInstanceId:
           type: string

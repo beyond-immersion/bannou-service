@@ -977,8 +977,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `PUPPETMASTER_ASSET_DOWNLOAD_TIMEOUT_SECONDS` | int | `30` | Timeout for downloading behavior YAML from asset service |
 | `PUPPETMASTER_BEHAVIOR_CACHE_MAX_SIZE` | int | `1000` | Maximum number of behavior documents to cache in memory |
 | `PUPPETMASTER_BEHAVIOR_CACHE_TTL_SECONDS` | int | `3600` | Time-to-live for cached behavior documents in seconds |
+| `PUPPETMASTER_BEHAVIOR_UPDATE_PAGE_SIZE` | int | `100` | Page size for iterating actors when broadcasting behavior up... |
 | `PUPPETMASTER_DEFAULT_WATCHER_TYPES` | string[] | `['regional']` | Default watcher types to start for each realm (comma-separat... |
 | `PUPPETMASTER_SNAPSHOT_CACHE_TTL_SECONDS` | int | `300` | Time-to-live for cached resource snapshots in seconds (used ... |
+| `PUPPETMASTER_SNAPSHOT_PREFETCH_CONCURRENCY` | int | `5` | Maximum number of concurrent resource snapshot prefetch oper... |
 
 ### Quest
 
@@ -1084,6 +1086,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SAVE_LOAD_UPLOAD_BATCH_SIZE` | int | `5` | Number of pending uploads to process per batch cycle |
 | `SAVE_LOAD_UPLOAD_RETRY_ATTEMPTS` | int | `3` | Number of retry attempts for failed uploads before giving up |
 | `SAVE_LOAD_UPLOAD_RETRY_DELAY_MS` | int | `1000` | Base delay between retry attempts (exponential backoff appli... |
+| `SAVE_LOAD_UPLOAD_WORKER_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before upload worker starts processing. All... |
 
 ### Scene
 
@@ -1144,12 +1147,10 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `STATUS_CACHE_WARMING_ENABLED` | bool | `false` | Enable proactive cache warming on startup by pre-loading act... |
 | `STATUS_DEFAULT_PAGE_SIZE` | int | `50` | Default page size for paginated queries |
 | `STATUS_DEFAULT_STATUS_DURATION_SECONDS` | int | `60` | Default duration when template has no defaultDurationSeconds... |
 | `STATUS_LOCK_ACQUISITION_TIMEOUT_SECONDS` | int | `5` | Maximum seconds to wait when acquiring a distributed lock be... |
 | `STATUS_LOCK_TIMEOUT_SECONDS` | int | `30` | TTL for distributed locks on status mutations |
-| `STATUS_MAX_CACHED_ENTITIES` | int | `10000` | Maximum number of entity active-status cache entries retaine... |
 | `STATUS_MAX_STACKS_PER_STATUS` | int | `10` | Global maximum stack count per status (template maxStacks ta... |
 | `STATUS_MAX_STATUSES_PER_ENTITY` | int | `50` | Maximum concurrent active statuses per entity |
 | `STATUS_MAX_STATUS_TEMPLATES_PER_GAME_SERVICE` | int | `200` | Maximum status template definitions per game service |
@@ -1297,9 +1298,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 1003
+- **Total properties**: 1004
 - **Required (no default)**: 59
-- **Optional (has default)**: 944
+- **Optional (has default)**: 945
 
 ## Environment Variable Naming Convention
 

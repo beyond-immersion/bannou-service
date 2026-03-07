@@ -200,7 +200,6 @@ components:
       required:
         - cachedBehaviorCount
         - activeWatcherCount
-        - isHealthy
       properties:
         cachedBehaviorCount:
           type: integer
@@ -208,9 +207,6 @@ components:
         activeWatcherCount:
           type: integer
           description: Number of active regional watcher instances
-        isHealthy:
-          type: boolean
-          description: Overall service health status
 
     InvalidateBehaviorsResponse:
       type: object
@@ -267,6 +263,7 @@ components:
           description: Behavior document reference this watcher uses
         actorId:
           type: string
+          format: uuid
           nullable: true
           description: Actor instance ID running this watcher's behavior
 
@@ -320,13 +317,8 @@ components:
     StopWatcherResponse:
       type: object
       additionalProperties: false
-      description: Response after stopping a watcher
-      required:
-        - stopped
-      properties:
-        stopped:
-          type: boolean
-          description: True if the watcher was found and stopped
+      description: Empty response. HTTP 200 confirms the watcher was stopped. HTTP 404 if watcher not found.
+      properties: {}
 
     StartWatchersForRealmRequest:
       type: object
@@ -346,6 +338,7 @@ components:
       description: Response after starting watchers for a realm
       required:
         - watchersStarted
+        - watchersExisted
         - watchers
       properties:
         watchersStarted:

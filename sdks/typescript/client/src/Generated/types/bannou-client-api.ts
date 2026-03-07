@@ -8020,6 +8020,7 @@ export interface paths {
      * Extend checkout lock TTL
      * @description Extends the checkout lock TTL. Should be called periodically
      *     during editing to prevent lock expiration.
+     *     Returns 409 Conflict when the extension limit has been reached.
      */
     post: operations['scene_heartbeatCheckout'];
     delete?: never;
@@ -8717,6 +8718,72 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/status/template/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a status template
+     * @description Mark a status template as deprecated. Deprecated templates cannot be used
+     *     for new grants. Idempotent -- returns OK if already deprecated.
+     *     Category A entity: deprecation is reversible via undeprecate.
+     */
+    post: operations['status_deprecateStatusTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/status/template/undeprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Undeprecate a status template
+     * @description Remove deprecation from a status template, restoring it for use in grants.
+     *     Idempotent -- returns OK if not deprecated.
+     *     Category A entity: undeprecation is allowed.
+     */
+    post: operations['status_undeprecateStatusTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/status/template/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a deprecated status template
+     * @description Permanently delete a status template. The template must be deprecated first.
+     *     Returns BadRequest if the template is not deprecated.
+     *     Category A entity: deletion requires prior deprecation.
+     */
+    post: operations['status_deleteStatusTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/status/grant': {
     parameters: {
       query?: never;
@@ -8909,29 +8976,6 @@ export interface paths {
      *     domain, fidelity, and seed attribution.
      */
     post: operations['status_getSeedEffects'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/status/cleanup-by-owner': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Remove all statuses and containers for an owner
-     * @description Remove all status containers, instances, and inventory containers for an
-     *     owner entity. Called by lib-resource cleanup callbacks when a character or
-     *     account is deleted. Destroys inventory containers (cascades to items),
-     *     deletes all instance records, and invalidates all caches.
-     */
-    post: operations['status_cleanupByOwner'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11261,14 +11305,14 @@ export interface components {
        * @description Tags that acceptable assets must have.
        *     Used for filtering when selecting random variations.
        */
-      acceptsTags?: string[];
+      acceptsTags?: string[] | null;
       /** @description Default asset if no specific asset is bound */
       defaultAsset?: components['schemas']['AssetReference'];
       /**
        * @description Pre-approved asset variations for random selection.
        *     Procedural systems pick from this list rather than searching all assets.
        */
-      variations?: components['schemas']['AssetReference'][];
+      variations?: components['schemas']['AssetReference'][] | null;
     };
     /**
      * @description Type classification for assets
@@ -11369,7 +11413,7 @@ export interface components {
        * @description Tags of assets that can attach here.
        *     Examples: wall_decoration, picture_frame, plant
        */
-      acceptsTags?: string[];
+      acceptsTags?: string[] | null;
       /** @description Default asset to display if no specific attachment is specified */
       defaultAsset?: components['schemas']['AssetReference'];
       /**
@@ -13131,7 +13175,7 @@ export interface components {
        *     Defaults to caller identity if not specified.
        */
       editorId?: string | null;
-      /** @description Custom lock TTL (uses default if not specified) */
+      /** @description Custom lock TTL in minutes (uses default if not specified) */
       ttlMinutes?: number | null;
     };
     /** @description Response containing checkout token and scene */
@@ -13248,23 +13292,6 @@ export interface components {
       hasExecutionHandler: boolean;
       /** @description Whether this is a built-in type */
       isBuiltIn: boolean;
-    };
-    /** @description Request to cleanup all boards for a deleted owner entity */
-    CleanupByOwnerRequest: {
-      /** @description Type of entity whose boards should be cleaned up */
-      ownerType: components['schemas']['EntityType'];
-      /**
-       * Format: uuid
-       * @description ID of the entity whose boards should be cleaned up
-       */
-      ownerId: string;
-    };
-    /** @description Result of an owner cleanup operation */
-    CleanupResponse: {
-      /** @description Number of status instances removed */
-      statusesRemoved: number;
-      /** @description Number of status containers deleted */
-      containersDeleted: number;
     };
     /** @description Response containing the client's capability manifest with available API endpoints and shortcuts */
     ClientCapabilitiesResponse: {
@@ -13549,8 +13576,6 @@ export interface components {
     };
     /** @description Response confirming commit */
     CommitResponse: {
-      /** @description Whether commit was successful */
-      committed: boolean;
       /** @description New version after commit */
       newVersion: string;
       /** @description Committed scene with updated metadata */
@@ -16404,16 +16429,9 @@ export interface components {
       /** @description Optional reason for deletion (included in event) */
       reason?: string | null;
     };
-    /** @description Response confirming scene deletion */
+    /** @description Response for scene deletion */
     DeleteSceneResponse: {
-      /** @description Whether the scene was successfully deleted */
-      deleted: boolean;
-      /**
-       * Format: uuid
-       * @description ID of the deleted scene
-       */
-      sceneId?: string;
-      /** @description If deletion failed, IDs of scenes that reference this one */
+      /** @description If deletion was blocked (409), IDs of scenes that reference this one */
       referencingScenes?: string[] | null;
     };
     /** @description Request to hard-delete a deprecated seed type with no remaining non-archived seeds. */
@@ -16442,8 +16460,6 @@ export interface components {
     };
     /** @description Result of a slot deletion operation with cleanup statistics */
     DeleteSlotResponse: {
-      /** @description Whether slot was deleted */
-      deleted: boolean;
       /** @description Number of versions deleted */
       versionsDeleted: number;
       /**
@@ -16451,6 +16467,14 @@ export interface components {
        * @description Storage freed in bytes
        */
       bytesFreed: number;
+    };
+    /** @description Request to delete a deprecated status template */
+    DeleteStatusTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Status template to delete (must be deprecated first)
+       */
+      statusTemplateId: string;
     };
     /** @description Request to permanently delete a specific save version */
     DeleteVersionRequest: {
@@ -16468,8 +16492,6 @@ export interface components {
     };
     /** @description Result of a version deletion operation with storage freed */
     DeleteVersionResponse: {
-      /** @description Whether version was deleted */
-      deleted: boolean;
       /**
        * Format: int64
        * @description Storage freed in bytes
@@ -16638,6 +16660,16 @@ export interface components {
       /** @description Optional reason for deprecation (for audit purposes). */
       reason: string;
     };
+    /** @description Request to deprecate a status template */
+    DeprecateStatusTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Status template to deprecate
+       */
+      statusTemplateId: string;
+      /** @description Why this template is being deprecated */
+      reason: string;
+    };
     /** @description Request to deprecate a template */
     DeprecateTemplateRequest: {
       /**
@@ -16702,11 +16734,6 @@ export interface components {
       sceneId: string;
       /** @description Checkout token */
       checkoutToken: string;
-    };
-    /** @description Response confirming discard */
-    DiscardResponse: {
-      /** @description Whether discard was successful */
-      discarded: boolean;
     };
     /** @description Discovery status for a single connection */
     DiscoveryCheckResult: {
@@ -17753,8 +17780,8 @@ export interface components {
       ownerId: string;
       /** @description Type of entity that owns the saves to export */
       ownerType: components['schemas']['EntityType'];
-      /** @description Specific slots to export (all if null) */
-      slotNames?: string[];
+      /** @description Specific slots to export (null = all slots) */
+      slotNames?: string[] | null;
     };
     /** @description Response with pre-signed URL for downloading exported save archive */
     ExportSavesResponse: {
@@ -19533,8 +19560,8 @@ export interface components {
       gameId: string;
       /** @description Scene type */
       sceneType: components['schemas']['SceneType'];
-      /** @description Registered rules (empty if none) */
-      rules?: components['schemas']['ValidationRule'][];
+      /** @description Registered rules (null if none) */
+      rules?: components['schemas']['ValidationRule'][] | null;
     };
     /** @description Goal definition for GOAP planning with conditions and priority */
     GoapGoal: {
@@ -19642,7 +19669,7 @@ export interface components {
       sourceId?: string | null;
       /** @description Override the template's default duration in seconds */
       durationOverrideSeconds?: number | null;
-      /** @description Arbitrary key-value data passed to contract template values and stored on the status instance. Convention for Divine integration - set metadata.blessingTier to the blessing tier string (e.g., minor, standard, greater, supreme) so the Divine service can query active blessings by tier. */
+      /** @description Arbitrary key-value data passed to contract template values and stored on the status instance. Opaque to Status -- callers define their own semantics. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -19879,15 +19906,13 @@ export interface components {
     };
     /** @description Response confirming lock extension */
     HeartbeatResponse: {
-      /** @description Whether extension was successful */
-      extended: boolean;
       /**
        * Format: date-time
        * @description New expiration time
        */
       newExpiresAt: string;
       /** @description Number of extensions remaining */
-      extensionsRemaining?: number;
+      extensionsRemaining: number;
     };
     /** @description Request for scene version history */
     HistoryRequest: {
@@ -19910,7 +19935,7 @@ export interface components {
        */
       sceneId: string;
       /** @description Current active version */
-      currentVersion?: string;
+      currentVersion: string;
       /** @description Version history entries */
       versions: components['schemas']['VersionInfo'][];
     };
@@ -20500,11 +20525,8 @@ export interface components {
      *     Uses JsonPatch.Net library (MIT licensed).
      */
     JsonPatchOperation: {
-      /**
-       * @description Operation type
-       * @enum {string}
-       */
-      op: 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test';
+      /** @description Operation type */
+      op: components['schemas']['JsonPatchOperationType'];
       /** @description JSON Pointer to target location */
       path: string;
       /** @description Source path (for move/copy operations) */
@@ -20512,6 +20534,11 @@ export interface components {
       /** @description Value to use (for add/replace/test operations) */
       value?: unknown;
     };
+    /**
+     * @description JSON Patch operation type per RFC 6902
+     * @enum {string}
+     */
+    JsonPatchOperationType: 'Add' | 'Remove' | 'Replace' | 'Move' | 'Copy' | 'Test';
     /**
      * @description Musical mode/scale type for key signatures
      * @enum {string}
@@ -21810,9 +21837,9 @@ export interface components {
       /** @description Total number of matching scenes */
       total: number;
       /** @description Current offset */
-      offset?: number;
+      offset: number;
       /** @description Applied limit */
-      limit?: number;
+      limit: number;
     };
     /** @description Request to list all registered schemas for a namespace */
     ListSchemasRequest: {
@@ -21912,6 +21939,11 @@ export interface components {
       gameServiceId: string;
       /** @description Optional filter by status category */
       category?: components['schemas']['StatusCategory'] | null;
+      /**
+       * @description Whether to include deprecated templates in results
+       * @default false
+       */
+      includeDeprecated: boolean;
       /**
        * @description Page number (one-indexed)
        * @default 1
@@ -22183,18 +22215,18 @@ export interface components {
       /** @description Human-readable name */
       displayName?: string | null;
       /** @description Whether this version is pinned */
-      pinned?: boolean;
+      pinned: boolean;
       /** @description Checkpoint name if pinned */
       checkpointName?: string | null;
       /**
        * Format: date-time
        * @description Save timestamp
        */
-      createdAt?: string;
-      /** @description Custom metadata */
+      createdAt: string;
+      /** @description Custom metadata (null if none set) */
       metadata?: {
         [key: string]: string;
-      };
+      } | null;
     };
     /** @description Complete location data returned from API operations */
     LocationResponse: {
@@ -22452,6 +22484,8 @@ export interface components {
     };
     /**
      * @description Types of marker nodes for spawn points, waypoints, and other positional markers.
+     *     DESIGN_DECISION: Whether this should be an opaque string instead of enum
+     *     (game-content codes vary per deployment). Tracked for future evaluation.
      * @enum {string}
      */
     MarkerType:
@@ -22766,18 +22800,16 @@ export interface components {
     };
     /** @description Result of a schema migration operation with version path details */
     MigrateSaveResponse: {
-      /** @description Whether migration succeeded */
-      success: boolean;
       /** @description Original schema version */
       fromSchemaVersion: string;
       /** @description Target schema version */
       toSchemaVersion: string;
       /** @description New version number (null if dry run) */
       newVersionNumber?: number | null;
-      /** @description Migration path applied (list of versions) */
-      migrationPath?: string[];
-      /** @description Non-fatal migration warnings */
-      warnings?: string[];
+      /** @description Migration path applied (list of versions, null if dry run failed) */
+      migrationPath?: string[] | null;
+      /** @description Non-fatal migration warnings (null if none) */
+      warnings?: string[] | null;
     };
     /** @description Details of a single relationship that failed to migrate */
     MigrationError: {
@@ -24554,16 +24586,14 @@ export interface components {
       limit: number;
       /**
        * @description Sort field
-       * @default created_at
-       * @enum {string}
+       * @default CreatedAt
        */
-      sortBy: 'created_at' | 'size' | 'version_number';
+      sortBy: components['schemas']['SaveSortField'];
       /**
        * @description Sort order
-       * @default desc
-       * @enum {string}
+       * @default Desc
        */
-      sortOrder: 'asc' | 'desc';
+      sortOrder: components['schemas']['SortOrder'];
     };
     /** @description Paginated results from a save query operation */
     QuerySavesResponse: {
@@ -24946,28 +24976,28 @@ export interface components {
      * @enum {string}
      */
     RealmEventCategory:
-      | 'FOUNDING'
-      | 'WAR'
-      | 'TREATY'
-      | 'CATACLYSM'
-      | 'DISCOVERY'
-      | 'MIGRATION'
-      | 'CULTURAL_SHIFT'
-      | 'ECONOMIC_CHANGE'
-      | 'POLITICAL_UPHEAVAL';
+      | 'Founding'
+      | 'War'
+      | 'Treaty'
+      | 'Cataclysm'
+      | 'Discovery'
+      | 'Migration'
+      | 'CulturalShift'
+      | 'EconomicChange'
+      | 'PoliticalUpheaval';
     /**
      * @description How the realm participated in the historical event
      * @enum {string}
      */
     RealmEventRole:
-      | 'ORIGIN'
-      | 'AGGRESSOR'
-      | 'DEFENDER'
-      | 'MEDIATOR'
-      | 'AFFECTED'
-      | 'BENEFICIARY'
-      | 'INSTIGATOR'
-      | 'NEUTRAL_PARTY';
+      | 'Origin'
+      | 'Aggressor'
+      | 'Defender'
+      | 'Mediator'
+      | 'Affected'
+      | 'Beneficiary'
+      | 'Instigator'
+      | 'NeutralParty';
     /** @description Record of a realm's participation in a historical event */
     RealmHistoricalParticipation: {
       /**
@@ -25048,21 +25078,16 @@ export interface components {
      * @enum {string}
      */
     RealmLoreElementType:
-      | 'ORIGIN_MYTH'
-      | 'CULTURAL_PRACTICE'
-      | 'POLITICAL_SYSTEM'
-      | 'ECONOMIC_BASE'
-      | 'RELIGIOUS_TRADITION'
-      | 'GEOGRAPHIC_FEATURE'
-      | 'FAMOUS_FIGURE'
-      | 'TECHNOLOGICAL_LEVEL';
+      | 'OriginMyth'
+      | 'CulturalPractice'
+      | 'PoliticalSystem'
+      | 'EconomicBase'
+      | 'ReligiousTradition'
+      | 'GeographicFeature'
+      | 'FamousFigure'
+      | 'TechnologicalLevel';
     /** @description Complete lore data for a realm */
     RealmLoreResponse: {
-      /**
-       * Format: uuid
-       * @description ID of the realm this lore belongs to
-       */
-      realmId: string;
       /** @description All lore elements for this realm */
       elements: components['schemas']['RealmLoreElement'][];
       /**
@@ -25087,9 +25112,9 @@ export interface components {
       /** @description Number of results per page */
       pageSize: number;
       /** @description Whether there are more results after this page */
-      hasNextPage?: boolean;
+      hasNextPage: boolean;
       /** @description Whether there are results before this page */
-      hasPreviousPage?: boolean;
+      hasPreviousPage: boolean;
     };
     /** @description Request to recover a deleted document from the trashcan */
     RecoverDocumentRequest: {
@@ -25828,7 +25853,7 @@ export interface components {
       /** @description The resolved scene content */
       scene: components['schemas']['Scene'];
       /** @description Depth level of this reference */
-      depth?: number;
+      depth: number;
     };
     /**
      * @description Base schema for all resource archives that can be stored in
@@ -26087,12 +26112,12 @@ export interface components {
        */
       estimatedFullSizeBytes: number;
       /** @description Number of deltas in chain to base snapshot */
-      chainLength?: number;
+      chainLength: number;
       /**
        * Format: double
        * @description Storage savings vs full snapshot (0-1)
        */
-      compressionSavings?: number;
+      compressionSavings: number;
       /**
        * Format: date-time
        * @description When the delta version was created
@@ -26169,7 +26194,7 @@ export interface components {
        */
       compressionRatio?: number;
       /** @description Whether version was pinned */
-      pinned?: boolean;
+      pinned: boolean;
       /** @description Checkpoint name if pinned */
       checkpointName?: string | null;
       /** @description Pre-signed URL to retrieve thumbnail (if provided) */
@@ -26178,7 +26203,7 @@ export interface components {
        * @description True if this save overwrote a version from a different device.
        *     Only relevant when deviceId is used for cloud sync.
        */
-      conflictDetected?: boolean;
+      conflictDetected: boolean;
       /** @description Device ID of the overwritten version (if conflict) */
       conflictingDeviceId?: string | null;
       /** @description Version number that was overwritten (if conflict) */
@@ -26189,13 +26214,18 @@ export interface components {
        */
       createdAt: string;
       /** @description Number of old versions cleaned up by rolling policy */
-      versionsCleanedUp?: number;
+      versionsCleanedUp: number;
       /**
        * @description True if async upload is enabled and data is queued for MinIO upload.
        *     Save is immediately loadable from Redis cache, but not yet durable.
        */
-      uploadPending?: boolean;
+      uploadPending: boolean;
     };
+    /**
+     * @description Field to sort save query results by
+     * @enum {string}
+     */
+    SaveSortField: 'CreatedAt' | 'Size' | 'VersionNumber';
     /**
      * @description Primary gameplay category for a scenario template
      * @enum {string}
@@ -26611,7 +26641,7 @@ export interface components {
       /** @description Root node of the scene hierarchy */
       root: components['schemas']['SceneNode'];
       /** @description Searchable tags for filtering scenes */
-      tags?: string[];
+      tags?: string[] | null;
       /** @description Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
@@ -26620,12 +26650,12 @@ export interface components {
        * Format: date-time
        * @description When the scene was first created
        */
-      createdAt?: string;
+      createdAt: string;
       /**
        * Format: date-time
        * @description When the scene was last modified
        */
-      updatedAt?: string;
+      updatedAt: string;
     };
     /**
      * @description Type of scene editor for polymorphic identification per FOUNDATION TENETS.
@@ -26663,7 +26693,7 @@ export interface components {
       /** @description Optional asset binding (mesh, sound, particle effect) */
       asset?: components['schemas']['AssetReference'];
       /** @description Child nodes in the hierarchy */
-      children?: components['schemas']['SceneNode'][];
+      children?: components['schemas']['SceneNode'][] | null;
       /**
        * @description Whether this node is active in the scene definition
        * @default true
@@ -26675,7 +26705,7 @@ export interface components {
        */
       sortOrder: number;
       /** @description Arbitrary tags for consumer filtering (e.g., entrance, spawn, interactive) */
-      tags?: string[];
+      tags?: string[] | null;
       /** @description Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention. */
       annotations?: {
         [key: string]: unknown;
@@ -26684,12 +26714,12 @@ export interface components {
        * @description Predefined locations for attaching child objects.
        *     Used by Scene Composer for furniture decoration, wall accessories, etc.
        */
-      attachmentPoints?: components['schemas']['AttachmentPoint'][];
+      attachmentPoints?: components['schemas']['AttachmentPoint'][] | null;
       /**
        * @description Interaction capabilities of this node.
        *     Used by AI navigation and character controllers.
        */
-      affordances?: components['schemas']['Affordance'][];
+      affordances?: components['schemas']['Affordance'][] | null;
       /**
        * @description Procedural asset swapping configuration.
        *     Defines which assets can substitute for this node's asset.
@@ -26740,25 +26770,27 @@ export interface components {
       /** @description Current version */
       version: string;
       /** @description Scene tags */
-      tags?: string[];
+      tags?: string[] | null;
       /** @description Total number of nodes in scene */
-      nodeCount?: number;
+      nodeCount: number;
       /**
        * Format: date-time
        * @description Creation timestamp
        */
-      createdAt?: string;
+      createdAt: string;
       /**
        * Format: date-time
        * @description Last update timestamp
        */
-      updatedAt?: string;
+      updatedAt: string;
       /** @description Whether scene is currently checked out */
-      isCheckedOut?: boolean;
+      isCheckedOut: boolean;
     };
     /**
      * @description Scene classification for querying and validation rule lookup.
      *     Different types may have different validation requirements per game.
+     *     DESIGN_DECISION: Whether this should be an opaque string instead of enum
+     *     (game-content codes vary per deployment). Tracked for future evaluation.
      * @enum {string}
      */
     SceneType:
@@ -26786,7 +26818,7 @@ export interface components {
       /** @description Previous version */
       previousVersion?: string | null;
       /** @description Whether migration script is registered */
-      hasMigration?: boolean;
+      hasMigration: boolean;
       /**
        * Format: date-time
        * @description Registration timestamp
@@ -27497,20 +27529,20 @@ export interface components {
       /** @description Save category determining retention and cleanup behavior */
       category: components['schemas']['SaveCategory'];
       /** @description Maximum versions to retain */
-      maxVersions?: number;
+      maxVersions: number;
       /** @description Days to retain versions (null = indefinite) */
       retentionDays?: number | null;
       /** @description Compression algorithm used for save data */
-      compressionType?: components['schemas']['CompressionType'];
+      compressionType: components['schemas']['CompressionType'];
       /** @description Current number of versions in slot */
-      versionCount?: number;
+      versionCount: number;
       /** @description Latest version number (null if empty) */
       latestVersion?: number | null;
       /**
        * Format: int64
        * @description Total storage used by all versions
        */
-      totalSizeBytes?: number;
+      totalSizeBytes: number;
       /**
        * Format: date-time
        * @description Slot creation timestamp
@@ -27520,11 +27552,11 @@ export interface components {
        * Format: date-time
        * @description Last modification timestamp
        */
-      updatedAt?: string;
-      /** @description Custom key-value metadata */
+      updatedAt: string;
+      /** @description Custom key-value metadata (null if none set) */
       metadata?: {
         [key: string]: string;
-      };
+      } | null;
     };
     /**
      * @description Sort direction for query results
@@ -27668,7 +27700,7 @@ export interface components {
       /** @description Number of new watchers started */
       watchersStarted: number;
       /** @description Number of watchers that already existed */
-      watchersExisted?: number;
+      watchersExisted: number;
       /** @description All watchers now active for this realm */
       watchers: components['schemas']['WatcherInfo'][];
     };
@@ -27759,7 +27791,7 @@ export interface components {
        * @description When this status expires (null for permanent)
        */
       expiresAt?: string | null;
-      /** @description Arbitrary metadata associated with this status instance */
+      /** @description Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -27834,6 +27866,15 @@ export interface components {
        * @description Asset identifier for this status effect's icon
        */
       iconAssetId?: string | null;
+      /** @description Whether this template is deprecated and unavailable for new grants */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When this template was deprecated (null if not deprecated)
+       */
+      deprecatedAt?: string | null;
+      /** @description Why this template was deprecated (null if not deprecated) */
+      deprecationReason?: string | null;
       /**
        * Format: date-time
        * @description When this template was created
@@ -27881,11 +27922,8 @@ export interface components {
        */
       watcherId: string;
     };
-    /** @description Response after stopping a watcher */
-    StopWatcherResponse: {
-      /** @description True if the watcher was found and stopped */
-      stopped: boolean;
-    };
+    /** @description Empty response. HTTP 200 confirms the watcher was stopped. HTTP 404 if watcher not found. */
+    StopWatcherResponse: Record<string, never>;
     /**
      * @description How layer data should be stored
      * @default Cached
@@ -29023,6 +29061,14 @@ export interface components {
        * @description The game service scope. Null for cross-game seed types.
        */
       gameServiceId?: string | null;
+    };
+    /** @description Request to undeprecate a status template (Category A -- reversible) */
+    UndeprecateStatusTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Status template to undeprecate
+       */
+      statusTemplateId: string;
     };
     /** @description Request to unlock a contract from guardian custody */
     UnlockContractRequest: {
@@ -30547,19 +30593,19 @@ export interface components {
       /** @description Rule-specific configuration */
       config?: components['schemas']['ValidationRuleConfig'];
     };
-    /** @description Configuration for a validation rule */
+    /** @description Configuration for a validation rule (fields are conditional on rule type) */
     ValidationRuleConfig: {
-      /** @description Filter to nodes of this type (for require_tag) */
-      nodeType?: string | null;
+      /** @description Filter to nodes of this type (for RequireTag, RequireNodeType) */
+      nodeType?: components['schemas']['NodeType'];
       /** @description Tag to check for */
       tag?: string | null;
       /** @description Minimum occurrences required */
       minCount?: number | null;
       /** @description Maximum occurrences allowed */
       maxCount?: number | null;
-      /** @description JSONPath to required annotation field (for require_annotation) */
+      /** @description JSONPath to required annotation field (for RequireAnnotation) */
       annotationPath?: string | null;
-      /** @description Custom validation expression (for custom_expression) */
+      /** @description Custom validation expression (for CustomExpression) */
       expression?: string | null;
     };
     /**
@@ -30649,7 +30695,7 @@ export interface components {
       /** @description Version that was verified */
       versionNumber: number;
       /** @description Expected SHA-256 hash */
-      expectedHash?: string;
+      expectedHash: string;
       /** @description Actual hash (null if data unavailable) */
       actualHash?: string | null;
       /** @description Error details if verification failed */
@@ -30669,7 +30715,7 @@ export interface components {
       /** @description Summary of changes */
       changesSummary?: string | null;
       /** @description Node count at this version */
-      nodeCount?: number;
+      nodeCount: number;
     };
     /** @description Metadata for a single save version including size and checkpoint info */
     VersionResponse: {
@@ -30677,9 +30723,9 @@ export interface components {
       versionNumber: number;
       /**
        * Format: uuid
-       * @description Reference to asset in lib-asset
+       * @description Reference to asset in lib-asset (null if not yet uploaded to MinIO)
        */
-      assetId?: string;
+      assetId?: string | null;
       /** @description SHA-256 hash */
       contentHash: string;
       /**
@@ -30697,7 +30743,7 @@ export interface components {
       /** @description Human-readable name */
       displayName?: string | null;
       /** @description Whether version is pinned */
-      pinned?: boolean;
+      pinned: boolean;
       /** @description Checkpoint name if pinned */
       checkpointName?: string | null;
       /**
@@ -30705,10 +30751,10 @@ export interface components {
        * @description Creation timestamp
        */
       createdAt: string;
-      /** @description Custom metadata */
+      /** @description Custom metadata (null if none set) */
       metadata?: {
         [key: string]: string;
-      };
+      } | null;
     };
     /** @description Record of a knowing obligation violation by a character */
     ViolationRecord: {
@@ -30891,7 +30937,10 @@ export interface components {
       startedAt: string;
       /** @description Behavior document reference this watcher uses */
       behaviorRef?: string | null;
-      /** @description Actor instance ID running this watcher's behavior */
+      /**
+       * Format: uuid
+       * @description Actor instance ID running this watcher's behavior
+       */
       actorId?: string | null;
     };
     /**
@@ -42887,9 +42936,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['DiscardResponse'];
-        };
+        content?: never;
       };
       /** @description Invalid checkout token */
       403: {
@@ -42929,7 +42976,7 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Checkout expired */
+      /** @description Checkout expired or extension limit reached */
       409: {
         headers: {
           [name: string]: unknown;
@@ -43850,6 +43897,104 @@ export interface operations {
       };
     };
   };
+  status_deprecateStatusTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateStatusTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Status template deprecated (or already deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StatusTemplateResponse'];
+        };
+      };
+      /** @description Status template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  status_undeprecateStatusTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UndeprecateStatusTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Status template undeprecated (or was not deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StatusTemplateResponse'];
+        };
+      };
+      /** @description Status template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  status_deleteStatusTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteStatusTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Status template deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Template is not deprecated (must deprecate before deleting) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Status template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   status_grantStatus: {
     parameters: {
       query?: never;
@@ -44090,30 +44235,6 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SeedEffectsResponse'];
-        };
-      };
-    };
-  };
-  status_cleanupByOwner: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CleanupByOwnerRequest'];
-      };
-    };
-    responses: {
-      /** @description Cleanup completed successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CleanupResponse'];
         };
       };
     };

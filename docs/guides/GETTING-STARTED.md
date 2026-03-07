@@ -644,7 +644,8 @@ make test              # Run unit tests
      post:
        operationId: newEndpoint
        summary: Does something new
-       x-permissions: [user]
+       x-permissions:
+         - role: user
        requestBody:
          content:
            application/json:

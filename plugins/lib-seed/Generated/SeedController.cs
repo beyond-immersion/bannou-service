@@ -39,9 +39,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Creates a new seed bound to the specified owner. The seed type must be registered and the owner type must be allowed by the seed type definition. Returns conflict if creating this seed would exceed the type's MaxPerOwner limit.
     /// </remarks>
 
+
+
     /// <returns>Seed created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> CreateSeedAsync(CreateSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> CreateSeed(CreateSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get seed by ID
@@ -51,9 +54,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns the seed entity with current growth phase and summary data.
     /// </remarks>
 
+
+
     /// <returns>Seed found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> GetSeedAsync(GetSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> GetSeed(GetSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get seeds by owner ID and type
@@ -63,9 +69,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns all seeds owned by the specified entity. Optionally filter by seed type code and status.
     /// </remarks>
 
+
+
     /// <returns>Seeds found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeedsResponse>> GetSeedsByOwnerAsync(GetSeedsByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeedsResponse>> GetSeedsByOwner(GetSeedsByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List seeds with filtering
@@ -75,9 +84,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns seeds matching the specified filters. Supports filtering by seed type, owner type, growth phase, status, and game service.
     /// </remarks>
 
+
+
     /// <returns>Seeds returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeedsResponse>> ListSeedsAsync(ListSeedsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeedsResponse>> ListSeeds(ListSeedsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update seed metadata or display name
@@ -87,9 +99,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Updates mutable fields of a seed. Cannot change owner or seed type.
     /// </remarks>
 
+
+
     /// <returns>Seed updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> UpdateSeedAsync(UpdateSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> UpdateSeed(UpdateSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Set a seed as active
@@ -99,9 +114,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Activates the specified seed. Only one seed of a given type can be active per owner at a time. Deactivates any previously active seed of the same type.
     /// </remarks>
 
+
+
     /// <returns>Seed activated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> ActivateSeedAsync(ActivateSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> ActivateSeed(ActivateSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Archive a seed
@@ -111,9 +129,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Soft-deletes a seed, preserving its data but removing it from active rotation. Archived seeds do not count toward the MaxPerOwner limit. Cannot archive an active seed.
     /// </remarks>
 
+
+
     /// <returns>Seed archived</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> ArchiveSeedAsync(ArchiveSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> ArchiveSeed(ArchiveSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get full growth domain map
@@ -123,9 +144,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns the complete growth domain map for a seed, including all top-level and sub-domain entries with their current depth values.
     /// </remarks>
 
+
+
     /// <returns>Growth data returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthResponse>> GetGrowthAsync(GetGrowthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthResponse>> GetGrowth(GetGrowthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Record growth in a domain
@@ -135,9 +159,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Records growth in a specific domain for a seed. Primarily called internally by consuming services after processing game events. Triggers capability manifest recomputation if thresholds are crossed.
     /// </remarks>
 
+
+
     /// <returns>Growth recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthResponse>> RecordGrowthAsync(RecordGrowthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthResponse>> RecordGrowth(RecordGrowthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Record growth across multiple domains atomically
@@ -147,9 +174,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Records growth across multiple domains in a single atomic operation. Useful when a single game event contributes to multiple domains simultaneously.
     /// </remarks>
 
+
+
     /// <returns>Growth recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthResponse>> RecordGrowthBatchAsync(RecordGrowthBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthResponse>> RecordGrowthBatch(RecordGrowthBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current growth phase
@@ -159,9 +189,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns the current computed growth phase for the seed, based on the seed type's configured phase thresholds.
     /// </remarks>
 
+
+
     /// <returns>Phase returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthPhaseResponse>> GetGrowthPhaseAsync(GetGrowthPhaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthPhaseResponse>> GetGrowthPhase(GetGrowthPhaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current capability manifest
@@ -171,9 +204,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns the most recently computed capability manifest for the seed. Consumers interpret what capabilities mean (UX modules, spawning permissions, faction actions, etc.).
     /// </remarks>
 
+
+
     /// <returns>Manifest returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CapabilityManifestResponse>> GetCapabilityManifestAsync(GetCapabilityManifestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CapabilityManifestResponse>> GetCapabilityManifest(GetCapabilityManifestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Register a new seed type definition
@@ -183,9 +219,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Registers a seed type with its growth phase definitions, capability rules, bond cardinality, and owner type restrictions. Seed types are scoped to game services.
     /// </remarks>
 
+
+
     /// <returns>Seed type registered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> RegisterSeedTypeAsync(RegisterSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> RegisterSeedType(RegisterSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get seed type definition
@@ -195,9 +234,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns the full seed type definition including phases and capability rules.
     /// </remarks>
 
+
+
     /// <returns>Seed type found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> GetSeedTypeAsync(GetSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> GetSeedType(GetSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List registered seed types
@@ -207,9 +249,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns all seed types registered for the specified game service.
     /// </remarks>
 
+
+
     /// <returns>Seed types returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeedTypesResponse>> ListSeedTypesAsync(ListSeedTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeedTypesResponse>> ListSeedTypes(ListSeedTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update seed type definition
@@ -219,9 +264,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Updates a seed type definition. Changes to phase thresholds or capability rules trigger recomputation for all seeds of this type.
     /// </remarks>
 
+
+
     /// <returns>Seed type updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> UpdateSeedTypeAsync(UpdateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> UpdateSeedType(UpdateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate a seed type
@@ -231,9 +279,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.
     /// </remarks>
 
+
+
     /// <returns>Seed type deprecated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> DeprecateSeedTypeAsync(DeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> DeprecateSeedType(DeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore a deprecated seed type
@@ -243,9 +294,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Removes deprecated status from a seed type, allowing new seeds of this type to be created again.
     /// </remarks>
 
+
+
     /// <returns>Seed type restored</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> UndeprecateSeedTypeAsync(UndeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> UndeprecateSeedType(UndeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a seed type
@@ -255,9 +309,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.
     /// </remarks>
 
+
+
     /// <returns>Seed type deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteSeedTypeAsync(DeleteSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteSeedType(DeleteSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Begin bond process between seeds
@@ -267,9 +324,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Initiates a bond between seeds of the same type. All participants must confirm for the bond to become active. Returns conflict if any participant already has a bond and the type's cardinality is 1.
     /// </remarks>
 
+
+
     /// <returns>Bond initiated, awaiting confirmation</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> InitiateBondAsync(InitiateBondRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> InitiateBond(InitiateBondRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Confirm a pending bond
@@ -279,9 +339,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Confirms a pending bond. When all participants have confirmed, the bond becomes active. Bond permanence is determined by the seed type.
     /// </remarks>
 
+
+
     /// <returns>Bond confirmed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> ConfirmBondAsync(ConfirmBondRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> ConfirmBond(ConfirmBondRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get bond by ID
@@ -291,9 +354,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns the bond record with all participants and status.
     /// </remarks>
 
+
+
     /// <returns>Bond found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> GetBondAsync(GetBondRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> GetBond(GetBondRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get bond for a specific seed
@@ -303,9 +369,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns the bond that the specified seed participates in, if any.
     /// </remarks>
 
+
+
     /// <returns>Bond found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> GetBondForSeedAsync(GetBondForSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> GetBondForSeed(GetBondForSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get partner seed(s) public info
@@ -315,15 +384,18 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns public information about the other seeds in the bond.
     /// </remarks>
 
+
+
     /// <returns>Partners returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondPartnersResponse>> GetBondPartnersAsync(GetBondPartnersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondPartnersResponse>> GetBondPartners(GetBondPartnersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ISeedService))]
+public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase, ISeedController
 {
     private ISeedService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

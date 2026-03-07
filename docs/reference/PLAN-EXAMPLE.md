@@ -1,5 +1,7 @@
 # Example Plan: Implement Seed Service (L2 Game Foundation)
 
+> ⛔ **FROZEN DOCUMENT** — Defines an authoritative reference example. AI agents MUST NOT modify any content without explicit user instruction. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Why this exists**: This is a real implementation plan preserved as a reference example. It demonstrates the expected structure, level of detail, and patterns for planning a new Bannou service from scratch. The Seed service was chosen because it exercises nearly every common pattern: schema-first development, state stores, events, configuration, bonds/relationships, distributed locks, caching, and unit tests.
 
 ## Context
@@ -20,10 +22,10 @@ This is the foundational growth primitive described in the [Seed System Guide](.
 
 #### 1a. `schemas/seed-api.yaml`
 - Write from the endpoint specifications below
-- **Fix x-permissions format**: Translate planning doc shorthand to actual format:
-  - `[authenticated]` → `- role: user` + `states: {}`
-  - `[developer]` → `- role: developer` + `states: {}`
-  - `[internal]` → `- role: developer` + `states: {}` (service-to-service calls bypass permissions; developer allows testing)
+- **Fix x-permissions format**: Translate planning doc shorthand to actual format per [ENDPOINT-PERMISSION-GUIDELINES.md](../reference/ENDPOINT-PERMISSION-GUIDELINES.md):
+  - `[authenticated]` → `- role: user`
+  - `[developer]` → `- role: developer`
+  - `[internal]` → `x-permissions: []` (service-to-service only — no WebSocket access)
 - Header: `x-service-layer: GameFoundation`, `servers: [{ url: http://localhost:5012 }]`
 - 22 POST endpoints across seed CRUD, growth, capabilities, types, and bonds
 - All component schemas from the draft (enums, requests, responses)

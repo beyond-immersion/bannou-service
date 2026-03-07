@@ -38,7 +38,8 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Location retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> GetLocationAsync(GetLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> GetLocation(GetLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get location by code and realm
@@ -48,9 +49,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// Retrieve a location using its unique code within a specific realm
     /// </remarks>
 
+
+
     /// <returns>Location retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> GetLocationByCodeAsync(GetLocationByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> GetLocationByCode(GetLocationByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List locations with filtering
@@ -60,9 +64,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// Retrieve locations with optional realm, parent, and type filtering
     /// </remarks>
 
+
+
     /// <returns>Locations retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListLocationsAsync(ListLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListLocations(ListLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all locations in a realm (primary query pattern)
@@ -74,9 +81,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>realm-scoped location queries.
     /// </remarks>
 
+
+
     /// <returns>Locations retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListLocationsByRealmAsync(ListLocationsByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListLocationsByRealm(ListLocationsByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get child locations for a parent location
@@ -87,9 +97,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>Useful for getting all cities in a region, all buildings in a city, etc.
     /// </remarks>
 
+
+
     /// <returns>Child locations retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListLocationsByParentAsync(ListLocationsByParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListLocationsByParent(ListLocationsByParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get root locations in a realm
@@ -100,9 +113,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>These are typically regions or major areas within the realm.
     /// </remarks>
 
+
+
     /// <returns>Root locations retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListRootLocationsAsync(ListRootLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListRootLocations(ListRootLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get all ancestors of a location
@@ -114,9 +130,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>might return [district, city, region].
     /// </remarks>
 
+
+
     /// <returns>Ancestors retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> GetLocationAncestorsAsync(GetLocationAncestorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> GetLocationAncestors(GetLocationAncestorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Validate location against territory boundaries
@@ -131,9 +150,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>- inclusive: Location MUST be within at least one territory location (or descendants)
     /// </remarks>
 
+
+
     /// <returns>Territory validation result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTerritoryResponse>> ValidateTerritoryAsync(ValidateTerritoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTerritoryResponse>> ValidateTerritory(ValidateTerritoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get all descendants of a location
@@ -145,9 +167,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>within a region or city.
     /// </remarks>
 
+
+
     /// <returns>Descendants retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> GetLocationDescendantsAsync(GetLocationDescendantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> GetLocationDescendants(GetLocationDescendantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create new location
@@ -156,7 +181,8 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Location created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> CreateLocationAsync(CreateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> CreateLocation(CreateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update location
@@ -165,7 +191,8 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Location updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> UpdateLocationAsync(UpdateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> UpdateLocation(UpdateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Set or change the parent of a location
@@ -179,9 +206,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>- Updates depth for location and all descendants
     /// </remarks>
 
+
+
     /// <returns>Parent updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> SetLocationParentAsync(SetLocationParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> SetLocationParent(SetLocationParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove parent from a location (make it a root location)
@@ -192,9 +222,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>within its realm. Updates depth for location and all descendants.
     /// </remarks>
 
+
+
     /// <returns>Parent removed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> RemoveLocationParentAsync(RemoveLocationParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> RemoveLocationParent(RemoveLocationParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete location
@@ -208,9 +241,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>then delete.
     /// </remarks>
 
+
+
     /// <returns>Location deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteLocationAsync(DeleteLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteLocation(DeleteLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Transfer a location to a different realm
@@ -224,9 +260,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>Does NOT move children — caller is responsible for tree ordering.
     /// </remarks>
 
+
+
     /// <returns>Location transferred successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> TransferLocationToRealmAsync(TransferLocationToRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> TransferLocationToRealm(TransferLocationToRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate a location
@@ -240,9 +279,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>- Can be hard-deleted after all references are removed
     /// </remarks>
 
+
+
     /// <returns>Location deprecated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> DeprecateLocationAsync(DeprecateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> DeprecateLocation(DeprecateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore a deprecated location
@@ -253,9 +295,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>available for entity placement again.
     /// </remarks>
 
+
+
     /// <returns>Location restored successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> UndeprecateLocationAsync(UndeprecateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> UndeprecateLocation(UndeprecateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if location exists and is active
@@ -266,9 +311,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>Returns true if location exists and is not deprecated, false otherwise.
     /// </remarks>
 
+
+
     /// <returns>Validation result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationExistsResponse>> LocationExistsAsync(LocationExistsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationExistsResponse>> LocationExists(LocationExistsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Find locations containing a spatial position
@@ -281,9 +329,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>location if it falls within the location's axis-aligned bounding box.
     /// </remarks>
 
+
+
     /// <returns>Locations containing the position</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> QueryLocationsByPositionAsync(QueryLocationsByPositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> QueryLocationsByPosition(QueryLocationsByPositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Seed locations from configuration
@@ -296,9 +347,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>Typically called at service startup with YAML-defined location hierarchies.
     /// </remarks>
 
+
+
     /// <returns>Seed operation completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedLocationsResponse>> SeedLocationsAsync(SeedLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedLocationsResponse>> SeedLocations(SeedLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Report entity presence at a location
@@ -315,9 +369,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>If omitted, the service reads the current value to detect location changes.
     /// </remarks>
 
+
+
     /// <returns>Position reported successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReportEntityPositionResponse>> ReportEntityPositionAsync(ReportEntityPositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReportEntityPositionResponse>> ReportEntityPosition(ReportEntityPositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get the current location of an entity
@@ -328,9 +385,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>non-expired presence binding exists.
     /// </remarks>
 
+
+
     /// <returns>Entity location query result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEntityLocationResponse>> GetEntityLocationAsync(GetEntityLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEntityLocationResponse>> GetEntityLocation(GetEntityLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List entities currently at a location
@@ -342,9 +402,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>presence store for reporting metadata.
     /// </remarks>
 
+
+
     /// <returns>Entity list for the location</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListEntitiesAtLocationResponse>> ListEntitiesAtLocationAsync(ListEntitiesAtLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListEntitiesAtLocationResponse>> ListEntitiesAtLocation(ListEntitiesAtLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove entity presence from its current location
@@ -355,9 +418,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>Publishes a departure event if the entity was present at a location.
     /// </remarks>
 
+
+
     /// <returns>Entity position cleared</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ClearEntityPositionResponse>> ClearEntityPositionAsync(ClearEntityPositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ClearEntityPositionResponse>> ClearEntityPosition(ClearEntityPositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get location base data for compression
@@ -369,15 +435,18 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     /// <br/>Returns BadRequest if location is not deprecated - only deprecated locations can be compressed.
     /// </remarks>
 
+
+
     /// <returns>Location base data returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationBaseArchive>> GetLocationCompressDataAsync(GetLocationCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationBaseArchive>> GetLocationCompressData(GetLocationCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ILocationService))]
+public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBase, ILocationController
 {
     private ILocationService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

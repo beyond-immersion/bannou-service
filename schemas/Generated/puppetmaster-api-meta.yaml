@@ -48,13 +48,11 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PuppetmasterStatusResponse\"\
         ,\n    \"$defs\": {\n        \"PuppetmasterStatusResponse\": {\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"description\": \"Service status and statistics\",\n            \"required\"\
-        : [\n                \"cachedBehaviorCount\",\n                \"activeWatcherCount\",\n                \"isHealthy\"\
-        \n            ],\n            \"properties\": {\n                \"cachedBehaviorCount\": {\n                    \"\
-        type\": \"integer\",\n                    \"description\": \"Number of behavior documents currently cached\"\n   \
-        \             },\n                \"activeWatcherCount\": {\n                    \"type\": \"integer\",\n        \
-        \            \"description\": \"Number of active regional watcher instances\"\n                },\n              \
-        \  \"isHealthy\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Overall service
-        health status\"\n                }\n            }\n        }\n    }\n}"
+        : [\n                \"cachedBehaviorCount\",\n                \"activeWatcherCount\"\n            ],\n          \
+        \  \"properties\": {\n                \"cachedBehaviorCount\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"description\": \"Number of behavior documents currently cached\"\n                },\n       \
+        \         \"activeWatcherCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of active regional watcher instances\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get service status and statistics\",\n    \"description\": \"Returns health
         status, cached behavior count, and active watcher count.\",\n    \"tags\": [\n        \"Puppetmaster\"\n    ],\n \
         \   \"deprecated\": false,\n    \"operationId\": \"getStatus\"\n}"
@@ -145,8 +143,8 @@ paths:
         \n                },\n                \"behaviorRef\": {\n                    \"type\": \"string\",\n            \
         \        \"nullable\": true,\n                    \"description\": \"Behavior document reference this watcher uses\"\
         \n                },\n                \"actorId\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Actor instance ID running this watcher's behavior\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Actor
+        instance ID running this watcher's behavior\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List active regional watchers\",\n    \"description\": \"Returns all currently
         active regional watcher instances.\",\n    \"tags\": [\n        \"Watchers\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"listWatchers\"\n}"
@@ -206,8 +204,9 @@ paths:
         : \"When this watcher was started\"\n                },\n                \"behaviorRef\": {\n                    \"\
         type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Behavior document
         reference this watcher uses\"\n                },\n                \"actorId\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Actor instance ID running
-        this watcher's behavior\"\n                }\n            }\n        }\n    }\n}"
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Actor instance ID running this watcher's behavior\"\n                }\n            }\n    \
+        \    }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Manually start a regional watcher\",\n    \"description\": \"Starts a regional
         watcher for the specified realm with the given behavior.\\nIf a watcher already exists for this realm and watcher
         type, returns the existing watcher.\\n\",\n    \"tags\": [\n        \"Watchers\"\n    ],\n    \"deprecated\": false,\n\
@@ -242,10 +241,8 @@ paths:
         : \"ID of the watcher to stop\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StopWatcherResponse\"\
         ,\n    \"$defs\": {\n        \"StopWatcherResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response after stopping a watcher\",\n            \"required\": [\n     \
-        \           \"stopped\"\n            ],\n            \"properties\": {\n                \"stopped\": {\n         \
-        \           \"type\": \"boolean\",\n                    \"description\": \"True if the watcher was found and stopped\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Empty response. HTTP 200 confirms the watcher was stopped. HTTP 404 if watcher
+        not found.\",\n            \"properties\": {}\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Stop a regional watcher\",\n    \"description\": \"Stops an active regional
         watcher by its ID.\",\n    \"tags\": [\n        \"Watchers\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"stopWatcher\"\n}"
@@ -283,29 +280,30 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartWatchersForRealmResponse\"\
         ,\n    \"$defs\": {\n        \"StartWatchersForRealmResponse\": {\n            \"type\": \"object\",\n           \
         \ \"additionalProperties\": false,\n            \"description\": \"Response after starting watchers for a realm\"\
-        ,\n            \"required\": [\n                \"watchersStarted\",\n                \"watchers\"\n            ],\n\
-        \            \"properties\": {\n                \"watchersStarted\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Number of new watchers started\"\n                },\n                \"\
-        watchersExisted\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of
-        watchers that already existed\"\n                },\n                \"watchers\": {\n                    \"type\"\
-        : \"array\",\n                    \"description\": \"All watchers now active for this realm\",\n                 \
-        \   \"items\": {\n                        \"$ref\": \"#/$defs/WatcherInfo\"\n                    }\n             \
-        \   }\n            }\n        },\n        \"WatcherInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Information about an active regional watcher\",\n            \"required\"\
-        : [\n                \"watcherId\",\n                \"realmId\",\n                \"watcherType\",\n            \
-        \    \"startedAt\"\n            ],\n            \"properties\": {\n                \"watcherId\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Unique identifier for this watcher instance\"\n                },\n                \"realmId\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm
-        this watcher monitors\"\n                },\n                \"watcherType\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Type of watcher (e.g., \\\"regional\\\", \\\"dungeon\\\", \\\"event\\\
-        \")\"\n                },\n                \"startedAt\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"date-time\",\n                    \"description\": \"When this watcher was started\"\n \
-        \               },\n                \"behaviorRef\": {\n                    \"type\": \"string\",\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Behavior document reference this watcher uses\"\
-        \n                },\n                \"actorId\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Actor instance ID running this watcher's behavior\"\
-        \n                }\n            }\n        }\n    }\n}"
+        ,\n            \"required\": [\n                \"watchersStarted\",\n                \"watchersExisted\",\n     \
+        \           \"watchers\"\n            ],\n            \"properties\": {\n                \"watchersStarted\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Number of new watchers started\"\
+        \n                },\n                \"watchersExisted\": {\n                    \"type\": \"integer\",\n       \
+        \             \"description\": \"Number of watchers that already existed\"\n                },\n                \"\
+        watchers\": {\n                    \"type\": \"array\",\n                    \"description\": \"All watchers now active
+        for this realm\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/WatcherInfo\"\n \
+        \                   }\n                }\n            }\n        },\n        \"WatcherInfo\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Information about an active
+        regional watcher\",\n            \"required\": [\n                \"watcherId\",\n                \"realmId\",\n \
+        \               \"watcherType\",\n                \"startedAt\"\n            ],\n            \"properties\": {\n \
+        \               \"watcherId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique identifier for this watcher instance\"\n                },\n    \
+        \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Realm this watcher monitors\"\n                },\n                \"watcherType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of watcher (e.g., \\\"\
+        regional\\\", \\\"dungeon\\\", \\\"event\\\")\"\n                },\n                \"startedAt\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this watcher was started\"\n                },\n                \"behaviorRef\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Behavior document
+        reference this watcher uses\"\n                },\n                \"actorId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Actor instance ID running this watcher's behavior\"\n                }\n            }\n    \
+        \    }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Start all relevant watchers for a realm\",\n    \"description\": \"Starts
         all applicable regional watchers for the specified realm.\\nUses configured watcher templates to determine which watchers
         to start.\\n\",\n    \"tags\": [\n        \"Watchers\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -343,7 +341,6 @@ components:
       required:
       - cachedBehaviorCount
       - activeWatcherCount
-      - isHealthy
       properties:
         cachedBehaviorCount:
           type: integer
@@ -351,9 +348,6 @@ components:
         activeWatcherCount:
           type: integer
           description: Number of active regional watcher instances
-        isHealthy:
-          type: boolean
-          description: Overall service health status
     InvalidateBehaviorsResponse:
       type: object
       additionalProperties: false
@@ -407,6 +401,7 @@ components:
           description: Behavior document reference this watcher uses
         actorId:
           type: string
+          format: uuid
           nullable: true
           description: Actor instance ID running this watcher's behavior
     StartWatcherRequest:
@@ -456,13 +451,8 @@ components:
     StopWatcherResponse:
       type: object
       additionalProperties: false
-      description: Response after stopping a watcher
-      required:
-      - stopped
-      properties:
-        stopped:
-          type: boolean
-          description: True if the watcher was found and stopped
+      description: Empty response. HTTP 200 confirms the watcher was stopped. HTTP 404 if watcher not found.
+      properties: {}
     StartWatchersForRealmRequest:
       type: object
       additionalProperties: false
@@ -480,6 +470,7 @@ components:
       description: Response after starting watchers for a realm
       required:
       - watchersStarted
+      - watchersExisted
       - watchers
       properties:
         watchersStarted:

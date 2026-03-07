@@ -40,9 +40,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>Built-in types (COMBAT, TRADE, etc.) cannot be created via this endpoint.
     /// </remarks>
 
+
+
     /// <returns>Encounter type created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeResponse>> CreateEncounterTypeAsync(CreateEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeResponse>> CreateEncounterType(CreateEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get encounter type by code
@@ -52,9 +55,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// Retrieve an encounter type by its unique code.
     /// </remarks>
 
+
+
     /// <returns>Encounter type retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeResponse>> GetEncounterTypeAsync(GetEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeResponse>> GetEncounterType(GetEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all encounter types
@@ -64,9 +70,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// Retrieve all encounter types including built-in and custom types.
     /// </remarks>
 
+
+
     /// <returns>Encounter types retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeListResponse>> ListEncounterTypesAsync(ListEncounterTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeListResponse>> ListEncounterTypes(ListEncounterTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update encounter type
@@ -77,9 +86,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>description and defaultEmotionalImpact updated.
     /// </remarks>
 
+
+
     /// <returns>Encounter type updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeResponse>> UpdateEncounterTypeAsync(UpdateEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeResponse>> UpdateEncounterType(UpdateEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete encounter type
@@ -90,9 +102,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>Types with existing encounters cannot be deleted.
     /// </remarks>
 
+
+
     /// <returns>Encounter type deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteEncounterTypeAsync(DeleteEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteEncounterType(DeleteEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Seed default encounter types
@@ -103,9 +118,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>at service startup, but can be invoked manually to restore defaults.
     /// </remarks>
 
+
+
     /// <returns>Seed operation completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedEncounterTypesResponse>> SeedEncounterTypesAsync(SeedEncounterTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedEncounterTypesResponse>> SeedEncounterTypes(SeedEncounterTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Record new encounter with perspectives
@@ -119,9 +137,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>default values if not specified.
     /// </remarks>
 
+
+
     /// <returns>Encounter recorded successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterResponse>> RecordEncounterAsync(RecordEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterResponse>> RecordEncounter(RecordEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get character's encounters (paginated)
@@ -132,9 +153,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>Memory decay is applied lazily on access.
     /// </remarks>
 
+
+
     /// <returns>Encounters retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterListResponse>> QueryByCharacterAsync(QueryByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterListResponse>> QueryByCharacter(QueryByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get encounters between two characters
@@ -145,9 +169,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>Useful for relationship history and dialogue context.
     /// </remarks>
 
+
+
     /// <returns>Encounters retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterListResponse>> QueryBetweenAsync(QueryBetweenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterListResponse>> QueryBetween(QueryBetweenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Recent encounters at location
@@ -158,9 +185,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>Useful for scene context and area history.
     /// </remarks>
 
+
+
     /// <returns>Encounters retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterListResponse>> QueryByLocationAsync(QueryByLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterListResponse>> QueryByLocation(QueryByLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Quick check if two characters have met
@@ -171,9 +201,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>Does not apply memory decay or return encounter details.
     /// </remarks>
 
+
+
     /// <returns>Check completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasMetResponse>> HasMetAsync(HasMetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasMetResponse>> HasMet(HasMetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Aggregate sentiment toward another character
@@ -184,9 +217,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>on all their encounters. Memory strength is factored into the calculation.
     /// </remarks>
 
+
+
     /// <returns>Sentiment calculated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SentimentResponse>> GetSentimentAsync(GetSentimentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SentimentResponse>> GetSentiment(GetSentimentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bulk sentiment for multiple targets
@@ -197,9 +233,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>Efficient for behavior system queries that check multiple NPCs.
     /// </remarks>
 
+
+
     /// <returns>Sentiments calculated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchSentimentResponse>> BatchGetSentimentAsync(BatchGetSentimentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchSentimentResponse>> BatchGetSentiment(BatchGetSentimentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get character's view of encounter
@@ -210,9 +249,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>Includes emotional impact, sentiment shift, and memory strength.
     /// </remarks>
 
+
+
     /// <returns>Perspective retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PerspectiveResponse>> GetPerspectiveAsync(GetPerspectiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PerspectiveResponse>> GetPerspective(GetPerspectiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update perspective (reflection)
@@ -223,9 +265,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>reflects on past events or gains new information about an encounter.
     /// </remarks>
 
+
+
     /// <returns>Perspective updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PerspectiveResponse>> UpdatePerspectiveAsync(UpdatePerspectiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PerspectiveResponse>> UpdatePerspective(UpdatePerspectiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Strengthen memory (referenced)
@@ -236,9 +281,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>is referenced in dialogue, thought, or action. Counteracts memory decay.
     /// </remarks>
 
+
+
     /// <returns>Memory refreshed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PerspectiveResponse>> RefreshMemoryAsync(RefreshMemoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PerspectiveResponse>> RefreshMemory(RefreshMemoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete encounter and perspectives
@@ -249,9 +297,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>This is a hard delete and cannot be undone.
     /// </remarks>
 
+
+
     /// <returns>Encounter deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteEncounterResponse>> DeleteEncounterAsync(DeleteEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteEncounterResponse>> DeleteEncounter(DeleteEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete all encounters for a character
@@ -262,9 +313,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>Used during character deletion or compression. This is a hard delete.
     /// </remarks>
 
+
+
     /// <returns>Encounters deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteByCharacterResponse>> DeleteByCharacterAsync(DeleteByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteByCharacterResponse>> DeleteByCharacter(DeleteByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Trigger memory decay (maintenance)
@@ -276,9 +330,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>maintenance or testing purposes.
     /// </remarks>
 
+
+
     /// <returns>Decay processing completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DecayMemoriesResponse>> DecayMemoriesAsync(DecayMemoriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DecayMemoriesResponse>> DecayMemories(DecayMemoriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get encounter data for compression
@@ -289,9 +346,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>Returns encounters and perspectives involving this character for archival.
     /// </remarks>
 
+
+
     /// <returns>Compressed data returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterEncounterArchive>> GetCompressDataAsync(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterEncounterArchive>> GetCompressData(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore encounter data from archive
@@ -302,15 +362,18 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
     /// <br/>Restores encounters and perspectives from archive data.
     /// </remarks>
 
+
+
     /// <returns>Restoration result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchiveAsync(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchive(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ICharacterEncounterService))]
+public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.ControllerBase, ICharacterEncounterController
 {
     private ICharacterEncounterService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

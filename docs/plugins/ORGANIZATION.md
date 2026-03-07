@@ -250,8 +250,10 @@ Organization (L4) declares `x-references` in `organization-api.yaml` for all L2 
 
 | Worker | Interval Config | Lock Key | Purpose |
 |--------|----------------|----------|---------|
-| `OrganizationSuccessionWorkerService` | `SuccessionCheckIntervalMinutes` | `org:lock:succession-worker` | Periodically checks for organizations with pending succession (leader role vacancy). Executes deterministic succession modes (Primogeniture, Designated). Opens voting periods for Elective modes. Flags contested successions for arbitration. |
-| `OrganizationCharterRenewalWorkerService` | (uses Contract milestone system) | `org:lock:charter-worker` | Monitors charter contract milestones for renewal deadlines. Publishes warnings before expiry. Handles grace period expiry by downgrading legal status. |
+| `OrganizationSuccessionWorkerService` | `SuccessionCheckIntervalMinutes` | `succession-worker` | Periodically checks for organizations with pending succession (leader role vacancy). Executes deterministic succession modes (Primogeniture, Designated). Opens voting periods for Elective modes. Flags contested successions for arbitration. |
+| `OrganizationCharterRenewalWorkerService` | (uses Contract milestone system) | `charter-worker` | Monitors charter contract milestones for renewal deadlines. Publishes warnings before expiry. Handles grace period expiry by downgrading legal status. |
+
+> **Note**: Lock keys shown are the resource identifiers passed to `LockAsync`. The lock store prefix (`org:lock`) is applied automatically by lib-state.
 
 ### Variable Provider Factories
 
@@ -1110,8 +1112,55 @@ How organizations participate in the NPC-driven economy through GOAP-based econo
 
 10. **Organization dissolution and the content flywheel**: Organization histories (founding, growth, crises, dissolution) should feed into the content flywheel via lib-resource compression. A dissolved guild's history becomes narrative material for Storyline -- "the legendary Ironworkers' Guild that was disbanded when the dwarven enclave fell." The compression format needs design.
 
+### Audit-Identified Design Decisions (AUDIT:NEEDS_DESIGN)
+
+These items were identified during the L4 spec audit (2026-03-07) as requiring human design decisions — the tenets do not prescribe a single answer.
+
+11. **T31 Deprecation lifecycle**: `AUDIT:NEEDS_DESIGN` — Organization entities have IDs stored in multiple services (contracts, relationships, seeds, wallets, inventories, collections). T31's decision tree says entities referenced by other services need deprecation. However, Organization entities are concrete instances (like Characters, which do NOT have deprecation), not definitions/templates. The Dissolved/Archived status lifecycle may serve the same purpose. **Decision needed**: Is Organization an instance entity (no T31 deprecation — use lib-resource cleanup) or a definition entity (add triple-field deprecation model)?
+
+12. **Realm cleanup target**: `AUDIT:NEEDS_DESIGN` — The OrganizationModel has no direct `realmId` field. Organizations reference `locationId`, and locations belong to realms. Should Organization declare `x-references` with `target: realm` (direct cleanup requiring realm traversal via location queries), or should realm cleanup cascade through Location's cleanup of Organization?
+
+13. **Seed event subscription vs DI listener**: `AUDIT:NEEDS_DESIGN` — The spec plans both event subscriptions (`seed.phase.changed`, `seed.capability.updated`) AND DI listener implementations (`ISeedEvolutionListener`) for the same data flow. This risks double-processing. **Decision needed**: Use DI listener only (fast-path, same node), event subscription only (distributed guarantee), or both with explicit deduplication? The DI listener is the correct primary mechanism per SERVICE-HIERARCHY.md; the event subscription may be needed for cross-node cache invalidation if the listener can't reach other nodes.
+
+14. **x-permissions: `[]` vs `[{role: developer}]`**: `AUDIT:NEEDS_DESIGN` — The spec says "internal-only, never internet-facing" (suggesting `x-permissions: []`, service-to-service only) but also says "All endpoints require developer role" (suggesting `x-permissions: [{role: developer}]`, WebSocket-accessible to developers). These have different functional consequences. **Decision needed**: Should Organization endpoints be reachable via WebSocket for developer tooling, or service-to-service only via lib-mesh?
+
+15. **assetType classification**: `AUDIT:NEEDS_DESIGN` — Currently Category B (opaque string). Values `Wallet`, `Inventory`, `Location`, `Contract`, `Custom` include system-managed types that route to different service clients. If service logic branches based on asset type, T25 says use an enum. But the spec says "Extensible for game-specific asset registrations." **Decision needed**: Category B opaque string (truly game-extensible) or Category C enum with `Custom` escape hatch?
+
+16. **dissolved/archived as dedicated events**: `AUDIT:NEEDS_DESIGN` — T31's rule about using `*.updated` with `changedFields` applies specifically to deprecation, not arbitrary state transitions. The question is whether `organization.dissolved` and `organization.archived` carry meaningful payload beyond `organization.updated` + `changedFields: ["status"]`. If they include dissolution reason, asset division details, or archive references, dedicated events are justified.
+
+17. **Compression flow**: `AUDIT:NEEDS_DESIGN` — See note at Compression Endpoints section. Is Organization a `x-compression-callback` target (lib-resource calls it), does it self-initiate compression, or both?
+
+18. **Guild membership model vs Issue #284**: `AUDIT:NEEDS_DESIGN` — Issue [#284](https://github.com/beyond-immersion/bannou-service/issues/284) proposes guild membership as itemized contracts with ranks-as-items-in-inventory. The deep dive takes a simpler approach (role codes with permission sets in a role store). **Issue #284 is still open** — the deep dive does not get final word. **Decision needed**: Which approach serves the game design better? The deep dive's role-code approach is simpler; #284's inventory approach is richer (audit trail, contract lifecycle) but more complex.
+
 ---
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. This is the largest of the three changes in the sovereignty/arbitration/organization triad and the most independent -- it can be built incrementally without waiting for sovereignty or arbitration, starting with basic organization CRUD and member management. See the phased implementation plan above.*
+Plugin is in pre-implementation phase. This is the largest of the three changes in the sovereignty/arbitration/organization triad and the most independent — it can be built incrementally without waiting for sovereignty or arbitration, starting with basic organization CRUD and member management. See the phased implementation plan above.
+
+**Spec audited**: 2026-03-07. Tenet compliance audit identified 10 definitive fixes (applied) and 8 design decisions (marked AUDIT:NEEDS_DESIGN in Design Considerations #11-#18).
+
+### Related GitHub Issues
+
+| Issue | Title | Relationship | Blocks |
+|-------|-------|-------------|--------|
+| [#436](https://github.com/beyond-immersion/bannou-service/issues/436) | Household split mechanic | Direct prerequisite for Phase 5 (Household Pattern) and Phase 7 (Dissolution Integration) | Phase 5, Phase 7 |
+| [#435](https://github.com/beyond-immersion/bannou-service/issues/435) | Sovereignty transfer consequences | Relates to DC#9 (mass re-chartering on sovereignty change) | Phase 3 |
+| [#284](https://github.com/beyond-immersion/bannou-service/issues/284) | Guild membership as itemized contracts | **Proposes different approach** than deep dive's role-code model. Still open — see DC#18 for design decision. | Phase 1 design |
+| [#564](https://github.com/beyond-immersion/bannou-service/issues/564) | Relationship: x-references for Organization entity type | Infrastructure needed when Organization is implemented | Phase 1 |
+| [#556](https://github.com/beyond-immersion/bannou-service/issues/556) | Currency: wallet cleanup on entity deletion | Prerequisite for Organization wallet lifecycle | Phase 1 |
+| [#354](https://github.com/beyond-immersion/bannou-service/issues/354) | Seed: cross-type growth transfer matrix | Building block for DC#4 (seed splitting on dissolution) | Phase 7 |
+| [#410](https://github.com/beyond-immersion/bannou-service/issues/410) | Second Thoughts / obligation | Supporting — obligation costs for illegal trade with outlawed organizations | Phase 6 |
+| [#432](https://github.com/beyond-immersion/bannou-service/issues/432) | Player housing as composed garden | Complementary — DC#7 household-Gardener integration | Phase 5 |
+| [#460](https://github.com/beyond-immersion/bannou-service/issues/460) | Contract: bulk creation evaluation | **Closed** — validated that Organization does not need bulk contract creation; background worker for mass re-chartering is correct | N/A |
+
+### Design Considerations Needing New Issues
+
+The following DCs have no dedicated GitHub issue and should have one created when work begins:
+
+- **DC#1**: Contract party entity types (organization/faction as parties) — prerequisite for Phase 1
+- **DC#2**: Currency wallet ownership for organizations — prerequisite for Phase 1
+- **DC#3**: Inventory ownership for organizations — prerequisite for Phase 1
+- **DC#6**: Role permission enforcement at API level — Phase 1
+- **DC#8**: Tax collection mechanism — Phase 3
+- **DC#10**: Organization compression format for content flywheel — Phase 7

@@ -25,6 +25,7 @@ public partial class SaveLoadController
         "CreateSlotRequest": {
             "description": "Request to create a new save slot for an entity.",
             "type": "object",
+            "additionalProperties": false,
             "required": [
                 "gameId",
                 "ownerId",
@@ -111,7 +112,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -133,6 +134,7 @@ public partial class SaveLoadController
     "$defs": {
         "SlotResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Complete metadata for a save slot including version statistics",
             "required": [
                 "slotId",
@@ -140,7 +142,12 @@ public partial class SaveLoadController
                 "ownerType",
                 "slotName",
                 "category",
-                "createdAt"
+                "maxVersions",
+                "compressionType",
+                "versionCount",
+                "totalSizeBytes",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "slotId": {
@@ -204,10 +211,11 @@ public partial class SaveLoadController
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom key-value metadata"
+                    "description": "Custom key-value metadata (null if none set)"
                 }
             }
         },
@@ -220,7 +228,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\ nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -298,6 +306,7 @@ public partial class SaveLoadController
     "$defs": {
         "GetSlotRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to retrieve metadata for a specific save slot",
             "required": [
                 "gameId",
@@ -324,6 +333,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Slot name"
                 }
             }
@@ -339,6 +350,7 @@ public partial class SaveLoadController
     "$defs": {
         "SlotResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Complete metadata for a save slot including version statistics",
             "required": [
                 "slotId",
@@ -346,7 +358,12 @@ public partial class SaveLoadController
                 "ownerType",
                 "slotName",
                 "category",
-                "createdAt"
+                "maxVersions",
+                "compressionType",
+                "versionCount",
+                "totalSizeBytes",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "slotId": {
@@ -410,10 +427,11 @@ public partial class SaveLoadController
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom key-value metadata"
+                    "description": "Custom key-value metadata (null if none set)"
                 }
             }
         },
@@ -426,7 +444,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\ nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -504,6 +522,7 @@ public partial class SaveLoadController
     "$defs": {
         "ListSlotsRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to list all save slots belonging to a specific owner",
             "required": [
                 "gameId",
@@ -552,7 +571,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -565,6 +584,7 @@ public partial class SaveLoadController
     "$defs": {
         "ListSlotsResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing a list of save slots for an owner",
             "required": [
                 "slots"
@@ -585,6 +605,7 @@ public partial class SaveLoadController
         },
         "SlotResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Complete metadata for a save slot including version statistics",
             "required": [
                 "slotId",
@@ -592,7 +613,12 @@ public partial class SaveLoadController
                 "ownerType",
                 "slotName",
                 "category",
-                "createdAt"
+                "maxVersions",
+                "compressionType",
+                "versionCount",
+                "totalSizeBytes",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "slotId": {
@@ -656,10 +682,11 @@ public partial class SaveLoadController
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom key-value metadata"
+                    "description": "Custom key-value metadata (null if none set)"
                 }
             }
         },
@@ -750,6 +777,7 @@ public partial class SaveLoadController
     "$defs": {
         "DeleteSlotRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to permanently delete a save slot and all its versions",
             "required": [
                 "gameId",
@@ -776,6 +804,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Slot name"
                 }
             }
@@ -791,17 +821,13 @@ public partial class SaveLoadController
     "$defs": {
         "DeleteSlotResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of a slot deletion operation with cleanup statistics",
             "required": [
-                "deleted",
                 "versionsDeleted",
                 "bytesFreed"
             ],
             "properties": {
-                "deleted": {
-                    "type": "boolean",
-                    "description": "Whether slot was deleted"
-                },
                 "versionsDeleted": {
                     "type": "integer",
                     "description": "Number of versions deleted"
@@ -880,6 +906,7 @@ public partial class SaveLoadController
     "$defs": {
         "RenameSlotRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to rename an existing save slot",
             "required": [
                 "gameId",
@@ -891,6 +918,9 @@ public partial class SaveLoadController
             "properties": {
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
                     "description": "Game identifier"
                 },
                 "ownerId": {
@@ -904,6 +934,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Current slot name"
                 },
                 "newSlotName": {
@@ -926,6 +958,7 @@ public partial class SaveLoadController
     "$defs": {
         "SlotResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Complete metadata for a save slot including version statistics",
             "required": [
                 "slotId",
@@ -933,7 +966,12 @@ public partial class SaveLoadController
                 "ownerType",
                 "slotName",
                 "category",
-                "createdAt"
+                "maxVersions",
+                "compressionType",
+                "versionCount",
+                "totalSizeBytes",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "slotId": {
@@ -997,10 +1035,11 @@ public partial class SaveLoadController
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom key-value metadata"
+                    "description": "Custom key-value metadata (null if none set)"
                 }
             }
         },
@@ -1013,7 +1052,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\ nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1091,6 +1130,7 @@ public partial class SaveLoadController
     "$defs": {
         "BulkDeleteSlotsRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to delete multiple save slots in a single operation",
             "required": [
                 "gameId",
@@ -1099,6 +1139,9 @@ public partial class SaveLoadController
             "properties": {
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
                     "description": "Game identifier"
                 },
                 "slotIds": {
@@ -1122,6 +1165,7 @@ public partial class SaveLoadController
     "$defs": {
         "BulkDeleteSlotsResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of bulk slot deletion with total cleanup statistics",
             "required": [
                 "deletedCount",
@@ -1206,6 +1250,7 @@ public partial class SaveLoadController
     "$defs": {
         "SaveRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to save game state data to a slot with optional compression and metadata",
             "required": [
                 "gameId",
@@ -1217,6 +1262,9 @@ public partial class SaveLoadController
             "properties": {
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
                     "description": "Game identifier for namespace isolation"
                 },
                 "ownerId": {
@@ -1230,6 +1278,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Slot name (auto-created if doesn't exist)"
                 },
                 "category": {
@@ -1294,7 +1344,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -1307,12 +1357,17 @@ public partial class SaveLoadController
     "$defs": {
         "SaveResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of a save operation including version info and conflict detection",
             "required": [
                 "slotId",
                 "versionNumber",
                 "contentHash",
                 "sizeBytes",
+                "pinned",
+                "conflictDetected",
+                "versionsCleanedUp",
+                "uploadPending",
                 "createdAt"
             ],
             "properties": {
@@ -1360,7 +1415,7 @@ public partial class SaveLoadController
                 },
                 "conflictDetected": {
                     "type": "boolean",
-                    "description": "True if this save overwrote a version from a different device.\ nOnly relevant when deviceId is used for cloud sync.\n"
+                    "description": "True if this save overwrote a version from a different device.\nOnly relevant when deviceId is used for cloud sync.\n"
                 },
                 "conflictingDeviceId": {
                     "type": "string",
@@ -1454,6 +1509,7 @@ public partial class SaveLoadController
     "$defs": {
         "LoadRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to load save data from a specific slot and version",
             "required": [
                 "gameId",
@@ -1510,12 +1566,15 @@ public partial class SaveLoadController
     "$defs": {
         "LoadResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing loaded save data with integrity verification",
             "required": [
                 "slotId",
                 "versionNumber",
                 "data",
-                "contentHash"
+                "contentHash",
+                "pinned",
+                "createdAt"
             ],
             "properties": {
                 "slotId": {
@@ -1562,10 +1621,11 @@ public partial class SaveLoadController
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata"
+                    "description": "Custom metadata (null if none set)"
                 }
             }
         }
@@ -1636,6 +1696,7 @@ public partial class SaveLoadController
     "$defs": {
         "SaveDeltaRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to save incremental changes as a delta from a base version",
             "required": [
                 "gameId",
@@ -1648,6 +1709,9 @@ public partial class SaveLoadController
             "properties": {
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
                     "description": "Game identifier for namespace isolation"
                 },
                 "ownerId": {
@@ -1661,6 +1725,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Name of the slot to save the delta to"
                 },
                 "baseVersion": {
@@ -1670,7 +1736,7 @@ public partial class SaveLoadController
                 "delta": {
                     "type": "string",
                     "format": "byte",
-                    "description": "Base64-encoded delta/patch data.\nFor JSON_PATCH: Array of RFC 6902 operations\ nFor BSDIFF/XDELTA: Binary patch data\n"
+                    "description": "Base64-encoded delta/patch data.\nFor JSON_PATCH: Array of RFC 6902 operations\nFor BSDIFF/XDELTA: Binary patch data\n"
                 },
                 "algorithm": {
                     "allOf": [
@@ -1714,7 +1780,7 @@ public partial class SaveLoadController
                 "Xdelta"
             ],
             "default": "JsonPatch",
-            "description": "Algorithm used for delta computation.\nJSON_PATCH: RFC 6902, best for structured JSON data\nBSDIFF: Binary diff, good for general binary data\nXDELTA: RFC 3284 VCDIFF, efficient for large binary files\n"
+            "description": "Algorithm used for delta computation.\ nJSON_PATCH: RFC 6902, best for structured JSON data\nBSDIFF: Binary diff, good for general binary data\nXDELTA: RFC 3284 VCDIFF, efficient for large binary files\n"
         }
     }
 }
@@ -1727,6 +1793,7 @@ public partial class SaveLoadController
     "$defs": {
         "SaveDeltaResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of delta save operation with size and chain information",
             "required": [
                 "slotId",
@@ -1734,6 +1801,8 @@ public partial class SaveLoadController
                 "baseVersion",
                 "deltaSizeBytes",
                 "estimatedFullSizeBytes",
+                "chainLength",
+                "compressionSavings",
                 "createdAt"
             ],
             "properties": {
@@ -1843,6 +1912,7 @@ public partial class SaveLoadController
     "$defs": {
         "LoadRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to load save data from a specific slot and version",
             "required": [
                 "gameId",
@@ -1899,12 +1969,15 @@ public partial class SaveLoadController
     "$defs": {
         "LoadResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing loaded save data with integrity verification",
             "required": [
                 "slotId",
                 "versionNumber",
                 "data",
-                "contentHash"
+                "contentHash",
+                "pinned",
+                "createdAt"
             ],
             "properties": {
                 "slotId": {
@@ -1951,10 +2024,11 @@ public partial class SaveLoadController
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata"
+                    "description": "Custom metadata (null if none set)"
                 }
             }
         }
@@ -2025,6 +2099,7 @@ public partial class SaveLoadController
     "$defs": {
         "CollapseDeltasRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to collapse a delta chain into a full snapshot",
             "required": [
                 "gameId",
@@ -2035,6 +2110,9 @@ public partial class SaveLoadController
             "properties": {
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
                     "description": "Game identifier for namespace isolation"
                 },
                 "ownerId": {
@@ -2048,6 +2126,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Name of the slot containing deltas to collapse"
                 },
                 "versionNumber": {
@@ -2073,12 +2153,17 @@ public partial class SaveLoadController
     "$defs": {
         "SaveResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of a save operation including version info and conflict detection",
             "required": [
                 "slotId",
                 "versionNumber",
                 "contentHash",
                 "sizeBytes",
+                "pinned",
+                "conflictDetected",
+                "versionsCleanedUp",
+                "uploadPending",
                 "createdAt"
             ],
             "properties": {
@@ -2126,7 +2211,7 @@ public partial class SaveLoadController
                 },
                 "conflictDetected": {
                     "type": "boolean",
-                    "description": "True if this save overwrote a version from a different device.\ nOnly relevant when deviceId is used for cloud sync.\n"
+                    "description": "True if this save overwrote a version from a different device.\nOnly relevant when deviceId is used for cloud sync.\n"
                 },
                 "conflictingDeviceId": {
                     "type": "string",
@@ -2220,6 +2305,7 @@ public partial class SaveLoadController
     "$defs": {
         "ListVersionsRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to list all versions within a save slot with pagination",
             "required": [
                 "ownerId",
@@ -2238,6 +2324,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Slot name"
                 },
                 "offset": {
@@ -2269,6 +2357,7 @@ public partial class SaveLoadController
     "$defs": {
         "ListVersionsResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Paginated list of save versions within a slot",
             "required": [
                 "versions",
@@ -2290,11 +2379,13 @@ public partial class SaveLoadController
         },
         "VersionResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Metadata for a single save version including size and checkpoint info",
             "required": [
                 "versionNumber",
                 "contentHash",
                 "sizeBytes",
+                "pinned",
                 "createdAt"
             ],
             "properties": {
@@ -2305,7 +2396,8 @@ public partial class SaveLoadController
                 "assetId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Reference to asset in lib-asset"
+                    "nullable": true,
+                    "description": "Reference to asset in lib-asset (null if not yet uploaded to MinIO)"
                 },
                 "contentHash": {
                     "type": "string",
@@ -2347,10 +2439,11 @@ public partial class SaveLoadController
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata"
+                    "description": "Custom metadata (null if none set)"
                 }
             }
         }
@@ -2421,6 +2514,7 @@ public partial class SaveLoadController
     "$defs": {
         "PinVersionRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to pin a save version as a checkpoint to prevent cleanup",
             "required": [
                 "ownerId",
@@ -2440,6 +2534,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Slot name"
                 },
                 "versionNumber": {
@@ -2464,11 +2560,13 @@ public partial class SaveLoadController
     "$defs": {
         "VersionResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Metadata for a single save version including size and checkpoint info",
             "required": [
                 "versionNumber",
                 "contentHash",
                 "sizeBytes",
+                "pinned",
                 "createdAt"
             ],
             "properties": {
@@ -2479,7 +2577,8 @@ public partial class SaveLoadController
                 "assetId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Reference to asset in lib-asset"
+                    "nullable": true,
+                    "description": "Reference to asset in lib-asset (null if not yet uploaded to MinIO)"
                 },
                 "contentHash": {
                     "type": "string",
@@ -2521,10 +2620,11 @@ public partial class SaveLoadController
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata"
+                    "description": "Custom metadata (null if none set)"
                 }
             }
         }
@@ -2595,6 +2695,7 @@ public partial class SaveLoadController
     "$defs": {
         "UnpinVersionRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to unpin a previously pinned save version",
             "required": [
                 "ownerId",
@@ -2614,6 +2715,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Slot name"
                 },
                 "versionNumber": {
@@ -2633,11 +2736,13 @@ public partial class SaveLoadController
     "$defs": {
         "VersionResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Metadata for a single save version including size and checkpoint info",
             "required": [
                 "versionNumber",
                 "contentHash",
                 "sizeBytes",
+                "pinned",
                 "createdAt"
             ],
             "properties": {
@@ -2648,7 +2753,8 @@ public partial class SaveLoadController
                 "assetId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Reference to asset in lib-asset"
+                    "nullable": true,
+                    "description": "Reference to asset in lib-asset (null if not yet uploaded to MinIO)"
                 },
                 "contentHash": {
                     "type": "string",
@@ -2690,10 +2796,11 @@ public partial class SaveLoadController
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata"
+                    "description": "Custom metadata (null if none set)"
                 }
             }
         }
@@ -2764,6 +2871,7 @@ public partial class SaveLoadController
     "$defs": {
         "DeleteVersionRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to permanently delete a specific save version",
             "required": [
                 "ownerId",
@@ -2783,6 +2891,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Slot name"
                 },
                 "versionNumber": {
@@ -2802,16 +2912,12 @@ public partial class SaveLoadController
     "$defs": {
         "DeleteVersionResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of a version deletion operation with storage freed",
             "required": [
-                "deleted",
                 "bytesFreed"
             ],
             "properties": {
-                "deleted": {
-                    "type": "boolean",
-                    "description": "Whether version was deleted"
-                },
                 "bytesFreed": {
                     "type": "integer",
                     "format": "int64",
@@ -2886,6 +2992,7 @@ public partial class SaveLoadController
     "$defs": {
         "QuerySavesRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Advanced query for saves across multiple owners with filtering and sorting",
             "properties": {
                 "ownerId": {
@@ -2954,22 +3061,21 @@ public partial class SaveLoadController
                     "description": "Maximum results"
                 },
                 "sortBy": {
-                    "type": "string",
-                    "enum": [
-                        "created_at",
-                        "size",
-                        "version_number"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SaveSortField"
+                        }
                     ],
-                    "default": "created_at",
+                    "default": "CreatedAt",
                     "description": "Sort field"
                 },
                 "sortOrder": {
-                    "type": "string",
-                    "enum": [
-                        "asc",
-                        "desc"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SortOrder"
+                        }
                     ],
-                    "default": "desc",
+                    "default": "Desc",
                     "description": "Sort order"
                 }
             }
@@ -2983,7 +3089,24 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+        },
+        "SaveSortField": {
+            "type": "string",
+            "enum": [
+                "CreatedAt",
+                "Size",
+                "VersionNumber"
+            ],
+            "description": "Field to sort save query results by"
+        },
+        "SortOrder": {
+            "type": "string",
+            "enum": [
+                "Asc",
+                "Desc"
+            ],
+            "description": "Sort direction for query results"
         }
     }
 }
@@ -2996,6 +3119,7 @@ public partial class SaveLoadController
     "$defs": {
         "QuerySavesResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Paginated results from a save query operation",
             "required": [
                 "results",
@@ -3017,6 +3141,7 @@ public partial class SaveLoadController
         },
         "QueryResultItem": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Single result item from a save query with slot and version metadata",
             "required": [
                 "slotId",
@@ -3025,6 +3150,7 @@ public partial class SaveLoadController
                 "ownerType",
                 "category",
                 "versionNumber",
+                "pinned",
                 "createdAt"
             ],
             "properties": {
@@ -3085,10 +3211,11 @@ public partial class SaveLoadController
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata"
+                    "description": "Custom metadata (null if none set)"
                 }
             }
         },
@@ -3101,7 +3228,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -3171,6 +3298,7 @@ public partial class SaveLoadController
         "CopySaveRequest": {
             "description": "Request to copy save data from one slot to another, optionally across different entities or games.",
             "type": "object",
+            "additionalProperties": false,
             "required": [
                 "sourceGameId",
                 "sourceOwnerId",
@@ -3184,6 +3312,9 @@ public partial class SaveLoadController
             "properties": {
                 "sourceGameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
                     "description": "Game identifier of the source save"
                 },
                 "sourceOwnerId": {
@@ -3197,6 +3328,8 @@ public partial class SaveLoadController
                 },
                 "sourceSlotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Name of the source slot to copy from"
                 },
                 "sourceVersion": {
@@ -3206,6 +3339,9 @@ public partial class SaveLoadController
                 },
                 "targetGameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
                     "description": "Game identifier for the target save"
                 },
                 "targetOwnerId": {
@@ -3219,6 +3355,8 @@ public partial class SaveLoadController
                 },
                 "targetSlotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Name of the target slot to copy to"
                 },
                 "targetCategory": {
@@ -3236,7 +3374,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -3249,12 +3387,17 @@ public partial class SaveLoadController
     "$defs": {
         "SaveResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of a save operation including version info and conflict detection",
             "required": [
                 "slotId",
                 "versionNumber",
                 "contentHash",
                 "sizeBytes",
+                "pinned",
+                "conflictDetected",
+                "versionsCleanedUp",
+                "uploadPending",
                 "createdAt"
             ],
             "properties": {
@@ -3302,7 +3445,7 @@ public partial class SaveLoadController
                 },
                 "conflictDetected": {
                     "type": "boolean",
-                    "description": "True if this save overwrote a version from a different device.\ nOnly relevant when deviceId is used for cloud sync.\n"
+                    "description": "True if this save overwrote a version from a different device.\nOnly relevant when deviceId is used for cloud sync.\n"
                 },
                 "conflictingDeviceId": {
                     "type": "string",
@@ -3396,6 +3539,7 @@ public partial class SaveLoadController
     "$defs": {
         "ExportSavesRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to export all saves for an owner to a downloadable archive",
             "required": [
                 "gameId",
@@ -3405,6 +3549,9 @@ public partial class SaveLoadController
             "properties": {
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
                     "description": "Game identifier for namespace isolation"
                 },
                 "ownerId": {
@@ -3418,10 +3565,11 @@ public partial class SaveLoadController
                 },
                 "slotNames": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Specific slots to export (all if null)"
+                    "description": "Specific slots to export (null = all slots)"
                 }
             }
         }
@@ -3436,6 +3584,7 @@ public partial class SaveLoadController
     "$defs": {
         "ExportSavesResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response with pre-signed URL for downloading exported save archive",
             "required": [
                 "downloadUrl",
@@ -3526,6 +3675,7 @@ public partial class SaveLoadController
     "$defs": {
         "ImportSavesRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to import saves from an uploaded archive",
             "required": [
                 "archiveAssetId",
@@ -3541,6 +3691,9 @@ public partial class SaveLoadController
                 },
                 "targetGameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
                     "description": "Game identifier for namespace isolation"
                 },
                 "targetOwnerId": {
@@ -3579,6 +3732,7 @@ public partial class SaveLoadController
     "$defs": {
         "ImportSavesResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of save archive import with success and conflict counts",
             "required": [
                 "importedSlots",
@@ -3600,10 +3754,11 @@ public partial class SaveLoadController
                 },
                 "conflicts": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Names of slots that had conflicts"
+                    "description": "Names of slots that had conflicts (null if none)"
                 }
             }
         }
@@ -3674,6 +3829,7 @@ public partial class SaveLoadController
     "$defs": {
         "VerifyIntegrityRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to verify data integrity of a save version via hash comparison",
             "required": [
                 "gameId",
@@ -3684,6 +3840,9 @@ public partial class SaveLoadController
             "properties": {
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
                     "description": "Game identifier for namespace isolation"
                 },
                 "ownerId": {
@@ -3697,6 +3856,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Name of the slot to verify"
                 },
                 "versionNumber": {
@@ -3717,10 +3878,12 @@ public partial class SaveLoadController
     "$defs": {
         "VerifyIntegrityResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of integrity verification with hash comparison details",
             "required": [
                 "valid",
-                "versionNumber"
+                "versionNumber",
+                "expectedHash"
             ],
             "properties": {
                 "valid": {
@@ -3814,6 +3977,7 @@ public partial class SaveLoadController
     "$defs": {
         "PromoteVersionRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to promote an older save version to be the latest",
             "required": [
                 "gameId",
@@ -3825,6 +3989,9 @@ public partial class SaveLoadController
             "properties": {
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
                     "description": "Game identifier for namespace isolation"
                 },
                 "ownerId": {
@@ -3838,6 +4005,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Name of the slot containing the version to promote"
                 },
                 "versionNumber": {
@@ -3862,12 +4031,17 @@ public partial class SaveLoadController
     "$defs": {
         "SaveResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of a save operation including version info and conflict detection",
             "required": [
                 "slotId",
                 "versionNumber",
                 "contentHash",
                 "sizeBytes",
+                "pinned",
+                "conflictDetected",
+                "versionsCleanedUp",
+                "uploadPending",
                 "createdAt"
             ],
             "properties": {
@@ -3915,7 +4089,7 @@ public partial class SaveLoadController
                 },
                 "conflictDetected": {
                     "type": "boolean",
-                    "description": "True if this save overwrote a version from a different device.\ nOnly relevant when deviceId is used for cloud sync.\n"
+                    "description": "True if this save overwrote a version from a different device.\nOnly relevant when deviceId is used for cloud sync.\n"
                 },
                 "conflictingDeviceId": {
                     "type": "string",
@@ -4009,6 +4183,7 @@ public partial class SaveLoadController
     "$defs": {
         "MigrateSaveRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to migrate a save to a newer schema version",
             "required": [
                 "ownerId",
@@ -4028,6 +4203,8 @@ public partial class SaveLoadController
                 },
                 "slotName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Slot name"
                 },
                 "versionNumber": {
@@ -4036,6 +4213,8 @@ public partial class SaveLoadController
                 },
                 "targetSchemaVersion": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
                     "description": "Target schema version to migrate to"
                 },
                 "dryRun": {
@@ -4056,17 +4235,13 @@ public partial class SaveLoadController
     "$defs": {
         "MigrateSaveResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of a schema migration operation with version path details",
             "required": [
-                "success",
                 "fromSchemaVersion",
                 "toSchemaVersion"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether migration succeeded"
-                },
                 "fromSchemaVersion": {
                     "type": "string",
                     "description": "Original schema version"
@@ -4082,17 +4257,19 @@ public partial class SaveLoadController
                 },
                 "migrationPath": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Migration path applied (list of versions)"
+                    "description": "Migration path applied (list of versions, null if dry run failed)"
                 },
                 "warnings": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Non-fatal migration warnings"
+                    "description": "Non-fatal migration warnings (null if none)"
                 }
             }
         }
@@ -4163,6 +4340,7 @@ public partial class SaveLoadController
     "$defs": {
         "RegisterSchemaRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to register a new save data schema with optional migration rules",
             "required": [
                 "namespace",
@@ -4172,10 +4350,14 @@ public partial class SaveLoadController
             "properties": {
                 "namespace": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Schema namespace (e.g., game identifier)"
                 },
                 "schemaVersion": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
                     "description": "Schema version identifier"
                 },
                 "schema": {
@@ -4199,6 +4381,7 @@ public partial class SaveLoadController
         },
         "JsonPatchOperation": {
             "type": "object",
+            "additionalProperties": false,
             "required": [
                 "op",
                 "path"
@@ -4206,15 +4389,7 @@ public partial class SaveLoadController
             "description": "JSON Patch operation per RFC 6902.\nUses JsonPatch.Net library (MIT licensed).\n",
             "properties": {
                 "op": {
-                    "type": "string",
-                    "enum": [
-                        "add",
-                        "remove",
-                        "replace",
-                        "move",
-                        "copy",
-                        "test"
-                    ],
+                    "$ref": "#/$defs/JsonPatchOperationType",
                     "description": "Operation type"
                 },
                 "path": {
@@ -4230,6 +4405,18 @@ public partial class SaveLoadController
                     "description": "Value to use (for add/replace/test operations)"
                 }
             }
+        },
+        "JsonPatchOperationType": {
+            "type": "string",
+            "enum": [
+                "Add",
+                "Remove",
+                "Replace",
+                "Move",
+                "Copy",
+                "Test"
+            ],
+            "description": "JSON Patch operation type per RFC 6902"
         }
     }
 }
@@ -4242,10 +4429,12 @@ public partial class SaveLoadController
     "$defs": {
         "SchemaResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Registered schema definition with version lineage information",
             "required": [
                 "namespace",
                 "schemaVersion",
+                "hasMigration",
                 "createdAt"
             ],
             "properties": {
@@ -4344,6 +4533,7 @@ public partial class SaveLoadController
     "$defs": {
         "ListSchemasRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to list all registered schemas for a namespace",
             "required": [
                 "namespace"
@@ -4351,6 +4541,8 @@ public partial class SaveLoadController
             "properties": {
                 "namespace": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Schema namespace to list"
                 }
             }
@@ -4366,6 +4558,7 @@ public partial class SaveLoadController
     "$defs": {
         "ListSchemasResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "List of registered schemas with latest version indicator",
             "required": [
                 "schemas"
@@ -4387,10 +4580,12 @@ public partial class SaveLoadController
         },
         "SchemaResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Registered schema definition with version lineage information",
             "required": [
                 "namespace",
                 "schemaVersion",
+                "hasMigration",
                 "createdAt"
             ],
             "properties": {
@@ -4489,6 +4684,7 @@ public partial class SaveLoadController
     "$defs": {
         "AdminCleanupRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request for admin-triggered cleanup of expired or orphaned saves",
             "properties": {
                 "dryRun": {
@@ -4519,7 +4715,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -4532,6 +4728,7 @@ public partial class SaveLoadController
     "$defs": {
         "AdminCleanupResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of admin cleanup operation with storage reclamation details",
             "required": [
                 "versionsDeleted",
@@ -4625,18 +4822,28 @@ public partial class SaveLoadController
     "$defs": {
         "AdminStatsRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request for aggregate storage statistics with optional grouping",
             "properties": {
                 "groupBy": {
-                    "type": "string",
-                    "enum": [
-                        "owner_type",
-                        "category",
-                        "schema_version"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/StatsGroupBy"
+                        }
                     ],
-                    "description": "Group statistics by field"
+                    "nullable": true,
+                    "description": "Group statistics by field (null = no grouping)"
                 }
             }
+        },
+        "StatsGroupBy": {
+            "type": "string",
+            "enum": [
+                "OwnerType",
+                "Category",
+                "SchemaVersion"
+            ],
+            "description": "Field to group storage statistics by"
         }
     }
 }
@@ -4649,6 +4856,7 @@ public partial class SaveLoadController
     "$defs": {
         "AdminStatsResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Aggregate storage statistics with optional breakdown by category",
             "required": [
                 "totalSlots",
@@ -4675,15 +4883,17 @@ public partial class SaveLoadController
                 },
                 "breakdown": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/StatsBreakdown"
                     },
-                    "description": "Breakdown by groupBy field"
+                    "description": "Breakdown by groupBy field (null if no groupBy specified)"
                 }
             }
         },
         "StatsBreakdown": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Storage statistics for a single category in the breakdown",
             "required": [
                 "key",

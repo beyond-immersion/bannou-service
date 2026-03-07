@@ -97,8 +97,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             var hotKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), v);
             await hotCacheStore.DeleteAsync(hotKey, cancellationToken);
 
-            // SaveVersionManifest.AssetId is now Guid? - check for non-null and non-empty
-            if (manifest.AssetId.HasValue && manifest.AssetId.Value != Guid.Empty)
+            if (manifest.AssetId.HasValue)
             {
                 try
                 {
@@ -160,8 +159,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             try
             {
                 // Delete asset if exists
-                // SaveVersionManifest.AssetId is now Guid?
-                if (version.AssetId.HasValue && version.AssetId.Value != Guid.Empty)
+                if (version.AssetId.HasValue)
                 {
                     try
                     {
@@ -210,7 +208,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             BytesFreed = bytesFreed
         };
         await _messageBus.TryPublishAsync(
-            "save.cleanup-completed",
+            "save-load.cleanup.completed",
             cleanupEvent,
             cancellationToken: cancellationToken);
     }
@@ -289,7 +287,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                 currentVersion.CompressedSizeBytes = compressedData.Length;
                 currentVersion.CompressionType = compressionType;
                 currentVersion.ContentHash = contentHash;
-                currentVersion.UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE;
+                currentVersion.UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.Pending : UploadStatus.Complete;
 
                 // Save updated manifest with optimistic concurrency
                 var newEtag = await _versionStore.TrySaveAsync(versionKey, currentVersion, versionEtag ?? string.Empty, cancellationToken: cancellationToken);

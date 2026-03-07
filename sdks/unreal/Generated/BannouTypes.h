@@ -200,8 +200,6 @@ struct FClauseAssetStatus;
 struct FClauseCategory;
 struct FClauseDistributionResult;
 struct FClauseTypeSummary;
-struct FCleanupByOwnerRequest;
-struct FCleanupResponse;
 struct FClientCapabilitiesResponse;
 struct FClientCapability;
 struct FClientShortcut;
@@ -357,6 +355,7 @@ struct FDeleteSceneResponse;
 struct FDeleteSeedTypeRequest;
 struct FDeleteSlotRequest;
 struct FDeleteSlotResponse;
+struct FDeleteStatusTemplateRequest;
 struct FDeleteVersionRequest;
 struct FDeleteVersionResponse;
 struct FDeletionStatus;
@@ -375,6 +374,7 @@ struct FDeprecateRelationshipTypeRequest;
 struct FDeprecateRoomTypeRequest;
 struct FDeprecateScenarioDefinitionRequest;
 struct FDeprecateSeedTypeRequest;
+struct FDeprecateStatusTemplateRequest;
 struct FDeprecateTemplateRequest;
 struct FDesignateRealmBaselineRequest;
 struct FDestroyItemInstanceRequest;
@@ -383,7 +383,6 @@ struct FDestroyReason;
 struct FDeviceInfo;
 struct FDeviceType;
 struct FDiscardRequest;
-struct FDiscardResponse;
 struct FDiscoveryCheckResult;
 struct FDiscoveryLevel;
 struct FDiscoveryRecord;
@@ -628,6 +627,7 @@ struct FJourneyLegStatus;
 struct FJourneyResponse;
 struct FJourneyStatus;
 struct FJsonPatchOperation;
+struct FJsonPatchOperationType;
 struct FKeyMode;
 struct FKeySignature;
 struct FKeySignatureEvent;
@@ -984,6 +984,7 @@ struct FSaveDeltaRequest;
 struct FSaveDeltaResponse;
 struct FSaveRequest;
 struct FSaveResponse;
+struct FSaveSortField;
 struct FScenarioCategory;
 struct FScenarioChaining;
 struct FScenarioCompletionResponse;
@@ -1139,6 +1140,7 @@ struct FUndeprecateLocationRequest;
 struct FUndeprecateModeRequest;
 struct FUndeprecateRelationshipTypeRequest;
 struct FUndeprecateSeedTypeRequest;
+struct FUndeprecateStatusTemplateRequest;
 struct FUnlockContractRequest;
 struct FUnlockContractResponse;
 struct FUnlockLicenseRequest;
@@ -5571,7 +5573,7 @@ struct FCheckoutRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString EditorId;
 
-    /** Custom lock TTL (uses default if not specified) */
+    /** Custom lock TTL in minutes (uses default if not specified) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int32> TtlMinutes;
 
@@ -5784,42 +5786,6 @@ struct FClauseTypeSummary
     /** Whether this is a built-in type */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IsBuiltIn = false;
-
-};
-
-/**
- * Request to cleanup all boards for a deleted owner entity
- */
-USTRUCT(BlueprintType)
-struct FCleanupByOwnerRequest
-{
-    GENERATED_BODY()
-
-    /** Type of entity whose boards should be cleaned up */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FEntityType OwnerType;
-
-    /** ID of the entity whose boards should be cleaned up */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid OwnerId;
-
-};
-
-/**
- * Result of an owner cleanup operation
- */
-USTRUCT(BlueprintType)
-struct FCleanupResponse
-{
-    GENERATED_BODY()
-
-    /** Number of status instances removed */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    int32 StatusesRemoved = 0;
-
-    /** Number of status containers deleted */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    int32 ContainersDeleted = 0;
 
 };
 
@@ -6226,10 +6192,6 @@ USTRUCT(BlueprintType)
 struct FCommitResponse
 {
     GENERATED_BODY()
-
-    /** Whether commit was successful */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Committed = false;
 
     /** New version after commit */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -10586,22 +10548,14 @@ struct FDeleteSceneRequest
 };
 
 /**
- * Response confirming scene deletion
+ * Response for scene deletion
  */
 USTRUCT(BlueprintType)
 struct FDeleteSceneResponse
 {
     GENERATED_BODY()
 
-    /** Whether the scene was successfully deleted */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Deleted = false;
-
-    /** ID of the deleted scene */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FGuid> SceneId;
-
-    /** If deletion failed, IDs of scenes that reference this one */
+    /** If deletion was blocked (409), IDs of scenes that reference this one */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FGuid> ReferencingScenes;
 
@@ -10659,10 +10613,6 @@ struct FDeleteSlotResponse
 {
     GENERATED_BODY()
 
-    /** Whether slot was deleted */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Deleted = false;
-
     /** Number of versions deleted */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int32 VersionsDeleted = 0;
@@ -10670,6 +10620,20 @@ struct FDeleteSlotResponse
     /** Storage freed in bytes */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int64 BytesFreed = 0;
+
+};
+
+/**
+ * Request to delete a deprecated status template
+ */
+USTRUCT(BlueprintType)
+struct FDeleteStatusTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** Status template to delete (must be deprecated first) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid StatusTemplateId;
 
 };
 
@@ -10706,10 +10670,6 @@ USTRUCT(BlueprintType)
 struct FDeleteVersionResponse
 {
     GENERATED_BODY()
-
-    /** Whether version was deleted */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Deleted = false;
 
     /** Storage freed in bytes */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -11010,6 +10970,24 @@ struct FDeprecateSeedTypeRequest
 };
 
 /**
+ * Request to deprecate a status template
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateStatusTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** Status template to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid StatusTemplateId;
+
+    /** Why this template is being deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
+
+};
+
+/**
  * Request to deprecate a template
  */
 USTRUCT(BlueprintType)
@@ -11130,20 +11108,6 @@ struct FDiscardRequest
     /** Checkout token */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString CheckoutToken;
-
-};
-
-/**
- * Response confirming discard
- */
-USTRUCT(BlueprintType)
-struct FDiscardResponse
-{
-    GENERATED_BODY()
-
-    /** Whether discard was successful */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Discarded = false;
 
 };
 
@@ -12609,7 +12573,7 @@ struct FExportSavesRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FEntityType OwnerType;
 
-    /** Specific slots to export (all if null) */
+    /** Specific slots to export (null = all slots) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FString> SlotNames;
 
@@ -15523,7 +15487,7 @@ struct FGetValidationRulesResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FSceneType SceneType;
 
-    /** Registered rules (empty if none) */
+    /** Registered rules (null if none) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FValidationRule> Rules;
 
@@ -15669,7 +15633,7 @@ struct FGrantStatusRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int32> DurationOverrideSeconds;
 
-    /** Arbitrary key-value data passed to contract template values and stored on the status instance. Convention for Divine integration - set metadata.blessingTier to the blessing tier string (e.g., minor, standard, greater, supreme) so the Divine service can query active blessings by tier. */
+    /** Arbitrary key-value data passed to contract template values and stored on the status instance. Opaque to Status -- callers define their own semantics. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -16037,17 +16001,13 @@ struct FHeartbeatResponse
 {
     GENERATED_BODY()
 
-    /** Whether extension was successful */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Extended = false;
-
     /** New expiration time */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime NewExpiresAt;
 
     /** Number of extensions remaining */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> ExtensionsRemaining;
+    int32 ExtensionsRemaining = 0;
 
 };
 
@@ -16979,7 +16939,7 @@ struct FJsonPatchOperation
 
     /** Operation type */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    EOp Op;
+    FJsonPatchOperationType Op;
 
     /** JSON Pointer to target location */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -16992,6 +16952,16 @@ struct FJsonPatchOperation
     /** Value to use (for add/replace/test operations) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Value;
+
+};
+
+/**
+ * JSON Patch operation type per RFC 6902
+ */
+USTRUCT(BlueprintType)
+struct FJsonPatchOperationType
+{
+    GENERATED_BODY()
 
 };
 
@@ -19131,11 +19101,11 @@ struct FListScenesResponse
 
     /** Current offset */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> Offset;
+    int32 Offset = 0;
 
     /** Applied limit */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> Limit;
+    int32 Limit = 0;
 
 };
 
@@ -19322,6 +19292,10 @@ struct FListStatusTemplatesRequest
     /** Optional filter by status category */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Category;
+
+    /** Whether to include deprecated templates in results */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IncludeDeprecated = false;
 
     /** Page number (one-indexed) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -19791,9 +19765,9 @@ struct FLoadResponse
 
     /** Save timestamp */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDateTime> CreatedAt;
+    FDateTime CreatedAt;
 
-    /** Custom metadata */
+    /** Custom metadata (null if none set) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -20687,10 +20661,6 @@ struct FMigrateSaveResponse
 {
     GENERATED_BODY()
 
-    /** Whether migration succeeded */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Success = false;
-
     /** Original schema version */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString FromSchemaVersion;
@@ -20703,11 +20673,11 @@ struct FMigrateSaveResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int32> NewVersionNumber;
 
-    /** Migration path applied (list of versions) */
+    /** Migration path applied (list of versions, null if dry run failed) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FString> MigrationPath;
 
-    /** Non-fatal migration warnings */
+    /** Non-fatal migration warnings (null if none) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FString> Warnings;
 
@@ -23589,11 +23559,11 @@ struct FQuerySavesRequest
 
     /** Sort field */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<ESortBy> SortBy;
+    TMap<FString, FString> SortBy;
 
     /** Sort order */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<ESortOrder> SortOrder;
+    TMap<FString, FString> SortOrder;
 
 };
 
@@ -24318,10 +24288,6 @@ USTRUCT(BlueprintType)
 struct FRealmLoreResponse
 {
     GENERATED_BODY()
-
-    /** ID of the realm this lore belongs to */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid RealmId;
 
     /** All lore elements for this realm */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -25527,7 +25493,7 @@ struct FResolvedReference
 
     /** Depth level of this reference */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> Depth;
+    int32 Depth = 0;
 
 };
 
@@ -25971,11 +25937,11 @@ struct FSaveDeltaResponse
 
     /** Number of deltas in chain to base snapshot */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> ChainLength;
+    int32 ChainLength = 0;
 
     /** Storage savings vs full snapshot (0-1) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<double> CompressionSavings;
+    double CompressionSavings = 0.0;
 
     /** When the delta version was created */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -26103,11 +26069,21 @@ struct FSaveResponse
 
     /** Number of old versions cleaned up by rolling policy */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> VersionsCleanedUp;
+    int32 VersionsCleanedUp = 0;
 
     /** True if async upload is enabled and data is queued for MinIO upload. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool UploadPending = false;
+
+};
+
+/**
+ * Field to sort save query results by
+ */
+USTRUCT(BlueprintType)
+struct FSaveSortField
+{
+    GENERATED_BODY()
 
 };
 
@@ -26739,11 +26715,11 @@ struct FScene
 
     /** When the scene was first created */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDateTime> CreatedAt;
+    FDateTime CreatedAt;
 
     /** When the scene was last modified */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDateTime> UpdatedAt;
+    FDateTime UpdatedAt;
 
 };
 
@@ -26895,15 +26871,15 @@ struct FSceneSummary
 
     /** Total number of nodes in scene */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> NodeCount;
+    int32 NodeCount = 0;
 
     /** Creation timestamp */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDateTime> CreatedAt;
+    FDateTime CreatedAt;
 
     /** Last update timestamp */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDateTime> UpdatedAt;
+    FDateTime UpdatedAt;
 
     /** Whether scene is currently checked out */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -28171,7 +28147,7 @@ struct FSlotResponse
 
     /** Maximum versions to retain */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> MaxVersions;
+    int32 MaxVersions = 0;
 
     /** Days to retain versions (null = indefinite) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -28179,11 +28155,11 @@ struct FSlotResponse
 
     /** Compression algorithm used for save data */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FCompressionType> CompressionType;
+    FCompressionType CompressionType;
 
     /** Current number of versions in slot */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> VersionCount;
+    int32 VersionCount = 0;
 
     /** Latest version number (null if empty) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -28191,7 +28167,7 @@ struct FSlotResponse
 
     /** Total storage used by all versions */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int64> TotalSizeBytes;
+    int64 TotalSizeBytes = 0;
 
     /** Slot creation timestamp */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -28199,9 +28175,9 @@ struct FSlotResponse
 
     /** Last modification timestamp */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDateTime> UpdatedAt;
+    FDateTime UpdatedAt;
 
-    /** Custom key-value metadata */
+    /** Custom key-value metadata (null if none set) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -28431,7 +28407,7 @@ struct FStartWatchersForRealmResponse
 
     /** Number of watchers that already existed */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> WatchersExisted;
+    int32 WatchersExisted = 0;
 
     /** All watchers now active for this realm */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -28543,7 +28519,7 @@ struct FStatusInstanceResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FDateTime> ExpiresAt;
 
-    /** Arbitrary metadata associated with this status instance */
+    /** Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -28645,6 +28621,18 @@ struct FStatusTemplateResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> IconAssetId;
 
+    /** Whether this template is deprecated and unavailable for new grants */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When this template was deprecated (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Why this template was deprecated (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
+
     /** When this template was created */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
@@ -28706,16 +28694,12 @@ struct FStopWatcherRequest
 };
 
 /**
- * Response after stopping a watcher
+ * Empty response. HTTP 200 confirms the watcher was stopped. HTTP 404 if watcher not found.
  */
 USTRUCT(BlueprintType)
 struct FStopWatcherResponse
 {
     GENERATED_BODY()
-
-    /** True if the watcher was found and stopped */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Stopped = false;
 
 };
 
@@ -30422,6 +30406,20 @@ struct FUndeprecateSeedTypeRequest
     /** The game service scope. Null for cross-game seed types. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> GameServiceId;
+
+};
+
+/**
+ * Request to undeprecate a status template (Category A -- reversible)
+ */
+USTRUCT(BlueprintType)
+struct FUndeprecateStatusTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** Status template to undeprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid StatusTemplateId;
 
 };
 
@@ -32960,16 +32958,16 @@ struct FValidationRule
 };
 
 /**
- * Configuration for a validation rule
+ * Configuration for a validation rule (fields are conditional on rule type)
  */
 USTRUCT(BlueprintType)
 struct FValidationRuleConfig
 {
     GENERATED_BODY()
 
-    /** Filter to nodes of this type (for require_tag) */
+    /** Filter to nodes of this type (for RequireTag, RequireNodeType) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString NodeType;
+    TOptional<FNodeType> NodeType;
 
     /** Tag to check for */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -32983,11 +32981,11 @@ struct FValidationRuleConfig
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int32> MaxCount;
 
-    /** JSONPath to required annotation field (for require_annotation) */
+    /** JSONPath to required annotation field (for RequireAnnotation) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString AnnotationPath;
 
-    /** Custom validation expression (for custom_expression) */
+    /** Custom validation expression (for CustomExpression) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Expression;
 
@@ -33173,7 +33171,7 @@ struct FVersionInfo
 
     /** Node count at this version */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> NodeCount;
+    int32 NodeCount = 0;
 
 };
 
@@ -33189,7 +33187,7 @@ struct FVersionResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int32 VersionNumber = 0;
 
-    /** Reference to asset in lib-asset */
+    /** Reference to asset in lib-asset (null if not yet uploaded to MinIO) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> AssetId;
 
@@ -33225,7 +33223,7 @@ struct FVersionResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
 
-    /** Custom metadata */
+    /** Custom metadata (null if none set) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -33507,7 +33505,7 @@ struct FWatcherInfo
 
     /** Actor instance ID running this watcher's behavior */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString ActorId;
+    TOptional<FGuid> ActorId;
 
 };
 

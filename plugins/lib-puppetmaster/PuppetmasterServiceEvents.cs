@@ -242,7 +242,7 @@ public partial class PuppetmasterService
             return false;
 
         var idString = idElement.GetString();
-        return !string.IsNullOrEmpty(idString) && Guid.TryParse(idString, out resourceId);
+        return !string.IsNullOrEmpty(idString) && Guid.TryParse(idString, out resourceId) && resourceId != Guid.Empty;
     }
 
     /// <summary>
@@ -270,7 +270,7 @@ public partial class PuppetmasterService
             // Paginate through all running actors. Behavior updates are rare admin events,
             // so sequential notification is acceptable.
             var offset = 0;
-            const int pageSize = 100;
+            var pageSize = _configuration.BehaviorUpdatePageSize;
             var notifiedCount = 0;
 
             while (true)
@@ -348,14 +348,18 @@ public partial class PuppetmasterService
     /// <summary>
     /// Handles actor.instance.deleted events by cleaning up all watches for that actor.
     /// </summary>
-    public Task HandleActorDeletedAsync(ActorInstanceDeletedEvent evt)
+    /// <param name="evt">The event data.</param>
+    public async Task HandleActorDeletedAsync(ActorInstanceDeletedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PuppetmasterService.HandleActorDeletedAsync");
+
         if (!Guid.TryParse(evt.ActorId, out var actorId))
         {
             _logger.LogWarning(
                 "Invalid actor ID in actor.instance.deleted event: {ActorId}",
                 evt.ActorId);
-            return Task.CompletedTask;
+            await Task.CompletedTask;
+            return;
         }
 
         var removedCount = _watchRegistry.RemoveAllWatches(actorId);
@@ -367,7 +371,7 @@ public partial class PuppetmasterService
                 removedCount, actorId);
         }
 
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     /// <summary>

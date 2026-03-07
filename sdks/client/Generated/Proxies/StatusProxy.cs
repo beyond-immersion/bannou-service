@@ -135,6 +135,58 @@ public sealed class StatusProxy
     }
 
     /// <summary>
+    /// Deprecate a status template
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing StatusTemplateResponse on success.</returns>
+    public Task<ApiResponse<StatusTemplateResponse>> DeprecateStatusTemplateAsync(
+        DeprecateStatusTemplateRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeprecateStatusTemplateRequest, StatusTemplateResponse>(
+            "/status/template/deprecate", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Undeprecate a status template
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing StatusTemplateResponse on success.</returns>
+    public Task<ApiResponse<StatusTemplateResponse>> UndeprecateStatusTemplateAsync(
+        UndeprecateStatusTemplateRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<UndeprecateStatusTemplateRequest, StatusTemplateResponse>(
+            "/status/template/undeprecate", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Delete a deprecated status template
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task DeleteStatusTemplateEventAsync(
+        DeleteStatusTemplateRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<DeleteStatusTemplateRequest>(
+            "/status/template/delete", request, channel, cancellationToken);
+    }
+
+    /// <summary>
     /// Grant a status effect to an entity
     /// </summary>
     /// <param name="request">The request payload.</param>

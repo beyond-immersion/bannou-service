@@ -1,5 +1,7 @@
 # Quality Tenets
 
+> ⛔ **FROZEN DOCUMENT** — Defines authoritative quality tenets enforced across the codebase. AI agents MUST NOT add, remove, modify, or reinterpret any content without explicit user instruction. If you believe something is incorrect, report the concern and wait — do not "fix" it. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Category**: Standards & Verification
 > **When to Reference**: During code review or before PR submission
 > **Tenets**: T10, T11, T12, T16, T19, T22
@@ -120,11 +122,13 @@ var result = await _service.GetAccountAsync(null);  // null is allowed by type s
 | Event topics (single-entity) | `{entity}.{action}` | `account.created`, `game-session.player-joined`, `personality.evolved` (Pattern A: service has one entity type, or entity name is independent of service name) |
 | Event topics (multi-entity) | `{service}.{entity}.{action}` | `worldstate.calendar-template.created`, `transit.connection.created`, `divine.blessing.granted` (Pattern C: dot-separated service namespace for services with multiple entity types) |
 | Client event names (single-entity) | `{service}.{compound-action}` | `auth.password-changed`, `game-session.state-changed`, `chat.typing-started` (Pattern A: no real API entity in the middle) |
-| Client event names (multi-entity) | `{service}.{entity}.{action}` | `chat.message.received`, `inventory.item.changed`, `voice.peer.joined` (Pattern C: middle word is a real API-backed entity with its own endpoint group) |
+| Client event names (multi-entity) | `{service}.{entity}.{action}` | `chat.message.received`, `inventory.item.changed`, `voice.peer.joined` (Pattern C: middle word is a real API-backed entity with its own endpoint group — see "Endpoint Group" definition below) |
 | State keys | `{entity-prefix}{id}` | `account-{guid}` |
 | Config properties | PascalCase + units | `TimeoutSeconds` |
 | Schema enum values | PascalCase | `TwoParty`, `FailFast`, `QuestCompleted` |
 | Test methods | `UnitOfWork_State_Result` | `GetAccount_WhenExists_Returns` |
+
+**"Endpoint group" definition** (for Pattern A vs Pattern C): An entity qualifies as an "endpoint group" when it appears as a path segment with multiple endpoints beneath it. For example, `/chat/message/send`, `/chat/message/edit`, `/chat/message/delete` — "message" is an endpoint group. A conceptual domain term that does NOT appear as a route path segment with its own set of endpoints is NOT an endpoint group. Example: Status has `/status/template/create` (template is an endpoint group) but no `/status/effect/...` routes — so "effect" is NOT an endpoint group, and the correct client event name is `status.effect-changed` (Pattern A), not `status.effect.changed` (Pattern C).
 
 Configuration properties: PascalCase, include units in time-based names (`HeartbeatIntervalSeconds`), document environment variable in XML comment.
 

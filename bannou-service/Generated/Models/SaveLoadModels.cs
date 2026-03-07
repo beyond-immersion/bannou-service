@@ -106,6 +106,116 @@ public enum ConflictResolution
 #pragma warning restore CS1591
 
 /// <summary>
+/// State of the storage circuit breaker.
+/// <br/>Closed: Normal operation, requests flow through.
+/// <br/>Open: Too many failures, requests are rejected.
+/// <br/>HalfOpen: Testing recovery, limited requests allowed.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CircuitBreakerState
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Closed")]
+    Closed = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Open")]
+    Open = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HalfOpen")]
+    HalfOpen = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// JSON Patch operation type per RFC 6902
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum JsonPatchOperationType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Add")]
+    Add = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Remove")]
+    Remove = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Replace")]
+    Replace = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Move")]
+    Move = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Copy")]
+    Copy = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Test")]
+    Test = 5,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Field to sort save query results by
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SaveSortField
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"CreatedAt")]
+    CreatedAt = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Size")]
+    Size = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"VersionNumber")]
+    VersionNumber = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Sort direction for query results
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SortOrder
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Asc")]
+    Asc = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Desc")]
+    Desc = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Field to group storage statistics by
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum StatsGroupBy
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"OwnerType")]
+    OwnerType = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Category")]
+    Category = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SchemaVersion")]
+    SchemaVersion = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// JSON Patch operation per RFC 6902.
 /// <br/>Uses JsonPatch.Net library (MIT licensed).
 /// <br/>
@@ -121,7 +231,7 @@ public partial class JsonPatchOperation
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public JsonPatchOperationOp Op { get; set; } = default!;
+    public JsonPatchOperationType Op { get; set; } = default!;
 
     /// <summary>
     /// JSON Pointer to target location
@@ -142,18 +252,6 @@ public partial class JsonPatchOperation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("value")]
     public object Value { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -244,18 +342,6 @@ public partial class CreateSlotRequest
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -296,21 +382,10 @@ public partial class GetSlotRequest
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -361,18 +436,6 @@ public partial class ListSlotsRequest
     [System.Text.Json.Serialization.JsonPropertyName("includeVersionCount")]
     public bool IncludeVersionCount { get; set; } = true;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -413,21 +476,10 @@ public partial class DeleteSlotRequest
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -496,6 +548,8 @@ public partial class SlotResponse
     /// Compression algorithm used for save data
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compressionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CompressionType CompressionType { get; set; } = default!;
 
@@ -529,25 +583,15 @@ public partial class SlotResponse
     /// Last modification timestamp
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Custom key-value metadata
+    /// Custom key-value metadata (null if none set)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public System.Collections.Generic.IDictionary<string, string> Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
 }
 
@@ -572,18 +616,6 @@ public partial class ListSlotsResponse
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -592,12 +624,6 @@ public partial class ListSlotsResponse
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteSlotResponse
 {
-
-    /// <summary>
-    /// Whether slot was deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deleted")]
-    public bool Deleted { get; set; } = default!;
 
     /// <summary>
     /// Number of versions deleted
@@ -610,18 +636,6 @@ public partial class DeleteSlotResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bytesFreed")]
     public long BytesFreed { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -636,8 +650,10 @@ public partial class SaveRequest
     /// Game identifier for namespace isolation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
     public string GameId { get; set; } = default!;
 
     /// <summary>
@@ -661,8 +677,9 @@ public partial class SaveRequest
     /// Slot name (auto-created if doesn't exist)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
 
     /// <summary>
@@ -723,18 +740,6 @@ public partial class SaveRequest
     [System.Text.Json.Serialization.JsonPropertyName("pinAsCheckpoint")]
     [System.ComponentModel.DataAnnotations.StringLength(64)]
     public string? PinAsCheckpoint { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -845,18 +850,6 @@ public partial class SaveResponse
     [System.Text.Json.Serialization.JsonPropertyName("uploadPending")]
     public bool UploadPending { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -918,18 +911,6 @@ public partial class LoadRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeMetadata")]
     public bool IncludeMetadata { get; set; } = true;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -998,25 +979,15 @@ public partial class LoadResponse
     /// Save timestamp
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata
+    /// Custom metadata (null if none set)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public System.Collections.Generic.IDictionary<string, string> Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
 }
 
@@ -1048,8 +1019,9 @@ public partial class ListVersionsRequest
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
 
     /// <summary>
@@ -1070,18 +1042,6 @@ public partial class ListVersionsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pinnedOnly")]
     public bool PinnedOnly { get; set; } = false;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1106,18 +1066,6 @@ public partial class ListVersionsResponse
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1134,10 +1082,10 @@ public partial class VersionResponse
     public int VersionNumber { get; set; } = default!;
 
     /// <summary>
-    /// Reference to asset in lib-asset
+    /// Reference to asset in lib-asset (null if not yet uploaded to MinIO)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    public System.Guid AssetId { get; set; } = default!;
+    public System.Guid? AssetId { get; set; } = default!;
 
     /// <summary>
     /// SHA-256 hash
@@ -1192,22 +1140,10 @@ public partial class VersionResponse
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata
+    /// Custom metadata (null if none set)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public System.Collections.Generic.IDictionary<string, string> Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
 }
 
@@ -1239,8 +1175,9 @@ public partial class PinVersionRequest
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
 
     /// <summary>
@@ -1255,18 +1192,6 @@ public partial class PinVersionRequest
     [System.Text.Json.Serialization.JsonPropertyName("checkpointName")]
     [System.ComponentModel.DataAnnotations.StringLength(64)]
     public string CheckpointName { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1298,8 +1223,9 @@ public partial class UnpinVersionRequest
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
 
     /// <summary>
@@ -1307,18 +1233,6 @@ public partial class UnpinVersionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("versionNumber")]
     public int VersionNumber { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1350,8 +1264,9 @@ public partial class DeleteVersionRequest
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
 
     /// <summary>
@@ -1359,18 +1274,6 @@ public partial class DeleteVersionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("versionNumber")]
     public int VersionNumber { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1382,28 +1285,10 @@ public partial class DeleteVersionResponse
 {
 
     /// <summary>
-    /// Whether version was deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deleted")]
-    public bool Deleted { get; set; } = default!;
-
-    /// <summary>
     /// Storage freed in bytes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bytesFreed")]
     public long BytesFreed { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1482,26 +1367,14 @@ public partial class QuerySavesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sortBy")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuerySavesRequestSortBy SortBy { get; set; } = BeyondImmersion.BannouService.SaveLoad.QuerySavesRequestSortBy.CreatedAt;
+    public SaveSortField SortBy { get; set; } = BeyondImmersion.BannouService.SaveLoad.SaveSortField.CreatedAt;
 
     /// <summary>
     /// Sort order
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sortOrder")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuerySavesRequestSortOrder SortOrder { get; set; } = BeyondImmersion.BannouService.SaveLoad.QuerySavesRequestSortOrder.Desc;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public SortOrder SortOrder { get; set; } = BeyondImmersion.BannouService.SaveLoad.SortOrder.Desc;
 
 }
 
@@ -1525,18 +1398,6 @@ public partial class QuerySavesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1634,22 +1495,10 @@ public partial class QueryResultItem
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata
+    /// Custom metadata (null if none set)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public System.Collections.Generic.IDictionary<string, string> Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
 }
 
@@ -1681,8 +1530,9 @@ public partial class MigrateSaveRequest
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
 
     /// <summary>
@@ -1695,8 +1545,9 @@ public partial class MigrateSaveRequest
     /// Target schema version to migrate to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSchemaVersion")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
     public string TargetSchemaVersion { get; set; } = default!;
 
     /// <summary>
@@ -1704,18 +1555,6 @@ public partial class MigrateSaveRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
     public bool DryRun { get; set; } = false;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1725,12 +1564,6 @@ public partial class MigrateSaveRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MigrateSaveResponse
 {
-
-    /// <summary>
-    /// Whether migration succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Original schema version
@@ -1755,28 +1588,16 @@ public partial class MigrateSaveResponse
     public int? NewVersionNumber { get; set; } = default!;
 
     /// <summary>
-    /// Migration path applied (list of versions)
+    /// Migration path applied (list of versions, null if dry run failed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("migrationPath")]
-    public System.Collections.Generic.ICollection<string> MigrationPath { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? MigrationPath { get; set; } = default!;
 
     /// <summary>
-    /// Non-fatal migration warnings
+    /// Non-fatal migration warnings (null if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("warnings")]
-    public System.Collections.Generic.ICollection<string> Warnings { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public System.Collections.Generic.ICollection<string>? Warnings { get; set; } = default!;
 
 }
 
@@ -1791,16 +1612,18 @@ public partial class RegisterSchemaRequest
     /// Schema namespace (e.g., game identifier)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string Namespace { get; set; } = default!;
 
     /// <summary>
     /// Schema version identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
     public string SchemaVersion { get; set; } = default!;
 
     /// <summary>
@@ -1824,18 +1647,6 @@ public partial class RegisterSchemaRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("migrationPatch")]
     public System.Collections.Generic.ICollection<JsonPatchOperation>? MigrationPatch { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1888,18 +1699,6 @@ public partial class SchemaResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1913,21 +1712,10 @@ public partial class ListSchemasRequest
     /// Schema namespace to list
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string Namespace { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1951,18 +1739,6 @@ public partial class ListSchemasResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("latestVersion")]
     public string? LatestVersion { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1999,18 +1775,6 @@ public partial class AdminCleanupRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SaveCategory Category { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2044,18 +1808,6 @@ public partial class AdminCleanupResponse
     [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
     public bool DryRun { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2066,23 +1818,11 @@ public partial class AdminStatsRequest
 {
 
     /// <summary>
-    /// Group statistics by field
+    /// Group statistics by field (null = no grouping)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("groupBy")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AdminStatsRequestGroupBy GroupBy { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public StatsGroupBy? GroupBy { get; set; } = default!;
 
 }
 
@@ -2118,22 +1858,10 @@ public partial class AdminStatsResponse
     public int PinnedVersions { get; set; } = default!;
 
     /// <summary>
-    /// Breakdown by groupBy field
+    /// Breakdown by groupBy field (null if no groupBy specified)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("breakdown")]
-    public System.Collections.Generic.ICollection<StatsBreakdown> Breakdown { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public System.Collections.Generic.ICollection<StatsBreakdown>? Breakdown { get; set; } = default!;
 
 }
 
@@ -2170,18 +1898,6 @@ public partial class StatsBreakdown
     [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
     public long SizeBytes { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2195,8 +1911,10 @@ public partial class RenameSlotRequest
     /// Game identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
     public string GameId { get; set; } = default!;
 
     /// <summary>
@@ -2220,8 +1938,9 @@ public partial class RenameSlotRequest
     /// Current slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
 
     /// <summary>
@@ -2233,18 +1952,6 @@ public partial class RenameSlotRequest
     [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$")]
     public string NewSlotName { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2259,8 +1966,10 @@ public partial class BulkDeleteSlotsRequest
     /// Game identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
     public string GameId { get; set; } = default!;
 
     /// <summary>
@@ -2270,18 +1979,6 @@ public partial class BulkDeleteSlotsRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<System.Guid> SlotIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2304,18 +2001,6 @@ public partial class BulkDeleteSlotsResponse
     [System.Text.Json.Serialization.JsonPropertyName("bytesFreed")]
     public long BytesFreed { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2329,8 +2014,10 @@ public partial class CopySaveRequest
     /// Game identifier of the source save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceGameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
     public string SourceGameId { get; set; } = default!;
 
     /// <summary>
@@ -2354,8 +2041,9 @@ public partial class CopySaveRequest
     /// Name of the source slot to copy from
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceSlotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SourceSlotName { get; set; } = default!;
 
     /// <summary>
@@ -2368,8 +2056,10 @@ public partial class CopySaveRequest
     /// Game identifier for the target save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetGameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
     public string TargetGameId { get; set; } = default!;
 
     /// <summary>
@@ -2393,8 +2083,9 @@ public partial class CopySaveRequest
     /// Name of the target slot to copy to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSlotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string TargetSlotName { get; set; } = default!;
 
     /// <summary>
@@ -2403,18 +2094,6 @@ public partial class CopySaveRequest
     [System.Text.Json.Serialization.JsonPropertyName("targetCategory")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SaveCategory TargetCategory { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2429,8 +2108,10 @@ public partial class ExportSavesRequest
     /// Game identifier for namespace isolation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
     public string GameId { get; set; } = default!;
 
     /// <summary>
@@ -2451,22 +2132,10 @@ public partial class ExportSavesRequest
     public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
-    /// Specific slots to export (all if null)
+    /// Specific slots to export (null = all slots)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotNames")]
-    public System.Collections.Generic.ICollection<string> SlotNames { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public System.Collections.Generic.ICollection<string>? SlotNames { get; set; } = default!;
 
 }
 
@@ -2499,18 +2168,6 @@ public partial class ExportSavesResponse
     [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
     public long SizeBytes { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2532,8 +2189,10 @@ public partial class ImportSavesRequest
     /// Game identifier for namespace isolation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetGameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
     public string TargetGameId { get; set; } = default!;
 
     /// <summary>
@@ -2559,18 +2218,6 @@ public partial class ImportSavesRequest
     [System.Text.Json.Serialization.JsonPropertyName("conflictResolution")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ConflictResolution ConflictResolution { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2600,22 +2247,10 @@ public partial class ImportSavesResponse
     public int SkippedSlots { get; set; } = default!;
 
     /// <summary>
-    /// Names of slots that had conflicts
+    /// Names of slots that had conflicts (null if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("conflicts")]
-    public System.Collections.Generic.ICollection<string> Conflicts { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public System.Collections.Generic.ICollection<string>? Conflicts { get; set; } = default!;
 
 }
 
@@ -2630,8 +2265,10 @@ public partial class VerifyIntegrityRequest
     /// Game identifier for namespace isolation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
     public string GameId { get; set; } = default!;
 
     /// <summary>
@@ -2655,8 +2292,9 @@ public partial class VerifyIntegrityRequest
     /// Name of the slot to verify
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
 
     /// <summary>
@@ -2664,18 +2302,6 @@ public partial class VerifyIntegrityRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("versionNumber")]
     public int? VersionNumber { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2702,6 +2328,8 @@ public partial class VerifyIntegrityResponse
     /// Expected SHA-256 hash
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expectedHash")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ExpectedHash { get; set; } = default!;
 
     /// <summary>
@@ -2716,18 +2344,6 @@ public partial class VerifyIntegrityResponse
     [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
     public string? ErrorMessage { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2741,8 +2357,10 @@ public partial class PromoteVersionRequest
     /// Game identifier for namespace isolation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
     public string GameId { get; set; } = default!;
 
     /// <summary>
@@ -2766,8 +2384,9 @@ public partial class PromoteVersionRequest
     /// Name of the slot containing the version to promote
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
 
     /// <summary>
@@ -2781,18 +2400,6 @@ public partial class PromoteVersionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2831,8 +2438,10 @@ public partial class SaveDeltaRequest
     /// Game identifier for namespace isolation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
     public string GameId { get; set; } = default!;
 
     /// <summary>
@@ -2856,8 +2465,9 @@ public partial class SaveDeltaRequest
     /// Name of the slot to save the delta to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
 
     /// <summary>
@@ -2907,18 +2517,6 @@ public partial class SaveDeltaRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2981,18 +2579,6 @@ public partial class SaveDeltaResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -3006,8 +2592,10 @@ public partial class CollapseDeltasRequest
     /// Game identifier for namespace isolation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
     public string GameId { get; set; } = default!;
 
     /// <summary>
@@ -3031,8 +2619,9 @@ public partial class CollapseDeltasRequest
     /// Name of the slot containing deltas to collapse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string SlotName { get; set; } = default!;
 
     /// <summary>
@@ -3047,93 +2636,7 @@ public partial class CollapseDeltasRequest
     [System.Text.Json.Serialization.JsonPropertyName("deleteIntermediates")]
     public bool DeleteIntermediates { get; set; } = true;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum JsonPatchOperationOp
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"add")]
-    Add = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"remove")]
-    Remove = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"replace")]
-    Replace = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"move")]
-    Move = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"copy")]
-    Copy = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"test")]
-    Test = 5,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum QuerySavesRequestSortBy
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"created_at")]
-    CreatedAt = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"size")]
-    Size = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"version_number")]
-    VersionNumber = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum QuerySavesRequestSortOrder
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"asc")]
-    Asc = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"desc")]
-    Desc = 1,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AdminStatsRequestGroupBy
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"owner_type")]
-    OwnerType = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"category")]
-    Category = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"schema_version")]
-    SchemaVersion = 2,
-
-}
-#pragma warning restore CS1591
 
 
 

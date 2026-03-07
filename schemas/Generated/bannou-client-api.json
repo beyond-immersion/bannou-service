@@ -15441,14 +15441,7 @@
         },
         "responses": {
           "200": {
-            "description": "Discard successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscardResponse"
-                }
-              }
-            }
+            "description": "Discard successful"
           },
           "403": {
             "description": "Invalid checkout token"
@@ -15459,7 +15452,7 @@
     "/scene/heartbeat": {
       "post": {
         "summary": "Extend checkout lock TTL",
-        "description": "Extends the checkout lock TTL. Should be called periodically\nduring editing to prevent lock expiration.\n",
+        "description": "Extends the checkout lock TTL. Should be called periodically\nduring editing to prevent lock expiration.\nReturns 409 Conflict when the extension limit has been reached.\n",
         "operationId": "scene_heartbeatCheckout",
         "tags": [
           "Versioning"
@@ -15495,7 +15488,7 @@
             "description": "Invalid checkout token"
           },
           "409": {
-            "description": "Checkout expired"
+            "description": "Checkout expired or extension limit reached"
           }
         }
       }
@@ -16739,6 +16732,125 @@
         }
       }
     },
+    "/status/template/deprecate": {
+      "post": {
+        "operationId": "status_deprecateStatusTemplate",
+        "tags": [
+          "StatusTemplate"
+        ],
+        "summary": "Deprecate a status template",
+        "description": "Mark a status template as deprecated. Deprecated templates cannot be used\nfor new grants. Idempotent -- returns OK if already deprecated.\nCategory A entity: deprecation is reversible via undeprecate.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeprecateStatusTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status template deprecated (or already deprecated)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Status template not found"
+          }
+        }
+      }
+    },
+    "/status/template/undeprecate": {
+      "post": {
+        "operationId": "status_undeprecateStatusTemplate",
+        "tags": [
+          "StatusTemplate"
+        ],
+        "summary": "Undeprecate a status template",
+        "description": "Remove deprecation from a status template, restoring it for use in grants.\nIdempotent -- returns OK if not deprecated.\nCategory A entity: undeprecation is allowed.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UndeprecateStatusTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status template undeprecated (or was not deprecated)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Status template not found"
+          }
+        }
+      }
+    },
+    "/status/template/delete": {
+      "post": {
+        "operationId": "status_deleteStatusTemplate",
+        "tags": [
+          "StatusTemplate"
+        ],
+        "summary": "Delete a deprecated status template",
+        "description": "Permanently delete a status template. The template must be deprecated first.\nReturns BadRequest if the template is not deprecated.\nCategory A entity: deletion requires prior deprecation.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteStatusTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status template deleted"
+          },
+          "400": {
+            "description": "Template is not deprecated (must deprecate before deleting)"
+          },
+          "404": {
+            "description": "Status template not found"
+          }
+        }
+      }
+    },
     "/status/grant": {
       "post": {
         "operationId": "status_grantStatus",
@@ -17086,44 +17198,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SeedEffectsResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/status/cleanup-by-owner": {
-      "post": {
-        "operationId": "status_cleanupByOwner",
-        "tags": [
-          "Cleanup"
-        ],
-        "summary": "Remove all statuses and containers for an owner",
-        "description": "Remove all status containers, instances, and inventory containers for an\nowner entity. Called by lib-resource cleanup callbacks when a character or\naccount is deleted. Destroys inventory containers (cascades to items),\ndeletes all instance records, and invalidates all caches.\n",
-        "x-permissions": [
-          {
-            "role": "developer",
-            "states": {}
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CleanupByOwnerRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Cleanup completed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CleanupResponse"
                 }
               }
             }
@@ -21073,6 +21147,7 @@
       },
       "Affordance": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
         "required": [
           "type"
@@ -21646,6 +21721,7 @@
       },
       "AssetReference": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Reference to an asset in lib-asset",
         "required": [
           "assetId"
@@ -21665,6 +21741,7 @@
           "variantId": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Variant identifier (consumer interprets meaning)"
           }
         }
@@ -21771,6 +21848,7 @@
       },
       "AssetSlot": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
         "required": [
           "slotType"
@@ -21778,10 +21856,13 @@
         "properties": {
           "slotType": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
             "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
           },
           "acceptsTags": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
@@ -21794,6 +21875,7 @@
           },
           "variations": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/AssetReference"
             },
@@ -21816,6 +21898,7 @@
       },
       "AssetUsageInfo": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Information about asset usage",
         "required": [
           "sceneId",
@@ -21969,6 +22052,7 @@
       },
       "AttachmentPoint": {
         "type": "object",
+        "additionalProperties": false,
         "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
         "required": [
           "name",
@@ -21977,6 +22061,8 @@
         "properties": {
           "name": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
             "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
           },
           "localTransform": {
@@ -21985,6 +22071,7 @@
           },
           "acceptsTags": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
@@ -25470,6 +25557,7 @@
       },
       "CheckoutRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to checkout a scene for editing",
         "required": [
           "sceneId"
@@ -25488,17 +25576,21 @@
           "editorId": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Editor identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the app-id or service name.\nDefaults to caller identity if not specified.\n"
           },
           "ttlMinutes": {
             "type": "integer",
             "nullable": true,
-            "description": "Custom lock TTL (uses default if not specified)"
+            "minimum": 1,
+            "maximum": 1440,
+            "description": "Custom lock TTL in minutes (uses default if not specified)"
           }
         }
       },
       "CheckoutResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Response containing checkout token and scene",
         "required": [
           "checkoutToken",
@@ -25745,45 +25837,6 @@
           }
         }
       },
-      "CleanupByOwnerRequest": {
-        "type": "object",
-        "description": "Request to cleanup all boards for a deleted owner entity",
-        "additionalProperties": false,
-        "required": [
-          "ownerType",
-          "ownerId"
-        ],
-        "properties": {
-          "ownerType": {
-            "$ref": "#/components/schemas/EntityType",
-            "description": "Type of entity whose boards should be cleaned up"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "ID of the entity whose boards should be cleaned up"
-          }
-        }
-      },
-      "CleanupResponse": {
-        "type": "object",
-        "description": "Result of an owner cleanup operation",
-        "additionalProperties": false,
-        "required": [
-          "statusesRemoved",
-          "containersDeleted"
-        ],
-        "properties": {
-          "statusesRemoved": {
-            "type": "integer",
-            "description": "Number of status instances removed"
-          },
-          "containersDeleted": {
-            "type": "integer",
-            "description": "Number of status containers deleted"
-          }
-        }
-      },
       "ClientCapabilitiesResponse": {
         "description": "Response containing the client's capability manifest with available API endpoints and shortcuts",
         "type": "object",
@@ -26003,6 +26056,7 @@
       },
       "CollapseDeltasRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to collapse a delta chain into a full snapshot",
         "required": [
           "gameId",
@@ -26013,6 +26067,9 @@
         "properties": {
           "gameId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z][a-z0-9-]*$",
             "description": "Game identifier for namespace isolation"
           },
           "ownerId": {
@@ -26026,6 +26083,8 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Name of the slot containing deltas to collapse"
           },
           "versionNumber": {
@@ -26245,6 +26304,7 @@
       },
       "CommitRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to commit checkout changes",
         "required": [
           "sceneId",
@@ -26259,6 +26319,7 @@
           },
           "checkoutToken": {
             "type": "string",
+            "maxLength": 200,
             "description": "Checkout token from checkout response"
           },
           "scene": {
@@ -26268,22 +26329,19 @@
           "changesSummary": {
             "type": "string",
             "nullable": true,
+            "maxLength": 2000,
             "description": "Optional summary of changes for audit"
           }
         }
       },
       "CommitResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Response confirming commit",
         "required": [
-          "committed",
           "newVersion"
         ],
         "properties": {
-          "committed": {
-            "type": "boolean",
-            "description": "Whether commit was successful"
-          },
           "newVersion": {
             "type": "string",
             "description": "New version after commit"
@@ -28279,6 +28337,7 @@
       "CopySaveRequest": {
         "description": "Request to copy save data from one slot to another, optionally across different entities or games.",
         "type": "object",
+        "additionalProperties": false,
         "required": [
           "sourceGameId",
           "sourceOwnerId",
@@ -28292,6 +28351,9 @@
         "properties": {
           "sourceGameId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z][a-z0-9-]*$",
             "description": "Game identifier of the source save"
           },
           "sourceOwnerId": {
@@ -28305,6 +28367,8 @@
           },
           "sourceSlotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Name of the source slot to copy from"
           },
           "sourceVersion": {
@@ -28314,6 +28378,9 @@
           },
           "targetGameId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z][a-z0-9-]*$",
             "description": "Game identifier for the target save"
           },
           "targetOwnerId": {
@@ -28327,6 +28394,8 @@
           },
           "targetSlotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Name of the target slot to copy to"
           },
           "targetCategory": {
@@ -30610,6 +30679,7 @@
       },
       "CreateSceneRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to create a new scene",
         "required": [
           "scene"
@@ -30667,6 +30737,7 @@
       "CreateSlotRequest": {
         "description": "Request to create a new save slot for an entity.",
         "type": "object",
+        "additionalProperties": false,
         "required": [
           "gameId",
           "ownerId",
@@ -30770,10 +30841,12 @@
           },
           "displayName": {
             "type": "string",
+            "maxLength": 256,
             "description": "Human-readable display name for this status effect"
           },
           "description": {
             "type": "string",
+            "maxLength": 2000,
             "description": "Detailed description of what this status effect does"
           },
           "category": {
@@ -30787,6 +30860,7 @@
           "maxStacks": {
             "type": "integer",
             "minimum": 1,
+            "maximum": 100,
             "default": 1,
             "description": "Maximum number of stacks when stackable is true"
           },
@@ -31912,6 +31986,7 @@
       },
       "DeleteSceneRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to delete a scene",
         "required": [
           "sceneId"
@@ -31925,26 +32000,16 @@
           "reason": {
             "type": "string",
             "nullable": true,
+            "maxLength": 1000,
             "description": "Optional reason for deletion (included in event)"
           }
         }
       },
       "DeleteSceneResponse": {
         "type": "object",
-        "description": "Response confirming scene deletion",
-        "required": [
-          "deleted"
-        ],
+        "additionalProperties": false,
+        "description": "Response for scene deletion",
         "properties": {
-          "deleted": {
-            "type": "boolean",
-            "description": "Whether the scene was successfully deleted"
-          },
-          "sceneId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "ID of the deleted scene"
-          },
           "referencingScenes": {
             "type": "array",
             "items": {
@@ -31952,7 +32017,7 @@
               "format": "uuid"
             },
             "nullable": true,
-            "description": "If deletion failed, IDs of scenes that reference this one"
+            "description": "If deletion was blocked (409), IDs of scenes that reference this one"
           }
         }
       },
@@ -31979,6 +32044,7 @@
       },
       "DeleteSlotRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to permanently delete a save slot and all its versions",
         "required": [
           "gameId",
@@ -32005,23 +32071,21 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Slot name"
           }
         }
       },
       "DeleteSlotResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Result of a slot deletion operation with cleanup statistics",
         "required": [
-          "deleted",
           "versionsDeleted",
           "bytesFreed"
         ],
         "properties": {
-          "deleted": {
-            "type": "boolean",
-            "description": "Whether slot was deleted"
-          },
           "versionsDeleted": {
             "type": "integer",
             "description": "Number of versions deleted"
@@ -32033,8 +32097,24 @@
           }
         }
       },
+      "DeleteStatusTemplateRequest": {
+        "type": "object",
+        "description": "Request to delete a deprecated status template",
+        "additionalProperties": false,
+        "required": [
+          "statusTemplateId"
+        ],
+        "properties": {
+          "statusTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Status template to delete (must be deprecated first)"
+          }
+        }
+      },
       "DeleteVersionRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to permanently delete a specific save version",
         "required": [
           "ownerId",
@@ -32054,6 +32134,8 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Slot name"
           },
           "versionNumber": {
@@ -32064,16 +32146,12 @@
       },
       "DeleteVersionResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Result of a version deletion operation with storage freed",
         "required": [
-          "deleted",
           "bytesFreed"
         ],
         "properties": {
-          "deleted": {
-            "type": "boolean",
-            "description": "Whether version was deleted"
-          },
           "bytesFreed": {
             "type": "integer",
             "format": "int64",
@@ -32418,6 +32496,27 @@
           }
         }
       },
+      "DeprecateStatusTemplateRequest": {
+        "type": "object",
+        "description": "Request to deprecate a status template",
+        "additionalProperties": false,
+        "required": [
+          "statusTemplateId",
+          "reason"
+        ],
+        "properties": {
+          "statusTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Status template to deprecate"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Why this template is being deprecated"
+          }
+        }
+      },
       "DeprecateTemplateRequest": {
         "type": "object",
         "description": "Request to deprecate a template",
@@ -32535,6 +32634,7 @@
       },
       "DiscardRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to discard checkout",
         "required": [
           "sceneId",
@@ -32548,20 +32648,8 @@
           },
           "checkoutToken": {
             "type": "string",
+            "maxLength": 200,
             "description": "Checkout token"
-          }
-        }
-      },
-      "DiscardResponse": {
-        "type": "object",
-        "description": "Response confirming discard",
-        "required": [
-          "discarded"
-        ],
-        "properties": {
-          "discarded": {
-            "type": "boolean",
-            "description": "Whether discard was successful"
           }
         }
       },
@@ -32826,6 +32914,7 @@
       },
       "DuplicateSceneRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to duplicate a scene",
         "required": [
           "sourceSceneId",
@@ -32839,11 +32928,14 @@
           },
           "newName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
             "description": "Name for the duplicate"
           },
           "newGameId": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Optional different game ID"
           },
           "newSceneType": {
@@ -34395,6 +34487,7 @@
       },
       "ExportSavesRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to export all saves for an owner to a downloadable archive",
         "required": [
           "gameId",
@@ -34404,6 +34497,9 @@
         "properties": {
           "gameId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z][a-z0-9-]*$",
             "description": "Game identifier for namespace isolation"
           },
           "ownerId": {
@@ -34417,15 +34513,17 @@
           },
           "slotNames": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
-            "description": "Specific slots to export (all if null)"
+            "description": "Specific slots to export (null = all slots)"
           }
         }
       },
       "ExportSavesResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Response with pre-signed URL for downloading exported save archive",
         "required": [
           "downloadUrl",
@@ -34718,6 +34816,7 @@
       },
       "FindAssetUsageRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to find asset usage",
         "required": [
           "assetId"
@@ -34731,12 +34830,14 @@
           "gameId": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Optional game filter"
           }
         }
       },
       "FindAssetUsageResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Scenes using the asset",
         "required": [
           "usages"
@@ -34753,6 +34854,7 @@
       },
       "FindReferencesRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to find referencing scenes",
         "required": [
           "sceneId"
@@ -34767,6 +34869,7 @@
       },
       "FindReferencesResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Scenes that reference the target",
         "required": [
           "referencingScenes"
@@ -36287,6 +36390,7 @@
           },
           "effects": {
             "type": "array",
+            "maxItems": 500,
             "items": {
               "$ref": "#/components/schemas/StatusEffectSummary"
             },
@@ -37421,6 +37525,7 @@
       },
       "GetSceneRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to retrieve a scene",
         "required": [
           "sceneId"
@@ -37434,6 +37539,7 @@
           "version": {
             "type": "string",
             "nullable": true,
+            "maxLength": 50,
             "description": "Specific version to retrieve (null = latest)"
           },
           "resolveReferences": {
@@ -37452,6 +37558,7 @@
       },
       "GetSceneResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Response containing a scene and resolution metadata",
         "required": [
           "scene"
@@ -37614,6 +37721,7 @@
       },
       "GetSlotRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to retrieve metadata for a specific save slot",
         "required": [
           "gameId",
@@ -37640,6 +37748,8 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Slot name"
           }
         }
@@ -37666,6 +37776,7 @@
           },
           "code": {
             "type": "string",
+            "maxLength": 128,
             "description": "Unique status code within this game service"
           }
         }
@@ -37840,6 +37951,7 @@
       },
       "GetValidationRulesRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to get validation rules",
         "required": [
           "gameId",
@@ -37848,6 +37960,8 @@
         "properties": {
           "gameId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
             "description": "Game ID"
           },
           "sceneType": {
@@ -37858,6 +37972,7 @@
       },
       "GetValidationRulesResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Response containing validation rules",
         "required": [
           "gameId",
@@ -37874,10 +37989,11 @@
           },
           "rules": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/ValidationRule"
             },
-            "description": "Registered rules (empty if none)"
+            "description": "Registered rules (null if none)"
           }
         }
       },
@@ -38055,6 +38171,7 @@
           },
           "statusTemplateCode": {
             "type": "string",
+            "maxLength": 128,
             "description": "Status template code to grant"
           },
           "sourceId": {
@@ -38073,7 +38190,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Arbitrary key-value data passed to contract template values and stored on the status instance. Convention for Divine integration - set metadata.blessingTier to the blessing tier string (e.g., minor, standard, greater, supreme) so the Divine service can query active blessings by tier."
+            "description": "Arbitrary key-value data passed to contract template values and stored on the status instance. Opaque to Status -- callers define their own semantics."
           }
         }
       },
@@ -38097,6 +38214,7 @@
           },
           "statusTemplateCode": {
             "type": "string",
+            "maxLength": 128,
             "description": "Status template code that was granted"
           },
           "stackCount": {
@@ -38470,6 +38588,7 @@
           },
           "statusCode": {
             "type": "string",
+            "maxLength": 128,
             "description": "Status template code to check for"
           }
         }
@@ -38501,6 +38620,7 @@
       },
       "HeartbeatRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to extend checkout lock",
         "required": [
           "sceneId",
@@ -38514,22 +38634,20 @@
           },
           "checkoutToken": {
             "type": "string",
+            "maxLength": 200,
             "description": "Checkout token"
           }
         }
       },
       "HeartbeatResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Response confirming lock extension",
         "required": [
-          "extended",
-          "newExpiresAt"
+          "newExpiresAt",
+          "extensionsRemaining"
         ],
         "properties": {
-          "extended": {
-            "type": "boolean",
-            "description": "Whether extension was successful"
-          },
           "newExpiresAt": {
             "type": "string",
             "format": "date-time",
@@ -38537,12 +38655,14 @@
           },
           "extensionsRemaining": {
             "type": "integer",
+            "minimum": 0,
             "description": "Number of extensions remaining"
           }
         }
       },
       "HistoryRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request for scene version history",
         "required": [
           "sceneId"
@@ -38556,15 +38676,19 @@
           "limit": {
             "type": "integer",
             "default": 10,
+            "minimum": 1,
+            "maximum": 1000,
             "description": "Maximum versions to return"
           }
         }
       },
       "HistoryResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Scene version history",
         "required": [
           "sceneId",
+          "currentVersion",
           "versions"
         ],
         "properties": {
@@ -39719,6 +39843,7 @@
       },
       "JsonPatchOperation": {
         "type": "object",
+        "additionalProperties": false,
         "required": [
           "op",
           "path"
@@ -39726,15 +39851,7 @@
         "description": "JSON Patch operation per RFC 6902.\nUses JsonPatch.Net library (MIT licensed).\n",
         "properties": {
           "op": {
-            "type": "string",
-            "enum": [
-              "add",
-              "remove",
-              "replace",
-              "move",
-              "copy",
-              "test"
-            ],
+            "$ref": "#/components/schemas/JsonPatchOperationType",
             "description": "Operation type"
           },
           "path": {
@@ -39750,6 +39867,18 @@
             "description": "Value to use (for add/replace/test operations)"
           }
         }
+      },
+      "JsonPatchOperationType": {
+        "type": "string",
+        "enum": [
+          "Add",
+          "Remove",
+          "Replace",
+          "Move",
+          "Copy",
+          "Test"
+        ],
+        "description": "JSON Patch operation type per RFC 6902"
       },
       "KeyMode": {
         "description": "Musical mode/scale type for key signatures",
@@ -42321,11 +42450,13 @@
       },
       "ListScenesRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to list scenes with optional filters",
         "properties": {
           "gameId": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Filter by game ID"
           },
           "sceneType": {
@@ -42352,6 +42483,7 @@
           "nameContains": {
             "type": "string",
             "nullable": true,
+            "maxLength": 500,
             "description": "Filter by name containing this substring (case-insensitive)"
           },
           "offset": {
@@ -42371,10 +42503,13 @@
       },
       "ListScenesResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Response containing scene list and pagination info",
         "required": [
           "scenes",
-          "total"
+          "total",
+          "offset",
+          "limit"
         ],
         "properties": {
           "scenes": {
@@ -42400,6 +42535,7 @@
       },
       "ListSchemasRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to list all registered schemas for a namespace",
         "required": [
           "namespace"
@@ -42407,12 +42543,15 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Schema namespace to list"
           }
         }
       },
       "ListSchemasResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "List of registered schemas with latest version indicator",
         "required": [
           "schemas"
@@ -42546,6 +42685,7 @@
       },
       "ListSlotsRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to list all save slots belonging to a specific owner",
         "required": [
           "gameId",
@@ -42587,6 +42727,7 @@
       },
       "ListSlotsResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Response containing a list of save slots for an owner",
         "required": [
           "slots"
@@ -42627,6 +42768,11 @@
               }
             ]
           },
+          "includeDeprecated": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to include deprecated templates in results"
+          },
           "page": {
             "type": "integer",
             "minimum": 1,
@@ -42655,6 +42801,7 @@
         "properties": {
           "templates": {
             "type": "array",
+            "maxItems": 200,
             "items": {
               "$ref": "#/components/schemas/StatusTemplateResponse"
             },
@@ -42734,6 +42881,7 @@
         "properties": {
           "statuses": {
             "type": "array",
+            "maxItems": 100,
             "items": {
               "$ref": "#/components/schemas/StatusEffectSummary"
             },
@@ -43087,6 +43235,7 @@
       },
       "ListVersionsResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Paginated list of save versions within a slot",
         "required": [
           "versions",
@@ -43108,6 +43257,7 @@
       },
       "LoadRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to load save data from a specific slot and version",
         "required": [
           "gameId",
@@ -43155,12 +43305,15 @@
       },
       "LoadResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Response containing loaded save data with integrity verification",
         "required": [
           "slotId",
           "versionNumber",
           "data",
-          "contentHash"
+          "contentHash",
+          "pinned",
+          "createdAt"
         ],
         "properties": {
           "slotId": {
@@ -43207,10 +43360,11 @@
           },
           "metadata": {
             "type": "object",
+            "nullable": true,
             "additionalProperties": {
               "type": "string"
             },
-            "description": "Custom metadata"
+            "description": "Custom metadata (null if none set)"
           }
         }
       },
@@ -43680,7 +43834,7 @@
       },
       "MarkerType": {
         "type": "string",
-        "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+        "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
         "enum": [
           "Generic",
           "SpawnPoint",
@@ -44324,6 +44478,7 @@
       },
       "MigrateSaveRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to migrate a save to a newer schema version",
         "required": [
           "ownerId",
@@ -44343,6 +44498,8 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Slot name"
           },
           "versionNumber": {
@@ -44351,6 +44508,8 @@
           },
           "targetSchemaVersion": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
             "description": "Target schema version to migrate to"
           },
           "dryRun": {
@@ -44362,17 +44521,13 @@
       },
       "MigrateSaveResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Result of a schema migration operation with version path details",
         "required": [
-          "success",
           "fromSchemaVersion",
           "toSchemaVersion"
         ],
         "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "Whether migration succeeded"
-          },
           "fromSchemaVersion": {
             "type": "string",
             "description": "Original schema version"
@@ -44388,17 +44543,19 @@
           },
           "migrationPath": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
-            "description": "Migration path applied (list of versions)"
+            "description": "Migration path applied (list of versions, null if dry run failed)"
           },
           "warnings": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
-            "description": "Non-fatal migration warnings"
+            "description": "Non-fatal migration warnings (null if none)"
           }
         }
       },
@@ -46268,6 +46425,7 @@
       },
       "PinVersionRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to pin a save version as a checkpoint to prevent cleanup",
         "required": [
           "ownerId",
@@ -46287,6 +46445,8 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Slot name"
           },
           "versionNumber": {
@@ -46817,6 +46977,7 @@
       },
       "PromoteVersionRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to promote an older save version to be the latest",
         "required": [
           "gameId",
@@ -46828,6 +46989,9 @@
         "properties": {
           "gameId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z][a-z0-9-]*$",
             "description": "Game identifier for namespace isolation"
           },
           "ownerId": {
@@ -46841,6 +47005,8 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Name of the slot containing the version to promote"
           },
           "versionNumber": {
@@ -46979,6 +47145,7 @@
       },
       "Quaternion": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Rotation represented as a quaternion",
         "required": [
           "x",
@@ -47941,6 +48108,7 @@
       },
       "QuerySavesRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Advanced query for saves across multiple owners with filtering and sorting",
         "properties": {
           "ownerId": {
@@ -48009,28 +48177,28 @@
             "description": "Maximum results"
           },
           "sortBy": {
-            "type": "string",
-            "enum": [
-              "created_at",
-              "size",
-              "version_number"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SaveSortField"
+              }
             ],
-            "default": "created_at",
+            "default": "CreatedAt",
             "description": "Sort field"
           },
           "sortOrder": {
-            "type": "string",
-            "enum": [
-              "asc",
-              "desc"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              }
             ],
-            "default": "desc",
+            "default": "Desc",
             "description": "Sort order"
           }
         }
       },
       "QuerySavesResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Paginated results from a save query operation",
         "required": [
           "results",
@@ -48813,29 +48981,29 @@
         "type": "string",
         "description": "Categories of historical events that realms can participate in",
         "enum": [
-          "FOUNDING",
-          "WAR",
-          "TREATY",
-          "CATACLYSM",
-          "DISCOVERY",
-          "MIGRATION",
-          "CULTURAL_SHIFT",
-          "ECONOMIC_CHANGE",
-          "POLITICAL_UPHEAVAL"
+          "Founding",
+          "War",
+          "Treaty",
+          "Cataclysm",
+          "Discovery",
+          "Migration",
+          "CulturalShift",
+          "EconomicChange",
+          "PoliticalUpheaval"
         ]
       },
       "RealmEventRole": {
         "type": "string",
         "description": "How the realm participated in the historical event",
         "enum": [
-          "ORIGIN",
-          "AGGRESSOR",
-          "DEFENDER",
-          "MEDIATOR",
-          "AFFECTED",
-          "BENEFICIARY",
-          "INSTIGATOR",
-          "NEUTRAL_PARTY"
+          "Origin",
+          "Aggressor",
+          "Defender",
+          "Mediator",
+          "Affected",
+          "Beneficiary",
+          "Instigator",
+          "NeutralParty"
         ]
       },
       "RealmHistoricalParticipation": {
@@ -48957,14 +49125,14 @@
         "type": "string",
         "description": "Types of lore elements. Each type represents a different aspect\nof the realm's background that influences behavior.\n",
         "enum": [
-          "ORIGIN_MYTH",
-          "CULTURAL_PRACTICE",
-          "POLITICAL_SYSTEM",
-          "ECONOMIC_BASE",
-          "RELIGIOUS_TRADITION",
-          "GEOGRAPHIC_FEATURE",
-          "FAMOUS_FIGURE",
-          "TECHNOLOGICAL_LEVEL"
+          "OriginMyth",
+          "CulturalPractice",
+          "PoliticalSystem",
+          "EconomicBase",
+          "ReligiousTradition",
+          "GeographicFeature",
+          "FamousFigure",
+          "TechnologicalLevel"
         ]
       },
       "RealmLoreResponse": {
@@ -48972,15 +49140,9 @@
         "description": "Complete lore data for a realm",
         "additionalProperties": false,
         "required": [
-          "realmId",
           "elements"
         ],
         "properties": {
-          "realmId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "ID of the realm this lore belongs to"
-          },
           "elements": {
             "type": "array",
             "items": {
@@ -49010,7 +49172,9 @@
           "participations",
           "totalCount",
           "page",
-          "pageSize"
+          "pageSize",
+          "hasNextPage",
+          "hasPreviousPage"
         ],
         "properties": {
           "participations": {
@@ -49087,6 +49251,7 @@
       },
       "ReferenceInfo": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Information about a reference",
         "required": [
           "sceneId",
@@ -49417,6 +49582,7 @@
       },
       "RegisterSchemaRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to register a new save data schema with optional migration rules",
         "required": [
           "namespace",
@@ -49426,10 +49592,14 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Schema namespace (e.g., game identifier)"
           },
           "schemaVersion": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
             "description": "Schema version identifier"
           },
           "schema": {
@@ -50031,6 +50201,7 @@
       },
       "RenameSlotRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to rename an existing save slot",
         "required": [
           "gameId",
@@ -50042,6 +50213,9 @@
         "properties": {
           "gameId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z][a-z0-9-]*$",
             "description": "Game identifier"
           },
           "ownerId": {
@@ -50055,6 +50229,8 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Current slot name"
           },
           "newSlotName": {
@@ -50494,12 +50670,14 @@
       },
       "ResolvedReference": {
         "type": "object",
+        "additionalProperties": false,
         "description": "A successfully resolved scene reference",
         "required": [
           "nodeId",
           "refId",
           "referencedSceneId",
-          "scene"
+          "scene",
+          "depth"
         ],
         "properties": {
           "nodeId": {
@@ -50527,6 +50705,7 @@
           },
           "depth": {
             "type": "integer",
+            "minimum": 0,
             "description": "Depth level of this reference"
           }
         }
@@ -50954,6 +51133,7 @@
       },
       "SaveDeltaRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to save incremental changes as a delta from a base version",
         "required": [
           "gameId",
@@ -50966,6 +51146,9 @@
         "properties": {
           "gameId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z][a-z0-9-]*$",
             "description": "Game identifier for namespace isolation"
           },
           "ownerId": {
@@ -50979,6 +51162,8 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Name of the slot to save the delta to"
           },
           "baseVersion": {
@@ -51026,6 +51211,7 @@
       },
       "SaveDeltaResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Result of delta save operation with size and chain information",
         "required": [
           "slotId",
@@ -51033,6 +51219,8 @@
           "baseVersion",
           "deltaSizeBytes",
           "estimatedFullSizeBytes",
+          "chainLength",
+          "compressionSavings",
           "createdAt"
         ],
         "properties": {
@@ -51077,6 +51265,7 @@
       },
       "SaveRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to save game state data to a slot with optional compression and metadata",
         "required": [
           "gameId",
@@ -51088,6 +51277,9 @@
         "properties": {
           "gameId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z][a-z0-9-]*$",
             "description": "Game identifier for namespace isolation"
           },
           "ownerId": {
@@ -51101,6 +51293,8 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Slot name (auto-created if doesn't exist)"
           },
           "category": {
@@ -51158,12 +51352,17 @@
       },
       "SaveResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Result of a save operation including version info and conflict detection",
         "required": [
           "slotId",
           "versionNumber",
           "contentHash",
           "sizeBytes",
+          "pinned",
+          "conflictDetected",
+          "versionsCleanedUp",
+          "uploadPending",
           "createdAt"
         ],
         "properties": {
@@ -51237,6 +51436,15 @@
             "description": "True if async upload is enabled and data is queued for MinIO upload.\nSave is immediately loadable from Redis cache, but not yet durable.\n"
           }
         }
+      },
+      "SaveSortField": {
+        "type": "string",
+        "enum": [
+          "CreatedAt",
+          "Size",
+          "VersionNumber"
+        ],
+        "description": "Field to sort save query results by"
       },
       "ScenarioCategory": {
         "type": "string",
@@ -51997,6 +52205,7 @@
       },
       "Scene": {
         "type": "object",
+        "additionalProperties": false,
         "description": "A complete scene document with hierarchical node structure",
         "required": [
           "sceneId",
@@ -52004,11 +52213,15 @@
           "sceneType",
           "name",
           "version",
-          "root"
+          "root",
+          "schema",
+          "createdAt",
+          "updatedAt"
         ],
         "properties": {
           "schema": {
             "type": "string",
+            "maxLength": 200,
             "description": "Schema identifier for validation",
             "default": "bannou://schemas/scene/v1"
           },
@@ -52019,6 +52232,8 @@
           },
           "gameId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
             "description": "Game service identifier for partitioning. Treated as opaque string.\nDefault is the nil UUID for unpartitioned scenes.\n",
             "default": "00000000-0000-0000-0000-000000000000"
           },
@@ -52028,16 +52243,20 @@
           },
           "name": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
             "description": "Human-readable scene name"
           },
           "description": {
             "type": "string",
             "nullable": true,
+            "maxLength": 2000,
             "description": "Optional scene description"
           },
           "version": {
             "type": "string",
             "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "maxLength": 50,
             "description": "Semantic version (MAJOR.MINOR.PATCH)"
           },
           "root": {
@@ -52046,6 +52265,7 @@
           },
           "tags": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
@@ -52079,6 +52299,7 @@
       },
       "SceneNode": {
         "type": "object",
+        "additionalProperties": false,
         "description": "A node in the scene hierarchy. Nodes can contain children to form\na tree structure. Each node has a local transform relative to its parent.\n",
         "required": [
           "nodeId",
@@ -52096,6 +52317,8 @@
           "refId": {
             "type": "string",
             "pattern": "^[a-z][a-z0-9_]*$",
+            "minLength": 1,
+            "maxLength": 200,
             "description": "Scene-local reference identifier. Must be unique within the scene.\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\n"
           },
           "parentNodeId": {
@@ -52106,6 +52329,8 @@
           },
           "name": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
             "description": "Human-readable display name for the node"
           },
           "nodeType": {
@@ -52123,6 +52348,7 @@
           },
           "children": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/SceneNode"
             },
@@ -52140,6 +52366,7 @@
           },
           "tags": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
@@ -52153,6 +52380,7 @@
           },
           "attachmentPoints": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/AttachmentPoint"
             },
@@ -52160,6 +52388,7 @@
           },
           "affordances": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/Affordance"
             },
@@ -52195,6 +52424,7 @@
       },
       "SceneResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Standard response containing a scene",
         "required": [
           "scene"
@@ -52208,13 +52438,18 @@
       },
       "SceneSummary": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Summary of a scene for list results (excludes full node tree)",
         "required": [
           "sceneId",
           "gameId",
           "sceneType",
           "name",
-          "version"
+          "version",
+          "nodeCount",
+          "createdAt",
+          "updatedAt",
+          "isCheckedOut"
         ],
         "properties": {
           "sceneId": {
@@ -52245,6 +52480,7 @@
           },
           "tags": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
@@ -52272,7 +52508,7 @@
       },
       "SceneType": {
         "type": "string",
-        "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+        "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
         "enum": [
           "Unknown",
           "Region",
@@ -52291,10 +52527,12 @@
       },
       "SchemaResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Registered schema definition with version lineage information",
         "required": [
           "namespace",
           "schemaVersion",
+          "hasMigration",
           "createdAt"
         ],
         "properties": {
@@ -52389,6 +52627,7 @@
       },
       "SearchResult": {
         "type": "object",
+        "additionalProperties": false,
         "description": "A single search result",
         "required": [
           "scene",
@@ -52406,12 +52645,14 @@
           "matchContext": {
             "type": "string",
             "nullable": true,
+            "maxLength": 500,
             "description": "Context around the match"
           }
         }
       },
       "SearchScenesRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request for full-text search",
         "required": [
           "query"
@@ -52419,11 +52660,14 @@
         "properties": {
           "query": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
             "description": "Search query text"
           },
           "gameId": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Filter by game ID"
           },
           "sceneTypes": {
@@ -52437,17 +52681,21 @@
           "offset": {
             "type": "integer",
             "default": 0,
+            "minimum": 0,
             "description": "Pagination offset"
           },
           "limit": {
             "type": "integer",
             "default": 50,
+            "minimum": 1,
+            "maximum": 100,
             "description": "Maximum results"
           }
         }
       },
       "SearchScenesResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Search results",
         "required": [
           "results",
@@ -52731,15 +52979,19 @@
         "properties": {
           "capabilityCode": {
             "type": "string",
+            "maxLength": 128,
             "description": "Capability code from the seed's capability manifest"
           },
           "domain": {
             "type": "string",
+            "maxLength": 128,
             "description": "Seed domain this capability belongs to"
           },
           "fidelity": {
             "type": "number",
             "format": "float",
+            "minimum": 0.0,
+            "maximum": 1.0,
             "description": "Capability fidelity value (0.0 to 1.0)"
           },
           "seedId": {
@@ -52749,6 +53001,7 @@
           },
           "seedTypeCode": {
             "type": "string",
+            "maxLength": 128,
             "description": "Type code of the seed providing this capability"
           }
         }
@@ -52774,6 +53027,7 @@
           },
           "effects": {
             "type": "array",
+            "maxItems": 500,
             "items": {
               "$ref": "#/components/schemas/SeedEffectEntry"
             },
@@ -53086,6 +53340,7 @@
           },
           "templates": {
             "type": "array",
+            "maxItems": 500,
             "items": {
               "$ref": "#/components/schemas/CreateStatusTemplateRequest"
             },
@@ -53836,6 +54091,7 @@
       },
       "SlotResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Complete metadata for a save slot including version statistics",
         "required": [
           "slotId",
@@ -53843,7 +54099,12 @@
           "ownerType",
           "slotName",
           "category",
-          "createdAt"
+          "maxVersions",
+          "compressionType",
+          "versionCount",
+          "totalSizeBytes",
+          "createdAt",
+          "updatedAt"
         ],
         "properties": {
           "slotId": {
@@ -53907,10 +54168,11 @@
           },
           "metadata": {
             "type": "object",
+            "nullable": true,
             "additionalProperties": {
               "type": "string"
             },
-            "description": "Custom key-value metadata"
+            "description": "Custom key-value metadata (null if none set)"
           }
         }
       },
@@ -54170,6 +54432,7 @@
         "description": "Response after starting watchers for a realm",
         "required": [
           "watchersStarted",
+          "watchersExisted",
           "watchers"
         ],
         "properties": {
@@ -54214,6 +54477,7 @@
         "properties": {
           "statusCode": {
             "type": "string",
+            "maxLength": 128,
             "description": "Status template code (item-based) or capability code (seed-derived)"
           },
           "category": {
@@ -54238,6 +54502,8 @@
           "fidelity": {
             "type": "number",
             "format": "float",
+            "minimum": 0.0,
+            "maximum": 1.0,
             "nullable": true,
             "description": "Seed capability fidelity value (null for item-based effects)"
           },
@@ -54286,6 +54552,7 @@
           },
           "statusTemplateCode": {
             "type": "string",
+            "maxLength": 128,
             "description": "Status template code"
           },
           "category": {
@@ -54328,7 +54595,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Arbitrary metadata associated with this status instance"
+            "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -54393,6 +54660,7 @@
           "maxStacks",
           "stackBehavior",
           "itemTemplateId",
+          "isDeprecated",
           "createdAt"
         ],
         "properties": {
@@ -54408,14 +54676,17 @@
           },
           "code": {
             "type": "string",
+            "maxLength": 128,
             "description": "Unique status code within this game service"
           },
           "displayName": {
             "type": "string",
+            "maxLength": 256,
             "description": "Human-readable display name"
           },
           "description": {
             "type": "string",
+            "maxLength": 2000,
             "description": "Detailed description of this status effect"
           },
           "category": {
@@ -54428,6 +54699,7 @@
           },
           "maxStacks": {
             "type": "integer",
+            "minimum": 1,
             "description": "Maximum number of stacks"
           },
           "stackBehavior": {
@@ -54447,6 +54719,7 @@
           },
           "defaultDurationSeconds": {
             "type": "integer",
+            "minimum": 1,
             "nullable": true,
             "description": "Default duration in seconds (null for permanent statuses)"
           },
@@ -54455,6 +54728,22 @@
             "format": "uuid",
             "nullable": true,
             "description": "Asset identifier for this status effect's icon"
+          },
+          "isDeprecated": {
+            "type": "boolean",
+            "description": "Whether this template is deprecated and unavailable for new grants"
+          },
+          "deprecatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When this template was deprecated (null if not deprecated)"
+          },
+          "deprecationReason": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true,
+            "description": "Why this template was deprecated (null if not deprecated)"
           },
           "createdAt": {
             "type": "string",
@@ -54531,16 +54820,8 @@
       "StopWatcherResponse": {
         "type": "object",
         "additionalProperties": false,
-        "description": "Response after stopping a watcher",
-        "required": [
-          "stopped"
-        ],
-        "properties": {
-          "stopped": {
-            "type": "boolean",
-            "description": "True if the watcher was found and stopped"
-          }
-        }
+        "description": "Empty response. HTTP 200 confirms the watcher was stopped. HTTP 404 if watcher not found.",
+        "properties": {}
       },
       "StorageMode": {
         "type": "string",
@@ -55725,6 +56006,7 @@
       },
       "Transform": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Position, rotation, and scale in 3D space",
         "required": [
           "position",
@@ -56753,6 +57035,21 @@
           }
         }
       },
+      "UndeprecateStatusTemplateRequest": {
+        "type": "object",
+        "description": "Request to undeprecate a status template (Category A -- reversible)",
+        "additionalProperties": false,
+        "required": [
+          "statusTemplateId"
+        ],
+        "properties": {
+          "statusTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Status template to undeprecate"
+          }
+        }
+      },
       "UnlockContractRequest": {
         "type": "object",
         "description": "Request to unlock a contract from guardian custody",
@@ -57001,6 +57298,7 @@
       },
       "UnpinVersionRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to unpin a previously pinned save version",
         "required": [
           "ownerId",
@@ -57020,6 +57318,8 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Slot name"
           },
           "versionNumber": {
@@ -57030,6 +57330,7 @@
       },
       "UnresolvedReference": {
         "type": "object",
+        "additionalProperties": false,
         "description": "A scene reference that could not be resolved",
         "required": [
           "nodeId",
@@ -59166,6 +59467,7 @@
       },
       "UpdateSceneRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to update an existing scene",
         "required": [
           "scene"
@@ -59178,6 +59480,7 @@
           "checkoutToken": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Checkout token if updating via checkout workflow"
           }
         }
@@ -59302,11 +59605,13 @@
           },
           "displayName": {
             "type": "string",
+            "maxLength": 256,
             "nullable": true,
             "description": "Updated display name (null means no change)"
           },
           "description": {
             "type": "string",
+            "maxLength": 2000,
             "nullable": true,
             "description": "Updated description (null means no change)"
           },
@@ -59327,6 +59632,7 @@
           "maxStacks": {
             "type": "integer",
             "minimum": 1,
+            "maximum": 100,
             "nullable": true,
             "description": "Updated maximum stack count (null means no change)"
           },
@@ -59844,6 +60150,7 @@
       },
       "ValidateSceneRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to validate a scene structure",
         "required": [
           "scene"
@@ -60063,6 +60370,7 @@
       },
       "ValidationResult": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Result of scene validation",
         "required": [
           "valid"
@@ -60092,6 +60400,7 @@
       },
       "ValidationRule": {
         "type": "object",
+        "additionalProperties": false,
         "description": "A validation rule definition",
         "required": [
           "ruleId",
@@ -60102,10 +60411,14 @@
         "properties": {
           "ruleId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
             "description": "Unique rule identifier within the gameId+sceneType"
           },
           "description": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
             "description": "Human-readable description of the rule"
           },
           "severity": {
@@ -60125,37 +60438,43 @@
       },
       "ValidationRuleConfig": {
         "type": "object",
-        "description": "Configuration for a validation rule",
+        "additionalProperties": false,
+        "description": "Configuration for a validation rule (fields are conditional on rule type)",
         "properties": {
           "nodeType": {
-            "type": "string",
+            "$ref": "#/components/schemas/NodeType",
             "nullable": true,
-            "description": "Filter to nodes of this type (for require_tag)"
+            "description": "Filter to nodes of this type (for RequireTag, RequireNodeType)"
           },
           "tag": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Tag to check for"
           },
           "minCount": {
             "type": "integer",
             "nullable": true,
+            "minimum": 0,
             "description": "Minimum occurrences required"
           },
           "maxCount": {
             "type": "integer",
             "nullable": true,
+            "minimum": 0,
             "description": "Maximum occurrences allowed"
           },
           "annotationPath": {
             "type": "string",
             "nullable": true,
-            "description": "JSONPath to required annotation field (for require_annotation)"
+            "maxLength": 500,
+            "description": "JSONPath to required annotation field (for RequireAnnotation)"
           },
           "expression": {
             "type": "string",
             "nullable": true,
-            "description": "Custom validation expression (for custom_expression)"
+            "maxLength": 2000,
+            "description": "Custom validation expression (for CustomExpression)"
           }
         }
       },
@@ -60246,6 +60565,7 @@
       },
       "Vector3": {
         "type": "object",
+        "additionalProperties": false,
         "description": "A point or direction in 3D space",
         "required": [
           "x",
@@ -60272,6 +60592,7 @@
       },
       "VerifyIntegrityRequest": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Request to verify data integrity of a save version via hash comparison",
         "required": [
           "gameId",
@@ -60282,6 +60603,9 @@
         "properties": {
           "gameId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z][a-z0-9-]*$",
             "description": "Game identifier for namespace isolation"
           },
           "ownerId": {
@@ -60295,6 +60619,8 @@
           },
           "slotName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Name of the slot to verify"
           },
           "versionNumber": {
@@ -60306,10 +60632,12 @@
       },
       "VerifyIntegrityResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Result of integrity verification with hash comparison details",
         "required": [
           "valid",
-          "versionNumber"
+          "versionNumber",
+          "expectedHash"
         ],
         "properties": {
           "valid": {
@@ -60338,10 +60666,12 @@
       },
       "VersionInfo": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Information about a specific version",
         "required": [
           "version",
-          "createdAt"
+          "createdAt",
+          "nodeCount"
         ],
         "properties": {
           "version": {
@@ -60356,11 +60686,13 @@
           "createdBy": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Who created this version"
           },
           "changesSummary": {
             "type": "string",
             "nullable": true,
+            "maxLength": 2000,
             "description": "Summary of changes"
           },
           "nodeCount": {
@@ -60371,11 +60703,13 @@
       },
       "VersionResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Metadata for a single save version including size and checkpoint info",
         "required": [
           "versionNumber",
           "contentHash",
           "sizeBytes",
+          "pinned",
           "createdAt"
         ],
         "properties": {
@@ -60386,7 +60720,8 @@
           "assetId": {
             "type": "string",
             "format": "uuid",
-            "description": "Reference to asset in lib-asset"
+            "nullable": true,
+            "description": "Reference to asset in lib-asset (null if not yet uploaded to MinIO)"
           },
           "contentHash": {
             "type": "string",
@@ -60428,10 +60763,11 @@
           },
           "metadata": {
             "type": "object",
+            "nullable": true,
             "additionalProperties": {
               "type": "string"
             },
-            "description": "Custom metadata"
+            "description": "Custom metadata (null if none set)"
           }
         }
       },
@@ -60786,6 +61122,7 @@
           },
           "actorId": {
             "type": "string",
+            "format": "uuid",
             "nullable": true,
             "description": "Actor instance ID running this watcher's behavior"
           }

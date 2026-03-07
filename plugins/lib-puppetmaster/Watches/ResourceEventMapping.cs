@@ -4,6 +4,8 @@
 // Mappings are loaded from the generated ResourceEventMappings class.
 // =============================================================================
 
+using System.Collections.Concurrent;
+
 namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 
 /// <summary>
@@ -22,8 +24,8 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 /// </remarks>
 public sealed class ResourceEventMapping
 {
-    private readonly Dictionary<string, SourceTypeMapping> _sourceToMapping = new();
-    private readonly Dictionary<string, List<string>> _resourceToSources = new();
+    private readonly ConcurrentDictionary<string, SourceTypeMapping> _sourceToMapping = new();
+    private readonly ConcurrentDictionary<string, List<string>> _resourceToSources = new();
 
     /// <summary>
     /// Creates a new resource event mapping populated from schema-generated mappings.
@@ -59,11 +61,9 @@ public sealed class ResourceEventMapping
     {
         _sourceToMapping[sourceType] = new SourceTypeMapping(eventTopic, resourceIdField, resourceType, isDeletion);
 
-        if (!_resourceToSources.TryGetValue(resourceType, out var sources))
-        {
-            sources = new List<string>();
-            _resourceToSources[resourceType] = sources;
-        }
+        // GetOrAdd is atomic on ConcurrentDictionary; List mutation is safe
+        // because AddMapping is only called from the constructor (single-threaded)
+        var sources = _resourceToSources.GetOrAdd(resourceType, _ => new List<string>());
         if (!sources.Contains(sourceType))
         {
             sources.Add(sourceType);

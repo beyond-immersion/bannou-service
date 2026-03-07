@@ -31,13 +31,13 @@ public class CircuitBreakerTests
         _configuration = new SaveLoadServiceConfiguration();
 
         // Setup mock state store for the private CircuitBreakerState type
-        var mockStore = new Mock<IStateStore<StorageCircuitBreaker.CircuitBreakerState>>();
+        var mockStore = new Mock<IStateStore<StorageCircuitBreaker.CircuitBreakerStateModel>>();
         mockStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((StorageCircuitBreaker.CircuitBreakerState?)null);
-        mockStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<StorageCircuitBreaker.CircuitBreakerState>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StorageCircuitBreaker.CircuitBreakerStateModel?)null);
+        mockStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<StorageCircuitBreaker.CircuitBreakerStateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
 
-        _stateStoreFactoryMock.Setup(f => f.GetStore<StorageCircuitBreaker.CircuitBreakerState>(It.IsAny<string>()))
+        _stateStoreFactoryMock.Setup(f => f.GetStore<StorageCircuitBreaker.CircuitBreakerStateModel>(It.IsAny<string>()))
             .Returns(mockStore.Object);
     }
 

@@ -40,9 +40,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>Typically called via event handlers, not directly.
     /// </remarks>
 
+
+
     /// <returns>Reference registered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterReferenceResponse>> RegisterReferenceAsync(RegisterReferenceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterReferenceResponse>> RegisterReference(RegisterReferenceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove a reference to a resource
@@ -53,9 +56,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>Typically called via event handlers, not directly.
     /// </remarks>
 
+
+
     /// <returns>Reference unregistered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnregisterReferenceResponse>> UnregisterReferenceAsync(UnregisterReferenceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnregisterReferenceResponse>> UnregisterReference(UnregisterReferenceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check reference count and cleanup eligibility
@@ -66,9 +72,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>eligible for cleanup (refcount=0 and grace period passed).
     /// </remarks>
 
+
+
     /// <returns>Reference status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckReferencesResponse>> CheckReferencesAsync(CheckReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckReferencesResponse>> CheckReferences(CheckReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all references to a resource
@@ -79,9 +88,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>Useful for debugging and understanding reference chains.
     /// </remarks>
 
+
+
     /// <returns>List of references</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListReferencesResponse>> ListReferencesAsync(ListReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListReferencesResponse>> ListReferences(ListReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Define cleanup callbacks for a resource type
@@ -93,9 +105,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>dependent entities.
     /// </remarks>
 
+
+
     /// <returns>Cleanup callback defined</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DefineCleanupResponse>> DefineCleanupCallbackAsync(DefineCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DefineCleanupResponse>> DefineCleanupCallback(DefineCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Execute cleanup for a resource
@@ -107,9 +122,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>Returns Conflict if refcount changed during execution.
     /// </remarks>
 
+
+
     /// <returns>Cleanup executed or rejected</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteCleanupResponse>> ExecuteCleanupAsync(ExecuteCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteCleanupResponse>> ExecuteCleanup(ExecuteCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List registered cleanup callbacks
@@ -120,9 +138,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>Useful for debugging and admin inspection of cleanup chains.
     /// </remarks>
 
+
+
     /// <returns>List of registered callbacks</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCleanupCallbacksResponse>> ListCleanupCallbacksAsync(ListCleanupCallbacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCleanupCallbacksResponse>> ListCleanupCallbacks(ListCleanupCallbacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove a cleanup callback registration
@@ -135,9 +156,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>callback was not registered.
     /// </remarks>
 
+
+
     /// <returns>Callback removed or was not registered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveCleanupCallbackResponse>> RemoveCleanupCallbackAsync(RemoveCleanupCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveCleanupCallbackResponse>> RemoveCleanupCallback(RemoveCleanupCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Register compression callback for a resource type
@@ -152,9 +176,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>build a complete archive.
     /// </remarks>
 
+
+
     /// <returns>Callback registered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DefineCompressCallbackResponse>> DefineCompressCallbackAsync(DefineCompressCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DefineCompressCallbackResponse>> DefineCompressCallback(DefineCompressCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Compress a resource and all dependents
@@ -176,9 +203,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>8. Publish resource.compressed event
     /// </remarks>
 
+
+
     /// <returns>Compression result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteCompressResponse>> ExecuteCompressAsync(ExecuteCompressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteCompressResponse>> ExecuteCompress(ExecuteCompressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore data from archive
@@ -192,9 +222,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>Each callback receives the resource ID and its archived data blob.
     /// </remarks>
 
+
+
     /// <returns>Decompression result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteDecompressResponse>> ExecuteDecompressAsync(ExecuteDecompressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteDecompressResponse>> ExecuteDecompress(ExecuteDecompressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List registered compression callbacks
@@ -205,9 +238,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>Useful for debugging and admin inspection of compression chains.
     /// </remarks>
 
+
+
     /// <returns>Callback list</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCompressCallbacksResponse>> ListCompressCallbacksAsync(ListCompressCallbacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCompressCallbacksResponse>> ListCompressCallbacks(ListCompressCallbacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Retrieve compressed archive
@@ -218,9 +254,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>Returns the latest version unless a specific archiveId is provided.
     /// </remarks>
 
+
+
     /// <returns>Archive data</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetArchiveResponse>> GetArchiveAsync(GetArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetArchiveResponse>> GetArchive(GetArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create ephemeral snapshot of a living resource
@@ -247,9 +286,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>- Analytics for living entity state capture
     /// </remarks>
 
+
+
     /// <returns>Snapshot result with snapshot ID and data</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteSnapshotResponse>> ExecuteSnapshotAsync(ExecuteSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteSnapshotResponse>> ExecuteSnapshot(ExecuteSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Retrieve an ephemeral snapshot
@@ -263,9 +305,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>is automatically deleted by Redis.
     /// </remarks>
 
+
+
     /// <returns>Snapshot data</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSnapshotResponse>> GetSnapshotAsync(GetSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSnapshotResponse>> GetSnapshot(GetSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List available seeded resources
@@ -279,9 +324,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>ISeededResourceProvider implementations registered in DI.
     /// </remarks>
 
+
+
     /// <returns>List of seeded resource identifiers</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeededResourcesResponse>> ListSeededResourcesAsync(ListSeededResourcesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeededResourcesResponse>> ListSeededResources(ListSeededResourcesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a seeded resource by type and identifier
@@ -295,15 +343,18 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <br/>the MIME type for proper parsing.
     /// </remarks>
 
+
+
     /// <returns>Seeded resource content and metadata</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSeededResourceResponse>> GetSeededResourceAsync(GetSeededResourceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSeededResourceResponse>> GetSeededResource(GetSeededResourceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IResourceService))]
+public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBase, IResourceController
 {
     private IResourceService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

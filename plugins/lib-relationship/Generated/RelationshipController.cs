@@ -41,9 +41,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>Relationships can be re-created after being ended.
     /// </remarks>
 
+
+
     /// <returns>Relationship created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipResponse>> CreateRelationshipAsync(CreateRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipResponse>> CreateRelationship(CreateRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a relationship by ID
@@ -52,7 +55,8 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
 
     /// <returns>Relationship retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipResponse>> GetRelationshipAsync(GetRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipResponse>> GetRelationship(GetRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all relationships for an entity
@@ -64,9 +68,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>other entity type, and whether to include ended relationships.
     /// </remarks>
 
+
+
     /// <returns>Relationships retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipListResponse>> ListRelationshipsByEntityAsync(ListRelationshipsByEntityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipListResponse>> ListRelationshipsByEntity(ListRelationshipsByEntityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get all relationships between two specific entities
@@ -77,9 +84,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>regardless of which is entity1 or entity2.
     /// </remarks>
 
+
+
     /// <returns>Relationships retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipListResponse>> GetRelationshipsBetweenAsync(GetRelationshipsBetweenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipListResponse>> GetRelationshipsBetween(GetRelationshipsBetweenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all relationships of a specific type
@@ -90,9 +100,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>Useful for finding all "FRIEND" relationships, for example.
     /// </remarks>
 
+
+
     /// <returns>Relationships retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipListResponse>> ListRelationshipsByTypeAsync(ListRelationshipsByTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipListResponse>> ListRelationshipsByType(ListRelationshipsByTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update relationship metadata
@@ -102,9 +115,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// Only metadata can be updated. Entity IDs and types cannot be changed.
     /// </remarks>
 
+
+
     /// <returns>Relationship updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipResponse>> UpdateRelationshipAsync(UpdateRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipResponse>> UpdateRelationship(UpdateRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// End a relationship
@@ -117,9 +133,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>between the same entities with the same type.
     /// </remarks>
 
+
+
     /// <returns>Relationship ended successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EndRelationshipAsync(EndRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EndRelationship(EndRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup relationships referencing a deleted entity
@@ -133,9 +152,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>for internal service-to-service calls during cascading resource cleanup.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByEntityResponse>> CleanupByEntityAsync(CleanupByEntityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByEntityResponse>> CleanupByEntity(CleanupByEntityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get relationship type by ID
@@ -144,7 +166,8 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
 
     /// <returns>Relationship type retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> GetRelationshipTypeAsync(GetRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> GetRelationshipType(GetRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get relationship type by code
@@ -154,9 +177,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// Retrieve a relationship type using its unique code (e.g., "SON", "MOTHER", "FRIEND")
     /// </remarks>
 
+
+
     /// <returns>Relationship type retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> GetRelationshipTypeByCodeAsync(GetRelationshipTypeByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> GetRelationshipTypeByCode(GetRelationshipTypeByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all relationship types
@@ -166,9 +192,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// Retrieve all relationship types with optional hierarchy filtering
     /// </remarks>
 
+
+
     /// <returns>Relationship types retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> ListRelationshipTypesAsync(ListRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> ListRelationshipTypes(ListRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get child types for a parent type
@@ -178,9 +207,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// Retrieve all relationship types that have the specified type as their parent
     /// </remarks>
 
+
+
     /// <returns>Child relationship types retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> GetChildRelationshipTypesAsync(GetChildRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> GetChildRelationshipTypes(GetChildRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if type matches ancestor in hierarchy
@@ -192,9 +224,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>This enables queries like "find all CHILD relationships" to match SON, DAUGHTER, etc.
     /// </remarks>
 
+
+
     /// <returns>Hierarchy match result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MatchesHierarchyResponse>> MatchesHierarchyAsync(MatchesHierarchyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MatchesHierarchyResponse>> MatchesHierarchy(MatchesHierarchyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get all ancestors of a relationship type
@@ -205,9 +240,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>For example, for "SON" might return ["CHILD", "FAMILY"].
     /// </remarks>
 
+
+
     /// <returns>Ancestors retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> GetAncestorsAsync(GetAncestorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> GetAncestors(GetAncestorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create new relationship type
@@ -216,7 +254,8 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
 
     /// <returns>Relationship type created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> CreateRelationshipTypeAsync(CreateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> CreateRelationshipType(CreateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update relationship type
@@ -225,7 +264,8 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
 
     /// <returns>Relationship type updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> UpdateRelationshipTypeAsync(UpdateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> UpdateRelationshipType(UpdateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete relationship type
@@ -237,9 +277,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>(or VOID), then delete. Only deprecated types with zero references can be deleted.
     /// </remarks>
 
+
+
     /// <returns>Relationship type deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRelationshipTypeAsync(DeleteRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRelationshipType(DeleteRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate a relationship type
@@ -254,9 +297,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>- Can be hard-deleted after all references are removed
     /// </remarks>
 
+
+
     /// <returns>Relationship type deprecated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> DeprecateRelationshipTypeAsync(DeprecateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> DeprecateRelationshipType(DeprecateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore a deprecated relationship type
@@ -267,9 +313,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>available for new relationships again.
     /// </remarks>
 
+
+
     /// <returns>Relationship type restored successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> UndeprecateRelationshipTypeAsync(UndeprecateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> UndeprecateRelationshipType(UndeprecateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Merge a deprecated type into another type
@@ -289,9 +338,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>- Fails if source is not deprecated (safety check)
     /// </remarks>
 
+
+
     /// <returns>Merge completed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeRelationshipTypeResponse>> MergeRelationshipTypeAsync(MergeRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeRelationshipTypeResponse>> MergeRelationshipType(MergeRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Seed relationship types from configuration
@@ -303,15 +355,18 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     /// <br/>Typically called at service startup with YAML-defined types.
     /// </remarks>
 
+
+
     /// <returns>Seed operation completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedRelationshipTypesResponse>> SeedRelationshipTypesAsync(SeedRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedRelationshipTypesResponse>> SeedRelationshipTypes(SeedRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class RelationshipController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IRelationshipService))]
+public partial class RelationshipController : Microsoft.AspNetCore.Mvc.ControllerBase, IRelationshipController
 {
     private IRelationshipService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

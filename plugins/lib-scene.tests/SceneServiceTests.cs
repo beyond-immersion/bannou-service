@@ -414,14 +414,8 @@ public class SceneServiceTests
     [Fact]
     public void DeleteSceneResponse_CanBeInstantiated()
     {
-        var sceneId = Guid.NewGuid();
-        var response = new DeleteSceneResponse
-        {
-            Deleted = true,
-            SceneId = sceneId
-        };
-        Assert.True(response.Deleted);
-        Assert.Equal(sceneId, response.SceneId);
+        var response = new DeleteSceneResponse();
+        Assert.NotNull(response);
     }
 
     #endregion

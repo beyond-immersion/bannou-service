@@ -65,11 +65,11 @@ public class CurrencyServiceTests
         // Act
         var endpoints = CurrencyPermissionRegistration.GetEndpoints();
 
-        // Assert
+        // Assert - Only endpoints with non-empty x-permissions (WebSocket-exposed) are registered.
+        // Most currency endpoints have x-permissions: [] (service-to-service only via lib-mesh).
         Assert.NotNull(endpoints);
         Assert.NotEmpty(endpoints);
-        // Currency API has 31 endpoints defined
-        Assert.True(endpoints.Count >= 25, $"Expected at least 25 endpoints, got {endpoints.Count}");
+        Assert.Equal(11, endpoints.Count);
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class CurrencyServiceTests
 
         // Assert
         var walletEndpoints = endpoints.Where(e => e.Path.Contains("/wallet")).ToList();
-        Assert.True(walletEndpoints.Count >= 5, $"Expected at least 5 wallet endpoints, got {walletEndpoints.Count}");
+        Assert.Equal(3, walletEndpoints.Count); // freeze, unfreeze, close
     }
 
     [Fact]
@@ -105,8 +105,9 @@ public class CurrencyServiceTests
         var endpoints = CurrencyPermissionRegistration.GetEndpoints();
 
         // Assert
+        // All hold endpoints have x-permissions: [] (service-to-service only)
         var holdEndpoints = endpoints.Where(e => e.Path.Contains("/hold")).ToList();
-        Assert.True(holdEndpoints.Count >= 4, $"Expected at least 4 hold endpoints, got {holdEndpoints.Count}");
+        Assert.Empty(holdEndpoints);
     }
 
     [Fact]
@@ -128,7 +129,7 @@ public class CurrencyServiceTests
 
         // Assert
         var transactionEndpoints = endpoints.Where(e => e.Path.Contains("/transaction")).ToList();
-        Assert.True(transactionEndpoints.Count >= 2, $"Expected at least 2 transaction endpoints, got {transactionEndpoints.Count}");
+        Assert.Single(transactionEndpoints); // history only
     }
 
     [Fact]

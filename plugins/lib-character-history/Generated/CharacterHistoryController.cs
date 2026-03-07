@@ -41,9 +41,12 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>The significance rating affects how strongly this event influences behavior.
     /// </remarks>
 
+
+
     /// <returns>Participation recorded successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HistoricalParticipation>> RecordParticipationAsync(RecordParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HistoricalParticipation>> RecordParticipation(RecordParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get all historical events a character participated in
@@ -54,9 +57,12 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>Supports filtering by event category and minimum significance.
     /// </remarks>
 
+
+
     /// <returns>Participation records retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ParticipationListResponse>> GetParticipationAsync(GetParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ParticipationListResponse>> GetParticipation(GetParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get all characters who participated in a historical event
@@ -67,9 +73,12 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>Useful for generating event summaries or finding related characters.
     /// </remarks>
 
+
+
     /// <returns>Participants retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ParticipationListResponse>> GetEventParticipantsAsync(GetEventParticipantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ParticipationListResponse>> GetEventParticipants(GetEventParticipantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a participation record
@@ -80,9 +89,12 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>or to correct erroneous records.
     /// </remarks>
 
+
+
     /// <returns>Participation deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteParticipationAsync(DeleteParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteParticipation(DeleteParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get machine-readable backstory elements for behavior system
@@ -94,9 +106,12 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>decision-making, not narrative text for players.
     /// </remarks>
 
+
+
     /// <returns>Backstory retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackstoryResponse>> GetBackstoryAsync(GetBackstoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackstoryResponse>> GetBackstory(GetBackstoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Set backstory elements for a character
@@ -107,9 +122,12 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>all existing elements or merge with them based on the replaceExisting flag.
     /// </remarks>
 
+
+
     /// <returns>Backstory saved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackstoryResponse>> SetBackstoryAsync(SetBackstoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackstoryResponse>> SetBackstory(SetBackstoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Add a single backstory element
@@ -120,9 +138,12 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>If an element with the same type and key exists, it will be updated.
     /// </remarks>
 
+
+
     /// <returns>Element added successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackstoryResponse>> AddBackstoryElementAsync(AddBackstoryElementRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackstoryResponse>> AddBackstoryElement(AddBackstoryElementRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete all backstory for a character
@@ -133,9 +154,12 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>compression or deletion.
     /// </remarks>
 
+
+
     /// <returns>Backstory deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteBackstoryAsync(DeleteBackstoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteBackstory(DeleteBackstoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete all history data for a character
@@ -146,9 +170,12 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>character. Used during character compression after summarization.
     /// </remarks>
 
+
+
     /// <returns>All history deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAllHistoryResponse>> DeleteAllHistoryAsync(DeleteAllHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAllHistoryResponse>> DeleteAllHistory(DeleteAllHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Generate text summaries for character compression
@@ -160,9 +187,12 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>character compression before history data is deleted.
     /// </remarks>
 
+
+
     /// <returns>Summaries generated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HistorySummaryResponse>> SummarizeHistoryAsync(SummarizeHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HistorySummaryResponse>> SummarizeHistory(SummarizeHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get history data for compression
@@ -173,9 +203,12 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>Returns historical participations, backstory elements, and text summaries for archival.
     /// </remarks>
 
+
+
     /// <returns>Compressed data returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterHistoryArchive>> GetCompressDataAsync(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterHistoryArchive>> GetCompressData(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore history data from archive
@@ -186,15 +219,18 @@ public interface ICharacterHistoryController : BeyondImmersion.BannouService.Con
     /// <br/>Restores historical participations and backstory elements from archive data.
     /// </remarks>
 
+
+
     /// <returns>Restoration result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchiveAsync(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchive(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ICharacterHistoryService))]
+public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.ControllerBase, ICharacterHistoryController
 {
     private ICharacterHistoryService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

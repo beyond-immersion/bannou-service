@@ -24,6 +24,7 @@ public partial class SceneController
     "$defs": {
         "CreateSceneRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to create a new scene",
             "required": [
                 "scene"
@@ -37,6 +38,7 @@ public partial class SceneController
         },
         "Scene": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A complete scene document with hierarchical node structure",
             "required": [
                 "sceneId",
@@ -44,11 +46,15 @@ public partial class SceneController
                 "sceneType",
                 "name",
                 "version",
-                "root"
+                "root",
+                "schema",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "schema": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Schema identifier for validation",
                     "default": "bannou://schemas/scene/v1"
                 },
@@ -59,6 +65,8 @@ public partial class SceneController
                 },
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Game service identifier for partitioning. Treated as opaque string.\nDefault is the nil UUID for unpartitioned scenes.\n",
                     "default": "00000000-0000-0000-0000-000000000000"
                 },
@@ -68,16 +76,20 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable scene name"
                 },
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Optional scene description"
                 },
                 "version": {
                     "type": "string",
                     "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                    "maxLength": 50,
                     "description": "Semantic version (MAJOR.MINOR.PATCH)"
                 },
                 "root": {
@@ -86,6 +98,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -111,7 +124,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -130,6 +143,7 @@ public partial class SceneController
         },
         "SceneNode": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A node in the scene hierarchy. Nodes can contain children to form\na tree structure. Each node has a local transform relative to its parent.\n",
             "required": [
                 "nodeId",
@@ -147,6 +161,8 @@ public partial class SceneController
                 "refId": {
                     "type": "string",
                     "pattern": "^[a-z][a-z0-9_]*$",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Scene-local reference identifier. Must be unique within the scene.\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\n"
                 },
                 "parentNodeId": {
@@ -157,6 +173,8 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable display name for the node"
                 },
                 "nodeType": {
@@ -174,6 +192,7 @@ public partial class SceneController
                 },
                 "children": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/SceneNode"
                     },
@@ -191,6 +210,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -204,13 +224,15 @@ public partial class SceneController
                 },
                 "attachmentPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/Affordance"
                     },
@@ -259,6 +281,7 @@ public partial class SceneController
         },
         "Transform": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Position, rotation, and scale in 3D space",
             "required": [
                 "position",
@@ -282,6 +305,7 @@ public partial class SceneController
         },
         "Vector3": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A point or direction in 3D space",
             "required": [
                 "x",
@@ -308,6 +332,7 @@ public partial class SceneController
         },
         "Quaternion": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Rotation represented as a quaternion",
             "required": [
                 "x",
@@ -340,6 +365,7 @@ public partial class SceneController
         },
         "AssetReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Reference to an asset in lib-asset",
             "required": [
                 "assetId"
@@ -359,12 +385,14 @@ public partial class SceneController
                 "variantId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
         },
         "AttachmentPoint": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
             "required": [
                 "name",
@@ -373,6 +401,8 @@ public partial class SceneController
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
                 },
                 "localTransform": {
@@ -381,6 +411,7 @@ public partial class SceneController
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -401,7 +432,8 @@ public partial class SceneController
         },
         "Affordance": {
             "type": "object",
-            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "additionalProperties": false,
+            "description": "Describes a capability or interaction mode for a node.\ nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
             "required": [
                 "type"
             ],
@@ -420,7 +452,7 @@ public partial class SceneController
         },
         "AffordanceType": {
             "type": "string",
-            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Walkable",
                 "Climbable",
@@ -435,6 +467,7 @@ public partial class SceneController
         },
         "AssetSlot": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
             "required": [
                 "slotType"
@@ -442,10 +475,13 @@ public partial class SceneController
             "properties": {
                 "slotType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -458,16 +494,17 @@ public partial class SceneController
                 },
                 "variations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AssetReference"
                     },
-                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                    "description": "Pre-approved asset variations for random selection.\ nProcedural systems pick from this list rather than searching all assets.\n"
                 }
             }
         },
         "MarkerType": {
             "type": "string",
-            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Generic",
                 "SpawnPoint",
@@ -500,6 +537,7 @@ public partial class SceneController
     "$defs": {
         "SceneResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Standard response containing a scene",
             "required": [
                 "scene"
@@ -513,6 +551,7 @@ public partial class SceneController
         },
         "Scene": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A complete scene document with hierarchical node structure",
             "required": [
                 "sceneId",
@@ -520,11 +559,15 @@ public partial class SceneController
                 "sceneType",
                 "name",
                 "version",
-                "root"
+                "root",
+                "schema",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "schema": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Schema identifier for validation",
                     "default": "bannou://schemas/scene/v1"
                 },
@@ -535,6 +578,8 @@ public partial class SceneController
                 },
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Game service identifier for partitioning. Treated as opaque string.\nDefault is the nil UUID for unpartitioned scenes.\n",
                     "default": "00000000-0000-0000-0000-000000000000"
                 },
@@ -544,16 +589,20 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable scene name"
                 },
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Optional scene description"
                 },
                 "version": {
                     "type": "string",
                     "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                    "maxLength": 50,
                     "description": "Semantic version (MAJOR.MINOR.PATCH)"
                 },
                 "root": {
@@ -562,6 +611,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -587,7 +637,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -606,6 +656,7 @@ public partial class SceneController
         },
         "SceneNode": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A node in the scene hierarchy. Nodes can contain children to form\na tree structure. Each node has a local transform relative to its parent.\n",
             "required": [
                 "nodeId",
@@ -623,6 +674,8 @@ public partial class SceneController
                 "refId": {
                     "type": "string",
                     "pattern": "^[a-z][a-z0-9_]*$",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Scene-local reference identifier. Must be unique within the scene.\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\n"
                 },
                 "parentNodeId": {
@@ -633,6 +686,8 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable display name for the node"
                 },
                 "nodeType": {
@@ -650,6 +705,7 @@ public partial class SceneController
                 },
                 "children": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/SceneNode"
                     },
@@ -667,6 +723,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -680,13 +737,15 @@ public partial class SceneController
                 },
                 "attachmentPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/Affordance"
                     },
@@ -735,6 +794,7 @@ public partial class SceneController
         },
         "Transform": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Position, rotation, and scale in 3D space",
             "required": [
                 "position",
@@ -758,6 +818,7 @@ public partial class SceneController
         },
         "Vector3": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A point or direction in 3D space",
             "required": [
                 "x",
@@ -784,6 +845,7 @@ public partial class SceneController
         },
         "Quaternion": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Rotation represented as a quaternion",
             "required": [
                 "x",
@@ -816,6 +878,7 @@ public partial class SceneController
         },
         "AssetReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Reference to an asset in lib-asset",
             "required": [
                 "assetId"
@@ -835,12 +898,14 @@ public partial class SceneController
                 "variantId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
         },
         "AttachmentPoint": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
             "required": [
                 "name",
@@ -849,6 +914,8 @@ public partial class SceneController
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
                 },
                 "localTransform": {
@@ -857,6 +924,7 @@ public partial class SceneController
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -877,7 +945,8 @@ public partial class SceneController
         },
         "Affordance": {
             "type": "object",
-            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "additionalProperties": false,
+            "description": "Describes a capability or interaction mode for a node.\ nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
             "required": [
                 "type"
             ],
@@ -896,7 +965,7 @@ public partial class SceneController
         },
         "AffordanceType": {
             "type": "string",
-            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Walkable",
                 "Climbable",
@@ -911,6 +980,7 @@ public partial class SceneController
         },
         "AssetSlot": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
             "required": [
                 "slotType"
@@ -918,10 +988,13 @@ public partial class SceneController
             "properties": {
                 "slotType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -934,16 +1007,17 @@ public partial class SceneController
                 },
                 "variations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AssetReference"
                     },
-                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                    "description": "Pre-approved asset variations for random selection.\ nProcedural systems pick from this list rather than searching all assets.\n"
                 }
             }
         },
         "MarkerType": {
             "type": "string",
-            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Generic",
                 "SpawnPoint",
@@ -1032,6 +1106,7 @@ public partial class SceneController
     "$defs": {
         "GetSceneRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to retrieve a scene",
             "required": [
                 "sceneId"
@@ -1045,6 +1120,7 @@ public partial class SceneController
                 "version": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 50,
                     "description": "Specific version to retrieve (null = latest)"
                 },
                 "resolveReferences": {
@@ -1072,6 +1148,7 @@ public partial class SceneController
     "$defs": {
         "GetSceneResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing a scene and resolution metadata",
             "required": [
                 "scene"
@@ -1109,6 +1186,7 @@ public partial class SceneController
         },
         "Scene": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A complete scene document with hierarchical node structure",
             "required": [
                 "sceneId",
@@ -1116,11 +1194,15 @@ public partial class SceneController
                 "sceneType",
                 "name",
                 "version",
-                "root"
+                "root",
+                "schema",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "schema": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Schema identifier for validation",
                     "default": "bannou://schemas/scene/v1"
                 },
@@ -1131,6 +1213,8 @@ public partial class SceneController
                 },
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Game service identifier for partitioning. Treated as opaque string.\nDefault is the nil UUID for unpartitioned scenes.\n",
                     "default": "00000000-0000-0000-0000-000000000000"
                 },
@@ -1140,16 +1224,20 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable scene name"
                 },
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Optional scene description"
                 },
                 "version": {
                     "type": "string",
                     "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                    "maxLength": 50,
                     "description": "Semantic version (MAJOR.MINOR.PATCH)"
                 },
                 "root": {
@@ -1158,6 +1246,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -1183,7 +1272,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -1202,6 +1291,7 @@ public partial class SceneController
         },
         "SceneNode": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A node in the scene hierarchy. Nodes can contain children to form\na tree structure. Each node has a local transform relative to its parent.\n",
             "required": [
                 "nodeId",
@@ -1219,6 +1309,8 @@ public partial class SceneController
                 "refId": {
                     "type": "string",
                     "pattern": "^[a-z][a-z0-9_]*$",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Scene-local reference identifier. Must be unique within the scene.\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\n"
                 },
                 "parentNodeId": {
@@ -1229,6 +1321,8 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable display name for the node"
                 },
                 "nodeType": {
@@ -1246,6 +1340,7 @@ public partial class SceneController
                 },
                 "children": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/SceneNode"
                     },
@@ -1263,6 +1358,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -1276,13 +1372,15 @@ public partial class SceneController
                 },
                 "attachmentPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/Affordance"
                     },
@@ -1306,7 +1404,7 @@ public partial class SceneController
                 "volumeSize": {
                     "$ref": "#/$defs/Vector3",
                     "nullable": true,
-                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\ nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
                 },
                 "referenceSceneId": {
                     "type": "string",
@@ -1331,6 +1429,7 @@ public partial class SceneController
         },
         "Transform": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Position, rotation, and scale in 3D space",
             "required": [
                 "position",
@@ -1354,6 +1453,7 @@ public partial class SceneController
         },
         "Vector3": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A point or direction in 3D space",
             "required": [
                 "x",
@@ -1380,6 +1480,7 @@ public partial class SceneController
         },
         "Quaternion": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Rotation represented as a quaternion",
             "required": [
                 "x",
@@ -1412,6 +1513,7 @@ public partial class SceneController
         },
         "AssetReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Reference to an asset in lib-asset",
             "required": [
                 "assetId"
@@ -1431,12 +1533,14 @@ public partial class SceneController
                 "variantId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
         },
         "AttachmentPoint": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
             "required": [
                 "name",
@@ -1445,6 +1549,8 @@ public partial class SceneController
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
                 },
                 "localTransform": {
@@ -1453,6 +1559,7 @@ public partial class SceneController
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -1473,7 +1580,8 @@ public partial class SceneController
         },
         "Affordance": {
             "type": "object",
-            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "additionalProperties": false,
+            "description": "Describes a capability or interaction mode for a node.\ nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
             "required": [
                 "type"
             ],
@@ -1492,7 +1600,7 @@ public partial class SceneController
         },
         "AffordanceType": {
             "type": "string",
-            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Walkable",
                 "Climbable",
@@ -1507,6 +1615,7 @@ public partial class SceneController
         },
         "AssetSlot": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
             "required": [
                 "slotType"
@@ -1514,10 +1623,13 @@ public partial class SceneController
             "properties": {
                 "slotType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -1530,16 +1642,17 @@ public partial class SceneController
                 },
                 "variations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AssetReference"
                     },
-                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                    "description": "Pre-approved asset variations for random selection.\ nProcedural systems pick from this list rather than searching all assets.\n"
                 }
             }
         },
         "MarkerType": {
             "type": "string",
-            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Generic",
                 "SpawnPoint",
@@ -1563,12 +1676,14 @@ public partial class SceneController
         },
         "ResolvedReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A successfully resolved scene reference",
             "required": [
                 "nodeId",
                 "refId",
                 "referencedSceneId",
-                "scene"
+                "scene",
+                "depth"
             ],
             "properties": {
                 "nodeId": {
@@ -1596,12 +1711,14 @@ public partial class SceneController
                 },
                 "depth": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Depth level of this reference"
                 }
             }
         },
         "UnresolvedReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A scene reference that could not be resolved",
             "required": [
                 "nodeId",
@@ -1716,11 +1833,13 @@ public partial class SceneController
     "$defs": {
         "ListScenesRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to list scenes with optional filters",
             "properties": {
                 "gameId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Filter by game ID"
                 },
                 "sceneType": {
@@ -1747,6 +1866,7 @@ public partial class SceneController
                 "nameContains": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 500,
                     "description": "Filter by name containing this substring (case-insensitive)"
                 },
                 "offset": {
@@ -1766,7 +1886,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -1794,10 +1914,13 @@ public partial class SceneController
     "$defs": {
         "ListScenesResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing scene list and pagination info",
             "required": [
                 "scenes",
-                "total"
+                "total",
+                "offset",
+                "limit"
             ],
             "properties": {
                 "scenes": {
@@ -1823,13 +1946,18 @@ public partial class SceneController
         },
         "SceneSummary": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Summary of a scene for list results (excludes full node tree)",
             "required": [
                 "sceneId",
                 "gameId",
                 "sceneType",
                 "name",
-                "version"
+                "version",
+                "nodeCount",
+                "createdAt",
+                "updatedAt",
+                "isCheckedOut"
             ],
             "properties": {
                 "sceneId": {
@@ -1860,6 +1988,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -1887,7 +2016,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -1971,6 +2100,7 @@ public partial class SceneController
     "$defs": {
         "UpdateSceneRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to update an existing scene",
             "required": [
                 "scene"
@@ -1983,12 +2113,14 @@ public partial class SceneController
                 "checkoutToken": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Checkout token if updating via checkout workflow"
                 }
             }
         },
         "Scene": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A complete scene document with hierarchical node structure",
             "required": [
                 "sceneId",
@@ -1996,11 +2128,15 @@ public partial class SceneController
                 "sceneType",
                 "name",
                 "version",
-                "root"
+                "root",
+                "schema",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "schema": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Schema identifier for validation",
                     "default": "bannou://schemas/scene/v1"
                 },
@@ -2011,6 +2147,8 @@ public partial class SceneController
                 },
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Game service identifier for partitioning. Treated as opaque string.\nDefault is the nil UUID for unpartitioned scenes.\n",
                     "default": "00000000-0000-0000-0000-000000000000"
                 },
@@ -2020,16 +2158,20 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable scene name"
                 },
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Optional scene description"
                 },
                 "version": {
                     "type": "string",
                     "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                    "maxLength": 50,
                     "description": "Semantic version (MAJOR.MINOR.PATCH)"
                 },
                 "root": {
@@ -2038,6 +2180,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2063,7 +2206,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -2082,6 +2225,7 @@ public partial class SceneController
         },
         "SceneNode": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A node in the scene hierarchy. Nodes can contain children to form\na tree structure. Each node has a local transform relative to its parent.\n",
             "required": [
                 "nodeId",
@@ -2099,6 +2243,8 @@ public partial class SceneController
                 "refId": {
                     "type": "string",
                     "pattern": "^[a-z][a-z0-9_]*$",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Scene-local reference identifier. Must be unique within the scene.\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\n"
                 },
                 "parentNodeId": {
@@ -2109,6 +2255,8 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable display name for the node"
                 },
                 "nodeType": {
@@ -2126,6 +2274,7 @@ public partial class SceneController
                 },
                 "children": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/SceneNode"
                     },
@@ -2143,6 +2292,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2156,13 +2306,15 @@ public partial class SceneController
                 },
                 "attachmentPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/Affordance"
                     },
@@ -2186,7 +2338,7 @@ public partial class SceneController
                 "volumeSize": {
                     "$ref": "#/$defs/Vector3",
                     "nullable": true,
-                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\ nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
                 },
                 "referenceSceneId": {
                     "type": "string",
@@ -2211,6 +2363,7 @@ public partial class SceneController
         },
         "Transform": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Position, rotation, and scale in 3D space",
             "required": [
                 "position",
@@ -2234,6 +2387,7 @@ public partial class SceneController
         },
         "Vector3": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A point or direction in 3D space",
             "required": [
                 "x",
@@ -2260,6 +2414,7 @@ public partial class SceneController
         },
         "Quaternion": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Rotation represented as a quaternion",
             "required": [
                 "x",
@@ -2292,6 +2447,7 @@ public partial class SceneController
         },
         "AssetReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Reference to an asset in lib-asset",
             "required": [
                 "assetId"
@@ -2311,12 +2467,14 @@ public partial class SceneController
                 "variantId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
         },
         "AttachmentPoint": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
             "required": [
                 "name",
@@ -2325,6 +2483,8 @@ public partial class SceneController
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
                 },
                 "localTransform": {
@@ -2333,6 +2493,7 @@ public partial class SceneController
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2353,7 +2514,8 @@ public partial class SceneController
         },
         "Affordance": {
             "type": "object",
-            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "additionalProperties": false,
+            "description": "Describes a capability or interaction mode for a node.\ nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
             "required": [
                 "type"
             ],
@@ -2372,7 +2534,7 @@ public partial class SceneController
         },
         "AffordanceType": {
             "type": "string",
-            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Walkable",
                 "Climbable",
@@ -2387,6 +2549,7 @@ public partial class SceneController
         },
         "AssetSlot": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
             "required": [
                 "slotType"
@@ -2394,10 +2557,13 @@ public partial class SceneController
             "properties": {
                 "slotType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2410,16 +2576,17 @@ public partial class SceneController
                 },
                 "variations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AssetReference"
                     },
-                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                    "description": "Pre-approved asset variations for random selection.\ nProcedural systems pick from this list rather than searching all assets.\n"
                 }
             }
         },
         "MarkerType": {
             "type": "string",
-            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Generic",
                 "SpawnPoint",
@@ -2452,6 +2619,7 @@ public partial class SceneController
     "$defs": {
         "SceneResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Standard response containing a scene",
             "required": [
                 "scene"
@@ -2465,6 +2633,7 @@ public partial class SceneController
         },
         "Scene": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A complete scene document with hierarchical node structure",
             "required": [
                 "sceneId",
@@ -2472,11 +2641,15 @@ public partial class SceneController
                 "sceneType",
                 "name",
                 "version",
-                "root"
+                "root",
+                "schema",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "schema": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Schema identifier for validation",
                     "default": "bannou://schemas/scene/v1"
                 },
@@ -2487,6 +2660,8 @@ public partial class SceneController
                 },
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Game service identifier for partitioning. Treated as opaque string.\nDefault is the nil UUID for unpartitioned scenes.\n",
                     "default": "00000000-0000-0000-0000-000000000000"
                 },
@@ -2496,16 +2671,20 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable scene name"
                 },
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Optional scene description"
                 },
                 "version": {
                     "type": "string",
                     "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                    "maxLength": 50,
                     "description": "Semantic version (MAJOR.MINOR.PATCH)"
                 },
                 "root": {
@@ -2514,6 +2693,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2539,7 +2719,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -2558,6 +2738,7 @@ public partial class SceneController
         },
         "SceneNode": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A node in the scene hierarchy. Nodes can contain children to form\na tree structure. Each node has a local transform relative to its parent.\n",
             "required": [
                 "nodeId",
@@ -2575,6 +2756,8 @@ public partial class SceneController
                 "refId": {
                     "type": "string",
                     "pattern": "^[a-z][a-z0-9_]*$",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Scene-local reference identifier. Must be unique within the scene.\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\n"
                 },
                 "parentNodeId": {
@@ -2585,6 +2768,8 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable display name for the node"
                 },
                 "nodeType": {
@@ -2602,6 +2787,7 @@ public partial class SceneController
                 },
                 "children": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/SceneNode"
                     },
@@ -2619,6 +2805,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2632,13 +2819,15 @@ public partial class SceneController
                 },
                 "attachmentPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/Affordance"
                     },
@@ -2687,6 +2876,7 @@ public partial class SceneController
         },
         "Transform": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Position, rotation, and scale in 3D space",
             "required": [
                 "position",
@@ -2710,6 +2900,7 @@ public partial class SceneController
         },
         "Vector3": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A point or direction in 3D space",
             "required": [
                 "x",
@@ -2736,6 +2927,7 @@ public partial class SceneController
         },
         "Quaternion": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Rotation represented as a quaternion",
             "required": [
                 "x",
@@ -2768,6 +2960,7 @@ public partial class SceneController
         },
         "AssetReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Reference to an asset in lib-asset",
             "required": [
                 "assetId"
@@ -2787,12 +2980,14 @@ public partial class SceneController
                 "variantId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
         },
         "AttachmentPoint": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
             "required": [
                 "name",
@@ -2801,6 +2996,8 @@ public partial class SceneController
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
                 },
                 "localTransform": {
@@ -2809,6 +3006,7 @@ public partial class SceneController
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2829,7 +3027,8 @@ public partial class SceneController
         },
         "Affordance": {
             "type": "object",
-            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "additionalProperties": false,
+            "description": "Describes a capability or interaction mode for a node.\ nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
             "required": [
                 "type"
             ],
@@ -2848,7 +3047,7 @@ public partial class SceneController
         },
         "AffordanceType": {
             "type": "string",
-            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Walkable",
                 "Climbable",
@@ -2863,6 +3062,7 @@ public partial class SceneController
         },
         "AssetSlot": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
             "required": [
                 "slotType"
@@ -2870,10 +3070,13 @@ public partial class SceneController
             "properties": {
                 "slotType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2886,16 +3089,17 @@ public partial class SceneController
                 },
                 "variations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AssetReference"
                     },
-                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                    "description": "Pre-approved asset variations for random selection.\ nProcedural systems pick from this list rather than searching all assets.\n"
                 }
             }
         },
         "MarkerType": {
             "type": "string",
-            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Generic",
                 "SpawnPoint",
@@ -2984,6 +3188,7 @@ public partial class SceneController
     "$defs": {
         "DeleteSceneRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to delete a scene",
             "required": [
                 "sceneId"
@@ -2997,6 +3202,7 @@ public partial class SceneController
                 "reason": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 1000,
                     "description": "Optional reason for deletion (included in event)"
                 }
             }
@@ -3012,20 +3218,9 @@ public partial class SceneController
     "$defs": {
         "DeleteSceneResponse": {
             "type": "object",
-            "description": "Response confirming scene deletion",
-            "required": [
-                "deleted"
-            ],
+            "additionalProperties": false,
+            "description": "Response for scene deletion",
             "properties": {
-                "deleted": {
-                    "type": "boolean",
-                    "description": "Whether the scene was successfully deleted"
-                },
-                "sceneId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the deleted scene"
-                },
                 "referencingScenes": {
                     "type": "array",
                     "items": {
@@ -3033,7 +3228,7 @@ public partial class SceneController
                         "format": "uuid"
                     },
                     "nullable": true,
-                    "description": "If deletion failed, IDs of scenes that reference this one"
+                    "description": "If deletion was blocked (409), IDs of scenes that reference this one"
                 }
             }
         }
@@ -3104,6 +3299,7 @@ public partial class SceneController
     "$defs": {
         "ValidateSceneRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to validate a scene structure",
             "required": [
                 "scene"
@@ -3122,6 +3318,7 @@ public partial class SceneController
         },
         "Scene": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A complete scene document with hierarchical node structure",
             "required": [
                 "sceneId",
@@ -3129,11 +3326,15 @@ public partial class SceneController
                 "sceneType",
                 "name",
                 "version",
-                "root"
+                "root",
+                "schema",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "schema": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Schema identifier for validation",
                     "default": "bannou://schemas/scene/v1"
                 },
@@ -3144,6 +3345,8 @@ public partial class SceneController
                 },
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Game service identifier for partitioning. Treated as opaque string.\nDefault is the nil UUID for unpartitioned scenes.\n",
                     "default": "00000000-0000-0000-0000-000000000000"
                 },
@@ -3153,16 +3356,20 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable scene name"
                 },
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Optional scene description"
                 },
                 "version": {
                     "type": "string",
                     "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                    "maxLength": 50,
                     "description": "Semantic version (MAJOR.MINOR.PATCH)"
                 },
                 "root": {
@@ -3171,6 +3378,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -3196,7 +3404,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -3215,6 +3423,7 @@ public partial class SceneController
         },
         "SceneNode": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A node in the scene hierarchy. Nodes can contain children to form\na tree structure. Each node has a local transform relative to its parent.\n",
             "required": [
                 "nodeId",
@@ -3232,6 +3441,8 @@ public partial class SceneController
                 "refId": {
                     "type": "string",
                     "pattern": "^[a-z][a-z0-9_]*$",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Scene-local reference identifier. Must be unique within the scene.\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\n"
                 },
                 "parentNodeId": {
@@ -3242,6 +3453,8 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable display name for the node"
                 },
                 "nodeType": {
@@ -3259,6 +3472,7 @@ public partial class SceneController
                 },
                 "children": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/SceneNode"
                     },
@@ -3276,6 +3490,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -3289,13 +3504,15 @@ public partial class SceneController
                 },
                 "attachmentPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/Affordance"
                     },
@@ -3344,6 +3561,7 @@ public partial class SceneController
         },
         "Transform": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Position, rotation, and scale in 3D space",
             "required": [
                 "position",
@@ -3367,6 +3585,7 @@ public partial class SceneController
         },
         "Vector3": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A point or direction in 3D space",
             "required": [
                 "x",
@@ -3393,6 +3612,7 @@ public partial class SceneController
         },
         "Quaternion": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Rotation represented as a quaternion",
             "required": [
                 "x",
@@ -3425,6 +3645,7 @@ public partial class SceneController
         },
         "AssetReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Reference to an asset in lib-asset",
             "required": [
                 "assetId"
@@ -3444,12 +3665,14 @@ public partial class SceneController
                 "variantId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
         },
         "AttachmentPoint": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
             "required": [
                 "name",
@@ -3458,6 +3681,8 @@ public partial class SceneController
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
                 },
                 "localTransform": {
@@ -3466,6 +3691,7 @@ public partial class SceneController
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -3486,7 +3712,8 @@ public partial class SceneController
         },
         "Affordance": {
             "type": "object",
-            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "additionalProperties": false,
+            "description": "Describes a capability or interaction mode for a node.\ nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
             "required": [
                 "type"
             ],
@@ -3505,7 +3732,7 @@ public partial class SceneController
         },
         "AffordanceType": {
             "type": "string",
-            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Walkable",
                 "Climbable",
@@ -3520,6 +3747,7 @@ public partial class SceneController
         },
         "AssetSlot": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
             "required": [
                 "slotType"
@@ -3527,10 +3755,13 @@ public partial class SceneController
             "properties": {
                 "slotType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -3543,16 +3774,17 @@ public partial class SceneController
                 },
                 "variations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AssetReference"
                     },
-                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                    "description": "Pre-approved asset variations for random selection.\ nProcedural systems pick from this list rather than searching all assets.\n"
                 }
             }
         },
         "MarkerType": {
             "type": "string",
-            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Generic",
                 "SpawnPoint",
@@ -3585,6 +3817,7 @@ public partial class SceneController
     "$defs": {
         "ValidationResult": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of scene validation",
             "required": [
                 "valid"
@@ -3614,6 +3847,7 @@ public partial class SceneController
         },
         "ValidationError": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A single validation error or warning",
             "required": [
                 "ruleId",
@@ -3623,10 +3857,12 @@ public partial class SceneController
             "properties": {
                 "ruleId": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Identifier of the validation rule that triggered this"
                 },
                 "message": {
                     "type": "string",
+                    "maxLength": 2000,
                     "description": "Human-readable error message"
                 },
                 "severity": {
@@ -3636,6 +3872,7 @@ public partial class SceneController
                 "nodePath": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 1000,
                     "description": "Path to the problematic node (e.g., root.children[0].children[2])"
                 },
                 "nodeId": {
@@ -3727,6 +3964,7 @@ public partial class SceneController
     "$defs": {
         "InstantiateSceneRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to record a scene instantiation",
             "required": [
                 "sceneAssetId",
@@ -3743,6 +3981,7 @@ public partial class SceneController
                 "version": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 50,
                     "description": "Specific version (null = validates latest exists)"
                 },
                 "instanceId": {
@@ -3769,6 +4008,7 @@ public partial class SceneController
         },
         "Transform": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Position, rotation, and scale in 3D space",
             "required": [
                 "position",
@@ -3792,6 +4032,7 @@ public partial class SceneController
         },
         "Vector3": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A point or direction in 3D space",
             "required": [
                 "x",
@@ -3818,6 +4059,7 @@ public partial class SceneController
         },
         "Quaternion": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Rotation represented as a quaternion",
             "required": [
                 "x",
@@ -3859,24 +4101,15 @@ public partial class SceneController
     "$defs": {
         "InstantiateSceneResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response confirming instantiation",
             "required": [
-                "instanceId",
                 "sceneVersion"
             ],
             "properties": {
-                "instanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "The instance ID"
-                },
                 "sceneVersion": {
                     "type": "string",
                     "description": "Version that was instantiated"
-                },
-                "eventPublished": {
-                    "type": "boolean",
-                    "description": "Whether the event was successfully published"
                 }
             }
         }
@@ -3947,6 +4180,7 @@ public partial class SceneController
     "$defs": {
         "DestroyInstanceRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to record instance destruction",
             "required": [
                 "instanceId"
@@ -3982,29 +4216,7 @@ public partial class SceneController
 """;
 
     private static readonly string _DestroyInstance_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DestroyInstanceResponse",
-    "$defs": {
-        "DestroyInstanceResponse": {
-            "type": "object",
-            "description": "Response confirming destruction",
-            "required": [
-                "destroyed"
-            ],
-            "properties": {
-                "destroyed": {
-                    "type": "boolean",
-                    "description": "Whether destruction was recorded"
-                },
-                "eventPublished": {
-                    "type": "boolean",
-                    "description": "Whether the event was successfully published"
-                }
-            }
-        }
-    }
-}
+{}
 """;
 
     private static readonly string _DestroyInstance_Info = """
@@ -4070,6 +4282,7 @@ public partial class SceneController
     "$defs": {
         "CheckoutRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to checkout a scene for editing",
             "required": [
                 "sceneId"
@@ -4088,18 +4301,21 @@ public partial class SceneController
                 "editorId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Editor identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the app-id or service name.\nDefaults to caller identity if not specified.\n"
                 },
                 "ttlMinutes": {
                     "type": "integer",
                     "nullable": true,
-                    "description": "Custom lock TTL (uses default if not specified)"
+                    "minimum": 1,
+                    "maximum": 1440,
+                    "description": "Custom lock TTL in minutes (uses default if not specified)"
                 }
             }
         },
         "SceneEditorType": {
             "type": "string",
-            "description": "Type of scene editor for polymorphic identification per FOUNDATION TENETS.\ nSession identifies a WebSocket session (user editing via client).\nService identifies a service or tool editing programmatically.\n",
+            "description": "Type of scene editor for polymorphic identification per FOUNDATION TENETS.\nSession identifies a WebSocket session (user editing via client).\nService identifies a service or tool editing programmatically.\n",
             "enum": [
                 "Session",
                 "Service"
@@ -4116,6 +4332,7 @@ public partial class SceneController
     "$defs": {
         "CheckoutResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing checkout token and scene",
             "required": [
                 "checkoutToken",
@@ -4140,6 +4357,7 @@ public partial class SceneController
         },
         "Scene": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A complete scene document with hierarchical node structure",
             "required": [
                 "sceneId",
@@ -4147,11 +4365,15 @@ public partial class SceneController
                 "sceneType",
                 "name",
                 "version",
-                "root"
+                "root",
+                "schema",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "schema": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Schema identifier for validation",
                     "default": "bannou://schemas/scene/v1"
                 },
@@ -4162,7 +4384,9 @@ public partial class SceneController
                 },
                 "gameId": {
                     "type": "string",
-                    "description": "Game service identifier for partitioning. Treated as opaque string.\ nDefault is the nil UUID for unpartitioned scenes.\n",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Game service identifier for partitioning. Treated as opaque string.\nDefault is the nil UUID for unpartitioned scenes.\n",
                     "default": "00000000-0000-0000-0000-000000000000"
                 },
                 "sceneType": {
@@ -4171,16 +4395,20 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable scene name"
                 },
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Optional scene description"
                 },
                 "version": {
                     "type": "string",
                     "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                    "maxLength": 50,
                     "description": "Semantic version (MAJOR.MINOR.PATCH)"
                 },
                 "root": {
@@ -4189,6 +4417,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -4214,7 +4443,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -4233,6 +4462,7 @@ public partial class SceneController
         },
         "SceneNode": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A node in the scene hierarchy. Nodes can contain children to form\na tree structure. Each node has a local transform relative to its parent.\n",
             "required": [
                 "nodeId",
@@ -4250,6 +4480,8 @@ public partial class SceneController
                 "refId": {
                     "type": "string",
                     "pattern": "^[a-z][a-z0-9_]*$",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Scene-local reference identifier. Must be unique within the scene.\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\n"
                 },
                 "parentNodeId": {
@@ -4260,6 +4492,8 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable display name for the node"
                 },
                 "nodeType": {
@@ -4277,6 +4511,7 @@ public partial class SceneController
                 },
                 "children": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/SceneNode"
                     },
@@ -4294,6 +4529,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -4307,13 +4543,15 @@ public partial class SceneController
                 },
                 "attachmentPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/Affordance"
                     },
@@ -4362,6 +4600,7 @@ public partial class SceneController
         },
         "Transform": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Position, rotation, and scale in 3D space",
             "required": [
                 "position",
@@ -4385,6 +4624,7 @@ public partial class SceneController
         },
         "Vector3": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A point or direction in 3D space",
             "required": [
                 "x",
@@ -4411,6 +4651,7 @@ public partial class SceneController
         },
         "Quaternion": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Rotation represented as a quaternion",
             "required": [
                 "x",
@@ -4443,6 +4684,7 @@ public partial class SceneController
         },
         "AssetReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Reference to an asset in lib-asset",
             "required": [
                 "assetId"
@@ -4462,12 +4704,14 @@ public partial class SceneController
                 "variantId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
         },
         "AttachmentPoint": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
             "required": [
                 "name",
@@ -4476,6 +4720,8 @@ public partial class SceneController
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
                 },
                 "localTransform": {
@@ -4484,6 +4730,7 @@ public partial class SceneController
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -4504,7 +4751,8 @@ public partial class SceneController
         },
         "Affordance": {
             "type": "object",
-            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "additionalProperties": false,
+            "description": "Describes a capability or interaction mode for a node.\ nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
             "required": [
                 "type"
             ],
@@ -4523,7 +4771,7 @@ public partial class SceneController
         },
         "AffordanceType": {
             "type": "string",
-            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Walkable",
                 "Climbable",
@@ -4538,6 +4786,7 @@ public partial class SceneController
         },
         "AssetSlot": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
             "required": [
                 "slotType"
@@ -4545,10 +4794,13 @@ public partial class SceneController
             "properties": {
                 "slotType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -4561,16 +4813,17 @@ public partial class SceneController
                 },
                 "variations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AssetReference"
                     },
-                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                    "description": "Pre-approved asset variations for random selection.\ nProcedural systems pick from this list rather than searching all assets.\n"
                 }
             }
         },
         "MarkerType": {
             "type": "string",
-            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Generic",
                 "SpawnPoint",
@@ -4659,6 +4912,7 @@ public partial class SceneController
     "$defs": {
         "CommitRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to commit checkout changes",
             "required": [
                 "sceneId",
@@ -4673,6 +4927,7 @@ public partial class SceneController
                 },
                 "checkoutToken": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Checkout token from checkout response"
                 },
                 "scene": {
@@ -4682,12 +4937,14 @@ public partial class SceneController
                 "changesSummary": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Optional summary of changes for audit"
                 }
             }
         },
         "Scene": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A complete scene document with hierarchical node structure",
             "required": [
                 "sceneId",
@@ -4695,11 +4952,15 @@ public partial class SceneController
                 "sceneType",
                 "name",
                 "version",
-                "root"
+                "root",
+                "schema",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "schema": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Schema identifier for validation",
                     "default": "bannou://schemas/scene/v1"
                 },
@@ -4710,6 +4971,8 @@ public partial class SceneController
                 },
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Game service identifier for partitioning. Treated as opaque string.\nDefault is the nil UUID for unpartitioned scenes.\n",
                     "default": "00000000-0000-0000-0000-000000000000"
                 },
@@ -4719,16 +4982,20 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable scene name"
                 },
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Optional scene description"
                 },
                 "version": {
                     "type": "string",
                     "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                    "maxLength": 50,
                     "description": "Semantic version (MAJOR.MINOR.PATCH)"
                 },
                 "root": {
@@ -4737,6 +5004,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -4762,7 +5030,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -4781,6 +5049,7 @@ public partial class SceneController
         },
         "SceneNode": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A node in the scene hierarchy. Nodes can contain children to form\na tree structure. Each node has a local transform relative to its parent.\n",
             "required": [
                 "nodeId",
@@ -4798,6 +5067,8 @@ public partial class SceneController
                 "refId": {
                     "type": "string",
                     "pattern": "^[a-z][a-z0-9_]*$",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Scene-local reference identifier. Must be unique within the scene.\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\n"
                 },
                 "parentNodeId": {
@@ -4808,6 +5079,8 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable display name for the node"
                 },
                 "nodeType": {
@@ -4825,6 +5098,7 @@ public partial class SceneController
                 },
                 "children": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/SceneNode"
                     },
@@ -4842,6 +5116,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -4855,6 +5130,7 @@ public partial class SceneController
                 },
                 "attachmentPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
@@ -4862,6 +5138,7 @@ public partial class SceneController
                 },
                 "affordances": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/Affordance"
                     },
@@ -4875,7 +5152,7 @@ public partial class SceneController
                 "markerType": {
                     "$ref": "#/$defs/MarkerType",
                     "nullable": true,
-                    "description": "Type of marker for marker nodes.\ nOnly relevant when nodeType is 'marker'.\n"
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
                 },
                 "volumeShape": {
                     "$ref": "#/$defs/VolumeShape",
@@ -4910,6 +5187,7 @@ public partial class SceneController
         },
         "Transform": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Position, rotation, and scale in 3D space",
             "required": [
                 "position",
@@ -4933,6 +5211,7 @@ public partial class SceneController
         },
         "Vector3": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A point or direction in 3D space",
             "required": [
                 "x",
@@ -4959,6 +5238,7 @@ public partial class SceneController
         },
         "Quaternion": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Rotation represented as a quaternion",
             "required": [
                 "x",
@@ -4991,6 +5271,7 @@ public partial class SceneController
         },
         "AssetReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Reference to an asset in lib-asset",
             "required": [
                 "assetId"
@@ -5010,12 +5291,14 @@ public partial class SceneController
                 "variantId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
         },
         "AttachmentPoint": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
             "required": [
                 "name",
@@ -5024,6 +5307,8 @@ public partial class SceneController
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
                 },
                 "localTransform": {
@@ -5032,6 +5317,7 @@ public partial class SceneController
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -5052,7 +5338,8 @@ public partial class SceneController
         },
         "Affordance": {
             "type": "object",
-            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "additionalProperties": false,
+            "description": "Describes a capability or interaction mode for a node.\ nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
             "required": [
                 "type"
             ],
@@ -5071,7 +5358,7 @@ public partial class SceneController
         },
         "AffordanceType": {
             "type": "string",
-            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Walkable",
                 "Climbable",
@@ -5086,6 +5373,7 @@ public partial class SceneController
         },
         "AssetSlot": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
             "required": [
                 "slotType"
@@ -5093,10 +5381,13 @@ public partial class SceneController
             "properties": {
                 "slotType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -5109,16 +5400,17 @@ public partial class SceneController
                 },
                 "variations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AssetReference"
                     },
-                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                    "description": "Pre-approved asset variations for random selection.\ nProcedural systems pick from this list rather than searching all assets.\n"
                 }
             }
         },
         "MarkerType": {
             "type": "string",
-            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Generic",
                 "SpawnPoint",
@@ -5151,16 +5443,12 @@ public partial class SceneController
     "$defs": {
         "CommitResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response confirming commit",
             "required": [
-                "committed",
                 "newVersion"
             ],
             "properties": {
-                "committed": {
-                    "type": "boolean",
-                    "description": "Whether commit was successful"
-                },
                 "newVersion": {
                     "type": "string",
                     "description": "New version after commit"
@@ -5174,6 +5462,7 @@ public partial class SceneController
         },
         "Scene": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A complete scene document with hierarchical node structure",
             "required": [
                 "sceneId",
@@ -5181,11 +5470,15 @@ public partial class SceneController
                 "sceneType",
                 "name",
                 "version",
-                "root"
+                "root",
+                "schema",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "schema": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Schema identifier for validation",
                     "default": "bannou://schemas/scene/v1"
                 },
@@ -5196,6 +5489,8 @@ public partial class SceneController
                 },
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Game service identifier for partitioning. Treated as opaque string.\nDefault is the nil UUID for unpartitioned scenes.\n",
                     "default": "00000000-0000-0000-0000-000000000000"
                 },
@@ -5205,16 +5500,20 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable scene name"
                 },
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Optional scene description"
                 },
                 "version": {
                     "type": "string",
                     "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                    "maxLength": 50,
                     "description": "Semantic version (MAJOR.MINOR.PATCH)"
                 },
                 "root": {
@@ -5223,6 +5522,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -5248,7 +5548,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -5267,6 +5567,7 @@ public partial class SceneController
         },
         "SceneNode": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A node in the scene hierarchy. Nodes can contain children to form\na tree structure. Each node has a local transform relative to its parent.\n",
             "required": [
                 "nodeId",
@@ -5284,6 +5585,8 @@ public partial class SceneController
                 "refId": {
                     "type": "string",
                     "pattern": "^[a-z][a-z0-9_]*$",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Scene-local reference identifier. Must be unique within the scene.\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\n"
                 },
                 "parentNodeId": {
@@ -5294,6 +5597,8 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable display name for the node"
                 },
                 "nodeType": {
@@ -5311,6 +5616,7 @@ public partial class SceneController
                 },
                 "children": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/SceneNode"
                     },
@@ -5328,6 +5634,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -5341,6 +5648,7 @@ public partial class SceneController
                 },
                 "attachmentPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
@@ -5348,6 +5656,7 @@ public partial class SceneController
                 },
                 "affordances": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/Affordance"
                     },
@@ -5361,7 +5670,7 @@ public partial class SceneController
                 "markerType": {
                     "$ref": "#/$defs/MarkerType",
                     "nullable": true,
-                    "description": "Type of marker for marker nodes.\ nOnly relevant when nodeType is 'marker'.\n"
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
                 },
                 "volumeShape": {
                     "$ref": "#/$defs/VolumeShape",
@@ -5371,7 +5680,7 @@ public partial class SceneController
                 "volumeSize": {
                     "$ref": "#/$defs/Vector3",
                     "nullable": true,
-                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\ nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
                 },
                 "referenceSceneId": {
                     "type": "string",
@@ -5396,6 +5705,7 @@ public partial class SceneController
         },
         "Transform": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Position, rotation, and scale in 3D space",
             "required": [
                 "position",
@@ -5419,6 +5729,7 @@ public partial class SceneController
         },
         "Vector3": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A point or direction in 3D space",
             "required": [
                 "x",
@@ -5445,6 +5756,7 @@ public partial class SceneController
         },
         "Quaternion": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Rotation represented as a quaternion",
             "required": [
                 "x",
@@ -5477,6 +5789,7 @@ public partial class SceneController
         },
         "AssetReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Reference to an asset in lib-asset",
             "required": [
                 "assetId"
@@ -5496,12 +5809,14 @@ public partial class SceneController
                 "variantId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
         },
         "AttachmentPoint": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
             "required": [
                 "name",
@@ -5510,6 +5825,8 @@ public partial class SceneController
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
                 },
                 "localTransform": {
@@ -5518,6 +5835,7 @@ public partial class SceneController
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -5538,7 +5856,8 @@ public partial class SceneController
         },
         "Affordance": {
             "type": "object",
-            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "additionalProperties": false,
+            "description": "Describes a capability or interaction mode for a node.\ nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
             "required": [
                 "type"
             ],
@@ -5557,7 +5876,7 @@ public partial class SceneController
         },
         "AffordanceType": {
             "type": "string",
-            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Walkable",
                 "Climbable",
@@ -5572,6 +5891,7 @@ public partial class SceneController
         },
         "AssetSlot": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
             "required": [
                 "slotType"
@@ -5579,10 +5899,13 @@ public partial class SceneController
             "properties": {
                 "slotType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -5595,16 +5918,17 @@ public partial class SceneController
                 },
                 "variations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AssetReference"
                     },
-                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                    "description": "Pre-approved asset variations for random selection.\ nProcedural systems pick from this list rather than searching all assets.\n"
                 }
             }
         },
         "MarkerType": {
             "type": "string",
-            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Generic",
                 "SpawnPoint",
@@ -5693,6 +6017,7 @@ public partial class SceneController
     "$defs": {
         "DiscardRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to discard checkout",
             "required": [
                 "sceneId",
@@ -5706,6 +6031,7 @@ public partial class SceneController
                 },
                 "checkoutToken": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Checkout token"
                 }
             }
@@ -5715,25 +6041,7 @@ public partial class SceneController
 """;
 
     private static readonly string _DiscardCheckout_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DiscardResponse",
-    "$defs": {
-        "DiscardResponse": {
-            "type": "object",
-            "description": "Response confirming discard",
-            "required": [
-                "discarded"
-            ],
-            "properties": {
-                "discarded": {
-                    "type": "boolean",
-                    "description": "Whether discard was successful"
-                }
-            }
-        }
-    }
-}
+{}
 """;
 
     private static readonly string _DiscardCheckout_Info = """
@@ -5799,6 +6107,7 @@ public partial class SceneController
     "$defs": {
         "HeartbeatRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to extend checkout lock",
             "required": [
                 "sceneId",
@@ -5812,6 +6121,7 @@ public partial class SceneController
                 },
                 "checkoutToken": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Checkout token"
                 }
             }
@@ -5827,16 +6137,13 @@ public partial class SceneController
     "$defs": {
         "HeartbeatResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response confirming lock extension",
             "required": [
-                "extended",
-                "newExpiresAt"
+                "newExpiresAt",
+                "extensionsRemaining"
             ],
             "properties": {
-                "extended": {
-                    "type": "boolean",
-                    "description": "Whether extension was successful"
-                },
                 "newExpiresAt": {
                     "type": "string",
                     "format": "date-time",
@@ -5844,6 +6151,7 @@ public partial class SceneController
                 },
                 "extensionsRemaining": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of extensions remaining"
                 }
             }
@@ -5855,7 +6163,7 @@ public partial class SceneController
     private static readonly string _HeartbeatCheckout_Info = """
 {
     "summary": "Extend checkout lock TTL",
-    "description": "Extends the checkout lock TTL. Should be called periodically\nduring editing to prevent lock expiration.\n",
+    "description": "Extends the checkout lock TTL. Should be called periodically\nduring editing to prevent lock expiration.\nReturns 409 Conflict when the extension limit has been reached.\n",
     "tags": [
         "Versioning"
     ],
@@ -5915,6 +6223,7 @@ public partial class SceneController
     "$defs": {
         "HistoryRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request for scene version history",
             "required": [
                 "sceneId"
@@ -5928,6 +6237,8 @@ public partial class SceneController
                 "limit": {
                     "type": "integer",
                     "default": 10,
+                    "minimum": 1,
+                    "maximum": 1000,
                     "description": "Maximum versions to return"
                 }
             }
@@ -5943,9 +6254,11 @@ public partial class SceneController
     "$defs": {
         "HistoryResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Scene version history",
             "required": [
                 "sceneId",
+                "currentVersion",
                 "versions"
             ],
             "properties": {
@@ -5969,10 +6282,12 @@ public partial class SceneController
         },
         "VersionInfo": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Information about a specific version",
             "required": [
                 "version",
-                "createdAt"
+                "createdAt",
+                "nodeCount"
             ],
             "properties": {
                 "version": {
@@ -5987,11 +6302,13 @@ public partial class SceneController
                 "createdBy": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Who created this version"
                 },
                 "changesSummary": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Summary of changes"
                 },
                 "nodeCount": {
@@ -6067,6 +6384,7 @@ public partial class SceneController
     "$defs": {
         "RegisterValidationRulesRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to register validation rules",
             "required": [
                 "gameId",
@@ -6076,6 +6394,8 @@ public partial class SceneController
             "properties": {
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Game ID for these rules"
                 },
                 "sceneType": {
@@ -6087,13 +6407,14 @@ public partial class SceneController
                     "items": {
                         "$ref": "#/$defs/ValidationRule"
                     },
+                    "minItems": 1,
                     "description": "Validation rules to register"
                 }
             }
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -6112,6 +6433,7 @@ public partial class SceneController
         },
         "ValidationRule": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A validation rule definition",
             "required": [
                 "ruleId",
@@ -6122,10 +6444,14 @@ public partial class SceneController
             "properties": {
                 "ruleId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique rule identifier within the gameId+sceneType"
                 },
                 "description": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000,
                     "description": "Human-readable description of the rule"
                 },
                 "severity": {
@@ -6164,69 +6490,65 @@ public partial class SceneController
         },
         "ValidationRuleConfig": {
             "type": "object",
-            "description": "Configuration for a validation rule",
+            "additionalProperties": false,
+            "description": "Configuration for a validation rule (fields are conditional on rule type)",
             "properties": {
                 "nodeType": {
-                    "type": "string",
+                    "$ref": "#/$defs/NodeType",
                     "nullable": true,
-                    "description": "Filter to nodes of this type (for require_tag)"
+                    "description": "Filter to nodes of this type (for RequireTag, RequireNodeType)"
                 },
                 "tag": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Tag to check for"
                 },
                 "minCount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum occurrences required"
                 },
                 "maxCount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Maximum occurrences allowed"
                 },
                 "annotationPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JSONPath to required annotation field (for require_annotation)"
+                    "maxLength": 500,
+                    "description": "JSONPath to required annotation field (for RequireAnnotation)"
                 },
                 "expression": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Custom validation expression (for custom_expression)"
+                    "maxLength": 2000,
+                    "description": "Custom validation expression (for CustomExpression)"
                 }
             }
+        },
+        "NodeType": {
+            "type": "string",
+            "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
+            "enum": [
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
+            ]
         }
     }
 }
 """;
 
     private static readonly string _RegisterValidationRules_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/RegisterValidationRulesResponse",
-    "$defs": {
-        "RegisterValidationRulesResponse": {
-            "type": "object",
-            "description": "Response confirming rule registration",
-            "required": [
-                "registered",
-                "ruleCount"
-            ],
-            "properties": {
-                "registered": {
-                    "type": "boolean",
-                    "description": "Whether registration was successful"
-                },
-                "ruleCount": {
-                    "type": "integer",
-                    "description": "Number of rules registered"
-                }
-            }
-        }
-    }
-}
+{}
 """;
 
     private static readonly string _RegisterValidationRules_Info = """
@@ -6292,6 +6614,7 @@ public partial class SceneController
     "$defs": {
         "GetValidationRulesRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get validation rules",
             "required": [
                 "gameId",
@@ -6300,6 +6623,8 @@ public partial class SceneController
             "properties": {
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Game ID"
                 },
                 "sceneType": {
@@ -6310,7 +6635,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -6338,6 +6663,7 @@ public partial class SceneController
     "$defs": {
         "GetValidationRulesResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing validation rules",
             "required": [
                 "gameId",
@@ -6354,16 +6680,17 @@ public partial class SceneController
                 },
                 "rules": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/ValidationRule"
                     },
-                    "description": "Registered rules (empty if none)"
+                    "description": "Registered rules (null if none)"
                 }
             }
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -6382,6 +6709,7 @@ public partial class SceneController
         },
         "ValidationRule": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A validation rule definition",
             "required": [
                 "ruleId",
@@ -6392,10 +6720,14 @@ public partial class SceneController
             "properties": {
                 "ruleId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique rule identifier within the gameId+sceneType"
                 },
                 "description": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000,
                     "description": "Human-readable description of the rule"
                 },
                 "severity": {
@@ -6434,39 +6766,58 @@ public partial class SceneController
         },
         "ValidationRuleConfig": {
             "type": "object",
-            "description": "Configuration for a validation rule",
+            "additionalProperties": false,
+            "description": "Configuration for a validation rule (fields are conditional on rule type)",
             "properties": {
                 "nodeType": {
-                    "type": "string",
+                    "$ref": "#/$defs/NodeType",
                     "nullable": true,
-                    "description": "Filter to nodes of this type (for require_tag)"
+                    "description": "Filter to nodes of this type (for RequireTag, RequireNodeType)"
                 },
                 "tag": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Tag to check for"
                 },
                 "minCount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum occurrences required"
                 },
                 "maxCount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Maximum occurrences allowed"
                 },
                 "annotationPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JSONPath to required annotation field (for require_annotation)"
+                    "maxLength": 500,
+                    "description": "JSONPath to required annotation field (for RequireAnnotation)"
                 },
                 "expression": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Custom validation expression (for custom_expression)"
+                    "maxLength": 2000,
+                    "description": "Custom validation expression (for CustomExpression)"
                 }
             }
+        },
+        "NodeType": {
+            "type": "string",
+            "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
+            "enum": [
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
+            ]
         }
     }
 }
@@ -6535,6 +6886,7 @@ public partial class SceneController
     "$defs": {
         "SearchScenesRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request for full-text search",
             "required": [
                 "query"
@@ -6542,11 +6894,14 @@ public partial class SceneController
             "properties": {
                 "query": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Search query text"
                 },
                 "gameId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Filter by game ID"
                 },
                 "sceneTypes": {
@@ -6560,18 +6915,21 @@ public partial class SceneController
                 "offset": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Pagination offset"
                 },
                 "limit": {
                     "type": "integer",
                     "default": 50,
+                    "minimum": 1,
+                    "maximum": 100,
                     "description": "Maximum results"
                 }
             }
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -6599,6 +6957,7 @@ public partial class SceneController
     "$defs": {
         "SearchScenesResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Search results",
             "required": [
                 "results",
@@ -6620,6 +6979,7 @@ public partial class SceneController
         },
         "SearchResult": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A single search result",
             "required": [
                 "scene",
@@ -6637,19 +6997,25 @@ public partial class SceneController
                 "matchContext": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 500,
                     "description": "Context around the match"
                 }
             }
         },
         "SceneSummary": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Summary of a scene for list results (excludes full node tree)",
             "required": [
                 "sceneId",
                 "gameId",
                 "sceneType",
                 "name",
-                "version"
+                "version",
+                "nodeCount",
+                "createdAt",
+                "updatedAt",
+                "isCheckedOut"
             ],
             "properties": {
                 "sceneId": {
@@ -6680,6 +7046,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -6707,7 +7074,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -6801,6 +7168,7 @@ public partial class SceneController
     "$defs": {
         "FindReferencesRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to find referencing scenes",
             "required": [
                 "sceneId"
@@ -6824,6 +7192,7 @@ public partial class SceneController
     "$defs": {
         "FindReferencesResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Scenes that reference the target",
             "required": [
                 "referencingScenes"
@@ -6840,6 +7209,7 @@ public partial class SceneController
         },
         "ReferenceInfo": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Information about a reference",
             "required": [
                 "sceneId",
@@ -6939,6 +7309,7 @@ public partial class SceneController
     "$defs": {
         "FindAssetUsageRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to find asset usage",
             "required": [
                 "assetId"
@@ -6952,6 +7323,7 @@ public partial class SceneController
                 "gameId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Optional game filter"
                 }
             }
@@ -6967,6 +7339,7 @@ public partial class SceneController
     "$defs": {
         "FindAssetUsageResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Scenes using the asset",
             "required": [
                 "usages"
@@ -6983,6 +7356,7 @@ public partial class SceneController
         },
         "AssetUsageInfo": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Information about asset usage",
             "required": [
                 "sceneId",
@@ -7021,7 +7395,7 @@ public partial class SceneController
         },
         "NodeType": {
             "type": "string",
-            "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
+            "description": "Structural node type. Indicates what kind of data the node contains,\ nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
                 "Group",
                 "Mesh",
@@ -7099,6 +7473,7 @@ public partial class SceneController
     "$defs": {
         "DuplicateSceneRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to duplicate a scene",
             "required": [
                 "sourceSceneId",
@@ -7112,11 +7487,14 @@ public partial class SceneController
                 },
                 "newName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Name for the duplicate"
                 },
                 "newGameId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Optional different game ID"
                 },
                 "newSceneType": {
@@ -7128,7 +7506,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -7156,6 +7534,7 @@ public partial class SceneController
     "$defs": {
         "SceneResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Standard response containing a scene",
             "required": [
                 "scene"
@@ -7169,6 +7548,7 @@ public partial class SceneController
         },
         "Scene": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A complete scene document with hierarchical node structure",
             "required": [
                 "sceneId",
@@ -7176,11 +7556,15 @@ public partial class SceneController
                 "sceneType",
                 "name",
                 "version",
-                "root"
+                "root",
+                "schema",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "schema": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Schema identifier for validation",
                     "default": "bannou://schemas/scene/v1"
                 },
@@ -7191,6 +7575,8 @@ public partial class SceneController
                 },
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Game service identifier for partitioning. Treated as opaque string.\nDefault is the nil UUID for unpartitioned scenes.\n",
                     "default": "00000000-0000-0000-0000-000000000000"
                 },
@@ -7200,16 +7586,20 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable scene name"
                 },
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 2000,
                     "description": "Optional scene description"
                 },
                 "version": {
                     "type": "string",
                     "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                    "maxLength": 50,
                     "description": "Semantic version (MAJOR.MINOR.PATCH)"
                 },
                 "root": {
@@ -7218,6 +7608,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -7243,7 +7634,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Unknown",
                 "Region",
@@ -7262,6 +7653,7 @@ public partial class SceneController
         },
         "SceneNode": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A node in the scene hierarchy. Nodes can contain children to form\na tree structure. Each node has a local transform relative to its parent.\n",
             "required": [
                 "nodeId",
@@ -7279,6 +7671,8 @@ public partial class SceneController
                 "refId": {
                     "type": "string",
                     "pattern": "^[a-z][a-z0-9_]*$",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Scene-local reference identifier. Must be unique within the scene.\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\n"
                 },
                 "parentNodeId": {
@@ -7289,6 +7683,8 @@ public partial class SceneController
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Human-readable display name for the node"
                 },
                 "nodeType": {
@@ -7306,6 +7702,7 @@ public partial class SceneController
                 },
                 "children": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/SceneNode"
                     },
@@ -7323,6 +7720,7 @@ public partial class SceneController
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -7336,13 +7734,15 @@ public partial class SceneController
                 },
                 "attachmentPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/Affordance"
                     },
@@ -7391,6 +7791,7 @@ public partial class SceneController
         },
         "Transform": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Position, rotation, and scale in 3D space",
             "required": [
                 "position",
@@ -7414,6 +7815,7 @@ public partial class SceneController
         },
         "Vector3": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A point or direction in 3D space",
             "required": [
                 "x",
@@ -7440,6 +7842,7 @@ public partial class SceneController
         },
         "Quaternion": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Rotation represented as a quaternion",
             "required": [
                 "x",
@@ -7472,6 +7875,7 @@ public partial class SceneController
         },
         "AssetReference": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Reference to an asset in lib-asset",
             "required": [
                 "assetId"
@@ -7491,12 +7895,14 @@ public partial class SceneController
                 "variantId": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
         },
         "AttachmentPoint": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
             "required": [
                 "name",
@@ -7505,6 +7911,8 @@ public partial class SceneController
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
                 },
                 "localTransform": {
@@ -7513,6 +7921,7 @@ public partial class SceneController
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -7533,7 +7942,8 @@ public partial class SceneController
         },
         "Affordance": {
             "type": "object",
-            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "additionalProperties": false,
+            "description": "Describes a capability or interaction mode for a node.\ nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
             "required": [
                 "type"
             ],
@@ -7552,7 +7962,7 @@ public partial class SceneController
         },
         "AffordanceType": {
             "type": "string",
-            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Walkable",
                 "Climbable",
@@ -7567,6 +7977,7 @@ public partial class SceneController
         },
         "AssetSlot": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
             "required": [
                 "slotType"
@@ -7574,10 +7985,13 @@ public partial class SceneController
             "properties": {
                 "slotType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
                 },
                 "acceptsTags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -7590,16 +8004,17 @@ public partial class SceneController
                 },
                 "variations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/AssetReference"
                     },
-                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                    "description": "Pre-approved asset variations for random selection.\ nProcedural systems pick from this list rather than searching all assets.\n"
                 }
             }
         },
         "MarkerType": {
             "type": "string",
-            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.\nDESIGN_DECISION: Whether this should be an opaque string instead of enum\n(game-content codes vary per deployment). Tracked for future evaluation.\n",
             "enum": [
                 "Generic",
                 "SpawnPoint",

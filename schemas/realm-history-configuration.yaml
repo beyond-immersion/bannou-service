@@ -18,6 +18,8 @@ x-service-configuration:
     MaxLoreElements:
       type: integer
       description: Maximum number of lore elements allowed per realm. Prevents unbounded growth from repeated AddLoreElement or SetLore calls. Returns BadRequest when limit would be exceeded.
+      minimum: 1
+      maximum: 10000
       default: 100
       env: REALM_HISTORY_MAX_LORE_ELEMENTS
     # Archive Summary Limits
@@ -39,5 +41,7 @@ x-service-configuration:
     IndexLockTimeoutSeconds:
       type: integer
       description: Timeout in seconds for distributed locks during index and lore write operations. Matches established patterns in Currency, Inventory, and Contract services.
+      minimum: 1
+      maximum: 300
       default: 15
       env: REALM_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS

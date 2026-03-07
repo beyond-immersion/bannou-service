@@ -194,7 +194,7 @@ try:
 
             # Skip methods marked as controller-only or manual-implementation
             if method_data.get('x-controller-only') is True or method_data.get('x-manual-implementation') is True:
-                print(f'    # Excluding controller-only or manual-implementation method: {method_name}', file=sys.stderr)
+                print(f'    # Excluding controller-only method: {method_name}', file=sys.stderr)
                 continue
 
             # Determine return type from responses

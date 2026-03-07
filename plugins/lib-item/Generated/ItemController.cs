@@ -40,9 +40,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>are immutable after creation.
     /// </remarks>
 
+
+
     /// <returns>Item template created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> CreateItemTemplateAsync(CreateItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> CreateItemTemplate(CreateItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get item template by ID or code
@@ -53,9 +56,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>At least one of templateId or (code + gameId) must be provided.
     /// </remarks>
 
+
+
     /// <returns>Item template retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> GetItemTemplateAsync(GetItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> GetItemTemplate(GetItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List item templates with filters
@@ -66,9 +72,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>rarity, scope, and active status.
     /// </remarks>
 
+
+
     /// <returns>Item templates retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListItemTemplatesResponse>> ListItemTemplatesAsync(ListItemTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListItemTemplatesResponse>> ListItemTemplates(ListItemTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update mutable fields of an item template
@@ -79,9 +88,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>are immutable after creation and cannot be changed.
     /// </remarks>
 
+
+
     /// <returns>Item template updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> UpdateItemTemplateAsync(UpdateItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> UpdateItemTemplate(UpdateItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate an item template
@@ -93,9 +105,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>specify a migration target template.
     /// </remarks>
 
+
+
     /// <returns>Item template deprecated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> DeprecateItemTemplateAsync(DeprecateItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> DeprecateItemTemplate(DeprecateItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a new item instance
@@ -107,9 +122,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>for most use cases - this endpoint is for low-level instance creation.
     /// </remarks>
 
+
+
     /// <returns>Item instance created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> CreateItemInstanceAsync(CreateItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> CreateItemInstance(CreateItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get item instance by ID
@@ -119,9 +137,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// Retrieves an item instance by its unique ID.
     /// </remarks>
 
+
+
     /// <returns>Item instance retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> GetItemInstanceAsync(GetItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> GetItemInstance(GetItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Modify item instance state
@@ -132,9 +153,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>custom name, and metadata. Cannot modify bound items unless admin.
     /// </remarks>
 
+
+
     /// <returns>Item instance modified successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> ModifyItemInstanceAsync(ModifyItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> ModifyItemInstance(ModifyItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bind item to character
@@ -145,9 +169,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>the template's soulboundType. Once bound, the item cannot be traded.
     /// </remarks>
 
+
+
     /// <returns>Item instance bound successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> BindItemInstanceAsync(BindItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> BindItemInstance(BindItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Unbind item from character
@@ -158,9 +185,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>for returning bound items to tradeable state. Requires a reason for audit trail.
     /// </remarks>
 
+
+
     /// <returns>Item instance unbound successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> UnbindItemInstanceAsync(UnbindItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> UnbindItemInstance(UnbindItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Destroy item instance
@@ -171,9 +201,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>Cannot destroy bound items unless admin or reason is 'admin'.
     /// </remarks>
 
+
+
     /// <returns>Item instance destroyed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DestroyItemInstanceResponse>> DestroyItemInstanceAsync(DestroyItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DestroyItemInstanceResponse>> DestroyItemInstance(DestroyItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Use an item (execute its behavior contract)
@@ -187,9 +220,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>contract's prebound APIs fail.
     /// </remarks>
 
+
+
     /// <returns>Item used successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UseItemResponse>> UseItemAsync(UseItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UseItemResponse>> UseItem(UseItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Complete a specific step of a multi-step item use
@@ -203,9 +239,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>are complete (per itemUseBehavior).
     /// </remarks>
 
+
+
     /// <returns>Step completed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UseItemStepResponse>> UseItemStepAsync(UseItemStepRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UseItemStepResponse>> UseItemStep(UseItemStepRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List items in a container
@@ -215,9 +254,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns all item instances in the specified container.
     /// </remarks>
 
+
+
     /// <returns>Items retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListItemsResponse>> ListItemsByContainerAsync(ListItemsByContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListItemsResponse>> ListItemsByContainer(ListItemsByContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List instances of a template
@@ -228,9 +270,12 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>Useful for admin queries and analytics.
     /// </remarks>
 
+
+
     /// <returns>Items retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListItemsResponse>> ListItemsByTemplateAsync(ListItemsByTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListItemsResponse>> ListItemsByTemplate(ListItemsByTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get multiple item instances by ID
@@ -240,15 +285,18 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     /// Retrieves multiple item instances in a single request.
     /// </remarks>
 
+
+
     /// <returns>Items retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetItemInstancesResponse>> BatchGetItemInstancesAsync(BatchGetItemInstancesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetItemInstancesResponse>> BatchGetItemInstances(BatchGetItemInstancesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IItemService))]
+public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase, IItemController
 {
     private IItemService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

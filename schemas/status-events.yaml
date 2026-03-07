@@ -78,6 +78,9 @@ x-lifecycle:
       stackable: { type: boolean, required: true, description: "Whether this status can stack" }
       maxStacks: { type: integer, required: true, description: "Maximum number of stacks" }
       stackBehavior: { $ref: 'status-api.yaml#/components/schemas/StackBehavior', required: true, description: "How multiple applications interact" }
+      isDeprecated: { type: boolean, required: true, description: "Whether this template is deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When this template was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Why this template was deprecated" }
       createdAt: { type: string, format: date-time, required: true, description: "When this template was created" }
       updatedAt: { type: string, format: date-time, nullable: true, description: "When this template was last updated" }
     sensitive:
@@ -126,6 +129,7 @@ components:
           description: Entity type discriminator
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Status template code that was granted
         statusInstanceId:
           type: string
@@ -181,6 +185,7 @@ components:
           description: Entity type discriminator
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Status template code that was removed
         statusInstanceId:
           type: string
@@ -219,6 +224,7 @@ components:
           description: Entity type discriminator
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Status template code that expired
         statusInstanceId:
           type: string
@@ -256,6 +262,7 @@ components:
           description: Entity type discriminator
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Status template code
         statusInstanceId:
           type: string
@@ -297,6 +304,7 @@ components:
           description: Entity type discriminator
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Status template code that failed to grant
         reason:
           $ref: 'status-api.yaml#/components/schemas/GrantFailureReason'

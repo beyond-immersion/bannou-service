@@ -143,7 +143,7 @@ public class CleanupService : BackgroundService
             if (slot.VersionCount == 0 && versionsDeleted > 0)
             {
                 await slotStore.DeleteAsync(slot.GetStateKey(), cancellationToken);
-                await messageBus.TryPublishAsync("save-slot.deleted", new SaveSlotDeletedEvent
+                await messageBus.TryPublishAsync("save-load.save-slot.deleted", new SaveSlotDeletedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -174,7 +174,7 @@ public class CleanupService : BackgroundService
                 totalVersionsDeleted, totalSlotsDeleted, totalBytesFreed);
 
             await messageBus.TryPublishAsync(
-                "save.cleanup-completed",
+                "save-load.cleanup.completed",
                 new CleanupCompletedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -241,8 +241,7 @@ public class CleanupService : BackgroundService
                 versionsDeleted++;
 
                 // Delete asset if exists
-                // SaveVersionManifest.AssetId is now Guid?
-                if (version.AssetId.HasValue && version.AssetId.Value != Guid.Empty)
+                if (version.AssetId.HasValue)
                 {
                     try
                     {
@@ -257,8 +256,7 @@ public class CleanupService : BackgroundService
                 }
 
                 // Delete thumbnail if exists
-                // SaveVersionManifest.ThumbnailAssetId is now Guid?
-                if (version.ThumbnailAssetId.HasValue && version.ThumbnailAssetId.Value != Guid.Empty)
+                if (version.ThumbnailAssetId.HasValue)
                 {
                     try
                     {

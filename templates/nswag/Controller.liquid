@@ -3,10 +3,8 @@
 public interface I{{ Class }}Controller : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 {%-     for operation in Operations %}
-{%-         comment -%}
-        Interface includes ALL methods (including controller-only).
-        Controller-only methods will be implemented in the partial controller class.
-{%-         endcomment -%}
+{%-         assign isManualImpl = operation.ExtensionData["x-manual-implementation"] -%}
+{%-         unless isManualImpl %}
 {%-         if operation.HasSummary %}
     /// <summary>
     /// {{ operation.Summary | csharpdocs }}
@@ -18,9 +16,12 @@ public interface I{{ Class }}Controller : BeyondImmersion.BannouService.Controll
     /// </remarks>
 {%          endif -%}
 {%-         for parameter in operation.Parameters %}
+{%-             assign hasHeaderExtraction = parameter.ExtensionData["x-from-authorization"] or parameter.ExtensionData["x-from-header"] -%}
+{%-             unless hasHeaderExtraction %}
 {%-             if parameter.HasDescription %}
     /// <param name="{{ parameter.VariableName }}">{{ parameter.Description | csharpdocs }}</param>
 {%-             endif %}
+{%-             endunless %}
 {%-         endfor %}
 {%-         if operation.HasResultDescription %}
     /// <returns>{{ operation.ResultDescription | csharpdocs }}</returns>
@@ -28,8 +29,9 @@ public interface I{{ Class }}Controller : BeyondImmersion.BannouService.Controll
 {%-         if operation.IsDeprecated %}
     [System.Obsolete]
 {%-         endif %}
-    {{ operation.ResultType }} {{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{% assign parameterOptional = GenerateOptionalParameters and parameter.IsOptional %}{{ parameter.TypeInControllerInterface }} {{ parameter.VariableName }}{% if parameterOptional and parameter.HasDefault == false %} = null{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken){% endif %});
+    {% if IsAspNetCore and operation.WrapResponse %}System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult>{% elsif operation.WrapResponse %}System.Threading.Tasks.Task<HttpResponseMessage>{% else %}{{ operation.ResultType }}{% endif %} {{ operation.ActualOperationName }}({% for parameter in operation.Parameters %}{% assign hasHeaderExtraction = parameter.ExtensionData["x-from-authorization"] or parameter.ExtensionData["x-from-header"] %}{% unless hasHeaderExtraction %}{{ parameter.Type }} {{ parameter.VariableName }}{% if GenerateOptionalParameters and parameter.IsOptional %} = null{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endunless %}{% endfor %}{% if UseCancellationToken %}System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken){% endif %});
 
+{%-         endunless %}
 {%-      endfor %}
 }
 {%- endif %}
@@ -52,7 +54,8 @@ public interface I{{ Class }}Controller : BeyondImmersion.BannouService.Controll
 {%-     break -%}
 {%-   endif -%}
 {%- endfor -%}
-public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} class {{ Class }}Controller{% if hasControllerOnlyMethods %}Base{% endif %} : {% if HasBaseClass %}{{ BaseClass }}{% else %}{{ AspNetNamespace }}.{% if IsAspNetCore %}ControllerBase{% else %}ApiController{% endif %}{% endif %}
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(I{{ Class }}Service))]
+public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} class {{ Class }}Controller{% if hasControllerOnlyMethods %}Base{% endif %} : {% if HasBaseClass %}{{ BaseClass }}{% else %}{{ AspNetNamespace }}.{% if IsAspNetCore %}ControllerBase{% else %}ApiController{% endif %}{% endif %}, I{{ Class }}Controller
 {
     private I{{ Class }}Service _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

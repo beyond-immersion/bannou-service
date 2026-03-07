@@ -491,23 +491,22 @@ paths:
   /example/admin-only:
     post:
       x-permissions:
-        roles: [admin]
+        - role: admin
       # ...
 
   /example/authenticated:
     post:
       x-permissions:
-        roles: [user, admin]
+        - role: user
       # ...
 
-  /example/public:
+  /example/service-internal:
     post:
-      x-permissions:
-        roles: [anonymous]
+      x-permissions: []       # Service-to-service only — no WebSocket access
       # ...
 ```
 
-See [Permissions Specification](../X-PERMISSIONS-SPECIFICATION.md) for complete documentation.
+See [Endpoint Permission Guidelines](../reference/ENDPOINT-PERMISSION-GUIDELINES.md) for the complete decision framework on which permission level to use (7 levels, state-gating patterns, shortcut eligibility, anti-patterns). See [SCHEMA-RULES.md](../reference/SCHEMA-RULES.md) for the `x-permissions` syntax reference.
 
 ## Configuration
 

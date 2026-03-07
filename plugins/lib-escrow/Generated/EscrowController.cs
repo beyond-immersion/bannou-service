@@ -42,9 +42,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>parties through appropriate channels. Sets template values on bound contract.
     /// </remarks>
 
+
+
     /// <returns>Escrow created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateEscrowResponse>> CreateEscrowAsync(CreateEscrowRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateEscrowResponse>> CreateEscrow(CreateEscrowRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get escrow details
@@ -54,9 +57,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Get escrow agreement details by ID.
     /// </remarks>
 
+
+
     /// <returns>Escrow details</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEscrowResponse>> GetEscrowAsync(GetEscrowRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEscrowResponse>> GetEscrow(GetEscrowRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List escrows for a party
@@ -66,9 +72,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// List escrow agreements with filtering options.
     /// </remarks>
 
+
+
     /// <returns>List of escrows</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListEscrowsResponse>> ListEscrowsAsync(ListEscrowsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListEscrowsResponse>> ListEscrows(ListEscrowsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get deposit or release token for a party
@@ -81,9 +90,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>NPCs, guilds, etc.).
     /// </remarks>
 
+
+
     /// <returns>Token information</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetMyTokenResponse>> GetMyTokenAsync(GetMyTokenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetMyTokenResponse>> GetMyToken(GetMyTokenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deposit assets into escrow
@@ -97,9 +109,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>to check if all asset requirements are satisfied.
     /// </remarks>
 
+
+
     /// <returns>Deposit successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DepositResponse>> DepositAsync(DepositRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DepositResponse>> Deposit(DepositRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Validate a deposit without executing
@@ -109,9 +124,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Validate a deposit without executing (dry run).
     /// </remarks>
 
+
+
     /// <returns>Validation result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateDepositResponse>> ValidateDepositAsync(ValidateDepositRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateDepositResponse>> ValidateDeposit(ValidateDepositRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get deposit status for a party
@@ -121,9 +139,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Get deposit status for a party in an escrow.
     /// </remarks>
 
+
+
     /// <returns>Deposit status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetDepositStatusResponse>> GetDepositStatusAsync(GetDepositStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetDepositStatusResponse>> GetDepositStatus(GetDepositStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Record party consent
@@ -133,9 +154,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Record party consent for release, refund, or re-affirmation.
     /// </remarks>
 
+
+
     /// <returns>Consent recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConsentResponse>> RecordConsentAsync(ConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConsentResponse>> RecordConsent(ConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get consent status for escrow
@@ -145,9 +169,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Get consent status for all parties in an escrow.
     /// </remarks>
 
+
+
     /// <returns>Consent status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetConsentStatusResponse>> GetConsentStatusAsync(GetConsentStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetConsentStatusResponse>> GetConsentStatus(GetConsentStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Trigger release
@@ -159,9 +186,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>Runs finalization flow before releasing remaining assets.
     /// </remarks>
 
+
+
     /// <returns>Release result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReleaseResponse>> ReleaseAsync(ReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReleaseResponse>> Release(ReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Trigger refund
@@ -171,9 +201,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Trigger refund (for trusted modes or consent).
     /// </remarks>
 
+
+
     /// <returns>Refund result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RefundResponse>> RefundAsync(RefundRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RefundResponse>> Refund(RefundRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cancel escrow before fully funded
@@ -183,9 +216,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Cancel escrow before fully funded, refunding any deposits.
     /// </remarks>
 
+
+
     /// <returns>Cancel result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CancelResponse>> CancelAsync(CancelRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CancelResponse>> Cancel(CancelRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Raise a dispute on funded escrow
@@ -195,9 +231,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Raise a dispute on a funded escrow.
     /// </remarks>
 
+
+
     /// <returns>Dispute raised</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DisputeResponse>> DisputeAsync(DisputeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DisputeResponse>> Dispute(DisputeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Confirm receipt of released assets
@@ -208,9 +247,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>Required when ReleaseMode is party_required or service_and_party.
     /// </remarks>
 
+
+
     /// <returns>Confirmation recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfirmReleaseResponse>> ConfirmReleaseAsync(ConfirmReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfirmReleaseResponse>> ConfirmRelease(ConfirmReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Confirm receipt of refunded assets
@@ -221,9 +263,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>Required when RefundMode is party_required.
     /// </remarks>
 
+
+
     /// <returns>Confirmation recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfirmRefundResponse>> ConfirmRefundAsync(ConfirmRefundRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfirmRefundResponse>> ConfirmRefund(ConfirmRefundRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Arbiter resolves disputed escrow
@@ -233,9 +278,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Arbiter resolves a disputed escrow.
     /// </remarks>
 
+
+
     /// <returns>Resolution result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ResolveResponse>> ResolveAsync(ResolveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ResolveResponse>> Resolve(ResolveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Verify condition for conditional escrow
@@ -246,9 +294,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>For escrows with boundContractId, use contract milestones instead.
     /// </remarks>
 
+
+
     /// <returns>Verification result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VerifyConditionResponse>> VerifyConditionAsync(VerifyConditionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VerifyConditionResponse>> VerifyCondition(VerifyConditionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Manually trigger validation
@@ -258,9 +309,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Manually trigger validation on an active escrow.
     /// </remarks>
 
+
+
     /// <returns>Validation result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateEscrowResponse>> ValidateEscrowAsync(ValidateEscrowRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateEscrowResponse>> ValidateEscrow(ValidateEscrowRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Re-affirm after validation failure
@@ -270,9 +324,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Re-affirm after validation failure (party accepts changed state).
     /// </remarks>
 
+
+
     /// <returns>Reaffirmation result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReaffirmResponse>> ReaffirmAsync(ReaffirmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReaffirmResponse>> Reaffirm(ReaffirmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Register a custom asset type handler
@@ -282,9 +339,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Register a custom asset type handler for extensibility.
     /// </remarks>
 
+
+
     /// <returns>Handler registered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterHandlerResponse>> RegisterHandlerAsync(RegisterHandlerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterHandlerResponse>> RegisterHandler(RegisterHandlerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List registered asset handlers
@@ -294,9 +354,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// List registered asset handlers (includes built-in).
     /// </remarks>
 
+
+
     /// <returns>List of handlers</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListHandlersResponse>> ListHandlersAsync(ListHandlersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListHandlersResponse>> ListHandlers(ListHandlersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove a custom asset handler registration
@@ -306,15 +369,18 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
     /// Remove a custom asset handler registration.
     /// </remarks>
 
+
+
     /// <returns>Handler deregistered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeregisterHandlerResponse>> DeregisterHandlerAsync(DeregisterHandlerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeregisterHandlerResponse>> DeregisterHandler(DeregisterHandlerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IEscrowService))]
+public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase, IEscrowController
 {
     private IEscrowService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

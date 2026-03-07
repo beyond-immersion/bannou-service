@@ -1,5 +1,7 @@
 # Implementation Tenets: Service Behavior & Contracts
 
+> ⛔ **FROZEN DOCUMENT** — Defines authoritative implementation tenets enforced across the codebase. AI agents MUST NOT add, remove, modify, or reinterpret any content without explicit user instruction. If you believe something is incorrect, report the concern and wait — do not "fix" it. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Category**: How services communicate, respond, and manage lifecycles
 > **When to Reference**: While designing service method behavior — event flow, error handling, response shape, distributed safety, client push, tracing, entity lifecycles
 > **Tenets**: T3, T7, T8, T9, T17, T30, T31
@@ -7,7 +9,7 @@
 
 These tenets define what a service method **does** at runtime.
 
-> **Note**: Schema Reference Hierarchy (formerly T26) is now covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md) and referenced by Tenet 1 in [TENETS.md](../TENETS.md).
+> **Note**: Schema Reference Hierarchy (previously covered in this file) is now consolidated in [SCHEMA-RULES.md](../SCHEMA-RULES.md) and referenced by Tenet 1 in [TENETS.md](../TENETS.md).
 
 ---
 
@@ -42,7 +44,6 @@ Running `make generate` produces:
 
 In the service constructor (see Tenet 6 for full pattern):
 ```csharp
-ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
 RegisterEventConsumers(eventConsumer);
 ```
 
@@ -201,7 +202,7 @@ Services MUST distinguish: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404
 ```csharp
 return (StatusCodes.OK, response);              // Success
 return (StatusCodes.NotFound, null);            // Resource doesn't exist
-return (StatusCodes.InternalServerError, null); // Unexpected failure
+return (StatusCodes.Conflict, null);            // Conflicting state
 ```
 
 ### Empty Payload for Error Responses (ABSOLUTE)
@@ -479,7 +480,7 @@ Does persistent data in OTHER services/entities store this entity's ID?
 
 These are foundational definitions that other entities reference by ID. Deletion would orphan or corrupt downstream data. The transition period gives operators and automated systems time to migrate references.
 
-**Current Category A entities**: Species, Realm, Relationship Type, Seed Type, Location.
+**Current Category A entities**: Species, Realm, Relationship Type, Seed Type, Location, Faction.
 
 **Lifecycle**: `Active` → `Deprecated` → (optional `Merge`) → `Delete`
 

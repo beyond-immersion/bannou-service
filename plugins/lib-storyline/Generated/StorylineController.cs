@@ -48,9 +48,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>5. Cache plan and publish storyline.composed event
     /// </remarks>
 
+
+
     /// <returns>Storyline plan generated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ComposeResponse>> ComposeAsync(ComposeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ComposeResponse>> Compose(ComposeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Retrieve a cached storyline plan
@@ -61,9 +64,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>Returns 404 if the plan has expired from cache or doesn't exist.
     /// </remarks>
 
+
+
     /// <returns>Plan retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetPlanResponse>> GetPlanAsync(GetPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetPlanResponse>> GetPlan(GetPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List cached storyline plans
@@ -74,9 +80,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>Plans are ordered by creation time (newest first).
     /// </remarks>
 
+
+
     /// <returns>Plans listed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListPlansResponse>> ListPlansAsync(ListPlansRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListPlansResponse>> ListPlans(ListPlansRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a new scenario definition
@@ -88,9 +97,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>phases, mutations, and optional quest hooks.
     /// </remarks>
 
+
+
     /// <returns>Scenario definition created</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> CreateScenarioDefinitionAsync(CreateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> CreateScenarioDefinition(CreateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a scenario definition by ID or code
@@ -101,9 +113,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>Uses read-through cache for performance.
     /// </remarks>
 
+
+
     /// <returns>Scenario definition retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioDefinitionResponse>> GetScenarioDefinitionAsync(GetScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioDefinitionResponse>> GetScenarioDefinition(GetScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List scenario definitions
@@ -114,9 +129,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>Results are paginated and ordered by priority (descending), then creation time.
     /// </remarks>
 
+
+
     /// <returns>Scenarios listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListScenarioDefinitionsResponse>> ListScenarioDefinitionsAsync(ListScenarioDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListScenarioDefinitionsResponse>> ListScenarioDefinitions(ListScenarioDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a scenario definition
@@ -127,9 +145,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>Uses ETag for optimistic concurrency control.
     /// </remarks>
 
+
+
     /// <returns>Scenario updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> UpdateScenarioDefinitionAsync(UpdateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> UpdateScenarioDefinition(UpdateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate a scenario definition
@@ -140,9 +161,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>Deprecated scenarios are not returned by find-available.
     /// </remarks>
 
+
+
     /// <returns>Scenario deprecated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeprecateScenarioDefinitionAsync(DeprecateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeprecateScenarioDefinition(DeprecateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Find scenarios matching character state
@@ -156,9 +180,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>Returns scenarios ordered by fit score with cooldown status.
     /// </remarks>
 
+
+
     /// <returns>Matching scenarios found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindAvailableScenariosResponse>> FindAvailableScenariosAsync(FindAvailableScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindAvailableScenariosResponse>> FindAvailableScenarios(FindAvailableScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Dry-run scenario trigger
@@ -170,9 +197,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>and predicted mutations.
     /// </remarks>
 
+
+
     /// <returns>Test result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TestScenarioResponse>> TestScenarioTriggerAsync(TestScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TestScenarioResponse>> TestScenarioTrigger(TestScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Score narrative fit without full condition check
@@ -183,9 +213,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>state. Faster than test but less detailed.
     /// </remarks>
 
+
+
     /// <returns>Fit score calculated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EvaluateFitResponse>> EvaluateScenarioFitAsync(EvaluateFitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EvaluateFitResponse>> EvaluateScenarioFit(EvaluateFitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Execute a scenario
@@ -200,9 +233,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>keys for safe retries.
     /// </remarks>
 
+
+
     /// <returns>Scenario triggered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TriggerScenarioResponse>> TriggerScenarioAsync(TriggerScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TriggerScenarioResponse>> TriggerScenario(TriggerScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get active scenarios for a character
@@ -212,9 +248,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// Returns currently executing scenarios for a character.
     /// </remarks>
 
+
+
     /// <returns>Active scenarios</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetActiveScenariosResponse>> GetActiveScenariosAsync(GetActiveScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetActiveScenariosResponse>> GetActiveScenarios(GetActiveScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get scenario execution history
@@ -224,9 +263,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// Returns historical scenario executions for a character with pagination.
     /// </remarks>
 
+
+
     /// <returns>Scenario history</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioHistoryResponse>> GetScenarioHistoryAsync(GetScenarioHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioHistoryResponse>> GetScenarioHistory(GetScenarioHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get storyline data for compression
@@ -237,15 +279,18 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <br/>Returns scenario participations, active arcs, and completion counts for archival.
     /// </remarks>
 
+
+
     /// <returns>Compressed data returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StorylineArchive>> GetCompressDataAsync(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StorylineArchive>> GetCompressData(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IStorylineService))]
+public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBase, IStorylineController
 {
     private IStorylineService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

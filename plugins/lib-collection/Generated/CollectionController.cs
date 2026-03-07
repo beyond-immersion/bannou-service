@@ -41,9 +41,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// <br/>an item template for inventory placement, and includes display/metadata fields.
     /// </remarks>
 
+
+
     /// <returns>Entry template created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> CreateEntryTemplateAsync(CreateEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> CreateEntryTemplate(CreateEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get an entry template by ID
@@ -53,9 +56,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Retrieves an entry template by its unique identifier.
     /// </remarks>
 
+
+
     /// <returns>Entry template retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> GetEntryTemplateAsync(GetEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> GetEntryTemplate(GetEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List entry templates
@@ -65,9 +71,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Paginated list of entry templates filtered by collection type, game service, and optional category.
     /// </remarks>
 
+
+
     /// <returns>Entry templates retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListEntryTemplatesResponse>> ListEntryTemplatesAsync(ListEntryTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListEntryTemplatesResponse>> ListEntryTemplates(ListEntryTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update an entry template
@@ -77,9 +86,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Update mutable fields of an entry template (displayName, tags, assets, unlockHint, themes, music metadata).
     /// </remarks>
 
+
+
     /// <returns>Entry template updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> UpdateEntryTemplateAsync(UpdateEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> UpdateEntryTemplate(UpdateEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate an entry template
@@ -92,9 +104,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// <br/>no delete. Idempotent — returns OK if already deprecated.
     /// </remarks>
 
+
+
     /// <returns>Entry template deprecated successfully (or already deprecated)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> DeprecateEntryTemplateAsync(DeprecateEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> DeprecateEntryTemplate(DeprecateEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bulk seed entry templates
@@ -104,9 +119,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Bulk create entry templates from a payload, skipping duplicates. Validates item template IDs. Returns count of created templates.
     /// </remarks>
 
+
+
     /// <returns>Seed completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedEntryTemplatesResponse>> SeedEntryTemplatesAsync(SeedEntryTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedEntryTemplatesResponse>> SeedEntryTemplates(SeedEntryTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a collection for an owner
@@ -118,9 +136,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// <br/>container (unlimited type) to hold unlocked entry items.
     /// </remarks>
 
+
+
     /// <returns>Collection created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CollectionResponse>> CreateCollectionAsync(CreateCollectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CollectionResponse>> CreateCollection(CreateCollectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a collection with unlocked entry summary
@@ -130,9 +151,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Retrieves a collection instance with its unlocked entry count.
     /// </remarks>
 
+
+
     /// <returns>Collection retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CollectionResponse>> GetCollectionAsync(GetCollectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CollectionResponse>> GetCollection(GetCollectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all collections for an owner
@@ -142,9 +166,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// List all collection instances for an owner entity, with optional game service filter.
     /// </remarks>
 
+
+
     /// <returns>Collections retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCollectionsResponse>> ListCollectionsAsync(ListCollectionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCollectionsResponse>> ListCollections(ListCollectionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a collection and its inventory container
@@ -154,9 +181,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Delete a collection instance, destroying its inventory container and all contained entry items.
     /// </remarks>
 
+
+
     /// <returns>Collection deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CollectionResponse>> DeleteCollectionAsync(DeleteCollectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CollectionResponse>> DeleteCollection(DeleteCollectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Grant/unlock an entry (idempotent)
@@ -169,9 +199,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// <br/>and places it in the collection container.
     /// </remarks>
 
+
+
     /// <returns>Entry granted (or already unlocked)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrantEntryResponse>> GrantEntryAsync(GrantEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrantEntryResponse>> GrantEntry(GrantEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if owner has a specific entry
@@ -181,9 +214,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Check if an owner has a specific entry unlocked in their collection.
     /// </remarks>
 
+
+
     /// <returns>Check completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasEntryResponse>> HasEntryAsync(HasEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasEntryResponse>> HasEntry(HasEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query unlocked entries with filtering
@@ -193,9 +229,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Query unlocked entries in a collection with optional filtering by category, tags, and metadata.
     /// </remarks>
 
+
+
     /// <returns>Entries retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryEntriesResponse>> QueryEntriesAsync(QueryEntriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryEntriesResponse>> QueryEntries(QueryEntriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update entry instance metadata
@@ -205,9 +244,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Update metadata for an unlocked entry (play count, kill count, favorites, discovery level, custom data).
     /// </remarks>
 
+
+
     /// <returns>Metadata updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockedEntryResponse>> UpdateEntryMetadataAsync(UpdateEntryMetadataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockedEntryResponse>> UpdateEntryMetadata(UpdateEntryMetadataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get completion statistics per collection type
@@ -217,9 +259,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Get completion statistics for a collection including total entries, unlocked count, percentage, and breakdown by category.
     /// </remarks>
 
+
+
     /// <returns>Statistics retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompletionStatsResponse>> GetCompletionStatsAsync(GetCompletionStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompletionStatsResponse>> GetCompletionStats(GetCompletionStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Select content for an area based on unlocked library
@@ -231,9 +276,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// <br/>Falls back to the area's default entry if no matches are found.
     /// </remarks>
 
+
+
     /// <returns>Content selected successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContentSelectionResponse>> SelectContentForAreaAsync(SelectContentForAreaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContentSelectionResponse>> SelectContentForArea(SelectContentForAreaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Set area-to-theme mapping
@@ -243,9 +291,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Create or update an area content configuration that maps an area code to themes and a default entry.
     /// </remarks>
 
+
+
     /// <returns>Area content config saved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> SetAreaContentConfigAsync(SetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> SetAreaContentConfig(SetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get area content config
@@ -255,9 +306,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Get the content configuration for a specific area and game service.
     /// </remarks>
 
+
+
     /// <returns>Area content config retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> GetAreaContentConfigAsync(GetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> GetAreaContentConfig(GetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List area configs for a game service
@@ -267,9 +321,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// List all area content configurations for a game service.
     /// </remarks>
 
+
+
     /// <returns>Area content configs retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAreaContentConfigsResponse>> ListAreaContentConfigsAsync(ListAreaContentConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAreaContentConfigsResponse>> ListAreaContentConfigs(ListAreaContentConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete an area content config
@@ -279,9 +336,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// Delete an area content configuration. Area configs are configuration singletons with no deprecation lifecycle — immediate hard delete.
     /// </remarks>
 
+
+
     /// <returns>Area content config deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> DeleteAreaContentConfigAsync(DeleteAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> DeleteAreaContentConfig(DeleteAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Advance progressive discovery level
@@ -293,9 +353,12 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// <br/>in the entry template's discovery levels.
     /// </remarks>
 
+
+
     /// <returns>Discovery level advanced</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdvanceDiscoveryResponse>> AdvanceDiscoveryAsync(AdvanceDiscoveryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdvanceDiscoveryResponse>> AdvanceDiscovery(AdvanceDiscoveryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup all collections for a deleted character
@@ -310,15 +373,18 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// <br/>cascading resource cleanup.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ICollectionService))]
+public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerBase, ICollectionController
 {
     private ICollectionService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

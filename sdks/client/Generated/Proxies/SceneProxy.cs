@@ -157,17 +157,15 @@ public sealed class SceneProxy
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing DestroyInstanceResponse on success.</returns>
-    public Task<ApiResponse<DestroyInstanceResponse>> DestroyInstanceAsync(
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task DestroyInstanceEventAsync(
         DestroyInstanceRequest request,
         ushort channel = 0,
-        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<DestroyInstanceRequest, DestroyInstanceResponse>(
-            "/scene/destroy-instance", request, channel, timeout, cancellationToken);
+        return _client.SendEventAsync<DestroyInstanceRequest>(
+            "/scene/destroy-instance", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -211,17 +209,15 @@ public sealed class SceneProxy
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing DiscardResponse on success.</returns>
-    public Task<ApiResponse<DiscardResponse>> DiscardCheckoutAsync(
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task DiscardCheckoutEventAsync(
         DiscardRequest request,
         ushort channel = 0,
-        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<DiscardRequest, DiscardResponse>(
-            "/scene/discard", request, channel, timeout, cancellationToken);
+        return _client.SendEventAsync<DiscardRequest>(
+            "/scene/discard", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -265,17 +261,15 @@ public sealed class SceneProxy
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing RegisterValidationRulesResponse on success.</returns>
-    public Task<ApiResponse<RegisterValidationRulesResponse>> RegisterValidationRulesAsync(
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task RegisterValidationRulesEventAsync(
         RegisterValidationRulesRequest request,
         ushort channel = 0,
-        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<RegisterValidationRulesRequest, RegisterValidationRulesResponse>(
-            "/scene/register-validation-rules", request, channel, timeout, cancellationToken);
+        return _client.SendEventAsync<RegisterValidationRulesRequest>(
+            "/scene/register-validation-rules", request, channel, cancellationToken);
     }
 
     /// <summary>

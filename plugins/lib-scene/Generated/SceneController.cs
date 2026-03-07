@@ -41,9 +41,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Returns Conflict if a scene with the same sceneId already exists.
     /// </remarks>
 
+
+
     /// <returns>Scene created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SceneResponse>> CreateSceneAsync(CreateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SceneResponse>> CreateScene(CreateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Retrieve a scene by ID
@@ -54,9 +57,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>up to a configurable depth.
     /// </remarks>
 
+
+
     /// <returns>Scene retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSceneResponse>> GetSceneAsync(GetSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSceneResponse>> GetScene(GetSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List scenes with filtering
@@ -67,9 +73,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Results are ordered by updatedAt descending (most recent first).
     /// </remarks>
 
+
+
     /// <returns>Scenes listed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListScenesResponse>> ListScenesAsync(ListScenesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListScenesResponse>> ListScenes(ListScenesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a scene document
@@ -81,9 +90,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Publishes scene.updated event on success.
     /// </remarks>
 
+
+
     /// <returns>Scene updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SceneResponse>> UpdateSceneAsync(UpdateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SceneResponse>> UpdateScene(UpdateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a scene
@@ -95,9 +107,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Publishes scene.deleted event on success.
     /// </remarks>
 
+
+
     /// <returns>Scene deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteSceneResponse>> DeleteSceneAsync(DeleteSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteSceneResponse>> DeleteScene(DeleteSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Validate a scene structure
@@ -108,9 +123,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>and optionally applies game-specific validation rules.
     /// </remarks>
 
+
+
     /// <returns>Validation result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidationResult>> ValidateSceneAsync(ValidateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidationResult>> ValidateScene(ValidateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Declare that a scene was instantiated in the game world
@@ -126,9 +144,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Consumers (Mapping, Actor, etc.) react to the event independently.
     /// </remarks>
 
+
+
     /// <returns>Instantiation recorded and event published</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InstantiateSceneResponse>> InstantiateSceneAsync(InstantiateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InstantiateSceneResponse>> InstantiateScene(InstantiateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Declare that a scene instance was removed
@@ -139,9 +160,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Consumers react to clean up spatial data, despawn NPCs, etc.
     /// </remarks>
 
+
+
     /// <returns>Destruction recorded and event published</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DestroyInstanceResponse>> DestroyInstanceAsync(DestroyInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DestroyInstance(DestroyInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Lock a scene for editing
@@ -153,9 +177,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Lock expires after TTL if not extended via heartbeat.
     /// </remarks>
 
+
+
     /// <returns>Checkout successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckoutResponse>> CheckoutSceneAsync(CheckoutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckoutResponse>> CheckoutScene(CheckoutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Save changes and release lock
@@ -166,9 +193,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>and releases the lock. Publishes scene.committed event.
     /// </remarks>
 
+
+
     /// <returns>Commit successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CommitResponse>> CommitSceneAsync(CommitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CommitResponse>> CommitScene(CommitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Release lock without saving changes
@@ -179,9 +209,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Scene remains at its pre-checkout version.
     /// </remarks>
 
+
+
     /// <returns>Discard successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DiscardResponse>> DiscardCheckoutAsync(DiscardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DiscardCheckout(DiscardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Extend checkout lock TTL
@@ -190,11 +223,15 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <remarks>
     /// Extends the checkout lock TTL. Should be called periodically
     /// <br/>during editing to prevent lock expiration.
+    /// <br/>Returns 409 Conflict when the extension limit has been reached.
     /// </remarks>
+
+
 
     /// <returns>Lock extended</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HeartbeatResponse>> HeartbeatCheckoutAsync(HeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HeartbeatResponse>> HeartbeatCheckout(HeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get version history for a scene
@@ -205,9 +242,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>retention limit per gameId.
     /// </remarks>
 
+
+
     /// <returns>History retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HistoryResponse>> GetSceneHistoryAsync(HistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HistoryResponse>> GetSceneHistory(HistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Register validation rules for a gameId+sceneType
@@ -218,9 +258,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>rules for the gameId+sceneType combination.
     /// </remarks>
 
+
+
     /// <returns>Rules registered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterValidationRulesResponse>> RegisterValidationRulesAsync(RegisterValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RegisterValidationRules(RegisterValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get validation rules for a gameId+sceneType
@@ -231,9 +274,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>gameId and sceneType combination.
     /// </remarks>
 
+
+
     /// <returns>Rules retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetValidationRulesResponse>> GetValidationRulesAsync(GetValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetValidationRulesResponse>> GetValidationRules(GetValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Full-text search across scenes
@@ -244,9 +290,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>for matching content.
     /// </remarks>
 
+
+
     /// <returns>Search results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SearchScenesResponse>> SearchScenesAsync(SearchScenesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SearchScenesResponse>> SearchScenes(SearchScenesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Find scenes that reference a given scene
@@ -257,9 +306,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>to the specified scene.
     /// </remarks>
 
+
+
     /// <returns>Referencing scenes found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindReferencesResponse>> FindReferencesAsync(FindReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindReferencesResponse>> FindReferences(FindReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Find scenes using a specific asset
@@ -270,9 +322,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>a specific asset ID.
     /// </remarks>
 
+
+
     /// <returns>Asset usage found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindAssetUsageResponse>> FindAssetUsageAsync(FindAssetUsageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindAssetUsageResponse>> FindAssetUsage(FindAssetUsageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Duplicate a scene with a new ID
@@ -283,15 +338,18 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>All node IDs are regenerated. Version resets to 1.0.0.
     /// </remarks>
 
+
+
     /// <returns>Scene duplicated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SceneResponse>> DuplicateSceneAsync(DuplicateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SceneResponse>> DuplicateScene(DuplicateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ISceneService))]
+public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase, ISceneController
 {
     private ISceneService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
@@ -699,7 +757,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <returns>Destruction recorded and event published</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("scene/destroy-instance")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DestroyInstanceResponse>> DestroyInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DestroyInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DestroyInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DestroyInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
@@ -710,8 +768,8 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         try
         {
 
-            var (statusCode, result) = await _implementation.DestroyInstanceAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode, result);
+            var statusCode = await _implementation.DestroyInstanceAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
@@ -847,7 +905,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <returns>Discard successful</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("scene/discard")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DiscardResponse>> DiscardCheckout([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DiscardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DiscardCheckout([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DiscardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
@@ -858,8 +916,8 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         try
         {
 
-            var (statusCode, result) = await _implementation.DiscardCheckoutAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode, result);
+            var statusCode = await _implementation.DiscardCheckoutAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
@@ -892,6 +950,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <remarks>
     /// Extends the checkout lock TTL. Should be called periodically
     /// <br/>during editing to prevent lock expiration.
+    /// <br/>Returns 409 Conflict when the extension limit has been reached.
     /// </remarks>
     /// <returns>Lock extended</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("scene/heartbeat")]
@@ -994,7 +1053,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <returns>Rules registered</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("scene/register-validation-rules")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterValidationRulesResponse>> RegisterValidationRules([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RegisterValidationRules([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
@@ -1005,8 +1064,8 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         try
         {
 
-            var (statusCode, result) = await _implementation.RegisterValidationRulesAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode, result);
+            var statusCode = await _implementation.RegisterValidationRulesAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {

@@ -41,15 +41,16 @@ namespace BeyondImmersion.BannouService.SaveLoad;
 public partial class SaveLoadService : ISaveLoadService
 {
     // Topic constants for event publishing (per FOUNDATION TENETS - Event-Driven Architecture)
-    private const string SAVE_SLOT_CREATED_TOPIC = "save-slot.created";
-    private const string SAVE_SLOT_UPDATED_TOPIC = "save-slot.updated";
-    private const string SAVE_SLOT_DELETED_TOPIC = "save-slot.deleted";
-    private const string SAVE_CREATED_TOPIC = "save.created";
-    private const string SAVE_LOADED_TOPIC = "save.loaded";
-    private const string SAVE_VERSION_PINNED_TOPIC = "save.version-pinned";
-    private const string SAVE_VERSION_UNPINNED_TOPIC = "save.version-unpinned";
-    private const string SAVE_VERSION_DELETED_TOPIC = "save.version-deleted";
-    private const string SAVE_QUEUED_TOPIC = "save.queued";
+    // Pattern C: {service}.{entity}.{action} with topic_prefix "save-load"
+    private const string SAVE_SLOT_CREATED_TOPIC = "save-load.save-slot.created";
+    private const string SAVE_SLOT_UPDATED_TOPIC = "save-load.save-slot.updated";
+    private const string SAVE_SLOT_DELETED_TOPIC = "save-load.save-slot.deleted";
+    private const string SAVE_CREATED_TOPIC = "save-load.save.created";
+    private const string SAVE_LOADED_TOPIC = "save-load.save.loaded";
+    private const string SAVE_VERSION_PINNED_TOPIC = "save-load.version.pinned";
+    private const string SAVE_VERSION_UNPINNED_TOPIC = "save-load.version.unpinned";
+    private const string SAVE_VERSION_DELETED_TOPIC = "save-load.version.deleted";
+    private const string SAVE_QUEUED_TOPIC = "save-load.upload.queued";
 
     private readonly IMessageBus _messageBus;
     /// <summary>Store for save slot metadata (basic CRUD operations).</summary>
@@ -116,6 +117,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SlotResponse?)> CreateSlotAsync(CreateSlotRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.CreateSlotAsync");
         _logger.LogDebug(
             "Creating save slot for game {GameId}, owner {OwnerType}:{OwnerId}, slot {SlotName}",
             body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
@@ -186,6 +188,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SlotResponse?)> GetSlotAsync(GetSlotRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.GetSlotAsync");
         var slotKey = SaveSlotMetadata.GetStateKey(
             body.GameId, body.OwnerType.ToString().ToLowerInvariant(),
             body.OwnerId.ToString(), body.SlotName);
@@ -204,6 +207,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, ListSlotsResponse?)> ListSlotsAsync(ListSlotsRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.ListSlotsAsync");
         var gameId = body.GameId;
         // SaveSlotMetadata.OwnerId/OwnerType/Category are now Guid/enum types - compare properly
         var bodyCategory = body.Category;
@@ -233,6 +237,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, DeleteSlotResponse?)> DeleteSlotAsync(DeleteSlotRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.DeleteSlotAsync");
         var slotKey = SaveSlotMetadata.GetStateKey(
             body.GameId, body.OwnerType.ToString().ToLowerInvariant(),
             body.OwnerId.ToString(), body.SlotName);
@@ -259,7 +264,6 @@ public partial class SaveLoadService : ISaveLoadService
 
         var response = new DeleteSlotResponse
         {
-            Deleted = true,
             VersionsDeleted = deletedVersions,
             BytesFreed = slot.TotalSizeBytes
         };
@@ -272,6 +276,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SlotResponse?)> RenameSlotAsync(RenameSlotRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.RenameSlotAsync");
         // Get old slot key
         var oldSlotKey = SaveSlotMetadata.GetStateKey(
             body.GameId, body.OwnerType.ToString().ToLowerInvariant(),
@@ -331,6 +336,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, BulkDeleteSlotsResponse?)> BulkDeleteSlotsAsync(BulkDeleteSlotsRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.BulkDeleteSlotsAsync");
         var deletedCount = 0;
         long totalBytesFreed = 0;
 
@@ -367,7 +373,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Failed to delete slot {SlotId}", slotId);
+                _logger.LogWarning(ex, "Failed to delete slot {SlotId}", slotId);
             }
         }
 
@@ -390,6 +396,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SaveResponse?)> SaveAsync(SaveRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.SaveAsync");
         _logger.LogDebug(
             "Saving to slot {SlotName} for {OwnerType}:{OwnerId} in game {GameId}",
             body.SlotName, body.OwnerType, body.OwnerId, body.GameId);
@@ -561,7 +568,7 @@ public partial class SaveLoadService : ISaveLoadService
             DeviceId = body.DeviceId,
             SchemaVersion = body.SchemaVersion,
             Metadata = new Dictionary<string, object>(),
-            UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE,
+            UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.Pending : UploadStatus.Complete,
             CreatedAt = now,
             ETag = Guid.NewGuid().ToString()
         };
@@ -693,6 +700,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, LoadResponse?)> LoadAsync(LoadRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.LoadAsync");
         _logger.LogDebug(
             "Loading from slot {SlotName} for {OwnerType}:{OwnerId} in game {GameId}",
             body.SlotName, body.OwnerType, body.OwnerId, body.GameId);
@@ -784,7 +792,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Load from Asset service if available - AssetId is now Guid?
-            if (manifest.AssetId.HasValue && manifest.AssetId.Value != Guid.Empty)
+            if (manifest.AssetId.HasValue)
             {
                 var assetResponse = await _versionDataLoader.LoadFromAssetServiceAsync(manifest.AssetId.Value.ToString(), cancellationToken);
                 if (assetResponse == null)
@@ -841,7 +849,7 @@ public partial class SaveLoadService : ISaveLoadService
             DisplayName = manifest?.CheckpointName,
             Pinned = manifest?.IsPinned ?? false,
             CheckpointName = manifest?.CheckpointName,
-            CreatedAt = manifest?.CreatedAt ?? DateTimeOffset.MinValue
+            CreatedAt = manifest?.CreatedAt ?? DateTimeOffset.UtcNow
         };
 
         _logger.LogDebug("Loaded version {Version} from slot {SlotId}, {Size} bytes",
@@ -856,6 +864,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SaveDeltaResponse?)> SaveDeltaAsync(SaveDeltaRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.SaveDeltaAsync");
         _logger.LogDebug(
             "Saving delta for slot {SlotName} based on version {BaseVersion}",
             body.SlotName, body.BaseVersion);
@@ -906,8 +915,7 @@ public partial class SaveLoadService : ISaveLoadService
         var deltaProcessor = new DeltaProcessor(
             _logger as ILogger<DeltaProcessor> ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<DeltaProcessor>.Instance,
             _configuration.MigrationMaxPatchOperations);
-        var algorithmEnum = body.Algorithm ?? DeltaAlgorithm.JsonPatch;
-        var algorithm = algorithmEnum.ToString();
+        var algorithm = body.Algorithm ?? DeltaAlgorithm.JsonPatch;
         if (!deltaProcessor.ValidateDelta(body.Delta, algorithm))
         {
             _logger.LogDebug("Invalid delta provided");
@@ -1010,12 +1018,12 @@ public partial class SaveLoadService : ISaveLoadService
             CompressionType = compressionTypeEnum,
             IsDelta = true,
             BaseVersionNumber = body.BaseVersion,
-            DeltaAlgorithm = algorithmEnum,
+            DeltaAlgorithm = algorithm,
             DeviceId = body.DeviceId,
             SchemaVersion = body.SchemaVersion,
             Metadata = body.Metadata?.ToDictionary(kv => kv.Key, kv => (object)kv.Value) ?? new Dictionary<string, object>(),
             CreatedAt = DateTimeOffset.UtcNow,
-            UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE
+            UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.Pending : UploadStatus.Complete
         };
 
         // Save manifest and update slot
@@ -1041,7 +1049,7 @@ public partial class SaveLoadService : ISaveLoadService
                 CompressedSizeBytes = compressedDelta.Length,
                 IsDelta = true,
                 BaseVersionNumber = body.BaseVersion,
-                DeltaAlgorithm = algorithmEnum,
+                DeltaAlgorithm = algorithm,
                 Priority = 1,
                 QueuedAt = DateTimeOffset.UtcNow
             };
@@ -1095,6 +1103,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, LoadResponse?)> LoadWithDeltasAsync(LoadRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.LoadWithDeltasAsync");
         // VersionNumber 0 means "load latest"
         var requestedVersion = body.VersionNumber == 0 ? -1 : body.VersionNumber;
         _logger.LogDebug(
@@ -1195,6 +1204,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SaveResponse?)> CollapseDeltasAsync(CollapseDeltasRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.CollapseDeltasAsync");
         _logger.LogDebug(
             "Collapsing deltas for slot {SlotName} to version {Version}",
             body.SlotName, body.VersionNumber ?? -1);
@@ -1238,7 +1248,7 @@ public partial class SaveLoadService : ISaveLoadService
                 VersionNumber = targetVersion.VersionNumber,
                 SizeBytes = targetVersion.SizeBytes,
                 CreatedAt = targetVersion.CreatedAt,
-                UploadPending = targetVersion.UploadStatus == UploadStatus.PENDING
+                UploadPending = targetVersion.UploadStatus == UploadStatus.Pending
             });
         }
 
@@ -1289,7 +1299,7 @@ public partial class SaveLoadService : ISaveLoadService
         targetVersion.CompressedSizeBytes = compressedData.Length;
         targetVersion.CompressionType = compressionTypeEnum;
         targetVersion.ContentHash = contentHash;
-        targetVersion.UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE;
+        targetVersion.UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.Pending : UploadStatus.Complete;
 
         // Save updated manifest with optimistic concurrency
         var newEtag = await _versionStore.TrySaveAsync(targetVersion.GetStateKey(), targetVersion, versionEtag ?? string.Empty, cancellationToken: cancellationToken);
@@ -1381,7 +1391,7 @@ public partial class SaveLoadService : ISaveLoadService
             VersionNumber = resolvedVersionNumber,
             SizeBytes = reconstructedData.Length,
             CreatedAt = targetVersion.CreatedAt,
-            UploadPending = targetVersion.UploadStatus == UploadStatus.PENDING
+            UploadPending = targetVersion.UploadStatus == UploadStatus.Pending
         });
     }
 
@@ -1391,6 +1401,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, ListVersionsResponse?)> ListVersionsAsync(ListVersionsRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.ListVersionsAsync");
         _logger.LogDebug(
             "Listing versions for slot {SlotName} owner {OwnerId} ({OwnerType})",
             body.SlotName, body.OwnerId, body.OwnerType);
@@ -1443,6 +1454,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, VersionResponse?)> PinVersionAsync(PinVersionRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.PinVersionAsync");
         _logger.LogDebug(
             "Pinning version {Version} in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
@@ -1502,6 +1514,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, VersionResponse?)> UnpinVersionAsync(UnpinVersionRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.UnpinVersionAsync");
         _logger.LogDebug(
             "Unpinning version {Version} in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
@@ -1562,6 +1575,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, DeleteVersionResponse?)> DeleteVersionAsync(DeleteVersionRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.DeleteVersionAsync");
         _logger.LogDebug(
             "Deleting version {Version} in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
@@ -1603,7 +1617,7 @@ public partial class SaveLoadService : ISaveLoadService
         var bytesFreed = version.CompressedSizeBytes ?? version.SizeBytes;
 
         // Delete the asset if it exists
-        if (version.AssetId.HasValue && version.AssetId.Value != Guid.Empty)
+        if (version.AssetId.HasValue)
         {
             try
             {
@@ -1661,7 +1675,6 @@ public partial class SaveLoadService : ISaveLoadService
 
         return (StatusCodes.OK, new DeleteVersionResponse
         {
-            Deleted = true,
             BytesFreed = bytesFreed
         });
     }
@@ -1671,6 +1684,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, QuerySavesResponse?)> QuerySavesAsync(QuerySavesRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.QuerySavesAsync");
         _logger.LogDebug(
             "Querying saves for owner {OwnerId} ({OwnerType})",
             body.OwnerId, body.OwnerType);
@@ -1772,13 +1786,13 @@ public partial class SaveLoadService : ISaveLoadService
         // Sort results
         results = body.SortBy switch
         {
-            QuerySavesRequestSortBy.CreatedAt => body.SortOrder == QuerySavesRequestSortOrder.Asc
+            SaveSortField.CreatedAt => body.SortOrder == SortOrder.Asc
                 ? results.OrderBy(r => r.CreatedAt).ToList()
                 : results.OrderByDescending(r => r.CreatedAt).ToList(),
-            QuerySavesRequestSortBy.Size => body.SortOrder == QuerySavesRequestSortOrder.Asc
+            SaveSortField.Size => body.SortOrder == SortOrder.Asc
                 ? results.OrderBy(r => r.SizeBytes).ToList()
                 : results.OrderByDescending(r => r.SizeBytes).ToList(),
-            QuerySavesRequestSortBy.VersionNumber => body.SortOrder == QuerySavesRequestSortOrder.Asc
+            SaveSortField.VersionNumber => body.SortOrder == SortOrder.Asc
                 ? results.OrderBy(r => r.VersionNumber).ToList()
                 : results.OrderByDescending(r => r.VersionNumber).ToList(),
             _ => results.OrderByDescending(r => r.CreatedAt).ToList()
@@ -1805,6 +1819,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SaveResponse?)> CopySaveAsync(CopySaveRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.CopySaveAsync");
         _logger.LogDebug(
             "Copying save from {SourceSlot} to {TargetSlot}",
             body.SourceSlotName, body.TargetSlotName);
@@ -1912,7 +1927,7 @@ public partial class SaveLoadService : ISaveLoadService
             Metadata = sourceVersion.Metadata != null ? new Dictionary<string, object>(sourceVersion.Metadata) : new Dictionary<string, object>(),
             IsPinned = false,
             IsDelta = false,
-            UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE,
+            UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.Pending : UploadStatus.Complete,
             CreatedAt = DateTimeOffset.UtcNow
         };
         await _versionStore.SaveAsync(newVersion.GetStateKey(), newVersion, cancellationToken: cancellationToken);
@@ -1989,6 +2004,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, ExportSavesResponse?)> ExportSavesAsync(ExportSavesRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.ExportSavesAsync");
         return await _saveExportImportManager.ExportSavesAsync(body, cancellationToken);
     }
 
@@ -1998,6 +2014,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, ImportSavesResponse?)> ImportSavesAsync(ImportSavesRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.ImportSavesAsync");
         return await _saveExportImportManager.ImportSavesAsync(body, cancellationToken);
     }
 
@@ -2007,6 +2024,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, VerifyIntegrityResponse?)> VerifyIntegrityAsync(VerifyIntegrityRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.VerifyIntegrityAsync");
         _logger.LogDebug(
             "Verifying integrity for slot {SlotName} owner {OwnerId}",
             body.SlotName, body.OwnerId);
@@ -2082,6 +2100,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SaveResponse?)> PromoteVersionAsync(PromoteVersionRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.PromoteVersionAsync");
         _logger.LogDebug(
             "Promoting version {Version} to latest in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
@@ -2169,7 +2188,7 @@ public partial class SaveLoadService : ISaveLoadService
             CompressionType = sourceVersion.CompressionType,
             SchemaVersion = sourceVersion.SchemaVersion,
             Metadata = new Dictionary<string, object>(sourceVersion.Metadata),
-            UploadStatus = UploadStatus.PENDING,
+            UploadStatus = UploadStatus.Pending,
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -2261,6 +2280,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, AdminCleanupResponse?)> AdminCleanupAsync(AdminCleanupRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.AdminCleanupAsync");
         _logger.LogDebug(
             "Executing AdminCleanup: dryRun={DryRun}, olderThanDays={Days}, category={Category}",
             body.DryRun, body.OlderThanDays, body.Category);
@@ -2362,6 +2382,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, AdminStatsResponse?)> AdminStatsAsync(AdminStatsRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.AdminStatsAsync");
         _logger.LogDebug("Executing AdminStats with groupBy={GroupBy}", body.GroupBy);
 
         // Get all slots
@@ -2383,7 +2404,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         switch (body.GroupBy)
         {
-            case AdminStatsRequestGroupBy.OwnerType:
+            case StatsGroupBy.OwnerType:
                 var ownerTypeGroups = slotList.GroupBy(s => s.OwnerType);
                 foreach (var group in ownerTypeGroups)
                 {
@@ -2399,7 +2420,7 @@ public partial class SaveLoadService : ISaveLoadService
                 }
                 break;
 
-            case AdminStatsRequestGroupBy.Category:
+            case StatsGroupBy.Category:
                 var categoryGroups = slotList.GroupBy(s => s.Category);
                 foreach (var group in categoryGroups)
                 {
@@ -2415,7 +2436,7 @@ public partial class SaveLoadService : ISaveLoadService
                 }
                 break;
 
-            case AdminStatsRequestGroupBy.SchemaVersion:
+            case StatsGroupBy.SchemaVersion:
                 var schemaGroups = versionList.GroupBy(v => v.SchemaVersion ?? "unversioned");
                 foreach (var group in schemaGroups)
                 {
@@ -2527,7 +2548,7 @@ public partial class SaveLoadService : ISaveLoadService
         return new VersionResponse
         {
             VersionNumber = version.VersionNumber,
-            AssetId = version.AssetId ?? Guid.Empty,
+            AssetId = version.AssetId,
             ContentHash = version.ContentHash,
             SizeBytes = version.SizeBytes,
             CompressedSizeBytes = version.CompressedSizeBytes ?? version.SizeBytes,
@@ -2576,6 +2597,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SchemaResponse?)> RegisterSchemaAsync(RegisterSchemaRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.RegisterSchemaAsync");
         return await _saveMigrationHandler.RegisterSchemaAsync(body, cancellationToken);
     }
 
@@ -2585,6 +2607,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, ListSchemasResponse?)> ListSchemasAsync(ListSchemasRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.ListSchemasAsync");
         return await _saveMigrationHandler.ListSchemasAsync(body, cancellationToken);
     }
 
@@ -2595,6 +2618,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, MigrateSaveResponse?)> MigrateSaveAsync(MigrateSaveRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.MigrateSaveAsync");
         return await _saveMigrationHandler.MigrateSaveAsync(body, cancellationToken);
     }
 

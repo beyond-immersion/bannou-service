@@ -22,6 +22,13 @@ public class StatusServiceTests
     public void StatusService_ConstructorIsValid() =>
         ServiceConstructorValidator.ValidateServiceConstructor<StatusService>();
 
+    /// <summary>
+    /// Validates the service respects the dependency hierarchy (L4 GameFeatures).
+    /// </summary>
+    [Fact]
+    public void StatusService_RespectsDependencyHierarchy() =>
+        ServiceHierarchyValidator.ValidateServiceHierarchy<StatusService>();
+
     #endregion
 
     #region Configuration Tests

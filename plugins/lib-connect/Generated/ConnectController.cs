@@ -41,9 +41,12 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Perfect for AI agents making one-off API calls or bulk operations.
     /// </remarks>
 
+
+
     /// <returns>Request proxied successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InternalProxyResponse>> ProxyInternalRequestAsync(InternalProxyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InternalProxyResponse>> ProxyInternalRequest(InternalProxyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get client capability manifest (GUID → API mappings)
@@ -65,9 +68,12 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Clients should listen for capability update events via WebSocket to stay current.
     /// </remarks>
 
+
+
     /// <returns>Client capabilities retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ClientCapabilitiesResponse>> GetClientCapabilitiesAsync(GetClientCapabilitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ClientCapabilitiesResponse>> GetClientCapabilities(GetClientCapabilitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Establish WebSocket connection
@@ -90,12 +96,15 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
 
     /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
 
+
     /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
+
 
     /// <param name="authorization">JWT Bearer token for new connections: "Bearer &lt;jwt_token&gt;"
     /// <br/>Reconnect token for existing sessions: "Reconnect &lt;reconnect_token&gt;"</param>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketAsync(Connection connection, Upgrade upgrade, string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocket(Connection connection, Upgrade upgrade, string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Establish WebSocket connection (POST variant)
@@ -109,9 +118,12 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
 
 
 
+
+
     /// <param name="body">Optional connection parameters</param>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPostAsync(Connection2 connection, Upgrade2 upgrade, string authorization, ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost(Connection2 connection, Upgrade2 upgrade, string authorization, ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Inter-node broadcast WebSocket endpoint
@@ -130,13 +142,17 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
 
     /// <param name="instanceId">Instance ID of the connecting peer Connect node</param>
 
+
     /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
+
 
     /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
 
+
     /// <param name="x_Service_Token">Service token for authentication (required when InternalAuthMode is ServiceToken)</param>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> BroadcastWebSocketAsync(string instanceId, Connection3 connection, Upgrade3 upgrade, string? x_Service_Token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> BroadcastWebSocket(string instanceId, Connection3 connection, Upgrade3 upgrade, string? x_Service_Token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Permission-gated proxy for endpoint metadata
@@ -154,9 +170,12 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
     /// <br/>permission source, exactly as for WebSocket meta requests.
     /// </remarks>
 
+
+
     /// <returns>Meta endpoint response</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEndpointMetaResponse>> GetEndpointMetaAsync(GetEndpointMetaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEndpointMetaResponse>> GetEndpointMeta(GetEndpointMetaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get all active WebSocket sessions for an account
@@ -176,15 +195,18 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Sessions in reconnection windows may not appear in this list.
     /// </remarks>
 
+
+
     /// <returns>Account sessions retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetAccountSessionsResponse>> GetAccountSessionsAsync(GetAccountSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetAccountSessionsResponse>> GetAccountSessions(GetAccountSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IConnectService))]
+public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase, IConnectController
 {
     private IConnectService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

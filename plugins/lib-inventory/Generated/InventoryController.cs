@@ -40,9 +40,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>Container types are game-defined strings (e.g., "inventory", "bank", "equipment_slot").
     /// </remarks>
 
+
+
     /// <returns>Container created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerResponse>> CreateContainerAsync(CreateContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerResponse>> CreateContainer(CreateContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get container with contents
@@ -52,9 +55,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// Retrieves a container by ID, optionally including its contents.
     /// </remarks>
 
+
+
     /// <returns>Container retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerWithContentsResponse>> GetContainerAsync(GetContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerWithContentsResponse>> GetContainer(GetContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get container or create if not exists
@@ -66,9 +72,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>with the specified defaults.
     /// </remarks>
 
+
+
     /// <returns>Container retrieved or created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerResponse>> GetOrCreateContainerAsync(GetOrCreateContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerResponse>> GetOrCreateContainer(GetOrCreateContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List containers for owner
@@ -78,9 +87,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// Returns all containers owned by the specified entity.
     /// </remarks>
 
+
+
     /// <returns>Containers retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListContainersResponse>> ListContainersAsync(ListContainersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListContainersResponse>> ListContainers(ListContainersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update container properties
@@ -90,9 +102,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// Updates mutable container properties like capacity limits and filtering.
     /// </remarks>
 
+
+
     /// <returns>Container updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerResponse>> UpdateContainerAsync(UpdateContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerResponse>> UpdateContainer(UpdateContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete container
@@ -103,9 +118,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>destroy, transfer to another container, or error if not empty.
     /// </remarks>
 
+
+
     /// <returns>Container deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteContainerResponse>> DeleteContainerAsync(DeleteContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteContainerResponse>> DeleteContainer(DeleteContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Add item to container
@@ -117,9 +135,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>merge with existing stacks.
     /// </remarks>
 
+
+
     /// <returns>Item added successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AddItemResponse>> AddItemToContainerAsync(AddItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AddItemResponse>> AddItemToContainer(AddItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove item from container
@@ -130,9 +151,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>container assignment. Use destroy via lib-item to permanently delete.
     /// </remarks>
 
+
+
     /// <returns>Item removed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveItemResponse>> RemoveItemFromContainerAsync(RemoveItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveItemResponse>> RemoveItemFromContainer(RemoveItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Move item to different slot or container
@@ -144,9 +168,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>effectively equips/unequips items.
     /// </remarks>
 
+
+
     /// <returns>Item moved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MoveItemResponse>> MoveItemAsync(MoveItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MoveItemResponse>> MoveItem(MoveItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Transfer item to different owner
@@ -157,9 +184,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>Used for trades, gifts, and loot distribution.
     /// </remarks>
 
+
+
     /// <returns>Item transferred successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferItemResponse>> TransferItemAsync(TransferItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferItemResponse>> TransferItem(TransferItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Split stack into two
@@ -170,9 +200,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>remainder, and a new stack is created with the split quantity.
     /// </remarks>
 
+
+
     /// <returns>Stack split successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SplitStackResponse>> SplitStackAsync(SplitStackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SplitStackResponse>> SplitStack(SplitStackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Merge two stacks
@@ -183,9 +216,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>destroyed and its quantity added to the target stack.
     /// </remarks>
 
+
+
     /// <returns>Stacks merged successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeStacksResponse>> MergeStacksAsync(MergeStacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeStacksResponse>> MergeStacks(MergeStacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Find items across containers
@@ -196,9 +232,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>Can filter by template, category, tags, and other criteria.
     /// </remarks>
 
+
+
     /// <returns>Items found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryItemsResponse>> QueryItemsAsync(QueryItemsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryItemsResponse>> QueryItems(QueryItemsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Count items of a template
@@ -208,9 +247,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// Counts total quantity of a specific item template across containers.
     /// </remarks>
 
+
+
     /// <returns>Count completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CountItemsResponse>> CountItemsAsync(CountItemsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CountItemsResponse>> CountItems(CountItemsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if entity has required items
@@ -221,9 +263,12 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>Used for crafting and quest requirements validation.
     /// </remarks>
 
+
+
     /// <returns>Check completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasItemsResponse>> HasItemsAsync(HasItemsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasItemsResponse>> HasItems(HasItemsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Find where item would fit
@@ -234,15 +279,18 @@ public interface IInventoryController : BeyondImmersion.BannouService.Controller
     /// <br/>Returns candidate containers and slots where the item could be placed.
     /// </remarks>
 
+
+
     /// <returns>Space search completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindSpaceResponse>> FindSpaceAsync(FindSpaceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindSpaceResponse>> FindSpace(FindSpaceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IInventoryService))]
+public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBase, IInventoryController
 {
     private IInventoryService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

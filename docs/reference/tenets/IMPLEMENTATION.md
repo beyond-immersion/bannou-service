@@ -1,5 +1,7 @@
 # Implementation Tenets (Index)
 
+> ⛔ **FROZEN DOCUMENT** — Defines authoritative implementation tenets enforced across the codebase. AI agents MUST NOT add, remove, modify, or reinterpret any content without explicit user instruction. If you believe something is incorrect, report the concern and wait — do not "fix" it. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Source Code Category**: `IMPLEMENTATION TENETS`
 > **When to Reference**: While actively writing service code
 

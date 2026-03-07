@@ -84,29 +84,29 @@ public partial class RealmHistoryController
             "type": "string",
             "description": "Categories of historical events that realms can participate in",
             "enum": [
-                "FOUNDING",
-                "WAR",
-                "TREATY",
-                "CATACLYSM",
-                "DISCOVERY",
-                "MIGRATION",
-                "CULTURAL_SHIFT",
-                "ECONOMIC_CHANGE",
-                "POLITICAL_UPHEAVAL"
+                "Founding",
+                "War",
+                "Treaty",
+                "Cataclysm",
+                "Discovery",
+                "Migration",
+                "CulturalShift",
+                "EconomicChange",
+                "PoliticalUpheaval"
             ]
         },
         "RealmEventRole": {
             "type": "string",
             "description": "How the realm participated in the historical event",
             "enum": [
-                "ORIGIN",
-                "AGGRESSOR",
-                "DEFENDER",
-                "MEDIATOR",
-                "AFFECTED",
-                "BENEFICIARY",
-                "INSTIGATOR",
-                "NEUTRAL_PARTY"
+                "Origin",
+                "Aggressor",
+                "Defender",
+                "Mediator",
+                "Affected",
+                "Beneficiary",
+                "Instigator",
+                "NeutralParty"
             ]
         }
     }
@@ -190,29 +190,29 @@ public partial class RealmHistoryController
             "type": "string",
             "description": "Categories of historical events that realms can participate in",
             "enum": [
-                "FOUNDING",
-                "WAR",
-                "TREATY",
-                "CATACLYSM",
-                "DISCOVERY",
-                "MIGRATION",
-                "CULTURAL_SHIFT",
-                "ECONOMIC_CHANGE",
-                "POLITICAL_UPHEAVAL"
+                "Founding",
+                "War",
+                "Treaty",
+                "Cataclysm",
+                "Discovery",
+                "Migration",
+                "CulturalShift",
+                "EconomicChange",
+                "PoliticalUpheaval"
             ]
         },
         "RealmEventRole": {
             "type": "string",
             "description": "How the realm participated in the historical event",
             "enum": [
-                "ORIGIN",
-                "AGGRESSOR",
-                "DEFENDER",
-                "MEDIATOR",
-                "AFFECTED",
-                "BENEFICIARY",
-                "INSTIGATOR",
-                "NEUTRAL_PARTY"
+                "Origin",
+                "Aggressor",
+                "Defender",
+                "Mediator",
+                "Affected",
+                "Beneficiary",
+                "Instigator",
+                "NeutralParty"
             ]
         }
     }
@@ -325,15 +325,15 @@ public partial class RealmHistoryController
             "type": "string",
             "description": "Categories of historical events that realms can participate in",
             "enum": [
-                "FOUNDING",
-                "WAR",
-                "TREATY",
-                "CATACLYSM",
-                "DISCOVERY",
-                "MIGRATION",
-                "CULTURAL_SHIFT",
-                "ECONOMIC_CHANGE",
-                "POLITICAL_UPHEAVAL"
+                "Founding",
+                "War",
+                "Treaty",
+                "Cataclysm",
+                "Discovery",
+                "Migration",
+                "CulturalShift",
+                "EconomicChange",
+                "PoliticalUpheaval"
             ]
         }
     }
@@ -353,7 +353,9 @@ public partial class RealmHistoryController
                 "participations",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "participations": {
@@ -457,29 +459,29 @@ public partial class RealmHistoryController
             "type": "string",
             "description": "Categories of historical events that realms can participate in",
             "enum": [
-                "FOUNDING",
-                "WAR",
-                "TREATY",
-                "CATACLYSM",
-                "DISCOVERY",
-                "MIGRATION",
-                "CULTURAL_SHIFT",
-                "ECONOMIC_CHANGE",
-                "POLITICAL_UPHEAVAL"
+                "Founding",
+                "War",
+                "Treaty",
+                "Cataclysm",
+                "Discovery",
+                "Migration",
+                "CulturalShift",
+                "EconomicChange",
+                "PoliticalUpheaval"
             ]
         },
         "RealmEventRole": {
             "type": "string",
             "description": "How the realm participated in the historical event",
             "enum": [
-                "ORIGIN",
-                "AGGRESSOR",
-                "DEFENDER",
-                "MEDIATOR",
-                "AFFECTED",
-                "BENEFICIARY",
-                "INSTIGATOR",
-                "NEUTRAL_PARTY"
+                "Origin",
+                "Aggressor",
+                "Defender",
+                "Mediator",
+                "Affected",
+                "Beneficiary",
+                "Instigator",
+                "NeutralParty"
             ]
         }
     }
@@ -584,14 +586,14 @@ public partial class RealmHistoryController
             "type": "string",
             "description": "How the realm participated in the historical event",
             "enum": [
-                "ORIGIN",
-                "AGGRESSOR",
-                "DEFENDER",
-                "MEDIATOR",
-                "AFFECTED",
-                "BENEFICIARY",
-                "INSTIGATOR",
-                "NEUTRAL_PARTY"
+                "Origin",
+                "Aggressor",
+                "Defender",
+                "Mediator",
+                "Affected",
+                "Beneficiary",
+                "Instigator",
+                "NeutralParty"
             ]
         }
     }
@@ -611,7 +613,9 @@ public partial class RealmHistoryController
                 "participations",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "participations": {
@@ -715,29 +719,29 @@ public partial class RealmHistoryController
             "type": "string",
             "description": "Categories of historical events that realms can participate in",
             "enum": [
-                "FOUNDING",
-                "WAR",
-                "TREATY",
-                "CATACLYSM",
-                "DISCOVERY",
-                "MIGRATION",
-                "CULTURAL_SHIFT",
-                "ECONOMIC_CHANGE",
-                "POLITICAL_UPHEAVAL"
+                "Founding",
+                "War",
+                "Treaty",
+                "Cataclysm",
+                "Discovery",
+                "Migration",
+                "CulturalShift",
+                "EconomicChange",
+                "PoliticalUpheaval"
             ]
         },
         "RealmEventRole": {
             "type": "string",
             "description": "How the realm participated in the historical event",
             "enum": [
-                "ORIGIN",
-                "AGGRESSOR",
-                "DEFENDER",
-                "MEDIATOR",
-                "AFFECTED",
-                "BENEFICIARY",
-                "INSTIGATOR",
-                "NEUTRAL_PARTY"
+                "Origin",
+                "Aggressor",
+                "Defender",
+                "Mediator",
+                "Affected",
+                "Beneficiary",
+                "Instigator",
+                "NeutralParty"
             ]
         }
     }
@@ -924,14 +928,14 @@ public partial class RealmHistoryController
             "type": "string",
             "description": "Types of lore elements. Each type represents a different aspect\nof the realm's background that influences behavior.\n",
             "enum": [
-                "ORIGIN_MYTH",
-                "CULTURAL_PRACTICE",
-                "POLITICAL_SYSTEM",
-                "ECONOMIC_BASE",
-                "RELIGIOUS_TRADITION",
-                "GEOGRAPHIC_FEATURE",
-                "FAMOUS_FIGURE",
-                "TECHNOLOGICAL_LEVEL"
+                "OriginMyth",
+                "CulturalPractice",
+                "PoliticalSystem",
+                "EconomicBase",
+                "ReligiousTradition",
+                "GeographicFeature",
+                "FamousFigure",
+                "TechnologicalLevel"
             ]
         }
     }
@@ -948,15 +952,9 @@ public partial class RealmHistoryController
             "description": "Complete lore data for a realm",
             "additionalProperties": false,
             "required": [
-                "realmId",
                 "elements"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the realm this lore belongs to"
-                },
                 "elements": {
                     "type": "array",
                     "items": {
@@ -1027,16 +1025,16 @@ public partial class RealmHistoryController
         },
         "RealmLoreElementType": {
             "type": "string",
-            "description": "Types of lore elements. Each type represents a different aspect\ nof the realm's background that influences behavior.\n",
+            "description": "Types of lore elements. Each type represents a different aspect\nof the realm's background that influences behavior.\n",
             "enum": [
-                "ORIGIN_MYTH",
-                "CULTURAL_PRACTICE",
-                "POLITICAL_SYSTEM",
-                "ECONOMIC_BASE",
-                "RELIGIOUS_TRADITION",
-                "GEOGRAPHIC_FEATURE",
-                "FAMOUS_FIGURE",
-                "TECHNOLOGICAL_LEVEL"
+                "OriginMyth",
+                "CulturalPractice",
+                "PoliticalSystem",
+                "EconomicBase",
+                "ReligiousTradition",
+                "GeographicFeature",
+                "FamousFigure",
+                "TechnologicalLevel"
             ]
         }
     }
@@ -1184,14 +1182,14 @@ public partial class RealmHistoryController
             "type": "string",
             "description": "Types of lore elements. Each type represents a different aspect\nof the realm's background that influences behavior.\n",
             "enum": [
-                "ORIGIN_MYTH",
-                "CULTURAL_PRACTICE",
-                "POLITICAL_SYSTEM",
-                "ECONOMIC_BASE",
-                "RELIGIOUS_TRADITION",
-                "GEOGRAPHIC_FEATURE",
-                "FAMOUS_FIGURE",
-                "TECHNOLOGICAL_LEVEL"
+                "OriginMyth",
+                "CulturalPractice",
+                "PoliticalSystem",
+                "EconomicBase",
+                "ReligiousTradition",
+                "GeographicFeature",
+                "FamousFigure",
+                "TechnologicalLevel"
             ]
         }
     }
@@ -1208,15 +1206,9 @@ public partial class RealmHistoryController
             "description": "Complete lore data for a realm",
             "additionalProperties": false,
             "required": [
-                "realmId",
                 "elements"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the realm this lore belongs to"
-                },
                 "elements": {
                     "type": "array",
                     "items": {
@@ -1287,16 +1279,16 @@ public partial class RealmHistoryController
         },
         "RealmLoreElementType": {
             "type": "string",
-            "description": "Types of lore elements. Each type represents a different aspect\ nof the realm's background that influences behavior.\n",
+            "description": "Types of lore elements. Each type represents a different aspect\nof the realm's background that influences behavior.\n",
             "enum": [
-                "ORIGIN_MYTH",
-                "CULTURAL_PRACTICE",
-                "POLITICAL_SYSTEM",
-                "ECONOMIC_BASE",
-                "RELIGIOUS_TRADITION",
-                "GEOGRAPHIC_FEATURE",
-                "FAMOUS_FIGURE",
-                "TECHNOLOGICAL_LEVEL"
+                "OriginMyth",
+                "CulturalPractice",
+                "PoliticalSystem",
+                "EconomicBase",
+                "ReligiousTradition",
+                "GeographicFeature",
+                "FamousFigure",
+                "TechnologicalLevel"
             ]
         }
     }
@@ -1435,14 +1427,14 @@ public partial class RealmHistoryController
             "type": "string",
             "description": "Types of lore elements. Each type represents a different aspect\nof the realm's background that influences behavior.\n",
             "enum": [
-                "ORIGIN_MYTH",
-                "CULTURAL_PRACTICE",
-                "POLITICAL_SYSTEM",
-                "ECONOMIC_BASE",
-                "RELIGIOUS_TRADITION",
-                "GEOGRAPHIC_FEATURE",
-                "FAMOUS_FIGURE",
-                "TECHNOLOGICAL_LEVEL"
+                "OriginMyth",
+                "CulturalPractice",
+                "PoliticalSystem",
+                "EconomicBase",
+                "ReligiousTradition",
+                "GeographicFeature",
+                "FamousFigure",
+                "TechnologicalLevel"
             ]
         }
     }
@@ -1459,15 +1451,9 @@ public partial class RealmHistoryController
             "description": "Complete lore data for a realm",
             "additionalProperties": false,
             "required": [
-                "realmId",
                 "elements"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the realm this lore belongs to"
-                },
                 "elements": {
                     "type": "array",
                     "items": {
@@ -1538,16 +1524,16 @@ public partial class RealmHistoryController
         },
         "RealmLoreElementType": {
             "type": "string",
-            "description": "Types of lore elements. Each type represents a different aspect\ nof the realm's background that influences behavior.\n",
+            "description": "Types of lore elements. Each type represents a different aspect\nof the realm's background that influences behavior.\n",
             "enum": [
-                "ORIGIN_MYTH",
-                "CULTURAL_PRACTICE",
-                "POLITICAL_SYSTEM",
-                "ECONOMIC_BASE",
-                "RELIGIOUS_TRADITION",
-                "GEOGRAPHIC_FEATURE",
-                "FAMOUS_FIGURE",
-                "TECHNOLOGICAL_LEVEL"
+                "OriginMyth",
+                "CulturalPractice",
+                "PoliticalSystem",
+                "EconomicBase",
+                "ReligiousTradition",
+                "GeographicFeature",
+                "FamousFigure",
+                "TechnologicalLevel"
             ]
         }
     }
@@ -1728,16 +1714,10 @@ public partial class RealmHistoryController
             "description": "Result of deleting all history data",
             "additionalProperties": false,
             "required": [
-                "realmId",
                 "participationsDeleted",
                 "loreDeleted"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the realm whose history was deleted"
-                },
                 "participationsDeleted": {
                     "type": "integer",
                     "description": "Number of participation records deleted"
@@ -1856,16 +1836,10 @@ public partial class RealmHistoryController
             "description": "Generated text summaries for realm archival",
             "additionalProperties": false,
             "required": [
-                "realmId",
                 "keyLorePoints",
                 "majorHistoricalEvents"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the realm summarized"
-                },
                 "keyLorePoints": {
                     "type": "array",
                     "items": {
@@ -1974,7 +1948,7 @@ public partial class RealmHistoryController
         "RealmHistoryArchive": {
             "type": "object",
             "x-archive-type": true,
-            "description": "Compressed realm lore and history for archive storage and storyline SDK consumption.\ nInherits base archive properties from ResourceArchiveBase.\nThe realmId field equals resourceId for convenience.\n",
+            "description": "Compressed realm lore and history for archive storage and storyline SDK consumption.\ nInherits base archive properties from ResourceArchiveBase.\nUse resourceId from the base type to identify the realm.\n",
             "allOf": [
                 {
                     "type": "object"
@@ -1982,26 +1956,21 @@ public partial class RealmHistoryController
             ],
             "additionalProperties": false,
             "required": [
-                "realmId",
                 "hasLore",
                 "hasParticipations"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Realm this data belongs to (equals resourceId)"
-                },
                 "hasLore": {
                     "type": "boolean",
                     "description": "Whether lore elements exist"
                 },
                 "loreElements": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/RealmLoreResponse"
                     },
-                    "description": "Lore elements (empty if hasLore=false)"
+                    "description": "Lore elements (null if hasLore=false)"
                 },
                 "hasParticipations": {
                     "type": "boolean",
@@ -2009,10 +1978,11 @@ public partial class RealmHistoryController
                 },
                 "participations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/RealmHistoricalParticipation"
                     },
-                    "description": "Event participations (empty if hasParticipations=false)"
+                    "description": "Event participations (null if hasParticipations=false)"
                 },
                 "summaries": {
                     "$ref": "#/$defs/RealmHistorySummaryResponse",
@@ -2026,15 +1996,9 @@ public partial class RealmHistoryController
             "description": "Complete lore data for a realm",
             "additionalProperties": false,
             "required": [
-                "realmId",
                 "elements"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the realm this lore belongs to"
-                },
                 "elements": {
                     "type": "array",
                     "items": {
@@ -2105,16 +2069,16 @@ public partial class RealmHistoryController
         },
         "RealmLoreElementType": {
             "type": "string",
-            "description": "Types of lore elements. Each type represents a different aspect\nof the realm's background that influences behavior.\n",
+            "description": "Types of lore elements. Each type represents a different aspect\ nof the realm's background that influences behavior.\n",
             "enum": [
-                "ORIGIN_MYTH",
-                "CULTURAL_PRACTICE",
-                "POLITICAL_SYSTEM",
-                "ECONOMIC_BASE",
-                "RELIGIOUS_TRADITION",
-                "GEOGRAPHIC_FEATURE",
-                "FAMOUS_FIGURE",
-                "TECHNOLOGICAL_LEVEL"
+                "OriginMyth",
+                "CulturalPractice",
+                "PoliticalSystem",
+                "EconomicBase",
+                "ReligiousTradition",
+                "GeographicFeature",
+                "FamousFigure",
+                "TechnologicalLevel"
             ]
         },
         "RealmHistoricalParticipation": {
@@ -2189,29 +2153,29 @@ public partial class RealmHistoryController
             "type": "string",
             "description": "Categories of historical events that realms can participate in",
             "enum": [
-                "FOUNDING",
-                "WAR",
-                "TREATY",
-                "CATACLYSM",
-                "DISCOVERY",
-                "MIGRATION",
-                "CULTURAL_SHIFT",
-                "ECONOMIC_CHANGE",
-                "POLITICAL_UPHEAVAL"
+                "Founding",
+                "War",
+                "Treaty",
+                "Cataclysm",
+                "Discovery",
+                "Migration",
+                "CulturalShift",
+                "EconomicChange",
+                "PoliticalUpheaval"
             ]
         },
         "RealmEventRole": {
             "type": "string",
             "description": "How the realm participated in the historical event",
             "enum": [
-                "ORIGIN",
-                "AGGRESSOR",
-                "DEFENDER",
-                "MEDIATOR",
-                "AFFECTED",
-                "BENEFICIARY",
-                "INSTIGATOR",
-                "NEUTRAL_PARTY"
+                "Origin",
+                "Aggressor",
+                "Defender",
+                "Mediator",
+                "Affected",
+                "Beneficiary",
+                "Instigator",
+                "NeutralParty"
             ]
         },
         "RealmHistorySummaryResponse": {
@@ -2219,29 +2183,23 @@ public partial class RealmHistoryController
             "description": "Generated text summaries for realm archival",
             "additionalProperties": false,
             "required": [
-                "realmId",
                 "keyLorePoints",
                 "majorHistoricalEvents"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the realm summarized"
-                },
                 "keyLorePoints": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     },
-                    "description": "Key lore elements as text summaries.\ne.g., [\"Founded during Year of the Dragon\", \"Primary export: Iron ore\"]\n"
+                    "description": "Key lore elements as text summaries.\ ne.g., [\"Founded during Year of the Dragon\", \"Primary export: Iron ore\"]\n"
                 },
                 "majorHistoricalEvents": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     },
-                    "description": "Major historical events as text summaries.\ ne.g., [\"Defended against the Northern Invasion\", \"Treaty of Stormgate established peace\"]\n"
+                    "description": "Major historical events as text summaries.\ne.g., [\"Defended against the Northern Invasion\", \"Treaty of Stormgate established peace\"]\n"
                 }
             }
         }
@@ -2344,17 +2302,10 @@ public partial class RealmHistoryController
             "description": "Result of restoration from archive",
             "additionalProperties": false,
             "required": [
-                "realmId",
                 "loreRestored",
-                "participationsRestored",
-                "success"
+                "participationsRestored"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Realm data was restored for"
-                },
                 "loreRestored": {
                     "type": "integer",
                     "description": "Number of lore elements restored"
@@ -2362,15 +2313,6 @@ public partial class RealmHistoryController
                 "participationsRestored": {
                     "type": "integer",
                     "description": "Number of participation records restored"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether restoration completed successfully"
-                },
-                "errorMessage": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Error details if restoration failed"
                 }
             }
         }

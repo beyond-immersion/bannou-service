@@ -38,7 +38,8 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
 
     /// <returns>Character created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterResponse>> CreateCharacterAsync(CreateCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterResponse>> CreateCharacter(CreateCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get character by ID
@@ -47,7 +48,8 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
 
     /// <returns>Character retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterResponse>> GetCharacterAsync(GetCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterResponse>> GetCharacter(GetCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update character
@@ -56,7 +58,8 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
 
     /// <returns>Character updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterResponse>> UpdateCharacterAsync(UpdateCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterResponse>> UpdateCharacter(UpdateCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete character (permanent removal)
@@ -65,7 +68,8 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
 
     /// <returns>Character deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteCharacterAsync(DeleteCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteCharacter(DeleteCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List characters with filtering
@@ -74,7 +78,8 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
 
     /// <returns>Characters retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterListResponse>> ListCharactersAsync(ListCharactersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterListResponse>> ListCharacters(ListCharactersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get character with optional related data (personality, backstory, family)
@@ -86,9 +91,12 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
     /// <br/>Each included dataset is fetched from its respective service.
     /// </remarks>
 
+
+
     /// <returns>Character retrieved with requested includes</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EnrichedCharacterResponse>> GetEnrichedCharacterAsync(GetEnrichedCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EnrichedCharacterResponse>> GetEnrichedCharacter(GetEnrichedCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Compress a dead character to archive format
@@ -101,9 +109,12 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
     /// <br/>Only works on characters with status 'dead'.
     /// </remarks>
 
+
+
     /// <returns>Character compressed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterArchive>> CompressCharacterAsync(CompressCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterArchive>> CompressCharacter(CompressCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get compressed archive data for a character
@@ -112,7 +123,8 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
 
     /// <returns>Archive retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterArchive>> GetCharacterArchiveAsync(GetCharacterArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterArchive>> GetCharacterArchive(GetCharacterArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check reference count for cleanup eligibility
@@ -124,9 +136,12 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
     /// <br/>References include: family relationships, past lives, historical events, memories.
     /// </remarks>
 
+
+
     /// <returns>Reference count retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterRefCount>> CheckCharacterReferencesAsync(CheckReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterRefCount>> CheckCharacterReferences(CheckReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get all characters in a realm (primary query pattern)
@@ -135,7 +150,8 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
 
     /// <returns>Characters retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterListResponse>> GetCharactersByRealmAsync(GetCharactersByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterListResponse>> GetCharactersByRealm(GetCharactersByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Transfer character to a different realm
@@ -147,9 +163,12 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
     /// <br/>and publishes realm transition events.
     /// </remarks>
 
+
+
     /// <returns>Character transferred successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterResponse>> TransferCharacterToRealmAsync(TransferCharacterToRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterResponse>> TransferCharacterToRealm(TransferCharacterToRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get character base data for compression
@@ -161,15 +180,18 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
     /// <br/>Returns BadRequest if character is alive - only dead characters can be compressed.
     /// </remarks>
 
+
+
     /// <returns>Character base data returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterBaseArchive>> GetCompressDataAsync(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterBaseArchive>> GetCompressData(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ICharacterService))]
+public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBase, ICharacterController
 {
     private ICharacterService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

@@ -39,9 +39,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Creates a quest definition wrapping a contract template with quest metadata.
     /// </remarks>
 
+
+
     /// <returns>Quest definition created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> CreateQuestDefinitionAsync(CreateQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> CreateQuestDefinition(CreateQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get quest definition by ID or code
@@ -51,9 +54,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Retrieves a quest definition by its unique identifier or code.
     /// </remarks>
 
+
+
     /// <returns>Quest definition found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> GetQuestDefinitionAsync(GetQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> GetQuestDefinition(GetQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List quest definitions with filtering
@@ -63,9 +69,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Lists quest definitions with optional filtering by category, difficulty, tags.
     /// </remarks>
 
+
+
     /// <returns>Quest definitions retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListQuestDefinitionsResponse>> ListQuestDefinitionsAsync(ListQuestDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListQuestDefinitionsResponse>> ListQuestDefinitions(ListQuestDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update quest definition metadata
@@ -75,9 +84,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Updates quest metadata (not contract template - that's immutable).
     /// </remarks>
 
+
+
     /// <returns>Quest definition updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> UpdateQuestDefinitionAsync(UpdateQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> UpdateQuestDefinition(UpdateQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Mark quest definition as deprecated
@@ -87,9 +99,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Marks a quest definition as deprecated. No new instances can be created.
     /// </remarks>
 
+
+
     /// <returns>Quest definition deprecated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> DeprecateQuestDefinitionAsync(DeprecateQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> DeprecateQuestDefinition(DeprecateQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Accept a quest
@@ -99,9 +114,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Creates a contract instance and auto-consents for the questor. Returns the active quest.
     /// </remarks>
 
+
+
     /// <returns>Quest accepted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestInstanceResponse>> AcceptQuestAsync(AcceptQuestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestInstanceResponse>> AcceptQuest(AcceptQuestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Abandon an active quest
@@ -111,9 +129,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Terminates the underlying contract and marks the quest as abandoned.
     /// </remarks>
 
+
+
     /// <returns>Quest abandoned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestInstanceResponse>> AbandonQuestAsync(AbandonQuestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestInstanceResponse>> AbandonQuest(AbandonQuestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get quest instance details
@@ -123,9 +144,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Retrieves detailed quest instance information including objectives.
     /// </remarks>
 
+
+
     /// <returns>Quest instance found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestInstanceResponse>> GetQuestAsync(GetQuestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestInstanceResponse>> GetQuest(GetQuestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List character's quests
@@ -135,9 +159,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Lists quests for a character filtered by status.
     /// </remarks>
 
+
+
     /// <returns>Quests retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListQuestsResponse>> ListQuestsAsync(ListQuestsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListQuestsResponse>> ListQuests(ListQuestsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List quests available to accept
@@ -147,9 +174,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Lists quests a character can accept (prerequisites met, not on cooldown, not active).
     /// </remarks>
 
+
+
     /// <returns>Available quests retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAvailableQuestsResponse>> ListAvailableQuestsAsync(ListAvailableQuestsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAvailableQuestsResponse>> ListAvailableQuests(ListAvailableQuestsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get player-facing quest log
@@ -159,9 +189,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Returns UI-optimized quest log with progress summaries.
     /// </remarks>
 
+
+
     /// <returns>Quest log retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestLogResponse>> GetQuestLogAsync(GetQuestLogRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestLogResponse>> GetQuestLog(GetQuestLogRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Report progress on an objective
@@ -171,9 +204,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Manually reports progress on a quest objective. Used by game systems.
     /// </remarks>
 
+
+
     /// <returns>Progress recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ObjectiveProgressResponse>> ReportObjectiveProgressAsync(ReportProgressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ObjectiveProgressResponse>> ReportObjectiveProgress(ReportProgressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Force complete an objective (debug/GM)
@@ -183,9 +219,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Immediately completes an objective regardless of progress. Admin only.
     /// </remarks>
 
+
+
     /// <returns>Objective completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ObjectiveProgressResponse>> ForceCompleteObjectiveAsync(ForceCompleteObjectiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ObjectiveProgressResponse>> ForceCompleteObjective(ForceCompleteObjectiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get objective progress details
@@ -195,9 +234,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Returns detailed progress information for a specific objective.
     /// </remarks>
 
+
+
     /// <returns>Objective progress retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ObjectiveProgressResponse>> GetObjectiveProgressAsync(GetObjectiveProgressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ObjectiveProgressResponse>> GetObjectiveProgress(GetObjectiveProgressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Handle milestone completion callback
@@ -207,9 +249,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Called by Contract prebound API when a milestone completes.
     /// </remarks>
 
+
+
     /// <returns>Callback processed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleMilestoneCompletedAsync(MilestoneCompletedCallback body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleMilestoneCompleted(MilestoneCompletedCallback body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Handle quest completion callback
@@ -219,9 +264,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// Called when all required milestones are done.
     /// </remarks>
 
+
+
     /// <returns>Callback processed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleQuestCompletedAsync(QuestCompletedCallback body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleQuestCompleted(QuestCompletedCallback body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get quest data for compression
@@ -232,15 +280,18 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Returns active quests, completion counts, and category breakdown for archival.
     /// </remarks>
 
+
+
     /// <returns>Compressed data returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestArchive>> GetCompressDataAsync(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestArchive>> GetCompressData(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IQuestService))]
+public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase, IQuestController
 {
     private IQuestService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

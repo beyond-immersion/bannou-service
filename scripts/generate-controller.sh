@@ -55,7 +55,7 @@ mkdir -p "$OUTPUT_DIR"
 require_nswag
 ensure_dotnet_root
 
-# Check for controller-only methods (including legacy x-manual-implementation flag)
+# Check for controller-only methods (x-controller-only or x-manual-implementation)
 HAS_CONTROLLER_ONLY_METHODS=false
 if grep -q "x-controller-only:\s*true\|x-manual-implementation:\s*true" "$SCHEMA_FILE"; then
     HAS_CONTROLLER_ONLY_METHODS=true

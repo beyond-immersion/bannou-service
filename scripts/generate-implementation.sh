@@ -283,8 +283,8 @@ try:
 
             method_name = convert_operation_id_to_method_name(operation_id)
 
-            # Skip methods marked as controller-only
-            if method_data.get('x-controller-only') is True:
+            # Skip methods marked as controller-only or manual-implementation
+            if method_data.get('x-controller-only') is True or method_data.get('x-manual-implementation') is True:
                 continue
 
             # Determine return type from responses (mirrors generate-interface.sh logic)

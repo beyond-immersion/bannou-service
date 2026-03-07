@@ -31,41 +31,6 @@ using System = global::System;
 public interface IDocumentationController : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 
-    /// <summary>
-    /// View documentation page in browser
-    /// </summary>
-
-    /// <remarks>
-    /// Browser-facing endpoint for viewing documentation.
-    /// <br/>Routed via NGINX, not exposed to WebSocket clients.
-    /// <br/>Returns HTML-rendered documentation page.
-    /// </remarks>
-
-    /// <param name="slug">Document slug within namespace</param>
-
-    /// <param name="ns">Documentation namespace (defaults to bannou)</param>
-
-    /// <returns>HTML documentation page (returns ContentResult)</returns>
-
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ViewDocumentBySlugAsync(string slug, string ns, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <summary>
-    /// Get raw markdown content
-    /// </summary>
-
-    /// <remarks>
-    /// Browser-facing endpoint for retrieving raw markdown content.
-    /// <br/>Routed via NGINX, not exposed to WebSocket clients.
-    /// <br/>Returns raw markdown with text/markdown content type.
-    /// </remarks>
-
-    /// <param name="slug">Document slug within namespace</param>
-
-    /// <param name="ns">Documentation namespace (defaults to bannou)</param>
-
-    /// <returns>Raw markdown content</returns>
-
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<string>> RawDocumentBySlugAsync(string slug, string ns, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Natural language documentation search
@@ -76,9 +41,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Returns the most relevant documents with voice-friendly summaries.
     /// </remarks>
 
+
+
     /// <returns>Search results with voice-friendly summaries</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryDocumentationResponse>> QueryDocumentationAsync(QueryDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryDocumentationResponse>> QueryDocumentation(QueryDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get specific document by ID or slug
@@ -89,9 +57,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Returns full content with metadata.
     /// </remarks>
 
+
+
     /// <returns>Document content</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetDocumentResponse>> GetDocumentAsync(GetDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetDocumentResponse>> GetDocument(GetDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Full-text keyword search
@@ -102,9 +73,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Faster than semantic search but less flexible.
     /// </remarks>
 
+
+
     /// <returns>Matching documents</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SearchDocumentationResponse>> SearchDocumentationAsync(SearchDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SearchDocumentationResponse>> SearchDocumentation(SearchDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List documents by category
@@ -115,9 +89,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Supports pagination for large result sets.
     /// </remarks>
 
+
+
     /// <returns>Document list</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDocumentsResponse>> ListDocumentsAsync(ListDocumentsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDocumentsResponse>> ListDocuments(ListDocumentsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get related topics and follow-up suggestions
@@ -128,9 +105,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>might want to explore. Useful for conversational AI flow.
     /// </remarks>
 
+
+
     /// <returns>Related topics</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SuggestRelatedResponse>> SuggestRelatedTopicsAsync(SuggestRelatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SuggestRelatedResponse>> SuggestRelatedTopics(SuggestRelatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create new documentation entry
@@ -139,7 +119,8 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
 
     /// <returns>Document created</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateDocumentResponse>> CreateDocumentAsync(CreateDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateDocumentResponse>> CreateDocument(CreateDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update existing documentation entry
@@ -148,7 +129,8 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
 
     /// <returns>Document updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateDocumentResponse>> UpdateDocumentAsync(UpdateDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateDocumentResponse>> UpdateDocument(UpdateDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Soft-delete documentation entry to trashcan
@@ -159,9 +141,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Documents are automatically cleaned up after TrashcanTtlDays.
     /// </remarks>
 
+
+
     /// <returns>Document moved to trashcan</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteDocumentResponse>> DeleteDocumentAsync(DeleteDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteDocumentResponse>> DeleteDocument(DeleteDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Recover document from trashcan
@@ -172,9 +157,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Must be called before the trashcan TTL expires.
     /// </remarks>
 
+
+
     /// <returns>Document recovered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RecoverDocumentResponse>> RecoverDocumentAsync(RecoverDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RecoverDocumentResponse>> RecoverDocument(RecoverDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bulk update document metadata
@@ -185,9 +173,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Each document is processed independently - partial success is possible.
     /// </remarks>
 
+
+
     /// <returns>Bulk update results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkUpdateResponse>> BulkUpdateDocumentsAsync(BulkUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkUpdateResponse>> BulkUpdateDocuments(BulkUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bulk soft-delete documents to trashcan
@@ -198,9 +189,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Each document is processed independently - partial success is possible.
     /// </remarks>
 
+
+
     /// <returns>Bulk delete results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkDeleteResponse>> BulkDeleteDocumentsAsync(BulkDeleteRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkDeleteResponse>> BulkDeleteDocuments(BulkDeleteRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bulk import documentation from structured source
@@ -211,9 +205,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Partial success is possible - failures reported per document.
     /// </remarks>
 
+
+
     /// <returns>Import results (may include partial failures)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ImportDocumentationResponse>> ImportDocumentationAsync(ImportDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ImportDocumentationResponse>> ImportDocumentation(ImportDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List documents in the trashcan
@@ -224,9 +221,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Documents remain recoverable until TTL expires or purge is called.
     /// </remarks>
 
+
+
     /// <returns>Trashcan contents</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTrashcanResponse>> ListTrashcanAsync(ListTrashcanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTrashcanResponse>> ListTrashcan(ListTrashcanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Permanently delete trashcan items
@@ -237,9 +237,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>This operation is irreversible - documents cannot be recovered after purge.
     /// </remarks>
 
+
+
     /// <returns>Purge results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PurgeTrashcanResponse>> PurgeTrashcanAsync(PurgeTrashcanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PurgeTrashcanResponse>> PurgeTrashcan(PurgeTrashcanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get namespace documentation statistics
@@ -250,9 +253,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Useful for monitoring, capacity planning, and administrative dashboards.
     /// </remarks>
 
+
+
     /// <returns>Namespace statistics</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NamespaceStatsResponse>> GetNamespaceStatsAsync(GetNamespaceStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NamespaceStatsResponse>> GetNamespaceStats(GetNamespaceStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bind a git repository to a documentation namespace
@@ -264,9 +270,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Triggers initial sync after binding.
     /// </remarks>
 
+
+
     /// <returns>Repository binding created</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BindRepositoryResponse>> BindRepositoryAsync(BindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BindRepositoryResponse>> BindRepository(BindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove repository binding from namespace
@@ -277,9 +286,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Optionally delete all documents imported from the repository.
     /// </remarks>
 
+
+
     /// <returns>Repository binding removed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnbindRepositoryResponse>> UnbindRepositoryAsync(UnbindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnbindRepositoryResponse>> UnbindRepository(UnbindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Manually trigger repository sync
@@ -290,9 +302,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>If force=true, performs full re-sync regardless of commit hash.
     /// </remarks>
 
+
+
     /// <returns>Sync completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SyncRepositoryResponse>> SyncRepositoryAsync(SyncRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SyncRepositoryResponse>> SyncRepository(SyncRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get repository binding status
@@ -302,9 +317,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// Get current status of a repository binding including sync state and statistics.
     /// </remarks>
 
+
+
     /// <returns>Repository binding status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RepositoryStatusResponse>> GetRepositoryStatusAsync(RepositoryStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RepositoryStatusResponse>> GetRepositoryStatus(RepositoryStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all repository bindings
@@ -314,9 +332,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// List all repository bindings with optional filtering by status.
     /// </remarks>
 
+
+
     /// <returns>List of repository bindings</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRepositoryBindingsResponse>> ListRepositoryBindingsAsync(ListRepositoryBindingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRepositoryBindingsResponse>> ListRepositoryBindings(ListRepositoryBindingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update repository binding configuration
@@ -326,9 +347,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// Update sync settings, file patterns, category mappings, or archive configuration.
     /// </remarks>
 
+
+
     /// <returns>Repository binding updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateRepositoryBindingResponse>> UpdateRepositoryBindingAsync(UpdateRepositoryBindingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateRepositoryBindingResponse>> UpdateRepositoryBinding(UpdateRepositoryBindingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create documentation archive
@@ -339,9 +363,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Archives are stored via Asset Service.
     /// </remarks>
 
+
+
     /// <returns>Archive created</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateArchiveResponse>> CreateDocumentationArchiveAsync(CreateArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateArchiveResponse>> CreateDocumentationArchive(CreateArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List documentation archives
@@ -351,9 +378,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// List all archives for a namespace.
     /// </remarks>
 
+
+
     /// <returns>List of archives</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListArchivesResponse>> ListDocumentationArchivesAsync(ListArchivesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListArchivesResponse>> ListDocumentationArchives(ListArchivesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore documentation from archive
@@ -364,9 +394,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// <br/>Replaces all documents in the namespace with archived content.
     /// </remarks>
 
+
+
     /// <returns>Archive restored</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreArchiveResponse>> RestoreDocumentationArchiveAsync(RestoreArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreArchiveResponse>> RestoreDocumentationArchive(RestoreArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete documentation archive
@@ -376,15 +409,18 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     /// Delete an archive from Asset Service storage.
     /// </remarks>
 
+
+
     /// <returns>Archive deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteArchiveResponse>> DeleteDocumentationArchiveAsync(DeleteArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteArchiveResponse>> DeleteDocumentationArchive(DeleteArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class DocumentationController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IDocumentationService))]
+public partial class DocumentationController : Microsoft.AspNetCore.Mvc.ControllerBase, IDocumentationController
 {
     private IDocumentationService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

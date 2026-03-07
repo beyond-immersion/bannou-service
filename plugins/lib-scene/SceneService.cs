@@ -7,7 +7,6 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -77,10 +76,8 @@ public partial class SceneService : ISceneService
     private const string SCENE_DESTROYED_TOPIC = "scene.destroyed";
     private const string SCENE_CHECKED_OUT_TOPIC = "scene.checked-out";
     private const string SCENE_COMMITTED_TOPIC = "scene.committed";
-    private const string SCENE_CHECKOUT_DISCARDED_TOPIC = "scene.checkout.discarded";
-    private const string SCENE_CHECKOUT_EXPIRED_TOPIC = "scene.checkout.expired";
-    private const string VALIDATION_RULES_UPDATED_TOPIC = "scene.validation-rules.updated";
-    private const string SCENE_REFERENCE_BROKEN_TOPIC = "scene.reference.broken";
+    private const string SCENE_CHECKOUT_DISCARDED_TOPIC = "scene.checkout-discarded";
+    private const string VALIDATION_RULES_UPDATED_TOPIC = "scene.validation-rules-updated";
 
     // YAML serializer/deserializer
     private static readonly ISerializer YamlSerializer = new SerializerBuilder()
@@ -502,11 +499,7 @@ public partial class SceneService : ISceneService
         }
 
         _logger.LogInformation("DeleteScene succeeded: sceneId={SceneId}", body.SceneId);
-        return (StatusCodes.OK, new DeleteSceneResponse
-        {
-            Deleted = true,
-            SceneId = body.SceneId
-        });
+        return (StatusCodes.OK, new DeleteSceneResponse());
     }
 
     /// <inheritdoc />
@@ -595,38 +588,30 @@ public partial class SceneService : ISceneService
         _logger.LogInformation("InstantiateScene succeeded: instanceId={InstanceId}", body.InstanceId);
         return (StatusCodes.OK, new InstantiateSceneResponse
         {
-            InstanceId = body.InstanceId,
-            SceneVersion = indexEntry.Version,
-            EventPublished = published
+            SceneVersion = indexEntry.Version
         });
     }
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, DestroyInstanceResponse?)> DestroyInstanceAsync(DestroyInstanceRequest body, CancellationToken cancellationToken = default)
+    public async Task<StatusCodes> DestroyInstanceAsync(DestroyInstanceRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("DestroyInstance: instanceId={InstanceId}", body.InstanceId);
 
         // Publish destroyed event
-        // After regeneration from updated schema, SceneAssetId/RegionId will be nullable Guid?
-        // and this ?? Guid.Empty workaround can be removed (assign directly from body)
         var eventModel = new SceneDestroyedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             InstanceId = body.InstanceId,
-            SceneAssetId = body.SceneAssetId ?? Guid.Empty,
-            RegionId = body.RegionId ?? Guid.Empty,
+            SceneAssetId = body.SceneAssetId,
+            RegionId = body.RegionId,
             Metadata = body.Metadata
         };
 
-        var published = await _messageBus.TryPublishAsync(SCENE_DESTROYED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync(SCENE_DESTROYED_TOPIC, eventModel, cancellationToken: cancellationToken);
 
         _logger.LogInformation("DestroyInstance succeeded: instanceId={InstanceId}", body.InstanceId);
-        return (StatusCodes.OK, new DestroyInstanceResponse
-        {
-            Destroyed = true,
-            EventPublished = published
-        });
+        return StatusCodes.OK;
     }
 
     #endregion
@@ -803,27 +788,24 @@ public partial class SceneService : ISceneService
         _logger.LogInformation("CommitScene succeeded: sceneId={SceneId}, newVersion={Version}", body.SceneId, updateResponse.Scene.Version);
         return (StatusCodes.OK, new CommitResponse
         {
-            Committed = true,
             NewVersion = updateResponse.Scene.Version,
             Scene = updateResponse.Scene
         });
     }
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, DiscardResponse?)> DiscardCheckoutAsync(DiscardRequest body, CancellationToken cancellationToken = default)
+    public async Task<StatusCodes> DiscardCheckoutAsync(DiscardRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("DiscardCheckout: sceneId={SceneId}", body.SceneId);
 
         var sceneIdStr = body.SceneId.ToString();
-
-
 
         // Validate checkout token
         var checkout = await _checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
         if (checkout == null || checkout.Token != body.CheckoutToken)
         {
             _logger.LogDebug("DiscardCheckout: Invalid checkout token for scene {SceneId}", body.SceneId);
-            return (StatusCodes.Forbidden, null);
+            return StatusCodes.Forbidden;
         }
 
         // Get index entry with ETag for optimistic concurrency
@@ -841,7 +823,7 @@ public partial class SceneService : ISceneService
             if (newIndexEtag == null)
             {
                 _logger.LogDebug("DiscardCheckout: Concurrent modification on scene index {SceneId}", body.SceneId);
-                return (StatusCodes.Conflict, null);
+                return StatusCodes.Conflict;
             }
         }
 
@@ -859,7 +841,7 @@ public partial class SceneService : ISceneService
         await _messageBus.TryPublishAsync(SCENE_CHECKOUT_DISCARDED_TOPIC, eventModel, cancellationToken: cancellationToken);
 
         _logger.LogInformation("DiscardCheckout succeeded: sceneId={SceneId}", body.SceneId);
-        return (StatusCodes.OK, new DiscardResponse { Discarded = true });
+        return StatusCodes.OK;
     }
 
     /// <inheritdoc />
@@ -884,16 +866,11 @@ public partial class SceneService : ISceneService
             return (StatusCodes.Conflict, null);
         }
 
-        // Check extension limit
+        // Check extension limit — return 409 when limit reached per QUALITY TENETS (no filler booleans)
         if (checkout.ExtensionCount >= _configuration.MaxCheckoutExtensions)
         {
             _logger.LogDebug("HeartbeatCheckout: Extension limit reached for scene {SceneId}", body.SceneId);
-            return (StatusCodes.OK, new HeartbeatResponse
-            {
-                Extended = false,
-                NewExpiresAt = checkout.ExpiresAt,
-                ExtensionsRemaining = 0
-            });
+            return (StatusCodes.Conflict, null);
         }
 
         // Extend checkout
@@ -910,7 +887,6 @@ public partial class SceneService : ISceneService
 
         return (StatusCodes.OK, new HeartbeatResponse
         {
-            Extended = true,
             NewExpiresAt = newExpiresAt,
             ExtensionsRemaining = _configuration.MaxCheckoutExtensions - checkout.ExtensionCount
         });
@@ -947,11 +923,10 @@ public partial class SceneService : ISceneService
     #region Validation Rules Operations
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, RegisterValidationRulesResponse?)> RegisterValidationRulesAsync(RegisterValidationRulesRequest body, CancellationToken cancellationToken = default)
+    public async Task<StatusCodes> RegisterValidationRulesAsync(RegisterValidationRulesRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("RegisterValidationRules: gameId={GameId}, sceneType={SceneType}, ruleCount={RuleCount}",
             body.GameId, body.SceneType, body.Rules.Count);
-
 
         var key = $"{VALIDATION_RULES_PREFIX}{body.GameId}:{body.SceneType}";
 
@@ -969,11 +944,7 @@ public partial class SceneService : ISceneService
         await _messageBus.TryPublishAsync(VALIDATION_RULES_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
 
         _logger.LogInformation("RegisterValidationRules succeeded: gameId={GameId}, sceneType={SceneType}", body.GameId, body.SceneType);
-        return (StatusCodes.OK, new RegisterValidationRulesResponse
-        {
-            Registered = true,
-            RuleCount = body.Rules.Count
-        });
+        return StatusCodes.OK;
     }
 
     /// <inheritdoc />
@@ -1226,7 +1197,7 @@ public partial class SceneService : ISceneService
             SceneId = sceneId,
             Version = scene.Version,
             Content = yaml,
-            UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         await _contentStore.SaveAsync(contentKey, contentEntry, null, cancellationToken);
@@ -1626,7 +1597,7 @@ public partial class SceneService : ISceneService
 
     private void ExtractAssetReferencesRecursive(SceneNode node, HashSet<Guid> assets)
     {
-        if (node.Asset != null && node.Asset.AssetId != Guid.Empty)
+        if (node.Asset != null)
         {
             assets.Add(node.Asset.AssetId);
         }

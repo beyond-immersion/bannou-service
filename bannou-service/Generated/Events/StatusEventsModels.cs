@@ -77,6 +77,7 @@ public partial class StatusGrantedEvent
     [System.Text.Json.Serialization.JsonPropertyName("statusTemplateCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string StatusTemplateCode { get; set; } = default!;
 
     /// <summary>
@@ -171,6 +172,7 @@ public partial class StatusRemovedEvent
     [System.Text.Json.Serialization.JsonPropertyName("statusTemplateCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string StatusTemplateCode { get; set; } = default!;
 
     /// <summary>
@@ -238,6 +240,7 @@ public partial class StatusExpiredEvent
     [System.Text.Json.Serialization.JsonPropertyName("statusTemplateCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string StatusTemplateCode { get; set; } = default!;
 
     /// <summary>
@@ -296,6 +299,7 @@ public partial class StatusStackedEvent
     [System.Text.Json.Serialization.JsonPropertyName("statusTemplateCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string StatusTemplateCode { get; set; } = default!;
 
     /// <summary>
@@ -366,6 +370,7 @@ public partial class StatusGrantFailedEvent
     [System.Text.Json.Serialization.JsonPropertyName("statusTemplateCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string StatusTemplateCode { get; set; } = default!;
 
     /// <summary>

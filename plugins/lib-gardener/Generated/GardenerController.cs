@@ -41,9 +41,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// <br/>garden state. First tick of the garden orchestrator spawns POIs.
     /// </remarks>
 
+
+
     /// <returns>Garden instance created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GardenStateResponse>> EnterGardenAsync(EnterGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GardenStateResponse>> EnterGarden(EnterGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current garden state
@@ -53,9 +56,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Returns the player's current garden instance with active POIs.
     /// </remarks>
 
+
+
     /// <returns>Garden state retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GardenStateResponse>> GetGardenStateAsync(GetGardenStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GardenStateResponse>> GetGardenState(GetGardenStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update player position in the garden
@@ -66,9 +72,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// <br/>drift metrics and checks proximity triggers against active POIs.
     /// </remarks>
 
+
+
     /// <returns>Position updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PositionUpdateResponse>> UpdatePositionAsync(UpdatePositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PositionUpdateResponse>> UpdatePosition(UpdatePositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Leave the garden
@@ -79,9 +88,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// <br/>garden-left event with session duration.
     /// </remarks>
 
+
+
     /// <returns>Left the garden</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaveGardenResponse>> LeaveGardenAsync(LeaveGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaveGardenResponse>> LeaveGarden(LeaveGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List active POIs
@@ -91,9 +103,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Returns all active POIs for the player's current garden instance.
     /// </remarks>
 
+
+
     /// <returns>POIs retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListPoisResponse>> ListPoisAsync(ListPoisRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListPoisResponse>> ListPois(ListPoisRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Interact with a POI
@@ -105,9 +120,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// <br/>enter the scenario directly.
     /// </remarks>
 
+
+
     /// <returns>Interaction result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PoiInteractionResponse>> InteractWithPoiAsync(InteractWithPoiRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PoiInteractionResponse>> InteractWithPoi(InteractWithPoiRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Decline a POI
@@ -118,9 +136,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// <br/>scenario history for diversity scoring.
     /// </remarks>
 
+
+
     /// <returns>POI declined</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeclinePoiResponse>> DeclinePoiAsync(DeclinePoiRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeclinePoiResponse>> DeclinePoi(DeclinePoiRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Enter a scenario
@@ -132,9 +153,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// <br/>publishes scenario-started events.
     /// </remarks>
 
+
+
     /// <returns>Scenario entered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> EnterScenarioAsync(EnterScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> EnterScenario(EnterScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current scenario state
@@ -144,9 +168,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Returns the player's active scenario instance.
     /// </remarks>
 
+
+
     /// <returns>Scenario state retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> GetScenarioStateAsync(GetScenarioStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> GetScenarioState(GetScenarioStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Complete a scenario
@@ -157,9 +184,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// <br/>writes history, and returns the player to the garden.
     /// </remarks>
 
+
+
     /// <returns>Scenario completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioCompletionResponse>> CompleteScenarioAsync(CompleteScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioCompletionResponse>> CompleteScenario(CompleteScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Abandon a scenario
@@ -170,9 +200,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// <br/>game session, and writes history.
     /// </remarks>
 
+
+
     /// <returns>Scenario abandoned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AbandonScenarioResponse>> AbandonScenarioAsync(AbandonScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AbandonScenarioResponse>> AbandonScenario(AbandonScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Chain to another scenario
@@ -184,9 +217,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// <br/>chaining rules (leadsTo list, max chain depth).
     /// </remarks>
 
+
+
     /// <returns>Chained to new scenario</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> ChainScenarioAsync(ChainScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> ChainScenario(ChainScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a scenario template
@@ -196,9 +232,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Creates a new scenario template definition.
     /// </remarks>
 
+
+
     /// <returns>Template created</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> CreateTemplateAsync(CreateTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> CreateTemplate(CreateTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get scenario template by ID
@@ -208,9 +247,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Returns a scenario template by its unique identifier.
     /// </remarks>
 
+
+
     /// <returns>Template retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> GetTemplateAsync(GetTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> GetTemplate(GetTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get scenario template by code
@@ -220,9 +262,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Returns a scenario template by its unique code string.
     /// </remarks>
 
+
+
     /// <returns>Template retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> GetTemplateByCodeAsync(GetTemplateByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> GetTemplateByCode(GetTemplateByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List scenario templates
@@ -232,9 +277,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Returns paginated scenario templates with optional filters.
     /// </remarks>
 
+
+
     /// <returns>Templates listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTemplatesResponse>> ListTemplatesAsync(ListTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTemplatesResponse>> ListTemplates(ListTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update scenario template
@@ -244,9 +292,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Updates non-null fields of an existing template.
     /// </remarks>
 
+
+
     /// <returns>Template updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> UpdateTemplateAsync(UpdateTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> UpdateTemplate(UpdateTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate scenario template
@@ -256,9 +307,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Sets the template status to Deprecated, preventing new instances.
     /// </remarks>
 
+
+
     /// <returns>Template deprecated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> DeprecateTemplateAsync(DeprecateTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> DeprecateTemplate(DeprecateTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get deployment phase configuration
@@ -268,9 +322,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Returns the current deployment phase configuration. Creates defaults if none exists.
     /// </remarks>
 
+
+
     /// <returns>Phase config retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PhaseConfigResponse>> GetPhaseConfigAsync(GetPhaseConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PhaseConfigResponse>> GetPhaseConfig(GetPhaseConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update deployment phase configuration
@@ -280,9 +337,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Updates non-null fields of the phase configuration. Publishes phase-changed event if phase changes.
     /// </remarks>
 
+
+
     /// <returns>Phase config updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PhaseConfigResponse>> UpdatePhaseConfigAsync(UpdatePhaseConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PhaseConfigResponse>> UpdatePhaseConfig(UpdatePhaseConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get deployment phase metrics
@@ -292,9 +352,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Returns current counts of active garden instances, scenario instances, and capacity utilization.
     /// </remarks>
 
+
+
     /// <returns>Phase metrics retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PhaseMetricsResponse>> GetPhaseMetricsAsync(GetPhaseMetricsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PhaseMetricsResponse>> GetPhaseMetrics(GetPhaseMetricsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Enter a scenario together with a bonded player
@@ -305,9 +368,12 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// <br/>both participants' garden instances, and template multiplayer support.
     /// </remarks>
 
+
+
     /// <returns>Both players entered shared scenario</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> EnterScenarioTogetherAsync(EnterTogetherRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> EnterScenarioTogether(EnterTogetherRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get shared garden state for bonded players
@@ -317,15 +383,18 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// Returns the merged garden state for both bond participants including shared POIs.
     /// </remarks>
 
+
+
     /// <returns>Shared garden state retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SharedGardenStateResponse>> GetSharedGardenStateAsync(GetSharedGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SharedGardenStateResponse>> GetSharedGardenState(GetSharedGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IGardenerService))]
+public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBase, IGardenerController
 {
     private IGardenerService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

@@ -33,13 +33,13 @@ public sealed class DeltaProcessor
     /// <param name="targetData">New data to derive delta from</param>
     /// <param name="algorithm">Algorithm to use for delta computation</param>
     /// <returns>The computed delta as a byte array, or null if computation failed</returns>
-    public byte[]? ComputeDelta(byte[] sourceData, byte[] targetData, string algorithm)
+    public byte[]? ComputeDelta(byte[] sourceData, byte[] targetData, DeltaAlgorithm algorithm)
     {
-        return algorithm.ToUpperInvariant() switch
+        return algorithm switch
         {
-            "JSON_PATCH" => ComputeJsonPatch(sourceData, targetData),
-            "BSDIFF" => throw new NotSupportedException("BSDIFF algorithm is not yet implemented"),
-            "XDELTA" => throw new NotSupportedException("XDELTA algorithm is not yet implemented"),
+            DeltaAlgorithm.JsonPatch => ComputeJsonPatch(sourceData, targetData),
+            DeltaAlgorithm.Bsdiff => throw new NotSupportedException("BSDIFF algorithm is not yet implemented"),
+            DeltaAlgorithm.Xdelta => throw new NotSupportedException("XDELTA algorithm is not yet implemented"),
             _ => throw new ArgumentException($"Unknown delta algorithm: {algorithm}", nameof(algorithm))
         };
     }
@@ -51,13 +51,13 @@ public sealed class DeltaProcessor
     /// <param name="deltaData">Delta/patch to apply</param>
     /// <param name="algorithm">Algorithm used to create the delta</param>
     /// <returns>Reconstructed data, or null if application failed</returns>
-    public byte[]? ApplyDelta(byte[] sourceData, byte[] deltaData, string algorithm)
+    public byte[]? ApplyDelta(byte[] sourceData, byte[] deltaData, DeltaAlgorithm algorithm)
     {
-        return algorithm.ToUpperInvariant() switch
+        return algorithm switch
         {
-            "JSON_PATCH" => ApplyJsonPatch(sourceData, deltaData),
-            "BSDIFF" => throw new NotSupportedException("BSDIFF algorithm is not yet implemented"),
-            "XDELTA" => throw new NotSupportedException("XDELTA algorithm is not yet implemented"),
+            DeltaAlgorithm.JsonPatch => ApplyJsonPatch(sourceData, deltaData),
+            DeltaAlgorithm.Bsdiff => throw new NotSupportedException("BSDIFF algorithm is not yet implemented"),
+            DeltaAlgorithm.Xdelta => throw new NotSupportedException("XDELTA algorithm is not yet implemented"),
             _ => throw new ArgumentException($"Unknown delta algorithm: {algorithm}", nameof(algorithm))
         };
     }
@@ -166,9 +166,9 @@ public sealed class DeltaProcessor
     /// <param name="deltaData">Delta data to validate</param>
     /// <param name="algorithm">Algorithm the delta was created with</param>
     /// <returns>True if valid, false otherwise</returns>
-    public bool ValidateDelta(byte[] deltaData, string algorithm)
+    public bool ValidateDelta(byte[] deltaData, DeltaAlgorithm algorithm)
     {
-        if (algorithm.ToUpperInvariant() != "JSON_PATCH")
+        if (algorithm != DeltaAlgorithm.JsonPatch)
         {
             // For non-JSON algorithms, just check for non-empty data
             return deltaData.Length > 0;
@@ -208,23 +208,23 @@ public sealed class DeltaProcessor
     /// </summary>
     /// <param name="deltaData">Delta data</param>
     /// <param name="algorithm">Algorithm the delta was created with</param>
-    /// <returns>Operation count, or -1 if not applicable/invalid</returns>
-    public int GetOperationCount(byte[] deltaData, string algorithm)
+    /// <returns>Operation count, or null if not applicable/invalid</returns>
+    public int? GetOperationCount(byte[] deltaData, DeltaAlgorithm algorithm)
     {
-        if (algorithm.ToUpperInvariant() != "JSON_PATCH")
+        if (algorithm != DeltaAlgorithm.JsonPatch)
         {
-            return -1;
+            return null;
         }
 
         try
         {
             var patchJson = Encoding.UTF8.GetString(deltaData);
             var patch = BannouJson.Deserialize<JsonPatch>(patchJson);
-            return patch?.Operations.Count ?? -1;
+            return patch?.Operations.Count;
         }
         catch
         {
-            return -1;
+            return null;
         }
     }
 }

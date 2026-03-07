@@ -34,14 +34,24 @@ using System = global::System;
 /// Event published when behavior documents are invalidated from cache
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BehaviorInvalidatedEvent : BaseServiceEvent
+public partial class BehaviorInvalidatedEvent
 {
 
     /// <summary>
-    /// Event type identifier for behavior cache invalidation
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "puppetmaster.behavior.invalidated";
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Specific behavior that was invalidated, or null if all were invalidated
@@ -61,14 +71,24 @@ public partial class BehaviorInvalidatedEvent : BaseServiceEvent
 /// Event published when a regional watcher is started
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WatcherStartedEvent : BaseServiceEvent
+public partial class WatcherStartedEvent
 {
 
     /// <summary>
-    /// Event type identifier for watcher started
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "puppetmaster.watcher.started";
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier for the watcher instance
@@ -104,7 +124,7 @@ public partial class WatcherStartedEvent : BaseServiceEvent
     /// Actor instance ID running this watcher's behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    public string? ActorId { get; set; } = default!;
+    public System.Guid? ActorId { get; set; } = default!;
 
 }
 
@@ -112,14 +132,24 @@ public partial class WatcherStartedEvent : BaseServiceEvent
 /// Event published when a regional watcher is stopped
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WatcherStoppedEvent : BaseServiceEvent
+public partial class WatcherStoppedEvent
 {
 
     /// <summary>
-    /// Event type identifier for watcher stopped
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "puppetmaster.watcher.stopped";
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier for the watcher instance

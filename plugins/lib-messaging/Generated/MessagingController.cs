@@ -38,7 +38,8 @@ public interface IMessagingController : BeyondImmersion.BannouService.Controller
 
     /// <returns>Event published successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishEventResponse>> PublishEventAsync(PublishEventRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishEventResponse>> PublishEvent(PublishEventRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a dynamic subscription to a topic
@@ -47,7 +48,8 @@ public interface IMessagingController : BeyondImmersion.BannouService.Controller
 
     /// <returns>Subscription created</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateSubscriptionResponse>> CreateSubscriptionAsync(CreateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateSubscriptionResponse>> CreateSubscription(CreateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove a dynamic subscription
@@ -56,7 +58,8 @@ public interface IMessagingController : BeyondImmersion.BannouService.Controller
 
     /// <returns>Subscription removed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveSubscriptionAsync(RemoveSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveSubscription(RemoveSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all known topics
@@ -65,13 +68,14 @@ public interface IMessagingController : BeyondImmersion.BannouService.Controller
 
     /// <returns>List of topics</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTopicsResponse>> ListTopicsAsync(ListTopicsRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTopicsResponse>> ListTopics(ListTopicsRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IMessagingService))]
+public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBase, IMessagingController
 {
     private IMessagingService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

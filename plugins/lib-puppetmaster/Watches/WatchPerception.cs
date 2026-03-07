@@ -76,7 +76,7 @@ public sealed class WatchPerception
     /// <summary>
     /// Timestamp when the change was detected.
     /// </summary>
-    public DateTime Timestamp { get; init; } = DateTime.UtcNow;
+    public DateTimeOffset Timestamp { get; init; } = DateTimeOffset.UtcNow;
 
     /// <summary>
     /// Creates a resource changed perception.

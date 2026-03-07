@@ -32,13 +32,11 @@ public sealed class RealmHistoryTemplate : ResourceTemplateBase
         ["loreElements"] = typeof(ICollection<RealmLoreResponse>),
         ["nestedArchives"] = typeof(ICollection<ResourceArchiveBase>),
         ["participations"] = typeof(ICollection<RealmHistoricalParticipation>),
-        ["realmId"] = typeof(Guid),
         ["resourceId"] = typeof(Guid),
         ["resourceType"] = typeof(string),
         ["schemaVersion"] = typeof(int),
         ["summaries"] = typeof(RealmHistorySummaryResponse),
         ["summaries.keyLorePoints"] = typeof(ICollection<string>),
         ["summaries.majorHistoricalEvents"] = typeof(ICollection<string>),
-        ["summaries.realmId"] = typeof(Guid),
     };
 }

@@ -41,9 +41,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>custom configuration (max versions, retention policy, etc.).
     /// </remarks>
 
+
+
     /// <returns>Slot created or updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SlotResponse>> CreateSlotAsync(CreateSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SlotResponse>> CreateSlot(CreateSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get slot metadata
@@ -53,9 +56,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// Returns slot configuration and version summary.
     /// </remarks>
 
+
+
     /// <returns>Slot found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SlotResponse>> GetSlotAsync(GetSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SlotResponse>> GetSlot(GetSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List slots for owner
@@ -65,9 +71,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// Returns all slots owned by the specified entity.
     /// </remarks>
 
+
+
     /// <returns>Slots listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSlotsResponse>> ListSlotsAsync(ListSlotsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSlotsResponse>> ListSlots(ListSlotsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete slot and all versions
@@ -78,9 +87,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>This is irreversible. Requires owner access or admin role.
     /// </remarks>
 
+
+
     /// <returns>Slot deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteSlotResponse>> DeleteSlotAsync(DeleteSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteSlotResponse>> DeleteSlot(DeleteSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Rename a save slot
@@ -91,9 +103,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>The new name must not already exist for this owner.
     /// </remarks>
 
+
+
     /// <returns>Slot renamed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SlotResponse>> RenameSlotAsync(RenameSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SlotResponse>> RenameSlot(RenameSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete multiple slots at once
@@ -104,9 +119,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>Useful for cleanup operations or account deletion.
     /// </remarks>
 
+
+
     /// <returns>Slots deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkDeleteSlotsResponse>> BulkDeleteSlotsAsync(BulkDeleteSlotsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkDeleteSlotsResponse>> BulkDeleteSlots(BulkDeleteSlotsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Save data to slot
@@ -120,9 +138,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>Rolling version cleanup is applied based on slot configuration.
     /// </remarks>
 
+
+
     /// <returns>Save successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> SaveAsync(SaveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> Save(SaveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Load data from slot
@@ -133,9 +154,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>latest version. Optionally specify a version number or checkpoint name.
     /// </remarks>
 
+
+
     /// <returns>Load successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoadResponse>> LoadAsync(LoadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoadResponse>> Load(LoadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Save incremental changes from base version
@@ -152,9 +176,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>Delta versions store only the patch; full data is reconstructed on load.
     /// </remarks>
 
+
+
     /// <returns>Delta save successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveDeltaResponse>> SaveDeltaAsync(SaveDeltaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveDeltaResponse>> SaveDelta(SaveDeltaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Load save reconstructing from delta chain
@@ -168,9 +195,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>delta chains during background cleanup.
     /// </remarks>
 
+
+
     /// <returns>Load successful (reconstructed if delta)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoadResponse>> LoadWithDeltasAsync(LoadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoadResponse>> LoadWithDeltas(LoadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Collapse delta chain into full snapshot
@@ -181,9 +211,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>Useful for reducing load latency or before deleting base versions.
     /// </remarks>
 
+
+
     /// <returns>Delta chain collapsed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> CollapseDeltasAsync(CollapseDeltasRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> CollapseDeltas(CollapseDeltasRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List versions in slot
@@ -193,9 +226,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// Returns all versions in a slot with metadata.
     /// </remarks>
 
+
+
     /// <returns>Versions listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListVersionsResponse>> ListVersionsAsync(ListVersionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListVersionsResponse>> ListVersions(ListVersionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Pin a version as checkpoint
@@ -206,9 +242,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>Optionally assigns a checkpoint name for easy retrieval.
     /// </remarks>
 
+
+
     /// <returns>Version pinned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VersionResponse>> PinVersionAsync(PinVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VersionResponse>> PinVersion(PinVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Unpin a version
@@ -218,9 +257,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// Removes pin from a version, making it eligible for rolling cleanup.
     /// </remarks>
 
+
+
     /// <returns>Version unpinned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VersionResponse>> UnpinVersionAsync(UnpinVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VersionResponse>> UnpinVersion(UnpinVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete specific version
@@ -231,9 +273,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>Cannot delete pinned versions; unpin first.
     /// </remarks>
 
+
+
     /// <returns>Version deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteVersionResponse>> DeleteVersionAsync(DeleteVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteVersionResponse>> DeleteVersion(DeleteVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query saves with filters
@@ -244,9 +289,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>category, date range, metadata, and more. Paginated results.
     /// </remarks>
 
+
+
     /// <returns>Query results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuerySavesResponse>> QuerySavesAsync(QuerySavesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuerySavesResponse>> QuerySaves(QuerySavesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Copy save to different slot or owner
@@ -257,9 +305,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>Can copy to same owner (different slot) or different owner (with admin).
     /// </remarks>
 
+
+
     /// <returns>Save copied</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> CopySaveAsync(CopySaveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> CopySave(CopySaveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Export saves for backup/portability
@@ -270,9 +321,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>Returns a pre-signed URL to download the export bundle.
     /// </remarks>
 
+
+
     /// <returns>Export prepared</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExportSavesResponse>> ExportSavesAsync(ExportSavesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExportSavesResponse>> ExportSaves(ExportSavesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Import saves from backup
@@ -283,9 +337,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>Supports conflict resolution strategies for existing slots.
     /// </remarks>
 
+
+
     /// <returns>Import completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ImportSavesResponse>> ImportSavesAsync(ImportSavesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ImportSavesResponse>> ImportSaves(ImportSavesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Verify save data integrity
@@ -296,9 +353,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>against the stored SHA-256 hash. Detects corruption or tampering.
     /// </remarks>
 
+
+
     /// <returns>Verification result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VerifyIntegrityResponse>> VerifyIntegrityAsync(VerifyIntegrityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VerifyIntegrityResponse>> VerifyIntegrity(VerifyIntegrityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Promote old version to latest
@@ -309,9 +369,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>"promoting" it to be the latest. Useful for rollback scenarios.
     /// </remarks>
 
+
+
     /// <returns>Version promoted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> PromoteVersionAsync(PromoteVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> PromoteVersion(PromoteVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Migrate save to new schema version
@@ -322,9 +385,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>to another. Creates a new version with the migrated data.
     /// </remarks>
 
+
+
     /// <returns>Migration successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MigrateSaveResponse>> MigrateSaveAsync(MigrateSaveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MigrateSaveResponse>> MigrateSave(MigrateSaveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Register a save data schema
@@ -335,9 +401,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>Optionally includes migration handlers from previous versions.
     /// </remarks>
 
+
+
     /// <returns>Schema registered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SchemaResponse>> RegisterSchemaAsync(RegisterSchemaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SchemaResponse>> RegisterSchema(RegisterSchemaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List registered schemas
@@ -347,9 +416,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// Returns all registered schemas for a game/namespace.
     /// </remarks>
 
+
+
     /// <returns>Schemas listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSchemasResponse>> ListSchemasAsync(ListSchemasRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSchemasResponse>> ListSchemas(ListSchemasRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Run cleanup for expired/orphaned saves
@@ -360,9 +432,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// <br/>Normally runs automatically, but can be triggered manually.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminCleanupResponse>> AdminCleanupAsync(AdminCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminCleanupResponse>> AdminCleanup(AdminCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get storage statistics
@@ -372,15 +447,18 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
     /// Returns storage usage statistics by owner, category, etc.
     /// </remarks>
 
+
+
     /// <returns>Statistics returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminStatsResponse>> AdminStatsAsync(AdminStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminStatsResponse>> AdminStats(AdminStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ISaveLoadService))]
+public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBase, ISaveLoadController
 {
     private ISaveLoadService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

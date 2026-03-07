@@ -87,19 +87,6 @@ public class StatusServiceConfiguration : BaseServiceConfiguration
     public int SeedEffectsCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
-    /// Maximum number of entity active-status cache entries retained in Redis (LRU eviction when exceeded)
-    /// Environment variable: STATUS_MAX_CACHED_ENTITIES
-    /// </summary>
-    [ConfigRange(Minimum = 100, Maximum = 100000)]
-    public int MaxCachedEntities { get; set; } = 10000;
-
-    /// <summary>
-    /// Enable proactive cache warming on startup by pre-loading active statuses for recently active entities
-    /// Environment variable: STATUS_CACHE_WARMING_ENABLED
-    /// </summary>
-    public bool CacheWarmingEnabled { get; set; } = false;
-
-    /// <summary>
     /// TTL for distributed locks on status mutations
     /// Environment variable: STATUS_LOCK_TIMEOUT_SECONDS
     /// </summary>

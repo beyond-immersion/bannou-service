@@ -96,9 +96,9 @@ Generic save/load system (L4 GameFeatures) for game state persistence with polym
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `save-slot.created` | `SaveSlotCreatedEvent` | Slot created |
-| `save-slot.updated` | `SaveSlotUpdatedEvent` | Slot metadata updated |
-| `save-slot.deleted` | `SaveSlotDeletedEvent` | Slot deleted |
+| `save-load.save-slot.created` | `SaveSlotCreatedEvent` | Slot created |
+| `save-load.save-slot.updated` | `SaveSlotUpdatedEvent` | Slot metadata updated |
+| `save-load.save-slot.deleted` | `SaveSlotDeletedEvent` | Slot deleted |
 
 ### Consumed Events
 
@@ -544,9 +544,15 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **Auto-collapse during cleanup** - Implemented in VersionCleanupManager.CollapseExcessiveDeltaChainsAsync; CleanupService now calls this when AutoCollapseEnabled is true. (2026-02-01)
+- **Hardening pass** - Comprehensive tenet compliance audit and fixes (2026-03-07):
+  - Schema: Flattened events, PascalCase enums, extracted named enum types, additionalProperties:false, NRT nullable compliance, validation keywords, configuration bounds, T8 filler removal
+  - Code: StorageCircuitBreaker string→enum, DeltaProcessor string→enum, top-level try-catch removal, Guid.Empty sentinel elimination, UploadStatus PascalCase, DeltaProcessor.GetOperationCount nullable return, telemetry spans on all 26 async methods, Pattern C event topics
+  - Event topics fixed to Pattern C format (`save-load.{entity}.{action}`), lifecycle topics to `save-load.save-slot.{action}`
 
 ### Needs Design Review
 
 - **BSDIFF delta algorithm** - Library selection and design decisions needed. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)
 - **XDELTA delta algorithm** - Consolidated with BSDIFF; same library selection and design questions apply. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)
 - **JSON Schema validation** - Method exists but is never called; design decisions needed on where/when to invoke validation. See [#229](https://github.com/beyond-immersion/bannou-service/issues/229). (2026-02-01)
+- **IAssetClient dependency pattern** - Save-load is L4 and Asset is L3; hierarchy allows hard dependency (constructor injection). Currently uses constructor injection, which is correct. However, if Asset were disabled, save-load would crash at startup. Consider whether graceful degradation (soft dependency with reduced functionality — local-only saves without MinIO persistence) is desirable. (2026-03-07)
+- **SaveUploadWorker store resolution pattern** - SaveUploadWorker resolves stores per-scope via `IStateStoreFactory` in `ProcessPendingUploadsAsync` rather than caching store references. This is a stylistic T6 consideration — BackgroundServices that create scopes should resolve stores once per scope and pass as parameters. Current pattern works but could be tightened. (2026-03-07)

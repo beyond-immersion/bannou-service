@@ -69,8 +69,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
         _logger.LogDebug("Hot cache miss for slot {SlotId} version {Version}", slotId, version.VersionNumber);
 
         // Load from asset service
-        // SaveVersionManifest.AssetId is now Guid? - check for null or empty Guid
-        if (!version.AssetId.HasValue || version.AssetId.Value == Guid.Empty)
+        if (!version.AssetId.HasValue)
         {
             _logger.LogWarning(
                 "No asset ID for version {Version} and no hot cache entry",
@@ -158,9 +157,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
                 return null;
             }
 
-            // DeltaAlgorithm - use enum value or config default, then convert to string for DeltaProcessor
-            var algorithmEnum = deltaVersion.DeltaAlgorithm ?? _configuration.DefaultDeltaAlgorithm;
-            var algorithm = algorithmEnum.ToString();
+            var algorithm = deltaVersion.DeltaAlgorithm ?? _configuration.DefaultDeltaAlgorithm;
             result = deltaProcessor.ApplyDelta(result, deltaData, algorithm);
 
             if (result == null)

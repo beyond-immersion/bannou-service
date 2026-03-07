@@ -46,18 +46,22 @@ paths: {}
 components:
   schemas:
     BehaviorInvalidatedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when behavior documents are invalidated from cache
       required:
+        - eventId
+        - timestamp
         - invalidatedCount
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "puppetmaster.behavior.invalidated"
-          description: Event type identifier for behavior cache invalidation
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         behaviorRef:
           type: string
           nullable: true
@@ -67,20 +71,24 @@ components:
           description: Number of behaviors invalidated
 
     WatcherStartedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a regional watcher is started
       required:
+        - eventId
+        - timestamp
         - watcherId
         - realmId
         - watcherType
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "puppetmaster.watcher.started"
-          description: Event type identifier for watcher started
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         watcherId:
           type: string
           format: uuid
@@ -98,24 +106,29 @@ components:
           description: Behavior document reference used by this watcher
         actorId:
           type: string
+          format: uuid
           nullable: true
           description: Actor instance ID running this watcher's behavior
 
     WatcherStoppedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a regional watcher is stopped
       required:
+        - eventId
+        - timestamp
         - watcherId
         - realmId
         - watcherType
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "puppetmaster.watcher.stopped"
-          description: Event type identifier for watcher stopped
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         watcherId:
           type: string
           format: uuid

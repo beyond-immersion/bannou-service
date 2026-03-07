@@ -1,5 +1,7 @@
 # x-permissions OpenAPI Extension Specification
 
+> **See also**: [ENDPOINT-PERMISSION-GUIDELINES.md](reference/ENDPOINT-PERMISSION-GUIDELINES.md) — the decision framework for **which** permission level to use on each endpoint. This document covers the **technical specification** (syntax, generation, integration flow). The guidelines cover the **semantics** (when and why to use each level).
+
 ## Overview
 
 The `x-permissions` extension defines role-based access control for API endpoints. When services start up, they use this information to register their API permissions with the Permission service, enabling dynamic capability discovery for WebSocket clients.

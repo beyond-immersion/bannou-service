@@ -1,5 +1,7 @@
 # Player Experience Vision
 
+> ⛔ **FROZEN DOCUMENT** — Defines strategic vision and design principles. AI agents MUST NOT modify any content without explicit user instruction. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Purpose**: This document captures the player-facing experience design for Arcadia, from first contact through long-term play, including the alpha-to-release deployment strategy. It complements VISION.md (which covers systems and architecture) by describing what the player actually *experiences* and how that experience evolves over time.
 >
 > **Core Thesis**: Every boundary in Arcadia is a gradient, not a wall. Tutorial to gameplay, idle to active control, one genre to another, testing phase to release -- all are continuous spectrums that the player traverses through accumulated experience.

@@ -1,5 +1,7 @@
 # Bannou Schema Rules
 
+> ⛔ **FROZEN DOCUMENT** — Defines authoritative schema rules enforced across the codebase. AI agents MUST NOT add, remove, modify, or reinterpret any content without explicit user instruction. If you believe something is incorrect, report the concern and wait — do not "fix" it. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **MANDATORY**: AI agents and developers MUST review this document before creating or modifying ANY OpenAPI schema file. This rule is inviolable - see TENETS.md Tenet 1.
 
 This is the authoritative reference for all schema authoring in Bannou. It covers schema file types, generation pipeline, extension attributes, NRT compliance, validation keywords, type references, and common pitfalls.
@@ -13,7 +15,7 @@ This is the authoritative reference for all schema authoring in Bannou. It cover
 3. [Extension Attributes (x-*)](#extension-attributes-x-)
 4. [NRT (Nullable Reference Types) Rules](#nrt-nullable-reference-types-rules)
 5. [Schema Reference Hierarchy ($ref)](#schema-reference-hierarchy-ref)
-6. [Validation Keywords](#validation-keywords)
+6. [Configuration Validation Keywords](#configuration-validation-keywords)
 7. [Configuration Schema Rules](#configuration-schema-rules)
 8. [API Schema Rules](#api-schema-rules)
 9. [Event Schema Rules](#event-schema-rules)
@@ -54,7 +56,7 @@ Run `make generate` or `scripts/generate-all-services.sh` to execute the full pi
 | 3. Lifecycle Events | `x-lifecycle` in events.yaml | `schemas/Generated/{service}-lifecycle-events.yaml` |
 | 4. Common Events | `common-events.yaml` | `bannou-service/Generated/Events/CommonEventsModels.cs` |
 | 5. Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
-| 6. Client Events | `{service}-client-events.yaml` | `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
+| 6. Client Events | `common-client-events.yaml` + `{service}-client-events.yaml` | Common: `bannou-service/Generated/CommonClientEventsModels.cs`; Service: `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
 | 7. Meta Schemas | `{service}-api.yaml` | `schemas/Generated/{service}-api-meta.yaml` |
 | 8. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
 | 9. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` |
@@ -92,7 +94,6 @@ Running `generate-service.sh {service}` bootstraps an entire new plugin from scr
    - `{Service}Controller.Meta.cs` - runtime schema introspection
    - `{Service}ServiceConfiguration.cs` - typed config class
    - `{Service}PermissionRegistration.cs` - permission matrix
-   - `{Service}ServiceEvents.cs` - event consumer registration and handler stubs (one-time template from `x-event-subscriptions`, never overwritten)
 
 3. **Generates shared code** into `bannou-service/Generated/`:
    - `Models/{Service}Models.cs` - request/response models (inspect with `make print-models PLUGIN="service"`)
@@ -102,17 +103,18 @@ Running `generate-service.sh {service}` bootstraps an entire new plugin from scr
 
    > **Model Inspection**: Always use `make print-models PLUGIN="service"` to inspect model shapes. If it fails or generation hasn't been run, generate first — never guess at model definitions.
 
-4. **Creates template files** (one-time, never overwritten):
+4. **Creates template files** (one-time, never overwritten) into `plugins/lib-{service}/`:
    - `{Service}Service.cs` - business logic with TODO stubs for each endpoint
    - `{Service}ServiceModels.cs` - internal storage models placeholder
    - `{Service}ServicePlugin.cs` - plugin registration skeleton
+   - `{Service}ServiceEvents.cs` - event consumer registration and handler stubs (from `x-event-subscriptions`)
 
 5. **Calls `generate-tests.sh`** to create the test project:
    - `plugins/lib-{service}.tests/` directory, `.csproj`, `AssemblyInfo.cs`, `GlobalUsings.cs`
    - `{Service}ServiceTests.cs` template with basic constructor validation test
    - Adds `lib-{service}.tests` to `bannou-service.sln` via `dotnet sln add`
 
-**Not auto-generated**: `{Service}ServiceEvents.cs` must be created manually when the service subscribes to events via `x-event-subscriptions`. This file is a partial class of `{Service}Service` containing `RegisterEventConsumers` and handler methods.
+**One-time template**: `{Service}ServiceEvents.cs` is generated once by `generate-event-subscriptions.sh` into the plugin root (not `Generated/`) when the service has `x-event-subscriptions`. It is never overwritten if it already exists. After initial generation, this file is manually maintained as a partial class of `{Service}Service` containing `RegisterEventConsumers` and handler methods.
 
 **Prerequisites**: Before running `generate-service.sh`, create the schema files:
 - `schemas/{service}-api.yaml` (required)
@@ -160,6 +162,8 @@ paths:
 
 **With state requirements**: Add `states: { game-session: in_lobby }` to require both role AND state.
 
+> **Choosing the right level**: This section defines the **syntax** of `x-permissions`. For guidance on **which** permission level to choose for each endpoint and why, see [ENDPOINT-PERMISSION-GUIDELINES.md](ENDPOINT-PERMISSION-GUIDELINES.md).
+
 ### x-lifecycle (Lifecycle Event Generation)
 
 Defined in `{service}-events.yaml`, generates CRUD lifecycle events automatically.
@@ -195,6 +199,8 @@ x-lifecycle:
 
 All three events carry the complete model so consumers can react without needing a follow-up lookup.
 
+All three generated events use `allOf` with `BaseServiceEvent` (producing C# inheritance and `IBannouEvent` implementation) and include an `eventName` property with a `default:` value matching the event's topic (e.g., `account.created`). This is automatic — no manual configuration is needed for lifecycle events to integrate with message taps and generic event processing.
+
 If `resource_mapping` is specified, each generated event includes `x-resource-mapping` for Puppetmaster watch subscriptions.
 
 **NEVER manually define `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent`** - use `x-lifecycle` instead.
@@ -209,6 +215,8 @@ Defined on **event schema definitions** in `{service}-events.yaml`, declares how
 
 ```yaml
 PersonalityUpdatedEvent:
+  allOf:
+    - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
   type: object
   additionalProperties: false
   description: Published when character personality traits change
@@ -217,16 +225,12 @@ PersonalityUpdatedEvent:
     resource_id_field: characterId       # JSON field containing resource ID
     source_type: character-personality   # Source type identifier for filtering
     is_deletion: false                   # Optional (inferred from event name ending in "Deleted")
-  required: [eventId, timestamp, characterId]
+  required: [eventName, eventId, timestamp, characterId]
   properties:
-    eventId:
+    eventName:
       type: string
-      format: uuid
-      description: Unique event identifier
-    timestamp:
-      type: string
-      format: date-time
-      description: When the event occurred
+      default: personality.updated
+      description: 'Event type identifier: personality.updated'
     characterId:
       type: string
       format: uuid
@@ -292,10 +296,10 @@ x-service-layer: GameFoundation  # L2 service
 | Value | Layer | Description | Example Services |
 |-------|-------|-------------|------------------|
 | `Infrastructure` | L0 | Core infrastructure plugins | state, messaging, mesh, telemetry |
-| `AppFoundation` | L1 | Required for any deployment | account, auth, connect, permission, contract, resource |
-| `GameFoundation` | L2 | Required for game deployments | realm, character, species, location, currency, item, inventory |
-| `AppFeatures` | L3 | Optional app capabilities | asset, orchestrator, documentation, website |
-| `GameFeatures` | L4 | Optional game capabilities | actor, behavior, matchmaking, analytics, achievement |
+| `AppFoundation` | L1 | Required for any deployment | account, auth, chat, connect, permission, contract, resource |
+| `GameFoundation` | L2 | Required for game deployments | realm, character, species, location, currency, item, inventory, etc. |
+| `AppFeatures` | L3 | Optional app capabilities | asset, orchestrator, documentation, website, voice, broadcast |
+| `GameFeatures` | L4 | Optional game capabilities | behavior, matchmaking, analytics, achievement, escrow |
 | `Extensions` | L5 | Third-party/meta-services | Custom plugins that need full stack |
 
 **Numeric values also accepted** (for programmatic generation): `0` = Infrastructure, `100` = AppFoundation, `200` = GameFoundation, `300` = AppFeatures, `400` = GameFeatures, `500` = Extensions.
@@ -342,9 +346,9 @@ info:
 - `cleanup.endpoint`: Service endpoint called during cleanup
 - `cleanup.payloadTemplate`: JSON template with `{{resourceId}}` placeholder
 
-**Generated output** (`lib-{service}/Generated/{Service}ReferenceTracking.Generated.cs`):
+**Generated output** (`lib-{service}/Generated/{Service}ReferenceTracking.cs`):
 - Helper methods: `Register{Target}ReferenceAsync()`, `Unregister{Target}ReferenceAsync()`
-- Cleanup callback registration via `IStartupTask`
+- Cleanup callback registration via `RegisterResourceCleanupCallbacksAsync()` static method, called from plugin startup (`OnRunningAsync`)
 
 ### x-resource-lifecycle (Resource Cleanup Configuration)
 
@@ -391,7 +395,7 @@ info:
 | 10-30 | Extension data (personality, history, encounters) |
 | 50-100 | Optional/derived data (quests, storylines) |
 
-**Eligibility (T29 — mandatory)**: Compression callbacks are for **entity identity and narrative data** consumed by behavior expressions and narrative generation (the content flywheel). They MUST NOT be used for game-mechanical operational state (proficiency levels, known recipes, rankings, statistics, inventory snapshots). If a service needs persistent capability tracking, it MUST own that state through Seed (growth), Collection (milestone unlocks), or License (explicit gates) — those L2 primitives handle their own archival through their own compression callbacks. See T29 "The Archive Shape of T29" in `FOUNDATION.md` for full rationale.
+**Eligibility**: Compression callbacks are for entity identity and narrative data only — not game-mechanical operational state. See [FOUNDATION.md T29](tenets/FOUNDATION.md) for the full eligibility rules.
 
 **Validation**: Generator validates that `compressEndpoint` and `decompressEndpoint` (if specified) exist in the schema's paths.
 
@@ -432,22 +436,20 @@ Defined on **individual event schema definitions** in `{service}-events.yaml`, d
 
 ```yaml
 EncounterRecordedEvent:
+  allOf:
+    - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
   type: object
   additionalProperties: false
   description: Published when a new encounter is recorded
   x-event-template:
     name: encounter_recorded    # Template name for ABML emit_event
     topic: encounter.recorded   # Event topic (RabbitMQ routing key)
-  required: [eventId, timestamp, encounterId]
+  required: [eventName, eventId, timestamp, encounterId]
   properties:
-    eventId:
+    eventName:
       type: string
-      format: uuid
-      description: Unique event identifier
-    timestamp:
-      type: string
-      format: date-time
-      description: When the event occurred
+      default: encounter.recorded
+      description: 'Event type identifier: encounter.recorded'
     encounterId:
       type: string
       format: uuid
@@ -462,9 +464,11 @@ EncounterRecordedEvent:
 
 **Generated output** (`lib-{service}/Generated/{Service}EventTemplates.cs`): Static class with `EventTemplate` fields and `RegisterAll(IEventTemplateRegistry)` method. Call from `OnRunningAsync`.
 
-### x-controller-only (Manual Controller Implementation)
+### x-controller-only and x-manual-implementation (Manual Controller Endpoints)
 
-Defined on **individual operations** in `{service}-api.yaml`, marks endpoints that require a manually-written controller method instead of the auto-generated pass-through to the service interface. The endpoint is excluded from `I{Service}Service` and the generated implementation stub; the developer must provide a partial `{Service}Controller.cs` class with the method override.
+Both flags mark individual operations in `{service}-api.yaml` as requiring manual controller implementation. **Both** exclude the endpoint from `I{Service}Service` (via `generate-interface.sh`) and the generated `{Service}Service.cs` implementation stub (via `generate-implementation.sh`). They differ only in what the NSwag Liquid template (`Controller.liquid`) generates for the controller class.
+
+**`x-controller-only`** — NSwag generates an `abstract` method with its own route and parameter signature. The controller class becomes `abstract class {Service}ControllerBase`. The developer provides a concrete `{Service}Controller` class that inherits from the base and uses `override` to implement the method with matching NSwag parameter types.
 
 ```yaml
 paths:
@@ -474,11 +478,34 @@ paths:
       summary: WebSocket upgrade endpoint
 ```
 
-**When to use**: Endpoints that need direct access to `HttpContext` (WebSocket upgrade, file streaming, OAuth redirects) rather than the standard request/response model.
+**`x-manual-implementation`** — NSwag generates nothing (comment placeholder only). The controller class remains `partial class {Service}Controller`. The developer adds methods in a manual partial class with fully custom routes, HTTP methods, and parameter signatures.
 
-**Legacy alias**: `x-manual-implementation: true` has the same effect and is still supported in `auth-api.yaml` and `documentation-api.yaml`. Prefer `x-controller-only` for new schemas.
+```yaml
+paths:
+  /documentation/view/{slug}:
+    get:
+      x-manual-implementation: true
+      summary: View documentation page in browser
+```
 
-**Generated behavior**: `generate-controller.sh` detects the flag and creates a partial controller template if one doesn't exist. `generate-interface.sh` and `generate-implementation.sh` skip the marked endpoint.
+#### Behavioral Difference Summary
+
+| Aspect | `x-controller-only` | `x-manual-implementation` |
+|--------|---------------------|---------------------------|
+| `I{Service}Service` | Excluded | Excluded |
+| `{Service}Service.cs` stub | Excluded | Excluded |
+| Controller class declaration | `abstract class {Service}ControllerBase` | `partial class {Service}Controller` |
+| Controller method | `public abstract` with NSwag signature | Comment only (no method) |
+| Manual class pattern | Inherits from Base, uses `override` | Partial class, defines own routes/params |
+| NSwag parameter types | Must match generated types | Fully custom |
+
+#### When to Use Which
+
+Use **`x-controller-only`** when the endpoint needs direct `HttpContext` access but its parameters can be expressed in OpenAPI (header parameters, standard request body). The generated abstract method provides route, HTTP method, and parameter binding; the override provides the implementation. Used by `connect-api.yaml` (WebSocket upgrade) and `auth-api.yaml` (OAuth redirect).
+
+Use **`x-manual-implementation`** when the endpoint's parameter model cannot be expressed through NSwag — typically browser-facing GET endpoints with path parameters, query strings, and non-JSON content types (HTML, markdown). The manual partial class defines everything from scratch. Used by `documentation-api.yaml` (browser-facing GET endpoints).
+
+**These flags are NOT interchangeable.** Switching from `x-manual-implementation` to `x-controller-only` changes the generated class from `partial` to `abstract` with a `Base` suffix, which breaks existing manual controller classes that use the partial pattern.
 
 ### x-from-authorization (Authorization Header Parameter)
 
@@ -522,57 +549,25 @@ MatchFoundEvent:
 
 **Used by generators**: `generate-client-event-groups.py` (groups events by service for typed subscription API), `generate-client-event-registry.py` (C# type→eventName mapping), `generate-client-event-registry-ts.py` (TypeScript registry), `generate-unreal-types.py` (Unreal Engine event types).
 
-**Related**: `x-internal: true` can be added alongside `x-client-event: true` to mark events that are used internally by the Connect/Permission infrastructure but should not be exposed to game client SDKs (e.g., `CapabilityManifestEvent`).
+**Related**: `x-internal: true` can be added alongside `x-client-event: true` to mark events that are used internally by the Connect/Permission infrastructure but should not be exposed to game client SDKs (e.g., `CapabilityManifestClientEvent`).
 
 ### x-sdk-type (External SDK Type Mapping)
 
-Defined on **schema objects** in `{service}-api.yaml`, maps an OpenAPI schema type to an existing C# type from an external SDK. Instead of generating a duplicate C# class, NSwag excludes the type and the generated code references the SDK type directly.
+Defined on **schema objects** in `{service}-api.yaml`, maps an OpenAPI schema type to an existing C# type from the Core SDK (`BeyondImmersion.Bannou.Core`). Instead of generating a duplicate C# class, NSwag excludes the type and the generated code references the SDK type directly.
 
 ```yaml
 components:
   schemas:
-    PitchClass:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass
+    EntityType:
+      x-sdk-type: BeyondImmersion.Bannou.Core.EntityType
       type: string
-      enum: [C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B]
-      description: Musical pitch class from MusicTheory SDK
+      enum: [Account, Character, Realm, Location]
+      description: Core entity type from Bannou Core SDK
 ```
 
-**Restriction: Core SDK types only.** `x-sdk-type` may ONLY reference types from the Core SDK (`BeyondImmersion.Bannou.Core`). Domain-specific SDKs (MusicTheory, StorylineTheory, BehaviorCompiler, etc.) must NOT be referenced via `x-sdk-type`, because doing so forces `bannou-service.csproj` to take a `ProjectReference` on the domain SDK, which leaks domain-specific concepts into the shared project that all plugins depend on. Instead, wrapping plugins should:
-
-1. **Define their own types** in the service API schema (duplicating/mirroring the SDK types)
-2. **Generate standard models** via the normal NSwag pipeline
-3. **Map between generated and SDK types** at the plugin boundary using a static `SdkTypeMapper` class in `{Service}ServiceModels.cs`
-
-This two-step approach keeps bannou-service clean (it only knows about its own generated types) and makes SDK version changes a plugin-internal concern rather than a cross-cutting dependency.
-
-**Currently used by**: `music-api.yaml` (MusicTheory SDK types -- legacy usage pending migration to the plugin-local type mapping pattern described above).
+**Restriction: Core SDK types only.** `x-sdk-type` may ONLY reference types from the Core SDK (`BeyondImmersion.Bannou.Core`). Domain-specific SDKs must define their own types in the service API schema and map between generated and SDK types at the plugin boundary.
 
 **Generated behavior**: `extract-sdk-types.py` scans for `x-sdk-type` markers and outputs exclusion lists. `generate-models.sh` and `generate-config.sh` consume these to exclude SDK types from NSwag generation and add the SDK namespace `using` statements.
-
-### Service Hierarchy Compliance
-
-The x-references pattern ensures compliance with the service hierarchy:
-
-1. **Consumer services (L3/L4)** declare `x-references` - they "know about" foundational resources
-2. **Foundational services (L2)** declare `x-resource-lifecycle` - they don't know about consumers
-3. **lib-resource (L1)** uses opaque string identifiers - no coupling to higher layers
-
-```
-┌───────────────────────────────────────────────────────────────┐
-│ L4: Game Features (actor, scene, etc.)                        │
-│   → x-references: target: "character" (declares dependency)   │
-│   → Calls: IResourceClient.Register/UnregisterReferenceAsync  │
-├───────────────────────────────────────────────────────────────┤
-│ L2: Game Foundation (character, realm, etc.)                  │
-│   → x-resource-lifecycle: gracePeriodSeconds, cleanupPolicy   │
-│   → Calls: /resource/check, /resource/cleanup/execute         │
-├───────────────────────────────────────────────────────────────┤
-│ L1: App Foundation (lib-resource)                             │
-│   → Maintains refcounts, executes cleanup callbacks           │
-│   → Uses opaque strings for resourceType/sourceType           │
-└───────────────────────────────────────────────────────────────┘
-```
 
 ---
 
@@ -598,7 +593,7 @@ CreateAccountRequest:
       description: User's email address
 ```
 
-**Generates**: `[Required] [JsonRequired] public string Email { get; set; } = default!;`
+**Generates**: `[Required(AllowEmptyStrings = true)] [JsonRequired] public string Email { get; set; } = default!;`
 
 ### Rule 2: Optional Reference Types → `nullable: true`
 
@@ -611,7 +606,9 @@ displayName:
   description: Optional display name
 ```
 
-**Generates**: `public string? DisplayName { get; set; }`
+**Generates**: `public string? DisplayName { get; set; } = default!;`
+
+**Note**: NSwag adds `= default!;` to reference type properties in API models (both required and nullable). This is a NSwag behavior — the `= default!` initializer suppresses NRT warnings but does not affect runtime behavior. Value types (`int`, `bool`, `Guid`) do not get `= default!`. Configuration classes (generated by a different script) do NOT include `= default!` on nullable properties.
 
 **WITHOUT `nullable: true`**, NSwag generates `string DisplayName = default!;` which **HIDES** null at runtime.
 
@@ -636,37 +633,18 @@ Only mark value types `nullable: true` if the absence of a value is semantically
 
 ## Schema Reference Hierarchy ($ref)
 
-NSwag processes each schema file independently. When multiple schemas define the same type, duplicate C# classes are generated, causing compilation errors. Follow this hierarchy:
-
-```
-                         ┌─────────────────┐
-                         │   common-api    │  ← System-wide shared types (EntityType, etc.)
-                         │     .yaml       │    Available to ALL schemas
-                         └────────┬────────┘
-                                  │ $ref allowed from anywhere
-                         ┌────────┴────────┐
-                         │  {service}-api  │  ← Service-specific shared types (enums, models)
-                         │     .yaml       │
-                         └────────┬────────┘
-                                  │ $ref allowed
-        ┌─────────────────────────┼─────────────────────────┐
-        ▼                         ▼                         ▼
-┌───────────────┐       ┌─────────────────┐       ┌──────────────────┐
-│ {service}     │       │ {service}       │       │ {service}        │
-│ -events.yaml  │       │ -configuration  │       │ -lifecycle       │
-│               │       │ .yaml           │       │ -events.yaml     │
-└───────────────┘       └─────────────────┘       └──────────────────┘
-```
+NSwag processes each schema file independently. When multiple schemas define the same type, duplicate C# classes are generated, causing compilation errors. Follow the reference rules below.
 
 ### Reference Rules
 
-All `$ref` paths are sibling-relative (same directory). Never use `../` prefixes.
+All `$ref` paths in manually authored schemas (in `schemas/`) are sibling-relative (same directory). Never use `../` prefixes in hand-written schemas. (Auto-generated schemas in `schemas/Generated/` use `../` to reference parent directory files — this is expected and correct.)
 
 | Source Schema | Can Reference | Path Format |
 |--------------|---------------|-------------|
 | `*-api.yaml` | `common-api.yaml` | `common-api.yaml#/...` |
 | `*-events.yaml` | Same service's `-api.yaml`, `common-api.yaml`, `common-events.yaml` | `{service}-api.yaml#/...` |
 | `*-configuration.yaml` | Same service's `-api.yaml`, `common-api.yaml` | `{service}-api.yaml#/...` |
+| `*-client-events.yaml` | Same service's `-api.yaml`, `common-client-events.yaml` | `common-client-events.yaml#/...` |
 
 ### Common Shared Files
 
@@ -681,7 +659,7 @@ All `$ref` paths are sibling-relative (same directory). Never use `../` prefixes
 DefaultCompressionType:
   $ref: 'save-load-api.yaml#/components/schemas/CompressionType'
   env: SAVE_LOAD_DEFAULT_COMPRESSION_TYPE
-  default: GZIP
+  default: Gzip
   description: Default compression algorithm
 
 # Events referencing API type (actor-events.yaml)
@@ -693,16 +671,16 @@ properties:
 
 ---
 
-## Validation Keywords
+## Configuration Validation Keywords
 
-OpenAPI 3.0.4 validation keywords generate `[ConfigX]` attributes in C#, validated at service startup.
+OpenAPI 3.0.4 validation keywords in **configuration schemas** (`*-configuration.yaml`) generate `[ConfigX]` attributes in C#, validated at service startup. API schemas (`*-api.yaml`) use standard `[Range]`, `[StringLength]`, etc. attributes via NSwag — those are NOT covered here.
 
 | Keyword | Applies To | Schema Example | Generated Attribute |
 |---------|------------|----------------|---------------------|
 | `minimum` | number/integer | `minimum: 1` | `[ConfigRange(Minimum = 1)]` |
 | `maximum` | number/integer | `maximum: 100` | `[ConfigRange(Maximum = 100)]` |
-| `exclusiveMinimum` | boolean | `exclusiveMinimum: true` | `[ConfigRange(..., ExclusiveMinimum = true)]` |
-| `exclusiveMaximum` | boolean | `exclusiveMaximum: true` | `[ConfigRange(..., ExclusiveMaximum = true)]` |
+| `exclusiveMinimum` | number/integer | `exclusiveMinimum: true` | `[ConfigRange(..., ExclusiveMinimum = true)]` |
+| `exclusiveMaximum` | number/integer | `exclusiveMaximum: true` | `[ConfigRange(..., ExclusiveMaximum = true)]` |
 | `minLength` | string | `minLength: 32` | `[ConfigStringLength(MinLength = 32)]` |
 | `maxLength` | string | `maxLength: 256` | `[ConfigStringLength(MaxLength = 256)]` |
 | `pattern` | string (regex) | `pattern: "^https?://"` | `[ConfigPattern(@"^https?://")]` |
@@ -752,7 +730,7 @@ Reference enum types from the service's API schema:
 DefaultCompression:
   $ref: 'my-service-api.yaml#/components/schemas/CompressionType'
   env: MY_SERVICE_DEFAULT_COMPRESSION
-  default: GZIP
+  default: Gzip
   description: Default compression algorithm
 ```
 
@@ -946,28 +924,27 @@ Client event `eventName` values (the `default:` on the `eventName` property) fol
 
 ### Custom Service Event Structure (Non-Lifecycle)
 
-Custom service events (events NOT generated by `x-lifecycle`) use a **flat structure** — they define `eventId` and `timestamp` inline. They do NOT use `allOf` with `BaseServiceEvent`.
+Custom service events (events NOT generated by `x-lifecycle`) MUST use `allOf` composition with `BaseServiceEvent` from `common-events.yaml`. This produces C# class inheritance (`: BaseServiceEvent`), which provides `IBannouEvent` interface implementation, `EventName` for message tap forwarding, and integration with generic event processing infrastructure.
 
 ```yaml
-# In {service}-events.yaml — custom event (flat, no inheritance)
+# In {service}-events.yaml — custom event (allOf with BaseServiceEvent)
 ContractProposedEvent:
+  allOf:
+    - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
   type: object
   additionalProperties: false
   description: Event published when a contract is proposed to parties
   required:
+    - eventName
     - eventId
     - timestamp
     - contractId
     - templateId
   properties:
-    eventId:
+    eventName:
       type: string
-      format: uuid
-      description: Unique event identifier
-    timestamp:
-      type: string
-      format: date-time
-      description: When the event occurred
+      default: contract.proposed
+      description: 'Event type identifier: contract.proposed'
     contractId:
       type: string
       format: uuid
@@ -979,12 +956,16 @@ ContractProposedEvent:
 ```
 
 **Key rules**:
-- Define `eventId` (uuid) and `timestamp` (date-time) directly on each event
+- MUST use `allOf` with `$ref` to `BaseServiceEvent` — this produces C# inheritance and `IBannouEvent` implementation
+- MUST include `eventName` with a `default:` value matching the event's topic — this provides event type identification for message taps and generic processing
+- MUST include `eventId` and `timestamp` in the `required` array (inherited from `BaseServiceEvent`, but required must be redeclared)
+- Do NOT define `eventId` or `timestamp` as properties — they are inherited from `BaseServiceEvent`
 - Use `additionalProperties: false`
 - Reference complex types via `$ref` to the service's `-api.yaml` (per mandatory type reuse)
-- Do NOT use `eventName` (that is for client events only)
 
-**Note**: `BaseServiceEvent` in `common-events.yaml` exists as a shared definition for the C# `IBannouEvent` interface, but custom service events do not compose it via `allOf` in their YAML definitions.
+**Why `allOf` is required**: Without `allOf`, NSwag generates a standalone class with no inheritance. The class will NOT implement `IBannouEvent`, will have no `EventName` property, and will be invisible to message taps (`IMessageTap`) and generic event processing pipelines.
+
+**Note on `eventName`**: Service events use `eventName` via `IBannouEvent.EventName` for generic event processing and message tap forwarding. This is a DIFFERENT purpose than client events, which use `eventName` for Connect service whitelist routing. Both are valid uses of the same property name.
 
 ### Client Event Inheritance Structure
 
@@ -1008,7 +989,7 @@ ChatMessageReceivedEvent:
   properties:
     eventName:
       type: string
-      default: "chat.message_received"
+      default: "chat.message.received"
       description: Fixed event type identifier
     roomId:
       type: string
@@ -1055,7 +1036,7 @@ x-state-stores:
     enableSearch: true
 ```
 
-**Entry key**: Kebab-case name (e.g., `auth-statestore`, `chat-rooms-cache`, `actor-pool-nodes`). This becomes the constant name in `StateStoreDefinitions.cs`.
+**Entry key**: Kebab-case name (e.g., `auth-statestore`, `chat-rooms-cache`, `actor-pool-nodes`). This is transformed into a PascalCase constant name in `StateStoreDefinitions.cs`.
 
 | Property | Required | Description |
 |----------|----------|-------------|
@@ -1132,7 +1113,7 @@ enum: [jsonPathEquals, jsonPathNotEquals, greaterThan]
 enum: [pool-per-type, shared-pool, auto-scale]
 ```
 
-**Why PascalCase**: BannouJson serializes C# enum members verbatim (no naming policy). The NSwag generation pipeline converts snake_case schema values to PascalCase C# members via a post-processing step, meaning the wire format is ALREADY PascalCase regardless of what the schema says. Using PascalCase in schemas eliminates the mismatch between schema values and actual wire values, prevents bugs from hardcoded string comparisons against schema values, and establishes one convention instead of five.
+**Why PascalCase**: BannouJson serializes C# enum members verbatim (no naming policy). NSwag generates `[EnumMember(Value = @"...")]` attributes that map schema values to C# member names. A post-processing step (`postprocess_enum_pascalcase` in `scripts/common.sh`) fixes NSwag's own underscore-style member naming (e.g., `Value_with_underscores` → `ValueWithUnderscores`), but this is a fixup for NSwag behavior, not a schema-to-PascalCase converter. Using PascalCase in schemas eliminates the mismatch between schema values and actual wire values, prevents bugs from hardcoded string comparisons against schema values, and establishes one convention instead of five.
 
 **Inline enums follow the same rule**:
 ```yaml
@@ -1203,15 +1184,26 @@ x-lifecycle:
 
 ## NRT Quick Reference
 
+**API models** (generated by NSwag from `*-api.yaml`):
+
 | Scenario | Schema Pattern | Generated C# |
 |----------|---------------|--------------|
-| Required request field | `required: [field]` | `[Required] string Field = default!;` |
-| Optional request string | `nullable: true` | `string? Field` |
+| Required request field | `required: [field]` | `[Required(AllowEmptyStrings = true)] [JsonRequired] string Field = default!;` |
+| Optional request string | `nullable: true` | `string? Field = default!;` |
 | Optional request int | `nullable: true` | `int? Field` |
 | Int with default | `default: 10` | `int Field = 10;` |
 | Bool with default | `default: true` | `bool Field = true;` |
-| Response field always set | `required: [field]` | `[Required] string Field = default!;` |
-| Response field sometimes null | `nullable: true` | `string? Field` |
+| Response field always set | `required: [field]` | `[Required(AllowEmptyStrings = true)] [JsonRequired] string Field = default!;` |
+| Response field sometimes null | `nullable: true` | `string? Field = default!;` |
+
+**Configuration classes** (generated by `generate-config.sh` from `*-configuration.yaml`):
+
+| Scenario | Schema Pattern | Generated C# |
+|----------|---------------|--------------|
+| Optional config string | `nullable: true` | `string? Field` (no `= default!`) |
+| Required config string | `required: [field]` | `string Field` |
+
+Note: Configuration generation uses a different script than API model generation. The key difference is that configuration classes do NOT add `= default!` initializers to nullable properties.
 
 ---
 
@@ -1225,20 +1217,20 @@ Before submitting schema changes, verify:
 
 **Configuration**: Every property has `env` with `{SERVICE}_{PROPERTY}` naming. No `type: object`. Enums via `$ref`. Single-line descriptions only.
 
-**Events**: Only canonical definitions (no cross-service `$ref`). Lifecycle events via `x-lifecycle`. Subscriptions via `x-event-subscriptions`. All published events listed in `x-event-publications` (lifecycle + custom).
+**Events**: Only canonical definitions (no cross-service `$ref`). Lifecycle events via `x-lifecycle`. Custom events MUST use `allOf` with `BaseServiceEvent` (produces C# inheritance, `IBannouEvent`, `EventName`). Custom events MUST include `eventName` with `default:` value. Subscriptions via `x-event-subscriptions`. All published events listed in `x-event-publications` (lifecycle + custom).
 
 **Enum Values**: ALL enum values use PascalCase (`TwoParty`, not `two_party`, `TWO_PARTY`, `twoParty`, or `two-party`). No exceptions.
 
-**Type References**: ALL enums/complex objects use `$ref` to `-api.yaml`. x-lifecycle model fields use `$ref` for objects/enums. All `$ref` paths sibling-relative (no `../`).
+**Type References**: ALL enums/complex objects use `$ref` to `-api.yaml`. x-lifecycle model fields use `$ref` for objects/enums. All `$ref` paths sibling-relative in hand-written schemas (no `../`; Generated/ schemas use `../` by design).
 
 **x-references**: Consumer services declare `x-references` with `target`, `sourceType`, `field`, `cleanup`. `cleanup.endpoint` matches an actual endpoint. `target` matches foundational service's `x-resource-lifecycle.resourceType`.
 
 **x-resource-lifecycle**: Foundational services with deletable resources declare it. `cleanupPolicy` is `BEST_EFFORT` or `ALL_REQUIRED`.
+
+**x-resource-mapping**: Events with `x-resource-mapping` have valid `resource_type`, `resource_id_field`, and `source_type`. `resource_id_field` matches an actual property on the event. Lifecycle events use `resource_mapping` in `x-lifecycle` instead.
 
 **x-compression-callback**: `compressEndpoint` exists in paths. `priority` set appropriately (0 base, 10-30 extension, 50-100 optional). Plugin calls generated `*CompressionCallbacks.RegisterAsync()`.
 
 **x-event-template**: `name` is unique across services. Plugin calls generated `*EventTemplates.RegisterAll()`. No manual `EventTemplate` definitions remain.
 
 **Metadata Bags**: Any property with `additionalProperties: true` includes description stating "Client-only metadata. No Bannou plugin reads specific keys from this field by convention." No cross-service data contracts via metadata bags. No documentation specifying convention-based keys for other services to read.
-
-**Resource Cleanup Contract (Producer Side)**: When your service is the `target` of `x-references`, your delete flow MUST: inject `IResourceClient`, call `/resource/check` before deletion, call `/resource/cleanup/execute` if references exist, handle cleanup failure (return `Conflict`), only delete after cleanup succeeds. **FORBIDDEN**: Adding event handlers that duplicate cleanup callbacks, deleting without `ExecuteCleanupAsync`, assuming event-based cleanup is equivalent.

@@ -232,6 +232,33 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 
 ---
 
+## ⛔ REFERENCE DOCUMENTS ARE FROZEN ⛔
+
+**The `docs/reference/` directory contains the authoritative rules, tenets, and design principles for the entire codebase. These documents are NEVER to be modified by an agent without EXPLICIT user instructions to change specific rules or content.**
+
+**What this covers**: ALL files in `docs/reference/` and `docs/reference/tenets/`:
+- **Tenets**: `TENETS.md`, `tenets/FOUNDATION.md`, `tenets/IMPLEMENTATION-BEHAVIOR.md`, `tenets/IMPLEMENTATION-DATA.md`, `tenets/QUALITY.md`, `tenets/TESTING-PATTERNS.md`, `tenets/IMPLEMENTATION.md`
+- **Rules**: `SCHEMA-RULES.md`, `ENDPOINT-PERMISSION-GUIDELINES.md`
+- **Architecture**: `SERVICE-HIERARCHY.md`, `ORCHESTRATION-PATTERNS.md`
+- **Vision**: `VISION.md`, `PLAYER-VISION.md`
+- **Templates & Reference**: `DEEP-DIVE-TEMPLATE.md`, `IMPLEMENTATION-MAP-TEMPLATE.md`, `PLAN-EXAMPLE.md`, `COMPRESSION-CHARTS.md`
+
+**Why this rule exists**: An agent wrote an incorrect rule into SCHEMA-RULES.md stating that service events should NOT use `allOf` with `BaseServiceEvent`. This was factually wrong — NSwag requires `allOf` for C# inheritance. But because it was written into an authoritative document, other agents enforced it as inviolable law, systematically "fixing" dozens of event schemas to comply with the bad rule. The protective guardrails that prevent casual modification also prevented agents from correcting the error. Bad rules were permanently enshrined and actively enforced, causing cascading damage across the codebase.
+
+**The fundamental problem**: Unlike code, where bad changes are caught by compilation or tests, **a bad rule change is invisible**. It becomes indistinguishable from intentional rules. Every future agent reads it, trusts it, and enforces it. A single incorrect sentence in TENETS.md can corrupt dozens of services over weeks before a human notices. The damage is multiplicative and silent.
+
+**Rules**:
+1. **NEVER modify any file in `docs/reference/` or `docs/reference/tenets/`** unless the user explicitly says "change the rule to...", "update the tenet...", or similar direct instruction to change rule content
+2. **NEVER "fix" what you think is wrong** in a reference document — present your concern and explain why you think the document is incorrect, then wait for explicit approval
+3. **NEVER add new tenets, rules, exceptions, or carve-outs** — these require explicit human approval
+4. **NEVER remove, weaken, or reinterpret existing rules** — if you believe a rule is wrong, report it as a finding and wait
+5. **If you find an inconsistency** between a reference document and the codebase: the document is presumed correct and the code is presumed wrong. Present both to the user and wait for direction.
+6. **If you must propose a rule change**: present the EXACT proposed change as a diff, explain WHY, cite the evidence, and wait for explicit approval
+
+**The reference documents are correct until proven otherwise. When in doubt, enforce what the document says, not what you think it should say.**
+
+---
+
 ## ⛔ NO CONVENTION-BASED CROSS-SERVICE DATA SHARING ⛔
 
 **Follow T29 (No Metadata Bag Contracts) in `docs/reference/tenets/FOUNDATION.md` TO THE LETTER.** T29 covers the eight failures of metadata bag contracts, the only two legitimate uses for `additionalProperties: true`, the correct service-owned binding pattern, per-layer scenario guidance, and detection/enforcement rules. It is comprehensive and authoritative.

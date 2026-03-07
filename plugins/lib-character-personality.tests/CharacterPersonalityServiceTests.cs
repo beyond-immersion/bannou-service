@@ -1034,10 +1034,11 @@ public class CharacterPersonalityServiceTests
         // Act
         var endpoints = CharacterPersonalityPermissionRegistration.GetEndpoints();
 
-        // Assert - All 12 endpoints have x-permissions defined
-        // Includes 2 compression endpoints: get-compress-data and restore-from-archive
+        // Assert - Only endpoints with non-empty x-permissions (WebSocket-exposed) are registered.
+        // Most character-personality endpoints have x-permissions: [] (service-to-service only).
+        // 2 endpoints have role requirements: setPersonality (developer), setCombatPreferences (developer)
         Assert.NotNull(endpoints);
-        Assert.Equal(12, endpoints.Count);
+        Assert.Equal(2, endpoints.Count);
     }
 
     [Fact]
@@ -1046,14 +1047,9 @@ public class CharacterPersonalityServiceTests
         // Act
         var endpoints = CharacterPersonalityPermissionRegistration.GetEndpoints();
 
-        // Assert expected endpoints exist (only those with x-permissions in schema)
-        Assert.Contains(endpoints, e => e.Path == "/character-personality/get");
+        // Assert - only set and set-combat have non-empty x-permissions (developer role)
         Assert.Contains(endpoints, e => e.Path == "/character-personality/set");
-        Assert.Contains(endpoints, e => e.Path == "/character-personality/delete");
-        Assert.Contains(endpoints, e => e.Path == "/character-personality/get-combat");
         Assert.Contains(endpoints, e => e.Path == "/character-personality/set-combat");
-        Assert.Contains(endpoints, e => e.Path == "/character-personality/delete-combat");
-        // Note: batch-get and evolve endpoints have no x-permissions, so not registered
     }
 
     [Fact]

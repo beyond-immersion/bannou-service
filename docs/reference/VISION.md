@@ -1,5 +1,7 @@
 # Bannou / Arcadia: The Vision
 
+> ⛔ **FROZEN DOCUMENT** — Defines strategic vision and design principles. AI agents MUST NOT modify any content without explicit user instruction. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Purpose**: This document distills the ultimate objectives, system interdependencies, and non-negotiable design principles of the Bannou platform and its flagship game, Arcadia. It exists to prime agents and humans alike with the "big picture" so that implementation work -- audits, tickets, cross-cutting concerns -- never loses sight of why these systems exist and how they must work together.
 >
 > **Sources**: Arcadia planning documentation (arcadia-kb), Bannou planning documentation (docs/planning), Bannou guides (docs/guides), Bannou plugin deep dives (docs/plugins).

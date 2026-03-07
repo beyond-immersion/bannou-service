@@ -35,16 +35,24 @@ using System = global::System;
 /// Published when a new save version is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveCreatedEvent : BaseServiceEvent
+public partial class SaveCreatedEvent
 {
 
     /// <summary>
-    /// Event type identifier
+    /// Unique identifier for this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.created";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the save was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Slot identifier
@@ -120,16 +128,24 @@ public partial class SaveCreatedEvent : BaseServiceEvent
 /// Published when a save is loaded
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveLoadedEvent : BaseServiceEvent
+public partial class SaveLoadedEvent
 {
 
     /// <summary>
-    /// Event type identifier
+    /// Unique identifier for this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.loaded";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the save was loaded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Slot identifier
@@ -174,16 +190,24 @@ public partial class SaveLoadedEvent : BaseServiceEvent
 /// Published when a save is migrated to a new schema version
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveMigratedEvent : BaseServiceEvent
+public partial class SaveMigratedEvent
 {
 
     /// <summary>
-    /// Event type identifier
+    /// Unique identifier for this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.migrated";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the migration occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Slot identifier
@@ -246,16 +270,24 @@ public partial class SaveMigratedEvent : BaseServiceEvent
 /// Published when a version is pinned as checkpoint
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VersionPinnedEvent : BaseServiceEvent
+public partial class VersionPinnedEvent
 {
 
     /// <summary>
-    /// Event type identifier
+    /// Unique identifier for this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.version-pinned";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the version was pinned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Slot identifier
@@ -302,16 +334,24 @@ public partial class VersionPinnedEvent : BaseServiceEvent
 /// Published when a version is unpinned
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VersionUnpinnedEvent : BaseServiceEvent
+public partial class VersionUnpinnedEvent
 {
 
     /// <summary>
-    /// Event type identifier
+    /// Unique identifier for this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.version-unpinned";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the version was unpinned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Slot identifier
@@ -358,16 +398,24 @@ public partial class VersionUnpinnedEvent : BaseServiceEvent
 /// Published when a version is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VersionDeletedEvent : BaseServiceEvent
+public partial class VersionDeletedEvent
 {
 
     /// <summary>
-    /// Event type identifier
+    /// Unique identifier for this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.version-deleted";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the version was deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Slot identifier
@@ -414,16 +462,24 @@ public partial class VersionDeletedEvent : BaseServiceEvent
 /// Published when automatic cleanup completes
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CleanupCompletedEvent : BaseServiceEvent
+public partial class CleanupCompletedEvent
 {
 
     /// <summary>
-    /// Event type identifier
+    /// Unique identifier for this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.cleanup-completed";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the cleanup completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Number of versions cleaned up
@@ -452,21 +508,27 @@ public partial class CleanupCompletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published when a save is queued for async upload.
-/// <br/>The save data is in Redis and immediately loadable, but not yet in MinIO.
-/// <br/>
+/// Published when a save is queued for async upload. The save data is in Redis and immediately loadable, but not yet in MinIO.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveQueuedEvent : BaseServiceEvent
+public partial class SaveQueuedEvent
 {
 
     /// <summary>
-    /// Event type identifier
+    /// Unique identifier for this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.queued";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the save was queued
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Save slot identifier
@@ -523,16 +585,24 @@ public partial class SaveQueuedEvent : BaseServiceEvent
 /// Published when async upload to MinIO completes successfully
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveUploadCompletedEvent : BaseServiceEvent
+public partial class SaveUploadCompletedEvent
 {
 
     /// <summary>
-    /// Event type identifier
+    /// Unique identifier for this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.upload-completed";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the upload completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Save slot identifier
@@ -577,21 +647,27 @@ public partial class SaveUploadCompletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published when async upload fails after all retry attempts.
-/// <br/>The save data may still be in Redis hot cache but will expire.
-/// <br/>
+/// Published when async upload fails after all retry attempts. The save data may still be in Redis hot cache but will expire.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveUploadFailedEvent : BaseServiceEvent
+public partial class SaveUploadFailedEvent
 {
 
     /// <summary>
-    /// Event type identifier
+    /// Unique identifier for this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.upload-failed";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the upload failure was recorded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Save slot identifier
@@ -652,16 +728,24 @@ public partial class SaveUploadFailedEvent : BaseServiceEvent
 /// Published when storage circuit breaker changes state
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CircuitBreakerStateChangedEvent : BaseServiceEvent
+public partial class CircuitBreakerStateChangedEvent
 {
 
     /// <summary>
-    /// Event type identifier
+    /// Unique identifier for this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.circuit-breaker-changed";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the state transition occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Previous circuit breaker state before the transition
@@ -670,7 +754,7 @@ public partial class CircuitBreakerStateChangedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CircuitBreakerStateChangedEventPreviousState PreviousState { get; set; } = default!;
+    public CircuitBreakerState PreviousState { get; set; } = default!;
 
     /// <summary>
     /// New circuit breaker state after the transition
@@ -679,7 +763,7 @@ public partial class CircuitBreakerStateChangedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CircuitBreakerStateChangedEventNewState NewState { get; set; } = default!;
+    public CircuitBreakerState NewState { get; set; } = default!;
 
     /// <summary>
     /// Consecutive failures (when opening)
@@ -700,40 +784,6 @@ public partial class CircuitBreakerStateChangedEvent : BaseServiceEvent
     public int? PendingUploads { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CircuitBreakerStateChangedEventPreviousState
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Closed")]
-    Closed = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Open")]
-    Open = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"HalfOpen")]
-    HalfOpen = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CircuitBreakerStateChangedEventNewState
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Closed")]
-    Closed = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Open")]
-    Open = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"HalfOpen")]
-    HalfOpen = 2,
-
-}
-#pragma warning restore CS1591
 
 
 

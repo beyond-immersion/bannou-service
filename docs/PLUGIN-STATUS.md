@@ -98,10 +98,10 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Music](#music-status) | L4 | 88% | 0 | Full composition pipeline. Storyteller + MusicTheory SDKs. Custom style persistence missing. |
 | [Obligation](#obligation-status) | L4 | 92% | 0 | L4-audited (2026-03-06): T8/T13/T21/T26/T7 fixes. All 11 endpoints production-ready. 2 feature gaps (event templates, ref tracking), 4 design considerations. |
 | [Puppetmaster](#puppetmaster-status) | L4 | 55% | 0 | Architecture designed. Watchers never spawn actors (core purpose stubbed). All state in-memory. |
-| [Realm History](#realm-history-status) | L4 | 90% | 0 | Feature-complete. Participations, lore, summarization, compression. Same quality as Character History. |
-| [Save-Load](#save-load-status) | L4 | 78% | 0 | Two-tier storage works. Delta saves, migration. Binary deltas stubbed, quota enforcement gap. |
-| [Scene](#scene-status) | L4 | 82% | 0 | All 19 endpoints done. Checkout/commit workflow. No version content snapshots or real search. |
-| [Status](#status-status) | L4 | 78% | 0 | All 16 endpoints done. Dual-source effects query. Blocked on Item decay system (#407). |
+| [Realm History](#realm-history-status) | L4 | 95% | 0 | **Hardened.** Feature-complete. PascalCase enums, T8-compliant responses, NRT-clean. Participations, lore, summarization, compression. |
+| [Save-Load](#save-load-status) | L4 | 85% | 0 | **Hardened**. Two-tier storage, delta saves, migration all working. Binary deltas stubbed, quota enforcement gap. |
+| [Scene](#scene-status) | L4 | 95% | 0 | **Hardened.** All 19 endpoints done. Schema NRT-clean, T8-compliant responses, T25/T26-clean code. Checkout/commit workflow. No version content snapshots or real search. |
+| [Status](#status-status) | L4 | 93% | 0 | **Hardened.** All 19 endpoints (incl. T31 deprecation). Cache key bug fixed, metadata type safety, client event naming. Blocked on #407. |
 | [Storyline](#storyline-status) | L4 | 55% | 0 | SDK wrapper works for MVP. 3/15 endpoints done. No iterative composition or event integration. |
 | [Affix](#affix-status) | L4 | 0% | 0 | Pre-implementation. Spec L4-audited: Pattern C topics, Category B deprecation, T31 instance guard, typed spawnTagModifiers, hard IInventoryClient, orphan reconciliation worker, x-permissions on all groups. No schema, no code. |
 | [Arbitration](#arbitration-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-05): 6 critical spec violations found and fixed in-document, schema creation guidance added, work tracking with 6 related GH issues, 4 resource cleanup targets. 8 design considerations remain. 2 unmet prerequisites (Faction sovereignty, Obligation multi-channel). No schema, no code. |
@@ -112,9 +112,9 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Hearsay](#hearsay-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): T25 BeliefDomain+SourceChannel enums (not strings), T25 subjectEntityId→Guid (no composite GUID-in-string), T16 PascalCase enum values, factual event topic fix (encounter.recorded not character-encounter.created), Obligation→Soft Dependencies, ITelemetryProvider in DI, x-archive-type noted, Phase 1 prerequisites (state-stores.yaml, variable-providers.yaml). 9 design considerations (3 from audit). No schema, no code. |
 | [Loot](#loot-status) | L4 | 0% | 0 | Pre-implementation. Deep dive audited and hardened (tenet-compliant event topics, PascalCase enums, typed models, x-permissions, dependency classification). No schema, no code. |
 | [Market](#market-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): Pattern C topics, PascalCase enums, x-lifecycle (MarketDefinition + VendorCatalog), x-permissions on all 6 groups, T31 configuration entity, T9 stock locking, T8 filler removed, T25 enum definitions, T30 ITelemetryProvider, namespace overlap fixed (market-price), x-references with field+payloadTemplate. 4 design decisions deferred. No schema, no code. |
-| [Organization](#organization-status) | L4 | 0% | 0 | Pre-implementation. Legal entity management spec. No schema, no code. |
+| [Organization](#organization-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-07): T16 kebab-case topics, PascalCase enums (SuccessionMode), x-lifecycle adoption (topic_prefix, custom event distinction), T14 EntityType committed (ownerType/entityType), T28 resource registration + x-references, T30 ITelemetryProvider, T21 enum config type, x-event-publications/subscriptions, lock key prefix fix, 8 AUDIT:NEEDS_DESIGN decisions (#11-#18). 9 GH issues referenced. No schema, no code. |
 | [Procedural](#procedural-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-07): Asset/Orchestrator→soft deps (L3 graceful degradation), T31 Category B deprecation (DeactivateTemplate→DeprecateTemplate, triple-field, includeDeprecated, no delete/undeprecate), x-lifecycle for template entity, ITelemetryProvider added, T26 nullable seed. 6 design decisions deferred (AUDIT:NEEDS_DESIGN). No schema, no code. |
-| [Showtime](#showtime-status) | L4 | 0% | 0 | Pre-implementation. In-game streaming metagame spec. No schema, no code. |
+| [Showtime](#showtime-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-07): T25 DateTime→DateTimeOffset, ShowtimeSessionStatus enum, EntityType $ref, T13 cleanup x-permissions:[], SentimentCategory $ref, x-event-publications, ITelemetryProvider, config types+constraints, T28 game-session.ended compliance documented. 7 design decisions deferred (AUDIT:NEEDS_DESIGN): DC#4 follower entity type, DC#8 client events, DC#9 self-subscription, DC#10 ShowtimeEnabled, DC#11 event naming, DC#12 x-lifecycle, DC#13 voice room conflict (#382), DC#14 SentimentCategory (#572). No schema, no code. |
 | [Trade](#trade-status) | L4 | 0% | 0 | Pre-implementation. Economic logistics orchestration with trade routes, shipments, tariffs, supply/demand dynamics, and NPC economic profiles spec. No schema, no code. |
 | [Utility](#utility-status) | L4 | 0% | 0 | Pre-implementation. Infrastructure network topology, continuous flow calculation, coverage cascading, and maintenance lifecycle spec. No schema, no code. |
 | [Workshop](#workshop-status) | L4 | 0% | 0 | Pre-implementation. Time-based automated production with lazy evaluation and worker scaling spec. No schema, no code. |
@@ -2023,9 +2023,9 @@ gh issue list --search "Obligation:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [PUPPETMASTER.md](plugins/PUPPETMASTER.md)
 
-### Production Readiness: 55%
+### Production Readiness: 60%
 
-The architectural skeleton is well-designed: behavior document caching and provider chain integration, resource snapshot caching for Event Brain actors, ABML action handlers (load_snapshot, prefetch_snapshots, spawn/stop/list_watchers, watch/unwatch), a watch system with dual-indexed registry and dynamic lifecycle event subscriptions, and realm event handling for watcher lifecycle. Configuration is fully wired (5 properties). No bugs. However, the most critical feature -- watcher-actor integration -- is stubbed: watchers are registered as data structures in memory but never spawn actual actors (ActorId is always null). Without this, regional watchers, divine actors, and encounter coordinators cannot execute behavior. All state is in-memory only (lost on restart), and the multi-instance story is broken.
+The architectural skeleton is well-designed: behavior document caching and provider chain integration, resource snapshot caching for Event Brain actors, ABML action handlers (load_snapshot, prefetch_snapshots, spawn/stop/list_watchers, watch/unwatch), a watch system with dual-indexed registry and dynamic lifecycle event subscriptions, and realm event handling for watcher lifecycle. Configuration is fully wired (5 properties). No bugs. Schema and code hardened: event schemas flattened (no allOf/BaseServiceEvent), filler response properties removed (isHealthy, stopped), configuration validation constraints added, T23 async patterns fixed, T30 telemetry spans added to handlers, T9 ConcurrentDictionary enforced on ResourceEventMapping, T25 DateTimeOffset on WatchPerception, T4 GetRequiredService for guaranteed IPuppetmasterClient. However, the most critical feature -- watcher-actor integration -- is stubbed: watchers are registered as data structures in memory but never spawn actual actors (ActorId is always null). Without this, regional watchers, divine actors, and encounter coordinators cannot execute behavior. All state is in-memory only (lost on restart), and the multi-instance story is broken.
 
 ### Bug Count: 0
 
@@ -2055,9 +2055,9 @@ gh issue list --search "Puppetmaster:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [REALM-HISTORY.md](plugins/REALM-HISTORY.md)
 
-### Production Readiness: 90%
+### Production Readiness: 95%
 
-Feature-complete with all 12 endpoints implemented, no stubs, and no bugs. Shares storage helper abstractions with character-history (DualIndexHelper, BackstoryStorageHelper), has proper distributed locking, resource cleanup/compression integration, and server-side paginated queries. Participation tracking with dual-indexed CRUD, lore management with merge semantics, template-based text summarization, compression/restoration support, ABML variable provider factory for realm-scoped behavior expressions. Same quality and maturity as Character History.
+**Hardened.** Feature-complete with all 12 endpoints implemented, no stubs, and no bugs. 40 unit tests with capture-pattern event/state verification and lock failure path coverage. Hardening pass (2026-03-07) migrated all enums to PascalCase (T1/T16), removed filler response properties (T8: realmId from RealmLoreResponse/archive, success/errorMessage), fixed 409 schema description (lock contention, not deduplication), NRT nullable array compliance, config validation constraints, compression callback priority fix, private method XML docs. Shares storage helper abstractions with character-history (DualIndexHelper, BackstoryStorageHelper), has proper distributed locking, resource cleanup/compression integration, and server-side paginated queries.
 
 ### Bug Count: 0
 
@@ -2072,8 +2072,8 @@ No known bugs.
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
 | 1 | **Event-level aggregation** | Compute aggregate impact scores per event across all participating realms. | [#266](https://github.com/beyond-immersion/bannou-service/issues/266) |
-| 2 | **AI-powered summarization** | Replace template-based summaries with LLM-generated narrative text. Blocked on shared LLM infrastructure from character-history. | [#269](https://github.com/beyond-immersion/bannou-service/issues/269) |
-| 3 | **Typed metadata schemas** | Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas. Systemic issue affecting 14+ services. | [#308](https://github.com/beyond-immersion/bannou-service/issues/308) |
+| 2 | **Typed metadata schemas** | Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas. Systemic issue affecting 14+ services. | [#308](https://github.com/beyond-immersion/bannou-service/issues/308) |
+| 3 | **Timeline visualization** | Chronological event data suitable for timeline UI rendering. May be satisfied by existing sorted query. | [#270](https://github.com/beyond-immersion/bannou-service/issues/270) |
 
 ### GH Issues
 
@@ -2087,9 +2087,9 @@ gh issue list --search "Realm History:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [SAVE-LOAD.md](plugins/SAVE-LOAD.md)
 
-### Production Readiness: 78%
+### Production Readiness: 85%
 
-The architecture is comprehensive and well-designed: two-tier storage (Redis hot cache + async MinIO upload), delta saves with JSON Patch, schema migration with BFS path discovery, circuit breaker, export/import, rolling cleanup, distributed locking, and 40+ configuration properties. No bugs. However, several meaningful stubs reduce readiness: two delta algorithms (BSDIFF/XDELTA) throw NotSupportedException, JSON Schema validation is a no-op, per-owner storage quota enforcement only checks per-slot, thumbnails have config but no implementation, and conflict detection flags are not surfaced to clients.
+**Hardened** (2026-03-07). Comprehensive tenet compliance audit: schema cleaned (flat events, PascalCase enums, named types, additionalProperties:false, NRT nullable, validation keywords, T8 filler removal), code cleaned (string→enum for CircuitBreaker/DeltaAlgorithm/UploadStatus, Guid.Empty sentinels eliminated, top-level try-catch removed, telemetry spans on all 26 methods, Pattern C event topics). The architecture is well-designed: two-tier storage (Redis hot cache + async MinIO upload), delta saves with JSON Patch, schema migration with BFS path discovery, circuit breaker, export/import, rolling cleanup, distributed locking, and 40+ configuration properties. No bugs. Remaining stubs: two delta algorithms (BSDIFF/XDELTA) throw NotSupportedException, JSON Schema validation is a no-op, per-owner storage quota enforcement only checks per-slot.
 
 ### Bug Count: 0
 
@@ -2119,9 +2119,9 @@ gh issue list --search "Save-Load:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [SCENE.md](plugins/SCENE.md)
 
-### Production Readiness: 82%
+### Production Readiness: 95%
 
-All 19 endpoints are implemented with solid structural validation, checkout/commit workflow with optimistic concurrency, reference resolution with circular detection, and secondary indexing. No bugs. However, version-specific content retrieval is a no-op (only latest content stored), soft-delete has no recovery mechanism despite the schema describing one, the SceneCheckoutExpiredEvent is never published, and search is brute-force global scan. Multiple design considerations (unbounded global index, secondary index race conditions, YAML serialization performance, no content versioning) also apply.
+**Hardened** (2026-03-07). All 19 endpoints implemented with solid structural validation, checkout/commit workflow with optimistic concurrency, reference resolution with circular detection, and secondary indexing. No bugs. Schema is NRT-clean with `additionalProperties: false`, validation constraints, and flat event structure. Responses are T8-compliant (no filler properties). Code is T25-clean (enum comparisons in validation) and T26-clean (no sentinel Guid.Empty values). Remaining gaps: version-specific content retrieval is a no-op (only latest content stored), soft-delete has no recovery mechanism, and search is brute-force global scan. Design considerations (unbounded global index, secondary index race conditions, YAML serialization performance) documented in deep dive.
 
 ### Bug Count: 0
 
@@ -2136,7 +2136,7 @@ No known bugs.
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
 | 1 | **Version content snapshots** | Only version metadata is retained -- actual YAML content per version is not preserved, making version-specific retrieval and rollback impossible. | [#187](https://github.com/beyond-immersion/bannou-service/issues/187) |
-| 2 | **Background checkout expiry** | No background service monitors stale checkouts or publishes `scene.checkout.expired` events; expiry is only checked lazily on next checkout attempt. | [#254](https://github.com/beyond-immersion/bannou-service/issues/254) |
+| 2 | **Background checkout expiry** | No background service monitors stale checkouts; expiry is only checked lazily on next checkout attempt. Event type would need to be added when implementing. | [#254](https://github.com/beyond-immersion/bannou-service/issues/254) |
 | 3 | **Full-text search with proper indexing** | Current `SearchScenes` is a brute-force global index scan loading all scene IDs; needs Redis Search or equivalent for sub-millisecond queries at scale. | No issue |
 
 ### GH Issues
@@ -2151,9 +2151,9 @@ gh issue list --search "Scene:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [STATUS.md](plugins/STATUS.md)
 
-### Production Readiness: 78%
+### Production Readiness: 93%
 
-All 16 API endpoints are fully implemented -- template CRUD with seeding, grant flow with 5 stacking behaviors, remove/cleanse operations, unified effects query merging item-based and seed-derived effects, and resource cleanup. The dual-source architecture is operational with lib-divine as the first consumer. However, a blocking dependency on #407 (Item Decay/Expiration System) means TTL-based status expiration relies on lazy cleanup during cache rebuilds rather than proactive event-driven expiration. Missing features include no variable provider factory for ABML, no client events, no cache warming, and hardcoded `EntityType.Character` breaking polymorphic entity support.
+All 19 API endpoints fully implemented -- template CRUD with seeding, T31 Category A deprecation lifecycle (deprecate, undeprecate, delete with grant guard), grant flow with 5 stacking behaviors, remove/cleanse operations, unified effects query merging item-based and seed-derived effects, client events via Entity Session Registry, and resource cleanup. The dual-source architecture is operational with lib-divine as the first consumer. Hardening pass (2026-03-07) fixed cache key casing mismatch, hardcoded EntityType.Character in contract ops, metadata type-narrowing, and client event naming. Blocking dependency on #407 (Item Decay/Expiration) means TTL-based status expiration relies on lazy cleanup during cache rebuilds.
 
 ### Bug Count: 0
 
@@ -2169,7 +2169,7 @@ No known bugs.
 |---|-------------|-------------|-------|
 | 1 | **Item Decay/Expiration System** | Blocking dependency. Without `item.expired` events from lib-item, TTL-based status expiration relies on lazy cleanup during cache rebuild. Combat buffs and divine blessings may appear active after expiry. | [#407](https://github.com/beyond-immersion/bannou-service/issues/407) |
 | 2 | **Variable Provider Factory for ABML** | `IStatusVariableProviderFactory` providing `${status.has_buff.<code>}`, `${status.is_dead}`, `${status.active_count}` is critical. Without it, NPCs cannot react to active effects in ABML behavior logic. | No issue |
-| 3 | **Hardcoded EntityType.Character in contract ops** | Both `CreateNewStatusInstanceAsync` and `RemoveInstanceInternalAsync` hardcode Character as the party entity type. Breaks polymorphic entity support for non-character entities. | [#415](https://github.com/beyond-immersion/bannou-service/issues/415) |
+| 3 | **Cache warming implementation** | `CacheWarmingEnabled` config exists but has no functional effect. Would proactively populate active status cache for recently active entities on startup. | [#412](https://github.com/beyond-immersion/bannou-service/issues/412) |
 
 ### GH Issues
 
@@ -2508,7 +2508,7 @@ gh issue list --search "Market:" --state open
 
 ### Production Readiness: 0%
 
-Entirely pre-implementation. The deep dive explicitly states "No schema, no code" and "Everything is unimplemented." The largest planned service in this batch, describing a legal entity management service with 36 planned endpoints across 8 groups, 15 published events, 8 consumed events, 7 state stores, 15 configuration properties, 2 background workers, 1 Variable Provider Factory, and a 7-phase implementation plan. Has extensive dependency requirements (12 hard, 5 soft) and depends on Faction sovereignty as a prerequisite.
+Pre-implementation. L4-audited (2026-03-07). Deep dive hardened: T16 kebab-case event topics fixed (`role_changed`→`role-changed`, `legal_status`→`legal-status`), PascalCase succession mode enums (`Primogeniture`, `EqualDivision`, `Designated`, `Testament`, `Elective`, `Conquest`, `Dissolution`), x-lifecycle adoption with `topic_prefix: organization` (Created/Updated/Deleted auto-generated; dissolved/archived/member/succession/legal-status/asset/phase events classified as custom), T14 EntityType committed for `ownerType` and `entityType` (removed "(or string pending schema)" hedge), T28 resource reference registration added to Create endpoint + x-references declarations, T30 ITelemetryProvider added to DI Services, T21 DefaultLegalStatus noted as `$ref: LegalStatus` enum, x-event-publications/subscriptions schema declarations added, x-compression-callback design decision documented, worker lock key prefix double-count fixed, x-service-layer and variable-providers.yaml schema requirements noted. 8 AUDIT:NEEDS_DESIGN decisions documented (DC#11-#18): T31 deprecation vs instance lifecycle, realm cleanup target, seed event+listener dedup, x-permissions model, assetType classification, dissolved/archived event design, compression flow, guild membership model vs Issue #284. 9 GH issues referenced in Work Tracking. 36 planned endpoints, 7 state stores, 12 hard + 5 soft dependencies, 7-phase implementation plan. No schema, no code.
 
 ### Bug Count: 0
 
@@ -2522,9 +2522,9 @@ No implementation exists to have bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Core Organization Infrastructure (Phase 1)** | Create schemas, generate code, implement organization CRUD that provisions seed + wallet + inventory, member management, role definitions, and asset registration. | No issue |
-| 2 | **Household Pattern (Phase 5)** | Implement households as organizations with family-specific succession modes (primogeniture, matrilineal), lifecycle integration with character events (marriage, coming of age), and dissolution via arbitration. | No issue |
-| 3 | **Payroll and Recurring Expenses** | Background worker for periodic salary payments and recurring expenses (rent, tax), with delinquent payroll triggering obligation events and charter breach. | No issue |
+| 1 | **Core Organization Infrastructure (Phase 1)** | Create schemas, generate code, implement organization CRUD that provisions seed + wallet + inventory, member management, role definitions, and asset registration. Prerequisite issues: #556 (wallet cleanup), #564 (relationship x-references). | [#284](https://github.com/beyond-immersion/bannou-service/issues/284) |
+| 2 | **Household Pattern (Phase 5)** | Implement households as organizations with family-specific succession modes (Primogeniture, matrilineal, EqualDivision), lifecycle integration with character events (marriage, coming of age), and dissolution via arbitration. | [#436](https://github.com/beyond-immersion/bannou-service/issues/436) |
+| 3 | **Legal Status System (Phase 3)** | Charter-as-contract pattern, sovereignty change re-evaluation with grace periods, faction territory event handling. | [#435](https://github.com/beyond-immersion/bannou-service/issues/435) |
 
 ### GH Issues
 
@@ -2572,7 +2572,11 @@ gh issue list --search "Procedural:" --state open
 
 ### Production Readiness: 0%
 
-Entirely pre-implementation. The deep dive explicitly states "No schema, no code" and "Everything is unimplemented." An in-game streaming metagame service with simulated audience pools, hype train mechanics, and real/simulated audience blending. Specifies 19 planned endpoints, 9 published events, 8 consumed events, 6 state stores, 25 configuration properties, 2 background workers, and a 7-phase implementation plan. Also resolves the GameSession (L2) to Voice (L3) hierarchy violation by owning the voice room orchestration flow.
+Entirely pre-implementation. L4-audited (2026-03-07). The deep dive explicitly states "No schema, no code" and "Everything is unimplemented." An in-game streaming metagame service with simulated audience pools, hype train mechanics, streamer career progression, and real/simulated audience blending. Specifies 19 planned endpoints, 9 published events, 8 consumed events, 6 state stores, 25 configuration properties (now with explicit types and validation constraints), 2 background workers, and a 7-phase implementation plan. Also resolves the GameSession (L2) to Voice (L3) hierarchy violation by owning the voice room orchestration flow. Composes Seed, Currency, Collection, Contract, and Relationship (L1/L2 hard deps) with soft deps on Broadcast, Voice, Analytics (L3/L4).
+
+**L4 audit fixes applied**: T25 `DateTime`→`DateTimeOffset` on all timestamps; `ShowtimeSessionStatus` enum defined (`Active`/`Paused`/`Ended`); `entityType`→`$ref: EntityType` for streamer identity; T13 cleanup endpoints→`x-permissions: []`; `SentimentCategory`→`$ref: common-api.yaml`; `x-event-publications` note added to Phase 1; `ITelemetryProvider` added to DI table; `game-session.ended` handler documented as T28-compliant live state reaction; config table enriched with types and constraints; GH issue cross-references added (#572, #382, #437, #366).
+
+**7 design decisions identified** (AUDIT:NEEDS_DESIGN): DC#4 follower entity type for IRelationshipClient, DC#8 client event specification, DC#9 self-subscription vs inline career progression, DC#10 ShowtimeEnabled redundancy, DC#11 event model naming, DC#12 x-lifecycle adoption, DC#13 voice room conflict with Connect (#382), DC#14 SentimentCategory extensibility (#572).
 
 ### Bug Count: 0
 

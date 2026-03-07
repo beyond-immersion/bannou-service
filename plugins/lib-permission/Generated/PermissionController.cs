@@ -39,9 +39,12 @@ public interface IPermissionController : BeyondImmersion.BannouService.Controlle
     /// Returns compiled list of methods available to this session
     /// </remarks>
 
+
+
     /// <returns>Session capabilities retrieved from Redis</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CapabilityResponse>> GetCapabilitiesAsync(CapabilityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CapabilityResponse>> GetCapabilities(CapabilityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Validate specific API access for session
@@ -51,9 +54,12 @@ public interface IPermissionController : BeyondImmersion.BannouService.Controlle
     /// Fast O(1) validation using Redis lookup
     /// </remarks>
 
+
+
     /// <returns>Permission validation result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidationResponse>> ValidateApiAccessAsync(ValidationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidationResponse>> ValidateApiAccess(ValidationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Register or update service permission matrix
@@ -63,9 +69,12 @@ public interface IPermissionController : BeyondImmersion.BannouService.Controlle
     /// Updates Redis with ServiceID -&gt; State -&gt; Role -&gt; Methods structure
     /// </remarks>
 
+
+
     /// <returns>Service permissions registered and sessions recompiled</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegistrationResponse>> RegisterServicePermissionsAsync(ServicePermissionMatrix body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegistrationResponse>> RegisterServicePermissions(ServicePermissionMatrix body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update session state for specific service
@@ -75,9 +84,12 @@ public interface IPermissionController : BeyondImmersion.BannouService.Controlle
     /// Updates SessionID -&gt; ServiceID -&gt; State and recompiles permissions
     /// </remarks>
 
+
+
     /// <returns>Session state updated and permissions recompiled</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionStateAsync(SessionStateUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionState(SessionStateUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update session role (affects all services)
@@ -87,9 +99,12 @@ public interface IPermissionController : BeyondImmersion.BannouService.Controlle
     /// Updates SessionID -&gt; Role and recompiles all service permissions
     /// </remarks>
 
+
+
     /// <returns>Session role updated and all permissions recompiled</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionRoleAsync(SessionRoleUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionRole(SessionRoleUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Clear session state for specific service
@@ -101,9 +116,12 @@ public interface IPermissionController : BeyondImmersion.BannouService.Controlle
     /// <br/>If states list is empty or not provided, clears the state unconditionally.
     /// </remarks>
 
+
+
     /// <returns>Session state cleared and permissions recompiled</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> ClearSessionStateAsync(ClearSessionStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> ClearSessionState(ClearSessionStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get complete session information
@@ -113,9 +131,12 @@ public interface IPermissionController : BeyondImmersion.BannouService.Controlle
     /// Returns current states, role, and compiled permissions
     /// </remarks>
 
+
+
     /// <returns>Complete session information</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionInfo>> GetSessionInfoAsync(SessionInfoRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionInfo>> GetSessionInfo(SessionInfoRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all registered services
@@ -131,15 +152,18 @@ public interface IPermissionController : BeyondImmersion.BannouService.Controlle
     /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
     /// </remarks>
 
+
+
     /// <returns>List of registered services</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisteredServicesResponse>> GetRegisteredServicesAsync(ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisteredServicesResponse>> GetRegisteredServices(ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IPermissionService))]
+public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerBase, IPermissionController
 {
     private IPermissionService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

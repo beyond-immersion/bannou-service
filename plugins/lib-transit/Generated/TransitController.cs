@@ -41,9 +41,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>unique string identifiers (e.g., "walking", "horseback", "wagon").
     /// </remarks>
 
+
+
     /// <returns>Mode registered successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ModeResponse>> RegisterModeAsync(RegisterModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ModeResponse>> RegisterMode(RegisterModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a transit mode by code
@@ -53,9 +56,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// Retrieve a transit mode definition by its unique code.
     /// </remarks>
 
+
+
     /// <returns>Mode found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ModeResponse>> GetModeAsync(GetModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ModeResponse>> GetMode(GetModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all registered transit modes
@@ -66,9 +72,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>terrain compatibility, tags, and deprecation status.
     /// </remarks>
 
+
+
     /// <returns>Modes listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListModesResponse>> ListModesAsync(ListModesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListModesResponse>> ListModes(ListModesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a transit mode's properties
@@ -79,9 +88,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>are updated; null fields are left unchanged.
     /// </remarks>
 
+
+
     /// <returns>Mode updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ModeResponse>> UpdateModeAsync(UpdateModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ModeResponse>> UpdateMode(UpdateModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate a transit mode
@@ -96,9 +108,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>and journeys store primaryModeCode/legModes referencing mode codes.
     /// </remarks>
 
+
+
     /// <returns>Mode deprecated (or already deprecated)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ModeResponse>> DeprecateModeAsync(DeprecateModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ModeResponse>> DeprecateMode(DeprecateModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Reverse deprecation of a transit mode
@@ -110,9 +125,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Idempotent: returns OK if not currently deprecated.
     /// </remarks>
 
+
+
     /// <returns>Mode undeprecated (or was not deprecated)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ModeResponse>> UndeprecateModeAsync(UndeprecateModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ModeResponse>> UndeprecateMode(UndeprecateModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a deprecated transit mode
@@ -125,9 +143,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>mode code as historical data.
     /// </remarks>
 
+
+
     /// <returns>Mode deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteModeResponse>> DeleteModeAsync(DeleteModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteModeResponse>> DeleteMode(DeleteModeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check which transit modes an entity can currently use
@@ -140,9 +161,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>compute preferenceCost and effectiveSpeed adjustments.
     /// </remarks>
 
+
+
     /// <returns>Availability checked</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckModeAvailabilityResponse>> CheckModeAvailabilityAsync(CheckModeAvailabilityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckModeAvailabilityResponse>> CheckModeAvailability(CheckModeAvailabilityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a connection between two locations
@@ -155,9 +179,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>validated against the realm's Worldstate season codes.
     /// </remarks>
 
+
+
     /// <returns>Connection created</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConnectionResponse>> CreateConnectionAsync(CreateConnectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConnectionResponse>> CreateConnection(CreateConnectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a connection by ID or code
@@ -167,9 +194,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// Retrieve a connection by its unique ID or code. One of connectionId or code must be provided.
     /// </remarks>
 
+
+
     /// <returns>Connection found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConnectionResponse>> GetConnectionAsync(GetConnectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConnectionResponse>> GetConnection(GetConnectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query connections by location, terrain, mode, or status
@@ -180,9 +210,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>an empty request returns all connections paginated.
     /// </remarks>
 
+
+
     /// <returns>Connections queried</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryConnectionsResponse>> QueryConnectionsAsync(QueryConnectionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryConnectionsResponse>> QueryConnections(QueryConnectionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a connection's properties
@@ -194,9 +227,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>are updated; null fields are left unchanged.
     /// </remarks>
 
+
+
     /// <returns>Connection updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConnectionResponse>> UpdateConnectionAsync(UpdateConnectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConnectionResponse>> UpdateConnection(UpdateConnectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Transition a connection's operational status with optimistic concurrency
@@ -211,9 +247,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>typically only set by the Seasonal Connection Worker via forceUpdate=true.
     /// </remarks>
 
+
+
     /// <returns>Status updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConnectionResponse>> UpdateConnectionStatusAsync(UpdateConnectionStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConnectionResponse>> UpdateConnectionStatus(UpdateConnectionStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a connection between locations
@@ -224,9 +263,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>this connection.
     /// </remarks>
 
+
+
     /// <returns>Connection deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteConnectionResponse>> DeleteConnectionAsync(DeleteConnectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteConnectionResponse>> DeleteConnection(DeleteConnectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Seed connections from configuration
@@ -240,9 +282,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>and replaceExisting deletes connections for that realm only.
     /// </remarks>
 
+
+
     /// <returns>Bulk seed completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkSeedConnectionsResponse>> BulkSeedConnectionsAsync(BulkSeedConnectionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkSeedConnectionsResponse>> BulkSeedConnections(BulkSeedConnectionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Plan a journey (status preparing)
@@ -256,9 +301,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>mode the entity can use on that connection.
     /// </remarks>
 
+
+
     /// <returns>Journey planned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> CreateJourneyAsync(CreateJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> CreateJourney(CreateJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Start a prepared journey
@@ -269,9 +317,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Publishes transit.journey.departed event.
     /// </remarks>
 
+
+
     /// <returns>Journey started</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> DepartJourneyAsync(DepartJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> DepartJourney(DepartJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Resume an interrupted journey
@@ -284,9 +335,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Publishes transit.journey.resumed event.
     /// </remarks>
 
+
+
     /// <returns>Journey resumed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> ResumeJourneyAsync(ResumeJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> ResumeJourney(ResumeJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Mark arrival at next waypoint
@@ -299,9 +353,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>or transit.journey.arrived accordingly.
     /// </remarks>
 
+
+
     /// <returns>Journey advanced</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> AdvanceJourneyAsync(AdvanceJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> AdvanceJourney(AdvanceJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Advance multiple journeys in a single call
@@ -316,9 +373,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>multiple times (advancing through multiple waypoints in a single tick).
     /// </remarks>
 
+
+
     /// <returns>Batch processed (check individual results for per-journey errors)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdvanceBatchResponse>> AdvanceBatchJourneysAsync(AdvanceBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdvanceBatchResponse>> AdvanceBatchJourneys(AdvanceBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Force-arrive a journey at destination
@@ -331,9 +391,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Publishes transit.journey.arrived event.
     /// </remarks>
 
+
+
     /// <returns>Journey force-arrived</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> ArriveJourneyAsync(ArriveJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> ArriveJourney(ArriveJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Interrupt an active journey
@@ -346,9 +409,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Publishes transit.journey.interrupted event.
     /// </remarks>
 
+
+
     /// <returns>Journey interrupted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> InterruptJourneyAsync(InterruptJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> InterruptJourney(InterruptJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Abandon a journey
@@ -359,9 +425,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Publishes transit.journey.abandoned event.
     /// </remarks>
 
+
+
     /// <returns>Journey abandoned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> AbandonJourneyAsync(AbandonJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> AbandonJourney(AbandonJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a journey by ID
@@ -371,9 +440,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// Retrieve a journey by its unique ID.
     /// </remarks>
 
+
+
     /// <returns>Journey found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> GetJourneyAsync(GetJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JourneyResponse>> GetJourney(GetJourneyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List active journeys on a specific connection
@@ -385,9 +457,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>bandit ambush targeting, caravan interception, and road traffic monitoring.
     /// </remarks>
 
+
+
     /// <returns>Journeys queried</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListJourneysResponse>> QueryJourneysByConnectionAsync(QueryJourneysByConnectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListJourneysResponse>> QueryJourneysByConnection(QueryJourneysByConnectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List journeys for an entity or within a realm
@@ -398,9 +473,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>cross-realm status, journey status, and active-only flag.
     /// </remarks>
 
+
+
     /// <returns>Journeys listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListJourneysResponse>> ListJourneysAsync(ListJourneysRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListJourneysResponse>> ListJourneys(ListJourneysRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query archived journeys from MySQL historical store
@@ -412,9 +490,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>and Character History (travel biography generation).
     /// </remarks>
 
+
+
     /// <returns>Archived journeys queried</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListJourneysResponse>> QueryJourneyArchiveAsync(QueryJourneyArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListJourneysResponse>> QueryJourneyArchive(QueryJourneyArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Calculate route options between two locations
@@ -428,9 +509,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>by the variable provider when GOAP evaluates the results).
     /// </remarks>
 
+
+
     /// <returns>Route options calculated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalculateRouteResponse>> CalculateRouteAsync(CalculateRouteRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalculateRouteResponse>> CalculateRoute(CalculateRouteRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Reveal a discoverable connection to an entity
@@ -443,9 +527,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>via rumor. Publishes transit.discovery.revealed event for new discoveries.
     /// </remarks>
 
+
+
     /// <returns>Discovery recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RevealDiscoveryResponse>> RevealDiscoveryAsync(RevealDiscoveryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RevealDiscoveryResponse>> RevealDiscovery(RevealDiscoveryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List connections an entity has discovered
@@ -455,9 +542,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// List all discoverable connections that an entity has discovered, with optional realm filtering.
     /// </remarks>
 
+
+
     /// <returns>Discoveries listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDiscoveriesResponse>> ListDiscoveriesAsync(ListDiscoveriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDiscoveriesResponse>> ListDiscoveries(ListDiscoveriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if an entity has discovered specific connections
@@ -467,9 +557,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// Check whether an entity has discovered each of the specified connections.
     /// </remarks>
 
+
+
     /// <returns>Discovery status checked</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckDiscoveriesResponse>> CheckDiscoveriesAsync(CheckDiscoveriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckDiscoveriesResponse>> CheckDiscoveries(CheckDiscoveriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Clean up transit data for a deleted location
@@ -481,9 +574,12 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>through it. Internal cleanup callback, not exposed to WebSocket clients.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> CleanupByLocationAsync(CleanupByLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> CleanupByLocation(CleanupByLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Clean up transit data for a deleted character
@@ -495,15 +591,18 @@ public interface ITransitController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Internal cleanup callback, not exposed to WebSocket clients.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> CleanupByCharacter(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class TransitController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ITransitService))]
+public partial class TransitController : Microsoft.AspNetCore.Mvc.ControllerBase, ITransitController
 {
     private ITransitService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

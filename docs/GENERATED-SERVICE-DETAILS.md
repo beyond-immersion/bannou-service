@@ -421,7 +421,7 @@ The State service (L0 Infrastructure) provides all Bannou services with unified 
 
 ## Status {#status}
 
-**Version**: 1.0.0 | **Schema**: `schemas/status-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/STATUS.md](plugins/STATUS.md)
+**Version**: 1.0.0 | **Schema**: `schemas/status-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/STATUS.md](plugins/STATUS.md)
 
 Unified entity effects query layer (L4 GameFeatures) aggregating temporary contract-managed statuses and passive seed-derived capabilities into a single query point. Any system needing "what effects does this entity have" -- combat buffs, death penalties, divine blessings, subscription benefits -- queries lib-status. Follows the "items in inventories" pattern: status templates define effect definitions, status containers hold per-entity inventory containers, and granting a status creates an item instance in that container. Contract integration is optional per-template for complex lifecycle; simple TTL-based statuses use lib-item's native decay system. Internal-only, never internet-facing.
 
@@ -490,7 +490,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 76
-- **Total endpoints**: 897
+- **Total endpoints**: 900
 
 ---
 

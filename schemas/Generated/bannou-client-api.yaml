@@ -10203,10 +10203,6 @@ paths:
       responses:
         '200':
           description: Discard successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DiscardResponse'
         '403':
           description: Invalid checkout token
   /scene/heartbeat:
@@ -10215,6 +10211,7 @@ paths:
       description: |
         Extends the checkout lock TTL. Should be called periodically
         during editing to prevent lock expiration.
+        Returns 409 Conflict when the extension limit has been reached.
       operationId: scene_heartbeatCheckout
       tags:
       - Versioning
@@ -10237,7 +10234,7 @@ paths:
         '403':
           description: Invalid checkout token
         '409':
-          description: Checkout expired
+          description: Checkout expired or extension limit reached
   /scene/history:
     post:
       summary: Get version history for a scene
@@ -11044,6 +11041,89 @@ paths:
                 $ref: '#/components/schemas/SeedStatusTemplatesResponse'
         '400':
           description: Invalid request (validation errors)
+  /status/template/deprecate:
+    post:
+      operationId: status_deprecateStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Deprecate a status template
+      description: |
+        Mark a status template as deprecated. Deprecated templates cannot be used
+        for new grants. Idempotent -- returns OK if already deprecated.
+        Category A entity: deprecation is reversible via undeprecate.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template deprecated (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '404':
+          description: Status template not found
+  /status/template/undeprecate:
+    post:
+      operationId: status_undeprecateStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Undeprecate a status template
+      description: |
+        Remove deprecation from a status template, restoring it for use in grants.
+        Idempotent -- returns OK if not deprecated.
+        Category A entity: undeprecation is allowed.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template undeprecated (or was not deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '404':
+          description: Status template not found
+  /status/template/delete:
+    post:
+      operationId: status_deleteStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Delete a deprecated status template
+      description: |
+        Permanently delete a status template. The template must be deprecated first.
+        Returns BadRequest if the template is not deprecated.
+        Category A entity: deletion requires prior deprecation.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template deleted
+        '400':
+          description: Template is not deprecated (must deprecate before 
+            deleting)
+        '404':
+          description: Status template not found
   /status/grant:
     post:
       operationId: status_grantStatus
@@ -11288,33 +11368,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SeedEffectsResponse'
-  /status/cleanup-by-owner:
-    post:
-      operationId: status_cleanupByOwner
-      tags:
-      - Cleanup
-      summary: Remove all statuses and containers for an owner
-      description: |
-        Remove all status containers, instances, and inventory containers for an
-        owner entity. Called by lib-resource cleanup callbacks when a character or
-        account is deleted. Destroys inventory containers (cascades to items),
-        deletes all instance records, and invalidates all caches.
-      x-permissions:
-      - role: developer
-        states: {}
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CleanupByOwnerRequest'
-      responses:
-        '200':
-          description: Cleanup completed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CleanupResponse'
   /storyline/compose:
     post:
       summary: Compose a storyline plan from archive seeds
@@ -14099,6 +14152,7 @@ components:
             $ref: '#/components/schemas/JourneyIncident'
     Affordance:
       type: object
+      additionalProperties: false
       description: |
         Describes a capability or interaction mode for a node.
         Used by AI systems to understand what actions are possible and by
@@ -14564,6 +14618,7 @@ components:
         Service: service-initiated operation identified by service name.
     AssetReference:
       type: object
+      additionalProperties: false
       description: Reference to an asset in lib-asset
       required:
       - assetId
@@ -14580,6 +14635,7 @@ components:
         variantId:
           type: string
           nullable: true
+          maxLength: 200
           description: Variant identifier (consumer interprets meaning)
     AssetRequirementInfo:
       type: object
@@ -14661,6 +14717,7 @@ components:
           description: Number of results skipped
     AssetSlot:
       type: object
+      additionalProperties: false
       description: |
         Defines acceptable asset types for procedural swapping at this node.
         Used by procedural generation systems to substitute assets while
@@ -14670,11 +14727,14 @@ components:
       properties:
         slotType:
           type: string
+          minLength: 1
+          maxLength: 200
           description: |
             Category of acceptable assets.
             Examples: chair, table, wall_art, floor_lamp
         acceptsTags:
           type: array
+          nullable: true
           items:
             type: string
           description: |
@@ -14686,6 +14746,7 @@ components:
           description: Default asset if no specific asset is bound
         variations:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/AssetReference'
           description: |
@@ -14704,6 +14765,7 @@ components:
       description: Type classification for assets
     AssetUsageInfo:
       type: object
+      additionalProperties: false
       description: Information about asset usage
       required:
       - sceneId
@@ -14824,6 +14886,7 @@ components:
           description: Complete asset metadata
     AttachmentPoint:
       type: object
+      additionalProperties: false
       description: |
         A predefined location where child objects can be attached.
         Used for decorating furniture, walls, and other objects with accessories.
@@ -14834,6 +14897,8 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 200
           description: |
             Unique name for this attachment point within the node.
             Examples: wall_hook_left, shelf_1, lamp_socket
@@ -14842,6 +14907,7 @@ components:
           description: Position and orientation relative to the owning node
         acceptsTags:
           type: array
+          nullable: true
           items:
             type: string
           description: |
@@ -17625,6 +17691,7 @@ components:
           description: LP cost for this license
     CheckoutRequest:
       type: object
+      additionalProperties: false
       description: Request to checkout a scene for editing
       required:
       - sceneId
@@ -17640,6 +17707,7 @@ components:
         editorId:
           type: string
           nullable: true
+          maxLength: 200
           description: |
             Editor identifier. For Session type: the WebSocket session ID (UUID format).
             For Service type: the app-id or service name.
@@ -17647,9 +17715,13 @@ components:
         ttlMinutes:
           type: integer
           nullable: true
-          description: Custom lock TTL (uses default if not specified)
+          minimum: 1
+          maximum: 1440
+          description: Custom lock TTL in minutes (uses default if not 
+            specified)
     CheckoutResponse:
       type: object
+      additionalProperties: false
       description: Response containing checkout token and scene
       required:
       - checkoutToken
@@ -17843,35 +17915,6 @@ components:
         isBuiltIn:
           type: boolean
           description: Whether this is a built-in type
-    CleanupByOwnerRequest:
-      type: object
-      description: Request to cleanup all boards for a deleted owner entity
-      additionalProperties: false
-      required:
-      - ownerType
-      - ownerId
-      properties:
-        ownerType:
-          $ref: '#/components/schemas/EntityType'
-          description: Type of entity whose boards should be cleaned up
-        ownerId:
-          type: string
-          format: uuid
-          description: ID of the entity whose boards should be cleaned up
-    CleanupResponse:
-      type: object
-      description: Result of an owner cleanup operation
-      additionalProperties: false
-      required:
-      - statusesRemoved
-      - containersDeleted
-      properties:
-        statusesRemoved:
-          type: integer
-          description: Number of status instances removed
-        containersDeleted:
-          type: integer
-          description: Number of status containers deleted
     ClientCapabilitiesResponse:
       description: Response containing the client's capability manifest with 
         available API endpoints and shortcuts
@@ -18061,6 +18104,7 @@ components:
           description: Number of licenses cloned (item instances created)
     CollapseDeltasRequest:
       type: object
+      additionalProperties: false
       description: Request to collapse a delta chain into a full snapshot
       required:
       - gameId
@@ -18070,6 +18114,9 @@ components:
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -18080,6 +18127,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the slot containing deltas to collapse
         versionNumber:
           type: integer
@@ -18282,6 +18331,7 @@ components:
       - Tactical
     CommitRequest:
       type: object
+      additionalProperties: false
       description: Request to commit checkout changes
       required:
       - sceneId
@@ -18294,6 +18344,7 @@ components:
           description: Scene being committed
         checkoutToken:
           type: string
+          maxLength: 200
           description: Checkout token from checkout response
         scene:
           $ref: '#/components/schemas/Scene'
@@ -18301,17 +18352,15 @@ components:
         changesSummary:
           type: string
           nullable: true
+          maxLength: 2000
           description: Optional summary of changes for audit
     CommitResponse:
       type: object
+      additionalProperties: false
       description: Response confirming commit
       required:
-      - committed
       - newVersion
       properties:
-        committed:
-          type: boolean
-          description: Whether commit was successful
         newVersion:
           type: string
           description: New version after commit
@@ -19936,6 +19985,7 @@ components:
       description: Request to copy save data from one slot to another, 
         optionally across different entities or games.
       type: object
+      additionalProperties: false
       required:
       - sourceGameId
       - sourceOwnerId
@@ -19948,6 +19998,9 @@ components:
       properties:
         sourceGameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier of the source save
         sourceOwnerId:
           type: string
@@ -19958,6 +20011,8 @@ components:
           description: Type of entity that owns the source save
         sourceSlotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the source slot to copy from
         sourceVersion:
           type: integer
@@ -19965,6 +20020,9 @@ components:
           description: Version to copy (latest if null)
         targetGameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for the target save
         targetOwnerId:
           type: string
@@ -19975,6 +20033,8 @@ components:
           description: Type of entity that will own the copied save
         targetSlotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the target slot to copy to
         targetCategory:
           $ref: '#/components/schemas/SaveCategory'
@@ -21915,6 +21975,7 @@ components:
           description: Classification tags for filtering
     CreateSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to create a new scene
       required:
       - scene
@@ -21964,6 +22025,7 @@ components:
     CreateSlotRequest:
       description: Request to create a new save slot for an entity.
       type: object
+      additionalProperties: false
       required:
       - gameId
       - ownerId
@@ -22051,9 +22113,11 @@ components:
           description: Unique status code within this game service
         displayName:
           type: string
+          maxLength: 256
           description: Human-readable display name for this status effect
         description:
           type: string
+          maxLength: 2000
           description: Detailed description of what this status effect does
         category:
           $ref: '#/components/schemas/StatusCategory'
@@ -22064,6 +22128,7 @@ components:
         maxStacks:
           type: integer
           minimum: 1
+          maximum: 100
           default: 1
           description: Maximum number of stacks when stackable is true
         stackBehavior:
@@ -22971,6 +23036,7 @@ components:
           description: Room ID to delete
     DeleteSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to delete a scene
       required:
       - sceneId
@@ -22982,27 +23048,21 @@ components:
         reason:
           type: string
           nullable: true
+          maxLength: 1000
           description: Optional reason for deletion (included in event)
     DeleteSceneResponse:
       type: object
-      description: Response confirming scene deletion
-      required:
-      - deleted
+      additionalProperties: false
+      description: Response for scene deletion
       properties:
-        deleted:
-          type: boolean
-          description: Whether the scene was successfully deleted
-        sceneId:
-          type: string
-          format: uuid
-          description: ID of the deleted scene
         referencingScenes:
           type: array
           items:
             type: string
             format: uuid
           nullable: true
-          description: If deletion failed, IDs of scenes that reference this one
+          description: If deletion was blocked (409), IDs of scenes that 
+            reference this one
     DeleteSeedTypeRequest:
       type: object
       description: Request to hard-delete a deprecated seed type with no 
@@ -23023,6 +23083,7 @@ components:
             The game service scope. Null for cross-game seed types.
     DeleteSlotRequest:
       type: object
+      additionalProperties: false
       description: Request to permanently delete a save slot and all its 
         versions
       required:
@@ -23046,18 +23107,17 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
     DeleteSlotResponse:
       type: object
+      additionalProperties: false
       description: Result of a slot deletion operation with cleanup statistics
       required:
-      - deleted
       - versionsDeleted
       - bytesFreed
       properties:
-        deleted:
-          type: boolean
-          description: Whether slot was deleted
         versionsDeleted:
           type: integer
           description: Number of versions deleted
@@ -23065,8 +23125,20 @@ components:
           type: integer
           format: int64
           description: Storage freed in bytes
+    DeleteStatusTemplateRequest:
+      type: object
+      description: Request to delete a deprecated status template
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Status template to delete (must be deprecated first)
     DeleteVersionRequest:
       type: object
+      additionalProperties: false
       description: Request to permanently delete a specific save version
       required:
       - ownerId
@@ -23083,20 +23155,19 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
         versionNumber:
           type: integer
           description: Version to delete
     DeleteVersionResponse:
       type: object
+      additionalProperties: false
       description: Result of a version deletion operation with storage freed
       required:
-      - deleted
       - bytesFreed
       properties:
-        deleted:
-          type: boolean
-          description: Whether version was deleted
         bytesFreed:
           type: integer
           format: int64
@@ -23373,6 +23444,22 @@ components:
           minLength: 1
           maxLength: 500
           description: Optional reason for deprecation (for audit purposes).
+    DeprecateStatusTemplateRequest:
+      type: object
+      description: Request to deprecate a status template
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      - reason
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Status template to deprecate
+        reason:
+          type: string
+          maxLength: 500
+          description: Why this template is being deprecated
     DeprecateTemplateRequest:
       type: object
       description: Request to deprecate a template
@@ -23462,6 +23549,7 @@ components:
         tracking
     DiscardRequest:
       type: object
+      additionalProperties: false
       description: Request to discard checkout
       required:
       - sceneId
@@ -23473,16 +23561,8 @@ components:
           description: Scene to discard changes for
         checkoutToken:
           type: string
+          maxLength: 200
           description: Checkout token
-    DiscardResponse:
-      type: object
-      description: Response confirming discard
-      required:
-      - discarded
-      properties:
-        discarded:
-          type: boolean
-          description: Whether discard was successful
     DiscoveryCheckResult:
       type: object
       additionalProperties: false
@@ -23692,6 +23772,7 @@ components:
       - Pause
     DuplicateSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to duplicate a scene
       required:
       - sourceSceneId
@@ -23703,10 +23784,13 @@ components:
           description: Scene to duplicate
         newName:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Name for the duplicate
         newGameId:
           type: string
           nullable: true
+          maxLength: 200
           description: Optional different game ID
         newSceneType:
           $ref: '#/components/schemas/SceneType'
@@ -25006,6 +25090,7 @@ components:
       - EndOfSeason
     ExportSavesRequest:
       type: object
+      additionalProperties: false
       description: Request to export all saves for an owner to a downloadable 
         archive
       required:
@@ -25015,6 +25100,9 @@ components:
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -25025,11 +25113,13 @@ components:
           description: Type of entity that owns the saves to export
         slotNames:
           type: array
+          nullable: true
           items:
             type: string
-          description: Specific slots to export (all if null)
+          description: Specific slots to export (null = all slots)
     ExportSavesResponse:
       type: object
+      additionalProperties: false
       description: Response with pre-signed URL for downloading exported save 
         archive
       required:
@@ -25266,6 +25356,7 @@ components:
           description: Previous incarnations (if reincarnation tracked)
     FindAssetUsageRequest:
       type: object
+      additionalProperties: false
       description: Request to find asset usage
       required:
       - assetId
@@ -25277,9 +25368,11 @@ components:
         gameId:
           type: string
           nullable: true
+          maxLength: 200
           description: Optional game filter
     FindAssetUsageResponse:
       type: object
+      additionalProperties: false
       description: Scenes using the asset
       required:
       - usages
@@ -25291,6 +25384,7 @@ components:
           description: Asset usage instances
     FindReferencesRequest:
       type: object
+      additionalProperties: false
       description: Request to find referencing scenes
       required:
       - sceneId
@@ -25301,6 +25395,7 @@ components:
           description: Scene ID to find references to
     FindReferencesResponse:
       type: object
+      additionalProperties: false
       description: Scenes that reference the target
       required:
       - referencingScenes
@@ -26510,6 +26605,7 @@ components:
           description: Number of seed-derived passive effects
         effects:
           type: array
+          maxItems: 500
           items:
             $ref: '#/components/schemas/StatusEffectSummary'
           description: All active effects with source attribution
@@ -27388,6 +27484,7 @@ components:
           description: WebSocket session ID of the player
     GetSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to retrieve a scene
       required:
       - sceneId
@@ -27399,6 +27496,7 @@ components:
         version:
           type: string
           nullable: true
+          maxLength: 50
           description: Specific version to retrieve (null = latest)
         resolveReferences:
           type: boolean
@@ -27413,6 +27511,7 @@ components:
             recursion)
     GetSceneResponse:
       type: object
+      additionalProperties: false
       description: Response containing a scene and resolution metadata
       required:
       - scene
@@ -27537,6 +27636,7 @@ components:
           description: Bond ID to look up shared garden state
     GetSlotRequest:
       type: object
+      additionalProperties: false
       description: Request to retrieve metadata for a specific save slot
       required:
       - gameId
@@ -27559,6 +27659,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
     GetStatusRequest:
       type: object
@@ -27580,6 +27682,7 @@ components:
           description: Game service the template is scoped to
         code:
           type: string
+          maxLength: 128
           description: Unique status code within this game service
     GetStatusTemplateRequest:
       type: object
@@ -27711,6 +27814,7 @@ components:
           description: Total matching transactions
     GetValidationRulesRequest:
       type: object
+      additionalProperties: false
       description: Request to get validation rules
       required:
       - gameId
@@ -27718,12 +27822,15 @@ components:
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Game ID
         sceneType:
           $ref: '#/components/schemas/SceneType'
           description: Scene type
     GetValidationRulesResponse:
       type: object
+      additionalProperties: false
       description: Response containing validation rules
       required:
       - gameId
@@ -27737,9 +27844,10 @@ components:
           description: Scene type
         rules:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/ValidationRule'
-          description: Registered rules (empty if none)
+          description: Registered rules (null if none)
     GoapGoal:
       description: Goal definition for GOAP planning with conditions and 
         priority
@@ -27884,6 +27992,7 @@ components:
           description: Game service scope for template lookup
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Status template code to grant
         sourceId:
           type: string
@@ -27901,10 +28010,8 @@ components:
           nullable: true
           additionalProperties: true
           description: "Arbitrary key-value data passed to contract template values
-            and stored on the status instance. Convention for Divine integration -
-            set metadata.blessingTier to the blessing tier string (e.g., minor, standard,
-            greater, supreme) so the Divine service can query active blessings by
-            tier."
+            and stored on the status instance. Opaque to Status -- callers define
+            their own semantics."
     GrantStatusResponse:
       type: object
       description: Result of a successful status grant operation
@@ -27923,6 +28030,7 @@ components:
           description: Status instance that was created or updated
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Status template code that was granted
         stackCount:
           type: integer
@@ -28221,6 +28329,7 @@ components:
           description: Entity type discriminator
         statusCode:
           type: string
+          maxLength: 128
           description: Status template code to check for
     HasStatusResponse:
       type: object
@@ -28243,6 +28352,7 @@ components:
           description: Current stack count if found (null if not present)
     HeartbeatRequest:
       type: object
+      additionalProperties: false
       description: Request to extend checkout lock
       required:
       - sceneId
@@ -28254,26 +28364,27 @@ components:
           description: Scene being edited
         checkoutToken:
           type: string
+          maxLength: 200
           description: Checkout token
     HeartbeatResponse:
       type: object
+      additionalProperties: false
       description: Response confirming lock extension
       required:
-      - extended
       - newExpiresAt
+      - extensionsRemaining
       properties:
-        extended:
-          type: boolean
-          description: Whether extension was successful
         newExpiresAt:
           type: string
           format: date-time
           description: New expiration time
         extensionsRemaining:
           type: integer
+          minimum: 0
           description: Number of extensions remaining
     HistoryRequest:
       type: object
+      additionalProperties: false
       description: Request for scene version history
       required:
       - sceneId
@@ -28285,12 +28396,16 @@ components:
         limit:
           type: integer
           default: 10
+          minimum: 1
+          maximum: 1000
           description: Maximum versions to return
     HistoryResponse:
       type: object
+      additionalProperties: false
       description: Scene version history
       required:
       - sceneId
+      - currentVersion
       - versions
       properties:
         sceneId:
@@ -29236,6 +29351,7 @@ components:
       - Abandoned
     JsonPatchOperation:
       type: object
+      additionalProperties: false
       required:
       - op
       - path
@@ -29244,14 +29360,7 @@ components:
         Uses JsonPatch.Net library (MIT licensed).
       properties:
         op:
-          type: string
-          enum:
-          - add
-          - remove
-          - replace
-          - move
-          - copy
-          - test
+          $ref: '#/components/schemas/JsonPatchOperationType'
           description: Operation type
         path:
           type: string
@@ -29262,6 +29371,16 @@ components:
           description: Source path (for move/copy operations)
         value:
           description: Value to use (for add/replace/test operations)
+    JsonPatchOperationType:
+      type: string
+      enum:
+      - Add
+      - Remove
+      - Replace
+      - Move
+      - Copy
+      - Test
+      description: JSON Patch operation type per RFC 6902
     KeyMode:
       description: Musical mode/scale type for key signatures
       type: string
@@ -31258,11 +31377,13 @@ components:
           description: Total matching scenarios
     ListScenesRequest:
       type: object
+      additionalProperties: false
       description: Request to list scenes with optional filters
       properties:
         gameId:
           type: string
           nullable: true
+          maxLength: 200
           description: Filter by game ID
         sceneType:
           $ref: '#/components/schemas/SceneType'
@@ -31283,6 +31404,7 @@ components:
         nameContains:
           type: string
           nullable: true
+          maxLength: 500
           description: Filter by name containing this substring 
             (case-insensitive)
         offset:
@@ -31298,10 +31420,13 @@ components:
           description: Maximum results to return
     ListScenesResponse:
       type: object
+      additionalProperties: false
       description: Response containing scene list and pagination info
       required:
       - scenes
       - total
+      - offset
+      - limit
       properties:
         scenes:
           type: array
@@ -31319,15 +31444,19 @@ components:
           description: Applied limit
     ListSchemasRequest:
       type: object
+      additionalProperties: false
       description: Request to list all registered schemas for a namespace
       required:
       - namespace
       properties:
         namespace:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Schema namespace to list
     ListSchemasResponse:
       type: object
+      additionalProperties: false
       description: List of registered schemas with latest version indicator
       required:
       - schemas
@@ -31427,6 +31556,7 @@ components:
           description: Total matching seeds across all pages.
     ListSlotsRequest:
       type: object
+      additionalProperties: false
       description: Request to list all save slots belonging to a specific owner
       required:
       - gameId
@@ -31457,6 +31587,7 @@ components:
           description: Include version count in response
     ListSlotsResponse:
       type: object
+      additionalProperties: false
       description: Response containing a list of save slots for an owner
       required:
       - slots
@@ -31486,6 +31617,10 @@ components:
           description: Optional filter by status category
           allOf:
           - $ref: '#/components/schemas/StatusCategory'
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated templates in results
         page:
           type: integer
           minimum: 1
@@ -31509,6 +31644,7 @@ components:
       properties:
         templates:
           type: array
+          maxItems: 200
           items:
             $ref: '#/components/schemas/StatusTemplateResponse'
           description: Status templates in this page
@@ -31571,6 +31707,7 @@ components:
       properties:
         statuses:
           type: array
+          maxItems: 100
           items:
             $ref: '#/components/schemas/StatusEffectSummary'
           description: Active status effects (item-based and optionally 
@@ -31844,6 +31981,7 @@ components:
           description: Number of versions to skip for pagination
     ListVersionsResponse:
       type: object
+      additionalProperties: false
       description: Paginated list of save versions within a slot
       required:
       - versions
@@ -31859,6 +31997,7 @@ components:
           description: Total version count in slot
     LoadRequest:
       type: object
+      additionalProperties: false
       description: Request to load save data from a specific slot and version
       required:
       - gameId
@@ -31896,6 +32035,7 @@ components:
           description: Include version metadata in response
     LoadResponse:
       type: object
+      additionalProperties: false
       description: Response containing loaded save data with integrity 
         verification
       required:
@@ -31903,6 +32043,8 @@ components:
       - versionNumber
       - data
       - contentHash
+      - pinned
+      - createdAt
       properties:
         slotId:
           type: string
@@ -31939,9 +32081,10 @@ components:
           description: Save timestamp
         metadata:
           type: object
+          nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata
+          description: Custom metadata (null if none set)
     LocationResponse:
       description: Complete location data returned from API operations
       type: object
@@ -32317,8 +32460,10 @@ components:
           description: When the object was last updated
     MarkerType:
       type: string
-      description: Types of marker nodes for spawn points, waypoints, and other 
-        positional markers.
+      description: |
+        Types of marker nodes for spawn points, waypoints, and other positional markers.
+        DESIGN_DECISION: Whether this should be an opaque string instead of enum
+        (game-content codes vary per deployment). Tracked for future evaluation.
       enum:
       - Generic
       - SpawnPoint
@@ -32837,6 +32982,7 @@ components:
           description: Track events
     MigrateSaveRequest:
       type: object
+      additionalProperties: false
       description: Request to migrate a save to a newer schema version
       required:
       - ownerId
@@ -32853,12 +32999,16 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
         versionNumber:
           type: integer
           description: Specific version to migrate (defaults to latest)
         targetSchemaVersion:
           type: string
+          minLength: 1
+          maxLength: 32
           description: Target schema version to migrate to
         dryRun:
           type: boolean
@@ -32866,16 +33016,13 @@ components:
           description: Validate migration without saving
     MigrateSaveResponse:
       type: object
+      additionalProperties: false
       description: Result of a schema migration operation with version path 
         details
       required:
-      - success
       - fromSchemaVersion
       - toSchemaVersion
       properties:
-        success:
-          type: boolean
-          description: Whether migration succeeded
         fromSchemaVersion:
           type: string
           description: Original schema version
@@ -32888,14 +33035,17 @@ components:
           description: New version number (null if dry run)
         migrationPath:
           type: array
+          nullable: true
           items:
             type: string
-          description: Migration path applied (list of versions)
+          description: Migration path applied (list of versions, null if dry run
+            failed)
         warnings:
           type: array
+          nullable: true
           items:
             type: string
-          description: Non-fatal migration warnings
+          description: Non-fatal migration warnings (null if none)
     MigrationError:
       description: Details of a single relationship that failed to migrate
       type: object
@@ -34390,6 +34540,7 @@ components:
           description: Message ID to pin
     PinVersionRequest:
       type: object
+      additionalProperties: false
       description: Request to pin a save version as a checkpoint to prevent 
         cleanup
       required:
@@ -34407,6 +34558,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
         versionNumber:
           type: integer
@@ -34825,6 +34978,7 @@ components:
           description: Functional analysis per chord
     PromoteVersionRequest:
       type: object
+      additionalProperties: false
       description: Request to promote an older save version to be the latest
       required:
       - gameId
@@ -34835,6 +34989,9 @@ components:
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -34845,6 +35002,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the slot containing the version to promote
         versionNumber:
           type: integer
@@ -34952,6 +35111,7 @@ components:
       - Unique
     Quaternion:
       type: object
+      additionalProperties: false
       description: Rotation represented as a quaternion
       required:
       - x
@@ -35678,6 +35838,7 @@ components:
           description: Slot position
     QuerySavesRequest:
       type: object
+      additionalProperties: false
       description: Advanced query for saves across multiple owners with 
         filtering and sorting
       properties:
@@ -35730,22 +35891,18 @@ components:
           maximum: 100
           description: Maximum results
         sortBy:
-          type: string
-          enum:
-          - created_at
-          - size
-          - version_number
-          default: created_at
+          allOf:
+          - $ref: '#/components/schemas/SaveSortField'
+          default: CreatedAt
           description: Sort field
         sortOrder:
-          type: string
-          enum:
-          - asc
-          - desc
-          default: desc
+          allOf:
+          - $ref: '#/components/schemas/SortOrder'
+          default: Desc
           description: Sort order
     QuerySavesResponse:
       type: object
+      additionalProperties: false
       description: Paginated results from a save query operation
       required:
       - results
@@ -36369,27 +36526,27 @@ components:
       description: Categories of historical events that realms can participate 
         in
       enum:
-      - FOUNDING
-      - WAR
-      - TREATY
-      - CATACLYSM
-      - DISCOVERY
-      - MIGRATION
-      - CULTURAL_SHIFT
-      - ECONOMIC_CHANGE
-      - POLITICAL_UPHEAVAL
+      - Founding
+      - War
+      - Treaty
+      - Cataclysm
+      - Discovery
+      - Migration
+      - CulturalShift
+      - EconomicChange
+      - PoliticalUpheaval
     RealmEventRole:
       type: string
       description: How the realm participated in the historical event
       enum:
-      - ORIGIN
-      - AGGRESSOR
-      - DEFENDER
-      - MEDIATOR
-      - AFFECTED
-      - BENEFICIARY
-      - INSTIGATOR
-      - NEUTRAL_PARTY
+      - Origin
+      - Aggressor
+      - Defender
+      - Mediator
+      - Affected
+      - Beneficiary
+      - Instigator
+      - NeutralParty
     RealmHistoricalParticipation:
       type: object
       description: Record of a realm's participation in a historical event
@@ -36501,26 +36658,21 @@ components:
         Types of lore elements. Each type represents a different aspect
         of the realm's background that influences behavior.
       enum:
-      - ORIGIN_MYTH
-      - CULTURAL_PRACTICE
-      - POLITICAL_SYSTEM
-      - ECONOMIC_BASE
-      - RELIGIOUS_TRADITION
-      - GEOGRAPHIC_FEATURE
-      - FAMOUS_FIGURE
-      - TECHNOLOGICAL_LEVEL
+      - OriginMyth
+      - CulturalPractice
+      - PoliticalSystem
+      - EconomicBase
+      - ReligiousTradition
+      - GeographicFeature
+      - FamousFigure
+      - TechnologicalLevel
     RealmLoreResponse:
       type: object
       description: Complete lore data for a realm
       additionalProperties: false
       required:
-      - realmId
       - elements
       properties:
-        realmId:
-          type: string
-          format: uuid
-          description: ID of the realm this lore belongs to
         elements:
           type: array
           items:
@@ -36545,6 +36697,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         participations:
           type: array
@@ -36601,6 +36755,7 @@ components:
           description: Timestamp when the document was recovered
     ReferenceInfo:
       type: object
+      additionalProperties: false
       description: Information about a reference
       required:
       - sceneId
@@ -36871,6 +37026,7 @@ components:
             plugin reads specific keys from this field by convention.
     RegisterSchemaRequest:
       type: object
+      additionalProperties: false
       description: Request to register a new save data schema with optional 
         migration rules
       required:
@@ -36880,9 +37036,13 @@ components:
       properties:
         namespace:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Schema namespace (e.g., game identifier)
         schemaVersion:
           type: string
+          minLength: 1
+          maxLength: 32
           description: Schema version identifier
         schema:
           type: object
@@ -37392,6 +37552,7 @@ components:
           description: Number of status instances removed
     RenameSlotRequest:
       type: object
+      additionalProperties: false
       description: Request to rename an existing save slot
       required:
       - gameId
@@ -37402,6 +37563,9 @@ components:
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier
         ownerId:
           type: string
@@ -37412,6 +37576,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Current slot name
         newSlotName:
           type: string
@@ -37756,12 +37922,14 @@ components:
           description: Which of the requested assets this bundle provides
     ResolvedReference:
       type: object
+      additionalProperties: false
       description: A successfully resolved scene reference
       required:
       - nodeId
       - refId
       - referencedSceneId
       - scene
+      - depth
       properties:
         nodeId:
           type: string
@@ -37783,6 +37951,7 @@ components:
           description: The resolved scene content
         depth:
           type: integer
+          minimum: 0
           description: Depth level of this reference
     ResourceArchiveBase:
       type: object
@@ -38129,6 +38298,7 @@ components:
         STATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).
     SaveDeltaRequest:
       type: object
+      additionalProperties: false
       description: Request to save incremental changes as a delta from a base 
         version
       required:
@@ -38141,6 +38311,9 @@ components:
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -38151,6 +38324,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the slot to save the delta to
         baseVersion:
           type: integer
@@ -38189,6 +38364,7 @@ components:
           description: Custom key-value metadata for this delta version
     SaveDeltaResponse:
       type: object
+      additionalProperties: false
       description: Result of delta save operation with size and chain 
         information
       required:
@@ -38197,6 +38373,8 @@ components:
       - baseVersion
       - deltaSizeBytes
       - estimatedFullSizeBytes
+      - chainLength
+      - compressionSavings
       - createdAt
       properties:
         slotId:
@@ -38230,6 +38408,7 @@ components:
           description: When the delta version was created
     SaveRequest:
       type: object
+      additionalProperties: false
       description: Request to save game state data to a slot with optional 
         compression and metadata
       required:
@@ -38241,6 +38420,9 @@ components:
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -38251,6 +38433,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name (auto-created if doesn't exist)
         category:
           allOf:
@@ -38298,6 +38482,7 @@ components:
           description: If provided, pin this version with checkpoint name
     SaveResponse:
       type: object
+      additionalProperties: false
       description: Result of a save operation including version info and 
         conflict detection
       required:
@@ -38305,6 +38490,10 @@ components:
       - versionNumber
       - contentHash
       - sizeBytes
+      - pinned
+      - conflictDetected
+      - versionsCleanedUp
+      - uploadPending
       - createdAt
       properties:
         slotId:
@@ -38365,6 +38554,13 @@ components:
           description: |
             True if async upload is enabled and data is queued for MinIO upload.
             Save is immediately loadable from Redis cache, but not yet durable.
+    SaveSortField:
+      type: string
+      enum:
+      - CreatedAt
+      - Size
+      - VersionNumber
+      description: Field to sort save query results by
     ScenarioCategory:
       type: string
       enum:
@@ -38969,6 +39165,7 @@ components:
           description: When this template was last updated
     Scene:
       type: object
+      additionalProperties: false
       description: A complete scene document with hierarchical node structure
       required:
       - sceneId
@@ -38977,9 +39174,13 @@ components:
       - name
       - version
       - root
+      - schema
+      - createdAt
+      - updatedAt
       properties:
         schema:
           type: string
+          maxLength: 200
           description: Schema identifier for validation
           default: "bannou://schemas/scene/v1"
         sceneId:
@@ -38988,6 +39189,8 @@ components:
           description: Unique scene identifier
         gameId:
           type: string
+          minLength: 1
+          maxLength: 200
           description: |
             Game service identifier for partitioning. Treated as opaque string.
             Default is the nil UUID for unpartitioned scenes.
@@ -38997,20 +39200,25 @@ components:
           description: Scene classification for querying and validation
         name:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Human-readable scene name
         description:
           type: string
           nullable: true
+          maxLength: 2000
           description: Optional scene description
         version:
           type: string
           pattern: '^\d+\.\d+\.\d+$'
+          maxLength: 50
           description: Semantic version (MAJOR.MINOR.PATCH)
         root:
           $ref: '#/components/schemas/SceneNode'
           description: Root node of the scene hierarchy
         tags:
           type: array
+          nullable: true
           items:
             type: string
           description: Searchable tags for filtering scenes
@@ -39040,6 +39248,7 @@ components:
       - Service
     SceneNode:
       type: object
+      additionalProperties: false
       description: |
         A node in the scene hierarchy. Nodes can contain children to form
         a tree structure. Each node has a local transform relative to its parent.
@@ -39057,6 +39266,8 @@ components:
         refId:
           type: string
           pattern: '^[a-z][a-z0-9_]*$'
+          minLength: 1
+          maxLength: 200
           description: |
             Scene-local reference identifier. Must be unique within the scene.
             Used for scripting and cross-referencing. Examples: main_door, npc_spawn_1
@@ -39067,6 +39278,8 @@ components:
           description: Parent node ID. Null for the root node only.
         name:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Human-readable display name for the node
         nodeType:
           $ref: '#/components/schemas/NodeType'
@@ -39080,6 +39293,7 @@ components:
           description: Optional asset binding (mesh, sound, particle effect)
         children:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/SceneNode'
           description: Child nodes in the hierarchy
@@ -39093,6 +39307,7 @@ components:
           description: Ordering among siblings for deterministic iteration
         tags:
           type: array
+          nullable: true
           items:
             type: string
           description: Arbitrary tags for consumer filtering (e.g., entrance, 
@@ -39106,6 +39321,7 @@ components:
             No Bannou plugin reads specific keys from this field by convention.
         attachmentPoints:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/AttachmentPoint'
           description: |
@@ -39113,6 +39329,7 @@ components:
             Used by Scene Composer for furniture decoration, wall accessories, etc.
         affordances:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/Affordance'
           description: |
@@ -39151,6 +39368,7 @@ components:
             Only relevant when nodeType is 'reference'.
     SceneResponse:
       type: object
+      additionalProperties: false
       description: Standard response containing a scene
       required:
       - scene
@@ -39160,6 +39378,7 @@ components:
           description: The scene document
     SceneSummary:
       type: object
+      additionalProperties: false
       description: Summary of a scene for list results (excludes full node tree)
       required:
       - sceneId
@@ -39167,6 +39386,10 @@ components:
       - sceneType
       - name
       - version
+      - nodeCount
+      - createdAt
+      - updatedAt
+      - isCheckedOut
       properties:
         sceneId:
           type: string
@@ -39190,6 +39413,7 @@ components:
           description: Current version
         tags:
           type: array
+          nullable: true
           items:
             type: string
           description: Scene tags
@@ -39212,6 +39436,8 @@ components:
       description: |
         Scene classification for querying and validation rule lookup.
         Different types may have different validation requirements per game.
+        DESIGN_DECISION: Whether this should be an opaque string instead of enum
+        (game-content codes vary per deployment). Tracked for future evaluation.
       enum:
       - Unknown
       - Region
@@ -39228,10 +39454,12 @@ components:
       - Other
     SchemaResponse:
       type: object
+      additionalProperties: false
       description: Registered schema definition with version lineage information
       required:
       - namespace
       - schemaVersion
+      - hasMigration
       - createdAt
       properties:
         namespace:
@@ -39303,6 +39531,7 @@ components:
           description: Total number of matching messages
     SearchResult:
       type: object
+      additionalProperties: false
       description: A single search result
       required:
       - scene
@@ -39317,19 +39546,24 @@ components:
         matchContext:
           type: string
           nullable: true
+          maxLength: 500
           description: Context around the match
     SearchScenesRequest:
       type: object
+      additionalProperties: false
       description: Request for full-text search
       required:
       - query
       properties:
         query:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Search query text
         gameId:
           type: string
           nullable: true
+          maxLength: 200
           description: Filter by game ID
         sceneTypes:
           type: array
@@ -39340,13 +39574,17 @@ components:
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
         limit:
           type: integer
           default: 50
+          minimum: 1
+          maximum: 100
           description: Maximum results
     SearchScenesResponse:
       type: object
+      additionalProperties: false
       description: Search results
       required:
       - results
@@ -39576,13 +39814,17 @@ components:
       properties:
         capabilityCode:
           type: string
+          maxLength: 128
           description: Capability code from the seed's capability manifest
         domain:
           type: string
+          maxLength: 128
           description: Seed domain this capability belongs to
         fidelity:
           type: number
           format: float
+          minimum: 0.0
+          maximum: 1.0
           description: Capability fidelity value (0.0 to 1.0)
         seedId:
           type: string
@@ -39590,6 +39832,7 @@ components:
           description: Seed providing this capability
         seedTypeCode:
           type: string
+          maxLength: 128
           description: Type code of the seed providing this capability
     SeedEffectsResponse:
       type: object
@@ -39609,6 +39852,7 @@ components:
           description: Entity type discriminator
         effects:
           type: array
+          maxItems: 500
           items:
             $ref: '#/components/schemas/SeedEffectEntry'
           description: Seed-derived passive effects
@@ -39854,6 +40098,7 @@ components:
             belong to this game service)
         templates:
           type: array
+          maxItems: 500
           items:
             $ref: '#/components/schemas/CreateStatusTemplateRequest'
           description: Status templates to create (duplicates are skipped)
@@ -40459,6 +40704,7 @@ components:
           description: Skill range (null means any skill level)
     SlotResponse:
       type: object
+      additionalProperties: false
       description: Complete metadata for a save slot including version 
         statistics
       required:
@@ -40467,7 +40713,12 @@ components:
       - ownerType
       - slotName
       - category
+      - maxVersions
+      - compressionType
+      - versionCount
+      - totalSizeBytes
       - createdAt
+      - updatedAt
       properties:
         slotId:
           type: string
@@ -40517,9 +40768,10 @@ components:
           description: Last modification timestamp
         metadata:
           type: object
+          nullable: true
           additionalProperties:
             type: string
-          description: Custom key-value metadata
+          description: Custom key-value metadata (null if none set)
     SortOrder:
       type: string
       enum:
@@ -40733,6 +40985,7 @@ components:
       description: Response after starting watchers for a realm
       required:
       - watchersStarted
+      - watchersExisted
       - watchers
       properties:
         watchersStarted:
@@ -40775,6 +41028,7 @@ components:
       properties:
         statusCode:
           type: string
+          maxLength: 128
           description: Status template code (item-based) or capability code 
             (seed-derived)
         category:
@@ -40796,6 +41050,8 @@ components:
         fidelity:
           type: number
           format: float
+          minimum: 0.0
+          maximum: 1.0
           nullable: true
           description: Seed capability fidelity value (null for item-based 
             effects)
@@ -40836,6 +41092,7 @@ components:
           description: Entity type discriminator
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Status template code
         category:
           $ref: '#/components/schemas/StatusCategory'
@@ -40871,7 +41128,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Arbitrary metadata associated with this status instance
+          description: "Client-only metadata. No Bannou plugin reads specific keys
+            from this field by convention."
     StatusRemoveReason:
       type: string
       description: |
@@ -40929,6 +41187,7 @@ components:
       - maxStacks
       - stackBehavior
       - itemTemplateId
+      - isDeprecated
       - createdAt
       properties:
         statusTemplateId:
@@ -40941,12 +41200,15 @@ components:
           description: Game service this template is scoped to
         code:
           type: string
+          maxLength: 128
           description: Unique status code within this game service
         displayName:
           type: string
+          maxLength: 256
           description: Human-readable display name
         description:
           type: string
+          maxLength: 2000
           description: Detailed description of this status effect
         category:
           $ref: '#/components/schemas/StatusCategory'
@@ -40956,6 +41218,7 @@ components:
           description: Whether this status can stack
         maxStacks:
           type: integer
+          minimum: 1
           description: Maximum number of stacks
         stackBehavior:
           $ref: '#/components/schemas/StackBehavior'
@@ -40972,6 +41235,7 @@ components:
           description: Item template used when granting this status
         defaultDurationSeconds:
           type: integer
+          minimum: 1
           nullable: true
           description: Default duration in seconds (null for permanent statuses)
         iconAssetId:
@@ -40979,6 +41243,21 @@ components:
           format: uuid
           nullable: true
           description: Asset identifier for this status effect's icon
+        isDeprecated:
+          type: boolean
+          description: Whether this template is deprecated and unavailable for 
+            new grants
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this template was deprecated (null if not 
+            deprecated)
+        deprecationReason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Why this template was deprecated (null if not deprecated)
         createdAt:
           type: string
           format: date-time
@@ -41041,13 +41320,9 @@ components:
     StopWatcherResponse:
       type: object
       additionalProperties: false
-      description: Response after stopping a watcher
-      required:
-      - stopped
-      properties:
-        stopped:
-          type: boolean
-          description: True if the watcher was found and stopped
+      description: Empty response. HTTP 200 confirms the watcher was stopped. 
+        HTTP 404 if watcher not found.
+      properties: {}
     StorageMode:
       type: string
       description: How layer data should be stored
@@ -42001,6 +42276,7 @@ components:
           description: ID of the target realm to transfer the location to
     Transform:
       type: object
+      additionalProperties: false
       description: Position, rotation, and scale in 3D space
       required:
       - position
@@ -42870,6 +43146,18 @@ components:
           nullable: true
           description: >-
             The game service scope. Null for cross-game seed types.
+    UndeprecateStatusTemplateRequest:
+      type: object
+      description: Request to undeprecate a status template (Category A -- 
+        reversible)
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Status template to undeprecate
     UnlockContractRequest:
       type: object
       description: Request to unlock a contract from guardian custody
@@ -43062,6 +43350,7 @@ components:
           description: Message ID to unpin
     UnpinVersionRequest:
       type: object
+      additionalProperties: false
       description: Request to unpin a previously pinned save version
       required:
       - ownerId
@@ -43078,12 +43367,15 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
         versionNumber:
           type: integer
           description: Version to unpin
     UnresolvedReference:
       type: object
+      additionalProperties: false
       description: A scene reference that could not be resolved
       required:
       - nodeId
@@ -44800,6 +45092,7 @@ components:
           description: New classification tags
     UpdateSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to update an existing scene
       required:
       - scene
@@ -44810,6 +45103,7 @@ components:
         checkoutToken:
           type: string
           nullable: true
+          maxLength: 200
           description: Checkout token if updating via checkout workflow
     UpdateSeedRequest:
       type: object
@@ -44915,10 +45209,12 @@ components:
           description: Status template to update
         displayName:
           type: string
+          maxLength: 256
           nullable: true
           description: Updated display name (null means no change)
         description:
           type: string
+          maxLength: 2000
           nullable: true
           description: Updated description (null means no change)
         category:
@@ -44933,6 +45229,7 @@ components:
         maxStacks:
           type: integer
           minimum: 1
+          maximum: 100
           nullable: true
           description: Updated maximum stack count (null means no change)
         stackBehavior:
@@ -45354,6 +45651,7 @@ components:
           description: Non-fatal warnings
     ValidateSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to validate a scene structure
       required:
       - scene
@@ -45541,6 +45839,7 @@ components:
       - BalanceMismatch
     ValidationResult:
       type: object
+      additionalProperties: false
       description: Result of scene validation
       required:
       - valid
@@ -45562,6 +45861,7 @@ components:
           description: Validation warnings (severity = warning)
     ValidationRule:
       type: object
+      additionalProperties: false
       description: A validation rule definition
       required:
       - ruleId
@@ -45571,9 +45871,13 @@ components:
       properties:
         ruleId:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Unique rule identifier within the gameId+sceneType
         description:
           type: string
+          minLength: 1
+          maxLength: 2000
           description: Human-readable description of the rule
         severity:
           $ref: '#/components/schemas/ValidationSeverity'
@@ -45587,33 +45891,41 @@ components:
           description: Rule-specific configuration
     ValidationRuleConfig:
       type: object
-      description: Configuration for a validation rule
+      additionalProperties: false
+      description: Configuration for a validation rule (fields are conditional 
+        on rule type)
       properties:
         nodeType:
-          type: string
+          $ref: '#/components/schemas/NodeType'
           nullable: true
-          description: Filter to nodes of this type (for require_tag)
+          description: Filter to nodes of this type (for RequireTag, 
+            RequireNodeType)
         tag:
           type: string
           nullable: true
+          maxLength: 200
           description: Tag to check for
         minCount:
           type: integer
           nullable: true
+          minimum: 0
           description: Minimum occurrences required
         maxCount:
           type: integer
           nullable: true
+          minimum: 0
           description: Maximum occurrences allowed
         annotationPath:
           type: string
           nullable: true
+          maxLength: 500
           description: JSONPath to required annotation field (for 
-            require_annotation)
+            RequireAnnotation)
         expression:
           type: string
           nullable: true
-          description: Custom validation expression (for custom_expression)
+          maxLength: 2000
+          description: Custom validation expression (for CustomExpression)
     ValidationRuleType:
       type: string
       description: Type of validation check to perform
@@ -45684,6 +45996,7 @@ components:
           description: Z coordinate in garden space units
     Vector3:
       type: object
+      additionalProperties: false
       description: A point or direction in 3D space
       required:
       - x
@@ -45704,6 +46017,7 @@ components:
           description: Z coordinate
     VerifyIntegrityRequest:
       type: object
+      additionalProperties: false
       description: Request to verify data integrity of a save version via hash 
         comparison
       required:
@@ -45714,6 +46028,9 @@ components:
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -45724,6 +46041,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the slot to verify
         versionNumber:
           type: integer
@@ -45731,10 +46050,12 @@ components:
           description: Version to verify (latest if null)
     VerifyIntegrityResponse:
       type: object
+      additionalProperties: false
       description: Result of integrity verification with hash comparison details
       required:
       - valid
       - versionNumber
+      - expectedHash
       properties:
         valid:
           type: boolean
@@ -45755,10 +46076,12 @@ components:
           description: Error details if verification failed
     VersionInfo:
       type: object
+      additionalProperties: false
       description: Information about a specific version
       required:
       - version
       - createdAt
+      - nodeCount
       properties:
         version:
           type: string
@@ -45770,22 +46093,26 @@ components:
         createdBy:
           type: string
           nullable: true
+          maxLength: 200
           description: Who created this version
         changesSummary:
           type: string
           nullable: true
+          maxLength: 2000
           description: Summary of changes
         nodeCount:
           type: integer
           description: Node count at this version
     VersionResponse:
       type: object
+      additionalProperties: false
       description: Metadata for a single save version including size and 
         checkpoint info
       required:
       - versionNumber
       - contentHash
       - sizeBytes
+      - pinned
       - createdAt
       properties:
         versionNumber:
@@ -45794,7 +46121,9 @@ components:
         assetId:
           type: string
           format: uuid
-          description: Reference to asset in lib-asset
+          nullable: true
+          description: Reference to asset in lib-asset (null if not yet uploaded
+            to MinIO)
         contentHash:
           type: string
           description: SHA-256 hash
@@ -45827,9 +46156,10 @@ components:
           description: Creation timestamp
         metadata:
           type: object
+          nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata
+          description: Custom metadata (null if none set)
     ViolationRecord:
       type: object
       description: Record of a knowing obligation violation by a character
@@ -46114,6 +46444,7 @@ components:
           description: Behavior document reference this watcher uses
         actorId:
           type: string
+          format: uuid
           nullable: true
           description: Actor instance ID running this watcher's behavior
     WeightContribution:

@@ -41,9 +41,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Board templates are scoped to a game service.
     /// </remarks>
 
+
+
     /// <returns>Board template created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> CreateBoardTemplateAsync(CreateBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> CreateBoardTemplate(CreateBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a board template by ID
@@ -53,9 +56,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// Retrieves a board template by its unique identifier.
     /// </remarks>
 
+
+
     /// <returns>Board template retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> GetBoardTemplateAsync(GetBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> GetBoardTemplate(GetBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List board templates for a game service
@@ -65,9 +71,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// Paginated list of board templates filtered by game service ID.
     /// </remarks>
 
+
+
     /// <returns>Board templates retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBoardTemplatesResponse>> ListBoardTemplatesAsync(ListBoardTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBoardTemplatesResponse>> ListBoardTemplates(ListBoardTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a board template
@@ -78,9 +87,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>and contract template are immutable after creation.
     /// </remarks>
 
+
+
     /// <returns>Board template updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> UpdateBoardTemplateAsync(UpdateBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> UpdateBoardTemplate(UpdateBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a board template
@@ -91,9 +103,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>that reference this template.
     /// </remarks>
 
+
+
     /// <returns>Board template deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> DeleteBoardTemplateAsync(DeleteBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> DeleteBoardTemplate(DeleteBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Add a license definition to a board template
@@ -106,9 +121,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Optional non-adjacent prerequisites can reference other license codes on the board.
     /// </remarks>
 
+
+
     /// <returns>License definition added successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> AddLicenseDefinitionAsync(AddLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> AddLicenseDefinition(AddLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a license definition
@@ -118,9 +136,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// Get a license definition by board template ID and license code.
     /// </remarks>
 
+
+
     /// <returns>License definition retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> GetLicenseDefinitionAsync(GetLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> GetLicenseDefinition(GetLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all license definitions for a board template
@@ -130,9 +151,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// Returns the full grid layout of all license definitions for a board template.
     /// </remarks>
 
+
+
     /// <returns>License definitions retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListLicenseDefinitionsResponse>> ListLicenseDefinitionsAsync(ListLicenseDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListLicenseDefinitionsResponse>> ListLicenseDefinitions(ListLicenseDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a license definition
@@ -143,9 +167,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>after creation.
     /// </remarks>
 
+
+
     /// <returns>License definition updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> UpdateLicenseDefinitionAsync(UpdateLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> UpdateLicenseDefinition(UpdateLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove a license definition from a board template
@@ -156,9 +183,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>instances have this license unlocked.
     /// </remarks>
 
+
+
     /// <returns>License definition removed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> RemoveLicenseDefinitionAsync(RemoveLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> RemoveLicenseDefinition(RemoveLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a board instance for an owner
@@ -172,9 +202,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>maxSlots = gridWidth * gridHeight) to hold unlocked license items.
     /// </remarks>
 
+
+
     /// <returns>Board created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardResponse>> CreateBoardAsync(CreateBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardResponse>> CreateBoard(CreateBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a board instance by ID
@@ -184,9 +217,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// Retrieves a board instance by its unique identifier.
     /// </remarks>
 
+
+
     /// <returns>Board retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardResponse>> GetBoardAsync(GetBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardResponse>> GetBoard(GetBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List boards for an owner
@@ -196,9 +232,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// List all board instances for an owner (by ownerType + ownerId), with optional game service filter.
     /// </remarks>
 
+
+
     /// <returns>Boards retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBoardsByOwnerResponse>> ListBoardsByOwnerAsync(ListBoardsByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBoardsByOwnerResponse>> ListBoardsByOwner(ListBoardsByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a board instance
@@ -209,9 +248,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>items within it.
     /// </remarks>
 
+
+
     /// <returns>Board deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardResponse>> DeleteBoardAsync(DeleteBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardResponse>> DeleteBoard(DeleteBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Unlock a license on a board
@@ -225,9 +267,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>execution fails, no license is placed.
     /// </remarks>
 
+
+
     /// <returns>License unlocked successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockLicenseResponse>> UnlockLicenseAsync(UnlockLicenseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockLicenseResponse>> UnlockLicense(UnlockLicenseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if a license can be unlocked
@@ -239,9 +284,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>sufficient LP.
     /// </remarks>
 
+
+
     /// <returns>Unlockability check completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckUnlockableResponse>> CheckUnlockableAsync(CheckUnlockableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckUnlockableResponse>> CheckUnlockable(CheckUnlockableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get full board state
@@ -253,9 +301,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>client UI rendering.
     /// </remarks>
 
+
+
     /// <returns>Board state retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardStateResponse>> GetBoardStateAsync(BoardStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardStateResponse>> GetBoardState(BoardStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bulk seed a board template with license definitions
@@ -266,9 +317,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Two-pass: creates definitions, then resolves prerequisite references.
     /// </remarks>
 
+
+
     /// <returns>Board template seeded successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedBoardTemplateResponse>> SeedBoardTemplateAsync(SeedBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedBoardTemplateResponse>> SeedBoardTemplate(SeedBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Clone a board's unlock state to a new owner
@@ -282,9 +336,12 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Does not publish individual license.unlocked events.
     /// </remarks>
 
+
+
     /// <returns>Board cloned successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CloneBoardResponse>> CloneBoardAsync(CloneBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CloneBoardResponse>> CloneBoard(CloneBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup boards referencing a deleted owner
@@ -298,15 +355,18 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// <br/>cascading resource cleanup.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByOwnerResponse>> CleanupByOwnerAsync(CleanupByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByOwnerResponse>> CleanupByOwner(CleanupByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ILicenseService))]
+public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase, ILicenseController
 {
     private ILicenseService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

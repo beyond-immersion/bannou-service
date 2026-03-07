@@ -3170,18 +3170,21 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         // Act
         var endpoints = SpeciesPermissionRegistration.GetEndpoints();
 
-        // Assert
+        // Assert - All species endpoints have x-permissions: [] (service-to-service only via lib-mesh).
+        // No endpoints are exposed to WebSocket clients, so no permission registrations.
         Assert.NotNull(endpoints);
-        Assert.NotEmpty(endpoints);
+        Assert.Empty(endpoints);
     }
 
     [Fact]
     public void SpeciesPermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        PermissionMatrixValidator.ValidatePermissionMatrix(
-            SpeciesPermissionRegistration.ServiceId,
-            SpeciesPermissionRegistration.ServiceVersion,
-            SpeciesPermissionRegistration.BuildPermissionMatrix());
+        // All species endpoints are service-to-service only (x-permissions: []),
+        // so the permission matrix is empty. ValidatePermissionMatrix requires non-empty,
+        // which doesn't apply to pure service-to-service services.
+        var matrix = SpeciesPermissionRegistration.BuildPermissionMatrix();
+        Assert.NotNull(matrix);
+        Assert.Empty(matrix);
     }
 
     [Fact]

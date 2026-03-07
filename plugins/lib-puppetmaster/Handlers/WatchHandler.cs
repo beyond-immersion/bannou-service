@@ -7,6 +7,7 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Puppetmaster.Watches;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
@@ -37,18 +38,22 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 public sealed class WatchHandler : IActionHandler
 {
     private readonly WatchRegistry _registry;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<WatchHandler> _logger;
 
     /// <summary>
     /// Creates a new watch handler.
     /// </summary>
     /// <param name="registry">Watch registry.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span creation.</param>
     /// <param name="logger">Logger instance.</param>
     public WatchHandler(
         WatchRegistry registry,
+        ITelemetryProvider telemetryProvider,
         ILogger<WatchHandler> logger)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        _telemetryProvider = telemetryProvider ?? throw new ArgumentNullException(nameof(telemetryProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -56,11 +61,12 @@ public sealed class WatchHandler : IActionHandler
     public bool CanHandle(ActionNode action) => action is WatchAction;
 
     /// <inheritdoc/>
-    public ValueTask<ActionResult> ExecuteAsync(
+    public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "WatchHandler.ExecuteAsync");
         var watchAction = (WatchAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 
@@ -75,16 +81,18 @@ public sealed class WatchHandler : IActionHandler
                 _logger.LogWarning(
                     "watch: resource_id expression '{Expression}' did not evaluate to valid GUID, got: {Value}",
                     watchAction.ResourceId, resourceIdValue);
-                return ValueTask.FromResult(ActionResult.Error(
-                    $"watch: resource_id must be a valid GUID, got: {resourceIdValue}"));
+                await Task.CompletedTask;
+                return ActionResult.Error(
+                    $"watch: resource_id must be a valid GUID, got: {resourceIdValue}");
             }
 
             // 2. Get actor ID from context
             if (!context.ActorId.HasValue)
             {
                 _logger.LogWarning("watch: Action executed outside actor context - no ActorId available");
-                return ValueTask.FromResult(ActionResult.Error(
-                    "watch: This action can only be executed within an actor context"));
+                await Task.CompletedTask;
+                return ActionResult.Error(
+                    "watch: This action can only be executed within an actor context");
             }
 
             var actorId = context.ActorId.Value;
@@ -104,26 +112,27 @@ public sealed class WatchHandler : IActionHandler
                 $"Registered watch on {watchAction.ResourceType}:{resourceId}",
                 DateTime.UtcNow));
 
-            return ValueTask.FromResult(ActionResult.Continue);
+            await Task.CompletedTask;
+            return ActionResult.Continue;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
                 "watch: Error registering watch for {ResourceType}",
                 watchAction.ResourceType);
-            return ValueTask.FromResult(ActionResult.Error($"watch: {ex.Message}"));
+            return ActionResult.Error($"watch: {ex.Message}");
         }
     }
 
     private static bool TryParseGuid(object? value, out Guid result)
     {
-        if (value is Guid guid)
+        if (value is Guid guid && guid != Guid.Empty)
         {
             result = guid;
             return true;
         }
 
-        if (value is string str && Guid.TryParse(str, out var parsed))
+        if (value is string str && Guid.TryParse(str, out var parsed) && parsed != Guid.Empty)
         {
             result = parsed;
             return true;

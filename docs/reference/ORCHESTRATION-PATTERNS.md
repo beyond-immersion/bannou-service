@@ -1,5 +1,7 @@
 # Orchestration Patterns: The Game World's "Main Thread"
 
+> ⛔ **FROZEN DOCUMENT** — Defines strategic design patterns and orchestration architecture. AI agents MUST NOT modify any content without explicit user instruction. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Scope**: How Bannou's decomposed services form living gameplay loops without a central orchestrator.
 > **Sources**: DIVINE.md, DUNGEON.md, BEHAVIORAL-BOOTSTRAP.md, ACTOR-BOUND-ENTITIES.md, VISION.md, PLAYER-VISION.md
 

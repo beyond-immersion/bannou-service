@@ -40,9 +40,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>are immutable after creation. Only one base currency per scope is allowed.
     /// </remarks>
 
+
+
     /// <returns>Currency definition created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CurrencyDefinitionResponse>> CreateCurrencyDefinitionAsync(CreateCurrencyDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CurrencyDefinitionResponse>> CreateCurrencyDefinition(CreateCurrencyDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get currency definition by ID or code
@@ -53,9 +56,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>At least one of definitionId or code must be provided.
     /// </remarks>
 
+
+
     /// <returns>Currency definition retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CurrencyDefinitionResponse>> GetCurrencyDefinitionAsync(GetCurrencyDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CurrencyDefinitionResponse>> GetCurrencyDefinition(GetCurrencyDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List currency definitions with filters
@@ -66,9 +72,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>active status, and base currency flag.
     /// </remarks>
 
+
+
     /// <returns>Currency definitions retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCurrencyDefinitionsResponse>> ListCurrencyDefinitionsAsync(ListCurrencyDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCurrencyDefinitionsResponse>> ListCurrencyDefinitions(ListCurrencyDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update mutable fields of a currency definition
@@ -79,9 +88,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>are immutable after creation and cannot be changed.
     /// </remarks>
 
+
+
     /// <returns>Currency definition updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CurrencyDefinitionResponse>> UpdateCurrencyDefinitionAsync(UpdateCurrencyDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CurrencyDefinitionResponse>> UpdateCurrencyDefinition(UpdateCurrencyDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a new wallet for an owner
@@ -92,9 +104,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Each owner+ownerType+realm combination can have at most one wallet.
     /// </remarks>
 
+
+
     /// <returns>Wallet created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletResponse>> CreateWalletAsync(CreateWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletResponse>> CreateWallet(CreateWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get wallet by ID or owner
@@ -105,9 +120,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Returns the wallet with all non-zero balances.
     /// </remarks>
 
+
+
     /// <returns>Wallet retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletWithBalancesResponse>> GetWalletAsync(GetWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletWithBalancesResponse>> GetWallet(GetWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get existing wallet or create if not exists
@@ -118,9 +136,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Upsert pattern for convenience.
     /// </remarks>
 
+
+
     /// <returns>Wallet retrieved or created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetOrCreateWalletResponse>> GetOrCreateWalletAsync(GetOrCreateWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetOrCreateWalletResponse>> GetOrCreateWallet(GetOrCreateWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Freeze a wallet to prevent transactions
@@ -131,9 +152,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>for audit purposes. Frozen wallets can still be queried.
     /// </remarks>
 
+
+
     /// <returns>Wallet frozen successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletResponse>> FreezeWalletAsync(FreezeWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletResponse>> FreezeWallet(FreezeWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Unfreeze a frozen wallet
@@ -143,9 +167,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// Restores a frozen wallet to active status, allowing transactions again.
     /// </remarks>
 
+
+
     /// <returns>Wallet unfrozen successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletResponse>> UnfreezeWalletAsync(UnfreezeWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletResponse>> UnfreezeWallet(UnfreezeWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Permanently close a wallet
@@ -156,9 +183,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>destination wallet. Closed wallets cannot be reopened.
     /// </remarks>
 
+
+
     /// <returns>Wallet closed and balances transferred</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CloseWalletResponse>> CloseWalletAsync(CloseWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CloseWalletResponse>> CloseWallet(CloseWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get balance for a specific currency in a wallet
@@ -170,9 +200,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Returns earn cap info and autogain info when applicable.
     /// </remarks>
 
+
+
     /// <returns>Balance retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetBalanceResponse>> GetBalanceAsync(GetBalanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetBalanceResponse>> GetBalance(GetBalanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get multiple balances in one call
@@ -183,9 +216,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Autogain is applied where applicable.
     /// </remarks>
 
+
+
     /// <returns>Balances retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetBalancesResponse>> BatchGetBalancesAsync(BatchGetBalancesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetBalancesResponse>> BatchGetBalances(BatchGetBalancesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Credit currency to a wallet (faucet operation)
@@ -196,9 +232,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Enforces earn caps, wallet caps, and global supply caps. Requires idempotency key.
     /// </remarks>
 
+
+
     /// <returns>Currency credited successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreditCurrencyResponse>> CreditCurrencyAsync(CreditCurrencyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreditCurrencyResponse>> CreditCurrency(CreditCurrencyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Debit currency from a wallet (sink operation)
@@ -209,9 +248,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Checks for sufficient funds unless negative balance is allowed.
     /// </remarks>
 
+
+
     /// <returns>Currency debited successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DebitCurrencyResponse>> DebitCurrencyAsync(DebitCurrencyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DebitCurrencyResponse>> DebitCurrency(DebitCurrencyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Transfer currency between wallets
@@ -222,9 +264,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>realm compatibility, and sufficient funds.
     /// </remarks>
 
+
+
     /// <returns>Transfer completed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferCurrencyResponse>> TransferCurrencyAsync(TransferCurrencyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferCurrencyResponse>> TransferCurrency(TransferCurrencyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Credit multiple wallets in one call
@@ -235,9 +280,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
     /// </remarks>
 
+
+
     /// <returns>Batch credit processed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchCreditResponse>> BatchCreditCurrencyAsync(BatchCreditRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchCreditResponse>> BatchCreditCurrency(BatchCreditRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Debit multiple wallets in one call
@@ -248,9 +296,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
     /// </remarks>
 
+
+
     /// <returns>Batch debit processed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchDebitResponse>> BatchDebitCurrencyAsync(BatchDebitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchDebitResponse>> BatchDebitCurrency(BatchDebitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Calculate conversion without executing
@@ -261,9 +312,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Uses base currency exchange rates to compute the effective rate.
     /// </remarks>
 
+
+
     /// <returns>Conversion calculated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalculateConversionResponse>> CalculateConversionAsync(CalculateConversionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalculateConversionResponse>> CalculateConversion(CalculateConversionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Execute currency conversion in a wallet
@@ -274,9 +328,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>currency and credits the target currency at the computed exchange rate.
     /// </remarks>
 
+
+
     /// <returns>Conversion executed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteConversionResponse>> ExecuteConversionAsync(ExecuteConversionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteConversionResponse>> ExecuteConversion(ExecuteConversionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get exchange rate between two currencies
@@ -287,9 +344,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>as an intermediary.
     /// </remarks>
 
+
+
     /// <returns>Exchange rate retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetExchangeRateResponse>> GetExchangeRateAsync(GetExchangeRateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetExchangeRateResponse>> GetExchangeRate(GetExchangeRateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a currency's exchange rate to base
@@ -300,9 +360,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Cannot set rate on the base currency itself.
     /// </remarks>
 
+
+
     /// <returns>Exchange rate updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateExchangeRateResponse>> UpdateExchangeRateAsync(UpdateExchangeRateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateExchangeRateResponse>> UpdateExchangeRate(UpdateExchangeRateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a transaction by ID
@@ -312,9 +375,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// Retrieves a single transaction record by its unique ID.
     /// </remarks>
 
+
+
     /// <returns>Transaction retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransactionResponse>> GetTransactionAsync(GetTransactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransactionResponse>> GetTransaction(GetTransactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get paginated transaction history for a wallet
@@ -325,9 +391,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>by currency, transaction type, and date range.
     /// </remarks>
 
+
+
     /// <returns>Transaction history retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetTransactionHistoryResponse>> GetTransactionHistoryAsync(GetTransactionHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetTransactionHistoryResponse>> GetTransactionHistory(GetTransactionHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get transactions by reference type and ID
@@ -338,9 +407,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>escrow, etc.).
     /// </remarks>
 
+
+
     /// <returns>Transactions retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetTransactionsByReferenceResponse>> GetTransactionsByReferenceAsync(GetTransactionsByReferenceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetTransactionsByReferenceResponse>> GetTransactionsByReference(GetTransactionsByReferenceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get global supply statistics for a currency
@@ -351,9 +423,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>escrow amounts, and lifetime mint/burn totals.
     /// </remarks>
 
+
+
     /// <returns>Supply statistics retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetGlobalSupplyResponse>> GetGlobalSupplyAsync(GetGlobalSupplyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetGlobalSupplyResponse>> GetGlobalSupply(GetGlobalSupplyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get wealth distribution statistics
@@ -364,9 +439,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Gini coefficient for a specific currency.
     /// </remarks>
 
+
+
     /// <returns>Distribution statistics retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetWalletDistributionResponse>> GetWalletDistributionAsync(GetWalletDistributionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetWalletDistributionResponse>> GetWalletDistribution(GetWalletDistributionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Debit wallet for escrow deposit
@@ -377,9 +455,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Immediately debits the wallet (no lock tracking needed - escrow owns the funds).
     /// </remarks>
 
+
+
     /// <returns>Escrow deposit processed (wallet debited)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EscrowDepositResponse>> EscrowDepositAsync(EscrowDepositRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EscrowDepositResponse>> EscrowDeposit(EscrowDepositRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Credit recipient on escrow completion
@@ -390,9 +471,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Credits the recipient wallet with the released funds.
     /// </remarks>
 
+
+
     /// <returns>Escrow release processed (recipient credited)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EscrowReleaseResponse>> EscrowReleaseAsync(EscrowReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EscrowReleaseResponse>> EscrowRelease(EscrowReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Credit depositor on escrow refund
@@ -403,9 +487,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Credits the original depositor wallet with the refunded funds.
     /// </remarks>
 
+
+
     /// <returns>Escrow refund processed (depositor credited)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EscrowRefundResponse>> EscrowRefundAsync(EscrowRefundRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EscrowRefundResponse>> EscrowRefund(EscrowRefundRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create an authorization hold (reserve funds)
@@ -417,9 +504,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>Used for pre-auth scenarios (dining, gas, hotels) where final amount may differ.
     /// </remarks>
 
+
+
     /// <returns>Hold created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HoldResponse>> CreateHoldAsync(CreateHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HoldResponse>> CreateHold(CreateHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Capture held funds (debit final amount)
@@ -430,9 +520,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>or equal to the held amount). Any difference is released back to available balance.
     /// </remarks>
 
+
+
     /// <returns>Hold captured successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CaptureHoldResponse>> CaptureHoldAsync(CaptureHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CaptureHoldResponse>> CaptureHold(CaptureHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Release held funds (make available again)
@@ -443,9 +536,12 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// <br/>No debit occurs.
     /// </remarks>
 
+
+
     /// <returns>Hold released successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HoldResponse>> ReleaseHoldAsync(ReleaseHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HoldResponse>> ReleaseHold(ReleaseHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get hold status and details
@@ -455,15 +551,18 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     /// Retrieves the current status and details of an authorization hold.
     /// </remarks>
 
+
+
     /// <returns>Hold retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HoldResponse>> GetHoldAsync(GetHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HoldResponse>> GetHold(GetHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ICurrencyService))]
+public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBase, ICurrencyController
 {
     private ICurrencyService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

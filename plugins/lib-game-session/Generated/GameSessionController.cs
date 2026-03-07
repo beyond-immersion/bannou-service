@@ -40,9 +40,12 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
     /// <br/>Access is granted through session shortcuts or internal service calls.
     /// </remarks>
 
+
+
     /// <returns>Game sessions retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionListResponse>> ListGameSessionsAsync(ListGameSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionListResponse>> ListGameSessions(ListGameSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create new game session
@@ -53,9 +56,12 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
     /// <br/>Access is granted through session shortcuts or internal service calls.
     /// </remarks>
 
+
+
     /// <returns>Game session created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> CreateGameSessionAsync(CreateGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> CreateGameSession(CreateGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get game session details
@@ -65,9 +71,12 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
     /// Get details of the current game session the user has joined.
     /// </remarks>
 
+
+
     /// <returns>Game session retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> GetGameSessionAsync(GetGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> GetGameSession(GetGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Join a game session
@@ -80,9 +89,12 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
     /// <br/>with the target session ID already filled in.
     /// </remarks>
 
+
+
     /// <returns>Successfully joined game session</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSessionAsync(JoinGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSession(JoinGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Leave a game session
@@ -91,7 +103,8 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Successfully left game session</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSessionAsync(LeaveGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSession(LeaveGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Kick player from game session (admin only)
@@ -100,7 +113,8 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Player kicked successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> KickPlayerAsync(KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> KickPlayer(KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Send chat message to game session
@@ -109,7 +123,8 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Chat message sent successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SendChatMessageAsync(ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SendChatMessage(ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Perform game action (enhanced permissions after joining)
@@ -118,7 +133,8 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Game action performed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameActionResponse>> PerformGameActionAsync(GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameActionResponse>> PerformGameAction(GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Join a specific game session by ID
@@ -131,9 +147,12 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
     /// <br/>For lobby sessions, this allows joining by ID without going through gameType lookup.
     /// </remarks>
 
+
+
     /// <returns>Successfully joined game session</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSessionByIdAsync(JoinGameSessionByIdRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSessionById(JoinGameSessionByIdRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Leave a specific game session by ID
@@ -144,9 +163,12 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
     /// <br/>to /sessions/leave which uses gameType. Useful for matchmade sessions.
     /// </remarks>
 
+
+
     /// <returns>Successfully left game session</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSessionByIdAsync(LeaveGameSessionByIdRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSessionById(LeaveGameSessionByIdRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Publish join shortcut for matchmade session
@@ -158,15 +180,18 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
     /// <br/>to join the session with their reservation token pre-bound.
     /// </remarks>
 
+
+
     /// <returns>Shortcut published successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishJoinShortcutResponse>> PublishJoinShortcutAsync(PublishJoinShortcutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishJoinShortcutResponse>> PublishJoinShortcut(PublishJoinShortcutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class GameSessionController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IGameSessionService))]
+public partial class GameSessionController : Microsoft.AspNetCore.Mvc.ControllerBase, IGameSessionController
 {
     private IGameSessionService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

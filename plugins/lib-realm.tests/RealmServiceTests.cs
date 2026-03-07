@@ -1066,7 +1066,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
         _mockListStore
             .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, List<Guid>, string, CancellationToken>((_, list, _, _) => savedList = list)
+            .Callback<string, List<Guid>, string, StateOptions?, CancellationToken>((_, list, _, _, _) => savedList = list)
             .ReturnsAsync("list-etag-2");
 
         // Act

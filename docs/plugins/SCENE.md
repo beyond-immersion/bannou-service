@@ -73,10 +73,8 @@ Hierarchical composition storage (L4 GameFeatures) for game worlds. Stores scene
 | `scene.destroyed` | `SceneDestroyedEvent` | Scene instance declared removed from game world |
 | `scene.checked-out` | `SceneCheckedOutEvent` | Scene locked for editing |
 | `scene.committed` | `SceneCommittedEvent` | Checkout changes committed, version bumped |
-| `scene.checkout.discarded` | `SceneCheckoutDiscardedEvent` | Checkout released without saving |
-| `scene.checkout.expired` | `SceneCheckoutExpiredEvent` | Checkout lock expired due to TTL (defined but not currently triggered by background process) |
-| `scene.validation-rules.updated` | `SceneValidationRulesUpdatedEvent` | Validation rules registered/updated for gameId+sceneType |
-| `scene.reference.broken` | `SceneReferenceBrokenEvent` | Referenced scene became unavailable (defined but not currently triggered) |
+| `scene.checkout-discarded` | `SceneCheckoutDiscardedEvent` | Checkout released without saving |
+| `scene.validation-rules-updated` | `SceneValidationRulesUpdatedEvent` | Validation rules registered/updated for gameId+sceneType |
 
 ### Consumed Events
 
@@ -119,8 +117,8 @@ Service lifetime is **Scoped** (per-request). No background services.
 ### Helper: `SceneValidationService`
 
 Extracted from `SceneService` for testability. Handles:
-- **Structural validation** (`ValidateStructure`): Checks sceneId non-empty, version pattern (MAJOR.MINOR.PATCH), root node existence, root has no parent, node count limit, refId uniqueness, refId pattern (`^[a-z][a-z0-9_]*$`), nodeId non-empty, and localTransform presence.
-- **Game-specific rules** (`ApplyGameValidationRules`): Applies registered `ValidationRule` entries by type: `require_tag` (min/max count of nodes with tag), `forbid_tag` (no nodes may have tag), `require_node_type` (min count of nodes of type).
+- **Structural validation** (`ValidateStructure`): Checks sceneId non-default UUID, version pattern (MAJOR.MINOR.PATCH), root node existence, root has no parent, node count limit, refId uniqueness, refId pattern (`^[a-z][a-z0-9_]*$`), nodeId non-default UUID, and localTransform presence.
+- **Game-specific rules** (`ApplyGameValidationRules`): Applies registered `ValidationRule` entries by type: `require_tag` (min/max count of nodes with tag, with optional `NodeType` enum filter), `forbid_tag` (no nodes may have tag), `require_node_type` (min count of nodes of type, using `NodeType` enum comparison).
 - **Result merging** (`MergeResults`): Combines errors/warnings from multiple validation passes.
 - **Node collection** (`CollectAllNodes`): Flattens the hierarchy into a list for iteration.
 
@@ -130,7 +128,7 @@ Extracted from `SceneService` for testability. Handles:
 |-------|---------|
 | `SceneIndexEntry` | Lightweight index: sceneId, assetId, gameId, sceneType, name, description, version, tags, nodeCount, timestamps, checkout status |
 | `CheckoutState` | Lock state: sceneId, token, editorId, expiresAt, extensionCount |
-| `SceneContentEntry` | YAML content wrapper: sceneId, version, content string, updatedAt unix timestamp |
+| `SceneContentEntry` | YAML content wrapper: sceneId, version, content string, updatedAt (DateTimeOffset) |
 | `VersionHistoryEntry` | Version record: version string, createdAt, createdBy |
 
 ---
@@ -147,31 +145,31 @@ Extracted from `SceneService` for testability. Handles:
 
 - **UpdateScene** (`/scene/update`): Checks scene exists (404 if not). If scene is checked out and no token provided, returns 409. If token provided, validates against stored checkout state (403 on mismatch). Re-validates structure and tag counts. Preserves createdAt, sets updatedAt. Increments PATCH version via `IncrementPatchVersion()`. Stores updated YAML. Updates index entry and secondary indexes (handles reference/asset diff between old and new). Records version history entry with editor ID from checkout. Publishes `scene.updated`.
 
-- **DeleteScene** (`/scene/delete`): Checks existence (404 if not). Checks reverse reference index -- blocks deletion if other scenes reference this one (returns 409 Conflict with referencing scene IDs). Loads scene for event data. Removes index entry, secondary indexes, and global index entry. Deletes version history. Publishes `scene.deleted`. Note: asset content in `scene:content:{id}` is NOT explicitly deleted (remains until TTL or manual cleanup).
+- **DeleteScene** (`/scene/delete`): Checks existence (404 if not). Checks reverse reference index -- blocks deletion if other scenes reference this one (returns 409 Conflict with referencing scene IDs in response). Loads scene for event data. Removes index entry, secondary indexes, and global index entry. Deletes version history. Publishes `scene.deleted`. Response contains only `referencingScenes` when blocked (T8: no filler). Note: asset content in `scene:content:{id}` is NOT explicitly deleted (remains until TTL or manual cleanup).
 
 - **DuplicateScene** (`/scene/duplicate`): Loads source scene (404 if not found). Creates new scene with fresh sceneId and all node IDs regenerated via `DuplicateNodeWithNewIds()`. Preserves refIds, names, transforms, assets, tags, annotations. Optionally overrides gameId and sceneType. Resets version to "1.0.0". Delegates to `CreateSceneAsync()` for storage, indexing, and event publishing.
 
 ### Instance Operations (2 endpoints)
 
-- **InstantiateScene** (`/scene/instantiate`): NOTIFICATION endpoint (caller has already instantiated). Validates scene exists via index lookup (404 if not found). Builds `SceneInstantiatedEvent` with instance ID, scene asset ID, version, name, gameId, sceneType, regionId, and world transform (position/rotation/scale converted to event types). Publishes event. Returns instanceId, sceneVersion, and whether event was published. Does NOT track instance state -- purely event-driven.
+- **InstantiateScene** (`/scene/instantiate`): NOTIFICATION endpoint (caller has already instantiated). Validates scene exists via index lookup (404 if not found). Builds `SceneInstantiatedEvent` with instance ID, scene asset ID, version, name, gameId, sceneType, regionId, and world transform (position/rotation/scale converted to event types). Publishes event. Returns sceneVersion only (T8: no echoed request fields or filler). Does NOT track instance state -- purely event-driven.
 
-- **DestroyInstance** (`/scene/destroy-instance`): Publishes `SceneDestroyedEvent` with instanceId, sceneAssetId (Guid.Empty if not provided), regionId (Guid.Empty if not provided), and caller metadata. Does NOT validate instance exists. Always returns destroyed=true. Purely event-driven notification for consumers (Mapping, Actor) to react.
+- **DestroyInstance** (`/scene/destroy-instance`): Publishes `SceneDestroyedEvent` with instanceId, sceneAssetId (nullable), regionId (nullable), and caller metadata. Does NOT validate instance exists. Returns empty 200 OK. Purely event-driven notification for consumers (Mapping, Actor) to react.
 
 ### Versioning Operations (5 endpoints)
 
 - **CheckoutScene** (`/scene/checkout`): Gets index with ETag for optimistic concurrency. If already checked out, checks if existing checkout is expired (allows takeover if expired). Loads scene from content store. Creates `CheckoutState` with random token (Guid "N" format), editor ID, expiry (now + ttlMinutes), extension count 0. Stores with TTL = ttlMinutes + 5 minutes (buffer). Updates index `IsCheckedOut=true` with ETag concurrency check. Publishes `scene.checked-out`. Returns token, scene, and expiresAt.
 
-- **CommitScene** (`/scene/commit`): Validates checkout token (403 Forbidden on mismatch). Checks expiry (409 Conflict if expired). Gets index with ETag. Delegates scene update to `UpdateSceneAsync()` (which handles validation, version increment, and storage). Deletes checkout state. Clears `IsCheckedOut` on index with ETag concurrency. Publishes `scene.committed` with new version, previous version, committer, changes summary, and node count.
+- **CommitScene** (`/scene/commit`): Validates checkout token (403 Forbidden on mismatch). Checks expiry (409 Conflict if expired). Gets index with ETag. Delegates scene update to `UpdateSceneAsync()` (which handles validation, version increment, and storage). Deletes checkout state. Clears `IsCheckedOut` on index with ETag concurrency. Publishes `scene.committed` with new version, previous version, committer, changes summary, and node count. Response contains newVersion and scene (T8: no filler `committed=true`).
 
-- **DiscardCheckout** (`/scene/discard`): Validates checkout token (403 Forbidden on mismatch). Does NOT check expiry (allows discard even after expiry). Deletes checkout state. Clears `IsCheckedOut` on index with ETag concurrency. Publishes `scene.checkout.discarded`. Scene remains at pre-checkout version.
+- **DiscardCheckout** (`/scene/discard`): Validates checkout token (403 Forbidden on mismatch). Does NOT check expiry (allows discard even after expiry). Deletes checkout state. Clears `IsCheckedOut` on index with ETag concurrency. Publishes `scene.checkout-discarded`. Returns empty 200 OK. Scene remains at pre-checkout version.
 
-- **HeartbeatCheckout** (`/scene/heartbeat`): Validates checkout token (403 Forbidden). Checks expiry (409 if expired). Checks extension limit (`MaxCheckoutExtensions`). If limit reached, returns extended=false with extensionsRemaining=0. Otherwise, sets new expiry to now + `DefaultCheckoutTtlMinutes`, increments extension count, re-saves with new TTL. Returns extended=true, new expiry, and remaining extensions.
+- **HeartbeatCheckout** (`/scene/heartbeat`): Validates checkout token (403 Forbidden). Checks expiry (409 if expired). Checks extension limit (`MaxCheckoutExtensions`) — returns 409 Conflict when limit reached. Otherwise, sets new expiry to now + `DefaultCheckoutTtlMinutes`, increments extension count, re-saves with new TTL. Returns new expiry and remaining extensions.
 
 - **GetSceneHistory** (`/scene/history`): Validates scene exists (404). Loads version history from `scene:version-history:{sceneId}`. Orders by createdAt descending. Limits to requested count. Returns sceneId, currentVersion (from index), and version list with version string, createdAt, createdBy.
 
 ### Validation Operations (2 endpoints)
 
-- **RegisterValidationRules** (`/scene/register-validation-rules`): Stores rule list at `scene:validation:{gameId}:{sceneType}`. Replaces any existing rules for the combination. Publishes `scene.validation-rules.updated` with game ID, scene type, and rule count. Returns registered=true and rule count. Supported rule types: require_tag, forbid_tag, require_node_type, require_annotation (not yet implemented), custom_expression (not yet implemented).
+- **RegisterValidationRules** (`/scene/register-validation-rules`): Stores rule list at `scene:validation:{gameId}:{sceneType}`. Replaces any existing rules for the combination. Publishes `scene.validation-rules-updated` with game ID, scene type, and rule count. Returns empty 200 OK. Supported rule types: require_tag, forbid_tag, require_node_type, require_annotation (not yet implemented), custom_expression (not yet implemented).
 
 - **GetValidationRules** (`/scene/get-validation-rules`): Simple lookup from state store. Returns empty list if no rules registered for the gameId+sceneType combination.
 
@@ -372,11 +370,9 @@ Optimistic Concurrency Pattern (Checkout)
 
 2. **Version-specific retrieval**: `LoadSceneAssetAsync` accepts a `version` parameter but ignores it. Only the latest version's content is stored. Historical version content is not preserved -- only version metadata (version string, timestamp, editor) is retained. [Issue #187](https://github.com/beyond-immersion/bannou-service/issues/187)
 
-3. **SceneCheckoutExpiredEvent**: The topic constant and event type exist, but no background process monitors and expires stale checkouts. Expiry is checked lazily when another user attempts checkout (can take over expired locks), but the event is never published.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/254 -->
+3. ~~**SceneCheckoutExpiredEvent**~~: **REMOVED** (2026-03-07) - Dead event type and topic constant removed during hardening. No background process monitors and expires stale checkouts (#254 remains open for the feature). Expiry is checked lazily when another user attempts checkout (can take over expired locks).
 
-4. **SceneReferenceBrokenEvent**: The topic and event type are defined in the events schema, but no code path currently publishes this event. It would need to be triggered when a scene is force-deleted despite references (currently blocked by the 409 Conflict check).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/257 -->
+4. ~~**SceneReferenceBrokenEvent**~~: **REMOVED** (2026-03-07) - Dead event type and topic constant removed during hardening. No code path publishes this event (#257 remains open for the feature). Deletion is blocked by 409 Conflict when references exist.
 
 5. ~~**require_annotation and custom_expression validation rules silently ignored**~~: **FIXED** (2026-02-08) - `ApplyValidationRule` now returns a `Warning`-severity `ValidationError` for unimplemented rule types (`RequireAnnotation`, `CustomExpression`) and unknown types (default case). Rules are no longer silently skipped. See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
 
@@ -390,7 +386,7 @@ Optimistic Concurrency Pattern (Checkout)
 
 ## Potential Extensions
 
-1. **Background checkout expiry**: A periodic background service that scans CheckoutState entries, publishes `scene.checkout.expired` for stale locks, and clears the IsCheckedOut flag on indexes. Would prevent perpetually locked scenes when editors disconnect.
+1. **Background checkout expiry**: A periodic background service that scans CheckoutState entries, publishes a checkout-expired event for stale locks, and clears the IsCheckedOut flag on indexes. Would prevent perpetually locked scenes when editors disconnect. See [#254](https://github.com/beyond-immersion/bannou-service/issues/254).
 
 2. **Full-text search with Redis Search**: Replace the brute-force global index scan in `SearchScenesAsync` with Redis Search indexing on name, description, and tags fields for sub-millisecond query performance.
 
@@ -422,7 +418,7 @@ No bugs identified.
 
 1. **Expired checkout takeover**: If a checkout lock has expired, the next `CheckoutScene` call silently takes over the lock without publishing a `scene.checkout.expired` event. The previous editor loses their token.
 
-2. **HeartbeatCheckout returns OK even at extension limit**: When `MaxCheckoutExtensions` is reached, the endpoint returns 200 OK with `extended=false` rather than an error status. Callers must check the `extended` field.
+2. ~~**HeartbeatCheckout returns OK even at extension limit**~~: **FIXED** (2026-03-07) - HeartbeatCheckout now returns 409 Conflict when `MaxCheckoutExtensions` is reached, instead of 200 OK with `extended=false`. Callers no longer need to inspect a response field to detect the limit.
 
 3. **DuplicateScene preserves refIds**: When duplicating, node IDs are regenerated but refIds are preserved. This means the duplicate has the same scripting references as the original.
 
@@ -461,6 +457,13 @@ No bugs identified.
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Completed
+
+- **2026-03-07**: Hardening pass — schema, events, code, and test fixes:
+  - **Schema**: `additionalProperties: false` on all objects, NRT fixes (required arrays), validation constraints (minLength/minItems/minimum/maximum), T8 filler removal from 7 responses (success booleans, echoed request fields, action timestamps, observability metrics), nullable fields for optional GUIDs (T26)
+  - **Events**: Removed dead events (`SceneCheckoutExpiredEvent`, `SceneReferenceBrokenEvent`) and their topic constants. Renamed topics to Pattern A: `scene.checkout-discarded`, `scene.validation-rules-updated`. Flattened all custom events (removed `allOf` + `BaseServiceEvent`, inline `eventId`/`timestamp`).
+  - **Configuration**: Added minimum/maximum constraints to all 11 integer properties
+  - **Code**: Removed Guid.Empty sentinel values (T26), changed `SceneContentEntry.UpdatedAt` from unix `long` to `DateTimeOffset`, `SceneValidationService` uses `NodeType` enum comparison instead of string (T25), `HeartbeatCheckout` returns 409 Conflict at extension limit instead of 200+extended=false, empty response methods return `StatusCodes` directly
+  - **Tests**: Fixed 4 string-to-enum type errors, 2 assertion string mismatches, `DeleteSceneResponse` property removal. 91/91 passing.
 
 - **2026-02-08**: Fixed unimplemented validation rule types silently passing ([#310](https://github.com/beyond-immersion/bannou-service/issues/310)). `RequireAnnotation`, `CustomExpression`, and any future enum values now return `Warning`-severity `ValidationError` instead of being silently skipped. Callers can see which rules were not applied.
 

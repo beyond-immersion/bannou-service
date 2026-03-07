@@ -40,9 +40,12 @@ public interface IMeshController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>Used by IMeshClient to resolve target hosts for service invocation.
     /// </remarks>
 
+
+
     /// <returns>Endpoints retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEndpointsResponse>> GetEndpointsAsync(GetEndpointsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEndpointsResponse>> GetEndpoints(GetEndpointsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all registered endpoints
@@ -53,9 +56,12 @@ public interface IMeshController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>Admin-only endpoint for monitoring and debugging.
     /// </remarks>
 
+
+
     /// <returns>All endpoints retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListEndpointsResponse>> ListEndpointsAsync(ListEndpointsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListEndpointsResponse>> ListEndpoints(ListEndpointsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Register a service endpoint
@@ -67,9 +73,12 @@ public interface IMeshController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>Endpoint TTL is refreshed on each heartbeat.
     /// </remarks>
 
+
+
     /// <returns>Endpoint registered successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterEndpointResponse>> RegisterEndpointAsync(RegisterEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterEndpointResponse>> RegisterEndpoint(RegisterEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deregister a service endpoint
@@ -80,9 +89,12 @@ public interface IMeshController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>Called during graceful shutdown.
     /// </remarks>
 
+
+
     /// <returns>Endpoint deregistered successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeregisterEndpointResponse>> DeregisterEndpointAsync(DeregisterEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeregisterEndpointResponse>> DeregisterEndpoint(DeregisterEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update endpoint health and load
@@ -93,9 +105,12 @@ public interface IMeshController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>Should be called periodically (default: every 30 seconds).
     /// </remarks>
 
+
+
     /// <returns>Heartbeat processed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HeartbeatResponse>> HeartbeatAsync(HeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HeartbeatResponse>> Heartbeat(HeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get optimal endpoint for routing
@@ -106,9 +121,12 @@ public interface IMeshController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>configured load balancing algorithm (round-robin, least-connections, weighted).
     /// </remarks>
 
+
+
     /// <returns>Route selected successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetRouteResponse>> GetRouteAsync(GetRouteRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetRouteResponse>> GetRoute(GetRouteRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get service-to-app-id mappings
@@ -119,9 +137,12 @@ public interface IMeshController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>Used by ServiceAppMappingResolver for distributed deployment.
     /// </remarks>
 
+
+
     /// <returns>Mappings retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetMappingsResponse>> GetMappingsAsync(GetMappingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetMappingsResponse>> GetMappings(GetMappingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get mesh health status
@@ -134,15 +155,18 @@ public interface IMeshController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>- Redis connectivity status
     /// </remarks>
 
+
+
     /// <returns>Health status retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MeshHealthResponse>> GetHealthAsync(GetHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MeshHealthResponse>> GetHealth(GetHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IMeshService))]
+public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase, IMeshController
 {
     private IMeshService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

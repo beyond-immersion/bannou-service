@@ -60,6 +60,21 @@ public partial interface IStatusService : IBannouService
         Task<(StatusCodes, SeedStatusTemplatesResponse?)> SeedStatusTemplatesAsync(SeedStatusTemplatesRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DeprecateStatusTemplate operation
+        /// </summary>
+        Task<(StatusCodes, StatusTemplateResponse?)> DeprecateStatusTemplateAsync(DeprecateStatusTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// UndeprecateStatusTemplate operation
+        /// </summary>
+        Task<(StatusCodes, StatusTemplateResponse?)> UndeprecateStatusTemplateAsync(UndeprecateStatusTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// DeleteStatusTemplate operation
+        /// </summary>
+        Task<StatusCodes> DeleteStatusTemplateAsync(DeleteStatusTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GrantStatus operation
         /// </summary>
         Task<(StatusCodes, GrantStatusResponse?)> GrantStatusAsync(GrantStatusRequest body, CancellationToken cancellationToken = default(CancellationToken));

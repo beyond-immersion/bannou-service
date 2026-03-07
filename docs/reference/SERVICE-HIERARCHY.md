@@ -1,10 +1,12 @@
 # Bannou Service Hierarchy
 
+> ⛔ **FROZEN DOCUMENT** — Defines the authoritative service dependency hierarchy. AI agents MUST NOT add, remove, modify, or reinterpret any content without explicit user instruction. If you believe something is incorrect, report the concern and wait — do not "fix" it. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Version**: 2.7
 > **Last Updated**: 2026-02-11
 > **Scope**: All Bannou service plugins and their inter-dependencies
 
-This document defines the authoritative service dependency hierarchy for Bannou. Services are organized into five layers based on their **domain** (application vs game) and **optionality** (foundation vs feature). Dependencies may only flow downward.
+This document defines the authoritative service dependency hierarchy for Bannou. Services are organized into six layers based on their **domain** (application vs game) and **optionality** (foundation vs feature). Dependencies may only flow downward.
 
 ---
 
@@ -310,7 +312,7 @@ servers:
     layer: ServiceLayer.GameFoundation)]
 ```
 
-**Valid layer values**: `Infrastructure` (L0), `AppFoundation` (L1), `GameFoundation` (L2), `AppFeatures` (L3), `GameFeatures` (L4, default if omitted), `Extensions` (L5). See [SCHEMA-RULES.md](SCHEMA-RULES.md#x-service-layer-service-hierarchy-layer) for complete documentation and the [Quick Reference](#quick-reference-all-services-by-layer) for which services belong to each layer.
+**Valid layer values**: `Infrastructure` (L0), `AppFoundation` (L1), `GameFoundation` (L2), `AppFeatures` (L3), `GameFeatures` (L4, default if omitted), `Extensions` (L5). See [SCHEMA-RULES.md](SCHEMA-RULES.md#x-service-layer-service-hierarchy-layer) for complete documentation and the [Layer 3](#layer-3-app-features-optional-non-game-capabilities) / [Layer 4](#layer-4-game-features-optional-game-specific-capabilities) tables above for which services belong to each layer.
 
 **Plugin Load Order**: PluginLoader reads the `ServiceLayer` from each service's `[BannouService]` attribute and sorts plugins accordingly:
 1. L0 plugins first (with internal ordering: telemetry → state → messaging → mesh)
@@ -573,7 +575,7 @@ The DI inversion patterns above come in two forms: **Providers** (pull) and **Li
 | `IVariableProviderFactory` | L4→L2 pull | Provider | Always safe | Consumer initiates; reads distributed state |
 | `IPrerequisiteProviderFactory` | L4→L2 pull | Provider | Always safe | Consumer initiates; reads distributed state |
 | `IBehaviorDocumentProvider` | L4→L2 pull | Provider | Always safe | Consumer initiates; reads distributed state |
-| `ISeededResourceProvider` | L4→L1 pull | Provider | Always safe | Consumer initiates; reads distributed state |
+| `ISeededResourceProvider` | L2/L3/L4→L1 pull | Provider | Always safe | Consumer initiates; reads distributed state |
 | `ISeedEvolutionListener` | L2→L4 push | Listener | Safe\* | \*Only when reaction writes to distributed state |
 | `ICollectionUnlockListener` | L2→L4 push | Listener | Safe\* | \*Only when reaction writes to distributed state |
 | `ISessionActivityListener` | L1→L1 push | Listener | Safe\* | \*Permission writes to Redis (distributed state); heartbeat frequency prohibits event bus |

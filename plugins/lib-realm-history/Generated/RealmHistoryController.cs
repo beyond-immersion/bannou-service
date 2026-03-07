@@ -41,9 +41,12 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>The impact level affects how strongly this event influences behavior.
     /// </remarks>
 
+
+
     /// <returns>Participation recorded successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistoricalParticipation>> RecordRealmParticipationAsync(RecordRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistoricalParticipation>> RecordRealmParticipation(RecordRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get all historical events a realm participated in
@@ -54,9 +57,12 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>Supports filtering by event category and minimum impact.
     /// </remarks>
 
+
+
     /// <returns>Participation records retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmParticipationListResponse>> GetRealmParticipationAsync(GetRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmParticipationListResponse>> GetRealmParticipation(GetRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get all realms that participated in a historical event
@@ -67,9 +73,12 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>Useful for generating event summaries or finding related realms.
     /// </remarks>
 
+
+
     /// <returns>Participants retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmParticipationListResponse>> GetRealmEventParticipantsAsync(GetRealmEventParticipantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmParticipationListResponse>> GetRealmEventParticipants(GetRealmEventParticipantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a participation record
@@ -80,9 +89,12 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>or to correct erroneous records.
     /// </remarks>
 
+
+
     /// <returns>Participation deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRealmParticipationAsync(DeleteRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRealmParticipation(DeleteRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get machine-readable lore elements for behavior system
@@ -94,9 +106,12 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>decision-making, not narrative text for players.
     /// </remarks>
 
+
+
     /// <returns>Lore retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> GetRealmLoreAsync(GetRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> GetRealmLore(GetRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Set lore elements for a realm
@@ -107,9 +122,12 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>all existing elements or merge with them based on the replaceExisting flag.
     /// </remarks>
 
+
+
     /// <returns>Lore saved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> SetRealmLoreAsync(SetRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> SetRealmLore(SetRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Add a single lore element
@@ -120,9 +138,12 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>If an element with the same type and key exists, it will be updated.
     /// </remarks>
 
+
+
     /// <returns>Element added successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> AddRealmLoreElementAsync(AddRealmLoreElementRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> AddRealmLoreElement(AddRealmLoreElementRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete all lore for a realm
@@ -133,9 +154,12 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>deletion.
     /// </remarks>
 
+
+
     /// <returns>Lore deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRealmLoreAsync(DeleteRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRealmLore(DeleteRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete all history data for a realm
@@ -146,9 +170,12 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>realm. Used during realm deletion.
     /// </remarks>
 
+
+
     /// <returns>All history deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAllRealmHistoryResponse>> DeleteAllRealmHistoryAsync(DeleteAllRealmHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAllRealmHistoryResponse>> DeleteAllRealmHistory(DeleteAllRealmHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Generate text summaries for realm archival
@@ -159,9 +186,12 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>participation.
     /// </remarks>
 
+
+
     /// <returns>Summaries generated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistorySummaryResponse>> SummarizeRealmHistoryAsync(SummarizeRealmHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistorySummaryResponse>> SummarizeRealmHistory(SummarizeRealmHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get realm history data for compression
@@ -173,9 +203,12 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>Resource service compression system.
     /// </remarks>
 
+
+
     /// <returns>Compressed data returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistoryArchive>> GetCompressDataAsync(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistoryArchive>> GetCompressData(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore realm history from archive
@@ -187,15 +220,18 @@ public interface IRealmHistoryController : BeyondImmersion.BannouService.Control
     /// <br/>service during decompression.
     /// </remarks>
 
+
+
     /// <returns>Data restored</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchiveAsync(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchive(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IRealmHistoryService))]
+public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.ControllerBase, IRealmHistoryController
 {
     private IRealmHistoryService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

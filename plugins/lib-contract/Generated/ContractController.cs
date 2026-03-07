@@ -40,9 +40,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>Templates specify party roles, default terms, milestones, and prebound APIs.
     /// </remarks>
 
+
+
     /// <returns>Template created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractTemplateResponse>> CreateContractTemplateAsync(CreateContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractTemplateResponse>> CreateContractTemplate(CreateContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get template by ID or code
@@ -53,9 +56,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>At least one of templateId or code must be provided.
     /// </remarks>
 
+
+
     /// <returns>Template retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractTemplateResponse>> GetContractTemplateAsync(GetContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractTemplateResponse>> GetContractTemplate(GetContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List templates with filters
@@ -66,9 +72,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>and search term.
     /// </remarks>
 
+
+
     /// <returns>Templates retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListContractTemplatesResponse>> ListContractTemplatesAsync(ListContractTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListContractTemplatesResponse>> ListContractTemplates(ListContractTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update template (not instances)
@@ -79,9 +88,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>Only certain fields can be updated after creation.
     /// </remarks>
 
+
+
     /// <returns>Template updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractTemplateResponse>> UpdateContractTemplateAsync(UpdateContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractTemplateResponse>> UpdateContractTemplate(UpdateContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Soft-delete template
@@ -92,9 +104,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>but no new instances can be created from this template.
     /// </remarks>
 
+
+
     /// <returns>Template deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteContractTemplateAsync(DeleteContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteContractTemplate(DeleteContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create contract instance from template
@@ -105,9 +120,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>in 'draft' status and must be proposed to parties before activation.
     /// </remarks>
 
+
+
     /// <returns>Instance created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> CreateContractInstanceAsync(CreateContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> CreateContractInstance(CreateContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Propose contract to parties (starts consent flow)
@@ -118,9 +136,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>Parties must consent before the contract becomes active.
     /// </remarks>
 
+
+
     /// <returns>Contract proposed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> ProposeContractInstanceAsync(ProposeContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> ProposeContractInstance(ProposeContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Party consents to contract
@@ -131,9 +152,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>parties consent, the contract moves to 'accepted' then 'active' status.
     /// </remarks>
 
+
+
     /// <returns>Consent recorded successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> ConsentToContractAsync(ConsentToContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> ConsentToContract(ConsentToContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get instance by ID
@@ -143,9 +167,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// Retrieves a contract instance by its unique ID.
     /// </remarks>
 
+
+
     /// <returns>Instance retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> GetContractInstanceAsync(GetContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> GetContractInstance(GetContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query instances by party, template, status
@@ -156,9 +183,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>must be provided.
     /// </remarks>
 
+
+
     /// <returns>Instances retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryContractInstancesResponse>> QueryContractInstancesAsync(QueryContractInstancesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryContractInstancesResponse>> QueryContractInstances(QueryContractInstancesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Request early termination
@@ -170,9 +200,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>incur penalties.
     /// </remarks>
 
+
+
     /// <returns>Termination processed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> TerminateContractInstanceAsync(TerminateContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> TerminateContractInstance(TerminateContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Hard-delete a terminal contract instance
@@ -186,9 +219,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>immediate deletion, not deprecation).
     /// </remarks>
 
+
+
     /// <returns>Instance deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteContractInstanceResponse>> DeleteContractInstanceAsync(DeleteContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteContractInstanceResponse>> DeleteContractInstance(DeleteContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current status and milestone progress
@@ -199,9 +235,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>pending consents, and any active breaches.
     /// </remarks>
 
+
+
     /// <returns>Status retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceStatusResponse>> GetContractInstanceStatusAsync(GetContractInstanceStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceStatusResponse>> GetContractInstanceStatus(GetContractInstanceStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// External system reports milestone completed
@@ -213,9 +252,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>contract status.
     /// </remarks>
 
+
+
     /// <returns>Milestone completed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MilestoneResponse>> CompleteMilestoneAsync(CompleteMilestoneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MilestoneResponse>> CompleteMilestone(CompleteMilestoneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// External system reports milestone failed
@@ -227,9 +269,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>prebound APIs and may record a breach.
     /// </remarks>
 
+
+
     /// <returns>Milestone failure recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MilestoneResponse>> FailMilestoneAsync(FailMilestoneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MilestoneResponse>> FailMilestone(FailMilestoneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get milestone details and status
@@ -239,9 +284,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// Gets the current state of a specific milestone.
     /// </remarks>
 
+
+
     /// <returns>Milestone retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MilestoneResponse>> GetMilestoneAsync(GetMilestoneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MilestoneResponse>> GetMilestone(GetMilestoneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Report a contract breach
@@ -253,9 +301,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>if configured.
     /// </remarks>
 
+
+
     /// <returns>Breach reported successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BreachResponse>> ReportBreachAsync(ReportBreachRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BreachResponse>> ReportBreach(ReportBreachRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Mark breach as cured (system/admin action)
@@ -267,9 +318,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>the breach has been remedied.
     /// </remarks>
 
+
+
     /// <returns>Breach cured successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BreachResponse>> CureBreachAsync(CureBreachRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BreachResponse>> CureBreach(CureBreachRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get breach details
@@ -279,9 +333,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// Retrieves details of a specific breach record.
     /// </remarks>
 
+
+
     /// <returns>Breach retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BreachResponse>> GetBreachAsync(GetBreachRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BreachResponse>> GetBreach(GetBreachRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update game metadata on instance
@@ -293,9 +350,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>to store additional context.
     /// </remarks>
 
+
+
     /// <returns>Metadata updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractMetadataResponse>> UpdateContractMetadataAsync(UpdateContractMetadataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractMetadataResponse>> UpdateContractMetadata(UpdateContractMetadataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get game metadata
@@ -305,9 +365,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// Retrieves game-specific metadata from a contract instance.
     /// </remarks>
 
+
+
     /// <returns>Metadata retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractMetadataResponse>> GetContractMetadataAsync(GetContractMetadataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractMetadataResponse>> GetContractMetadata(GetContractMetadataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if entity can take action given contracts
@@ -318,9 +381,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>active contract constraints (exclusivity, non-compete, territory, etc.).
     /// </remarks>
 
+
+
     /// <returns>Constraint check completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckConstraintResponse>> CheckContractConstraintAsync(CheckConstraintRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckConstraintResponse>> CheckContractConstraint(CheckConstraintRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query active contracts for entity
@@ -331,9 +397,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>Useful for displaying current obligations in UI.
     /// </remarks>
 
+
+
     /// <returns>Active contracts retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryActiveContractsResponse>> QueryActiveContractsAsync(QueryActiveContractsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryActiveContractsResponse>> QueryActiveContracts(QueryActiveContractsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Lock contract under guardian custody
@@ -345,9 +414,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>guardian. Requires the contract template to have `transferable: true`.
     /// </remarks>
 
+
+
     /// <returns>Contract locked successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LockContractResponse>> LockContractAsync(LockContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LockContractResponse>> LockContract(LockContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Unlock contract from guardian custody
@@ -358,9 +430,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>unlock a contract. Called on escrow refund to restore contract to original state.
     /// </remarks>
 
+
+
     /// <returns>Contract unlocked successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockContractResponse>> UnlockContractAsync(UnlockContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockContractResponse>> UnlockContract(UnlockContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Transfer party role to new entity
@@ -372,9 +447,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>Contract must be locked and caller must be the guardian.
     /// </remarks>
 
+
+
     /// <returns>Party transferred successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferContractPartyResponse>> TransferContractPartyAsync(TransferContractPartyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferContractPartyResponse>> TransferContractParty(TransferContractPartyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Register a new clause type
@@ -387,9 +465,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>(asset_requirement, currency_transfer, item_transfer) are pre-registered.
     /// </remarks>
 
+
+
     /// <returns>Clause type registered successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterClauseTypeResponse>> RegisterClauseTypeAsync(RegisterClauseTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterClauseTypeResponse>> RegisterClauseType(RegisterClauseTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all registered clause types
@@ -400,9 +481,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>custom-registered types.
     /// </remarks>
 
+
+
     /// <returns>Clause types listed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListClauseTypesResponse>> ListClauseTypesAsync(ListClauseTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListClauseTypesResponse>> ListClauseTypes(ListClauseTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Set template values on contract instance
@@ -414,9 +498,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>substitution in clause handlers (e.g., wallet IDs, container IDs).
     /// </remarks>
 
+
+
     /// <returns>Template values set successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SetTemplateValuesResponse>> SetContractTemplateValuesAsync(SetTemplateValuesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SetTemplateValuesResponse>> SetContractTemplateValues(SetTemplateValuesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if asset requirement clauses are satisfied
@@ -428,9 +515,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>via the registered clause type handlers.
     /// </remarks>
 
+
+
     /// <returns>Asset requirements checked</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckAssetRequirementsResponse>> CheckAssetRequirementsAsync(CheckAssetRequirementsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckAssetRequirementsResponse>> CheckAssetRequirements(CheckAssetRequirementsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Execute all contract clauses (idempotent)
@@ -443,15 +533,18 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     /// <br/>status and all template values must be set.
     /// </remarks>
 
+
+
     /// <returns>Contract executed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteContractResponse>> ExecuteContractAsync(ExecuteContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteContractResponse>> ExecuteContract(ExecuteContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IContractService))]
+public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBase, IContractController
 {
     private IContractService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

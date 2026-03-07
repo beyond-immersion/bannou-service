@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -31,7 +32,7 @@ namespace BeyondImmersion.BannouService.Status;
 /// <b>IMPLEMENTATION TENETS CHECKLIST:</b>
 /// <list type="bullet">
 ///   <item><b>Type Safety:</b> All models use proper C# types (enums, Guids, DateTimeOffset).</item>
-///   <item><b>Configuration:</b> All 13 config properties are wired up.</item>
+///   <item><b>Configuration:</b> All config properties are wired up.</item>
 ///   <item><b>Events:</b> All state changes publish typed events.</item>
 ///   <item><b>Cache Stores:</b> Redis caches with TTL, invalidated on mutation, rebuilt on miss.</item>
 ///   <item><b>Concurrency:</b> Distributed locks via IDistributedLockProvider for entity mutations.</item>
@@ -49,6 +50,7 @@ public partial class StatusService : IStatusService
     private readonly IContractClient _contractClient;
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly IResourceClient _resourceClient;
     private readonly IServiceProvider _serviceProvider;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -109,6 +111,7 @@ public partial class StatusService : IStatusService
         IContractClient contractClient,
         IGameServiceClient gameServiceClient,
         IDistributedLockProvider lockProvider,
+        IResourceClient resourceClient,
         IServiceProvider serviceProvider,
         IEntitySessionRegistry entitySessionRegistry,
         ITelemetryProvider telemetryProvider)
@@ -121,6 +124,7 @@ public partial class StatusService : IStatusService
         _contractClient = contractClient;
         _gameServiceClient = gameServiceClient;
         _lockProvider = lockProvider;
+        _resourceClient = resourceClient;
         _serviceProvider = serviceProvider;
         _entitySessionRegistry = entitySessionRegistry;
         _telemetryProvider = telemetryProvider;
@@ -136,13 +140,6 @@ public partial class StatusService : IStatusService
         _seedEffectsCacheStore = stateStoreFactory.GetStore<SeedEffectsCacheModel>(StateStoreDefinitions.StatusSeedEffectsCache);
 
         RegisterEventConsumers(eventConsumer);
-
-        if (_configuration.CacheWarmingEnabled)
-        {
-            _logger.LogInformation(
-                "Status cache warming enabled with max {MaxCachedEntities} cached entities",
-                _configuration.MaxCachedEntities);
-        }
     }
 
     // ========================================================================
@@ -250,6 +247,7 @@ public partial class StatusService : IStatusService
                 Stackable = body.Stackable,
                 MaxStacks = effectiveMaxStacks,
                 StackBehavior = body.StackBehavior,
+                IsDeprecated = false,
                 CreatedAt = now
             },
             cancellationToken: cancellationToken);
@@ -317,6 +315,17 @@ public partial class StatusService : IStatusService
             });
         }
 
+        // Filter out deprecated templates by default per IMPLEMENTATION TENETS (T31)
+        if (!body.IncludeDeprecated)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.IsDeprecated",
+                Operator = QueryOperator.Equals,
+                Value = false
+            });
+        }
+
         var pageSize = body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize;
         var offset = (body.Page - 1) * pageSize;
 
@@ -344,12 +353,15 @@ public partial class StatusService : IStatusService
     public async Task<(StatusCodes, StatusTemplateResponse?)> UpdateStatusTemplateAsync(
         UpdateStatusTemplateRequest body, CancellationToken cancellationToken)
     {
+        using var lockCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        lockCts.CancelAfter(TimeSpan.FromSeconds(_configuration.LockAcquisitionTimeoutSeconds));
+
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.StatusLock,
             $"tpl:{body.StatusTemplateId}",
             Guid.NewGuid().ToString(),
             _configuration.LockTimeoutSeconds,
-            cancellationToken);
+            lockCts.Token);
 
         if (!lockHandle.Success)
         {
@@ -433,6 +445,9 @@ public partial class StatusService : IStatusService
                 Stackable = template.Stackable,
                 MaxStacks = template.MaxStacks,
                 StackBehavior = template.StackBehavior,
+                IsDeprecated = template.IsDeprecated,
+                DeprecatedAt = template.DeprecatedAt,
+                DeprecationReason = template.DeprecationReason,
                 CreatedAt = template.CreatedAt,
                 UpdatedAt = template.UpdatedAt,
                 ChangedFields = changedFields
@@ -444,6 +459,231 @@ public partial class StatusService : IStatusService
             template.StatusTemplateId, string.Join(", ", changedFields));
 
         return (StatusCodes.OK, ToTemplateResponse(template));
+    }
+
+    /// <summary>
+    /// Marks a status template as deprecated. Idempotent per IMPLEMENTATION TENETS.
+    /// Deprecated templates cannot grant new instances but existing instances remain active.
+    /// </summary>
+    public async Task<(StatusCodes, StatusTemplateResponse?)> DeprecateStatusTemplateAsync(
+        DeprecateStatusTemplateRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.DeprecateStatusTemplateAsync");
+
+        using var lockCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        lockCts.CancelAfter(TimeSpan.FromSeconds(_configuration.LockAcquisitionTimeoutSeconds));
+
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.StatusLock,
+            $"tpl:{body.StatusTemplateId}",
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            lockCts.Token);
+
+        if (!lockHandle.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for template {TemplateId}", body.StatusTemplateId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var template = await _templateStore.GetAsync(
+            TemplateIdKey(body.StatusTemplateId), cancellationToken);
+
+        if (template == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Idempotent: already deprecated returns OK
+        if (template.IsDeprecated)
+        {
+            return (StatusCodes.OK, ToTemplateResponse(template));
+        }
+
+        template.IsDeprecated = true;
+        template.DeprecatedAt = DateTimeOffset.UtcNow;
+        template.DeprecationReason = body.Reason;
+        template.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _templateStore.SaveAsync(TemplateIdKey(template.StatusTemplateId), template, cancellationToken: cancellationToken);
+        await _templateStore.SaveAsync(
+            TemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync(
+            "status.template.updated",
+            new StatusTemplateUpdatedEvent
+            {
+                StatusTemplateId = template.StatusTemplateId,
+                GameServiceId = template.GameServiceId,
+                Code = template.Code,
+                DisplayName = template.DisplayName,
+                Category = template.Category,
+                Stackable = template.Stackable,
+                MaxStacks = template.MaxStacks,
+                StackBehavior = template.StackBehavior,
+                IsDeprecated = template.IsDeprecated,
+                DeprecatedAt = template.DeprecatedAt,
+                DeprecationReason = template.DeprecationReason,
+                CreatedAt = template.CreatedAt,
+                UpdatedAt = template.UpdatedAt,
+                ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
+            },
+            cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Deprecated status template {TemplateId} ({Code}): {Reason}",
+            template.StatusTemplateId, template.Code, body.Reason);
+
+        return (StatusCodes.OK, ToTemplateResponse(template));
+    }
+
+    /// <summary>
+    /// Reverses deprecation on a status template. Idempotent per IMPLEMENTATION TENETS.
+    /// Category A entities support undeprecation.
+    /// </summary>
+    public async Task<(StatusCodes, StatusTemplateResponse?)> UndeprecateStatusTemplateAsync(
+        UndeprecateStatusTemplateRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.UndeprecateStatusTemplateAsync");
+
+        using var lockCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        lockCts.CancelAfter(TimeSpan.FromSeconds(_configuration.LockAcquisitionTimeoutSeconds));
+
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.StatusLock,
+            $"tpl:{body.StatusTemplateId}",
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            lockCts.Token);
+
+        if (!lockHandle.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for template {TemplateId}", body.StatusTemplateId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var template = await _templateStore.GetAsync(
+            TemplateIdKey(body.StatusTemplateId), cancellationToken);
+
+        if (template == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Idempotent: not deprecated returns OK
+        if (!template.IsDeprecated)
+        {
+            return (StatusCodes.OK, ToTemplateResponse(template));
+        }
+
+        template.IsDeprecated = false;
+        template.DeprecatedAt = null;
+        template.DeprecationReason = null;
+        template.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _templateStore.SaveAsync(TemplateIdKey(template.StatusTemplateId), template, cancellationToken: cancellationToken);
+        await _templateStore.SaveAsync(
+            TemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync(
+            "status.template.updated",
+            new StatusTemplateUpdatedEvent
+            {
+                StatusTemplateId = template.StatusTemplateId,
+                GameServiceId = template.GameServiceId,
+                Code = template.Code,
+                DisplayName = template.DisplayName,
+                Category = template.Category,
+                Stackable = template.Stackable,
+                MaxStacks = template.MaxStacks,
+                StackBehavior = template.StackBehavior,
+                IsDeprecated = template.IsDeprecated,
+                CreatedAt = template.CreatedAt,
+                UpdatedAt = template.UpdatedAt,
+                ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
+            },
+            cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Undeprecated status template {TemplateId} ({Code})",
+            template.StatusTemplateId, template.Code);
+
+        return (StatusCodes.OK, ToTemplateResponse(template));
+    }
+
+    /// <summary>
+    /// Deletes a status template. Requires prior deprecation per IMPLEMENTATION TENETS (T31 Category A).
+    /// Coordinates cleanup of dependent data via lib-resource.
+    /// </summary>
+    public async Task<StatusCodes> DeleteStatusTemplateAsync(
+        DeleteStatusTemplateRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.DeleteStatusTemplateAsync");
+
+        using var lockCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        lockCts.CancelAfter(TimeSpan.FromSeconds(_configuration.LockAcquisitionTimeoutSeconds));
+
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.StatusLock,
+            $"tpl:{body.StatusTemplateId}",
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            lockCts.Token);
+
+        if (!lockHandle.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for template {TemplateId}", body.StatusTemplateId);
+            return StatusCodes.Conflict;
+        }
+
+        var template = await _templateStore.GetAsync(
+            TemplateIdKey(body.StatusTemplateId), cancellationToken);
+
+        if (template == null)
+        {
+            return StatusCodes.NotFound;
+        }
+
+        // Must be deprecated before deletion per IMPLEMENTATION TENETS (T31 Category A)
+        if (!template.IsDeprecated)
+        {
+            _logger.LogWarning(
+                "Attempted to delete non-deprecated template {TemplateId}",
+                body.StatusTemplateId);
+            return StatusCodes.BadRequest;
+        }
+
+        // Delete both keys
+        await _templateStore.DeleteAsync(TemplateIdKey(template.StatusTemplateId), cancellationToken);
+        await _templateStore.DeleteAsync(
+            TemplateCodeKey(template.GameServiceId, template.Code), cancellationToken);
+
+        // Publish lifecycle event
+        await _messageBus.TryPublishAsync(
+            "status.template.deleted",
+            new StatusTemplateDeletedEvent
+            {
+                StatusTemplateId = template.StatusTemplateId,
+                GameServiceId = template.GameServiceId,
+                Code = template.Code,
+                DisplayName = template.DisplayName,
+                Category = template.Category,
+                Stackable = template.Stackable,
+                MaxStacks = template.MaxStacks,
+                StackBehavior = template.StackBehavior,
+                IsDeprecated = template.IsDeprecated,
+                DeprecatedAt = template.DeprecatedAt,
+                DeprecationReason = template.DeprecationReason,
+                CreatedAt = template.CreatedAt,
+                UpdatedAt = template.UpdatedAt
+            },
+            cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Deleted status template {TemplateId} ({Code})",
+            template.StatusTemplateId, template.Code);
+
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -534,6 +774,7 @@ public partial class StatusService : IStatusService
                     Stackable = templateReq.Stackable,
                     MaxStacks = effectiveMaxStacks,
                     StackBehavior = templateReq.StackBehavior,
+                    IsDeprecated = false,
                     CreatedAt = now
                 },
                 cancellationToken: cancellationToken);
@@ -572,6 +813,16 @@ public partial class StatusService : IStatusService
         {
             await PublishGrantFailedEventAsync(body, GrantFailureReason.TemplateNotFound, null, cancellationToken);
             return (StatusCodes.NotFound, null);
+        }
+
+        // Reject grants for deprecated templates per IMPLEMENTATION TENETS (T31 Category A)
+        if (template.IsDeprecated)
+        {
+            _logger.LogWarning(
+                "Rejected grant of deprecated template {Code} for {EntityType} {EntityId}",
+                body.StatusTemplateCode, body.EntityType, body.EntityId);
+            await PublishGrantFailedEventAsync(body, GrantFailureReason.TemplateDeprecated, null, cancellationToken);
+            return (StatusCodes.BadRequest, null);
         }
 
         // Acquire entity lock for mutation safety
@@ -1137,7 +1388,7 @@ public partial class StatusService : IStatusService
                 await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
                     new StatusEffectChangedClientEvent
                     {
-                        EventName = "status.effect-changed",
+                        EventName = "status.effect.changed",
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         ChangeType = StatusChangeType.Stacked,
@@ -1200,7 +1451,7 @@ public partial class StatusService : IStatusService
                 await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
                     new StatusEffectChangedClientEvent
                     {
-                        EventName = "status.effect-changed",
+                        EventName = "status.effect.changed",
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         ChangeType = StatusChangeType.Stacked,
@@ -1302,7 +1553,7 @@ public partial class StatusService : IStatusService
                             new ContractPartyInput
                             {
                                 EntityId = body.EntityId,
-                                EntityType = EntityType.Character,
+                                EntityType = body.EntityType,
                                 Role = "subject"
                             }
                         }
@@ -1350,7 +1601,7 @@ public partial class StatusService : IStatusService
             ItemInstanceId = itemInstanceId,
             GrantedAt = now,
             ExpiresAt = expiresAt,
-            Metadata = body.Metadata as Dictionary<string, object>
+            Metadata = body.Metadata
         };
 
         // Save instance
@@ -1382,7 +1633,7 @@ public partial class StatusService : IStatusService
         await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
             new StatusEffectChangedClientEvent
             {
-                EventName = "status.effect-changed",
+                EventName = "status.effect.changed",
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 ChangeType = StatusChangeType.Granted,
@@ -1501,7 +1752,7 @@ public partial class StatusService : IStatusService
                     {
                         ContractId = instance.ContractInstanceId.Value,
                         RequestingEntityId = instance.EntityId,
-                        RequestingEntityType = EntityType.Character,
+                        RequestingEntityType = instance.EntityType,
                         Reason = "status-removed"
                     },
                     cancellationToken);
@@ -1539,7 +1790,7 @@ public partial class StatusService : IStatusService
         await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
             new StatusEffectChangedClientEvent
             {
-                EventName = "status.effect-changed",
+                EventName = "status.effect.changed",
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 ChangeType = reason == StatusRemoveReason.Cleansed
@@ -1647,7 +1898,7 @@ public partial class StatusService : IStatusService
                 await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
                     new StatusEffectChangedClientEvent
                     {
-                        EventName = "status.effect-changed",
+                        EventName = "status.effect.changed",
                         EventId = Guid.NewGuid(),
                         Timestamp = now,
                         ChangeType = StatusChangeType.Expired,
@@ -1858,6 +2109,9 @@ public partial class StatusService : IStatusService
         ItemTemplateId = model.ItemTemplateId,
         DefaultDurationSeconds = model.DefaultDurationSeconds,
         IconAssetId = model.IconAssetId,
+        IsDeprecated = model.IsDeprecated,
+        DeprecatedAt = model.DeprecatedAt,
+        DeprecationReason = model.DeprecationReason,
         CreatedAt = model.CreatedAt,
         UpdatedAt = model.UpdatedAt
     };

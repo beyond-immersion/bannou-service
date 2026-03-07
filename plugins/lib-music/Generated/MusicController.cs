@@ -40,9 +40,12 @@ public interface IMusicController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>and compositional constraints. Returns MIDI-JSON format output.
     /// </remarks>
 
+
+
     /// <returns>Composition generated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GenerateCompositionResponse>> GenerateCompositionAsync(GenerateCompositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GenerateCompositionResponse>> GenerateComposition(GenerateCompositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Validate MIDI-JSON structure
@@ -53,9 +56,12 @@ public interface IMusicController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>timing, and format compliance.
     /// </remarks>
 
+
+
     /// <returns>Validation completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateMidiJsonResponse>> ValidateMidiJsonAsync(ValidateMidiJsonRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateMidiJsonResponse>> ValidateMidiJson(ValidateMidiJsonRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get style definition
@@ -66,9 +72,12 @@ public interface IMusicController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>interval rules, form templates, and genre-specific parameters.
     /// </remarks>
 
+
+
     /// <returns>Style retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StyleDefinitionResponse>> GetStyleAsync(GetStyleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StyleDefinitionResponse>> GetStyle(GetStyleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List available styles
@@ -78,9 +87,12 @@ public interface IMusicController : BeyondImmersion.BannouService.Controllers.IB
     /// Lists all available style definitions with optional filtering by category.
     /// </remarks>
 
+
+
     /// <returns>Styles listed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListStylesResponse>> ListStylesAsync(ListStylesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListStylesResponse>> ListStyles(ListStylesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create new style definition
@@ -90,9 +102,12 @@ public interface IMusicController : BeyondImmersion.BannouService.Controllers.IB
     /// Creates a new style definition. Only accessible to admin users.
     /// </remarks>
 
+
+
     /// <returns>Style created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StyleDefinitionResponse>> CreateStyleAsync(CreateStyleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StyleDefinitionResponse>> CreateStyle(CreateStyleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Generate chord progression
@@ -104,9 +119,12 @@ public interface IMusicController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>modal interchange, and jazz voicings.
     /// </remarks>
 
+
+
     /// <returns>Progression generated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GenerateProgressionResponse>> GenerateProgressionAsync(GenerateProgressionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GenerateProgressionResponse>> GenerateProgression(GenerateProgressionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Generate melody over harmony
@@ -117,9 +135,12 @@ public interface IMusicController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>interval preferences, and rhythmic patterns from the specified style.
     /// </remarks>
 
+
+
     /// <returns>Melody generated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GenerateMelodyResponse>> GenerateMelodyAsync(GenerateMelodyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GenerateMelodyResponse>> GenerateMelody(GenerateMelodyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Apply voice leading to chords
@@ -130,15 +151,18 @@ public interface IMusicController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>part-writing according to traditional or style-specific rules.
     /// </remarks>
 
+
+
     /// <returns>Voice leading applied successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoiceLeadResponse>> ApplyVoiceLeadingAsync(VoiceLeadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoiceLeadResponse>> ApplyVoiceLeading(VoiceLeadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IMusicService))]
+public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase, IMusicController
 {
     private IMusicService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

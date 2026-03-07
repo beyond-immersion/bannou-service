@@ -90,7 +90,7 @@ public sealed class SaveVersionManifest
     /// <summary>
     /// Upload status (PENDING, COMPLETE, FAILED)
     /// </summary>
-    public UploadStatus UploadStatus { get; set; } = UploadStatus.PENDING;
+    public UploadStatus UploadStatus { get; set; } = UploadStatus.Pending;
 
     /// <summary>
     /// Version creation timestamp

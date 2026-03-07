@@ -38,7 +38,8 @@ public interface IStateController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>State value retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetStateResponse>> GetStateAsync(GetStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetStateResponse>> GetState(GetStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Save state value
@@ -47,7 +48,8 @@ public interface IStateController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>State saved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveStateResponse>> SaveStateAsync(SaveStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveStateResponse>> SaveState(SaveStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete state value
@@ -56,7 +58,8 @@ public interface IStateController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>State deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteStateResponse>> DeleteStateAsync(DeleteStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteStateResponse>> DeleteState(DeleteStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query state (MySQL JSON queries or Redis with search enabled)
@@ -65,7 +68,8 @@ public interface IStateController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Query results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryStateResponse>> QueryStateAsync(QueryStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryStateResponse>> QueryState(QueryStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bulk get multiple keys
@@ -74,7 +78,8 @@ public interface IStateController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Bulk results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkGetStateResponse>> BulkGetStateAsync(BulkGetStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkGetStateResponse>> BulkGetState(BulkGetStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bulk save multiple key-value pairs
@@ -83,7 +88,8 @@ public interface IStateController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Bulk save results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkSaveStateResponse>> BulkSaveStateAsync(BulkSaveStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkSaveStateResponse>> BulkSaveState(BulkSaveStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check existence of multiple keys
@@ -92,7 +98,8 @@ public interface IStateController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Bulk exists results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkExistsStateResponse>> BulkExistsStateAsync(BulkExistsStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkExistsStateResponse>> BulkExistsState(BulkExistsStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete multiple keys
@@ -101,7 +108,8 @@ public interface IStateController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Bulk delete results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkDeleteStateResponse>> BulkDeleteStateAsync(BulkDeleteStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkDeleteStateResponse>> BulkDeleteState(BulkDeleteStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List configured state stores
@@ -110,13 +118,14 @@ public interface IStateController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>List of stores</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListStoresResponse>> ListStoresAsync(ListStoresRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListStoresResponse>> ListStores(ListStoresRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IStateService))]
+public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase, IStateController
 {
     private IStateService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

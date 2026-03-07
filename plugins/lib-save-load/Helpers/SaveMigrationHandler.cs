@@ -67,82 +67,64 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             "Registering schema {Namespace}:{Version}",
             body.Namespace, body.SchemaVersion);
 
-        try
+        // Check if schema already exists
+        var schemaKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.SchemaVersion);
+        var existingSchema = await _schemaStore.GetAsync(schemaKey, cancellationToken);
+        if (existingSchema != null)
         {
-            // Check if schema already exists
-            var schemaKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.SchemaVersion);
-            var existingSchema = await _schemaStore.GetAsync(schemaKey, cancellationToken);
-            if (existingSchema != null)
+            _logger.LogWarning(
+                "Schema {Namespace}:{Version} already exists",
+                body.Namespace, body.SchemaVersion);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Validate previous version exists if specified
+        if (!string.IsNullOrEmpty(body.PreviousVersion))
+        {
+            var previousKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.PreviousVersion);
+            var previousSchema = await _schemaStore.GetAsync(previousKey, cancellationToken);
+            if (previousSchema == null)
             {
                 _logger.LogWarning(
-                    "Schema {Namespace}:{Version} already exists",
-                    body.Namespace, body.SchemaVersion);
-                return (StatusCodes.Conflict, null);
+                    "Previous schema version {Version} not found",
+                    body.PreviousVersion);
+                return (StatusCodes.BadRequest, null);
             }
-
-            // Validate previous version exists if specified
-            if (!string.IsNullOrEmpty(body.PreviousVersion))
-            {
-                var previousKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.PreviousVersion);
-                var previousSchema = await _schemaStore.GetAsync(previousKey, cancellationToken);
-                if (previousSchema == null)
-                {
-                    _logger.LogWarning(
-                        "Previous schema version {Version} not found",
-                        body.PreviousVersion);
-                    return (StatusCodes.BadRequest, null);
-                }
-            }
-
-            // Serialize migration patch if provided
-            string? migrationPatchJson = null;
-            if (body.MigrationPatch != null && body.MigrationPatch.Count > 0)
-            {
-                migrationPatchJson = BannouJson.Serialize(body.MigrationPatch);
-            }
-
-            // Create schema definition
-            var schema = new SaveSchemaDefinition
-            {
-                Namespace = body.Namespace,
-                SchemaVersion = body.SchemaVersion,
-                SchemaJson = BannouJson.Serialize(body.Schema),
-                PreviousVersion = body.PreviousVersion,
-                MigrationPatchJson = migrationPatchJson,
-                CreatedAt = DateTimeOffset.UtcNow
-            };
-
-            await _schemaStore.SaveAsync(schemaKey, schema, cancellationToken: cancellationToken);
-
-            _logger.LogInformation(
-                "Registered schema {Namespace}:{Version}",
-                body.Namespace, body.SchemaVersion);
-
-            return (StatusCodes.OK, new SchemaResponse
-            {
-                Namespace = schema.Namespace,
-                SchemaVersion = schema.SchemaVersion,
-                Schema = body.Schema,
-                PreviousVersion = schema.PreviousVersion,
-                HasMigration = schema.HasMigration,
-                CreatedAt = schema.CreatedAt
-            });
         }
-        catch (Exception ex)
+
+        // Serialize migration patch if provided
+        string? migrationPatchJson = null;
+        if (body.MigrationPatch != null && body.MigrationPatch.Count > 0)
         {
-            _logger.LogError(ex, "Error executing RegisterSchema operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "RegisterSchema",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/schema/register",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            migrationPatchJson = BannouJson.Serialize(body.MigrationPatch);
         }
+
+        // Create schema definition
+        var schema = new SaveSchemaDefinition
+        {
+            Namespace = body.Namespace,
+            SchemaVersion = body.SchemaVersion,
+            SchemaJson = BannouJson.Serialize(body.Schema),
+            PreviousVersion = body.PreviousVersion,
+            MigrationPatchJson = migrationPatchJson,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        await _schemaStore.SaveAsync(schemaKey, schema, cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Registered schema {Namespace}:{Version}",
+            body.Namespace, body.SchemaVersion);
+
+        return (StatusCodes.OK, new SchemaResponse
+        {
+            Namespace = schema.Namespace,
+            SchemaVersion = schema.SchemaVersion,
+            Schema = body.Schema,
+            PreviousVersion = schema.PreviousVersion,
+            HasMigration = schema.HasMigration,
+            CreatedAt = schema.CreatedAt
+        });
     }
 
     /// <inheritdoc />
@@ -153,73 +135,55 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveMigrationHandler.ListSchemasAsync");
         _logger.LogDebug("Listing schemas for namespace {Namespace}", body.Namespace);
 
-        try
+        // Query all schemas in the namespace
+        var schemas = await _schemaQueryStore.QueryAsync(
+            s => s.Namespace == body.Namespace,
+            cancellationToken);
+
+        var schemaList = schemas.ToList();
+
+        // Find latest version (the one with no successor)
+        string? latestVersion = null;
+        var versionSet = new HashSet<string>(schemaList.Select(s => s.SchemaVersion));
+        // Where clause ensures PreviousVersion is not null/empty; coalesce satisfies compiler's nullable analysis
+        var predecessorSet = new HashSet<string>(schemaList.Where(s => !string.IsNullOrEmpty(s.PreviousVersion)).Select(s => s.PreviousVersion ?? string.Empty));
+
+        foreach (var version in versionSet)
         {
-            // Query all schemas in the namespace
-            var schemas = await _schemaQueryStore.QueryAsync(
-                s => s.Namespace == body.Namespace,
-                cancellationToken);
-
-            var schemaList = schemas.ToList();
-
-            // Find latest version (the one with no successor)
-            string? latestVersion = null;
-            var versionSet = new HashSet<string>(schemaList.Select(s => s.SchemaVersion));
-            // Where clause ensures PreviousVersion is not null/empty; coalesce satisfies compiler's nullable analysis
-            var predecessorSet = new HashSet<string>(schemaList.Where(s => !string.IsNullOrEmpty(s.PreviousVersion)).Select(s => s.PreviousVersion ?? string.Empty));
-
-            foreach (var version in versionSet)
+            if (!predecessorSet.Contains(version))
             {
-                if (!predecessorSet.Contains(version))
-                {
-                    latestVersion = version;
-                    break;
-                }
+                latestVersion = version;
+                break;
             }
-
-            // If no clear successor chain, fall back to most recently created
-            if (latestVersion == null && schemaList.Count > 0)
-            {
-                latestVersion = schemaList.OrderByDescending(s => s.CreatedAt).First().SchemaVersion;
-            }
-
-            var response = new ListSchemasResponse
-            {
-                Schemas = schemaList.Select(s => new SchemaResponse
-                {
-                    Namespace = s.Namespace,
-                    SchemaVersion = s.SchemaVersion,
-                    Schema = !string.IsNullOrEmpty(s.SchemaJson)
-                        ? BannouJson.Deserialize<object>(s.SchemaJson) ?? new object()
-                        : new object(),
-                    PreviousVersion = s.PreviousVersion,
-                    HasMigration = s.HasMigration,
-                    CreatedAt = s.CreatedAt
-                }).ToList(),
-                LatestVersion = latestVersion
-            };
-
-            _logger.LogInformation(
-                "Listed {Count} schemas for namespace {Namespace}",
-                schemaList.Count, body.Namespace);
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        // If no clear successor chain, fall back to most recently created
+        if (latestVersion == null && schemaList.Count > 0)
         {
-            _logger.LogError(ex, "Error executing ListSchemas operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "ListSchemas",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/schemas",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            latestVersion = schemaList.OrderByDescending(s => s.CreatedAt).First().SchemaVersion;
         }
+
+        var response = new ListSchemasResponse
+        {
+            Schemas = schemaList.Select(s => new SchemaResponse
+            {
+                Namespace = s.Namespace,
+                SchemaVersion = s.SchemaVersion,
+                Schema = !string.IsNullOrEmpty(s.SchemaJson)
+                    ? BannouJson.Deserialize<object>(s.SchemaJson) ?? new object()
+                    : new object(),
+                PreviousVersion = s.PreviousVersion,
+                HasMigration = s.HasMigration,
+                CreatedAt = s.CreatedAt
+            }).ToList(),
+            LatestVersion = latestVersion
+        };
+
+        _logger.LogInformation(
+            "Listed {Count} schemas for namespace {Namespace}",
+            schemaList.Count, body.Namespace);
+
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc />
@@ -238,234 +202,213 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             "Migrating save {SlotName} to schema version {TargetVersion}",
             body.SlotName, body.TargetSchemaVersion);
 
-        try
+        // Uses constructor-cached store references per FOUNDATION TENETS
+
+        // Find source slot by querying by owner and slot name
+        // SaveSlotMetadata.OwnerId and OwnerType are now Guid and enum - compare properly
+
+        // Query slots for this owner and slot name
+        var slots = await _slotQueryStore.QueryAsync(
+            s => s.OwnerId == body.OwnerId && s.OwnerType == body.OwnerType && s.SlotName == body.SlotName,
+            cancellationToken);
+        var slot = slots.FirstOrDefault();
+
+        if (slot == null)
         {
-            // Uses constructor-cached store references per FOUNDATION TENETS
+            _logger.LogWarning("Slot not found for owner {OwnerId}, slot {SlotName}", body.OwnerId, body.SlotName);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Find source slot by querying by owner and slot name
-            // SaveSlotMetadata.OwnerId and OwnerType are now Guid and enum - compare properly
+        var slotKey = SaveSlotMetadata.GetStateKey(slot.GameId, body.OwnerType.ToString().ToLowerInvariant(), body.OwnerId.ToString(), body.SlotName);
 
-            // Query slots for this owner and slot name
-            var slots = await _slotQueryStore.QueryAsync(
-                s => s.OwnerId == body.OwnerId && s.OwnerType == body.OwnerType && s.SlotName == body.SlotName,
-                cancellationToken);
-            var slot = slots.FirstOrDefault();
+        // Get source version
+        var versionNumber = body.VersionNumber > 0 ? body.VersionNumber : (slot.LatestVersion ?? 0);
+        if (versionNumber == 0)
+        {
+            _logger.LogWarning("No versions found for slot {SlotId}", slot.SlotId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (slot == null)
-            {
-                _logger.LogWarning("Slot not found for owner {OwnerId}, slot {SlotName}", body.OwnerId, body.SlotName);
-                return (StatusCodes.NotFound, null);
-            }
+        // SlotId is Guid - convert to string for state key
+        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), versionNumber);
+        var version = await _versionStore.GetAsync(versionKey, cancellationToken);
 
-            var slotKey = SaveSlotMetadata.GetStateKey(slot.GameId, body.OwnerType.ToString().ToLowerInvariant(), body.OwnerId.ToString(), body.SlotName);
+        if (version == null)
+        {
+            _logger.LogWarning("Version {Version} not found for slot {SlotId}", versionNumber, slot.SlotId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Get source version
-            var versionNumber = body.VersionNumber > 0 ? body.VersionNumber : (slot.LatestVersion ?? 0);
-            if (versionNumber == 0)
-            {
-                _logger.LogWarning("No versions found for slot {SlotId}", slot.SlotId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // SlotId is Guid - convert to string for state key
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), versionNumber);
-            var version = await _versionStore.GetAsync(versionKey, cancellationToken);
-
-            if (version == null)
-            {
-                _logger.LogWarning("Version {Version} not found for slot {SlotId}", versionNumber, slot.SlotId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Check if migration is needed
-            var currentSchemaVersion = version.SchemaVersion ?? "1.0.0";
-            if (currentSchemaVersion == body.TargetSchemaVersion)
-            {
-                _logger.LogInformation(
-                    "Save is already at target schema version {Version}",
-                    body.TargetSchemaVersion);
-
-                return (StatusCodes.OK, new MigrateSaveResponse
-                {
-                    Success = true,
-                    FromSchemaVersion = currentSchemaVersion,
-                    ToSchemaVersion = body.TargetSchemaVersion,
-                    NewVersionNumber = null,
-                    MigrationPath = new List<string> { currentSchemaVersion },
-                    Warnings = new List<string>()
-                });
-            }
-
-            // Create migrator and find migration path (default max 10 steps)
-            var migrator = new SchemaMigrator(_logger, _schemaQueryStore, _telemetryProvider, maxMigrationSteps: 10);
-            var migrationPath = await migrator.FindMigrationPathAsync(
-                slot.GameId,
-                currentSchemaVersion,
-                body.TargetSchemaVersion,
-                cancellationToken);
-
-            if (migrationPath == null)
-            {
-                _logger.LogWarning(
-                    "No migration path found from {From} to {To}",
-                    currentSchemaVersion, body.TargetSchemaVersion);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Load the save data
-            var saveData = await _versionDataLoader.LoadVersionDataAsync(slot.SlotId.ToString(), version, cancellationToken);
-            if (saveData == null)
-            {
-                _logger.LogError("Failed to load save data for migration");
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Apply migration
-            var migrationResult = await migrator.ApplyMigrationPathAsync(
-                slot.GameId,
-                saveData,
-                migrationPath,
-                cancellationToken);
-
-            if (migrationResult == null)
-            {
-                _logger.LogError("Migration failed");
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // If dry run, return without saving
-            if (body.DryRun)
-            {
-                return (StatusCodes.OK, new MigrateSaveResponse
-                {
-                    Success = true,
-                    FromSchemaVersion = currentSchemaVersion,
-                    ToSchemaVersion = body.TargetSchemaVersion,
-                    NewVersionNumber = null,
-                    MigrationPath = migrationPath,
-                    Warnings = migrationResult.Warnings
-                });
-            }
-
-            // Save the migrated data as a new version
-            var newVersionNumber = (slot.LatestVersion ?? 0) + 1;
-
-            // Compress data
-            var compressionType = slot.CompressionType;
-            var migrationCompressionLevel = compressionType == CompressionType.Brotli
-                ? _configuration.BrotliCompressionLevel
-                : compressionType == CompressionType.Gzip
-                    ? _configuration.GzipCompressionLevel
-                    : (int?)null;
-            var compressedData = CompressionHelper.Compress(migrationResult.Data, compressionType, migrationCompressionLevel);
-
-            // Upload to storage
-            var uploadRequest = new UploadRequest
-            {
-                OwnerType = AssetOwnerType.Service,
-                OwnerId = "save-load",
-                Filename = $"{slot.SlotId}_{newVersionNumber}.save",
-                ContentType = "application/octet-stream",
-                Size = compressedData.Length,
-                Metadata = new AssetMetadataInput { AssetType = AssetType.Other }
-            };
-
-            var uploadResponse = await _assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
-            if (uploadResponse?.UploadUrl == null)
-            {
-                _logger.LogError("Failed to request upload URL for migrated save");
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            using var httpClient = _httpClientFactory.CreateClient();
-            using var uploadContent = new ByteArrayContent(compressedData);
-            uploadContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-            var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl, uploadContent, cancellationToken);
-
-            if (!uploadResult.IsSuccessStatusCode)
-            {
-                _logger.LogError("Failed to upload migrated save: {Status}", uploadResult.StatusCode);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            var completeRequest = new CompleteUploadRequest { UploadId = uploadResponse.UploadId };
-            var assetMetadata = await _assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
-
-            if (assetMetadata == null)
-            {
-                _logger.LogError("Failed to complete upload for migrated save");
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Create new version manifest
-            // SaveVersionManifest fields are now proper types
-            var contentHash = Hashing.ContentHasher.ComputeHash(migrationResult.Data);
-            var newVersion = new SaveVersionManifest
-            {
-                SlotId = slot.SlotId,
-                VersionNumber = newVersionNumber,
-                ContentHash = contentHash,
-                SizeBytes = migrationResult.Data.Length,
-                CompressedSizeBytes = compressedData.Length,
-                CompressionType = compressionType,
-                SchemaVersion = body.TargetSchemaVersion,
-                CheckpointName = $"Migrated from {currentSchemaVersion}",
-                AssetId = Guid.Parse(assetMetadata.AssetId),
-                CreatedAt = DateTimeOffset.UtcNow,
-                Metadata = version.Metadata != null ? new Dictionary<string, object>(version.Metadata) : new Dictionary<string, object>()
-            };
-
-            var newVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), newVersionNumber);
-            await _versionStore.SaveAsync(newVersionKey, newVersion, cancellationToken: cancellationToken);
-
-            // Update slot's latest version
-            slot.LatestVersion = newVersionNumber;
-            slot.UpdatedAt = DateTimeOffset.UtcNow;
-            await _slotQueryStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
-
-            // Publish event - SaveSlotMetadata.SlotId is now Guid
-            await _messageBus.TryPublishAsync("save.migrated", new SaveMigratedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SlotId = slot.SlotId,
-                SlotName = slot.SlotName,
-                OriginalVersionNumber = versionNumber,
-                NewVersionNumber = newVersionNumber,
-                OwnerId = slot.OwnerId,
-                OwnerType = slot.OwnerType,
-                FromSchemaVersion = currentSchemaVersion,
-                ToSchemaVersion = body.TargetSchemaVersion
-            }, cancellationToken: cancellationToken);
-
+        // Check if migration is needed
+        var currentSchemaVersion = version.SchemaVersion ?? "1.0.0";
+        if (currentSchemaVersion == body.TargetSchemaVersion)
+        {
             _logger.LogInformation(
-                "Migrated save {SlotName} from {From} to {To}, new version {Version}",
-                body.SlotName, currentSchemaVersion, body.TargetSchemaVersion, newVersionNumber);
+                "Save is already at target schema version {Version}",
+                body.TargetSchemaVersion);
 
             return (StatusCodes.OK, new MigrateSaveResponse
             {
-                Success = true,
                 FromSchemaVersion = currentSchemaVersion,
                 ToSchemaVersion = body.TargetSchemaVersion,
-                NewVersionNumber = newVersionNumber,
+                NewVersionNumber = null,
+                MigrationPath = new List<string> { currentSchemaVersion },
+                Warnings = new List<string>()
+            });
+        }
+
+        // Create migrator and find migration path (default max 10 steps)
+        var migrator = new SchemaMigrator(_logger, _schemaQueryStore, _telemetryProvider, maxMigrationSteps: 10);
+        var migrationPath = await migrator.FindMigrationPathAsync(
+            slot.GameId,
+            currentSchemaVersion,
+            body.TargetSchemaVersion,
+            cancellationToken);
+
+        if (migrationPath == null)
+        {
+            _logger.LogWarning(
+                "No migration path found from {From} to {To}",
+                currentSchemaVersion, body.TargetSchemaVersion);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Load the save data
+        var saveData = await _versionDataLoader.LoadVersionDataAsync(slot.SlotId.ToString(), version, cancellationToken);
+        if (saveData == null)
+        {
+            _logger.LogError("Failed to load save data for migration");
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        // Apply migration
+        var migrationResult = await migrator.ApplyMigrationPathAsync(
+            slot.GameId,
+            saveData,
+            migrationPath,
+            cancellationToken);
+
+        if (migrationResult == null)
+        {
+            _logger.LogError("Migration failed");
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        // If dry run, return without saving
+        if (body.DryRun)
+        {
+            return (StatusCodes.OK, new MigrateSaveResponse
+            {
+                FromSchemaVersion = currentSchemaVersion,
+                ToSchemaVersion = body.TargetSchemaVersion,
+                NewVersionNumber = null,
                 MigrationPath = migrationPath,
                 Warnings = migrationResult.Warnings
             });
         }
-        catch (Exception ex)
+
+        // Save the migrated data as a new version
+        var newVersionNumber = (slot.LatestVersion ?? 0) + 1;
+
+        // Compress data
+        var compressionType = slot.CompressionType;
+        var migrationCompressionLevel = compressionType == CompressionType.Brotli
+            ? _configuration.BrotliCompressionLevel
+            : compressionType == CompressionType.Gzip
+                ? _configuration.GzipCompressionLevel
+                : (int?)null;
+        var compressedData = CompressionHelper.Compress(migrationResult.Data, compressionType, migrationCompressionLevel);
+
+        // Upload to storage
+        var uploadRequest = new UploadRequest
         {
-            _logger.LogError(ex, "Error executing MigrateSave operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "MigrateSave",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/migrate",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
+            OwnerType = AssetOwnerType.Service,
+            OwnerId = "save-load",
+            Filename = $"{slot.SlotId}_{newVersionNumber}.save",
+            ContentType = "application/octet-stream",
+            Size = compressedData.Length,
+            Metadata = new AssetMetadataInput { AssetType = AssetType.Other }
+        };
+
+        var uploadResponse = await _assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
+        if (uploadResponse?.UploadUrl == null)
+        {
+            _logger.LogError("Failed to request upload URL for migrated save");
             return (StatusCodes.InternalServerError, null);
         }
+
+        using var httpClient = _httpClientFactory.CreateClient();
+        using var uploadContent = new ByteArrayContent(compressedData);
+        uploadContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl, uploadContent, cancellationToken);
+
+        if (!uploadResult.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to upload migrated save: {Status}", uploadResult.StatusCode);
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        var completeRequest = new CompleteUploadRequest { UploadId = uploadResponse.UploadId };
+        var assetMetadata = await _assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
+
+        if (assetMetadata == null)
+        {
+            _logger.LogError("Failed to complete upload for migrated save");
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        // Create new version manifest
+        // SaveVersionManifest fields are now proper types
+        var contentHash = Hashing.ContentHasher.ComputeHash(migrationResult.Data);
+        var newVersion = new SaveVersionManifest
+        {
+            SlotId = slot.SlotId,
+            VersionNumber = newVersionNumber,
+            ContentHash = contentHash,
+            SizeBytes = migrationResult.Data.Length,
+            CompressedSizeBytes = compressedData.Length,
+            CompressionType = compressionType,
+            SchemaVersion = body.TargetSchemaVersion,
+            CheckpointName = $"Migrated from {currentSchemaVersion}",
+            AssetId = Guid.Parse(assetMetadata.AssetId),
+            CreatedAt = DateTimeOffset.UtcNow,
+            Metadata = version.Metadata != null ? new Dictionary<string, object>(version.Metadata) : new Dictionary<string, object>()
+        };
+
+        var newVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), newVersionNumber);
+        await _versionStore.SaveAsync(newVersionKey, newVersion, cancellationToken: cancellationToken);
+
+        // Update slot's latest version
+        slot.LatestVersion = newVersionNumber;
+        slot.UpdatedAt = DateTimeOffset.UtcNow;
+        await _slotQueryStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
+
+        // Publish event - SaveSlotMetadata.SlotId is now Guid
+        await _messageBus.TryPublishAsync("save-load.save.migrated", new SaveMigratedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SlotId = slot.SlotId,
+            SlotName = slot.SlotName,
+            OriginalVersionNumber = versionNumber,
+            NewVersionNumber = newVersionNumber,
+            OwnerId = slot.OwnerId,
+            OwnerType = slot.OwnerType,
+            FromSchemaVersion = currentSchemaVersion,
+            ToSchemaVersion = body.TargetSchemaVersion
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Migrated save {SlotName} from {From} to {To}, new version {Version}",
+            body.SlotName, currentSchemaVersion, body.TargetSchemaVersion, newVersionNumber);
+
+        return (StatusCodes.OK, new MigrateSaveResponse
+        {
+            FromSchemaVersion = currentSchemaVersion,
+            ToSchemaVersion = body.TargetSchemaVersion,
+            NewVersionNumber = newVersionNumber,
+            MigrationPath = migrationPath,
+            Warnings = migrationResult.Warnings
+        });
     }
 }

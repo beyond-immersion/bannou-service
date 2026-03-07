@@ -25,6 +25,7 @@ components:
       - stackable
       - maxStacks
       - stackBehavior
+      - isDeprecated
       - createdAt
       properties:
         eventName:
@@ -57,11 +58,23 @@ components:
         stackBehavior: &id008
           $ref: ../status-api.yaml#/components/schemas/StackBehavior
           description: "How multiple applications interact"
-        createdAt: &id009
+        isDeprecated: &id009
+          type: boolean
+          description: "Whether this template is deprecated"
+        deprecatedAt: &id010
+          type: string
+          format: date-time
+          nullable: true
+          description: "When this template was deprecated"
+        deprecationReason: &id011
+          type: string
+          nullable: true
+          description: "Why this template was deprecated"
+        createdAt: &id012
           type: string
           format: date-time
           description: "When this template was created"
-        updatedAt: &id010
+        updatedAt: &id013
           type: string
           format: date-time
           nullable: true
@@ -84,6 +97,7 @@ components:
       - stackable
       - maxStacks
       - stackBehavior
+      - isDeprecated
       - createdAt
       - changedFields
       properties:
@@ -99,8 +113,11 @@ components:
         stackable: *id006
         maxStacks: *id007
         stackBehavior: *id008
-        createdAt: *id009
-        updatedAt: *id010
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        createdAt: *id012
+        updatedAt: *id013
         changedFields:
           type: array
           items:
@@ -124,6 +141,7 @@ components:
       - stackable
       - maxStacks
       - stackBehavior
+      - isDeprecated
       - createdAt
       properties:
         eventName:
@@ -138,8 +156,11 @@ components:
         stackable: *id006
         maxStacks: *id007
         stackBehavior: *id008
-        createdAt: *id009
-        updatedAt: *id010
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        createdAt: *id012
+        updatedAt: *id013
         deletedReason:
           type: string
           nullable: true

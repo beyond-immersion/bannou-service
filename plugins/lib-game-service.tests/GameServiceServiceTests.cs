@@ -212,8 +212,8 @@ public class GameServiceServiceTests
                 It.IsAny<string>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, List<Guid>, string, CancellationToken>(
-                (key, data, etag, ct) => savedList = data)
+            .Callback<string, List<Guid>, string, StateOptions?, CancellationToken>(
+                (key, data, etag, _, ct) => savedList = data)
             .ReturnsAsync("etag-2");
 
         // Act
@@ -906,8 +906,8 @@ public class GameServiceServiceTests
                 It.IsAny<string>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, List<Guid>, string, CancellationToken>(
-                (key, data, etag, ct) => savedList = data)
+            .Callback<string, List<Guid>, string, StateOptions?, CancellationToken>(
+                (key, data, etag, _, ct) => savedList = data)
             .ReturnsAsync("etag-2");
 
         // Act

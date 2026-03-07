@@ -57,7 +57,7 @@ public class SaveUploadWorker : BackgroundService
         }
 
         // Wait for other services to initialize
-        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        await Task.Delay(TimeSpan.FromSeconds(_configuration.UploadWorkerStartupDelaySeconds), stoppingToken);
 
         _logger.LogInformation(
             "SaveUploadWorker starting with interval of {IntervalMs}ms, batch size {BatchSize}",
@@ -245,7 +245,7 @@ public class SaveUploadWorker : BackgroundService
         {
             // SaveVersionManifest.AssetId is Guid? - parse the string from response
             manifest.AssetId = Guid.Parse(assetMetadata.AssetId);
-            manifest.UploadStatus = UploadStatus.COMPLETE;
+            manifest.UploadStatus = UploadStatus.Complete;
             await versionStore.SaveAsync(versionKey, manifest, cancellationToken: cancellationToken);
         }
 
@@ -270,7 +270,7 @@ public class SaveUploadWorker : BackgroundService
         };
 
         await messageBus.TryPublishAsync(
-            "save.upload-completed",
+            "save-load.upload.completed",
             completedEvent,
             cancellationToken: cancellationToken);
 
@@ -314,7 +314,7 @@ public class SaveUploadWorker : BackgroundService
             };
 
             await messageBus.TryPublishAsync(
-                "save.upload-failed",
+                "save-load.upload.failed",
                 failedEvent,
                 cancellationToken: cancellationToken);
 

@@ -40,7 +40,7 @@ public static class RealmHistoryCompressionCallbacks
                     ServiceName = "realm-history",
                     CompressEndpoint = "/realm-history/get-compress-data",
                     CompressPayloadTemplate = "{\"realmId\": \"{{resourceId}}\"}",
-                    Priority = 0,
+                    Priority = 10,
                     Description = "Realm historical events and lore elements",
                     DecompressEndpoint = "/realm-history/restore-from-archive",
                     DecompressPayloadTemplate = "{\"realmId\": \"{{resourceId}}\", \"data\": \"{{data}}\"}"

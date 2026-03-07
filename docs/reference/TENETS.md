@@ -1,5 +1,7 @@
 # Bannou Service Development Tenets
 
+> ⛔ **FROZEN DOCUMENT** — Defines authoritative development tenets enforced across the codebase. AI agents MUST NOT add, remove, modify, or reinterpret any content without explicit user instruction. If you believe something is incorrect, report the concern and wait — do not "fix" it. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Version**: 9.1
 > **Last Updated**: 2026-02-28
 > **Scope**: All Bannou microservices and related infrastructure
@@ -130,11 +132,12 @@ Before adding ANY service client dependency, you MUST read [SERVICE-HIERARCHY.md
 ### The Hierarchy Layers
 
 ```
-Layer 4: Application Services (actor, behavior, mapping, scene, etc.)
-Layer 3: Extended Services (character-personality, character-history, etc.)
-Layer 2: Foundational Services (account, auth, character, realm, etc.)
-Layer 1: Observability (telemetry, orchestrator, analytics) - OPTIONAL
-Layer 0: Infrastructure (lib-state, lib-messaging, lib-mesh) - ALWAYS ON
+Layer 5: Extensions (third-party plugins, meta-services)
+Layer 4: Game Features (behavior, matchmaking, analytics, achievement, escrow, etc.) - OPTIONAL
+Layer 3: App Features (asset, orchestrator, documentation, website, voice, broadcast) - OPTIONAL
+Layer 2: Game Foundation (realm, character, species, location, currency, item, inventory, etc.)
+Layer 1: App Foundation (account, auth, chat, connect, permission, contract, resource)
+Layer 0: Infrastructure (state, messaging, mesh, telemetry) - ALWAYS ON
 ```
 
 ### The Cardinal Rule
@@ -195,7 +198,7 @@ Tenets are organized into categories based on when they're needed:
 | **T4** | Infrastructure Libs Pattern | MUST use lib-state, lib-messaging, lib-mesh; direct DB/queue access forbidden; L0/L1/L2 dependencies are hard (fail at startup) |
 | **T5** | Event-Driven Architecture | All state changes publish typed events; no anonymous objects |
 | **T6** | Service Implementation Pattern | Partial class structure with standardized dependencies |
-| **T13** | X-Permissions Usage | All endpoints declare x-permissions; `[]` = service-only (no WebSocket); `role: anonymous` = pre-auth public |
+| **T13** | X-Permissions Usage | All endpoints declare x-permissions; `[]` = service-only (no WebSocket); `role: anonymous` = pre-auth public. See [ENDPOINT-PERMISSION-GUIDELINES.md](ENDPOINT-PERMISSION-GUIDELINES.md) for the decision framework |
 | **T15** | Browser-Facing Endpoints | GET/path-params only for OAuth, Website, WebSocket upgrade (exceptional) |
 | **T18** | Licensing Requirements | MIT/BSD/Apache only; GPL forbidden for linked code |
 | **T27** | Cross-Service Communication Discipline | Direct API for higher→lower; DI interfaces for lower↔higher; events for broadcast only; inverted subscriptions forbidden |
@@ -286,7 +289,7 @@ Tenets are organized into categories based on when they're needed:
 | Missing event consumer registration | T3 | Add RegisterEventConsumers call |
 | Adding top-level try-catch to service endpoint methods | T7 | Generated controller already provides catch-all boundary with logging, error events, and 500 response; do not duplicate |
 | Generic catch returning 500 in service method | T7 | Let it propagate to the generated controller; only catch for specific recovery logic or inter-service `ApiException` |
-| Using IErrorEventEmitter | T7 | Use IMessageBus.TryPublishErrorAsync instead |
+| Using IErrorEventEmitter (deprecated) | T7 | Use IMessageBus.TryPublishErrorAsync instead |
 | Emitting error events for user errors | T7 | Only emit for unexpected/internal failures |
 | Constructing `ServiceErrorEvent` directly | T7 | Use `TryPublishErrorAsync`; only `RabbitMQMessageBus` constructs the event |
 | Passing instance ID to `TryPublishErrorAsync` | T7 | Instance identity injected internally from `IMeshInstanceIdentifier` |
@@ -366,7 +369,7 @@ Tenets are organized into categories based on when they're needed:
 | Publishing registration events at startup | T27 | Use DI Provider interface discovered via `IEnumerable<T>` |
 | Defining event schema to receive data from callers | T27 | Remove event; expose API endpoint; callers use generated client |
 | Lower-layer caching higher-layer data and subscribing to invalidation events | T27 | Provider owns its cache; lower layer calls provider interface for fresh data |
-| Subscribing to `*.deleted` for dependent data cleanup | T28 | Register with lib-resource; implement cleanup callback via `ISeededResourceProvider` |
+| Subscribing to `*.deleted` for dependent data cleanup | T28 | Declare `x-references` in schema; implement cleanup endpoint; register via generated `RegisterResourceCleanupCallbacksAsync()` |
 | Event-based cleanup for persistent dependent data | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
 | Cleanup handler in `*ServiceEvents.cs` for another service's entity | T28 | Move to lib-resource cleanup callback; remove event subscription |
 | Using lib-resource for high-frequency instance cleanup (items at scale) | T28 | Use DI Listener (`IItemInstanceDestructionListener`) + orphan reconciliation worker (T28 exception) |

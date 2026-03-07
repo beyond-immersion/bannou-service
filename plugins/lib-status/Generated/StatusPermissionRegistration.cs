@@ -137,6 +137,51 @@ public static class StatusPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/status/template/deprecate",
+            Method = ServiceEndpointMethod.Post,
+            Description = "deprecateStatusTemplate",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/status/template/undeprecate",
+            Method = ServiceEndpointMethod.Post,
+            Description = "undeprecateStatusTemplate",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/status/template/delete",
+            Method = ServiceEndpointMethod.Post,
+            Description = "deleteStatusTemplate",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/status/grant",
             Method = ServiceEndpointMethod.Post,
             Description = "grantStatus",
@@ -260,21 +305,6 @@ public static class StatusPermissionRegistration
             Path = "/status/effects/get-seed",
             Method = ServiceEndpointMethod.Post,
             Description = "getSeedEffects",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/status/cleanup-by-owner",
-            Method = ServiceEndpointMethod.Post,
-            Description = "cleanupByOwner",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

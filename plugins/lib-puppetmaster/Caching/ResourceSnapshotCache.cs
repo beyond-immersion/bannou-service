@@ -33,6 +33,7 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
     private readonly TimeSpan _defaultTtl;
+    private readonly int _prefetchConcurrency;
 
     /// <summary>
     /// Creates a new resource snapshot cache.
@@ -51,6 +52,7 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
         _logger = logger;
         _telemetryProvider = telemetryProvider;
         _defaultTtl = TimeSpan.FromSeconds(configuration.SnapshotCacheTtlSeconds);
+        _prefetchConcurrency = configuration.SnapshotPrefetchConcurrency;
     }
 
     /// <inheritdoc />
@@ -104,7 +106,7 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
         var successCount = 0;
 
         // Prefetch in parallel with bounded concurrency
-        var semaphore = new SemaphoreSlim(5); // Max 5 concurrent fetches
+        var semaphore = new SemaphoreSlim(_prefetchConcurrency);
         try
         {
             var tasks = resourceIds.Select(async id =>

@@ -153,6 +153,7 @@ public enum StatusRemoveReason
 /// <summary>
 /// Why a status grant was rejected.
 /// <br/>- template_not_found: status template code does not exist for game service
+/// <br/>- template_deprecated: status template has been deprecated and cannot grant new instances
 /// <br/>- entity_at_max_statuses: entity has reached maximum concurrent statuses
 /// <br/>- stack_limit_reached: status has reached maximum stack count
 /// <br/>- stack_behavior_ignore: template uses ignore stacking and status already present
@@ -168,20 +169,23 @@ public enum GrantFailureReason
     [System.Runtime.Serialization.EnumMember(Value = @"TemplateNotFound")]
     TemplateNotFound = 0,
 
+    [System.Runtime.Serialization.EnumMember(Value = @"TemplateDeprecated")]
+    TemplateDeprecated = 1,
+
     [System.Runtime.Serialization.EnumMember(Value = @"EntityAtMaxStatuses")]
-    EntityAtMaxStatuses = 1,
+    EntityAtMaxStatuses = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"StackLimitReached")]
-    StackLimitReached = 2,
+    StackLimitReached = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"StackBehaviorIgnore")]
-    StackBehaviorIgnore = 3,
+    StackBehaviorIgnore = 4,
 
     [System.Runtime.Serialization.EnumMember(Value = @"ContractFailed")]
-    ContractFailed = 4,
+    ContractFailed = 5,
 
     [System.Runtime.Serialization.EnumMember(Value = @"ItemCreationFailed")]
-    ItemCreationFailed = 5,
+    ItemCreationFailed = 6,
 
 }
 #pragma warning restore CS1591
@@ -259,6 +263,7 @@ public partial class StatusEffectSummary
     [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string StatusCode { get; set; } = default!;
 
     /// <summary>
@@ -295,6 +300,7 @@ public partial class StatusEffectSummary
     /// Seed capability fidelity value (null for item-based effects)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fidelity")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
     public float? Fidelity { get; set; } = default!;
 
     /// <summary>
@@ -324,6 +330,7 @@ public partial class SeedEffectEntry
     [System.Text.Json.Serialization.JsonPropertyName("capabilityCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string CapabilityCode { get; set; } = default!;
 
     /// <summary>
@@ -332,12 +339,14 @@ public partial class SeedEffectEntry
     [System.Text.Json.Serialization.JsonPropertyName("domain")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string Domain { get; set; } = default!;
 
     /// <summary>
     /// Capability fidelity value (0.0 to 1.0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fidelity")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
     public float Fidelity { get; set; } = default!;
 
     /// <summary>
@@ -354,6 +363,7 @@ public partial class SeedEffectEntry
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string SeedTypeCode { get; set; } = default!;
 
 }
@@ -388,6 +398,7 @@ public partial class CreateStatusTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256)]
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
@@ -396,6 +407,7 @@ public partial class CreateStatusTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(2000)]
     public string Description { get; set; } = default!;
 
     /// <summary>
@@ -417,7 +429,7 @@ public partial class CreateStatusTemplateRequest
     /// Maximum number of stacks when stackable is true
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxStacks")]
-    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int MaxStacks { get; set; } = 1;
 
     /// <summary>
@@ -494,6 +506,7 @@ public partial class GetStatusTemplateByCodeRequest
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string Code { get; set; } = default!;
 
 }
@@ -519,6 +532,12 @@ public partial class ListStatusTemplatesRequest
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public StatusCategory? Category { get; set; } = default!;
+
+    /// <summary>
+    /// Whether to include deprecated templates in results
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
+    public bool IncludeDeprecated { get; set; } = false;
 
     /// <summary>
     /// Page number (one-indexed)
@@ -555,12 +574,14 @@ public partial class UpdateStatusTemplateRequest
     /// Updated display name (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.StringLength(256)]
     public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Updated description (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(2000)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
@@ -580,7 +601,7 @@ public partial class UpdateStatusTemplateRequest
     /// Updated maximum stack count (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxStacks")]
-    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int? MaxStacks { get; set; } = default!;
 
     /// <summary>
@@ -632,7 +653,68 @@ public partial class SeedStatusTemplatesRequest
     [System.Text.Json.Serialization.JsonPropertyName("templates")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(500)]
     public System.Collections.Generic.ICollection<CreateStatusTemplateRequest> Templates { get; set; } = new System.Collections.ObjectModel.Collection<CreateStatusTemplateRequest>();
+
+}
+
+/// <summary>
+/// Request to deprecate a status template
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeprecateStatusTemplateRequest
+{
+
+    /// <summary>
+    /// Status template to deprecate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("statusTemplateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid StatusTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Why this template is being deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to undeprecate a status template (Category A -- reversible)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UndeprecateStatusTemplateRequest
+{
+
+    /// <summary>
+    /// Status template to undeprecate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("statusTemplateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid StatusTemplateId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to delete a deprecated status template
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteStatusTemplateRequest
+{
+
+    /// <summary>
+    /// Status template to delete (must be deprecated first)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("statusTemplateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid StatusTemplateId { get; set; } = default!;
 
 }
 
@@ -665,6 +747,7 @@ public partial class StatusTemplateResponse
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string Code { get; set; } = default!;
 
     /// <summary>
@@ -673,6 +756,7 @@ public partial class StatusTemplateResponse
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256)]
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
@@ -681,6 +765,7 @@ public partial class StatusTemplateResponse
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(2000)]
     public string Description { get; set; } = default!;
 
     /// <summary>
@@ -702,6 +787,7 @@ public partial class StatusTemplateResponse
     /// Maximum number of stacks
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxStacks")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int MaxStacks { get; set; } = default!;
 
     /// <summary>
@@ -731,6 +817,7 @@ public partial class StatusTemplateResponse
     /// Default duration in seconds (null for permanent statuses)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultDurationSeconds")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? DefaultDurationSeconds { get; set; } = default!;
 
     /// <summary>
@@ -738,6 +825,25 @@ public partial class StatusTemplateResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iconAssetId")]
     public System.Guid? IconAssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this template is deprecated and unavailable for new grants
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When this template was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Why this template was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// When this template was created
@@ -768,6 +874,7 @@ public partial class ListStatusTemplatesResponse
     [System.Text.Json.Serialization.JsonPropertyName("templates")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(200)]
     public System.Collections.Generic.ICollection<StatusTemplateResponse> Templates { get; set; } = new System.Collections.ObjectModel.Collection<StatusTemplateResponse>();
 
     /// <summary>
@@ -849,6 +956,7 @@ public partial class GrantStatusRequest
     [System.Text.Json.Serialization.JsonPropertyName("statusTemplateCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string StatusTemplateCode { get; set; } = default!;
 
     /// <summary>
@@ -865,7 +973,7 @@ public partial class GrantStatusRequest
     public int? DurationOverrideSeconds { get; set; } = default!;
 
     /// <summary>
-    /// Arbitrary key-value data passed to contract template values and stored on the status instance. Convention for Divine integration - set metadata.blessingTier to the blessing tier string (e.g., minor, standard, greater, supreme) so the Divine service can query active blessings by tier.
+    /// Arbitrary key-value data passed to contract template values and stored on the status instance. Opaque to Status -- callers define their own semantics.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -1006,6 +1114,7 @@ public partial class HasStatusRequest
     [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string StatusCode { get; set; } = default!;
 
 }
@@ -1101,6 +1210,7 @@ public partial class GrantStatusResponse
     [System.Text.Json.Serialization.JsonPropertyName("statusTemplateCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string StatusTemplateCode { get; set; } = default!;
 
     /// <summary>
@@ -1237,6 +1347,7 @@ public partial class StatusInstanceResponse
     [System.Text.Json.Serialization.JsonPropertyName("statusTemplateCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string StatusTemplateCode { get; set; } = default!;
 
     /// <summary>
@@ -1289,7 +1400,7 @@ public partial class StatusInstanceResponse
     public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
     /// <summary>
-    /// Arbitrary metadata associated with this status instance
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -1309,6 +1420,7 @@ public partial class ListStatusesResponse
     [System.Text.Json.Serialization.JsonPropertyName("statuses")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<StatusEffectSummary> Statuses { get; set; } = new System.Collections.ObjectModel.Collection<StatusEffectSummary>();
 
     /// <summary>
@@ -1446,6 +1558,7 @@ public partial class GetEffectsResponse
     [System.Text.Json.Serialization.JsonPropertyName("effects")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(500)]
     public System.Collections.Generic.ICollection<StatusEffectSummary> Effects { get; set; } = new System.Collections.ObjectModel.Collection<StatusEffectSummary>();
 
 }
@@ -1480,6 +1593,7 @@ public partial class SeedEffectsResponse
     [System.Text.Json.Serialization.JsonPropertyName("effects")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(500)]
     public System.Collections.Generic.ICollection<SeedEffectEntry> Effects { get; set; } = new System.Collections.ObjectModel.Collection<SeedEffectEntry>();
 
 }

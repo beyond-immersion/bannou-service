@@ -347,7 +347,7 @@ Removes a resource change watch from the `WatchRegistry`.
 ## API Endpoints (Implementation Notes)
 
 **Tag: Puppetmaster**
-- `POST /puppetmaster/status` - Returns service health, cached behavior count, and active watcher count. Always returns `isHealthy: true`.
+- `POST /puppetmaster/status` - Returns cached behavior count and active watcher count.
 
 **Tag: Behaviors**
 - `POST /puppetmaster/behaviors/invalidate` - Invalidates specific or all cached behaviors. Publishes `BehaviorInvalidatedEvent` regardless of whether any behaviors were actually invalidated.
@@ -355,7 +355,7 @@ Removes a resource change watch from the `WatchRegistry`.
 **Tag: Watchers**
 - `POST /puppetmaster/watchers/list` - Lists active watchers with optional realm filter. Returns from in-memory dictionary.
 - `POST /puppetmaster/watchers/start` - Starts a watcher for a realm/type combination. Idempotent - returns existing watcher if already running for that realm/type. Requires `developer` role.
-- `POST /puppetmaster/watchers/stop` - Stops a watcher by ID. Returns `stopped: false` if watcher not found (does not error).
+- `POST /puppetmaster/watchers/stop` - Stops a watcher by ID. Returns 404 if watcher not found.
 - `POST /puppetmaster/watchers/start-for-realm` - Starts all default watcher types for a realm. Currently only starts "regional" type. Requires `developer` role.
 
 **Permission Notes**:
@@ -466,8 +466,7 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 
 3. ~~**ResourceSnapshotCache TTL Configuration**~~: **FIXED** (2026-02-11) - Added `SnapshotCacheTtlSeconds` config property (default 300s, minimum 1s). ResourceSnapshotCache now injects `PuppetmasterServiceConfiguration` and uses the config value instead of hardcoded 5-minute TTL.
 
-4. **Actor-to-Actor Communication Commands**: Event actors currently communicate with character actors only via perception injection through the Watch system (`WatchPerception`). Higher-level ABML commands would simplify behavior authoring for orchestration flows: `actor_command:` for one-way commands (e.g., "start cutscene", "offer quest") and `actor_query:` for request/response patterns (e.g., "what is your current storyline participation?"). Depends on Stub #1 (watcher-actor integration) being complete first, since watchers need to actually spawn actors before they can send commands to them.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/438 -->
+4. **Actor-to-Actor Communication Commands**: Event actors currently communicate with character actors only via perception injection through the Watch system (`WatchPerception`). Higher-level ABML commands would simplify behavior authoring for orchestration flows: `actor_command:` for one-way commands (e.g., "start cutscene", "offer quest") and `actor_query:` for request/response patterns (e.g., "what is your current storyline participation?"). Depends on Stub #1 (watcher-actor integration) being complete first, since watchers need to actually spawn actors before they can send commands to them. *(GH #438 closed)*
 
 ---
 
@@ -499,7 +498,7 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **StopWatcher returns success for non-existent watchers**: `StopWatcherAsync` returns `(StatusCodes.OK, { Stopped = false })` instead of an error when the watcher doesn't exist. This is intentional idempotency - callers don't need to check if a watcher exists before stopping it.
+1. ~~**StopWatcher returns success for non-existent watchers**~~: **FIXED** — `StopWatcherAsync` now returns `(StatusCodes.NotFound, null)` when the watcher doesn't exist, per T8 (no filler properties; status code communicates result).
 
 2. **Watcher uniqueness is per (realm, type)**: Only one watcher per realm/type combination is allowed. `StartWatcherAsync` returns the existing watcher with `AlreadyExisted = true` rather than creating a duplicate.
 

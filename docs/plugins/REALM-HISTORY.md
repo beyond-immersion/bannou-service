@@ -150,7 +150,7 @@ Dual-Index Storage Pattern
                 │
                 Conditions: $.ParticipationId EXISTS
                             $.RealmId = R1
-                            $.EventCategory = WAR  (optional)
+                            $.EventCategory = War  (optional)
                             $.Impact >= 0.5        (optional)
                 SortBy: $.EventDateUnix DESC
                 │
@@ -164,7 +164,7 @@ Dual-Index Storage Pattern
                 │
                 Conditions: $.ParticipationId EXISTS
                             $.EventId = E1
-                            $.Role = DEFENDER  (optional)
+                            $.Role = Defender  (optional)
                 SortBy: $.Impact DESC
                 │
                 ▼
@@ -184,10 +184,7 @@ None. The service is feature-complete for its scope.
 1. **Event-level aggregation**: Compute aggregate impact scores per event across all participating realms.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/266 -->
 2. **Lore inheritance**: Child realms inheriting lore elements from parent realms (if realm hierarchy is added).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/268 -->
-3. **AI-powered summarization**: Replace template-based summaries with LLM-generated narrative text.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/269 -->
-4. **Realm timeline visualization**: Chronological event data suitable for timeline UI rendering.
+3. **Realm timeline visualization**: Chronological event data suitable for timeline UI rendering.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/270 -->
 
 ---
@@ -202,7 +199,7 @@ None identified.
 
 1. **Summarize is a read-only operation (no event)**: `SummarizeRealmHistoryAsync` does not publish any event because it's a pure read operation that doesn't modify state. Per FOUNDATION TENETS (Event-Driven Architecture), events notify about state changes - read operations don't trigger events. This is consistent with other read operations like `GetRealmLore` and `GetRealmParticipation`.
 
-2. **Unknown lore element types display raw enum string**: The `GenerateLoreSummary` method uses `_ => element.ElementType.ToString()` for unrecognized element types, so the raw string like "NEW_TYPE" appears verbatim in summaries.
+2. **Unknown lore element types display raw enum string**: The `GenerateLoreSummary` method uses `_ => element.ElementType.ToString()` for unrecognized element types, so the raw PascalCase string like "NewType" appears verbatim in summaries.
 
 3. **Unknown participation roles default to "participated in"**: The `GenerateEventSummary` method uses `_ => "participated in"` for unrecognized roles.
 
@@ -228,9 +225,18 @@ None identified.
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
 - **2026-02-06**: [#306](https://github.com/beyond-immersion/bannou-service/issues/306) - Single-document storage for lore elements (evaluate whether document storage is problematic for large lore collections; shared pattern with character-history via BackstoryStorageHelper)
 - **2026-02-02**: [#266](https://github.com/beyond-immersion/bannou-service/issues/266) - Event-level aggregation (API design decisions needed: metrics, role breakdowns, filtering, new endpoint vs enhancement)
-- **2026-02-02**: [#268](https://github.com/beyond-immersion/bannou-service/issues/268) - Lore inheritance (BLOCKED: requires realm hierarchy which contradicts current Realm service design of "peer worlds with no hierarchical relationships")
-- **2026-02-02**: [#269](https://github.com/beyond-immersion/bannou-service/issues/269) - AI-powered summarization (BLOCKED on character-history #230 which tracks shared LLM infrastructure work)
 - **2026-02-02**: [#270](https://github.com/beyond-immersion/bannou-service/issues/270) - Timeline visualization (may already be satisfied by existing `GetRealmParticipation` endpoint which returns chronologically-sorted data)
 
+### Design Decisions (Deferred from Hardening)
+1. **Config validation constraints**: `MaxLoreElements` (1–10000) and `IndexLockTimeoutSeconds` (1–300) added during hardening. No tenet mandates specific ranges — these are reasonable guardrails. Review if operational experience suggests different bounds.
+2. **`relatedEntityType` as string vs EntityType enum**: Lore element `relatedEntityType` is a plain string. T14/T25 would suggest using `EntityType` enum for known entity references, but since lore can reference non-entity concepts (geographic features, abstract ideas), string is defensible. Requires design decision on whether to constrain to entity types or keep flexible.
+3. **Archive `loreElements`/`participations` nullable modeling**: Made nullable during hardening to align with NRT compliance (these arrays are null when `hasLore`/`hasParticipations` is false). The `has*` boolean + nullable array pattern is intentional for archive serialization clarity.
+
 ### Completed
-(None pending)
+- **2026-03-07**: Hardening pass — PascalCase enum migration (RealmEventCategory, RealmEventRole, RealmLoreElementType), T8 filler property removal (realmId from RealmLoreResponse and RealmHistoryArchive, success/errorMessage from responses), 409 schema description fix (lock contention, not deduplication), NRT nullable array compliance, config validation constraints, compression callback priority fix (0→10), private method XML docs, capture-pattern test migration, lock failure tests, resource reference verification tests, summarize limit tests (40 total unit tests)
+- **2026-02-06**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Add concurrency control to DualIndexHelper index updates
+- **2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency
+- **2026-02-02**: [#272](https://github.com/beyond-immersion/bannou-service/issues/272) - Index cleanup on orphaned events or realm deletion
+- **2026-02-02**: [#350](https://github.com/beyond-immersion/bannou-service/issues/350) - Configurable lore element count limit
+- **2026-02-02**: [#268](https://github.com/beyond-immersion/bannou-service/issues/268) - Lore inheritance (closed)
+- **2026-02-02**: [#269](https://github.com/beyond-immersion/bannou-service/issues/269) - AI-powered summarization (closed)

@@ -29,10 +29,10 @@ AudienceMember:
   interestTags: string[]              # Content interest tags (e.g., "combat", "crafting", "social")
   engagementLevel: float              # 0.0 to 1.0 current engagement
   engagementDecayRate: float          # Per-tick decay when content doesn't match interests
-  sentimentBias: SentimentCategory    # Default sentiment when engaged
+  sentimentBias: SentimentCategory    # Default sentiment when engaged ($ref: common-api.yaml)
   isRealDerived: bool                 # True if created from a real sentiment pulse (admin-only visibility)
   trackingId: Guid?                   # For real-derived: matches the lib-broadcast tracking ID
-  lastActiveTimestamp: DateTime
+  lastActiveTimestamp: DateTimeOffset
 ```
 
 ### Audience Lifecycle
@@ -75,9 +75,9 @@ HypeTrain:
   currentScore: float           # Accumulated hype within current level
   levelThreshold: float         # Score needed to advance to next level
   decayRate: float              # Per-tick decay (hype dies if not fed)
-  triggerCategory: SentimentCategory  # What started the train
-  startedAt: DateTime
-  expiresAt: DateTime           # Hard timeout (hype trains can't last forever)
+  triggerCategory: SentimentCategory  # What started the train ($ref: common-api.yaml)
+  startedAt: DateTimeOffset
+  expiresAt: DateTimeOffset     # Hard timeout (hype trains can't last forever)
 ```
 
 ### Hype Train Lifecycle
@@ -174,8 +174,8 @@ When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtim
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `sess:{showtimeSessionId}` | `ShowtimeSessionModel` | Primary lookup by ID. Stores streamer entity (type+ID), game service scope, status (active/paused/ended), start time, audience metrics, content tags, linked platform session ID (nullable), linked voice room ID (nullable). |
-| `sess-streamer:{entityType}:{entityId}` | `ShowtimeSessionModel` | Active session lookup by streamer entity |
+| `sess:{showtimeSessionId}` | `ShowtimeSessionModel` | Primary lookup by ID. Stores streamer entity (`entityType: $ref EntityType` + `entityId: Guid`), game service scope, status (`ShowtimeSessionStatus` enum: `Active`, `Paused`, `Ended`), start time, audience metrics, content tags, linked platform session ID (nullable), linked voice room ID (nullable). |
+| `sess-streamer:{entityType}:{entityId}` | `ShowtimeSessionModel` | Active session lookup by streamer entity (`entityType: $ref EntityType`) |
 | `sess-game:{gameServiceId}` | `ShowtimeSessionModel` | Active sessions by game service (for audience routing) |
 
 ### Audience Pool Store
@@ -192,8 +192,8 @@ When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtim
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `follow:{followerId}` | `AudienceFollowerModel` | Persistent follower record: streamer entity, follower member ID, personality type, interest tags, first-followed timestamp, total watch time, engagement history summary, isRealDerived (admin-only). |
-| `follow-streamer:{entityType}:{entityId}` | `AudienceFollowerModel` | Followers for a streamer entity (paged query) |
+| `follow:{followerId}` | `AudienceFollowerModel` | Persistent follower record: streamer entity (`$ref: EntityType`), follower member ID, personality type, interest tags, first-followed timestamp (`DateTimeOffset`), total watch time, engagement history summary, isRealDerived (admin-only). |
+| `follow-streamer:{entityType}:{entityId}` | `AudienceFollowerModel` | Followers for a streamer entity (paged query). AUDIT:NEEDS_DESIGN — see DC#4 re: follower entity type. |
 
 ### Hype Train Store
 **Store**: `showtime-hype-trains` (Backend: Redis, prefix: `showtime:hype`)
@@ -248,8 +248,8 @@ When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtim
 | `voice.participant.joined` | `HandleVoiceParticipantJoinedAsync` | Adjust audience behavior based on voice room size (more participants = more dynamic content). (Soft -- no-op if lib-voice absent) |
 | `voice.participant.left` | `HandleVoiceParticipantLeftAsync` | Adjust audience behavior based on voice room size. (Soft -- no-op if lib-voice absent) |
 | `game-session.created` | `HandleGameSessionCreatedAsync` | Create voice room via lib-voice if game session is configured for voice; optionally create streaming session if auto-stream enabled |
-| `game-session.ended` | `HandleGameSessionEndedAsync` | End associated streaming sessions and delete voice rooms via lib-voice |
-| `showtime.session.ended` | `HandleShowtimeSessionEndedAsync` | Trigger career progression: record seed growth, evaluate milestones, grant collection entries, update follower relationships |
+| `game-session.ended` | `HandleGameSessionEndedAsync` | End associated streaming sessions and delete voice rooms via lib-voice. Note: this is a live state reaction (ending ephemeral sessions/voice rooms), NOT dependent data cleanup — compliant with FOUNDATION TENETS. Persistent data cleanup for game-service deletion is handled via lib-resource x-references. |
+| `showtime.session.ended` | `HandleShowtimeSessionEndedAsync` | Trigger career progression: record seed growth, evaluate milestones, grant collection entries, update follower relationships. **AUDIT:NEEDS_DESIGN** — self-subscription adds RabbitMQ overhead; career logic could execute inline in `EndSessionAsync`. See DC#9. |
 
 ### Resource Cleanup (T28)
 
@@ -269,33 +269,33 @@ When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtim
 
 ## Configuration
 
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `ShowtimeEnabled` | `SHOWTIME_ENABLED` | `false` | Master feature flag |
-| `StreamerSeedTypeCode` | `SHOWTIME_STREAMER_SEED_TYPE_CODE` | `streamer` | Seed type code for streamer career growth |
-| `TipCurrencyCode` | `SHOWTIME_TIP_CURRENCY_CODE` | `stream_tip` | Currency code for virtual tip economy |
-| `MilestoneCollectionType` | `SHOWTIME_MILESTONE_COLLECTION_TYPE` | `streaming_milestones` | Collection type code for streaming milestone unlocks |
-| `HypeCollectionType` | `SHOWTIME_HYPE_COLLECTION_TYPE` | `streaming_hype` | Collection type code for hype achievements |
-| `WorldFirstCollectionType` | `SHOWTIME_WORLD_FIRST_COLLECTION_TYPE` | `streaming_world_first` | Collection type code for world-first stream unlocks |
-| `SponsorshipContractTemplateCode` | `SHOWTIME_SPONSORSHIP_CONTRACT_TEMPLATE_CODE` | `stream_sponsorship` | Contract template code for NPC sponsorship deals |
-| `FollowerRelationshipTypeCode` | `SHOWTIME_FOLLOWER_RELATIONSHIP_TYPE_CODE` | `stream_follower` | Relationship type code for streamer-follower bonds |
-| `DefaultAudiencePoolSize` | `SHOWTIME_DEFAULT_AUDIENCE_POOL_SIZE` | `50` | Base audience pool size for new/Unknown phase streamers |
-| `AudiencePoolScalePerPhase` | `SHOWTIME_AUDIENCE_POOL_SCALE_PER_PHASE` | `2.0` | Multiplier applied per career phase (Rising=2x, Popular=4x, etc.) |
-| `AudienceTickIntervalSeconds` | `SHOWTIME_AUDIENCE_TICK_INTERVAL_SECONDS` | `5` | How often the audience simulation evaluates engagement and migration |
-| `EngagementDecayBaseRate` | `SHOWTIME_ENGAGEMENT_DECAY_BASE_RATE` | `0.02` | Per-tick engagement decay when content doesn't match interests |
-| `HypeTrainTriggerThreshold` | `SHOWTIME_HYPE_TRAIN_TRIGGER_THRESHOLD` | `10` | Minimum matching sentiments in a pulse interval to trigger a hype train |
-| `HypeTrainLevelExponent` | `SHOWTIME_HYPE_TRAIN_LEVEL_EXPONENT` | `1.5` | Exponential scaling factor for level thresholds |
-| `HypeTrainDecayRate` | `SHOWTIME_HYPE_TRAIN_DECAY_RATE` | `0.1` | Per-tick decay rate for hype train score |
-| `HypeTrainMaxDurationMinutes` | `SHOWTIME_HYPE_TRAIN_MAX_DURATION_MINUTES` | `10` | Hard timeout for hype trains |
-| `FollowerEngagementThreshold` | `SHOWTIME_FOLLOWER_ENGAGEMENT_THRESHOLD` | `0.6` | Minimum average engagement for an audience member to become a follower |
-| `FollowerWatchTimeMinutes` | `SHOWTIME_FOLLOWER_WATCH_TIME_MINUTES` | `30` | Minimum cumulative watch time for follower conversion |
-| `MaxFollowersPerStreamer` | `SHOWTIME_MAX_FOLLOWERS_PER_STREAMER` | `10000` | Maximum followers per streamer entity |
-| `RealDerivedMemberTtlSeconds` | `SHOWTIME_REAL_DERIVED_MEMBER_TTL_SECONDS` | `30` | TTL for anonymous real-derived audience members (2x pulse interval) |
-| `CareerWorkerIntervalSeconds` | `SHOWTIME_CAREER_WORKER_INTERVAL_SECONDS` | `60` | Career progression worker evaluation frequency |
-| `AutoStreamOnGameSession` | `SHOWTIME_AUTO_STREAM_ON_GAME_SESSION` | `false` | Automatically create streaming sessions when game sessions start |
-| `AutoVoiceOnGameSession` | `SHOWTIME_AUTO_VOICE_ON_GAME_SESSION` | `true` | Automatically create voice rooms when game sessions start |
-| `GrowthDebounceIntervalMs` | `SHOWTIME_GROWTH_DEBOUNCE_INTERVAL_MS` | `5000` | Debounce interval for seed growth contributions (prevent overwhelming lib-seed) |
-| `DistributedLockTimeoutSeconds` | `SHOWTIME_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for distributed lock acquisition |
+| Property | Type | Env Var | Default | Constraints | Purpose |
+|----------|------|---------|---------|-------------|---------|
+| `ShowtimeEnabled` | boolean | `SHOWTIME_ENABLED` | `false` | | Master feature flag (AUDIT:NEEDS_DESIGN — see DC#10, may be redundant with SERVICE_ENABLED) |
+| `StreamerSeedTypeCode` | string | `SHOWTIME_STREAMER_SEED_TYPE_CODE` | `streamer` | | Seed type code for streamer career growth |
+| `TipCurrencyCode` | string | `SHOWTIME_TIP_CURRENCY_CODE` | `stream_tip` | | Currency code for virtual tip economy |
+| `MilestoneCollectionType` | string | `SHOWTIME_MILESTONE_COLLECTION_TYPE` | `streaming_milestones` | | Collection type code for streaming milestone unlocks |
+| `HypeCollectionType` | string | `SHOWTIME_HYPE_COLLECTION_TYPE` | `streaming_hype` | | Collection type code for hype achievements |
+| `WorldFirstCollectionType` | string | `SHOWTIME_WORLD_FIRST_COLLECTION_TYPE` | `streaming_world_first` | | Collection type code for world-first stream unlocks |
+| `SponsorshipContractTemplateCode` | string | `SHOWTIME_SPONSORSHIP_CONTRACT_TEMPLATE_CODE` | `stream_sponsorship` | | Contract template code for NPC sponsorship deals |
+| `FollowerRelationshipTypeCode` | string | `SHOWTIME_FOLLOWER_RELATIONSHIP_TYPE_CODE` | `stream_follower` | | Relationship type code for streamer-follower bonds |
+| `DefaultAudiencePoolSize` | integer | `SHOWTIME_DEFAULT_AUDIENCE_POOL_SIZE` | `50` | minimum: 1 | Base audience pool size for new/Unknown phase streamers |
+| `AudiencePoolScalePerPhase` | double | `SHOWTIME_AUDIENCE_POOL_SCALE_PER_PHASE` | `2.0` | minimum: 1.0 | Multiplier applied per career phase (Rising=2x, Popular=4x, etc.) |
+| `AudienceTickIntervalSeconds` | integer | `SHOWTIME_AUDIENCE_TICK_INTERVAL_SECONDS` | `5` | minimum: 1 | How often the audience simulation evaluates engagement and migration |
+| `EngagementDecayBaseRate` | double | `SHOWTIME_ENGAGEMENT_DECAY_BASE_RATE` | `0.02` | minimum: 0.0, maximum: 1.0 | Per-tick engagement decay when content doesn't match interests |
+| `HypeTrainTriggerThreshold` | integer | `SHOWTIME_HYPE_TRAIN_TRIGGER_THRESHOLD` | `10` | minimum: 1 | Minimum matching sentiments in a pulse interval to trigger a hype train |
+| `HypeTrainLevelExponent` | double | `SHOWTIME_HYPE_TRAIN_LEVEL_EXPONENT` | `1.5` | minimum: 1.0 | Exponential scaling factor for level thresholds |
+| `HypeTrainDecayRate` | double | `SHOWTIME_HYPE_TRAIN_DECAY_RATE` | `0.1` | minimum: 0.0, maximum: 1.0 | Per-tick decay rate for hype train score |
+| `HypeTrainMaxDurationMinutes` | integer | `SHOWTIME_HYPE_TRAIN_MAX_DURATION_MINUTES` | `10` | minimum: 1 | Hard timeout for hype trains |
+| `FollowerEngagementThreshold` | double | `SHOWTIME_FOLLOWER_ENGAGEMENT_THRESHOLD` | `0.6` | minimum: 0.0, maximum: 1.0 | Minimum average engagement for an audience member to become a follower |
+| `FollowerWatchTimeMinutes` | integer | `SHOWTIME_FOLLOWER_WATCH_TIME_MINUTES` | `30` | minimum: 1 | Minimum cumulative watch time for follower conversion |
+| `MaxFollowersPerStreamer` | integer | `SHOWTIME_MAX_FOLLOWERS_PER_STREAMER` | `10000` | minimum: 1 | Maximum followers per streamer entity |
+| `RealDerivedMemberTtlSeconds` | integer | `SHOWTIME_REAL_DERIVED_MEMBER_TTL_SECONDS` | `30` | minimum: 1 | TTL for anonymous real-derived audience members (2x pulse interval) |
+| `CareerWorkerIntervalSeconds` | integer | `SHOWTIME_CAREER_WORKER_INTERVAL_SECONDS` | `60` | minimum: 1 | Career progression worker evaluation frequency |
+| `AutoStreamOnGameSession` | boolean | `SHOWTIME_AUTO_STREAM_ON_GAME_SESSION` | `false` | | Automatically create streaming sessions when game sessions start |
+| `AutoVoiceOnGameSession` | boolean | `SHOWTIME_AUTO_VOICE_ON_GAME_SESSION` | `true` | | Automatically create voice rooms when game sessions start |
+| `GrowthDebounceIntervalMs` | integer | `SHOWTIME_GROWTH_DEBOUNCE_INTERVAL_MS` | `5000` | minimum: 100 | Debounce interval for seed growth contributions (prevent overwhelming lib-seed) |
+| `DistributedLockTimeoutSeconds` | integer | `SHOWTIME_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `30` | minimum: 1 | Timeout for distributed lock acquisition |
 
 ---
 
@@ -304,6 +304,7 @@ When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtim
 | Service | Role |
 |---------|------|
 | `ILogger<ShowtimeService>` | Structured logging |
+| `ITelemetryProvider` | Telemetry span instrumentation for all async methods (L0) |
 | `ShowtimeServiceConfiguration` | Typed configuration access (25 properties) |
 | `IStateStoreFactory` | State store access (creates 6 stores) |
 | `IMessageBus` | Event publishing |
@@ -380,7 +381,7 @@ All endpoints require `developer` role.
 
 ### Cleanup Endpoints (2 endpoints)
 
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
+Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). All cleanup endpoints use `x-permissions: []` (service-to-service only via lib-mesh, not exposed to WebSocket clients).
 
 - **CleanupByCharacter** (`/showtime/cleanup-by-character`): End active sessions where streamer is the character. Archive follower records. Remove streaming collection entries referencing this character.
 - **CleanupByGameService** (`/showtime/cleanup-by-game-service`): End all active sessions for the game service. Delete all session records, follower records, and streaming-specific collection entries.
@@ -459,10 +460,11 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 **Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
 
 ### Phase 1: Schema & Generation
-- Create showtime-api.yaml schema with all endpoints (19 endpoints across 5 groups)
-- Create showtime-events.yaml schema (9 published events, 8 consumed events)
-- Create showtime-configuration.yaml schema (25 configuration properties)
-- Create showtime-client-events.yaml (hype train client events, audience milestone notifications)
+- Create showtime-api.yaml schema with all endpoints (19 endpoints across 5 groups), including `ShowtimeSessionStatus` enum (`Active`, `Paused`, `Ended`) and `$ref: EntityType` for streamer identity
+- Create showtime-events.yaml schema with `x-event-publications` listing all 9 published events, `x-event-subscriptions` for consumed events, and flat event structure (eventId + timestamp inline)
+- Create showtime-configuration.yaml schema (25 configuration properties with explicit types and validation constraints)
+- Create showtime-client-events.yaml (AUDIT:NEEDS_DESIGN — client event models, `eventName` values, and `BaseClientEvent` inheritance must be specified before creation; see DC#8)
+- Add 6 state stores to `schemas/state-stores.yaml`
 - Generate service code
 - Verify build succeeds
 
@@ -612,13 +614,13 @@ The `streamer` seed type (detailed above) provides progressive growth that gates
 | **Milestones** | `stream_hours` (stream X hours with sponsor visible), `audience_reach` (total viewers), `hype_generation` (trigger N hype trains) |
 | **Prebound API** | Credit streamer with sponsorship payment (Currency), grant sponsor reputation boost (Seed growth) |
 
-### Relationship: Follower Bonds
+### Relationship: Follower Bonds (AUDIT:NEEDS_DESIGN — see DC#4)
 
 | Property | Value |
 |----------|-------|
 | **Relationship Type** | `stream_follower` |
 | **Direction** | Follower → Streamer (unidirectional) |
-| **Entity Types** | Polymorphic (audience member entity → streamer character/account) |
+| **Entity Types** | Polymorphic (audience member entity → streamer character/account). **AUDIT:NEEDS_DESIGN** — simulated audience members are not proper Bannou entities and lack a valid `EntityType`. See DC#4 for options. If local follower records are chosen (option a), this section is removed and `IRelationshipClient` is dropped from hard dependencies. |
 | **Lifecycle** | Created when audience member meets follow thresholds; persists across sessions; can unfollow via engagement decay |
 
 ---
@@ -686,16 +688,52 @@ This eliminates the hierarchy violation entirely. GameSession publishes events; 
 
 3. **Hype train threshold tuning**: The number of matching sentiments needed to trigger a hype train (`HypeTrainTriggerThreshold = 10`) and the level escalation exponent (`HypeTrainLevelExponent = 1.5`) need gameplay testing. Values that work for a 50-member audience may be wrong for a 5000-member audience.
 
-4. **Cross-service follower entity representation**: When a follower is created via `IRelationshipClient`, what entity type represents the audience member? Simulated audience members don't have character IDs. Options: a synthetic entity type (`audience_member`), a character spawned to represent the follower, or a purely local follower record without cross-service relationship integration.
+4. **(AUDIT:NEEDS_DESIGN)** **Cross-service follower entity representation**: When a follower is created via `IRelationshipClient`, what entity type represents the audience member? Simulated audience members don't have character IDs and are not proper Bannou entities — they cannot participate in `Relationship` records without a valid `EntityType`. Options: (a) drop `IRelationshipClient` and store followers purely in Showtime's own `showtime-audience-followers` store (simplest, avoids the entity type problem entirely); (b) add `AudienceMember` to `EntityType` enum (requires common-api.yaml change, but audience members are ephemeral Redis state, not persistent entities); (c) spawn lightweight character records for followers in a system realm (heavy, but gives proper entity identity for `${relationship.*}` ABML access). **This decision affects the Hard Dependencies list** — if option (a) is chosen, `IRelationshipClient` should be removed. Related: GH issues [#437](https://github.com/beyond-immersion/bannou-service/issues/437) (seed owner promotion) and [#366](https://github.com/beyond-immersion/bannou-service/issues/366) (seed archived data cleanup).
 
 5. **Sentiment pulse timing alignment**: lib-broadcast publishes pulses every 15 seconds; lib-showtime ticks audiences every 5 seconds. Real-derived audience members created from a pulse will be evaluated by 3 ticks before the next pulse arrives. The TTL for anonymous real-derived members (`RealDerivedMemberTtlSeconds = 30`) covers two pulse intervals, but alignment edge cases may cause brief audience count fluctuations.
 
-6. **Career progression when streamer entity changes**: If a character dies (and the streamer seed is character-owned), the career data in MySQL persists but the seed follows character death rules. Should the career history (sessions, milestones) transfer to a new character, or start fresh? This depends on whether the seed is account-owned (persists) or character-owned (archived).
+6. **Career progression when streamer entity changes**: If a character dies (and the streamer seed is character-owned), the career data in MySQL persists but the seed follows character death rules. Should the career history (sessions, milestones) transfer to a new character, or start fresh? This depends on whether the seed is account-owned (persists) or character-owned (archived). Related: GH issues [#437](https://github.com/beyond-immersion/bannou-service/issues/437) (seed owner type promotion) and [#366](https://github.com/beyond-immersion/bannou-service/issues/366) (seed archived data cleanup).
 
 7. **Voice room broadcasting consent UX**: When lib-showtime creates a voice room and a player wants to broadcast it, the consent flow goes through lib-voice. But the UX decision (modal dialog? in-room notification? veto-based?) is a client-side design question that affects how consent is presented and collected. lib-showtime/lib-voice provide the API; the client determines the UX.
+
+8. **(AUDIT:NEEDS_DESIGN)** **Client events specification**: Phase 1 includes creating `showtime-client-events.yaml` but no model names, `eventName` values, or `BaseClientEvent` inheritance structure have been specified. Before schema creation, must define: (a) which client events are needed (hype train progress, milestone notifications, audience changes, follower updates); (b) `eventName` values following Pattern C (`showtime.hype.progress`, `showtime.milestone.reached`, etc.); (c) model names with `ClientEvent` suffix (`ShowtimeHypeProgressClientEvent`, etc.); (d) `IClientEventPublisher` dependency (T17). Alternatively, defer client events entirely to a later phase if streaming UX is not yet designed.
+
+9. **(AUDIT:NEEDS_DESIGN)** **Self-subscription vs inline career progression**: The consumed events table lists `showtime.session.ended` as a self-subscription for career progression (seed growth, milestones, collection grants, follower conversions). While not a tenet violation (T27 addresses cross-service communication, not self-subscription), inline execution after session-end processing is simpler, more reliable (no RabbitMQ round-trip or lost-event risk), and the `CareerProgressionWorker` background service already exists for periodic evaluation. Options: (a) remove self-subscription, execute career logic inline in `EndSessionAsync`; (b) keep self-subscription for separation of concerns. The event is still published for external consumers either way.
+
+10. **(AUDIT:NEEDS_DESIGN)** **`ShowtimeEnabled` configuration property purpose**: `ShowtimeEnabled` (default `false`) appears redundant with the infrastructure-level `SHOWTIME_SERVICE_ENABLED` managed by PluginLoader. If it serves a different purpose (e.g., service loads for health/cleanup but streaming metagame features are disabled), its distinct role must be documented and the property renamed to something specific (e.g., `StreamingMetagameEnabled`). If redundant, it should be removed per IMPLEMENTATION TENETS (no dead configuration).
+
+11. **(AUDIT:NEEDS_DESIGN)** **Event model naming convention**: Event models currently use `Showtime{Entity}{Action}Event` (e.g., `ShowtimeHypeStartedEvent`). The `Showtime` prefix serves as a service namespace but the deep dive's own model calls the entity `HypeTrain`, not `ShowtimeHype`. Options: (a) keep `Showtime*` prefix for disambiguation (matches Divine's `DivineDeity*` pattern); (b) use entity-only names (`HypeTrainStartedEvent`, `CareerMilestoneReachedEvent`, `AudienceChangedEvent`). Decision affects all 9 event model names.
+
+12. **(AUDIT:NEEDS_DESIGN)** **x-lifecycle adoption for session events**: Session events (started/ended/paused/resumed) are manually defined. `x-lifecycle` could auto-generate standard `Created`/`Updated`/`Deleted` events, with paused/resumed modeled as status changes via `*.updated` with `changedFields: ["status"]`. However, session events carry domain-specific payloads (ended includes metrics/summary) that don't fit the generic lifecycle pattern. Options: (a) custom events only (current); (b) x-lifecycle + separate domain events for the metric-heavy ended event.
+
+13. **Voice room creation conflict with Connect companion rooms**: GH issue [#382](https://github.com/beyond-immersion/bannou-service/issues/382) describes a `ICompanionRoomProvider` DI pattern for Connect (L1) to create voice rooms. If both Connect (via DI provider) and Showtime (via `game-session.created` event handler) create voice rooms for the same game session, duplicates would be created. The two approaches must be coordinated or one must defer to the other.
+
+14. **SentimentCategory extensibility dependency**: GH issue [#572](https://github.com/beyond-immersion/bannou-service/issues/572) questions whether `SentimentCategory` should change from a fixed enum to per-game extensible categories. The deep dive assumes a fixed enum (used for `sentimentBias` and `triggerCategory`). If #572 resolves toward extensibility, Showtime's audience-to-behavior mapping and hype train trigger logic must also become extensible. This is an external dependency, not a Showtime design decision — but its resolution affects schema design.
 
 ---
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase.*
+### L4 Audit (2026-03-07)
+
+**Tenet/Schema audit completed.** 6 definitive fixes applied to deep dive:
+- T25: `DateTime` → `DateTimeOffset` on all timestamp fields (AudienceMember, HypeTrain)
+- T25/T14: `ShowtimeSessionStatus` enum defined (`Active`, `Paused`, `Ended`)
+- T14: `entityType` → `$ref: EntityType` for streamer identity
+- T13: Cleanup endpoints → `x-permissions: []` (service-to-service only)
+- SCHEMA-RULES: `SentimentCategory` → `$ref: common-api.yaml`
+- SCHEMA-RULES: `x-event-publications` note added to Phase 1
+- T30: `ITelemetryProvider` added to DI Services table
+- T28: `game-session.ended` handler documented as compliant live state reaction
+- Configuration table: explicit types, validation constraints added
+- GH issue cross-references added (#572, #382, #437, #366)
+
+**7 design decisions identified** (DC#4, DC#8-14 marked AUDIT:NEEDS_DESIGN):
+- DC#4: Follower entity type for IRelationshipClient
+- DC#8: Client event specification
+- DC#9: Self-subscription vs inline career progression
+- DC#10: ShowtimeEnabled purpose/redundancy
+- DC#11: Event model naming convention
+- DC#12: x-lifecycle adoption for session events
+- DC#13: Voice room creation conflict with Connect companion rooms (#382)
+- DC#14: SentimentCategory extensibility dependency (#572)

@@ -1,5 +1,7 @@
 # Plugin Implementation Map Template
 
+> ⛔ **FROZEN DOCUMENT** — Defines an authoritative template. AI agents MUST NOT modify any content without explicit user instruction. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > This document defines the structure for per-plugin implementation maps.
 > Each plugin gets one map: `docs/maps/{SERVICE-NAME}.md`
 
@@ -175,7 +177,7 @@ Constructor dependencies, collection-injected providers, and internal helper ser
 
 | Interface | Registered As | Direction | Consumer |
 |-----------|---------------|-----------|----------|
-| `ISeededResourceProvider` | `Singleton` | L4→L1 pull | Resource (L1) discovers seeded data |
+| `ISeededResourceProvider` | `Singleton` | L2/L3/L4→L1 pull | Resource (L1) discovers seeded data |
 | `IBehaviorDocumentProvider` | `Singleton` | L4→L2 pull | Actor (L2) discovers behavior documents |
 ```
 
@@ -208,6 +210,8 @@ One row per endpoint, providing a scannable overview. Generated endpoints can be
 - `x-manual` — In schema with `x-manual-implementation: true`, implemented in a manual partial controller class
 - `manual` — NOT in schema at all. Registered via `MapPost`/`MapGet` in plugin startup code or a standalone handler class
 
+**Roles** column: The `x-permissions` role from the schema. Valid values: `anonymous`, `user`, `user+states` (state-gated), `developer`, `admin`, `[]` (service-to-service), `internal` (non-schema manual endpoints). See [ENDPOINT-PERMISSION-GUIDELINES.md](ENDPOINT-PERMISSION-GUIDELINES.md) for the decision framework on which level to use.
+
 **Mutates** column: List which state key patterns are written or deleted (use short names, not full patterns). `-` if read-only.
 
 **Publishes** column: List event topics published. `-` if none.
@@ -234,7 +238,7 @@ RETURN (200, ResponseType)
 #### Formatting Rules
 
 - **One block per endpoint** — no grouping or abbreviating "simple" methods
-- **Method header**: `### MethodName` followed by `POST /route | Roles: [roles]`
+- **Method header**: `### MethodName` followed by `POST /route | Roles: [roles]` (see [ENDPOINT-PERMISSION-GUIDELINES.md](ENDPOINT-PERMISSION-GUIDELINES.md) for valid roles)
 - **Pseudo-code body**: Uses the notation vocabulary defined below
 - **Indentation**: 2 spaces for scope (lock body, loop body, conditional branches)
 - **Comments**: `//` prefix for clarifying notes

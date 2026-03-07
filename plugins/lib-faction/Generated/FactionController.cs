@@ -47,9 +47,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>does not exceed the configured maximum.
     /// </remarks>
 
+
+
     /// <returns>Faction created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> CreateFactionAsync(CreateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> CreateFaction(CreateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a faction by ID
@@ -60,9 +63,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>growth phase (denormalized from lib-seed for convenience) and member count.
     /// </remarks>
 
+
+
     /// <returns>Faction retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> GetFactionAsync(GetFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> GetFaction(GetFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a faction by code
@@ -73,9 +79,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Codes are human-readable identifiers like "thieves_guild" or "royal_guard".
     /// </remarks>
 
+
+
     /// <returns>Faction retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> GetFactionByCodeAsync(GetFactionByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> GetFactionByCode(GetFactionByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List factions with filters
@@ -86,9 +95,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>game service, status, and parent faction. Supports cursor-based pagination.
     /// </remarks>
 
+
+
     /// <returns>Factions retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListFactionsResponse>> ListFactionsAsync(ListFactionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListFactionsResponse>> ListFactions(ListFactionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a faction
@@ -100,9 +112,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>gameServiceId or realmId after creation.
     /// </remarks>
 
+
+
     /// <returns>Faction updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> UpdateFactionAsync(UpdateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> UpdateFaction(UpdateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate a faction
@@ -114,9 +129,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Existing norm enforcement continues until the faction is dissolved.
     /// </remarks>
 
+
+
     /// <returns>Faction deprecated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> DeprecateFactionAsync(DeprecateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> DeprecateFaction(DeprecateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Reactivate a deprecated faction
@@ -126,9 +144,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// Restores a deprecated faction to active status.
     /// </remarks>
 
+
+
     /// <returns>Faction reactivated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> UndeprecateFactionAsync(UndeprecateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> UndeprecateFaction(UndeprecateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a faction
@@ -141,9 +162,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>the associated seed.
     /// </remarks>
 
+
+
     /// <returns>Faction deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteFactionAsync(DeleteFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteFaction(DeleteFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bulk seed factions from configuration
@@ -158,9 +182,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>factions (matched by code within game service) are skipped.
     /// </remarks>
 
+
+
     /// <returns>Seeding completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedFactionsResponse>> SeedFactionsAsync(SeedFactionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedFactionsResponse>> SeedFactions(SeedFactionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Designate a faction as realm baseline
@@ -176,9 +203,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>clears the previous one. The faction must belong to the specified realm.
     /// </remarks>
 
+
+
     /// <returns>Faction designated as realm baseline</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> DesignateRealmBaselineAsync(DesignateRealmBaselineRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> DesignateRealmBaseline(DesignateRealmBaselineRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get the realm baseline faction
@@ -189,9 +219,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Returns 404 if no baseline has been designated.
     /// </remarks>
 
+
+
     /// <returns>Realm baseline faction retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> GetRealmBaselineAsync(GetRealmBaselineRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> GetRealmBaseline(GetRealmBaselineRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Add a character to a faction
@@ -208,9 +241,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Publishes a faction.member.added event for downstream consumers.
     /// </remarks>
 
+
+
     /// <returns>Member added</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionMemberResponse>> AddMemberAsync(AddMemberRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionMemberResponse>> AddMember(AddMemberRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove a character from a faction
@@ -221,9 +257,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>faction.member.removed event for downstream consumers.
     /// </remarks>
 
+
+
     /// <returns>Member removed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveMemberAsync(RemoveMemberRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveMember(RemoveMemberRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List members of a faction
@@ -234,9 +273,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>by role and cursor-based pagination. Ordered by join date descending.
     /// </remarks>
 
+
+
     /// <returns>Members retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListMembersResponse>> ListMembersAsync(ListMembersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListMembersResponse>> ListMembers(ListMembersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List a character's faction memberships
@@ -248,9 +290,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>${faction.*} variable provider for ABML behavior expressions.
     /// </remarks>
 
+
+
     /// <returns>Memberships retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListMembershipsByCharacterResponse>> ListMembershipsByCharacterAsync(ListMembershipsByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListMembershipsByCharacterResponse>> ListMembershipsByCharacter(ListMembershipsByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a member's role
@@ -261,9 +306,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>faction.member.role-changed event for downstream consumers.
     /// </remarks>
 
+
+
     /// <returns>Role updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionMemberResponse>> UpdateMemberRoleAsync(UpdateMemberRoleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionMemberResponse>> UpdateMemberRole(UpdateMemberRoleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if a character is a member of a faction
@@ -274,9 +322,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>and if so, their role. Lightweight lookup for permission/capability checks.
     /// </remarks>
 
+
+
     /// <returns>Membership check result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckMembershipResponse>> CheckMembershipAsync(CheckMembershipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckMembershipResponse>> CheckMembership(CheckMembershipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Claim a location for a faction
@@ -291,9 +342,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>The faction must belong to the same realm as the location.
     /// </remarks>
 
+
+
     /// <returns>Territory claimed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TerritoryClaimResponse>> ClaimTerritoryAsync(ClaimTerritoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TerritoryClaimResponse>> ClaimTerritory(ClaimTerritoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Release a territory claim
@@ -304,9 +358,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>and available for other factions. Publishes a faction.territory.released event.
     /// </remarks>
 
+
+
     /// <returns>Territory released</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ReleaseTerritoryAsync(ReleaseTerritoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ReleaseTerritory(ReleaseTerritoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List territory claims for a faction
@@ -317,9 +374,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>and cursor-based pagination.
     /// </remarks>
 
+
+
     /// <returns>Territory claims retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTerritoryClaimsResponse>> ListTerritoryClaimsAsync(ListTerritoryClaimsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTerritoryClaimsResponse>> ListTerritoryClaims(ListTerritoryClaimsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get the controlling faction for a location
@@ -333,9 +393,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Returns 404 if the location has no controlling faction.
     /// </remarks>
 
+
+
     /// <returns>Controlling faction retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ControllingFactionResponse>> GetControllingFactionAsync(GetControllingFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ControllingFactionResponse>> GetControllingFaction(GetControllingFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Define a behavioral norm for a faction
@@ -359,9 +422,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>is defined by contract templates and action tag mappings.
     /// </remarks>
 
+
+
     /// <returns>Norm defined</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NormDefinitionResponse>> DefineNormAsync(DefineNormRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NormDefinitionResponse>> DefineNorm(DefineNormRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update an existing norm
@@ -373,9 +439,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>are subject to capability checks.
     /// </remarks>
 
+
+
     /// <returns>Norm updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NormDefinitionResponse>> UpdateNormAsync(UpdateNormRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NormDefinitionResponse>> UpdateNorm(UpdateNormRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a norm definition
@@ -385,9 +454,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// Removes a behavioral norm definition from a faction.
     /// </remarks>
 
+
+
     /// <returns>Norm deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteNormAsync(DeleteNormRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteNorm(DeleteNormRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List norms defined by a faction
@@ -398,9 +470,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>by severity and scope.
     /// </remarks>
 
+
+
     /// <returns>Norms retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListNormsResponse>> ListNormsAsync(ListNormsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListNormsResponse>> ListNorms(ListNormsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query all norms applicable to a character
@@ -424,9 +499,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>membership or location changes.
     /// </remarks>
 
+
+
     /// <returns>Applicable norms resolved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryApplicableNormsResponse>> QueryApplicableNormsAsync(QueryApplicableNormsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryApplicableNormsResponse>> QueryApplicableNorms(QueryApplicableNormsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup faction data for a deleted character
@@ -438,9 +516,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>norm definitions are faction-owned, not character-owned, so they remain.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup faction data for a deleted realm
@@ -452,9 +533,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>territory claims, norm definitions, and associated seeds.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealmAsync(CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealm(CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup territory claims for a deleted location
@@ -466,9 +550,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>remains intact.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByLocationResponse>> CleanupByLocationAsync(CleanupByLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByLocationResponse>> CleanupByLocation(CleanupByLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get faction data for character archival compression
@@ -480,9 +567,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>are faction-owned data and not included in character archives.
     /// </remarks>
 
+
+
     /// <returns>Compressed data returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionArchive>> GetCompressDataAsync(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionArchive>> GetCompressData(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore faction data from archive
@@ -494,15 +584,18 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>factions that still exist.
     /// </remarks>
 
+
+
     /// <returns>Restoration result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchiveAsync(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchive(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IFactionService))]
+public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase, IFactionController
 {
     private IFactionService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

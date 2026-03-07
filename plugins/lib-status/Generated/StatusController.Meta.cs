@@ -48,10 +48,12 @@ public partial class StatusController
                 },
                 "displayName": {
                     "type": "string",
+                    "maxLength": 256,
                     "description": "Human-readable display name for this status effect"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2000,
                     "description": "Detailed description of what this status effect does"
                 },
                 "category": {
@@ -65,6 +67,7 @@ public partial class StatusController
                 "maxStacks": {
                     "type": "integer",
                     "minimum": 1,
+                    "maximum": 100,
                     "default": 1,
                     "description": "Maximum number of stacks when stackable is true"
                 },
@@ -99,7 +102,7 @@ public partial class StatusController
         },
         "StatusCategory": {
             "type": "string",
-            "description": "Classification of status effects for filtering and cleanse targeting.\ n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\ n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
+            "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
                 "Buff",
                 "Debuff",
@@ -144,6 +147,7 @@ public partial class StatusController
                 "maxStacks",
                 "stackBehavior",
                 "itemTemplateId",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -159,14 +163,17 @@ public partial class StatusController
                 },
                 "code": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Unique status code within this game service"
                 },
                 "displayName": {
                     "type": "string",
+                    "maxLength": 256,
                     "description": "Human-readable display name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2000,
                     "description": "Detailed description of this status effect"
                 },
                 "category": {
@@ -179,6 +186,7 @@ public partial class StatusController
                 },
                 "maxStacks": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Maximum number of stacks"
                 },
                 "stackBehavior": {
@@ -198,6 +206,7 @@ public partial class StatusController
                 },
                 "defaultDurationSeconds": {
                     "type": "integer",
+                    "minimum": 1,
                     "nullable": true,
                     "description": "Default duration in seconds (null for permanent statuses)"
                 },
@@ -206,6 +215,22 @@ public partial class StatusController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Asset identifier for this status effect's icon"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template is deprecated and unavailable for new grants"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Why this template was deprecated (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -222,7 +247,7 @@ public partial class StatusController
         },
         "StatusCategory": {
             "type": "string",
-            "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
+            "description": "Classification of status effects for filtering and cleanse targeting.\ n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\ n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
                 "Buff",
                 "Debuff",
@@ -347,6 +372,7 @@ public partial class StatusController
                 "maxStacks",
                 "stackBehavior",
                 "itemTemplateId",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -362,14 +388,17 @@ public partial class StatusController
                 },
                 "code": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Unique status code within this game service"
                 },
                 "displayName": {
                     "type": "string",
+                    "maxLength": 256,
                     "description": "Human-readable display name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2000,
                     "description": "Detailed description of this status effect"
                 },
                 "category": {
@@ -382,6 +411,7 @@ public partial class StatusController
                 },
                 "maxStacks": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Maximum number of stacks"
                 },
                 "stackBehavior": {
@@ -401,6 +431,7 @@ public partial class StatusController
                 },
                 "defaultDurationSeconds": {
                     "type": "integer",
+                    "minimum": 1,
                     "nullable": true,
                     "description": "Default duration in seconds (null for permanent statuses)"
                 },
@@ -409,6 +440,22 @@ public partial class StatusController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Asset identifier for this status effect's icon"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template is deprecated and unavailable for new grants"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Why this template was deprecated (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -425,7 +472,7 @@ public partial class StatusController
         },
         "StatusCategory": {
             "type": "string",
-            "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
+            "description": "Classification of status effects for filtering and cleanse targeting.\ n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\ n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
                 "Buff",
                 "Debuff",
@@ -527,6 +574,7 @@ public partial class StatusController
                 },
                 "code": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Unique status code within this game service"
                 }
             }
@@ -555,6 +603,7 @@ public partial class StatusController
                 "maxStacks",
                 "stackBehavior",
                 "itemTemplateId",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -570,14 +619,17 @@ public partial class StatusController
                 },
                 "code": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Unique status code within this game service"
                 },
                 "displayName": {
                     "type": "string",
+                    "maxLength": 256,
                     "description": "Human-readable display name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2000,
                     "description": "Detailed description of this status effect"
                 },
                 "category": {
@@ -590,6 +642,7 @@ public partial class StatusController
                 },
                 "maxStacks": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Maximum number of stacks"
                 },
                 "stackBehavior": {
@@ -609,6 +662,7 @@ public partial class StatusController
                 },
                 "defaultDurationSeconds": {
                     "type": "integer",
+                    "minimum": 1,
                     "nullable": true,
                     "description": "Default duration in seconds (null for permanent statuses)"
                 },
@@ -617,6 +671,22 @@ public partial class StatusController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Asset identifier for this status effect's icon"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template is deprecated and unavailable for new grants"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Why this template was deprecated (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -633,7 +703,7 @@ public partial class StatusController
         },
         "StatusCategory": {
             "type": "string",
-            "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
+            "description": "Classification of status effects for filtering and cleanse targeting.\ n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\ n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
                 "Buff",
                 "Debuff",
@@ -741,6 +811,11 @@ public partial class StatusController
                         }
                     ]
                 },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include deprecated templates in results"
+                },
                 "page": {
                     "type": "integer",
                     "minimum": 1,
@@ -790,6 +865,7 @@ public partial class StatusController
             "properties": {
                 "templates": {
                     "type": "array",
+                    "maxItems": 200,
                     "items": {
                         "$ref": "#/$defs/StatusTemplateResponse"
                     },
@@ -824,6 +900,7 @@ public partial class StatusController
                 "maxStacks",
                 "stackBehavior",
                 "itemTemplateId",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -839,14 +916,17 @@ public partial class StatusController
                 },
                 "code": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Unique status code within this game service"
                 },
                 "displayName": {
                     "type": "string",
+                    "maxLength": 256,
                     "description": "Human-readable display name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2000,
                     "description": "Detailed description of this status effect"
                 },
                 "category": {
@@ -859,6 +939,7 @@ public partial class StatusController
                 },
                 "maxStacks": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Maximum number of stacks"
                 },
                 "stackBehavior": {
@@ -878,6 +959,7 @@ public partial class StatusController
                 },
                 "defaultDurationSeconds": {
                     "type": "integer",
+                    "minimum": 1,
                     "nullable": true,
                     "description": "Default duration in seconds (null for permanent statuses)"
                 },
@@ -886,6 +968,22 @@ public partial class StatusController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Asset identifier for this status effect's icon"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template is deprecated and unavailable for new grants"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Why this template was deprecated (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -902,7 +1000,7 @@ public partial class StatusController
         },
         "StatusCategory": {
             "type": "string",
-            "description": "Classification of status effects for filtering and cleanse targeting.\ n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\ n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
+            "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\ n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
                 "Buff",
                 "Debuff",
@@ -1003,11 +1101,13 @@ public partial class StatusController
                 },
                 "displayName": {
                     "type": "string",
+                    "maxLength": 256,
                     "nullable": true,
                     "description": "Updated display name (null means no change)"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2000,
                     "nullable": true,
                     "description": "Updated description (null means no change)"
                 },
@@ -1028,6 +1128,7 @@ public partial class StatusController
                 "maxStacks": {
                     "type": "integer",
                     "minimum": 1,
+                    "maximum": 100,
                     "nullable": true,
                     "description": "Updated maximum stack count (null means no change)"
                 },
@@ -1107,6 +1208,7 @@ public partial class StatusController
                 "maxStacks",
                 "stackBehavior",
                 "itemTemplateId",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -1122,14 +1224,17 @@ public partial class StatusController
                 },
                 "code": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Unique status code within this game service"
                 },
                 "displayName": {
                     "type": "string",
+                    "maxLength": 256,
                     "description": "Human-readable display name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2000,
                     "description": "Detailed description of this status effect"
                 },
                 "category": {
@@ -1142,6 +1247,7 @@ public partial class StatusController
                 },
                 "maxStacks": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Maximum number of stacks"
                 },
                 "stackBehavior": {
@@ -1161,6 +1267,7 @@ public partial class StatusController
                 },
                 "defaultDurationSeconds": {
                     "type": "integer",
+                    "minimum": 1,
                     "nullable": true,
                     "description": "Default duration in seconds (null for permanent statuses)"
                 },
@@ -1169,6 +1276,22 @@ public partial class StatusController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Asset identifier for this status effect's icon"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template is deprecated and unavailable for new grants"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Why this template was deprecated (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1185,7 +1308,7 @@ public partial class StatusController
         },
         "StatusCategory": {
             "type": "string",
-            "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
+            "description": "Classification of status effects for filtering and cleanse targeting.\ n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\ n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
                 "Buff",
                 "Debuff",
@@ -1287,6 +1410,7 @@ public partial class StatusController
                 },
                 "templates": {
                     "type": "array",
+                    "maxItems": 500,
                     "items": {
                         "$ref": "#/$defs/CreateStatusTemplateRequest"
                     },
@@ -1320,10 +1444,12 @@ public partial class StatusController
                 },
                 "displayName": {
                     "type": "string",
+                    "maxLength": 256,
                     "description": "Human-readable display name for this status effect"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2000,
                     "description": "Detailed description of what this status effect does"
                 },
                 "category": {
@@ -1337,6 +1463,7 @@ public partial class StatusController
                 "maxStacks": {
                     "type": "integer",
                     "minimum": 1,
+                    "maximum": 100,
                     "default": 1,
                     "description": "Maximum number of stacks when stackable is true"
                 },
@@ -1478,6 +1605,546 @@ public partial class StatusController
 
     #endregion
 
+    #region Meta Endpoints for DeprecateStatusTemplate
+
+    private static readonly string _DeprecateStatusTemplate_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeprecateStatusTemplateRequest",
+    "$defs": {
+        "DeprecateStatusTemplateRequest": {
+            "type": "object",
+            "description": "Request to deprecate a status template",
+            "additionalProperties": false,
+            "required": [
+                "statusTemplateId",
+                "reason"
+            ],
+            "properties": {
+                "statusTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Status template to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Why this template is being deprecated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateStatusTemplate_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StatusTemplateResponse",
+    "$defs": {
+        "StatusTemplateResponse": {
+            "type": "object",
+            "description": "Status template with all fields",
+            "additionalProperties": false,
+            "required": [
+                "statusTemplateId",
+                "gameServiceId",
+                "code",
+                "displayName",
+                "description",
+                "category",
+                "stackable",
+                "maxStacks",
+                "stackBehavior",
+                "itemTemplateId",
+                "isDeprecated",
+                "createdAt"
+            ],
+            "properties": {
+                "statusTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique status template identifier"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service this template is scoped to"
+                },
+                "code": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "description": "Unique status code within this game service"
+                },
+                "displayName": {
+                    "type": "string",
+                    "maxLength": 256,
+                    "description": "Human-readable display name"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "description": "Detailed description of this status effect"
+                },
+                "category": {
+                    "$ref": "#/$defs/StatusCategory",
+                    "description": "Classification of this status effect"
+                },
+                "stackable": {
+                    "type": "boolean",
+                    "description": "Whether this status can stack"
+                },
+                "maxStacks": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum number of stacks"
+                },
+                "stackBehavior": {
+                    "$ref": "#/$defs/StackBehavior",
+                    "description": "How multiple applications interact"
+                },
+                "contractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for lifecycle management (null if not contract-managed)"
+                },
+                "itemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Item template used when granting this status"
+                },
+                "defaultDurationSeconds": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true,
+                    "description": "Default duration in seconds (null for permanent statuses)"
+                },
+                "iconAssetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Asset identifier for this status effect's icon"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template is deprecated and unavailable for new grants"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Why this template was deprecated (null if not deprecated)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this template was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was last updated"
+                }
+            }
+        },
+        "StatusCategory": {
+            "type": "string",
+            "description": "Classification of status effects for filtering and cleanse targeting.\ n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\ n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
+            "enum": [
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
+            ]
+        },
+        "StackBehavior": {
+            "type": "string",
+            "description": "How multiple applications of the same status template interact.\n- refresh_duration: resets timer, preserves or increments stack count\n- independent: each application is a separate item with own timer\n- increase_intensity: stacks increase effect magnitude, shared timer reset\n- replace: new application replaces existing entirely\n- ignore: cannot apply if already present\n",
+            "enum": [
+                "RefreshDuration",
+                "Independent",
+                "IncreaseIntensity",
+                "Replace",
+                "Ignore"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateStatusTemplate_Info = """
+{
+    "summary": "Deprecate a status template",
+    "description": "Mark a status template as deprecated. Deprecated templates cannot be used\nfor new grants. Idempotent -- returns OK if already deprecated.\ nCategory A entity: deprecation is reversible via undeprecate.\n",
+    "tags": [
+        "StatusTemplate"
+    ],
+    "deprecated": false,
+    "operationId": "deprecateStatusTemplate"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeprecateStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateStatusTemplate_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Status",
+            "POST",
+            "/status/template/deprecate",
+            _DeprecateStatusTemplate_Info));
+
+    /// <summary>Returns request schema for DeprecateStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateStatusTemplate_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Status",
+            "POST",
+            "/status/template/deprecate",
+            "request-schema",
+            _DeprecateStatusTemplate_RequestSchema));
+
+    /// <summary>Returns response schema for DeprecateStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateStatusTemplate_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Status",
+            "POST",
+            "/status/template/deprecate",
+            "response-schema",
+            _DeprecateStatusTemplate_ResponseSchema));
+
+    /// <summary>Returns full schema for DeprecateStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateStatusTemplate_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Status",
+            "POST",
+            "/status/template/deprecate",
+            _DeprecateStatusTemplate_Info,
+            _DeprecateStatusTemplate_RequestSchema,
+            _DeprecateStatusTemplate_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UndeprecateStatusTemplate
+
+    private static readonly string _UndeprecateStatusTemplate_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UndeprecateStatusTemplateRequest",
+    "$defs": {
+        "UndeprecateStatusTemplateRequest": {
+            "type": "object",
+            "description": "Request to undeprecate a status template (Category A -- reversible)",
+            "additionalProperties": false,
+            "required": [
+                "statusTemplateId"
+            ],
+            "properties": {
+                "statusTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Status template to undeprecate"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UndeprecateStatusTemplate_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StatusTemplateResponse",
+    "$defs": {
+        "StatusTemplateResponse": {
+            "type": "object",
+            "description": "Status template with all fields",
+            "additionalProperties": false,
+            "required": [
+                "statusTemplateId",
+                "gameServiceId",
+                "code",
+                "displayName",
+                "description",
+                "category",
+                "stackable",
+                "maxStacks",
+                "stackBehavior",
+                "itemTemplateId",
+                "isDeprecated",
+                "createdAt"
+            ],
+            "properties": {
+                "statusTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique status template identifier"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service this template is scoped to"
+                },
+                "code": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "description": "Unique status code within this game service"
+                },
+                "displayName": {
+                    "type": "string",
+                    "maxLength": 256,
+                    "description": "Human-readable display name"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "description": "Detailed description of this status effect"
+                },
+                "category": {
+                    "$ref": "#/$defs/StatusCategory",
+                    "description": "Classification of this status effect"
+                },
+                "stackable": {
+                    "type": "boolean",
+                    "description": "Whether this status can stack"
+                },
+                "maxStacks": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum number of stacks"
+                },
+                "stackBehavior": {
+                    "$ref": "#/$defs/StackBehavior",
+                    "description": "How multiple applications interact"
+                },
+                "contractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for lifecycle management (null if not contract-managed)"
+                },
+                "itemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Item template used when granting this status"
+                },
+                "defaultDurationSeconds": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true,
+                    "description": "Default duration in seconds (null for permanent statuses)"
+                },
+                "iconAssetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Asset identifier for this status effect's icon"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template is deprecated and unavailable for new grants"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Why this template was deprecated (null if not deprecated)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this template was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was last updated"
+                }
+            }
+        },
+        "StatusCategory": {
+            "type": "string",
+            "description": "Classification of status effects for filtering and cleanse targeting.\ n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\ n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
+            "enum": [
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
+            ]
+        },
+        "StackBehavior": {
+            "type": "string",
+            "description": "How multiple applications of the same status template interact.\n- refresh_duration: resets timer, preserves or increments stack count\n- independent: each application is a separate item with own timer\n- increase_intensity: stacks increase effect magnitude, shared timer reset\n- replace: new application replaces existing entirely\n- ignore: cannot apply if already present\n",
+            "enum": [
+                "RefreshDuration",
+                "Independent",
+                "IncreaseIntensity",
+                "Replace",
+                "Ignore"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _UndeprecateStatusTemplate_Info = """
+{
+    "summary": "Undeprecate a status template",
+    "description": "Remove deprecation from a status template, restoring it for use in grants.\nIdempotent -- returns OK if not deprecated.\nCategory A entity: undeprecation is allowed.\n",
+    "tags": [
+        "StatusTemplate"
+    ],
+    "deprecated": false,
+    "operationId": "undeprecateStatusTemplate"
+}
+""";
+
+    /// <summary>Returns endpoint information for UndeprecateStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/undeprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateStatusTemplate_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Status",
+            "POST",
+            "/status/template/undeprecate",
+            _UndeprecateStatusTemplate_Info));
+
+    /// <summary>Returns request schema for UndeprecateStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/undeprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateStatusTemplate_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Status",
+            "POST",
+            "/status/template/undeprecate",
+            "request-schema",
+            _UndeprecateStatusTemplate_RequestSchema));
+
+    /// <summary>Returns response schema for UndeprecateStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/undeprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateStatusTemplate_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Status",
+            "POST",
+            "/status/template/undeprecate",
+            "response-schema",
+            _UndeprecateStatusTemplate_ResponseSchema));
+
+    /// <summary>Returns full schema for UndeprecateStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/undeprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateStatusTemplate_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Status",
+            "POST",
+            "/status/template/undeprecate",
+            _UndeprecateStatusTemplate_Info,
+            _UndeprecateStatusTemplate_RequestSchema,
+            _UndeprecateStatusTemplate_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteStatusTemplate
+
+    private static readonly string _DeleteStatusTemplate_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteStatusTemplateRequest",
+    "$defs": {
+        "DeleteStatusTemplateRequest": {
+            "type": "object",
+            "description": "Request to delete a deprecated status template",
+            "additionalProperties": false,
+            "required": [
+                "statusTemplateId"
+            ],
+            "properties": {
+                "statusTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Status template to delete (must be deprecated first)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteStatusTemplate_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DeleteStatusTemplate_Info = """
+{
+    "summary": "Delete a deprecated status template",
+    "description": "Permanently delete a status template. The template must be deprecated first.\nReturns BadRequest if the template is not deprecated.\ nCategory A entity: deletion requires prior deprecation.\n",
+    "tags": [
+        "StatusTemplate"
+    ],
+    "deprecated": false,
+    "operationId": "deleteStatusTemplate"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteStatusTemplate_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Status",
+            "POST",
+            "/status/template/delete",
+            _DeleteStatusTemplate_Info));
+
+    /// <summary>Returns request schema for DeleteStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteStatusTemplate_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Status",
+            "POST",
+            "/status/template/delete",
+            "request-schema",
+            _DeleteStatusTemplate_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteStatusTemplate_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Status",
+            "POST",
+            "/status/template/delete",
+            "response-schema",
+            _DeleteStatusTemplate_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteStatusTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/status/template/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteStatusTemplate_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Status",
+            "POST",
+            "/status/template/delete",
+            _DeleteStatusTemplate_Info,
+            _DeleteStatusTemplate_RequestSchema,
+            _DeleteStatusTemplate_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GrantStatus
 
     private static readonly string _GrantStatus_RequestSchema = """
@@ -1512,6 +2179,7 @@ public partial class StatusController
                 },
                 "statusTemplateCode": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Status template code to grant"
                 },
                 "sourceId": {
@@ -1530,7 +2198,7 @@ public partial class StatusController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Arbitrary key-value data passed to contract template values and stored on the status instance. Convention for Divine integration - set metadata.blessingTier to the blessing tier string (e.g., minor, standard, greater, supreme) so the Divine service can query active blessings by tier."
+                    "description": "Arbitrary key-value data passed to contract template values and stored on the status instance. Opaque to Status -- callers define their own semantics."
                 }
             }
         }
@@ -1563,6 +2231,7 @@ public partial class StatusController
                 },
                 "statusTemplateCode": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Status template code that was granted"
                 },
                 "stackCount": {
@@ -1599,7 +2268,7 @@ public partial class StatusController
         },
         "GrantResult": {
             "type": "string",
-            "description": "How a successful status grant was resolved.\ n- granted: new status applied (no prior instance)\n- stacked: stack count increased on existing instance\n- refreshed: timer reset on existing instance\n- replaced: existing instance removed and new one created\n",
+            "description": "How a successful status grant was resolved.\n- granted: new status applied (no prior instance)\n- stacked: stack count increased on existing instance\n- refreshed: timer reset on existing instance\n- replaced: existing instance removed and new one created\n",
             "enum": [
                 "Granted",
                 "Stacked",
@@ -1743,6 +2412,7 @@ public partial class StatusController
                 },
                 "statusTemplateCode": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Status template code"
                 },
                 "category": {
@@ -1785,7 +2455,7 @@ public partial class StatusController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Arbitrary metadata associated with this status instance"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2142,6 +2812,7 @@ public partial class StatusController
                 },
                 "statusCode": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Status template code to check for"
                 }
             }
@@ -2326,6 +2997,7 @@ public partial class StatusController
             "properties": {
                 "statuses": {
                     "type": "array",
+                    "maxItems": 100,
                     "items": {
                         "$ref": "#/$defs/StatusEffectSummary"
                     },
@@ -2357,6 +3029,7 @@ public partial class StatusController
             "properties": {
                 "statusCode": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Status template code (item-based) or capability code (seed-derived)"
                 },
                 "category": {
@@ -2381,6 +3054,8 @@ public partial class StatusController
                 "fidelity": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
                     "nullable": true,
                     "description": "Seed capability fidelity value (null for item-based effects)"
                 },
@@ -2400,7 +3075,7 @@ public partial class StatusController
         },
         "StatusCategory": {
             "type": "string",
-            "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
+            "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\ n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
                 "Buff",
                 "Debuff",
@@ -2412,7 +3087,7 @@ public partial class StatusController
         },
         "EffectSource": {
             "type": "string",
-            "description": "Whether an effect comes from a status item or a seed capability.\n- item_based: temporary effect stored as an item in a status container\n- seed_derived: passive capability computed from seed growth state\n",
+            "description": "Whether an effect comes from a status item or a seed capability.\n- item_based: temporary effect stored as an item in a status container\ n- seed_derived: passive capability computed from seed growth state\n",
             "enum": [
                 "ItemBased",
                 "SeedDerived"
@@ -2538,6 +3213,7 @@ public partial class StatusController
                 },
                 "statusTemplateCode": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Status template code"
                 },
                 "category": {
@@ -2580,7 +3256,7 @@ public partial class StatusController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Arbitrary metadata associated with this status instance"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2726,6 +3402,7 @@ public partial class StatusController
                 },
                 "effects": {
                     "type": "array",
+                    "maxItems": 500,
                     "items": {
                         "$ref": "#/$defs/StatusEffectSummary"
                     },
@@ -2745,6 +3422,7 @@ public partial class StatusController
             "properties": {
                 "statusCode": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Status template code (item-based) or capability code (seed-derived)"
                 },
                 "category": {
@@ -2769,6 +3447,8 @@ public partial class StatusController
                 "fidelity": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
                     "nullable": true,
                     "description": "Seed capability fidelity value (null for item-based effects)"
                 },
@@ -2921,6 +3601,7 @@ public partial class StatusController
                 },
                 "effects": {
                     "type": "array",
+                    "maxItems": 500,
                     "items": {
                         "$ref": "#/$defs/SeedEffectEntry"
                     },
@@ -2942,15 +3623,19 @@ public partial class StatusController
             "properties": {
                 "capabilityCode": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Capability code from the seed's capability manifest"
                 },
                 "domain": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Seed domain this capability belongs to"
                 },
                 "fidelity": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
                     "description": "Capability fidelity value (0.0 to 1.0)"
                 },
                 "seedId": {
@@ -2960,6 +3645,7 @@ public partial class StatusController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "maxLength": 128,
                     "description": "Type code of the seed providing this capability"
                 }
             }

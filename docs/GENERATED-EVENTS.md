@@ -583,7 +583,7 @@ This document lists all events defined in Bannou's event schemas.
 | `SaveCreatedEvent` | Lifecycle (Created) | `save.created` | Published when a new save version is created |
 | `SaveLoadedEvent` | Custom | `save-loaded` | Published when a save is loaded |
 | `SaveMigratedEvent` | Custom | `save-migrated` | Published when a save is migrated to a new schema ... |
-| `SaveQueuedEvent` | Custom | `save-queued` | Published when a save is queued for async upload. |
+| `SaveQueuedEvent` | Custom | `save-queued` | Published when a save is queued for async upload. ... |
 | `SaveUploadCompletedEvent` | Custom | `save-upload-completed` | Published when async upload to MinIO completes suc... |
 | `SaveUploadFailedEvent` | Custom | `save-upload-failed` | Published when async upload fails after all retry ... |
 | `VersionDeletedEvent` | Lifecycle (Deleted) | `version.deleted` | Published when a version is deleted |
@@ -599,11 +599,9 @@ This document lists all events defined in Bannou's event schemas.
 | `EventVector3` | Custom | `event-vector3` | 3D vector for events |
 | `SceneCheckedOutEvent` | Custom | `scene-checked-out` | Published when a scene is locked for editing |
 | `SceneCheckoutDiscardedEvent` | Custom | `scene-checkout-discarded` | Published when a checkout is discarded without sav... |
-| `SceneCheckoutExpiredEvent` | Expiration | `scene-checkout.expired` | Published when a checkout lock expires due to TTL |
 | `SceneCommittedEvent` | Custom | `scene-committed` | Published when checkout changes are committed |
 | `SceneDestroyedEvent` | Custom | `scene-destroyed` | Published when a scene instance is removed from th... |
 | `SceneInstantiatedEvent` | Custom | `scene-instantiated` | Published when a scene is instantiated in the game... |
-| `SceneReferenceBrokenEvent` | Custom | `scene-reference-broken` | Published when a referenced scene becomes unavaila... |
 | `SceneValidationRulesUpdatedEvent` | Lifecycle (Updated) | `scene-validation-rules.updated` | Published when validation rules are registered or ... |
 
 ### Seed

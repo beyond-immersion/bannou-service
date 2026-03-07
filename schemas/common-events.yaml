@@ -35,9 +35,9 @@ components:
         eventName:
           type: string
           description: |
-            Unique event type identifier (e.g., "connect.capability_manifest").
-            Must be in the generated ClientEventWhitelist or will be rejected.
-            Convention: {service}.{event_name}
+            Event type identifier (e.g., "account.created", "contract.proposed").
+            Used by IBannouEvent.EventName for message tap forwarding and generic
+            event processing pipelines. Convention: {entity}.{action}
         eventId:
           type: string
           format: uuid

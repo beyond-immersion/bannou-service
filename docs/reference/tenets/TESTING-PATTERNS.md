@@ -1,5 +1,7 @@
 # Testing Patterns & Anti-Patterns
 
+> ⛔ **FROZEN DOCUMENT** — Defines authoritative testing patterns enforced across the codebase. AI agents MUST NOT add, remove, modify, or reinterpret any content without explicit user instruction. If you believe something is incorrect, report the concern and wait — do not "fix" it. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Category**: Quality & Verification
 > **When to Reference**: Before writing any test, during test review
 > **Related Tenets**: T11 (Testing Requirements), T12 (Test Integrity)

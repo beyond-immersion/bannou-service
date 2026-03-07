@@ -1,5 +1,7 @@
 # Implementation Tenets: Data Modeling & Code Discipline
 
+> ⛔ **FROZEN DOCUMENT** — Defines authoritative implementation tenets enforced across the codebase. AI agents MUST NOT add, remove, modify, or reinterpret any content without explicit user instruction. If you believe something is incorrect, report the concern and wait — do not "fix" it. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Category**: How data is typed, structured, and code is written
 > **When to Reference**: While writing the actual lines of code — data modeling, serialization, configuration, async patterns, disposables, type safety, null representation
 > **Tenets**: T14, T20, T21, T23, T24, T25, T26
@@ -38,7 +40,7 @@ private static string BuildCompositeKey(...)
     => $"composite:{BuildEntityRef(id1, type1)}:{BuildEntityRef(id2, type2)}:{relationshipTypeId}";
 ```
 
-Since lib-state stores cannot enforce foreign key constraints, implement validation in service logic and subscribe to `entity.deleted` events for cascade handling.
+Since lib-state stores cannot enforce foreign key constraints, implement validation in service logic and use lib-resource for cascade cleanup of dependent data (see T28 in [FOUNDATION.md](FOUNDATION.md) for the required pattern).
 
 ### Polymorphic Type Field Classification (MANDATORY)
 

@@ -42,9 +42,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>-
     /// </remarks>
 
+
+
     /// <returns>Infrastructure health status (check response body for component health)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InfrastructureHealthResponse>> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InfrastructureHealthResponse>> GetInfrastructureHealth(InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get health status of all services
@@ -55,9 +58,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>Uses existing ServiceHeartbeatEvent schema from common-events.yaml.
     /// </remarks>
 
+
+
     /// <returns>Service health report</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceHealthReport>> GetServicesHealthAsync(ServiceHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceHealthReport>> GetServicesHealth(ServiceHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restart service with optional configuration
@@ -70,9 +76,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>Supports optional environment variable updates during restart.
     /// </remarks>
 
+
+
     /// <returns>Service restarted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceRestartResult>> RestartServiceAsync(ServiceRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceRestartResult>> RestartService(ServiceRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if service needs restart
@@ -88,9 +97,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- Unavailable: Restart needed
     /// </remarks>
 
+
+
     /// <returns>Restart recommendation</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestartRecommendation>> ShouldRestartServiceAsync(ShouldRestartServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestartRecommendation>> ShouldRestartService(ShouldRestartServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Detect available container orchestration backends
@@ -113,9 +125,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- Compose: Check for docker compose v2 availability
     /// </remarks>
 
+
+
     /// <returns>Available backends with capabilities</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackendsResponse>> GetBackendsAsync(ListBackendsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackendsResponse>> GetBackends(ListBackendsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List available deployment presets
@@ -134,9 +149,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- `distributed-npc`: NPC processing distributed across nodes
     /// </remarks>
 
+
+
     /// <returns>Available deployment presets</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PresetsResponse>> GetPresetsAsync(ListPresetsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PresetsResponse>> GetPresets(ListPresetsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deploy or update an environment
@@ -162,9 +180,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- Update environment variables without restart (where supported)
     /// </remarks>
 
+
+
     /// <returns>Deployment initiated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeployResponse>> DeployAsync(DeployRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeployResponse>> Deploy(DeployRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current service-to-app-id routing mappings
@@ -183,9 +204,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- Monitoring deployment topology
     /// </remarks>
 
+
+
     /// <returns>Service routing mappings</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceRoutingResponse>> GetServiceRoutingAsync(GetServiceRoutingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceRoutingResponse>> GetServiceRouting(GetServiceRoutingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current environment status
@@ -200,9 +224,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- Active preset and any customizations
     /// </remarks>
 
+
+
     /// <returns>Current environment status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EnvironmentStatus>> GetStatusAsync(GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EnvironmentStatus>> GetStatus(GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Tear down the current environment
@@ -218,9 +245,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- `preserve-data`: Keep volumes and networks, only remove containers
     /// </remarks>
 
+
+
     /// <returns>Teardown completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TeardownResponse>> TeardownAsync(TeardownRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TeardownResponse>> Teardown(TeardownRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Clean up unused resources
@@ -240,9 +270,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- `all`: All of the above
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanResponse>> CleanAsync(CleanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanResponse>> Clean(CleanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get service/container logs
@@ -253,9 +286,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>Supports real-time streaming via WebSocket upgrade.
     /// </remarks>
 
+
+
     /// <returns>Log output</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LogsResponse>> GetLogsAsync(GetLogsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LogsResponse>> GetLogs(GetLogsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update service topology without full redeploy
@@ -272,9 +308,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- Add new service nodes to running environment
     /// </remarks>
 
+
+
     /// <returns>Topology update applied</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TopologyUpdateResponse>> UpdateTopologyAsync(TopologyUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TopologyUpdateResponse>> UpdateTopology(TopologyUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Request container restart (self-service pattern)
@@ -297,9 +336,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- `force`: Kill all instances simultaneously (causes downtime)
     /// </remarks>
 
+
+
     /// <returns>Restart request accepted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerRestartResponse>> RequestContainerRestartAsync(ContainerRestartRequestBody body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerRestartResponse>> RequestContainerRestart(ContainerRestartRequestBody body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get container health and restart history
@@ -310,9 +352,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>running plugins, and current configuration.
     /// </remarks>
 
+
+
     /// <returns>Container status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerStatus>> GetContainerStatusAsync(GetContainerStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerStatus>> GetContainerStatus(GetContainerStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Rollback to a previous configuration version
@@ -327,9 +372,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>to prevent re-breaking on next orchestrator deploy.
     /// </remarks>
 
+
+
     /// <returns>Rollback completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigRollbackResponse>> RollbackConfigurationAsync(ConfigRollbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigRollbackResponse>> RollbackConfiguration(ConfigRollbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current configuration version and metadata
@@ -340,9 +388,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>and summary of configuration state (not actual values for security).
     /// </remarks>
 
+
+
     /// <returns>Configuration version info</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigVersionResponse>> GetConfigVersionAsync(GetConfigVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigVersionResponse>> GetConfigVersion(GetConfigVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Notify that configuration or secrets have changed
@@ -362,9 +413,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>separately.
     /// </remarks>
 
+
+
     /// <returns>Notification published successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NotifyConfigChangeResponse>> NotifyConfigChangeAsync(NotifyConfigChangeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NotifyConfigChangeResponse>> NotifyConfigChange(NotifyConfigChangeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Acquire a processor from a pool
@@ -376,9 +430,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>The processor is marked as busy until explicitly released.
     /// </remarks>
 
+
+
     /// <returns>Processor acquired successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AcquireProcessorResponse>> AcquireProcessorAsync(AcquireProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AcquireProcessorResponse>> AcquireProcessor(AcquireProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Release a processor back to the pool
@@ -389,9 +446,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>Should be called when processing is complete or on error cleanup.
     /// </remarks>
 
+
+
     /// <returns>Processor released successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReleaseProcessorResponse>> ReleaseProcessorAsync(ReleaseProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReleaseProcessorResponse>> ReleaseProcessor(ReleaseProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get processing pool status
@@ -405,9 +465,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- Recent processing metrics
     /// </remarks>
 
+
+
     /// <returns>Pool status retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PoolStatusResponse>> GetPoolStatusAsync(GetPoolStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PoolStatusResponse>> GetPoolStatus(GetPoolStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Scale a processing pool
@@ -419,9 +482,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>Respects min/max constraints from pool configuration.
     /// </remarks>
 
+
+
     /// <returns>Pool scaled successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScalePoolResponse>> ScalePoolAsync(ScalePoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScalePoolResponse>> ScalePool(ScalePoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup idle processing pool instances
@@ -432,15 +498,18 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>Used for resource reclamation during low-activity periods.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupPoolResponse>> CleanupPoolAsync(CleanupPoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupPoolResponse>> CleanupPool(CleanupPoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IOrchestratorService))]
+public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.ControllerBase, IOrchestratorController
 {
     private IOrchestratorService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

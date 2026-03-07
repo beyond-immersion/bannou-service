@@ -149,7 +149,7 @@ public partial interface ISceneClient
     /// </remarks>
     /// <returns>Destruction recorded and event published</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<DestroyInstanceResponse> DestroyInstanceAsync(DestroyInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task DestroyInstanceAsync(DestroyInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -189,7 +189,7 @@ public partial interface ISceneClient
     /// </remarks>
     /// <returns>Discard successful</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<DiscardResponse> DiscardCheckoutAsync(DiscardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task DiscardCheckoutAsync(DiscardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -199,6 +199,7 @@ public partial interface ISceneClient
     /// <remarks>
     /// Extends the checkout lock TTL. Should be called periodically
     /// <br/>during editing to prevent lock expiration.
+    /// <br/>Returns 409 Conflict when the extension limit has been reached.
     /// </remarks>
     /// <returns>Lock extended</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -228,7 +229,7 @@ public partial interface ISceneClient
     /// </remarks>
     /// <returns>Rules registered</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<RegisterValidationRulesResponse> RegisterValidationRulesAsync(RegisterValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task RegisterValidationRulesAsync(RegisterValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -1103,7 +1104,7 @@ public partial class SceneClient : ISceneClient, BeyondImmersion.BannouService.S
     /// </remarks>
     /// <returns>Destruction recorded and event published</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<DestroyInstanceResponse> DestroyInstanceAsync(DestroyInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task DestroyInstanceAsync(DestroyInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -1126,7 +1127,6 @@ public partial class SceneClient : ISceneClient, BeyondImmersion.BannouService.S
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
-            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
             // Apply custom headers
             ApplyHeaders(request_);
@@ -1149,12 +1149,7 @@ public partial class SceneClient : ISceneClient, BeyondImmersion.BannouService.S
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<DestroyInstanceResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
+                        return;
                     }
                     else
                     {
@@ -1380,7 +1375,7 @@ public partial class SceneClient : ISceneClient, BeyondImmersion.BannouService.S
     /// </remarks>
     /// <returns>Discard successful</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<DiscardResponse> DiscardCheckoutAsync(DiscardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task DiscardCheckoutAsync(DiscardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -1403,7 +1398,6 @@ public partial class SceneClient : ISceneClient, BeyondImmersion.BannouService.S
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
-            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
             // Apply custom headers
             ApplyHeaders(request_);
@@ -1426,12 +1420,7 @@ public partial class SceneClient : ISceneClient, BeyondImmersion.BannouService.S
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<DiscardResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
+                        return;
                     }
                     else
                     if (status_ == 403)
@@ -1467,6 +1456,7 @@ public partial class SceneClient : ISceneClient, BeyondImmersion.BannouService.S
     /// <remarks>
     /// Extends the checkout lock TTL. Should be called periodically
     /// <br/>during editing to prevent lock expiration.
+    /// <br/>Returns 409 Conflict when the extension limit has been reached.
     /// </remarks>
     /// <returns>Lock extended</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -1533,7 +1523,7 @@ public partial class SceneClient : ISceneClient, BeyondImmersion.BannouService.S
                     if (status_ == 409)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Checkout expired", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Checkout expired or extension limit reached", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1656,7 +1646,7 @@ public partial class SceneClient : ISceneClient, BeyondImmersion.BannouService.S
     /// </remarks>
     /// <returns>Rules registered</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<RegisterValidationRulesResponse> RegisterValidationRulesAsync(RegisterValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task RegisterValidationRulesAsync(RegisterValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -1679,7 +1669,6 @@ public partial class SceneClient : ISceneClient, BeyondImmersion.BannouService.S
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
-            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
             // Apply custom headers
             ApplyHeaders(request_);
@@ -1702,12 +1691,7 @@ public partial class SceneClient : ISceneClient, BeyondImmersion.BannouService.S
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<RegisterValidationRulesResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
+                        return;
                     }
                     else
                     {

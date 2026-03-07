@@ -123,6 +123,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// <summary>
     /// Records a realm's participation in a historical event.
     /// </summary>
+    /// <param name="body">The participation recording request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The recorded participation, or null on failure.</returns>
     public async Task<(StatusCodes, RealmHistoricalParticipation?)> RecordRealmParticipationAsync(
         RecordRealmParticipationRequest body,
         CancellationToken cancellationToken)
@@ -185,6 +188,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// <summary>
     /// Gets a realm's historical event participation records.
     /// </summary>
+    /// <param name="body">The participation query request with pagination and filters.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paginated participation list, or null on failure.</returns>
     public async Task<(StatusCodes, RealmParticipationListResponse?)> GetRealmParticipationAsync(
         GetRealmParticipationRequest body,
         CancellationToken cancellationToken)
@@ -225,6 +231,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// Gets all realms that participated in a historical event.
     /// Uses server-side MySQL JSON queries for efficient pagination per IMPLEMENTATION TENETS.
     /// </summary>
+    /// <param name="body">The event participants query request with pagination and filters.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paginated participation list, or null on failure.</returns>
     public async Task<(StatusCodes, RealmParticipationListResponse?)> GetRealmEventParticipantsAsync(
         GetRealmEventParticipantsRequest body,
         CancellationToken cancellationToken)
@@ -264,6 +273,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// <summary>
     /// Deletes a specific participation record.
     /// </summary>
+    /// <param name="body">The deletion request containing the participation ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code indicating success or failure.</returns>
     public async Task<StatusCodes> DeleteRealmParticipationAsync(
         DeleteRealmParticipationRequest body,
         CancellationToken cancellationToken)
@@ -316,6 +328,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// <summary>
     /// Gets lore elements for a realm.
     /// </summary>
+    /// <param name="body">The lore query request with optional type and strength filters.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The realm's lore elements, or null if not found.</returns>
     public async Task<(StatusCodes, RealmLoreResponse?)> GetRealmLoreAsync(
         GetRealmLoreRequest body,
         CancellationToken cancellationToken)
@@ -346,7 +361,6 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         return (StatusCodes.OK, new RealmLoreResponse
         {
-            RealmId = body.RealmId,
             Elements = elements,
             CreatedAt = TimestampHelper.FromUnixSeconds(loreData.CreatedAtUnix),
             UpdatedAt = TimestampHelper.FromUnixSeconds(loreData.UpdatedAtUnix)
@@ -356,6 +370,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// <summary>
     /// Sets lore elements for a realm with merge or replace semantics.
     /// </summary>
+    /// <param name="body">The lore set request with elements and merge/replace flag.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The updated lore state, or null on failure.</returns>
     public async Task<(StatusCodes, RealmLoreResponse?)> SetRealmLoreAsync(
         SetRealmLoreRequest body,
         CancellationToken cancellationToken)
@@ -428,7 +445,6 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         var response = new RealmLoreResponse
         {
-            RealmId = body.RealmId,
             Elements = result.Backstory.Elements.Select(MapToRealmLoreElement).ToList(),
             CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
             UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
@@ -470,6 +486,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// <summary>
     /// Adds a single lore element to a realm.
     /// </summary>
+    /// <param name="body">The element addition request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The updated lore state, or null on failure.</returns>
     public async Task<(StatusCodes, RealmLoreResponse?)> AddRealmLoreElementAsync(
         AddRealmLoreElementRequest body,
         CancellationToken cancellationToken)
@@ -512,7 +531,6 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         var response = new RealmLoreResponse
         {
-            RealmId = body.RealmId,
             Elements = result.Backstory.Elements.Select(MapToRealmLoreElement).ToList(),
             CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
             UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
@@ -554,6 +572,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// <summary>
     /// Deletes all lore for a realm.
     /// </summary>
+    /// <param name="body">The lore deletion request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code indicating success or failure.</returns>
     public async Task<StatusCodes> DeleteRealmLoreAsync(
         DeleteRealmLoreRequest body,
         CancellationToken cancellationToken)
@@ -596,6 +617,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// <summary>
     /// Deletes all history data for a realm.
     /// </summary>
+    /// <param name="body">The deletion request containing the realm ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Counts of deleted participations and lore, or null on failure.</returns>
     public async Task<(StatusCodes, DeleteAllRealmHistoryResponse?)> DeleteAllRealmHistoryAsync(
         DeleteAllRealmHistoryRequest body,
         CancellationToken cancellationToken)
@@ -663,7 +687,6 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         return (StatusCodes.OK, new DeleteAllRealmHistoryResponse
         {
-            RealmId = body.RealmId,
             ParticipationsDeleted = participationsDeleted,
             LoreDeleted = loreDeleted
         });
@@ -672,6 +695,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// <summary>
     /// Generates text summaries for realm archival.
     /// </summary>
+    /// <param name="body">The summarization request with optional limit overrides.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Generated text summaries, or null if no data exists.</returns>
     public async Task<(StatusCodes, RealmHistorySummaryResponse?)> SummarizeRealmHistoryAsync(
         SummarizeRealmHistoryRequest body,
         CancellationToken cancellationToken)
@@ -725,7 +751,6 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         var response = new RealmHistorySummaryResponse
         {
-            RealmId = body.RealmId,
             KeyLorePoints = keyLorePoints,
             MajorHistoricalEvents = majorHistoricalEvents
         };
@@ -744,6 +769,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// Gets realm history data for compression during realm archival.
     /// Called by Resource service during realm compression via compression callback.
     /// </summary>
+    /// <param name="body">The compression data request containing the realm ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Complete archive data for storage, or null if no data exists.</returns>
     public async Task<(StatusCodes, RealmHistoryArchive?)> GetCompressDataAsync(
         GetCompressDataRequest body,
         CancellationToken cancellationToken)
@@ -768,7 +796,6 @@ public partial class RealmHistoryService : IRealmHistoryService
         {
             loreResponse = new RealmLoreResponse
             {
-                RealmId = body.RealmId,
                 Elements = loreData.Elements.Select(MapToRealmLoreElement).ToList(),
                 CreatedAt = TimestampHelper.FromUnixSeconds(loreData.CreatedAtUnix),
                 UpdatedAt = TimestampHelper.FromUnixSeconds(loreData.UpdatedAtUnix)
@@ -783,7 +810,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         }
 
         // Generate text summaries for the archive
-        var summaries = GenerateSummariesForArchive(body.RealmId, participations, loreData);
+        var summaries = GenerateSummariesForArchive(participations, loreData);
 
         var response = new RealmHistoryArchive
         {
@@ -793,7 +820,6 @@ public partial class RealmHistoryService : IRealmHistoryService
             ArchivedAt = DateTimeOffset.UtcNow,
             SchemaVersion = 1,
             // Service-specific fields
-            RealmId = body.RealmId,
             HasParticipations = participations.Count > 0,
             Participations = participations,
             HasLore = loreData != null,
@@ -812,6 +838,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// Restores realm history data from a compressed archive.
     /// Called by Resource service during realm decompression via decompression callback.
     /// </summary>
+    /// <param name="body">The restoration request with Base64-encoded gzipped archive data.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Counts of restored items, or null on failure.</returns>
     public async Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(
         RestoreFromArchiveRequest body,
         CancellationToken cancellationToken)
@@ -833,18 +862,11 @@ public partial class RealmHistoryService : IRealmHistoryService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to decompress archive data for realm {RealmId}", body.RealmId);
-            return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
-            {
-                RealmId = body.RealmId,
-                ParticipationsRestored = 0,
-                LoreRestored = 0,
-                Success = false,
-                ErrorMessage = $"Invalid archive data: {ex.Message}"
-            });
+            return (StatusCodes.BadRequest, null);
         }
 
         // Restore participations
-        if (archiveData.HasParticipations && archiveData.Participations.Count > 0)
+        if (archiveData.HasParticipations && archiveData.Participations != null && archiveData.Participations.Count > 0)
         {
             foreach (var participation in archiveData.Participations)
             {
@@ -884,7 +906,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         }
 
         // Restore lore
-        if (archiveData.HasLore && archiveData.LoreElements.Count > 0)
+        if (archiveData.HasLore && archiveData.LoreElements != null && archiveData.LoreElements.Count > 0)
         {
             // Aggregate all elements from all lore responses
             var allElements = archiveData.LoreElements.SelectMany(lr => lr.Elements).ToList();
@@ -914,15 +936,15 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         return (StatusCodes.OK, new RestoreFromArchiveResponse
         {
-            RealmId = body.RealmId,
             ParticipationsRestored = participationsRestored,
-            LoreRestored = loreRestored,
-            Success = true
+            LoreRestored = loreRestored
         });
     }
 
+    /// <summary>
+    /// Generates text summaries from participation and lore data for archive storage.
+    /// </summary>
     private RealmHistorySummaryResponse GenerateSummariesForArchive(
-        Guid realmId,
         List<RealmHistoricalParticipation> participations,
         RealmLoreData? loreData)
     {
@@ -965,30 +987,35 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         return new RealmHistorySummaryResponse
         {
-            RealmId = realmId,
             KeyLorePoints = keyLorePoints,
             MajorHistoricalEvents = majorHistoricalEvents
         };
     }
 
+    /// <summary>
+    /// Generates a human-readable event summary from an API response model.
+    /// </summary>
     private static string GenerateEventSummaryFromModel(RealmHistoricalParticipation participation)
     {
         var roleVerb = participation.Role switch
         {
-            RealmEventRole.ORIGIN => "originated",
-            RealmEventRole.AGGRESSOR => "instigated",
-            RealmEventRole.DEFENDER => "defended against",
-            RealmEventRole.MEDIATOR => "mediated",
-            RealmEventRole.AFFECTED => "was affected by",
-            RealmEventRole.BENEFICIARY => "benefited from",
-            RealmEventRole.INSTIGATOR => "instigated",
-            RealmEventRole.NEUTRAL_PARTY => "observed",
+            RealmEventRole.Origin => "originated",
+            RealmEventRole.Aggressor => "instigated",
+            RealmEventRole.Defender => "defended against",
+            RealmEventRole.Mediator => "mediated",
+            RealmEventRole.Affected => "was affected by",
+            RealmEventRole.Beneficiary => "benefited from",
+            RealmEventRole.Instigator => "instigated",
+            RealmEventRole.NeutralParty => "observed",
             _ => "participated in"
         };
 
         return $"{participation.EventName} ({roleVerb})";
     }
 
+    /// <summary>
+    /// Decompresses a gzipped byte array into a UTF-8 JSON string.
+    /// </summary>
     private static string DecompressJsonData(byte[] compressedBytes)
     {
         using var input = new System.IO.MemoryStream(compressedBytes);
@@ -1068,6 +1095,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     // Mapping Methods
     // ============================================================================
 
+    /// <summary>
+    /// Maps internal participation storage data to the API response model.
+    /// </summary>
     private static RealmHistoricalParticipation MapToRealmHistoricalParticipation(RealmParticipationData data)
     {
         return new RealmHistoricalParticipation
@@ -1085,6 +1115,9 @@ public partial class RealmHistoryService : IRealmHistoryService
         };
     }
 
+    /// <summary>
+    /// Maps internal lore element storage data to the API response model.
+    /// </summary>
     private static RealmLoreElement MapToRealmLoreElement(RealmLoreElementData data)
     {
         return new RealmLoreElement
@@ -1098,6 +1131,9 @@ public partial class RealmHistoryService : IRealmHistoryService
         };
     }
 
+    /// <summary>
+    /// Maps an API lore element model to the internal storage format.
+    /// </summary>
     private static RealmLoreElementData MapToRealmLoreElementData(RealmLoreElement element)
     {
         return new RealmLoreElementData
@@ -1111,36 +1147,42 @@ public partial class RealmHistoryService : IRealmHistoryService
         };
     }
 
+    /// <summary>
+    /// Generates a human-readable lore summary from a storage model element.
+    /// </summary>
     private static string GenerateLoreSummary(RealmLoreElementData element)
     {
         var typeLabel = element.ElementType switch
         {
-            RealmLoreElementType.ORIGIN_MYTH => "Origin",
-            RealmLoreElementType.CULTURAL_PRACTICE => "Cultural practice",
-            RealmLoreElementType.POLITICAL_SYSTEM => "Political system",
-            RealmLoreElementType.ECONOMIC_BASE => "Economic base",
-            RealmLoreElementType.RELIGIOUS_TRADITION => "Religious tradition",
-            RealmLoreElementType.GEOGRAPHIC_FEATURE => "Geographic feature",
-            RealmLoreElementType.FAMOUS_FIGURE => "Famous figure",
-            RealmLoreElementType.TECHNOLOGICAL_LEVEL => "Technology level",
+            RealmLoreElementType.OriginMyth => "Origin",
+            RealmLoreElementType.CulturalPractice => "Cultural practice",
+            RealmLoreElementType.PoliticalSystem => "Political system",
+            RealmLoreElementType.EconomicBase => "Economic base",
+            RealmLoreElementType.ReligiousTradition => "Religious tradition",
+            RealmLoreElementType.GeographicFeature => "Geographic feature",
+            RealmLoreElementType.FamousFigure => "Famous figure",
+            RealmLoreElementType.TechnologicalLevel => "Technology level",
             _ => element.ElementType.ToString()
         };
 
         return $"{typeLabel}: {element.Key} - {element.Value}";
     }
 
+    /// <summary>
+    /// Generates a human-readable event summary from a storage model participation.
+    /// </summary>
     private static string GenerateEventSummary(RealmParticipationData participation)
     {
         var roleVerb = participation.Role switch
         {
-            RealmEventRole.ORIGIN => "originated",
-            RealmEventRole.AGGRESSOR => "instigated",
-            RealmEventRole.DEFENDER => "defended against",
-            RealmEventRole.MEDIATOR => "mediated",
-            RealmEventRole.AFFECTED => "was affected by",
-            RealmEventRole.BENEFICIARY => "benefited from",
-            RealmEventRole.INSTIGATOR => "instigated",
-            RealmEventRole.NEUTRAL_PARTY => "observed",
+            RealmEventRole.Origin => "originated",
+            RealmEventRole.Aggressor => "instigated",
+            RealmEventRole.Defender => "defended against",
+            RealmEventRole.Mediator => "mediated",
+            RealmEventRole.Affected => "was affected by",
+            RealmEventRole.Beneficiary => "benefited from",
+            RealmEventRole.Instigator => "instigated",
+            RealmEventRole.NeutralParty => "observed",
             _ => "participated in"
         };
 

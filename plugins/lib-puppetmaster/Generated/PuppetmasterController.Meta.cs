@@ -43,8 +43,7 @@ public partial class PuppetmasterController
             "description": "Service status and statistics",
             "required": [
                 "cachedBehaviorCount",
-                "activeWatcherCount",
-                "isHealthy"
+                "activeWatcherCount"
             ],
             "properties": {
                 "cachedBehaviorCount": {
@@ -54,10 +53,6 @@ public partial class PuppetmasterController
                 "activeWatcherCount": {
                     "type": "integer",
                     "description": "Number of active regional watcher instances"
-                },
-                "isHealthy": {
-                    "type": "boolean",
-                    "description": "Overall service health status"
                 }
             }
         }
@@ -302,6 +297,7 @@ public partial class PuppetmasterController
                 },
                 "actorId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "Actor instance ID running this watcher's behavior"
                 }
@@ -462,6 +458,7 @@ public partial class PuppetmasterController
                 },
                 "actorId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "Actor instance ID running this watcher's behavior"
                 }
@@ -559,16 +556,8 @@ public partial class PuppetmasterController
         "StopWatcherResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Response after stopping a watcher",
-            "required": [
-                "stopped"
-            ],
-            "properties": {
-                "stopped": {
-                    "type": "boolean",
-                    "description": "True if the watcher was found and stopped"
-                }
-            }
+            "description": "Empty response. HTTP 200 confirms the watcher was stopped. HTTP 404 if watcher not found.",
+            "properties": {}
         }
     }
 }
@@ -665,6 +654,7 @@ public partial class PuppetmasterController
             "description": "Response after starting watchers for a realm",
             "required": [
                 "watchersStarted",
+                "watchersExisted",
                 "watchers"
             ],
             "properties": {
@@ -722,6 +712,7 @@ public partial class PuppetmasterController
                 },
                 "actorId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "Actor instance ID running this watcher's behavior"
                 }

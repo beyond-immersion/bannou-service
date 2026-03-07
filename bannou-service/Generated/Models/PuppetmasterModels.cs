@@ -88,12 +88,6 @@ public partial class PuppetmasterStatusResponse
     [System.Text.Json.Serialization.JsonPropertyName("activeWatcherCount")]
     public int ActiveWatcherCount { get; set; } = default!;
 
-    /// <summary>
-    /// Overall service health status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isHealthy")]
-    public bool IsHealthy { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -177,7 +171,7 @@ public partial class WatcherInfo
     /// Actor instance ID running this watcher's behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    public string? ActorId { get; set; } = default!;
+    public System.Guid? ActorId { get; set; } = default!;
 
 }
 
@@ -253,17 +247,11 @@ public partial class StopWatcherRequest
 }
 
 /// <summary>
-/// Response after stopping a watcher
+/// Empty response. HTTP 200 confirms the watcher was stopped. HTTP 404 if watcher not found.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StopWatcherResponse
 {
-
-    /// <summary>
-    /// True if the watcher was found and stopped
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("stopped")]
-    public bool Stopped { get; set; } = default!;
 
 }
 

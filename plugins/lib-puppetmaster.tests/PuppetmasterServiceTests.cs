@@ -130,7 +130,7 @@ public class PuppetmasterServiceTests
     }
 
     [Fact]
-    public async Task GetStatusAsync_ReturnsHealthyStatus()
+    public async Task GetStatusAsync_ReturnsOkStatus()
     {
         // Arrange
         var service = CreateService();
@@ -141,8 +141,8 @@ public class PuppetmasterServiceTests
             CancellationToken.None);
 
         // Assert
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.IsHealthy);
     }
 
     [Fact]

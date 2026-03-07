@@ -40,9 +40,12 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Returns room ID and initial configuration.
     /// </remarks>
 
+
+
     /// <returns>Voice room created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoiceRoomResponse>> CreateVoiceRoomAsync(CreateVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoiceRoomResponse>> CreateVoiceRoom(CreateVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get voice room details
@@ -52,9 +55,12 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// Retrieves current state of a voice room including participant list.
     /// </remarks>
 
+
+
     /// <returns>Voice room retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoiceRoomResponse>> GetVoiceRoomAsync(GetVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoiceRoomResponse>> GetVoiceRoom(GetVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Join voice room and register SIP endpoint
@@ -67,9 +73,12 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>or RTP server details for scaled mode.
     /// </remarks>
 
+
+
     /// <returns>Successfully joined voice room</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinVoiceRoomResponse>> JoinVoiceRoomAsync(JoinVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinVoiceRoomResponse>> JoinVoiceRoom(JoinVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Leave voice room
@@ -79,9 +88,12 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// Removes a participant from the voice room.
     /// </remarks>
 
+
+
     /// <returns>Successfully left voice room</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveVoiceRoomAsync(LeaveVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveVoiceRoom(LeaveVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete voice room
@@ -91,9 +103,12 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// Deletes a voice room and notifies all participants.
     /// </remarks>
 
+
+
     /// <returns>Voice room deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteVoiceRoomAsync(DeleteVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteVoiceRoom(DeleteVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update peer endpoint TTL
@@ -104,9 +119,12 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Should be called periodically to prevent endpoint expiration.
     /// </remarks>
 
+
+
     /// <returns>Heartbeat acknowledged</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> PeerHeartbeatAsync(PeerHeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> PeerHeartbeat(PeerHeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Send SDP answer to complete WebRTC handshake
@@ -122,9 +140,12 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>The state is cleared after the answer is processed or times out.
     /// </remarks>
 
+
+
     /// <returns>SDP answer processed, peer notified</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AnswerPeerAsync(AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AnswerPeer(AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Request broadcast consent from all room participants
@@ -135,9 +156,12 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>This endpoint is the ONLY way to initiate voice room broadcasting. lib-broadcast subscribes to the resulting approval/decline events.
     /// </remarks>
 
+
+
     /// <returns>Consent request sent to all participants</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RequestBroadcastConsentAsync(BroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RequestBroadcastConsent(BroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Respond to a broadcast consent request
@@ -147,9 +171,12 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.broadcast.approved. If any participant declines, lib-voice publishes voice.broadcast.declined.
     /// </remarks>
 
+
+
     /// <returns>Consent response recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RespondBroadcastConsentAsync(BroadcastConsentResponse body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RespondBroadcastConsent(BroadcastConsentResponse body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Stop broadcasting from a voice room
@@ -159,9 +186,12 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.broadcast.stopped with reason ConsentRevoked.
     /// </remarks>
 
+
+
     /// <returns>Broadcast stopped</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StopBroadcastAsync(StopBroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StopBroadcast(StopBroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get broadcast status for a voice room
@@ -171,15 +201,18 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// Returns the current broadcast state: whether consent is pending, active, or inactive.
     /// </remarks>
 
+
+
     /// <returns>Broadcast status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> GetBroadcastStatusAsync(BroadcastStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> GetBroadcastStatus(BroadcastStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IVoiceService))]
+public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase, IVoiceController
 {
     private IVoiceService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

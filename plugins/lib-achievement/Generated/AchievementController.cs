@@ -40,9 +40,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// <br/>Developer-only endpoint.
     /// </remarks>
 
+
+
     /// <returns>Achievement created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AchievementDefinitionResponse>> CreateAchievementDefinitionAsync(CreateAchievementDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AchievementDefinitionResponse>> CreateAchievementDefinition(CreateAchievementDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get achievement definition
@@ -52,9 +55,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// Retrieve details about a specific achievement.
     /// </remarks>
 
+
+
     /// <returns>Achievement definition retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AchievementDefinitionResponse>> GetAchievementDefinitionAsync(GetAchievementDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AchievementDefinitionResponse>> GetAchievementDefinition(GetAchievementDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List achievement definitions
@@ -64,9 +70,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// List achievements for a game service with optional platform filtering.
     /// </remarks>
 
+
+
     /// <returns>Achievement definitions retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAchievementDefinitionsResponse>> ListAchievementDefinitionsAsync(ListAchievementDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAchievementDefinitionsResponse>> ListAchievementDefinitions(ListAchievementDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update achievement definition
@@ -77,9 +86,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// <br/>Developer-only endpoint.
     /// </remarks>
 
+
+
     /// <returns>Achievement updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AchievementDefinitionResponse>> UpdateAchievementDefinitionAsync(UpdateAchievementDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AchievementDefinitionResponse>> UpdateAchievementDefinition(UpdateAchievementDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate an achievement definition
@@ -94,9 +106,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// <br/>Idempotent: returns OK if already deprecated.
     /// </remarks>
 
+
+
     /// <returns>Achievement definition deprecated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AchievementDefinitionResponse>> DeprecateAchievementDefinitionAsync(DeprecateAchievementDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AchievementDefinitionResponse>> DeprecateAchievementDefinition(DeprecateAchievementDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get entity's achievement progress
@@ -106,9 +121,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// Get progress for an entity across all achievements or a specific one.
     /// </remarks>
 
+
+
     /// <returns>Progress retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AchievementProgressResponse>> GetAchievementProgressAsync(GetAchievementProgressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AchievementProgressResponse>> GetAchievementProgress(GetAchievementProgressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update achievement progress
@@ -119,9 +137,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// <br/>Service-only endpoint - called by game logic.
     /// </remarks>
 
+
+
     /// <returns>Progress updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateAchievementProgressResponse>> UpdateAchievementProgressAsync(UpdateAchievementProgressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateAchievementProgressResponse>> UpdateAchievementProgress(UpdateAchievementProgressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Directly unlock an achievement
@@ -132,9 +153,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// <br/>Service-only endpoint - used for non-progressive achievements.
     /// </remarks>
 
+
+
     /// <returns>Achievement unlocked successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockAchievementResponse>> UnlockAchievementAsync(UnlockAchievementRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockAchievementResponse>> UnlockAchievement(UnlockAchievementRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List unlocked achievements
@@ -144,9 +168,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// Get all achievements unlocked by an entity.
     /// </remarks>
 
+
+
     /// <returns>Unlocked achievements retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListUnlockedAchievementsResponse>> ListUnlockedAchievementsAsync(ListUnlockedAchievementsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListUnlockedAchievementsResponse>> ListUnlockedAchievements(ListUnlockedAchievementsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Manually trigger platform sync
@@ -157,9 +184,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// <br/>Admin-only endpoint.
     /// </remarks>
 
+
+
     /// <returns>Sync completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SyncPlatformAchievementsResponse>> SyncPlatformAchievementsAsync(SyncPlatformAchievementsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SyncPlatformAchievementsResponse>> SyncPlatformAchievements(SyncPlatformAchievementsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get platform sync status
@@ -169,9 +199,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// Get the sync status for an entity on a specific platform.
     /// </remarks>
 
+
+
     /// <returns>Sync status retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PlatformSyncStatusResponse>> GetPlatformSyncStatusAsync(GetPlatformSyncStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PlatformSyncStatusResponse>> GetPlatformSyncStatus(GetPlatformSyncStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete all achievement progress for a character
@@ -182,15 +215,18 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
     /// <br/>Called by lib-resource during character deletion cleanup. This is a hard delete.
     /// </remarks>
 
+
+
     /// <returns>Progress records deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class AchievementController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IAchievementService))]
+public partial class AchievementController : Microsoft.AspNetCore.Mvc.ControllerBase, IAchievementController
 {
     private IAchievementService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

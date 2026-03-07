@@ -4,7 +4,7 @@ namespace BeyondImmersion.BannouService.SaveLoad.Models;
 /// Manifest for save data export archives.
 /// Stored as manifest.json in the root of export ZIP files.
 /// </summary>
-public class ExportManifest
+public sealed class ExportManifest
 {
     /// <summary>
     /// Game ID the saves are from.
@@ -14,12 +14,12 @@ public class ExportManifest
     /// <summary>
     /// Owner ID (player or realm) the saves belong to.
     /// </summary>
-    public string OwnerId { get; set; } = string.Empty;
+    public Guid OwnerId { get; set; }
 
     /// <summary>
     /// Owner type (Player/Realm/Game).
     /// </summary>
-    public string OwnerType { get; set; } = string.Empty;
+    public EntityType OwnerType { get; set; }
 
     /// <summary>
     /// When the export was created.
@@ -40,12 +40,12 @@ public class ExportManifest
 /// <summary>
 /// Entry for a single slot in an export manifest.
 /// </summary>
-public class ExportSlotEntry
+public sealed class ExportSlotEntry
 {
     /// <summary>
     /// Original slot ID.
     /// </summary>
-    public string SlotId { get; set; } = string.Empty;
+    public Guid SlotId { get; set; }
 
     /// <summary>
     /// Slot name (used as folder name in archive).
@@ -55,7 +55,7 @@ public class ExportSlotEntry
     /// <summary>
     /// Category (autosave, quicksave, manual, etc.).
     /// </summary>
-    public string? Category { get; set; }
+    public SaveCategory? Category { get; set; }
 
     /// <summary>
     /// Display name for the slot.

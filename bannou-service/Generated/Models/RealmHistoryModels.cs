@@ -38,32 +38,32 @@ using System = global::System;
 public enum RealmEventCategory
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"FOUNDING")]
-    FOUNDING = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Founding")]
+    Founding = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"WAR")]
-    WAR = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"War")]
+    War = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TREATY")]
-    TREATY = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Treaty")]
+    Treaty = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CATACLYSM")]
-    CATACLYSM = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Cataclysm")]
+    Cataclysm = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DISCOVERY")]
-    DISCOVERY = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Discovery")]
+    Discovery = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"MIGRATION")]
-    MIGRATION = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Migration")]
+    Migration = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CULTURAL_SHIFT")]
-    CULTURAL_SHIFT = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"CulturalShift")]
+    CulturalShift = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ECONOMIC_CHANGE")]
-    ECONOMIC_CHANGE = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"EconomicChange")]
+    EconomicChange = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"POLITICAL_UPHEAVAL")]
-    POLITICAL_UPHEAVAL = 8,
+    [System.Runtime.Serialization.EnumMember(Value = @"PoliticalUpheaval")]
+    PoliticalUpheaval = 8,
 
 }
 #pragma warning restore CS1591
@@ -76,29 +76,29 @@ public enum RealmEventCategory
 public enum RealmEventRole
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ORIGIN")]
-    ORIGIN = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Origin")]
+    Origin = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"AGGRESSOR")]
-    AGGRESSOR = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Aggressor")]
+    Aggressor = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DEFENDER")]
-    DEFENDER = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Defender")]
+    Defender = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"MEDIATOR")]
-    MEDIATOR = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Mediator")]
+    Mediator = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"AFFECTED")]
-    AFFECTED = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Affected")]
+    Affected = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BENEFICIARY")]
-    BENEFICIARY = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Beneficiary")]
+    Beneficiary = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"INSTIGATOR")]
-    INSTIGATOR = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"Instigator")]
+    Instigator = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"NEUTRAL_PARTY")]
-    NEUTRAL_PARTY = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"NeutralParty")]
+    NeutralParty = 7,
 
 }
 #pragma warning restore CS1591
@@ -113,29 +113,29 @@ public enum RealmEventRole
 public enum RealmLoreElementType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ORIGIN_MYTH")]
-    ORIGIN_MYTH = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"OriginMyth")]
+    OriginMyth = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CULTURAL_PRACTICE")]
-    CULTURAL_PRACTICE = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"CulturalPractice")]
+    CulturalPractice = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"POLITICAL_SYSTEM")]
-    POLITICAL_SYSTEM = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"PoliticalSystem")]
+    PoliticalSystem = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ECONOMIC_BASE")]
-    ECONOMIC_BASE = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"EconomicBase")]
+    EconomicBase = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"RELIGIOUS_TRADITION")]
-    RELIGIOUS_TRADITION = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"ReligiousTradition")]
+    ReligiousTradition = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"GEOGRAPHIC_FEATURE")]
-    GEOGRAPHIC_FEATURE = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"GeographicFeature")]
+    GeographicFeature = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"FAMOUS_FIGURE")]
-    FAMOUS_FIGURE = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"FamousFigure")]
+    FamousFigure = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TECHNOLOGICAL_LEVEL")]
-    TECHNOLOGICAL_LEVEL = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"TechnologicalLevel")]
+    TechnologicalLevel = 7,
 
 }
 #pragma warning restore CS1591
@@ -297,14 +297,6 @@ public partial class RealmLoreElement
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RealmLoreResponse
 {
-
-    /// <summary>
-    /// ID of the realm this lore belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
     /// All lore elements for this realm
@@ -711,14 +703,6 @@ public partial class DeleteAllRealmHistoryResponse
 {
 
     /// <summary>
-    /// ID of the realm whose history was deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
     /// Number of participation records deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("participationsDeleted")]
@@ -738,14 +722,6 @@ public partial class DeleteAllRealmHistoryResponse
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RealmHistorySummaryResponse
 {
-
-    /// <summary>
-    /// ID of the realm summarized
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
     /// Key lore elements as text summaries.
@@ -789,20 +765,12 @@ public partial class GetCompressDataRequest
 /// <summary>
 /// Compressed realm lore and history for archive storage and storyline SDK consumption.
 /// <br/>Inherits base archive properties from ResourceArchiveBase.
-/// <br/>The realmId field equals resourceId for convenience.
+/// <br/>Use resourceId from the base type to identify the realm.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RealmHistoryArchive : ResourceArchiveBase
 {
-
-    /// <summary>
-    /// Realm this data belongs to (equals resourceId)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
     /// Whether lore elements exist
@@ -811,10 +779,10 @@ public partial class RealmHistoryArchive : ResourceArchiveBase
     public bool HasLore { get; set; } = default!;
 
     /// <summary>
-    /// Lore elements (empty if hasLore=false)
+    /// Lore elements (null if hasLore=false)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loreElements")]
-    public System.Collections.Generic.ICollection<RealmLoreResponse> LoreElements { get; set; } = default!;
+    public System.Collections.Generic.ICollection<RealmLoreResponse>? LoreElements { get; set; } = default!;
 
     /// <summary>
     /// Whether event participations exist
@@ -823,10 +791,10 @@ public partial class RealmHistoryArchive : ResourceArchiveBase
     public bool HasParticipations { get; set; } = default!;
 
     /// <summary>
-    /// Event participations (empty if hasParticipations=false)
+    /// Event participations (null if hasParticipations=false)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("participations")]
-    public System.Collections.Generic.ICollection<RealmHistoricalParticipation> Participations { get; set; } = default!;
+    public System.Collections.Generic.ICollection<RealmHistoricalParticipation>? Participations { get; set; } = default!;
 
     /// <summary>
     /// Text summaries for reference
@@ -869,14 +837,6 @@ public partial class RestoreFromArchiveResponse
 {
 
     /// <summary>
-    /// Realm data was restored for
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
     /// Number of lore elements restored
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loreRestored")]
@@ -887,18 +847,6 @@ public partial class RestoreFromArchiveResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("participationsRestored")]
     public int ParticipationsRestored { get; set; } = default!;
-
-    /// <summary>
-    /// Whether restoration completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
-    /// Error details if restoration failed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
-    public string? ErrorMessage { get; set; } = default!;
 
 }
 

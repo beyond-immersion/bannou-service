@@ -38,7 +38,8 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Template created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorTemplateResponse>> CreateActorTemplateAsync(CreateActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorTemplateResponse>> CreateActorTemplate(CreateActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get an actor template by ID or category
@@ -47,7 +48,8 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Template retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorTemplateResponse>> GetActorTemplateAsync(GetActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorTemplateResponse>> GetActorTemplate(GetActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all actor templates
@@ -56,7 +58,8 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Templates listed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListActorTemplatesResponse>> ListActorTemplatesAsync(ListActorTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListActorTemplatesResponse>> ListActorTemplates(ListActorTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update an actor template
@@ -65,7 +68,8 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Template updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorTemplateResponse>> UpdateActorTemplateAsync(UpdateActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorTemplateResponse>> UpdateActorTemplate(UpdateActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete an actor template
@@ -74,7 +78,8 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Template deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteActorTemplateResponse>> DeleteActorTemplateAsync(DeleteActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteActorTemplateResponse>> DeleteActorTemplate(DeleteActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Spawn a new actor from a template
@@ -83,7 +88,8 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Actor spawned successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorInstanceResponse>> SpawnActorAsync(SpawnActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorInstanceResponse>> SpawnActor(SpawnActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get actor instance (instantiate-on-access if template allows)
@@ -95,9 +101,12 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>instantiates the actor and returns it.
     /// </remarks>
 
+
+
     /// <returns>Actor retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorInstanceResponse>> GetActorAsync(GetActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorInstanceResponse>> GetActor(GetActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Stop a running actor
@@ -106,7 +115,8 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Actor stopped successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StopActorResponse>> StopActorAsync(StopActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StopActorResponse>> StopActor(StopActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bind an unbound actor to a character
@@ -119,9 +129,12 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Fails if the actor is already bound to a character.
     /// </remarks>
 
+
+
     /// <returns>Actor bound to character successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorInstanceResponse>> BindActorCharacterAsync(BindActorCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorInstanceResponse>> BindActorCharacter(BindActorCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup actors referencing a deleted character
@@ -134,9 +147,12 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>cascading resource cleanup.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List actors with optional filters
@@ -145,7 +161,8 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Actors listed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListActorsResponse>> ListActorsAsync(ListActorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListActorsResponse>> ListActors(ListActorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Inject a perception event into an actor's queue (testing)
@@ -157,9 +174,12 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>full game server setup.
     /// </remarks>
 
+
+
     /// <returns>Perception injected successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InjectPerceptionResponse>> InjectPerceptionAsync(InjectPerceptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InjectPerceptionResponse>> InjectPerception(InjectPerceptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query an actor for its available options
@@ -177,9 +197,12 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>- stale_ok: Return cached options regardless of age
     /// </remarks>
 
+
+
     /// <returns>Options retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryOptionsResponse>> QueryOptionsAsync(QueryOptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryOptionsResponse>> QueryOptions(QueryOptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Start an encounter managed by an Event Brain actor
@@ -191,9 +214,12 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>via their character perception channels.
     /// </remarks>
 
+
+
     /// <returns>Encounter started successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartEncounterResponse>> StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartEncounterResponse>> StartEncounter(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update the phase of an active encounter
@@ -204,9 +230,12 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Phase changes are logged and can trigger behavior changes in participant actors.
     /// </remarks>
 
+
+
     /// <returns>Encounter phase updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateEncounterPhaseResponse>> UpdateEncounterPhaseAsync(UpdateEncounterPhaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateEncounterPhaseResponse>> UpdateEncounterPhase(UpdateEncounterPhaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// End an active encounter
@@ -217,9 +246,12 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>encounter state and allows the actor to manage a new encounter.
     /// </remarks>
 
+
+
     /// <returns>Encounter ended successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EndEncounterResponse>> EndEncounterAsync(EndEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EndEncounterResponse>> EndEncounter(EndEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get the current encounter state for an actor
@@ -230,15 +262,18 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>null encounter data if the actor is not managing an encounter.
     /// </remarks>
 
+
+
     /// <returns>Encounter state retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEncounterResponse>> GetEncounterAsync(GetEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEncounterResponse>> GetEncounter(GetEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IActorService))]
+public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase, IActorController
 {
     private IActorService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

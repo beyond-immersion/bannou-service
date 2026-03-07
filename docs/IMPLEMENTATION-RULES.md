@@ -213,3 +213,19 @@ For services handling multiple entity types:
 Decision tree: If the valid set of types is the same as `EntityType` values, use `EntityType`. If the valid set includes non-entity roles or game-specific codes, define a service-specific enum or use opaque strings.
 
 **See**: IMPLEMENTATION TENETS in `tenets/IMPLEMENTATION-DATA.md`
+
+---
+
+## 15. Endpoint Permissions
+
+Every endpoint MUST declare `x-permissions` in the schema. The permission level determines who can call the endpoint via WebSocket — it is not optional and there are no defaults.
+
+Seven levels: Pre-Auth Public (`role: anonymous`), Authenticated User (`role: user`), State-Gated User (`role: user` + `states`), Developer (`role: developer`), Admin (`role: admin`), Service-to-Service (`[]`), and Browser-Facing (T15 exception).
+
+Key rules:
+- **Default to `[]`** (service-to-service) — add a role only when you have a concrete WebSocket use case
+- **State-gate session-like contexts** using the Entry/Context/Exit pattern (entry = `role: user`, in-context = `role: user` + states, exit = `role: user` + states)
+- **Never use `role: admin` when you mean `[]`** — admin means a human administrator with a WebSocket session; `[]` means automated service-to-service access
+- **Each endpoint gets its own permission level** — independent of other endpoints on the same service
+
+**See**: [ENDPOINT-PERMISSION-GUIDELINES.md](reference/ENDPOINT-PERMISSION-GUIDELINES.md) for the complete decision framework, and FOUNDATION TENETS T13 in `tenets/FOUNDATION.md`

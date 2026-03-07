@@ -188,19 +188,16 @@ export class SceneProxy {
    * Release lock without saving changes
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
+   * @returns Promise that completes when the event is sent.
    */
-  async sceneDiscardCheckoutAsync(
+  async sceneDiscardCheckoutEventAsync(
     request: Schemas['DiscardRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['DiscardResponse']>> {
-    return this.client.invokeAsync<Schemas['DiscardRequest'], Schemas['DiscardResponse']>(
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['DiscardRequest']>(
       '/scene/discard',
       request,
-      channel,
-      timeout
+      channel
     );
   }
 

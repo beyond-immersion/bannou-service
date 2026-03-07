@@ -39,9 +39,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Registers a new room type definition. Room types are a dynamic registry of string codes. Built-in types (text, sentiment, emoji) are pre-registered on startup. Custom types are added via this endpoint. Returns conflict if code already exists for the given game service scope.
     /// </remarks>
 
+
+
     /// <returns>Room type registered successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> RegisterRoomTypeAsync(RegisterRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> RegisterRoomType(RegisterRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get room type by code
@@ -51,9 +54,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns the room type definition for the specified code and optional game service scope.
     /// </remarks>
 
+
+
     /// <returns>Room type found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> GetRoomTypeAsync(GetRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> GetRoomType(GetRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List room types with filters
@@ -63,9 +69,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns room types matching the specified filters with pagination.
     /// </remarks>
 
+
+
     /// <returns>Room types returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRoomTypesResponse>> ListRoomTypesAsync(ListRoomTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRoomTypesResponse>> ListRoomTypes(ListRoomTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a room type definition
@@ -75,9 +84,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Updates mutable fields of a room type definition. Cannot change code or message format.
     /// </remarks>
 
+
+
     /// <returns>Room type updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> UpdateRoomTypeAsync(UpdateRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> UpdateRoomType(UpdateRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Soft-deprecate a room type
@@ -87,9 +99,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Sets the room type status to Deprecated. Existing rooms continue to work but no new rooms can be created with this type.
     /// </remarks>
 
+
+
     /// <returns>Room type deprecated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> DeprecateRoomTypeAsync(DeprecateRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> DeprecateRoomType(DeprecateRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a chat room
@@ -99,9 +114,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Creates a new chat room of the specified type. Optionally associates a governing contract that drives room lifecycle (lock, archive, delete) on contract state changes.
     /// </remarks>
 
+
+
     /// <returns>Room created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> CreateRoomAsync(CreateRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> CreateRoom(CreateRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get room by ID
@@ -111,9 +129,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns the chat room metadata for the specified room ID.
     /// </remarks>
 
+
+
     /// <returns>Room found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> GetRoomAsync(GetRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> GetRoom(GetRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List rooms with filters
@@ -123,9 +144,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns rooms matching the specified filters with pagination.
     /// </remarks>
 
+
+
     /// <returns>Rooms returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRoomsResponse>> ListRoomsAsync(ListRoomsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRoomsResponse>> ListRooms(ListRoomsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update room settings
@@ -135,9 +159,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Updates mutable room settings. Caller must be the room owner.
     /// </remarks>
 
+
+
     /// <returns>Room updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> UpdateRoomAsync(UpdateRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> UpdateRoom(UpdateRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a room
@@ -147,9 +174,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Deletes a room, removing all participants and messages. Caller must be the room owner or the room must be empty.
     /// </remarks>
 
+
+
     /// <returns>Room deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> DeleteRoomAsync(DeleteRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> DeleteRoom(DeleteRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Archive a room to Resource
@@ -159,9 +189,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Archives a persistent room via lib-resource, preserving message history and metadata. Room is marked as archived after successful archival.
     /// </remarks>
 
+
+
     /// <returns>Room archived</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> ArchiveRoomAsync(ArchiveRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> ArchiveRoom(ArchiveRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Join a chat room
@@ -171,9 +204,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Joins the caller to the specified room. For companion rooms in AutoJoinLazy or Manual mode, the room is created on-the-fly if it does not yet exist. Returns conflict if the room is full or forbidden if the caller is banned.
     /// </remarks>
 
+
+
     /// <returns>Joined room</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> JoinRoomAsync(JoinRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> JoinRoom(JoinRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Leave a chat room
@@ -183,9 +219,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Removes the caller from the room. If the owner leaves, promotes the next moderator or oldest member.
     /// </remarks>
 
+
+
     /// <returns>Left room</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> LeaveRoomAsync(LeaveRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> LeaveRoom(LeaveRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List room participants
@@ -195,9 +234,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns all current participants in the room with their roles and status.
     /// </remarks>
 
+
+
     /// <returns>Participants returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ParticipantsResponse>> ListParticipantsAsync(ListParticipantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ParticipantsResponse>> ListParticipants(ListParticipantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove a participant from the room
@@ -207,9 +249,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Kicks a participant from the room. Caller must be Owner or Moderator with higher role than target.
     /// </remarks>
 
+
+
     /// <returns>Participant kicked</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> KickParticipantAsync(KickParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> KickParticipant(KickParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Ban a participant from the room
@@ -219,9 +264,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Bans a participant. If currently in the room, they are kicked first. Optionally set a duration; null means permanent.
     /// </remarks>
 
+
+
     /// <returns>Participant banned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> BanParticipantAsync(BanParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> BanParticipant(BanParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Unban a participant
@@ -231,9 +279,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Removes a ban record for a participant. Caller must be Owner or Moderator.
     /// </remarks>
 
+
+
     /// <returns>Participant unbanned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> UnbanParticipantAsync(UnbanParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> UnbanParticipant(UnbanParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Mute a participant
@@ -243,9 +294,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Mutes a participant, preventing them from sending messages. Optionally set a duration; null means permanent.
     /// </remarks>
 
+
+
     /// <returns>Participant muted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> MuteParticipantAsync(MuteParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> MuteParticipant(MuteParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Unmute a participant
@@ -255,9 +309,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Removes a mute from a participant, allowing them to send messages again. Caller must be Owner or Moderator.
     /// </remarks>
 
+
+
     /// <returns>Participant unmuted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> UnmuteParticipantAsync(UnmuteParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> UnmuteParticipant(UnmuteParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Change a participant's role
@@ -267,9 +324,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Changes a participant's role within a chat room. Only the room Owner can change roles. Cannot change own role or promote to Owner (ownership transfer happens automatically when the owner leaves via LeaveRoom).
     /// </remarks>
 
+
+
     /// <returns>Role changed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> ChangeParticipantRoleAsync(ChangeParticipantRoleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> ChangeParticipantRole(ChangeParticipantRoleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Send a message to a room
@@ -279,9 +339,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Sends a message to the specified room. Content is validated against the room type's message format and validator config. For AutoJoinLazy companion rooms, the room is created and the sender auto-joined if the room does not yet exist.
     /// </remarks>
 
+
+
     /// <returns>Message sent</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> SendMessageAsync(SendMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> SendMessage(SendMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Send multiple messages
@@ -291,9 +354,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Sends multiple messages to a room atomically. Intended for bulk sentiment pushes from higher-layer services.
     /// </remarks>
 
+
+
     /// <returns>Messages sent</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SendMessageBatchResponse>> SendMessageBatchAsync(SendMessageBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SendMessageBatchResponse>> SendMessageBatch(SendMessageBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get message history
@@ -303,9 +369,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns paginated message history for a room, ordered by timestamp descending. Uses cursor-based pagination.
     /// </remarks>
 
+
+
     /// <returns>Messages returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MessageHistoryResponse>> GetMessageHistoryAsync(MessageHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MessageHistoryResponse>> GetMessageHistory(MessageHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a message
@@ -315,9 +384,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Deletes a specific message. Caller must be the message sender, room Owner, or Moderator.
     /// </remarks>
 
+
+
     /// <returns>Message deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> DeleteMessageAsync(DeleteMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> DeleteMessage(DeleteMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Pin a message
@@ -327,9 +399,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Pins a message in the room. Caller must be Owner or Moderator. Returns conflict if max pinned messages reached.
     /// </remarks>
 
+
+
     /// <returns>Message pinned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> PinMessageAsync(PinMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> PinMessage(PinMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Unpin a message
@@ -339,9 +414,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Unpins a previously pinned message. Caller must be Owner or Moderator.
     /// </remarks>
 
+
+
     /// <returns>Message unpinned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> UnpinMessageAsync(UnpinMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> UnpinMessage(UnpinMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Full-text search in persistent rooms
@@ -351,9 +429,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Searches message content in persistent rooms using MySQL full-text search. Not available for ephemeral rooms.
     /// </remarks>
 
+
+
     /// <returns>Search results returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SearchMessagesResponse>> SearchMessagesAsync(SearchMessagesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SearchMessagesResponse>> SearchMessages(SearchMessagesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all rooms system-wide
@@ -363,9 +444,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns all rooms across the system for administrative purposes. Supports filtering by status and type.
     /// </remarks>
 
+
+
     /// <returns>Rooms returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRoomsResponse>> AdminListRoomsAsync(AdminListRoomsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRoomsResponse>> AdminListRooms(AdminListRoomsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Room and message statistics
@@ -375,9 +459,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Returns system-wide chat statistics for monitoring and debugging.
     /// </remarks>
 
+
+
     /// <returns>Statistics returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminStatsResponse>> AdminGetStatsAsync(AdminGetStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminStatsResponse>> AdminGetStats(AdminGetStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Force cleanup of idle rooms
@@ -387,9 +474,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Triggers an immediate idle room cleanup cycle, bypassing the normal interval.
     /// </remarks>
 
+
+
     /// <returns>Cleanup executed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminCleanupResponse>> AdminForceCleanupAsync(AdminForceCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminCleanupResponse>> AdminForceCleanup(AdminForceCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Signal typing activity
@@ -399,9 +489,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Records that the caller is actively typing in the specified room. Automatically expires after TypingTimeoutSeconds if not refreshed. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.
     /// </remarks>
 
+
+
     /// <returns>Typing state recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TypingAsync(TypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Typing(TypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Signal typing stopped
@@ -411,15 +504,18 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     /// Immediately clears the caller's typing state in the specified room. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.
     /// </remarks>
 
+
+
     /// <returns>Typing state cleared</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EndTypingAsync(EndTypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EndTyping(EndTypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IChatService))]
+public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase, IChatController
 {
     private IChatService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

@@ -41,9 +41,12 @@ public interface IAnalyticsController : BeyondImmersion.BannouService.Controller
     /// <br/>Service-only endpoint - not exposed to clients.
     /// </remarks>
 
+
+
     /// <returns>Event ingested successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<IngestEventResponse>> IngestEventAsync(IngestEventRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<IngestEventResponse>> IngestEvent(IngestEventRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Ingest multiple analytics events
@@ -54,9 +57,12 @@ public interface IAnalyticsController : BeyondImmersion.BannouService.Controller
     /// <br/>Service-only endpoint - not exposed to clients.
     /// </remarks>
 
+
+
     /// <returns>Events ingested successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<IngestEventBatchResponse>> IngestEventBatchAsync(IngestEventBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<IngestEventBatchResponse>> IngestEventBatch(IngestEventBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get entity statistics summary
@@ -67,9 +73,12 @@ public interface IAnalyticsController : BeyondImmersion.BannouService.Controller
     /// <br/>averages, and derived metrics computed from ingested events.
     /// </remarks>
 
+
+
     /// <returns>Entity summary retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntitySummaryResponse>> GetEntitySummaryAsync(GetEntitySummaryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntitySummaryResponse>> GetEntitySummary(GetEntitySummaryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query entity summaries with filters
@@ -80,9 +89,12 @@ public interface IAnalyticsController : BeyondImmersion.BannouService.Controller
     /// <br/>Useful for dashboards and reporting.
     /// </remarks>
 
+
+
     /// <returns>Query executed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryEntitySummariesResponse>> QueryEntitySummariesAsync(QueryEntitySummariesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryEntitySummariesResponse>> QueryEntitySummaries(QueryEntitySummariesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get entity Glicko-2 skill rating
@@ -93,9 +105,12 @@ public interface IAnalyticsController : BeyondImmersion.BannouService.Controller
     /// <br/>Returns rating, rating deviation (RD), and volatility.
     /// </remarks>
 
+
+
     /// <returns>Skill rating retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SkillRatingResponse>> GetSkillRatingAsync(GetSkillRatingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SkillRatingResponse>> GetSkillRating(GetSkillRatingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update entity skill rating after match
@@ -107,9 +122,12 @@ public interface IAnalyticsController : BeyondImmersion.BannouService.Controller
     /// <br/>Service-only endpoint - typically called by game-session service.
     /// </remarks>
 
+
+
     /// <returns>Skill ratings updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateSkillRatingResponse>> UpdateSkillRatingAsync(UpdateSkillRatingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateSkillRatingResponse>> UpdateSkillRating(UpdateSkillRatingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Record controller possession event
@@ -121,9 +139,12 @@ public interface IAnalyticsController : BeyondImmersion.BannouService.Controller
     /// <br/>Service-only endpoint.
     /// </remarks>
 
+
+
     /// <returns>Controller event recorded successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RecordControllerEventAsync(RecordControllerEventRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RecordControllerEvent(RecordControllerEventRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query controller history
@@ -134,9 +155,12 @@ public interface IAnalyticsController : BeyondImmersion.BannouService.Controller
     /// <br/>Useful for audit trails and replays.
     /// </remarks>
 
+
+
     /// <returns>Controller history retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryControllerHistoryResponse>> QueryControllerHistoryAsync(QueryControllerHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryControllerHistoryResponse>> QueryControllerHistory(QueryControllerHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup expired controller history
@@ -147,15 +171,18 @@ public interface IAnalyticsController : BeyondImmersion.BannouService.Controller
     /// <br/>Runs in batches to avoid overwhelming the database. Returns count of deleted records.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupControllerHistoryResponse>> CleanupControllerHistoryAsync(CleanupControllerHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupControllerHistoryResponse>> CleanupControllerHistory(CleanupControllerHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IAnalyticsService))]
+public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBase, IAnalyticsController
 {
     private IAnalyticsService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

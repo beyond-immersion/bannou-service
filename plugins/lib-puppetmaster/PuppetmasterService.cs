@@ -104,7 +104,7 @@ public partial class PuppetmasterService : IPuppetmasterService
     /// <param name="body">Status request (currently empty, reserved for future filters).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Service status response.</returns>
-    public Task<(StatusCodes, PuppetmasterStatusResponse?)> GetStatusAsync(
+    public async Task<(StatusCodes, PuppetmasterStatusResponse?)> GetStatusAsync(
         GetStatusRequest body,
         CancellationToken cancellationToken)
     {
@@ -113,11 +113,11 @@ public partial class PuppetmasterService : IPuppetmasterService
         var response = new PuppetmasterStatusResponse
         {
             CachedBehaviorCount = _behaviorCache.CachedCount,
-            ActiveWatcherCount = _activeWatchers.Count,
-            IsHealthy = true
+            ActiveWatcherCount = _activeWatchers.Count
         };
 
-        return Task.FromResult<(StatusCodes, PuppetmasterStatusResponse?)>((StatusCodes.OK, response));
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -170,7 +170,7 @@ public partial class PuppetmasterService : IPuppetmasterService
     /// <param name="body">List request with optional realm filter.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of active watchers.</returns>
-    public Task<(StatusCodes, ListWatchersResponse?)> ListWatchersAsync(
+    public async Task<(StatusCodes, ListWatchersResponse?)> ListWatchersAsync(
         ListWatchersRequest body,
         CancellationToken cancellationToken)
     {
@@ -185,7 +185,8 @@ public partial class PuppetmasterService : IPuppetmasterService
             Watchers = watchers
         };
 
-        return Task.FromResult<(StatusCodes, ListWatchersResponse?)>((StatusCodes.OK, response));
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -282,7 +283,7 @@ public partial class PuppetmasterService : IPuppetmasterService
         if (!_activeWatchers.TryRemove(body.WatcherId, out var watcher))
         {
             _logger.LogWarning("Watcher {WatcherId} not found", body.WatcherId);
-            return (StatusCodes.OK, new StopWatcherResponse { Stopped = false });
+            return (StatusCodes.NotFound, null);
         }
 
         // Remove from realm/type index
@@ -310,7 +311,7 @@ public partial class PuppetmasterService : IPuppetmasterService
             watcher.RealmId,
             watcher.WatcherType);
 
-        return (StatusCodes.OK, new StopWatcherResponse { Stopped = true });
+        return (StatusCodes.OK, new StopWatcherResponse());
     }
 
     /// <summary>

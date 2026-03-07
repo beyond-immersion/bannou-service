@@ -421,7 +421,7 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
                     if (status_ == 409)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Participation already recorded for this realm and event", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Failed to acquire distributed lock for participation recording", status_, responseText_, headers_, null);
                     }
                     else
                     {

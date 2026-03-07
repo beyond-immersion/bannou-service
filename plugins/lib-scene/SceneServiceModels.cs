@@ -73,7 +73,7 @@ internal class SceneContentEntry
     public Guid SceneId { get; set; }
     public string Version { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
-    public long UpdatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 }
 
 /// <summary>

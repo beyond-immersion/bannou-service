@@ -78,10 +78,12 @@ public class AccountServiceTests
         // Act
         var endpoints = AccountPermissionRegistration.GetEndpoints();
 
-        // Assert
+        // Assert - Only endpoints with non-empty x-permissions (WebSocket-exposed) are registered.
+        // Most account endpoints have x-permissions: [] (service-to-service only via lib-mesh).
+        // 3 endpoints have role requirements: listAccounts (admin), updateProfile (user), bulkUpdateRoles (admin)
         Assert.NotNull(endpoints);
         Assert.NotEmpty(endpoints);
-        Assert.Equal(18, endpoints.Count); // 16 endpoints defined in account-api.yaml with x-permissions
+        Assert.Equal(3, endpoints.Count);
     }
 
     [Fact]
@@ -105,13 +107,13 @@ public class AccountServiceTests
         // Act
         var endpoints = AccountPermissionRegistration.GetEndpoints();
 
-        // Assert - All account endpoints should require user or admin (no anonymous/service)
+        // Assert - All WebSocket-exposed account endpoints require user or admin
         var guardedEndpoints = endpoints.Where(e =>
             e.Permissions.All(p => p.Role == "user" || p.Role == "admin")).ToList();
 
-        Assert.Equal(18, guardedEndpoints.Count);
-        Assert.Equal(14, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "admin")));
-        Assert.Equal(4, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "user")));
+        Assert.Equal(3, guardedEndpoints.Count);
+        Assert.Equal(2, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "admin")));
+        Assert.Equal(1, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "user")));
     }
 
     [Fact]

@@ -1,5 +1,7 @@
 # Compression Gameplay Patterns: Visual Guide
 
+> ⛔ **FROZEN DOCUMENT** — Defines an authoritative reference. AI agents MUST NOT modify any content without explicit user instruction. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > Quick reference charts for explaining what character compression enables.
 > See `COMPRESSION-GAMEPLAY-PATTERNS.md` for full design details.
 

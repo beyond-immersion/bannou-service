@@ -83,6 +83,7 @@ public partial class StatusEffectChangedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("statusTemplateCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128)]
     public string StatusTemplateCode { get; set; } = default!;
 
     /// <summary>

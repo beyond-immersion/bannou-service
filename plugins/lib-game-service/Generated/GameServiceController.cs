@@ -39,9 +39,12 @@ public interface IGameServiceController : BeyondImmersion.BannouService.Controll
     /// Returns all game services, optionally filtered by active status.
     /// </remarks>
 
+
+
     /// <returns>Services retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListServicesResponse>> ListServicesAsync(ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListServicesResponse>> ListServices(ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get service by ID or stub name
@@ -51,9 +54,12 @@ public interface IGameServiceController : BeyondImmersion.BannouService.Controll
     /// Retrieves a single service by either serviceId (GUID) or stubName.
     /// </remarks>
 
+
+
     /// <returns>Service retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceInfo>> GetServiceAsync(GetServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceInfo>> GetService(GetServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a new game service entry
@@ -63,9 +69,12 @@ public interface IGameServiceController : BeyondImmersion.BannouService.Controll
     /// Admin-only endpoint to register a new game service in the registry.
     /// </remarks>
 
+
+
     /// <returns>Service created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceInfo>> CreateServiceAsync(CreateServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceInfo>> CreateService(CreateServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a game service entry
@@ -75,9 +84,12 @@ public interface IGameServiceController : BeyondImmersion.BannouService.Controll
     /// Admin-only endpoint to update an existing game service.
     /// </remarks>
 
+
+
     /// <returns>Service updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceInfo>> UpdateServiceAsync(UpdateServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceInfo>> UpdateService(UpdateServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a game service entry
@@ -87,15 +99,18 @@ public interface IGameServiceController : BeyondImmersion.BannouService.Controll
     /// Admin-only endpoint to remove a game service from the registry.
     /// </remarks>
 
+
+
     /// <returns>Service deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteServiceAsync(DeleteServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteService(DeleteServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class GameServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IGameServiceService))]
+public partial class GameServiceController : Microsoft.AspNetCore.Mvc.ControllerBase, IGameServiceController
 {
     private IGameServiceService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

@@ -133,6 +133,59 @@ export class StatusProxy {
   }
 
   /**
+   * Deprecate a status template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async statusDeprecateStatusTemplateAsync(
+    request: Schemas['DeprecateStatusTemplateRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['StatusTemplateResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeprecateStatusTemplateRequest'],
+      Schemas['StatusTemplateResponse']
+    >('/status/template/deprecate', request, channel, timeout);
+  }
+
+  /**
+   * Undeprecate a status template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async statusUndeprecateStatusTemplateAsync(
+    request: Schemas['UndeprecateStatusTemplateRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['StatusTemplateResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['UndeprecateStatusTemplateRequest'],
+      Schemas['StatusTemplateResponse']
+    >('/status/template/undeprecate', request, channel, timeout);
+  }
+
+  /**
+   * Delete a deprecated status template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async statusDeleteStatusTemplateEventAsync(
+    request: Schemas['DeleteStatusTemplateRequest'],
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['DeleteStatusTemplateRequest']>(
+      '/status/template/delete',
+      request,
+      channel
+    );
+  }
+
+  /**
    * Grant a status effect to an entity
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -302,25 +355,5 @@ export class StatusProxy {
       Schemas['GetSeedEffectsRequest'],
       Schemas['SeedEffectsResponse']
     >('/status/effects/get-seed', request, channel, timeout);
-  }
-
-  /**
-   * Remove all statuses and containers for an owner
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async statusCleanupByOwnerAsync(
-    request: Schemas['CleanupByOwnerRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['CleanupResponse']>> {
-    return this.client.invokeAsync<Schemas['CleanupByOwnerRequest'], Schemas['CleanupResponse']>(
-      '/status/cleanup-by-owner',
-      request,
-      channel,
-      timeout
-    );
   }
 }

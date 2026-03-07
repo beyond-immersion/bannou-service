@@ -55,12 +55,14 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Maximum size for a single save in bytes (default 100MB)
     /// Environment variable: SAVE_LOAD_MAX_SAVE_SIZE_BYTES
     /// </summary>
+    [ConfigRange(Minimum = 1024, Maximum = 1073741824)]
     public long MaxSaveSizeBytes { get; set; } = 104857600L;
 
     /// <summary>
     /// Auto-compress saves larger than this (default 1MB)
     /// Environment variable: SAVE_LOAD_AUTO_COMPRESS_THRESHOLD_BYTES
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 1073741824)]
     public long AutoCompressThresholdBytes { get; set; } = 1048576L;
 
     /// <summary>
@@ -73,6 +75,7 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// TTL for hot cache entries in minutes
     /// Environment variable: SAVE_LOAD_HOT_CACHE_TTL_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10080)]
     public int HotCacheTtlMinutes { get; set; } = 60;
 
     /// <summary>
@@ -85,42 +88,49 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Default max versions for QUICK_SAVE category
     /// Environment variable: SAVE_LOAD_DEFAULT_MAX_VERSIONS_QUICK_SAVE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int DefaultMaxVersionsQuickSave { get; set; } = 1;
 
     /// <summary>
     /// Default max versions for AUTO_SAVE category
     /// Environment variable: SAVE_LOAD_DEFAULT_MAX_VERSIONS_AUTO_SAVE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int DefaultMaxVersionsAutoSave { get; set; } = 5;
 
     /// <summary>
     /// Default max versions for MANUAL_SAVE category
     /// Environment variable: SAVE_LOAD_DEFAULT_MAX_VERSIONS_MANUAL_SAVE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int DefaultMaxVersionsManualSave { get; set; } = 10;
 
     /// <summary>
     /// Default max versions for CHECKPOINT category
     /// Environment variable: SAVE_LOAD_DEFAULT_MAX_VERSIONS_CHECKPOINT
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int DefaultMaxVersionsCheckpoint { get; set; } = 20;
 
     /// <summary>
     /// Default max versions for STATE_SNAPSHOT category
     /// Environment variable: SAVE_LOAD_DEFAULT_MAX_VERSIONS_STATE_SNAPSHOT
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int DefaultMaxVersionsStateSnapshot { get; set; } = 3;
 
     /// <summary>
     /// Interval for automatic cleanup task
     /// Environment variable: SAVE_LOAD_CLEANUP_INTERVAL_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
     public int CleanupIntervalMinutes { get; set; } = 60;
 
     /// <summary>
     /// Delay in seconds before cleanup service starts processing
     /// Environment variable: SAVE_LOAD_CLEANUP_STARTUP_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
     public int CleanupStartupDelaySeconds { get; set; } = 30;
 
     /// <summary>
@@ -133,6 +143,7 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Grace period before cleaning up SESSION-owned saves after session ends. Allows other services to copy/promote saves to longer-term storage.
     /// Environment variable: SAVE_LOAD_SESSION_CLEANUP_GRACE_PERIOD_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 60)]
     public int SessionCleanupGracePeriodMinutes { get; set; } = 5;
 
     /// <summary>
@@ -145,24 +156,28 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Maximum JSON Patch operations per migration (safety limit)
     /// Environment variable: SAVE_LOAD_MIGRATION_MAX_PATCH_OPERATIONS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MigrationMaxPatchOperations { get; set; } = 1000;
 
     /// <summary>
     /// Maximum save slots per owner entity
     /// Environment variable: SAVE_LOAD_MAX_SLOTS_PER_OWNER
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MaxSlotsPerOwner { get; set; } = 100;
 
     /// <summary>
     /// Rate limit - maximum saves per owner per minute
     /// Environment variable: SAVE_LOAD_MAX_SAVES_PER_MINUTE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
     public int MaxSavesPerMinute { get; set; } = 10;
 
     /// <summary>
     /// Maximum total storage per owner (default 1GB)
     /// Environment variable: SAVE_LOAD_MAX_TOTAL_SIZE_BYTES_PER_OWNER
     /// </summary>
+    [ConfigRange(Minimum = 1048576, Maximum = 10737418240)]
     public long MaxTotalSizeBytesPerOwner { get; set; } = 1073741824L;
 
     /// <summary>
@@ -189,6 +204,7 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Maximum thumbnail size in bytes (default 256KB)
     /// Environment variable: SAVE_LOAD_THUMBNAIL_MAX_SIZE_BYTES
     /// </summary>
+    [ConfigRange(Minimum = 1024, Maximum = 10485760)]
     public int ThumbnailMaxSizeBytes { get; set; } = 262144;
 
     /// <summary>
@@ -213,6 +229,7 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Maximum number of deltas before forcing collapse. Longer chains increase load latency.
     /// Environment variable: SAVE_LOAD_MAX_DELTA_CHAIN_LENGTH
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int MaxDeltaChainLength { get; set; } = 10;
 
     /// <summary>
@@ -225,12 +242,14 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// If delta is larger than this percent of full save, store as full instead. Avoids storing deltas that dont provide meaningful savings.
     /// Environment variable: SAVE_LOAD_DELTA_SIZE_THRESHOLD_PERCENT
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int DeltaSizeThresholdPercent { get; set; } = 50;
 
     /// <summary>
     /// Minimum base save size in bytes before applying delta threshold logic (1KB default)
     /// Environment variable: SAVE_LOAD_MIN_BASE_SIZE_FOR_DELTA_THRESHOLD_BYTES
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 104857600)]
     public int MinBaseSizeForDeltaThresholdBytes { get; set; } = 1024;
 
     /// <summary>
@@ -243,7 +262,15 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Time window for considering saves as potentially conflicting. Saves from different devices within this window trigger conflict flag.
     /// Environment variable: SAVE_LOAD_CONFLICT_DETECTION_WINDOW_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
     public int ConflictDetectionWindowMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Delay in seconds before upload worker starts processing. Allows other services to initialize first.
+    /// Environment variable: SAVE_LOAD_UPLOAD_WORKER_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
+    public int UploadWorkerStartupDelaySeconds { get; set; } = 5;
 
     /// <summary>
     /// Queue uploads to MinIO/S3 instead of synchronous write. Save is acknowledged immediately when data is stored in Redis pending queue. Background worker uploads asynchronously.
@@ -255,36 +282,42 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// TTL for pending uploads in Redis. If upload fails repeatedly, entry expires and save is considered failed (event published).
     /// Environment variable: SAVE_LOAD_PENDING_UPLOAD_TTL_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 10080)]
     public int PendingUploadTtlMinutes { get; set; } = 60;
 
     /// <summary>
     /// Maximum concurrent uploads to storage backend (semaphore). Prevents overwhelming MinIO/S3 during traffic spikes.
     /// Environment variable: SAVE_LOAD_MAX_CONCURRENT_UPLOADS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int MaxConcurrentUploads { get; set; } = 10;
 
     /// <summary>
     /// Number of pending uploads to process per batch cycle
     /// Environment variable: SAVE_LOAD_UPLOAD_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 50)]
     public int UploadBatchSize { get; set; } = 5;
 
     /// <summary>
     /// Interval between upload batch processing cycles
     /// Environment variable: SAVE_LOAD_UPLOAD_BATCH_INTERVAL_MS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 60000)]
     public int UploadBatchIntervalMs { get; set; } = 100;
 
     /// <summary>
     /// Number of retry attempts for failed uploads before giving up
     /// Environment variable: SAVE_LOAD_UPLOAD_RETRY_ATTEMPTS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 10)]
     public int UploadRetryAttempts { get; set; } = 3;
 
     /// <summary>
     /// Base delay between retry attempts (exponential backoff applied)
     /// Environment variable: SAVE_LOAD_UPLOAD_RETRY_DELAY_MS
     /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 60000)]
     public int UploadRetryDelayMs { get; set; } = 1000;
 
     /// <summary>
@@ -297,18 +330,21 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Number of consecutive failures before circuit opens
     /// Environment variable: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_THRESHOLD
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int StorageCircuitBreakerThreshold { get; set; } = 5;
 
     /// <summary>
     /// Seconds before attempting to close circuit (half-open state)
     /// Environment variable: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_RESET_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 3600)]
     public int StorageCircuitBreakerResetSeconds { get; set; } = 30;
 
     /// <summary>
     /// Successful uploads needed in half-open state to close circuit
     /// Environment variable: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_HALF_OPEN_ATTEMPTS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
     public int StorageCircuitBreakerHalfOpenAttempts { get; set; } = 2;
 
 }

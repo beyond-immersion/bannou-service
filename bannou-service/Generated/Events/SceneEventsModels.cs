@@ -37,8 +37,24 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SceneInstantiatedEvent : BaseServiceEvent
+public partial class SceneInstantiatedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// Event timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Unique instance identifier (caller-provided)
@@ -123,8 +139,24 @@ public partial class SceneInstantiatedEvent : BaseServiceEvent
 /// Published when a scene instance is removed from the game world
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SceneDestroyedEvent : BaseServiceEvent
+public partial class SceneDestroyedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// Event timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Instance that was destroyed
@@ -164,8 +196,24 @@ public partial class SceneDestroyedEvent : BaseServiceEvent
 /// Published when a scene is locked for editing
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SceneCheckedOutEvent : BaseServiceEvent
+public partial class SceneCheckedOutEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// Event timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// ID of the scene being edited
@@ -220,8 +268,24 @@ public partial class SceneCheckedOutEvent : BaseServiceEvent
 /// Published when checkout changes are committed
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SceneCommittedEvent : BaseServiceEvent
+public partial class SceneCommittedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// Event timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// ID of the committed scene
@@ -294,8 +358,24 @@ public partial class SceneCommittedEvent : BaseServiceEvent
 /// Published when a checkout is discarded without saving
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SceneCheckoutDiscardedEvent : BaseServiceEvent
+public partial class SceneCheckoutDiscardedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// Event timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// ID of the scene
@@ -339,64 +419,27 @@ public partial class SceneCheckoutDiscardedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published when a checkout lock expires due to TTL
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SceneCheckoutExpiredEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// ID of the scene
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sceneId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SceneId { get; set; } = default!;
-
-    /// <summary>
-    /// Name of the scene
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sceneName")]
-    public string? SceneName { get; set; } = default!;
-
-    /// <summary>
-    /// Game ID of the scene
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    public string? GameId { get; set; } = default!;
-
-    /// <summary>
-    /// When the lock actually expired
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("expiredAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset ExpiredAt { get; set; } = default!;
-
-    /// <summary>
-    /// Type of editor that originally checked out the scene
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("originalCheckoutByType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SceneEditorType? OriginalCheckoutByType { get; set; } = default!;
-
-    /// <summary>
-    /// Editor identifier of who originally checked out the scene.
-    /// <br/>For Session type: the WebSocket session ID (UUID format).
-    /// <br/>For Service type: the app-id or service name.
-    /// <br/>
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("originalCheckoutById")]
-    public string? OriginalCheckoutById { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published when validation rules are registered or updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SceneValidationRulesUpdatedEvent : BaseServiceEvent
+public partial class SceneValidationRulesUpdatedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// Event timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Game ID for the rules
@@ -426,86 +469,6 @@ public partial class SceneValidationRulesUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedBy")]
     public string? UpdatedBy { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Reason why a scene reference became broken
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum BrokenReferenceReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Deleted")]
-    Deleted = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AccessRevoked")]
-    AccessRevoked = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Corrupted")]
-    Corrupted = 2,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Published when a referenced scene becomes unavailable.
-/// <br/>This is an edge case event - normally deletion is blocked if references exist.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SceneReferenceBrokenEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Scene containing the broken reference
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("affectedSceneId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AffectedSceneId { get; set; } = default!;
-
-    /// <summary>
-    /// Name of the affected scene
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("affectedSceneName")]
-    public string? AffectedSceneName { get; set; } = default!;
-
-    /// <summary>
-    /// Node with the broken reference
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("affectedNodeId")]
-    public System.Guid? AffectedNodeId { get; set; } = default!;
-
-    /// <summary>
-    /// refId of the affected node
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("affectedNodeRefId")]
-    public string? AffectedNodeRefId { get; set; } = default!;
-
-    /// <summary>
-    /// Scene that is no longer available
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("brokenReferenceSceneId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BrokenReferenceSceneId { get; set; } = default!;
-
-    /// <summary>
-    /// Name of the scene that is no longer available
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("brokenReferenceSceneName")]
-    public string? BrokenReferenceSceneName { get; set; } = default!;
-
-    /// <summary>
-    /// Why the reference broke
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BrokenReferenceReason Reason { get; set; } = default!;
 
 }
 

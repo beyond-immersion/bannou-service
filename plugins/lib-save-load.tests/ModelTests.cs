@@ -169,7 +169,7 @@ public class ModelTests
         Assert.Null(manifest.SchemaVersion);
         Assert.NotNull(manifest.Metadata);
         Assert.Empty(manifest.Metadata);
-        Assert.Equal(UploadStatus.PENDING, manifest.UploadStatus);
+        Assert.Equal(UploadStatus.Pending, manifest.UploadStatus);
         Assert.Null(manifest.ETag);
     }
 

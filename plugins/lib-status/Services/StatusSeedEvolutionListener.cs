@@ -95,9 +95,8 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
     private async Task InvalidateSeedEffectsCacheAsync(Guid ownerId, EntityType ownerType)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusSeedEvolutionListener.InvalidateSeedEffectsCacheAsync");
-        // Use lowercase to match cache key format from StatusService.SeedEffectsCacheKey
-        var ownerTypeStr = ownerType.ToString().ToLowerInvariant();
-        var cacheKey = $"seed:{ownerId}:{ownerTypeStr}";
+        // Match cache key format from StatusService.SeedEffectsCacheKey (PascalCase EntityType)
+        var cacheKey = $"seed:{ownerId}:{ownerType}";
         try
         {
             await _seedEffectsCacheStore.DeleteAsync(cacheKey);

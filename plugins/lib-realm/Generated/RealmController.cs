@@ -38,7 +38,8 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Realm retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> GetRealmAsync(GetRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> GetRealm(GetRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get realm by code
@@ -48,9 +49,12 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
     /// Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
     /// </remarks>
 
+
+
     /// <returns>Realm retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> GetRealmByCodeAsync(GetRealmByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> GetRealmByCode(GetRealmByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all realms
@@ -60,9 +64,12 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
     /// Retrieve all realms with optional filtering
     /// </remarks>
 
+
+
     /// <returns>Realms retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmListResponse>> ListRealmsAsync(ListRealmsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmListResponse>> ListRealms(ListRealmsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create new realm
@@ -71,7 +78,8 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Realm created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> CreateRealmAsync(CreateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> CreateRealm(CreateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update realm
@@ -80,7 +88,8 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Realm updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> UpdateRealmAsync(UpdateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> UpdateRealm(UpdateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete realm
@@ -93,9 +102,12 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>can be deleted.
     /// </remarks>
 
+
+
     /// <returns>Realm deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRealmAsync(DeleteRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRealm(DeleteRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate a realm
@@ -109,9 +121,12 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>- Can be hard-deleted after all references are removed
     /// </remarks>
 
+
+
     /// <returns>Realm deprecated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> DeprecateRealmAsync(DeprecateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> DeprecateRealm(DeprecateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore a deprecated realm
@@ -122,9 +137,12 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>available for new entities again.
     /// </remarks>
 
+
+
     /// <returns>Realm restored successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> UndeprecateRealmAsync(UndeprecateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> UndeprecateRealm(UndeprecateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Merge a deprecated realm into another realm
@@ -142,9 +160,12 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Merge into VOID realm is allowed (intentionally orphaning entities).
     /// </remarks>
 
+
+
     /// <returns>Merge completed (check response for per-entity-type results)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeRealmsResponse>> MergeRealmsAsync(MergeRealmsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeRealmsResponse>> MergeRealms(MergeRealmsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if realm exists and is active
@@ -155,9 +176,12 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Returns true if realm exists and is not deprecated, false otherwise.
     /// </remarks>
 
+
+
     /// <returns>Validation result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmExistsResponse>> RealmExistsAsync(RealmExistsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmExistsResponse>> RealmExists(RealmExistsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if multiple realms exist and are active
@@ -169,9 +193,12 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>N+1 API calls when validating multiple realms.
     /// </remarks>
 
+
+
     /// <returns>Validation results for all requested realms</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmsExistBatchResponse>> RealmsExistBatchAsync(RealmsExistBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmsExistBatchResponse>> RealmsExistBatch(RealmsExistBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Seed realms from configuration
@@ -183,9 +210,12 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Typically called at service startup with YAML-defined realms.
     /// </remarks>
 
+
+
     /// <returns>Seed operation completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedRealmsResponse>> SeedRealmsAsync(SeedRealmsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedRealmsResponse>> SeedRealms(SeedRealmsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get realm context for location archive
@@ -197,15 +227,18 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>for inclusion in the location archive.
     /// </remarks>
 
+
+
     /// <returns>Realm context for location archive returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLocationArchiveContext>> GetLocationCompressContextAsync(GetLocationCompressContextRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLocationArchiveContext>> GetLocationCompressContext(GetLocationCompressContextRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IRealmService))]
+public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase, IRealmController
 {
     private IRealmService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

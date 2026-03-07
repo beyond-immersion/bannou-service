@@ -41,9 +41,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>If channel already exists with active authority, returns Conflict.
     /// </remarks>
 
+
+
     /// <returns>Channel created, authority granted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthorityGrant>> CreateChannelAsync(CreateChannelRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthorityGrant>> CreateChannel(CreateChannelRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Release authority over a channel
@@ -54,9 +57,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Only the current authority can release.
     /// </remarks>
 
+
+
     /// <returns>Authority released successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ReleaseAuthority(ReleaseAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Maintain authority over channel
@@ -67,9 +73,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Failure to heartbeat results in authority expiration.
     /// </remarks>
 
+
+
     /// <returns>Heartbeat acknowledged</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthorityHeartbeatResponse>> AuthorityHeartbeatAsync(AuthorityHeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthorityHeartbeatResponse>> AuthorityHeartbeat(AuthorityHeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Publish map data update (RPC path)
@@ -81,9 +90,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>For high-throughput scenarios, use event publishing via ingestTopic instead.
     /// </remarks>
 
+
+
     /// <returns>Update published successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishMapUpdateResponse>> PublishMapUpdateAsync(PublishMapUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishMapUpdateResponse>> PublishMapUpdate(PublishMapUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Publish metadata object changes (batch)
@@ -95,9 +107,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Max 100 changes per request.
     /// </remarks>
 
+
+
     /// <returns>Object changes published</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishObjectChangesResponse>> PublishObjectChangesAsync(PublishObjectChangesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishObjectChangesResponse>> PublishObjectChanges(PublishObjectChangesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Request full snapshot for cold start
@@ -109,9 +124,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>For very large maps, payloadRef points to lib-asset storage.
     /// </remarks>
 
+
+
     /// <returns>Snapshot returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RequestSnapshotResponse>> RequestSnapshotAsync(RequestSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RequestSnapshotResponse>> RequestSnapshot(RequestSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query map data at a specific point
@@ -123,9 +141,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Optionally includes objects within radius.
     /// </remarks>
 
+
+
     /// <returns>Query results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryPointResponse>> QueryPointAsync(QueryPointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryPointResponse>> QueryPoint(QueryPointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query map data within bounds
@@ -137,9 +158,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Limited to maxObjects per kind.
     /// </remarks>
 
+
+
     /// <returns>Query results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBoundsResponse>> QueryBoundsAsync(QueryBoundsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBoundsResponse>> QueryBounds(QueryBoundsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Find all objects of a type in region
@@ -150,9 +174,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>For event actors asking "where are all the boulder clusters?"
     /// </remarks>
 
+
+
     /// <returns>Matching objects</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryObjectsByTypeResponse>> QueryObjectsByTypeAsync(QueryObjectsByTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryObjectsByTypeResponse>> QueryObjectsByType(QueryObjectsByTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Find locations that afford a specific action or scene type
@@ -171,9 +198,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>with customAffordance for novel scenarios.
     /// </remarks>
 
+
+
     /// <returns>Scored locations</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AffordanceQueryResponse>> QueryAffordanceAsync(AffordanceQueryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AffordanceQueryResponse>> QueryAffordance(AffordanceQueryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Acquire exclusive edit lock for design-time editing
@@ -185,9 +215,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Returns authority token for publishing edits.
     /// </remarks>
 
+
+
     /// <returns>Checkout successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthoringCheckoutResponse>> CheckoutForAuthoringAsync(AuthoringCheckoutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthoringCheckoutResponse>> CheckoutForAuthoring(AuthoringCheckoutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Commit design-time changes
@@ -198,9 +231,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Optionally includes a commit message for history.
     /// </remarks>
 
+
+
     /// <returns>Changes committed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthoringCommitResponse>> CommitAuthoringAsync(AuthoringCommitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthoringCommitResponse>> CommitAuthoring(AuthoringCommitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Release authoring checkout without committing
@@ -211,9 +247,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Use when abandoning edits.
     /// </remarks>
 
+
+
     /// <returns>Checkout released</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ReleaseAuthoringAsync(AuthoringReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ReleaseAuthoring(AuthoringReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a map definition template
@@ -225,9 +264,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>channels with predefined layer configurations.
     /// </remarks>
 
+
+
     /// <returns>Definition created</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> CreateDefinitionAsync(CreateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> CreateDefinition(CreateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a map definition by ID
@@ -237,9 +279,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// Returns the full map definition including all layer configurations.
     /// </remarks>
 
+
+
     /// <returns>Definition found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> GetDefinitionAsync(GetDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> GetDefinition(GetDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List map definitions with optional filters
@@ -249,9 +294,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// Returns a paginated list of map definitions.
     /// </remarks>
 
+
+
     /// <returns>Definitions list</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDefinitionsResponse>> ListDefinitionsAsync(ListDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDefinitionsResponse>> ListDefinitions(ListDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a map definition
@@ -262,9 +310,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Layer configurations can be modified.
     /// </remarks>
 
+
+
     /// <returns>Definition updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> UpdateDefinitionAsync(UpdateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> UpdateDefinition(UpdateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a map definition
@@ -274,15 +325,18 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
     /// Deletes a map definition. Cannot delete if active channels reference it.
     /// </remarks>
 
+
+
     /// <returns>Definition deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteDefinitionAsync(DeleteDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteDefinition(DeleteDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IMappingService))]
+public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase, IMappingController
 {
     private IMappingService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

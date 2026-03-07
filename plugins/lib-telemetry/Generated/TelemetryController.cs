@@ -39,9 +39,12 @@ public interface ITelemetryController : BeyondImmersion.BannouService.Controller
     /// Returns the health status of telemetry exporters and current configuration state.
     /// </remarks>
 
+
+
     /// <returns>Telemetry health status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TelemetryHealthResponse>> HealthAsync(TelemetryHealthRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TelemetryHealthResponse>> Health(TelemetryHealthRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get telemetry status and configuration
@@ -51,15 +54,18 @@ public interface ITelemetryController : BeyondImmersion.BannouService.Controller
     /// Returns detailed telemetry status including active exporters, sampling configuration, and service identity.
     /// </remarks>
 
+
+
     /// <returns>Telemetry status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TelemetryStatusResponse>> StatusAsync(TelemetryStatusRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TelemetryStatusResponse>> Status(TelemetryStatusRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class TelemetryController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ITelemetryService))]
+public partial class TelemetryController : Microsoft.AspNetCore.Mvc.ControllerBase, ITelemetryController
 {
     private ITelemetryService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

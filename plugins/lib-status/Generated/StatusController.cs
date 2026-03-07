@@ -42,9 +42,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>integration for lifecycle management.
     /// </remarks>
 
+
+
     /// <returns>Status template created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> CreateStatusTemplateAsync(CreateStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> CreateStatusTemplate(CreateStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a status template by ID
@@ -54,9 +57,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// Retrieves a status template by its unique identifier.
     /// </remarks>
 
+
+
     /// <returns>Status template retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> GetStatusTemplateAsync(GetStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> GetStatusTemplate(GetStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a status template by code
@@ -66,9 +72,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// Retrieves a status template by its game service and unique code.
     /// </remarks>
 
+
+
     /// <returns>Status template retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> GetStatusTemplateByCodeAsync(GetStatusTemplateByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> GetStatusTemplateByCode(GetStatusTemplateByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List status templates
@@ -78,9 +87,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// Paginated list of status templates filtered by game service with optional category filter.
     /// </remarks>
 
+
+
     /// <returns>Status templates retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListStatusTemplatesResponse>> ListStatusTemplatesAsync(ListStatusTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListStatusTemplatesResponse>> ListStatusTemplates(ListStatusTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a status template
@@ -90,9 +102,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// Update mutable fields of a status template. Only non-null fields in the request are updated.
     /// </remarks>
 
+
+
     /// <returns>Status template updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> UpdateStatusTemplateAsync(UpdateStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> UpdateStatusTemplate(UpdateStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Bulk seed status templates
@@ -102,9 +117,63 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// Bulk create status templates from a payload, skipping duplicates. Validates item template IDs. Returns count of created templates.
     /// </remarks>
 
+
+
     /// <returns>Seed completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedStatusTemplatesResponse>> SeedStatusTemplatesAsync(SeedStatusTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedStatusTemplatesResponse>> SeedStatusTemplates(SeedStatusTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Deprecate a status template
+    /// </summary>
+
+    /// <remarks>
+    /// Mark a status template as deprecated. Deprecated templates cannot be used
+    /// <br/>for new grants. Idempotent -- returns OK if already deprecated.
+    /// <br/>Category A entity: deprecation is reversible via undeprecate.
+    /// </remarks>
+
+
+
+    /// <returns>Status template deprecated (or already deprecated)</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> DeprecateStatusTemplate(DeprecateStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Undeprecate a status template
+    /// </summary>
+
+    /// <remarks>
+    /// Remove deprecation from a status template, restoring it for use in grants.
+    /// <br/>Idempotent -- returns OK if not deprecated.
+    /// <br/>Category A entity: undeprecation is allowed.
+    /// </remarks>
+
+
+
+    /// <returns>Status template undeprecated (or was not deprecated)</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> UndeprecateStatusTemplate(UndeprecateStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Delete a deprecated status template
+    /// </summary>
+
+    /// <remarks>
+    /// Permanently delete a status template. The template must be deprecated first.
+    /// <br/>Returns BadRequest if the template is not deprecated.
+    /// <br/>Category A entity: deletion requires prior deprecation.
+    /// </remarks>
+
+
+
+    /// <returns>Status template deleted</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteStatusTemplate(DeleteStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Grant a status effect to an entity
@@ -124,9 +193,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>- ignore: rejects if already present
     /// </remarks>
 
+
+
     /// <returns>Status granted successfully (or stacked/refreshed/replaced)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrantStatusResponse>> GrantStatusAsync(GrantStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrantStatusResponse>> GrantStatus(GrantStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove a specific status instance
@@ -138,9 +210,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>the active status cache.
     /// </remarks>
 
+
+
     /// <returns>Status removed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusInstanceResponse>> RemoveStatusAsync(RemoveStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusInstanceResponse>> RemoveStatus(RemoveStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove all statuses from a source
@@ -150,9 +225,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// Remove all status instances granted by a specific source for an entity. Used for cascading removal when a source entity is deleted.
     /// </remarks>
 
+
+
     /// <returns>Statuses removed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveStatusesResponse>> RemoveBySourceAsync(RemoveBySourceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveStatusesResponse>> RemoveBySource(RemoveBySourceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove all statuses of a category (cleanse)
@@ -162,9 +240,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// Remove all status instances of a given category for an entity. Used for cleanse mechanics (remove all debuffs, etc.).
     /// </remarks>
 
+
+
     /// <returns>Statuses cleansed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveStatusesResponse>> RemoveByCategoryAsync(RemoveByCategoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveStatusesResponse>> RemoveByCategory(RemoveByCategoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Check if an entity has a specific status
@@ -174,9 +255,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// Check if an entity has a specific status template code active. Returns the status instance ID and stack count if found.
     /// </remarks>
 
+
+
     /// <returns>Check completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasStatusResponse>> HasStatusAsync(HasStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasStatusResponse>> HasStatus(HasStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List active statuses for an entity
@@ -188,9 +272,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>from cache with seed-derived effects when includePassive is true.
     /// </remarks>
 
+
+
     /// <returns>Statuses retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListStatusesResponse>> ListStatusesAsync(ListStatusesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListStatusesResponse>> ListStatuses(ListStatusesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a specific status instance
@@ -200,9 +287,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// Retrieves a status instance by its unique identifier with full details including metadata.
     /// </remarks>
 
+
+
     /// <returns>Status instance retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusInstanceResponse>> GetStatusAsync(GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusInstanceResponse>> GetStatus(GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get unified effects for an entity
@@ -214,9 +304,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>attribution via the effectSource field.
     /// </remarks>
 
+
+
     /// <returns>Effects retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEffectsResponse>> GetEffectsAsync(GetEffectsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEffectsResponse>> GetEffects(GetEffectsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get seed-derived passive effects for an entity
@@ -228,9 +321,12 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>domain, fidelity, and seed attribution.
     /// </remarks>
 
+
+
     /// <returns>Seed effects retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedEffectsResponse>> GetSeedEffectsAsync(GetSeedEffectsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedEffectsResponse>> GetSeedEffects(GetSeedEffectsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove all statuses and containers for an owner
@@ -243,15 +339,18 @@ public interface IStatusController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>deletes all instance records, and invalidates all caches.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupResponse>> CleanupByOwnerAsync(CleanupByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupResponse>> CleanupByOwner(CleanupByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IStatusService))]
+public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase, IStatusController
 {
     private IStatusService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
@@ -582,6 +681,156 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:status/template/seed",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Deprecate a status template
+    /// </summary>
+    /// <remarks>
+    /// Mark a status template as deprecated. Deprecated templates cannot be used
+    /// <br/>for new grants. Idempotent -- returns OK if already deprecated.
+    /// <br/>Category A entity: deprecation is reversible via undeprecate.
+    /// </remarks>
+    /// <returns>Status template deprecated (or already deprecated)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("status/template/deprecate")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> DeprecateStatusTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.DeprecateStatusTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/template/deprecate");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeprecateStatusTemplateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StatusController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:status/template/deprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StatusController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:status/template/deprecate");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "status",
+                "DeprecateStatusTemplate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:status/template/deprecate",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Undeprecate a status template
+    /// </summary>
+    /// <remarks>
+    /// Remove deprecation from a status template, restoring it for use in grants.
+    /// <br/>Idempotent -- returns OK if not deprecated.
+    /// <br/>Category A entity: undeprecation is allowed.
+    /// </remarks>
+    /// <returns>Status template undeprecated (or was not deprecated)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("status/template/undeprecate")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> UndeprecateStatusTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UndeprecateStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.UndeprecateStatusTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/template/undeprecate");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.UndeprecateStatusTemplateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StatusController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:status/template/undeprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StatusController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:status/template/undeprecate");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "status",
+                "UndeprecateStatusTemplate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:status/template/undeprecate",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Delete a deprecated status template
+    /// </summary>
+    /// <remarks>
+    /// Permanently delete a status template. The template must be deprecated first.
+    /// <br/>Returns BadRequest if the template is not deprecated.
+    /// <br/>Category A entity: deletion requires prior deprecation.
+    /// </remarks>
+    /// <returns>Status template deleted</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("status/template/delete")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteStatusTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.DeleteStatusTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/template/delete");
+        try
+        {
+
+            var statusCode = await _implementation.DeleteStatusTemplateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StatusController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:status/template/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StatusController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:status/template/delete");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "status",
+                "DeleteStatusTemplate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:status/template/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

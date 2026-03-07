@@ -63,6 +63,15 @@ internal class StatusTemplateModel
     /// <summary>Optional icon asset reference.</summary>
     public Guid? IconAssetId { get; set; }
 
+    /// <summary>Whether this template is deprecated.</summary>
+    public bool IsDeprecated { get; set; }
+
+    /// <summary>When this template was deprecated.</summary>
+    public DateTimeOffset? DeprecatedAt { get; set; }
+
+    /// <summary>Why this template was deprecated.</summary>
+    public string? DeprecationReason { get; set; }
+
     /// <summary>When this template was created.</summary>
     public DateTimeOffset CreatedAt { get; set; }
 
@@ -112,8 +121,8 @@ internal class StatusInstanceModel
     /// <summary>When this status expires (null for permanent).</summary>
     public DateTimeOffset? ExpiresAt { get; set; }
 
-    /// <summary>Optional metadata from the grant request.</summary>
-    public Dictionary<string, object>? Metadata { get; set; }
+    /// <summary>Optional metadata from the grant request. Opaque pass-through per FOUNDATION TENETS.</summary>
+    public object? Metadata { get; set; }
 }
 
 /// <summary>

@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to save-slot.created when a saveslot is created
+/// Published to save-load.save-slot.created when a saveslot is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SaveSlotCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save-slot.created
+    /// Event type identifier: save-load.save-slot.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save-slot.created";
+    public override string EventName { get; set; } = "save-load.save-slot.created";
 
     /// <summary>
     /// Unique slot identifier
@@ -154,19 +154,19 @@ public partial class SaveSlotCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to save-slot.updated when a saveslot is updated
+/// Published to save-load.save-slot.updated when a saveslot is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SaveSlotUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save-slot.updated
+    /// Event type identifier: save-load.save-slot.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save-slot.updated";
+    public override string EventName { get; set; } = "save-load.save-slot.updated";
 
     /// <summary>
     /// Unique slot identifier
@@ -284,19 +284,19 @@ public partial class SaveSlotUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to save-slot.deleted when a saveslot is deleted
+/// Published to save-load.save-slot.deleted when a saveslot is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SaveSlotDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save-slot.deleted
+    /// Event type identifier: save-load.save-slot.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save-slot.deleted";
+    public override string EventName { get; set; } = "save-load.save-slot.deleted";
 
     /// <summary>
     /// Unique slot identifier

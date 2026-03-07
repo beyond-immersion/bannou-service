@@ -40,9 +40,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// <br/>Developer-only endpoint for setting up game leaderboards.
     /// </remarks>
 
+
+
     /// <returns>Leaderboard created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardDefinitionResponse>> CreateLeaderboardDefinitionAsync(CreateLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardDefinitionResponse>> CreateLeaderboardDefinition(CreateLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get leaderboard definition
@@ -52,9 +55,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// Retrieve details about a specific leaderboard.
     /// </remarks>
 
+
+
     /// <returns>Leaderboard definition retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardDefinitionResponse>> GetLeaderboardDefinitionAsync(GetLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardDefinitionResponse>> GetLeaderboardDefinition(GetLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List leaderboard definitions
@@ -64,9 +70,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// List all leaderboards for a game service.
     /// </remarks>
 
+
+
     /// <returns>Leaderboard definitions retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListLeaderboardDefinitionsResponse>> ListLeaderboardDefinitionsAsync(ListLeaderboardDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListLeaderboardDefinitionsResponse>> ListLeaderboardDefinitions(ListLeaderboardDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update leaderboard definition
@@ -77,9 +86,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// <br/>Developer-only endpoint.
     /// </remarks>
 
+
+
     /// <returns>Leaderboard updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardDefinitionResponse>> UpdateLeaderboardDefinitionAsync(UpdateLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardDefinitionResponse>> UpdateLeaderboardDefinition(UpdateLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete leaderboard definition
@@ -90,9 +102,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// <br/>Developer-only endpoint. This action is irreversible.
     /// </remarks>
 
+
+
     /// <returns>Leaderboard deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteLeaderboardDefinitionAsync(DeleteLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteLeaderboardDefinition(DeleteLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Submit or update a score
@@ -107,9 +122,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// <br/>Service-only endpoint.
     /// </remarks>
 
+
+
     /// <returns>Score submitted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubmitScoreResponse>> SubmitScoreAsync(SubmitScoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubmitScoreResponse>> SubmitScore(SubmitScoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Submit multiple scores
@@ -120,9 +138,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// <br/>Service-only endpoint.
     /// </remarks>
 
+
+
     /// <returns>Scores submitted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubmitScoreBatchResponse>> SubmitScoreBatchAsync(SubmitScoreBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubmitScoreBatchResponse>> SubmitScoreBatch(SubmitScoreBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get entity's rank
@@ -132,9 +153,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// Get the current rank and score for a specific entity.
     /// </remarks>
 
+
+
     /// <returns>Rank retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntityRankResponse>> GetEntityRankAsync(GetEntityRankRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntityRankResponse>> GetEntityRank(GetEntityRankRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get top entries
@@ -144,9 +168,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// Get the top N entries on a leaderboard.
     /// </remarks>
 
+
+
     /// <returns>Top ranks retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardEntriesResponse>> GetTopRanksAsync(GetTopRanksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardEntriesResponse>> GetTopRanks(GetTopRanksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get entries around entity
@@ -157,9 +184,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// <br/>Useful for showing a player's position with nearby competitors.
     /// </remarks>
 
+
+
     /// <returns>Ranks retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardEntriesResponse>> GetRanksAroundAsync(GetRanksAroundRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardEntriesResponse>> GetRanksAround(GetRanksAroundRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Start a new season
@@ -170,9 +200,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// <br/>Admin-only endpoint. Previous scores are preserved in history.
     /// </remarks>
 
+
+
     /// <returns>Season created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeasonResponse>> CreateSeasonAsync(CreateSeasonRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeasonResponse>> CreateSeason(CreateSeasonRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current season info
@@ -182,15 +215,18 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
     /// Get information about the current or a specific past season.
     /// </remarks>
 
+
+
     /// <returns>Season info retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeasonResponse>> GetSeasonAsync(GetSeasonRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeasonResponse>> GetSeason(GetSeasonRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ILeaderboardService))]
+public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.ControllerBase, ILeaderboardController
 {
     private ILeaderboardService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

@@ -55,6 +55,7 @@ public class RealmHistoryServiceConfiguration : BaseServiceConfiguration
     /// Maximum number of lore elements allowed per realm. Prevents unbounded growth from repeated AddLoreElement or SetLore calls. Returns BadRequest when limit would be exceeded.
     /// Environment variable: REALM_HISTORY_MAX_LORE_ELEMENTS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MaxLoreElements { get; set; } = 100;
 
     /// <summary>
@@ -75,6 +76,7 @@ public class RealmHistoryServiceConfiguration : BaseServiceConfiguration
     /// Timeout in seconds for distributed locks during index and lore write operations. Matches established patterns in Currency, Inventory, and Contract services.
     /// Environment variable: REALM_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int IndexLockTimeoutSeconds { get; set; } = 15;
 
 }

@@ -40,9 +40,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>For large files (&gt;50MB), returns multipart upload configuration.
     /// </remarks>
 
+
+
     /// <returns>Upload URL generated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UploadResponse>> RequestUploadAsync(UploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UploadResponse>> RequestUpload(UploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Mark upload as complete, trigger processing
@@ -54,9 +57,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>and emits completion events via WebSocket.
     /// </remarks>
 
+
+
     /// <returns>Asset created, processing started</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetMetadata>> CompleteUploadAsync(CompleteUploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetMetadata>> CompleteUpload(CompleteUploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get asset metadata and download URL
@@ -67,9 +73,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Specify version to download a specific version, or omit for latest.
     /// </remarks>
 
+
+
     /// <returns>Asset metadata with download URL</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetWithDownloadUrl>> GetAssetAsync(GetAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetWithDownloadUrl>> GetAsset(GetAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete an asset
@@ -80,9 +89,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>If versionId is omitted, all versions are deleted.
     /// </remarks>
 
+
+
     /// <returns>Asset deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAssetResponse>> DeleteAssetAsync(DeleteAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAssetResponse>> DeleteAsset(DeleteAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all versions of an asset
@@ -93,9 +105,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Includes version IDs, creation timestamps, and archive status.
     /// </remarks>
 
+
+
     /// <returns>List of asset versions</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetVersionList>> ListAssetVersionsAsync(ListVersionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetVersionList>> ListAssetVersions(ListVersionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Search assets by tags, type, or realm
@@ -106,9 +121,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>All filters are optional and combine with AND logic.
     /// </remarks>
 
+
+
     /// <returns>Matching assets</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetSearchResult>> SearchAssetsAsync(AssetSearchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetSearchResult>> SearchAssets(AssetSearchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create asset bundle from multiple assets
@@ -120,9 +138,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Completion notification sent via WebSocket event.
     /// </remarks>
 
+
+
     /// <returns>Bundle created immediately (small bundles)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateBundleResponse>> CreateBundleAsync(CreateBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateBundleResponse>> CreateBundle(CreateBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get bundle manifest and download URL
@@ -133,9 +154,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Supports both native .bannou format and ZIP conversion (cached).
     /// </remarks>
 
+
+
     /// <returns>Bundle manifest with download URL</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BundleWithDownloadUrl>> GetBundleAsync(GetBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BundleWithDownloadUrl>> GetBundle(GetBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Request upload URL for a pre-made bundle
@@ -146,9 +170,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>After upload, the bundle undergoes validation before registration.
     /// </remarks>
 
+
+
     /// <returns>Upload URL generated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UploadResponse>> RequestBundleUploadAsync(BundleUploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UploadResponse>> RequestBundleUpload(BundleUploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create metabundle from source bundles
@@ -164,9 +191,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>with conflict details.
     /// </remarks>
 
+
+
     /// <returns>Metabundle created or queued for creation</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateMetabundleResponse>> CreateMetabundleAsync(CreateMetabundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateMetabundleResponse>> CreateMetabundle(CreateMetabundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get async metabundle job status
@@ -180,9 +210,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>MetabundleCreationCompleteEvent via WebSocket for completion notification.
     /// </remarks>
 
+
+
     /// <returns>Job status retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetJobStatusResponse>> GetJobStatusAsync(GetJobStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetJobStatusResponse>> GetJobStatus(GetJobStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cancel an async metabundle job
@@ -196,9 +229,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>with status 'cancelled' via WebSocket.
     /// </remarks>
 
+
+
     /// <returns>Job cancellation result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CancelJobResponse>> CancelJobAsync(CancelJobRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CancelJobResponse>> CancelJob(CancelJobRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Compute optimal bundles for requested assets
@@ -217,9 +253,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Returns pre-signed download URLs for all selected bundles and assets.
     /// </remarks>
 
+
+
     /// <returns>Resolution complete with download URLs</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ResolveBundlesResponse>> ResolveBundlesAsync(ResolveBundlesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ResolveBundlesResponse>> ResolveBundles(ResolveBundlesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Find all bundles containing a specific asset
@@ -231,9 +270,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>distribution and debugging resolution issues.
     /// </remarks>
 
+
+
     /// <returns>Bundles containing the asset</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBundlesByAssetResponse>> QueryBundlesByAssetAsync(QueryBundlesByAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBundlesByAssetResponse>> QueryBundlesByAsset(QueryBundlesByAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update bundle metadata
@@ -247,9 +289,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Only the bundle owner or admin can update.
     /// </remarks>
 
+
+
     /// <returns>Bundle updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateBundleResponse>> UpdateBundleAsync(UpdateBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateBundleResponse>> UpdateBundle(UpdateBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Soft-delete a bundle
@@ -265,9 +310,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Only the bundle owner or admin can delete.
     /// </remarks>
 
+
+
     /// <returns>Bundle deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteBundleResponse>> DeleteBundleAsync(DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteBundleResponse>> DeleteBundle(DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore a soft-deleted bundle
@@ -280,9 +328,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Only the bundle owner or admin can restore.
     /// </remarks>
 
+
+
     /// <returns>Bundle restored successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreBundleResponse>> RestoreBundleAsync(RestoreBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreBundleResponse>> RestoreBundle(RestoreBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query bundles with advanced filters
@@ -300,9 +351,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Supports pagination and sorting.
     /// </remarks>
 
+
+
     /// <returns>Query results</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBundlesResponse>> QueryBundlesAsync(QueryBundlesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBundlesResponse>> QueryBundles(QueryBundlesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List version history for a bundle
@@ -320,9 +374,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>The current version's full metadata snapshot is always included.
     /// </remarks>
 
+
+
     /// <returns>Version history</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBundleVersionsResponse>> ListBundleVersionsAsync(ListBundleVersionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBundleVersionsResponse>> ListBundleVersions(ListBundleVersionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Batch asset metadata lookup
@@ -334,15 +391,18 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <br/>Maximum 100 asset IDs per request.
     /// </remarks>
 
+
+
     /// <returns>Asset metadata retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkGetAssetsResponse>> BulkGetAssetsAsync(BulkGetAssetsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkGetAssetsResponse>> BulkGetAssets(BulkGetAssetsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IAssetService))]
+public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase, IAssetController
 {
     private IAssetService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

@@ -130,6 +130,27 @@ public class RealmHistoryServiceTests
         Assert.Equal(100, config.MaxLoreElements);
     }
 
+    [Fact]
+    public void RealmHistoryServiceConfiguration_ArchiveSummaryMaxLorePoints_DefaultIs10()
+    {
+        var config = new RealmHistoryServiceConfiguration();
+        Assert.Equal(10, config.ArchiveSummaryMaxLorePoints);
+    }
+
+    [Fact]
+    public void RealmHistoryServiceConfiguration_ArchiveSummaryMaxHistoricalEvents_DefaultIs10()
+    {
+        var config = new RealmHistoryServiceConfiguration();
+        Assert.Equal(10, config.ArchiveSummaryMaxHistoricalEvents);
+    }
+
+    [Fact]
+    public void RealmHistoryServiceConfiguration_IndexLockTimeoutSeconds_DefaultIs15()
+    {
+        var config = new RealmHistoryServiceConfiguration();
+        Assert.Equal(15, config.IndexLockTimeoutSeconds);
+    }
+
     #endregion
 
     #region RecordRealmParticipation Tests
@@ -147,8 +168,8 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             EventId = eventId,
             EventName = "The Great War",
-            EventCategory = RealmEventCategory.WAR,
-            Role = RealmEventRole.DEFENDER,
+            EventCategory = RealmEventCategory.War,
+            Role = RealmEventRole.Defender,
             EventDate = DateTimeOffset.UtcNow.AddDays(-30),
             Impact = 0.8f,
             Metadata = null
@@ -156,6 +177,33 @@ public class RealmHistoryServiceTests
 
         _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((HistoryIndexData?)null);
+
+        // Capture saved state and published event
+        string? savedKey = null;
+        RealmParticipationData? savedData = null;
+        _mockParticipationStore.Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<RealmParticipationData>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, RealmParticipationData, StateOptions?, CancellationToken>((k, d, _, _) =>
+            {
+                savedKey = k;
+                savedData = d;
+            })
+            .ReturnsAsync("etag");
+
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((t, e, _) =>
+            {
+                if (t == "realm-history.participation.recorded")
+                {
+                    capturedTopic = t;
+                    capturedEvent = e;
+                }
+            })
+            .ReturnsAsync(true);
 
         // Act
         var (status, result) = await service.RecordRealmParticipationAsync(request, CancellationToken.None);
@@ -166,21 +214,31 @@ public class RealmHistoryServiceTests
         Assert.Equal(realmId, result.RealmId);
         Assert.Equal(eventId, result.EventId);
         Assert.Equal("The Great War", result.EventName);
-        Assert.Equal(RealmEventCategory.WAR, result.EventCategory);
-        Assert.Equal(RealmEventRole.DEFENDER, result.Role);
+        Assert.Equal(RealmEventCategory.War, result.EventCategory);
+        Assert.Equal(RealmEventRole.Defender, result.Role);
         Assert.NotEqual(Guid.Empty, result.ParticipationId);
 
-        // Verify state was saved
-        _mockParticipationStore.Verify(s => s.SaveAsync(
-            It.Is<string>(k => k.StartsWith("realm-participation-")),
-            It.IsAny<RealmParticipationData>(),
-            It.IsAny<StateOptions?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        // Assert on captured saved data
+        Assert.NotNull(savedKey);
+        Assert.StartsWith("realm-participation-", savedKey);
+        Assert.NotNull(savedData);
+        Assert.Equal(realmId, savedData.RealmId);
+        Assert.Equal(eventId, savedData.EventId);
+        Assert.Equal("The Great War", savedData.EventName);
+        Assert.Equal(RealmEventCategory.War, savedData.EventCategory);
+        Assert.Equal(RealmEventRole.Defender, savedData.Role);
+        Assert.Equal(0.8f, savedData.Impact);
 
-        // Verify event was published
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "realm-history.participation.recorded",
-            It.IsAny<RealmParticipationRecordedEvent>(),
+        // Assert on captured event
+        Assert.Equal("realm-history.participation.recorded", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<RealmParticipationRecordedEvent>(capturedEvent);
+        Assert.Equal(realmId, typedEvent.RealmId);
+        Assert.Equal(result.ParticipationId, typedEvent.ParticipationId);
+
+        // Verify resource reference registered
+        _mockResourceClient.Verify(r => r.RegisterReferenceAsync(
+            It.IsAny<RegisterReferenceRequest>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -201,8 +259,8 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             EventId = Guid.NewGuid(),
             EventName = "New Treaty",
-            EventCategory = RealmEventCategory.TREATY,
-            Role = RealmEventRole.MEDIATOR,
+            EventCategory = RealmEventCategory.Treaty,
+            Role = RealmEventRole.Mediator,
             EventDate = DateTimeOffset.UtcNow,
             Impact = 0.5f
         };
@@ -270,8 +328,8 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             EventId = Guid.NewGuid(),
             EventName = "War Event",
-            EventCategory = RealmEventCategory.WAR,
-            Role = RealmEventRole.DEFENDER,
+            EventCategory = RealmEventCategory.War,
+            Role = RealmEventRole.Defender,
             EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Impact = 0.8f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -283,7 +341,7 @@ public class RealmHistoryServiceTests
         var request = new GetRealmParticipationRequest
         {
             RealmId = realmId,
-            EventCategory = RealmEventCategory.WAR,
+            EventCategory = RealmEventCategory.War,
             Page = 1,
             PageSize = 20
         };
@@ -322,8 +380,8 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             EventId = Guid.NewGuid(),
             EventName = "Page 2 Event",
-            EventCategory = RealmEventCategory.WAR,
-            Role = RealmEventRole.DEFENDER,
+            EventCategory = RealmEventCategory.War,
+            Role = RealmEventRole.Defender,
             EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Impact = 0.8f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -399,8 +457,8 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             EventId = eventId,
             EventName = "Great War",
-            EventCategory = RealmEventCategory.WAR,
-            Role = RealmEventRole.DEFENDER,
+            EventCategory = RealmEventCategory.War,
+            Role = RealmEventRole.Defender,
             EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Impact = 0.9f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -412,7 +470,7 @@ public class RealmHistoryServiceTests
         var request = new GetRealmEventParticipantsRequest
         {
             EventId = eventId,
-            Role = RealmEventRole.DEFENDER,
+            Role = RealmEventRole.Defender,
             Page = 1,
             PageSize = 20
         };
@@ -424,7 +482,7 @@ public class RealmHistoryServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Single(result.Participations);
-        Assert.Equal(RealmEventRole.DEFENDER, result.Participations.First().Role);
+        Assert.Equal(RealmEventRole.Defender, result.Participations.First().Role);
 
         // Verify query conditions include EventId and Role filters
         _mockJsonQueryableStore.Verify(s => s.JsonQueryPagedAsync(
@@ -476,7 +534,7 @@ public class RealmHistoryServiceTests
             {
                 new RealmLoreElement
                 {
-                    ElementType = RealmLoreElementType.ORIGIN_MYTH,
+                    ElementType = RealmLoreElementType.OriginMyth,
                     Key = "creation",
                     Value = "Born from the void",
                     Strength = 0.9f
@@ -497,10 +555,15 @@ public class RealmHistoryServiceTests
         Assert.Single(result.Elements);
         Assert.Equal("creation", result.Elements.First().Key);
 
-        // Verify lore.created event was published (new lore)
+        // Verify lore.created event was published with correct data
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "realm-history.lore.created",
-            It.IsAny<RealmLoreCreatedEvent>(),
+            It.Is<RealmLoreCreatedEvent>(e => e.RealmId == realmId && e.ElementCount == 1),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify resource reference registered for new lore
+        _mockResourceClient.Verify(r => r.RegisterReferenceAsync(
+            It.IsAny<RegisterReferenceRequest>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -518,7 +581,7 @@ public class RealmHistoryServiceTests
             {
                 new RealmLoreElementData
                 {
-                    ElementType = RealmLoreElementType.ORIGIN_MYTH,
+                    ElementType = RealmLoreElementType.OriginMyth,
                     Key = "creation",
                     Value = "Old value",
                     Strength = 0.5f
@@ -538,7 +601,7 @@ public class RealmHistoryServiceTests
             {
                 new RealmLoreElement
                 {
-                    ElementType = RealmLoreElementType.ORIGIN_MYTH,
+                    ElementType = RealmLoreElementType.OriginMyth,
                     Key = "creation",
                     Value = "Updated value",
                     Strength = 0.9f
@@ -553,10 +616,10 @@ public class RealmHistoryServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
 
-        // Verify lore.updated event was published (existing lore)
+        // Verify lore.updated event was published with correct data
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "realm-history.lore.updated",
-            It.IsAny<RealmLoreUpdatedEvent>(),
+            It.Is<RealmLoreUpdatedEvent>(e => e.RealmId == realmId && e.ElementCount == 1),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -577,9 +640,9 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             Elements = new List<RealmLoreElement>
             {
-                new RealmLoreElement { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "k1", Value = "v1", Strength = 0.5f },
-                new RealmLoreElement { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "k2", Value = "v2", Strength = 0.5f },
-                new RealmLoreElement { ElementType = RealmLoreElementType.POLITICAL_SYSTEM, Key = "k3", Value = "v3", Strength = 0.5f }
+                new RealmLoreElement { ElementType = RealmLoreElementType.OriginMyth, Key = "k1", Value = "v1", Strength = 0.5f },
+                new RealmLoreElement { ElementType = RealmLoreElementType.CulturalPractice, Key = "k2", Value = "v2", Strength = 0.5f },
+                new RealmLoreElement { ElementType = RealmLoreElementType.PoliticalSystem, Key = "k3", Value = "v3", Strength = 0.5f }
             },
             ReplaceExisting = true
         };
@@ -605,8 +668,8 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             Elements = new List<RealmLoreElementData>
             {
-                new RealmLoreElementData { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "existing1", Value = "v1", Strength = 0.5f },
-                new RealmLoreElementData { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "existing2", Value = "v2", Strength = 0.5f }
+                new RealmLoreElementData { ElementType = RealmLoreElementType.OriginMyth, Key = "existing1", Value = "v1", Strength = 0.5f },
+                new RealmLoreElementData { ElementType = RealmLoreElementType.CulturalPractice, Key = "existing2", Value = "v2", Strength = 0.5f }
             },
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -621,7 +684,7 @@ public class RealmHistoryServiceTests
             Elements = new List<RealmLoreElement>
             {
                 // This is a truly new element (different type+key), pushing count to 3 > limit of 2
-                new RealmLoreElement { ElementType = RealmLoreElementType.POLITICAL_SYSTEM, Key = "new1", Value = "v3", Strength = 0.5f }
+                new RealmLoreElement { ElementType = RealmLoreElementType.PoliticalSystem, Key = "new1", Value = "v3", Strength = 0.5f }
             },
             ReplaceExisting = false
         };
@@ -647,8 +710,8 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             Elements = new List<RealmLoreElementData>
             {
-                new RealmLoreElementData { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "creation", Value = "old", Strength = 0.5f },
-                new RealmLoreElementData { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "farming", Value = "old", Strength = 0.5f }
+                new RealmLoreElementData { ElementType = RealmLoreElementType.OriginMyth, Key = "creation", Value = "old", Strength = 0.5f },
+                new RealmLoreElementData { ElementType = RealmLoreElementType.CulturalPractice, Key = "farming", Value = "old", Strength = 0.5f }
             },
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -663,7 +726,7 @@ public class RealmHistoryServiceTests
             Elements = new List<RealmLoreElement>
             {
                 // Same type+key as existing = update, not new. Count stays at 2 (at limit, not over)
-                new RealmLoreElement { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "creation", Value = "updated", Strength = 0.9f }
+                new RealmLoreElement { ElementType = RealmLoreElementType.OriginMyth, Key = "creation", Value = "updated", Strength = 0.9f }
             },
             ReplaceExisting = false
         };
@@ -689,8 +752,8 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             Elements = new List<RealmLoreElementData>
             {
-                new RealmLoreElementData { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "k1", Value = "v1", Strength = 0.5f },
-                new RealmLoreElementData { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "k2", Value = "v2", Strength = 0.5f }
+                new RealmLoreElementData { ElementType = RealmLoreElementType.OriginMyth, Key = "k1", Value = "v1", Strength = 0.5f },
+                new RealmLoreElementData { ElementType = RealmLoreElementType.CulturalPractice, Key = "k2", Value = "v2", Strength = 0.5f }
             },
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -704,7 +767,7 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             Element = new RealmLoreElement
             {
-                ElementType = RealmLoreElementType.POLITICAL_SYSTEM,
+                ElementType = RealmLoreElementType.PoliticalSystem,
                 Key = "new_element",
                 Value = "v3",
                 Strength = 0.5f
@@ -732,8 +795,8 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             Elements = new List<RealmLoreElementData>
             {
-                new RealmLoreElementData { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "creation", Value = "old_value", Strength = 0.5f },
-                new RealmLoreElementData { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "farming", Value = "old_value", Strength = 0.5f }
+                new RealmLoreElementData { ElementType = RealmLoreElementType.OriginMyth, Key = "creation", Value = "old_value", Strength = 0.5f },
+                new RealmLoreElementData { ElementType = RealmLoreElementType.CulturalPractice, Key = "farming", Value = "old_value", Strength = 0.5f }
             },
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -748,7 +811,7 @@ public class RealmHistoryServiceTests
             Element = new RealmLoreElement
             {
                 // Same type+key = update, allowed even at limit
-                ElementType = RealmLoreElementType.ORIGIN_MYTH,
+                ElementType = RealmLoreElementType.OriginMyth,
                 Key = "creation",
                 Value = "updated_value",
                 Strength = 0.9f
@@ -779,8 +842,8 @@ public class RealmHistoryServiceTests
             RealmId = realmId,
             Elements = new List<RealmLoreElement>
             {
-                new RealmLoreElement { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "k1", Value = "v1", Strength = 0.5f },
-                new RealmLoreElement { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "k2", Value = "v2", Strength = 0.5f }
+                new RealmLoreElement { ElementType = RealmLoreElementType.OriginMyth, Key = "k1", Value = "v1", Strength = 0.5f },
+                new RealmLoreElement { ElementType = RealmLoreElementType.CulturalPractice, Key = "k2", Value = "v2", Strength = 0.5f }
             },
             ReplaceExisting = false
         };
@@ -846,7 +909,12 @@ public class RealmHistoryServiceTests
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "realm-history.lore.deleted",
-            It.IsAny<RealmLoreDeletedEvent>(),
+            It.Is<RealmLoreDeletedEvent>(e => e.RealmId == realmId),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify resource reference unregistered
+        _mockResourceClient.Verify(r => r.UnregisterReferenceAsync(
+            It.IsAny<UnregisterReferenceRequest>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -867,6 +935,727 @@ public class RealmHistoryServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    #endregion
+
+    #region DeleteAllRealmHistory Tests
+
+    [Fact]
+    public async Task DeleteAllRealmHistoryAsync_WithData_ReturnsOKAndDeletesCounts()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var participationId = Guid.NewGuid();
+        var eventId = Guid.NewGuid();
+
+        var participationData = new RealmParticipationData
+        {
+            ParticipationId = participationId,
+            RealmId = realmId,
+            EventId = eventId,
+            EventName = "Great War",
+            EventCategory = RealmEventCategory.War,
+            Role = RealmEventRole.Defender,
+            EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Impact = 0.8f,
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        var indexData = new HistoryIndexData
+        {
+            EntityId = realmId.ToString(),
+            RecordIds = new List<string> { participationId.ToString() }
+        };
+
+        // Setup participation index with one record
+        _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(indexData);
+        _mockParticipationStore.Setup(s => s.GetBulkAsync(
+            It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, RealmParticipationData>
+            {
+                [$"realm-participation-{participationId}"] = participationData
+            });
+
+        // Setup secondary index bulk lookup (used by RemoveAllByPrimaryKeyAsync)
+        _mockIndexStore.Setup(s => s.GetBulkAsync(
+            It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, HistoryIndexData>
+            {
+                [$"realm-participation-event-{eventId}"] = new HistoryIndexData
+                {
+                    EntityId = eventId.ToString(),
+                    RecordIds = new List<string> { participationId.ToString() }
+                }
+            });
+
+        // Setup bulk delete for participation records
+        _mockParticipationStore.Setup(s => s.DeleteBulkAsync(
+            It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        // Setup lore exists
+        var loreData = new RealmLoreData
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElementData>
+            {
+                new RealmLoreElementData { ElementType = RealmLoreElementType.OriginMyth, Key = "creation", Value = "From fire", Strength = 1.0f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(loreData);
+
+        var request = new DeleteAllRealmHistoryRequest { RealmId = realmId };
+
+        // Act
+        var (status, result) = await service.DeleteAllRealmHistoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+
+        // Verify deletion event was published with correct data
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "realm-history.deleted",
+            It.Is<RealmHistoryDeletedEvent>(e => e.RealmId == realmId && e.ParticipationsDeleted == 1 && e.LoreDeleted),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify resource references unregistered for participations and lore
+        _mockResourceClient.Verify(r => r.UnregisterReferenceAsync(
+            It.IsAny<UnregisterReferenceRequest>(),
+            It.IsAny<CancellationToken>()), Times.AtLeast(2));
+    }
+
+    [Fact]
+    public async Task DeleteAllRealmHistoryAsync_NoData_ReturnsOKWithZeroCounts()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RealmLoreData?)null);
+
+        var request = new DeleteAllRealmHistoryRequest { RealmId = realmId };
+
+        // Act
+        var (status, result) = await service.DeleteAllRealmHistoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(0, result.ParticipationsDeleted);
+        Assert.False(result.LoreDeleted);
+    }
+
+    #endregion
+
+    #region SummarizeRealmHistory Tests
+
+    [Fact]
+    public async Task SummarizeRealmHistoryAsync_WithData_ReturnsOKWithSummaries()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        var loreData = new RealmLoreData
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElementData>
+            {
+                new RealmLoreElementData { ElementType = RealmLoreElementType.OriginMyth, Key = "creation", Value = "Born from fire", Strength = 1.0f },
+                new RealmLoreElementData { ElementType = RealmLoreElementType.CulturalPractice, Key = "harvest", Value = "Annual festival", Strength = 0.7f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(loreData);
+
+        var participationData = new RealmParticipationData
+        {
+            ParticipationId = Guid.NewGuid(),
+            RealmId = realmId,
+            EventId = Guid.NewGuid(),
+            EventName = "The Great War",
+            EventCategory = RealmEventCategory.War,
+            Role = RealmEventRole.Defender,
+            EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Impact = 0.9f,
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        var indexData = new HistoryIndexData
+        {
+            EntityId = realmId.ToString(),
+            RecordIds = new List<string> { participationData.ParticipationId.ToString() }
+        };
+        _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(indexData);
+        _mockParticipationStore.Setup(s => s.GetBulkAsync(
+            It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, RealmParticipationData>
+            {
+                [$"realm-participation-{participationData.ParticipationId}"] = participationData
+            });
+
+        var request = new SummarizeRealmHistoryRequest
+        {
+            RealmId = realmId,
+            MaxLorePoints = 5,
+            MaxHistoricalEvents = 5
+        };
+
+        // Act
+        var (status, result) = await service.SummarizeRealmHistoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.NotEmpty(result.KeyLorePoints);
+        Assert.NotEmpty(result.MajorHistoricalEvents);
+        Assert.Contains(result.KeyLorePoints, s => s.Contains("creation"));
+        Assert.Contains(result.MajorHistoricalEvents, s => s.Contains("The Great War"));
+    }
+
+    [Fact]
+    public async Task SummarizeRealmHistoryAsync_NoData_ReturnsOKWithEmptyLists()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RealmLoreData?)null);
+        _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+
+        var request = new SummarizeRealmHistoryRequest
+        {
+            RealmId = realmId,
+            MaxLorePoints = 5,
+            MaxHistoricalEvents = 5
+        };
+
+        // Act
+        var (status, result) = await service.SummarizeRealmHistoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Empty(result.KeyLorePoints);
+        Assert.Empty(result.MajorHistoricalEvents);
+    }
+
+    #endregion
+
+    #region GetCompressData Tests
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithData_ReturnsOKWithArchive()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        var participationData = new RealmParticipationData
+        {
+            ParticipationId = Guid.NewGuid(),
+            RealmId = realmId,
+            EventId = Guid.NewGuid(),
+            EventName = "The Cataclysm",
+            EventCategory = RealmEventCategory.War,
+            Role = RealmEventRole.Affected,
+            EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Impact = 0.95f,
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        var indexData = new HistoryIndexData
+        {
+            EntityId = realmId.ToString(),
+            RecordIds = new List<string> { participationData.ParticipationId.ToString() }
+        };
+        _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(indexData);
+        _mockParticipationStore.Setup(s => s.GetBulkAsync(
+            It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, RealmParticipationData>
+            {
+                [$"realm-participation-{participationData.ParticipationId}"] = participationData
+            });
+
+        var loreData = new RealmLoreData
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElementData>
+            {
+                new RealmLoreElementData { ElementType = RealmLoreElementType.OriginMyth, Key = "origin", Value = "Born from stars", Strength = 1.0f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(loreData);
+
+        var request = new GetCompressDataRequest { RealmId = realmId };
+
+        // Act
+        var (status, result) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(realmId, result.ResourceId);
+        Assert.Equal("realm-history", result.ResourceType);
+        Assert.True(result.HasParticipations);
+        Assert.True(result.HasLore);
+        Assert.NotNull(result.Participations);
+        Assert.Single(result.Participations);
+        Assert.NotNull(result.LoreElements);
+        Assert.Single(result.LoreElements);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_NoData_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RealmLoreData?)null);
+
+        var request = new GetCompressDataRequest { RealmId = realmId };
+
+        // Act
+        var (status, result) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_OnlyParticipations_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        var participationData = new RealmParticipationData
+        {
+            ParticipationId = Guid.NewGuid(),
+            RealmId = realmId,
+            EventId = Guid.NewGuid(),
+            EventName = "A Treaty",
+            EventCategory = RealmEventCategory.Treaty,
+            Role = RealmEventRole.Mediator,
+            EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Impact = 0.5f,
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        var indexData = new HistoryIndexData
+        {
+            EntityId = realmId.ToString(),
+            RecordIds = new List<string> { participationData.ParticipationId.ToString() }
+        };
+        _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(indexData);
+        _mockParticipationStore.Setup(s => s.GetBulkAsync(
+            It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, RealmParticipationData>
+            {
+                [$"realm-participation-{participationData.ParticipationId}"] = participationData
+            });
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RealmLoreData?)null);
+
+        var request = new GetCompressDataRequest { RealmId = realmId };
+
+        // Act
+        var (status, result) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.True(result.HasParticipations);
+        Assert.False(result.HasLore);
+    }
+
+    #endregion
+
+    #region RestoreFromArchive Tests
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_InvalidBase64_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new RestoreFromArchiveRequest
+        {
+            RealmId = Guid.NewGuid(),
+            Data = "not-valid-base64!!!"
+        };
+
+        // Act
+        var (status, result) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_ValidArchive_ReturnsOKWithCounts()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        // Build a valid archive, compress it, and base64 encode it
+        var archive = new RealmHistoryArchive
+        {
+            ResourceId = realmId,
+            ResourceType = "realm-history",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            HasParticipations = true,
+            Participations = new List<RealmHistoricalParticipation>
+            {
+                new RealmHistoricalParticipation
+                {
+                    ParticipationId = Guid.NewGuid(),
+                    RealmId = realmId,
+                    EventId = Guid.NewGuid(),
+                    EventName = "Restored Event",
+                    EventCategory = RealmEventCategory.War,
+                    Role = RealmEventRole.Defender,
+                    EventDate = DateTimeOffset.UtcNow.AddDays(-100),
+                    Impact = 0.7f,
+                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-100)
+                }
+            },
+            HasLore = true,
+            LoreElements = new List<RealmLoreResponse>
+            {
+                new RealmLoreResponse
+                {
+                    Elements = new List<RealmLoreElement>
+                    {
+                        new RealmLoreElement
+                        {
+                            ElementType = RealmLoreElementType.OriginMyth,
+                            Key = "restored-origin",
+                            Value = "From the archive",
+                            Strength = 1.0f
+                        }
+                    },
+                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-100),
+                    UpdatedAt = DateTimeOffset.UtcNow.AddDays(-100)
+                }
+            }
+        };
+
+        var jsonData = BeyondImmersion.Bannou.Core.BannouJson.Serialize(archive);
+        var compressedData = CompressToBase64(jsonData);
+
+        // Setup stores for restoration
+        _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+        _mockLoreStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RealmLoreData?)null);
+
+        var request = new RestoreFromArchiveRequest
+        {
+            RealmId = realmId,
+            Data = compressedData
+        };
+
+        // Act
+        var (status, result) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(1, result.ParticipationsRestored);
+        Assert.Equal(1, result.LoreRestored);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_ValidArchive_RegistersResourceReferences()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        var archive = new RealmHistoryArchive
+        {
+            ResourceId = realmId,
+            ResourceType = "realm-history",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            HasParticipations = true,
+            Participations = new List<RealmHistoricalParticipation>
+            {
+                new RealmHistoricalParticipation
+                {
+                    ParticipationId = Guid.NewGuid(),
+                    RealmId = realmId,
+                    EventId = Guid.NewGuid(),
+                    EventName = "Restored Event",
+                    EventCategory = RealmEventCategory.War,
+                    Role = RealmEventRole.Defender,
+                    EventDate = DateTimeOffset.UtcNow.AddDays(-100),
+                    Impact = 0.7f,
+                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-100)
+                }
+            },
+            HasLore = true,
+            LoreElements = new List<RealmLoreResponse>
+            {
+                new RealmLoreResponse
+                {
+                    Elements = new List<RealmLoreElement>
+                    {
+                        new RealmLoreElement
+                        {
+                            ElementType = RealmLoreElementType.OriginMyth,
+                            Key = "origin",
+                            Value = "From archive",
+                            Strength = 1.0f
+                        }
+                    }
+                }
+            }
+        };
+
+        var jsonData = BeyondImmersion.Bannou.Core.BannouJson.Serialize(archive);
+        var compressedData = CompressToBase64(jsonData);
+
+        _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+        _mockLoreStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RealmLoreData?)null);
+
+        var request = new RestoreFromArchiveRequest { RealmId = realmId, Data = compressedData };
+
+        // Act
+        await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert — resource references registered for both participation and lore
+        _mockResourceClient.Verify(r => r.RegisterReferenceAsync(
+            It.IsAny<RegisterReferenceRequest>(),
+            It.IsAny<CancellationToken>()), Times.AtLeast(2));
+    }
+
+    #endregion
+
+    #region Lock Failure Tests
+
+    [Fact]
+    public async Task SetRealmLoreAsync_LockFailure_ReturnsConflict()
+    {
+        // Arrange
+        var failLock = new Mock<ILockResponse>();
+        failLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider.Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failLock.Object);
+
+        var service = CreateService();
+
+        var request = new SetRealmLoreRequest
+        {
+            RealmId = Guid.NewGuid(),
+            Elements = new List<RealmLoreElement>
+            {
+                new RealmLoreElement { ElementType = RealmLoreElementType.OriginMyth, Key = "k", Value = "v", Strength = 0.5f }
+            },
+            ReplaceExisting = false
+        };
+
+        // Act
+        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task AddRealmLoreElementAsync_LockFailure_ReturnsConflict()
+    {
+        // Arrange
+        var failLock = new Mock<ILockResponse>();
+        failLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider.Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failLock.Object);
+
+        var service = CreateService();
+
+        var request = new AddRealmLoreElementRequest
+        {
+            RealmId = Guid.NewGuid(),
+            Element = new RealmLoreElement { ElementType = RealmLoreElementType.OriginMyth, Key = "k", Value = "v", Strength = 0.5f }
+        };
+
+        // Act
+        var (status, result) = await service.AddRealmLoreElementAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DeleteAllRealmHistoryAsync_ParticipationLockFailure_ReturnsConflict()
+    {
+        // Arrange
+        var failLock = new Mock<ILockResponse>();
+        failLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider.Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failLock.Object);
+
+        var service = CreateService();
+
+        _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+
+        var request = new DeleteAllRealmHistoryRequest { RealmId = Guid.NewGuid() };
+
+        // Act
+        var (status, result) = await service.DeleteAllRealmHistoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+    }
+
+    #endregion
+
+    #region GetCompressData Additional Tests
+
+    [Fact]
+    public async Task GetCompressDataAsync_OnlyLore_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+
+        var loreData = new RealmLoreData
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElementData>
+            {
+                new RealmLoreElementData { ElementType = RealmLoreElementType.OriginMyth, Key = "origin", Value = "Born from fire", Strength = 1.0f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(loreData);
+
+        var request = new GetCompressDataRequest { RealmId = realmId };
+
+        // Act
+        var (status, result) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.False(result.HasParticipations);
+        Assert.True(result.HasLore);
+        Assert.NotNull(result.LoreElements);
+        Assert.Single(result.LoreElements);
+    }
+
+    #endregion
+
+    #region Summarize Limit Enforcement Tests
+
+    [Fact]
+    public async Task SummarizeRealmHistoryAsync_LimitsLorePoints()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        var elements = new List<RealmLoreElementData>();
+        for (int i = 0; i < 10; i++)
+        {
+            elements.Add(new RealmLoreElementData
+            {
+                ElementType = RealmLoreElementType.OriginMyth,
+                Key = $"key{i}",
+                Value = $"value{i}",
+                Strength = (10 - i) * 0.1f
+            });
+        }
+
+        var loreData = new RealmLoreData
+        {
+            RealmId = realmId,
+            Elements = elements,
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(loreData);
+        _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+
+        var request = new SummarizeRealmHistoryRequest
+        {
+            RealmId = realmId,
+            MaxLorePoints = 3,
+            MaxHistoricalEvents = 5
+        };
+
+        // Act
+        var (status, result) = await service.SummarizeRealmHistoryAsync(request, CancellationToken.None);
+
+        // Assert — only top 3 by strength should appear
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(3, result.KeyLorePoints.Count);
+    }
+
+    #endregion
+
+    #region Helpers
+
+    /// <summary>
+    /// Helper to compress JSON string to base64-encoded gzip data (matching the archive format).
+    /// </summary>
+    private static string CompressToBase64(string jsonData)
+    {
+        using var output = new System.IO.MemoryStream();
+        using (var gzip = new System.IO.Compression.GZipStream(output, System.IO.Compression.CompressionMode.Compress))
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(jsonData);
+            gzip.Write(bytes, 0, bytes.Length);
+        }
+        return Convert.ToBase64String(output.ToArray());
     }
 
     #endregion

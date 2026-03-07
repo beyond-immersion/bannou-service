@@ -56,7 +56,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Seed Service API](#seed) | `client.Seed` | 24 | Generic progressive growth entity service (L2 GameFoundation... |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 9 | Repository pattern state management with Redis and MySQL bac... |
-| [Status Service API](#status) | `client.Status` | 16 | Unified entity effects query layer for temporary contract-ma... |
+| [Status Service API](#status) | `client.Status` | 19 | Unified entity effects query layer for temporary contract-ma... |
 | [Storyline Composer API](#storyline) | `client.Storyline` | 15 | Seeded narrative generation from compressed archives using t... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
@@ -2096,7 +2096,7 @@ Hierarchical composition storage for game worlds.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `InstantiatesceneAsync` | `InstantiateSceneRequest` | `InstantiateSceneResponse` | Declare that a scene was instantiated in the game world |
-| `DestroyinstanceAsync` | `DestroyInstanceRequest` | `DestroyInstanceResponse` | Declare that a scene instance was removed |
+| `DestroyinstanceEventAsync` | `DestroyInstanceRequest` | *(fire-and-forget)* | Declare that a scene instance was removed |
 
 ### Query
 
@@ -2122,7 +2122,7 @@ Hierarchical composition storage for game worlds.
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
-| `RegisterValidationrulesAsync` | `RegisterValidationRulesRequest` | `RegisterValidationRulesResponse` | Register validation rules for a gameId+sceneType |
+| `RegisterValidationrulesEventAsync` | `RegisterValidationRulesRequest` | *(fire-and-forget)* | Register validation rules for a gameId+sceneType |
 | `GetValidationrulesAsync` | `GetValidationRulesRequest` | `GetValidationRulesResponse` | Get validation rules for a gameId+sceneType |
 
 ### Versioning
@@ -2131,7 +2131,7 @@ Hierarchical composition storage for game worlds.
 |--------|---------|----------|---------|
 | `CheckoutsceneAsync` | `CheckoutRequest` | `CheckoutResponse` | Lock a scene for editing |
 | `CommitsceneAsync` | `CommitRequest` | `CommitResponse` | Save changes and release lock |
-| `DiscardcheckoutAsync` | `DiscardRequest` | `DiscardResponse` | Release lock without saving changes |
+| `DiscardcheckoutEventAsync` | `DiscardRequest` | *(fire-and-forget)* | Release lock without saving changes |
 | `HeartbeatcheckoutAsync` | `HeartbeatRequest` | `HeartbeatResponse` | Extend checkout lock TTL |
 | `GetScenehistoryAsync` | `HistoryRequest` | `HistoryResponse` | Get version history for a scene |
 
@@ -2268,6 +2268,9 @@ Unified entity effects query layer for temporary contract-managed statuses and p
 | `ListStatustemplatesAsync` | `ListStatusTemplatesRequest` | `ListStatusTemplatesResponse` | List status templates |
 | `UpdateStatustemplateAsync` | `UpdateStatusTemplateRequest` | `StatusTemplateResponse` | Update a status template |
 | `SeedstatustemplatesAsync` | `SeedStatusTemplatesRequest` | `SeedStatusTemplatesResponse` | Bulk seed status templates |
+| `DeprecatestatustemplateAsync` | `DeprecateStatusTemplateRequest` | `StatusTemplateResponse` | Deprecate a status template |
+| `UndeprecatestatustemplateAsync` | `UndeprecateStatusTemplateRequest` | `StatusTemplateResponse` | Undeprecate a status template |
+| `DeleteStatustemplateEventAsync` | `DeleteStatusTemplateRequest` | *(fire-and-forget)* | Delete a deprecated status template |
 
 ---
 
@@ -2548,7 +2551,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 55
-- **Total methods**: 890
+- **Total methods**: 893
 
 ---
 

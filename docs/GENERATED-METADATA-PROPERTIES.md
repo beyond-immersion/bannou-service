@@ -30,8 +30,8 @@ Compliant properties include one of these phrases in their description:
 | Metric | Count |
 |--------|-------|
 | Total metadata bag properties | 166 |
-| Compliant (has marker) | 149 |
-| Non-compliant (missing marker) | 17 |
+| Compliant (has marker) | 150 |
+| Non-compliant (missing marker) | 16 |
 | Compliance rate | 90% |
 
 ## Properties by Service
@@ -362,7 +362,7 @@ Compliant properties include one of these phrases in their description:
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
 | `GrantStatusRequest` | `metadata` | `status-api.yaml` | **N** | Arbitrary key-value data passed to contract template values and stored on the... |
-| `StatusInstanceResponse` | `metadata` | `status-api.yaml` | **N** | Arbitrary metadata associated with this status instance |
+| `StatusInstanceResponse` | `metadata` | `status-api.yaml` | Y | Client-only metadata. No Bannou plugin reads specific keys from this field by... |
 
 ### Common / Shared Schemas
 
@@ -460,7 +460,6 @@ or is it being misused as a cross-service data contract?
 | State | `BulkStateItem` | `value` | `state-api.yaml` | The value (null if not found) |
 | State | `BulkSaveItem` | `value` | `state-api.yaml` | The value to store |
 | Status | `GrantStatusRequest` | `metadata` | `status-api.yaml` | Arbitrary key-value data passed to contract template values and stored on the... |
-| Status | `StatusInstanceResponse` | `metadata` | `status-api.yaml` | Arbitrary metadata associated with this status instance |
 
 ---
 

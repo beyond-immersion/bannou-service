@@ -1014,6 +1014,18 @@ enum class EJourneyStatus : uint8
     Abandoned UMETA(DisplayName = "Abandoned"),
 };
 
+/** JSON Patch operation type per RFC 6902 */
+UENUM(BlueprintType)
+enum class EJsonPatchOperationType : uint8
+{
+    Add UMETA(DisplayName = "Add"),
+    Remove UMETA(DisplayName = "Remove"),
+    Replace UMETA(DisplayName = "Replace"),
+    Move UMETA(DisplayName = "Move"),
+    Copy UMETA(DisplayName = "Copy"),
+    Test UMETA(DisplayName = "Test"),
+};
+
 /** Musical mode/scale type for key signatures */
 UENUM(BlueprintType)
 enum class EKeyMode : uint8
@@ -1075,7 +1087,10 @@ enum class EMapKind : uint8
     VisualEffects UMETA(DisplayName = "VisualEffects"),
 };
 
-/** Types of marker nodes for spawn points, waypoints, and other positional markers. */
+/** Types of marker nodes for spawn points, waypoints, and other positional markers.
+DESIGN_DECISION: Whether this should be an opaque string instead of enum
+(game-content codes vary per deployment). Tracked for future evaluation.
+ */
 UENUM(BlueprintType)
 enum class EMarkerType : uint8
 {
@@ -1478,29 +1493,29 @@ enum class EQuestStatus : uint8
 UENUM(BlueprintType)
 enum class ERealmEventCategory : uint8
 {
-    FOUNDING UMETA(DisplayName = "FOUNDING"),
-    WAR UMETA(DisplayName = "WAR"),
-    TREATY UMETA(DisplayName = "TREATY"),
-    CATACLYSM UMETA(DisplayName = "CATACLYSM"),
-    DISCOVERY UMETA(DisplayName = "DISCOVERY"),
-    MIGRATION UMETA(DisplayName = "MIGRATION"),
-    CULTURALSHIFT UMETA(DisplayName = "CULTURAL_SHIFT"),
-    ECONOMICCHANGE UMETA(DisplayName = "ECONOMIC_CHANGE"),
-    POLITICALUPHEAVAL UMETA(DisplayName = "POLITICAL_UPHEAVAL"),
+    Founding UMETA(DisplayName = "Founding"),
+    War UMETA(DisplayName = "War"),
+    Treaty UMETA(DisplayName = "Treaty"),
+    Cataclysm UMETA(DisplayName = "Cataclysm"),
+    Discovery UMETA(DisplayName = "Discovery"),
+    Migration UMETA(DisplayName = "Migration"),
+    CulturalShift UMETA(DisplayName = "CulturalShift"),
+    EconomicChange UMETA(DisplayName = "EconomicChange"),
+    PoliticalUpheaval UMETA(DisplayName = "PoliticalUpheaval"),
 };
 
 /** How the realm participated in the historical event */
 UENUM(BlueprintType)
 enum class ERealmEventRole : uint8
 {
-    ORIGIN UMETA(DisplayName = "ORIGIN"),
-    AGGRESSOR UMETA(DisplayName = "AGGRESSOR"),
-    DEFENDER UMETA(DisplayName = "DEFENDER"),
-    MEDIATOR UMETA(DisplayName = "MEDIATOR"),
-    AFFECTED UMETA(DisplayName = "AFFECTED"),
-    BENEFICIARY UMETA(DisplayName = "BENEFICIARY"),
-    INSTIGATOR UMETA(DisplayName = "INSTIGATOR"),
-    NEUTRALPARTY UMETA(DisplayName = "NEUTRAL_PARTY"),
+    Origin UMETA(DisplayName = "Origin"),
+    Aggressor UMETA(DisplayName = "Aggressor"),
+    Defender UMETA(DisplayName = "Defender"),
+    Mediator UMETA(DisplayName = "Mediator"),
+    Affected UMETA(DisplayName = "Affected"),
+    Beneficiary UMETA(DisplayName = "Beneficiary"),
+    Instigator UMETA(DisplayName = "Instigator"),
+    NeutralParty UMETA(DisplayName = "NeutralParty"),
 };
 
 /** Types of lore elements. Each type represents a different aspect
@@ -1509,14 +1524,14 @@ of the realm's background that influences behavior.
 UENUM(BlueprintType)
 enum class ERealmLoreElementType : uint8
 {
-    ORIGINMYTH UMETA(DisplayName = "ORIGIN_MYTH"),
-    CULTURALPRACTICE UMETA(DisplayName = "CULTURAL_PRACTICE"),
-    POLITICALSYSTEM UMETA(DisplayName = "POLITICAL_SYSTEM"),
-    ECONOMICBASE UMETA(DisplayName = "ECONOMIC_BASE"),
-    RELIGIOUSTRADITION UMETA(DisplayName = "RELIGIOUS_TRADITION"),
-    GEOGRAPHICFEATURE UMETA(DisplayName = "GEOGRAPHIC_FEATURE"),
-    FAMOUSFIGURE UMETA(DisplayName = "FAMOUS_FIGURE"),
-    TECHNOLOGICALLEVEL UMETA(DisplayName = "TECHNOLOGICAL_LEVEL"),
+    OriginMyth UMETA(DisplayName = "OriginMyth"),
+    CulturalPractice UMETA(DisplayName = "CulturalPractice"),
+    PoliticalSystem UMETA(DisplayName = "PoliticalSystem"),
+    EconomicBase UMETA(DisplayName = "EconomicBase"),
+    ReligiousTradition UMETA(DisplayName = "ReligiousTradition"),
+    GeographicFeature UMETA(DisplayName = "GeographicFeature"),
+    FamousFigure UMETA(DisplayName = "FamousFigure"),
+    TechnologicalLevel UMETA(DisplayName = "TechnologicalLevel"),
 };
 
 /** Controls how refund confirmation is handled. Same semantics as ReleaseMode.
@@ -1592,6 +1607,15 @@ enum class ESaveCategory : uint8
     StateSnapshot UMETA(DisplayName = "StateSnapshot"),
 };
 
+/** Field to sort save query results by */
+UENUM(BlueprintType)
+enum class ESaveSortField : uint8
+{
+    CreatedAt UMETA(DisplayName = "CreatedAt"),
+    Size UMETA(DisplayName = "Size"),
+    VersionNumber UMETA(DisplayName = "VersionNumber"),
+};
+
 /** Primary gameplay category for a scenario template */
 UENUM(BlueprintType)
 enum class EScenarioCategory : uint8
@@ -1632,6 +1656,8 @@ enum class ESceneEditorType : uint8
 
 /** Scene classification for querying and validation rule lookup.
 Different types may have different validation requirements per game.
+DESIGN_DECISION: Whether this should be an opaque string instead of enum
+(game-content codes vary per deployment). Tracked for future evaluation.
  */
 UENUM(BlueprintType)
 enum class ESceneType : uint8
@@ -2152,18 +2178,6 @@ enum class EContentType : uint8
     Blazor UMETA(DisplayName = "Blazor"),
 };
 
-/** Operation type */
-UENUM(BlueprintType)
-enum class EOp : uint8
-{
-    Add UMETA(DisplayName = "add"),
-    Remove UMETA(DisplayName = "remove"),
-    Replace UMETA(DisplayName = "replace"),
-    Move UMETA(DisplayName = "move"),
-    Copy UMETA(DisplayName = "copy"),
-    Test UMETA(DisplayName = "test"),
-};
-
 /** Risk severity */
 UENUM(BlueprintType)
 enum class ESeverity : uint8
@@ -2171,23 +2185,6 @@ enum class ESeverity : uint8
     Low UMETA(DisplayName = "Low"),
     Medium UMETA(DisplayName = "Medium"),
     High UMETA(DisplayName = "High"),
-};
-
-/** Sort field */
-UENUM(BlueprintType)
-enum class ESortBy : uint8
-{
-    CreatedAt UMETA(DisplayName = "created_at"),
-    Size UMETA(DisplayName = "size"),
-    VersionNumber UMETA(DisplayName = "version_number"),
-};
-
-/** Sort order */
-UENUM(BlueprintType)
-enum class ESortOrder : uint8
-{
-    Asc UMETA(DisplayName = "asc"),
-    Desc UMETA(DisplayName = "desc"),
 };
 
 /** Current health status of the website service */

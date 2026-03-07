@@ -19,6 +19,8 @@ x-service-configuration:
       format: int64
       env: SAVE_LOAD_MAX_SAVE_SIZE_BYTES
       default: 104857600
+      minimum: 1024
+      maximum: 1073741824
       description: Maximum size for a single save in bytes (default 100MB)
 
     AutoCompressThresholdBytes:
@@ -26,6 +28,8 @@ x-service-configuration:
       format: int64
       env: SAVE_LOAD_AUTO_COMPRESS_THRESHOLD_BYTES
       default: 1048576
+      minimum: 0
+      maximum: 1073741824
       description: Auto-compress saves larger than this (default 1MB)
 
     DefaultCompressionType:
@@ -38,6 +42,8 @@ x-service-configuration:
       type: integer
       env: SAVE_LOAD_HOT_CACHE_TTL_MINUTES
       default: 60
+      minimum: 1
+      maximum: 10080
       description: TTL for hot cache entries in minutes
 
     AssetBucket:
@@ -50,42 +56,56 @@ x-service-configuration:
       type: integer
       env: SAVE_LOAD_DEFAULT_MAX_VERSIONS_QUICK_SAVE
       default: 1
+      minimum: 1
+      maximum: 100
       description: Default max versions for QUICK_SAVE category
 
     DefaultMaxVersionsAutoSave:
       type: integer
       env: SAVE_LOAD_DEFAULT_MAX_VERSIONS_AUTO_SAVE
       default: 5
+      minimum: 1
+      maximum: 100
       description: Default max versions for AUTO_SAVE category
 
     DefaultMaxVersionsManualSave:
       type: integer
       env: SAVE_LOAD_DEFAULT_MAX_VERSIONS_MANUAL_SAVE
       default: 10
+      minimum: 1
+      maximum: 100
       description: Default max versions for MANUAL_SAVE category
 
     DefaultMaxVersionsCheckpoint:
       type: integer
       env: SAVE_LOAD_DEFAULT_MAX_VERSIONS_CHECKPOINT
       default: 20
+      minimum: 1
+      maximum: 100
       description: Default max versions for CHECKPOINT category
 
     DefaultMaxVersionsStateSnapshot:
       type: integer
       env: SAVE_LOAD_DEFAULT_MAX_VERSIONS_STATE_SNAPSHOT
       default: 3
+      minimum: 1
+      maximum: 100
       description: Default max versions for STATE_SNAPSHOT category
 
     CleanupIntervalMinutes:
       type: integer
       env: SAVE_LOAD_CLEANUP_INTERVAL_MINUTES
       default: 60
+      minimum: 1
+      maximum: 1440
       description: Interval for automatic cleanup task
 
     CleanupStartupDelaySeconds:
       type: integer
       env: SAVE_LOAD_CLEANUP_STARTUP_DELAY_SECONDS
       default: 30
+      minimum: 0
+      maximum: 300
       description: Delay in seconds before cleanup service starts processing
 
     CleanupControlPlaneOnly:
@@ -98,6 +118,8 @@ x-service-configuration:
       type: integer
       env: SAVE_LOAD_SESSION_CLEANUP_GRACE_PERIOD_MINUTES
       default: 5
+      minimum: 0
+      maximum: 60
       description: Grace period before cleaning up SESSION-owned saves after session ends. Allows other services to copy/promote saves to longer-term storage.
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -114,6 +136,8 @@ x-service-configuration:
       type: integer
       env: SAVE_LOAD_MIGRATION_MAX_PATCH_OPERATIONS
       default: 1000
+      minimum: 1
+      maximum: 10000
       description: Maximum JSON Patch operations per migration (safety limit)
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -124,12 +148,16 @@ x-service-configuration:
       type: integer
       env: SAVE_LOAD_MAX_SLOTS_PER_OWNER
       default: 100
+      minimum: 1
+      maximum: 10000
       description: Maximum save slots per owner entity
 
     MaxSavesPerMinute:
       type: integer
       env: SAVE_LOAD_MAX_SAVES_PER_MINUTE
       default: 10
+      minimum: 1
+      maximum: 1000
       description: Rate limit - maximum saves per owner per minute
 
     MaxTotalSizeBytesPerOwner:
@@ -137,6 +165,8 @@ x-service-configuration:
       format: int64
       env: SAVE_LOAD_MAX_TOTAL_SIZE_BYTES_PER_OWNER
       default: 1073741824
+      minimum: 1048576
+      maximum: 10737418240
       description: Maximum total storage per owner (default 1GB)
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -173,6 +203,8 @@ x-service-configuration:
       type: integer
       env: SAVE_LOAD_THUMBNAIL_MAX_SIZE_BYTES
       default: 262144
+      minimum: 1024
+      maximum: 10485760
       description: Maximum thumbnail size in bytes (default 256KB)
 
     ThumbnailAllowedFormats:
@@ -201,6 +233,8 @@ x-service-configuration:
       type: integer
       env: SAVE_LOAD_MAX_DELTA_CHAIN_LENGTH
       default: 10
+      minimum: 1
+      maximum: 100
       description: Maximum number of deltas before forcing collapse. Longer chains increase load latency.
 
     AutoCollapseEnabled:
@@ -213,12 +247,16 @@ x-service-configuration:
       type: integer
       env: SAVE_LOAD_DELTA_SIZE_THRESHOLD_PERCENT
       default: 50
+      minimum: 1
+      maximum: 100
       description: If delta is larger than this percent of full save, store as full instead. Avoids storing deltas that dont provide meaningful savings.
 
     MinBaseSizeForDeltaThresholdBytes:
       type: integer
       env: SAVE_LOAD_MIN_BASE_SIZE_FOR_DELTA_THRESHOLD_BYTES
       default: 1024
+      minimum: 0
+      maximum: 104857600
       description: Minimum base save size in bytes before applying delta threshold logic (1KB default)
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -235,11 +273,21 @@ x-service-configuration:
       type: integer
       env: SAVE_LOAD_CONFLICT_DETECTION_WINDOW_MINUTES
       default: 5
+      minimum: 1
+      maximum: 1440
       description: Time window for considering saves as potentially conflicting. Saves from different devices within this window trigger conflict flag.
 
     # ═══════════════════════════════════════════════════════════════════════════
     # STORAGE BACKEND PROTECTION
     # ═══════════════════════════════════════════════════════════════════════════
+
+    UploadWorkerStartupDelaySeconds:
+      type: integer
+      env: SAVE_LOAD_UPLOAD_WORKER_STARTUP_DELAY_SECONDS
+      default: 5
+      minimum: 0
+      maximum: 300
+      description: Delay in seconds before upload worker starts processing. Allows other services to initialize first.
 
     AsyncUploadEnabled:
       type: boolean
@@ -251,36 +299,48 @@ x-service-configuration:
       type: integer
       env: SAVE_LOAD_PENDING_UPLOAD_TTL_MINUTES
       default: 60
+      minimum: 5
+      maximum: 10080
       description: TTL for pending uploads in Redis. If upload fails repeatedly, entry expires and save is considered failed (event published).
 
     MaxConcurrentUploads:
       type: integer
       env: SAVE_LOAD_MAX_CONCURRENT_UPLOADS
       default: 10
+      minimum: 1
+      maximum: 100
       description: Maximum concurrent uploads to storage backend (semaphore). Prevents overwhelming MinIO/S3 during traffic spikes.
 
     UploadBatchSize:
       type: integer
       env: SAVE_LOAD_UPLOAD_BATCH_SIZE
       default: 5
+      minimum: 1
+      maximum: 50
       description: Number of pending uploads to process per batch cycle
 
     UploadBatchIntervalMs:
       type: integer
       env: SAVE_LOAD_UPLOAD_BATCH_INTERVAL_MS
       default: 100
+      minimum: 10
+      maximum: 60000
       description: Interval between upload batch processing cycles
 
     UploadRetryAttempts:
       type: integer
       env: SAVE_LOAD_UPLOAD_RETRY_ATTEMPTS
       default: 3
+      minimum: 0
+      maximum: 10
       description: Number of retry attempts for failed uploads before giving up
 
     UploadRetryDelayMs:
       type: integer
       env: SAVE_LOAD_UPLOAD_RETRY_DELAY_MS
       default: 1000
+      minimum: 100
+      maximum: 60000
       description: Base delay between retry attempts (exponential backoff applied)
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -297,16 +357,22 @@ x-service-configuration:
       type: integer
       env: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_THRESHOLD
       default: 5
+      minimum: 1
+      maximum: 100
       description: Number of consecutive failures before circuit opens
 
     StorageCircuitBreakerResetSeconds:
       type: integer
       env: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_RESET_SECONDS
       default: 30
+      minimum: 5
+      maximum: 3600
       description: Seconds before attempting to close circuit (half-open state)
 
     StorageCircuitBreakerHalfOpenAttempts:
       type: integer
       env: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_HALF_OPEN_ATTEMPTS
       default: 2
+      minimum: 1
+      maximum: 10
       description: Successful uploads needed in half-open state to close circuit

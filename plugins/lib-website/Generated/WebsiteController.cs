@@ -37,7 +37,8 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Website service status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusResponse>> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusResponse>> GetStatus(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get dynamic page content from CMS
@@ -47,7 +48,8 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Page content retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> GetPageContentAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> GetPageContent(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get latest news and announcements
@@ -55,11 +57,13 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <param name="limit">Number of news items to return</param>
 
+
     /// <param name="offset">Pagination offset</param>
 
     /// <returns>News items retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NewsResponse>> GetNewsAsync(int limit, int offset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NewsResponse>> GetNews(int? limit, int? offset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get download links for game clients
@@ -69,7 +73,8 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Download links retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DownloadsResponse>> GetDownloadsAsync(Platform? platform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DownloadsResponse>> GetDownloads(Platform? platform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Submit contact form
@@ -78,7 +83,8 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Contact form submitted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContactResponse>> SubmitContactAsync(ContactRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContactResponse>> SubmitContact(ContactRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get account profile for logged-in user
@@ -86,7 +92,8 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Account profile retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountProfile>> GetAccountProfileAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountProfile>> GetAccountProfile(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all CMS pages
@@ -95,7 +102,8 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Page list retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<System.Collections.Generic.ICollection<PageMetadata>>> ListPagesAsync(bool includeUnpublished, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<System.Collections.Generic.ICollection<PageMetadata>>> ListPages(bool? includeUnpublished, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create new CMS page
@@ -104,16 +112,19 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Page created</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> CreatePageAsync(PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> CreatePage(PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update CMS page
     /// </summary>
 
 
+
     /// <returns>Page updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> UpdatePageAsync(string slug, PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> UpdatePage(string slug, PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete CMS page
@@ -122,7 +133,8 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Page deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeletePageAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeletePage(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get site configuration
@@ -130,7 +142,8 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Site settings retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SiteSettings>> GetSiteSettingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SiteSettings>> GetSiteSettings(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update site configuration
@@ -139,7 +152,8 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Settings updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SiteSettings>> UpdateSiteSettingsAsync(SiteSettings body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SiteSettings>> UpdateSiteSettings(SiteSettings body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current theme configuration
@@ -147,7 +161,8 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Theme configuration retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ThemeConfig>> GetThemeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ThemeConfig>> GetTheme(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update theme configuration
@@ -156,13 +171,14 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Theme updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateThemeAsync(ThemeConfig body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateTheme(ThemeConfig body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IWebsiteService))]
+public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase, IWebsiteController
 {
     private IWebsiteService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

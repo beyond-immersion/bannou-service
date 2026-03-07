@@ -1,5 +1,7 @@
 # Endpoint Permission Guidelines
 
+> ⛔ **FROZEN DOCUMENT** — Defines authoritative permission rules enforced across the codebase. AI agents MUST NOT add, remove, modify, or reinterpret any content without explicit user instruction. If you believe something is incorrect, report the concern and wait — do not "fix" it. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Version**: 1.1
 > **Last Updated**: 2026-03-06
 > **Scope**: All Bannou service endpoints — how to choose x-permissions for every endpoint
@@ -288,7 +290,7 @@ Browser-facing endpoints are a special case defined by T15. They are routed thro
 2. Adding a new browser-facing endpoint requires justification: why can't this go through WebSocket?
 3. Browser-facing endpoints do NOT appear in the WebSocket capability manifest — they are a separate routing layer
 4. Authentication for browser-facing endpoints uses cookies or query parameters, not the WebSocket session
-5. Browser-facing endpoints are declared via `x-controller-only: true` or standard REST conventions in the schema
+5. Browser-facing endpoints are declared via `x-controller-only: true`, `x-manual-implementation: true`, or standard REST conventions in the schema
 
 ---
 

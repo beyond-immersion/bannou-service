@@ -778,16 +778,45 @@ components:
       enum: [Skip, Overwrite, Rename, Fail]
       description: Strategy for handling conflicts during import
 
+    CircuitBreakerState:
+      type: string
+      enum: [Closed, Open, HalfOpen]
+      description: |
+        State of the storage circuit breaker.
+        Closed: Normal operation, requests flow through.
+        Open: Too many failures, requests are rejected.
+        HalfOpen: Testing recovery, limited requests allowed.
+
+    JsonPatchOperationType:
+      type: string
+      enum: [Add, Remove, Replace, Move, Copy, Test]
+      description: JSON Patch operation type per RFC 6902
+
+    SaveSortField:
+      type: string
+      enum: [CreatedAt, Size, VersionNumber]
+      description: Field to sort save query results by
+
+    SortOrder:
+      type: string
+      enum: [Asc, Desc]
+      description: Sort direction for query results
+
+    StatsGroupBy:
+      type: string
+      enum: [OwnerType, Category, SchemaVersion]
+      description: Field to group storage statistics by
+
     JsonPatchOperation:
       type: object
+      additionalProperties: false
       required: [op, path]
       description: |
         JSON Patch operation per RFC 6902.
         Uses JsonPatch.Net library (MIT licensed).
       properties:
         op:
-          type: string
-          enum: [add, remove, replace, move, copy, test]
+          $ref: '#/components/schemas/JsonPatchOperationType'
           description: Operation type
         path:
           type: string
@@ -806,6 +835,7 @@ components:
     CreateSlotRequest:
       description: Request to create a new save slot for an entity.
       type: object
+      additionalProperties: false
       required: [gameId, ownerId, ownerType, slotName, category]
       properties:
         gameId:
@@ -863,6 +893,7 @@ components:
 
     GetSlotRequest:
       type: object
+      additionalProperties: false
       description: Request to retrieve metadata for a specific save slot
       required: [gameId, ownerId, ownerType, slotName]
       properties:
@@ -881,10 +912,13 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
 
     ListSlotsRequest:
       type: object
+      additionalProperties: false
       description: Request to list all save slots belonging to a specific owner
       required: [gameId, ownerId, ownerType]
       properties:
@@ -913,6 +947,7 @@ components:
 
     DeleteSlotRequest:
       type: object
+      additionalProperties: false
       description: Request to permanently delete a save slot and all its versions
       required: [gameId, ownerId, ownerType, slotName]
       properties:
@@ -931,12 +966,15 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
 
     SlotResponse:
       type: object
+      additionalProperties: false
       description: Complete metadata for a save slot including version statistics
-      required: [slotId, ownerId, ownerType, slotName, category, createdAt]
+      required: [slotId, ownerId, ownerType, slotName, category, maxVersions, compressionType, versionCount, totalSizeBytes, createdAt, updatedAt]
       properties:
         slotId:
           type: string
@@ -986,12 +1024,14 @@ components:
           description: Last modification timestamp
         metadata:
           type: object
+          nullable: true
           additionalProperties:
             type: string
-          description: Custom key-value metadata
+          description: Custom key-value metadata (null if none set)
 
     ListSlotsResponse:
       type: object
+      additionalProperties: false
       description: Response containing a list of save slots for an owner
       required: [slots]
       properties:
@@ -1006,12 +1046,10 @@ components:
 
     DeleteSlotResponse:
       type: object
+      additionalProperties: false
       description: Result of a slot deletion operation with cleanup statistics
-      required: [deleted, versionsDeleted, bytesFreed]
+      required: [versionsDeleted, bytesFreed]
       properties:
-        deleted:
-          type: boolean
-          description: Whether slot was deleted
         versionsDeleted:
           type: integer
           description: Number of versions deleted
@@ -1026,11 +1064,15 @@ components:
 
     SaveRequest:
       type: object
+      additionalProperties: false
       description: Request to save game state data to a slot with optional compression and metadata
       required: [gameId, ownerId, ownerType, slotName, data]
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -1041,6 +1083,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name (auto-created if doesn't exist)
         category:
           allOf:
@@ -1089,8 +1133,9 @@ components:
 
     SaveResponse:
       type: object
+      additionalProperties: false
       description: Result of a save operation including version info and conflict detection
-      required: [slotId, versionNumber, contentHash, sizeBytes, createdAt]
+      required: [slotId, versionNumber, contentHash, sizeBytes, pinned, conflictDetected, versionsCleanedUp, uploadPending, createdAt]
       properties:
         slotId:
           type: string
@@ -1153,6 +1198,7 @@ components:
 
     LoadRequest:
       type: object
+      additionalProperties: false
       description: Request to load save data from a specific slot and version
       required: [gameId, ownerId, ownerType, slotName]
       properties:
@@ -1187,8 +1233,9 @@ components:
 
     LoadResponse:
       type: object
+      additionalProperties: false
       description: Response containing loaded save data with integrity verification
-      required: [slotId, versionNumber, data, contentHash]
+      required: [slotId, versionNumber, data, contentHash, pinned, createdAt]
       properties:
         slotId:
           type: string
@@ -1225,9 +1272,10 @@ components:
           description: Save timestamp
         metadata:
           type: object
+          nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata
+          description: Custom metadata (null if none set)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # VERSION MODELS
@@ -1235,6 +1283,7 @@ components:
 
     ListVersionsRequest:
       type: object
+      additionalProperties: false
       description: Request to list all versions within a save slot with pagination
       required: [ownerId, ownerType, slotName]
       properties:
@@ -1247,6 +1296,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
         offset:
           type: integer
@@ -1264,6 +1315,7 @@ components:
 
     ListVersionsResponse:
       type: object
+      additionalProperties: false
       description: Paginated list of save versions within a slot
       required: [versions, totalCount]
       properties:
@@ -1278,8 +1330,9 @@ components:
 
     VersionResponse:
       type: object
+      additionalProperties: false
       description: Metadata for a single save version including size and checkpoint info
-      required: [versionNumber, contentHash, sizeBytes, createdAt]
+      required: [versionNumber, contentHash, sizeBytes, pinned, createdAt]
       properties:
         versionNumber:
           type: integer
@@ -1287,7 +1340,8 @@ components:
         assetId:
           type: string
           format: uuid
-          description: Reference to asset in lib-asset
+          nullable: true
+          description: Reference to asset in lib-asset (null if not yet uploaded to MinIO)
         contentHash:
           type: string
           description: SHA-256 hash
@@ -1320,12 +1374,14 @@ components:
           description: Creation timestamp
         metadata:
           type: object
+          nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata
+          description: Custom metadata (null if none set)
 
     PinVersionRequest:
       type: object
+      additionalProperties: false
       description: Request to pin a save version as a checkpoint to prevent cleanup
       required: [ownerId, ownerType, slotName, versionNumber]
       properties:
@@ -1338,6 +1394,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
         versionNumber:
           type: integer
@@ -1349,6 +1407,7 @@ components:
 
     UnpinVersionRequest:
       type: object
+      additionalProperties: false
       description: Request to unpin a previously pinned save version
       required: [ownerId, ownerType, slotName, versionNumber]
       properties:
@@ -1361,6 +1420,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
         versionNumber:
           type: integer
@@ -1368,6 +1429,7 @@ components:
 
     DeleteVersionRequest:
       type: object
+      additionalProperties: false
       description: Request to permanently delete a specific save version
       required: [ownerId, ownerType, slotName, versionNumber]
       properties:
@@ -1380,6 +1442,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
         versionNumber:
           type: integer
@@ -1387,12 +1451,10 @@ components:
 
     DeleteVersionResponse:
       type: object
+      additionalProperties: false
       description: Result of a version deletion operation with storage freed
-      required: [deleted, bytesFreed]
+      required: [bytesFreed]
       properties:
-        deleted:
-          type: boolean
-          description: Whether version was deleted
         bytesFreed:
           type: integer
           format: int64
@@ -1404,6 +1466,7 @@ components:
 
     QuerySavesRequest:
       type: object
+      additionalProperties: false
       description: Advanced query for saves across multiple owners with filtering and sorting
       properties:
         ownerId:
@@ -1455,18 +1518,19 @@ components:
           maximum: 100
           description: Maximum results
         sortBy:
-          type: string
-          enum: [created_at, size, version_number]
-          default: created_at
+          allOf:
+          - $ref: '#/components/schemas/SaveSortField'
+          default: CreatedAt
           description: Sort field
         sortOrder:
-          type: string
-          enum: [asc, desc]
-          default: desc
+          allOf:
+          - $ref: '#/components/schemas/SortOrder'
+          default: Desc
           description: Sort order
 
     QuerySavesResponse:
       type: object
+      additionalProperties: false
       description: Paginated results from a save query operation
       required: [results, totalCount]
       properties:
@@ -1481,8 +1545,9 @@ components:
 
     QueryResultItem:
       type: object
+      additionalProperties: false
       description: Single result item from a save query with slot and version metadata
-      required: [slotId, slotName, ownerId, ownerType, category, versionNumber, createdAt]
+      required: [slotId, slotName, ownerId, ownerType, category, versionNumber, pinned, createdAt]
       properties:
         slotId:
           type: string
@@ -1529,9 +1594,10 @@ components:
           description: Creation timestamp
         metadata:
           type: object
+          nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata
+          description: Custom metadata (null if none set)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # MIGRATION MODELS
@@ -1539,6 +1605,7 @@ components:
 
     MigrateSaveRequest:
       type: object
+      additionalProperties: false
       description: Request to migrate a save to a newer schema version
       required: [ownerId, ownerType, slotName, targetSchemaVersion]
       properties:
@@ -1551,12 +1618,16 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Slot name
         versionNumber:
           type: integer
           description: Specific version to migrate (defaults to latest)
         targetSchemaVersion:
           type: string
+          minLength: 1
+          maxLength: 32
           description: Target schema version to migrate to
         dryRun:
           type: boolean
@@ -1565,12 +1636,10 @@ components:
 
     MigrateSaveResponse:
       type: object
+      additionalProperties: false
       description: Result of a schema migration operation with version path details
-      required: [success, fromSchemaVersion, toSchemaVersion]
+      required: [fromSchemaVersion, toSchemaVersion]
       properties:
-        success:
-          type: boolean
-          description: Whether migration succeeded
         fromSchemaVersion:
           type: string
           description: Original schema version
@@ -1583,25 +1652,32 @@ components:
           description: New version number (null if dry run)
         migrationPath:
           type: array
+          nullable: true
           items:
             type: string
-          description: Migration path applied (list of versions)
+          description: Migration path applied (list of versions, null if dry run failed)
         warnings:
           type: array
+          nullable: true
           items:
             type: string
-          description: Non-fatal migration warnings
+          description: Non-fatal migration warnings (null if none)
 
     RegisterSchemaRequest:
       type: object
+      additionalProperties: false
       description: Request to register a new save data schema with optional migration rules
       required: [namespace, schemaVersion, schema]
       properties:
         namespace:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Schema namespace (e.g., game identifier)
         schemaVersion:
           type: string
+          minLength: 1
+          maxLength: 32
           description: Schema version identifier
         schema:
           type: object
@@ -1621,8 +1697,9 @@ components:
 
     SchemaResponse:
       type: object
+      additionalProperties: false
       description: Registered schema definition with version lineage information
-      required: [namespace, schemaVersion, createdAt]
+      required: [namespace, schemaVersion, hasMigration, createdAt]
       properties:
         namespace:
           type: string
@@ -1647,15 +1724,19 @@ components:
 
     ListSchemasRequest:
       type: object
+      additionalProperties: false
       description: Request to list all registered schemas for a namespace
       required: [namespace]
       properties:
         namespace:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Schema namespace to list
 
     ListSchemasResponse:
       type: object
+      additionalProperties: false
       description: List of registered schemas with latest version indicator
       required: [schemas]
       properties:
@@ -1675,6 +1756,7 @@ components:
 
     AdminCleanupRequest:
       type: object
+      additionalProperties: false
       description: Request for admin-triggered cleanup of expired or orphaned saves
       properties:
         dryRun:
@@ -1693,6 +1775,7 @@ components:
 
     AdminCleanupResponse:
       type: object
+      additionalProperties: false
       description: Result of admin cleanup operation with storage reclamation details
       required: [versionsDeleted, bytesFreed, dryRun]
       properties:
@@ -1712,15 +1795,18 @@ components:
 
     AdminStatsRequest:
       type: object
+      additionalProperties: false
       description: Request for aggregate storage statistics with optional grouping
       properties:
         groupBy:
-          type: string
-          enum: [owner_type, category, schema_version]
-          description: Group statistics by field
+          allOf:
+          - $ref: '#/components/schemas/StatsGroupBy'
+          nullable: true
+          description: Group statistics by field (null = no grouping)
 
     AdminStatsResponse:
       type: object
+      additionalProperties: false
       description: Aggregate storage statistics with optional breakdown by category
       required: [totalSlots, totalVersions, totalSizeBytes]
       properties:
@@ -1739,12 +1825,14 @@ components:
           description: Number of pinned versions
         breakdown:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/StatsBreakdown'
-          description: Breakdown by groupBy field
+          description: Breakdown by groupBy field (null if no groupBy specified)
 
     StatsBreakdown:
       type: object
+      additionalProperties: false
       description: Storage statistics for a single category in the breakdown
       required: [key, slots, versions, sizeBytes]
       properties:
@@ -1768,11 +1856,15 @@ components:
 
     RenameSlotRequest:
       type: object
+      additionalProperties: false
       description: Request to rename an existing save slot
       required: [gameId, ownerId, ownerType, slotName, newSlotName]
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier
         ownerId:
           type: string
@@ -1783,6 +1875,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Current slot name
         newSlotName:
           type: string
@@ -1793,11 +1887,15 @@ components:
 
     BulkDeleteSlotsRequest:
       type: object
+      additionalProperties: false
       description: Request to delete multiple save slots in a single operation
       required: [gameId, slotIds]
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier
         slotIds:
           type: array
@@ -1808,6 +1906,7 @@ components:
 
     BulkDeleteSlotsResponse:
       type: object
+      additionalProperties: false
       description: Result of bulk slot deletion with total cleanup statistics
       required: [deletedCount, bytesFreed]
       properties:
@@ -1822,11 +1921,15 @@ components:
     CopySaveRequest:
       description: Request to copy save data from one slot to another, optionally across different entities or games.
       type: object
+      additionalProperties: false
       required: [sourceGameId, sourceOwnerId, sourceOwnerType, sourceSlotName, targetGameId, targetOwnerId, 
           targetOwnerType, targetSlotName]
       properties:
         sourceGameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier of the source save
         sourceOwnerId:
           type: string
@@ -1837,6 +1940,8 @@ components:
           description: Type of entity that owns the source save
         sourceSlotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the source slot to copy from
         sourceVersion:
           type: integer
@@ -1844,6 +1949,9 @@ components:
           description: Version to copy (latest if null)
         targetGameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for the target save
         targetOwnerId:
           type: string
@@ -1854,6 +1962,8 @@ components:
           description: Type of entity that will own the copied save
         targetSlotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the target slot to copy to
         targetCategory:
           $ref: '#/components/schemas/SaveCategory'
@@ -1861,11 +1971,15 @@ components:
 
     ExportSavesRequest:
       type: object
+      additionalProperties: false
       description: Request to export all saves for an owner to a downloadable archive
       required: [gameId, ownerId, ownerType]
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -1876,12 +1990,14 @@ components:
           description: Type of entity that owns the saves to export
         slotNames:
           type: array
+          nullable: true
           items:
             type: string
-          description: Specific slots to export (all if null)
+          description: Specific slots to export (null = all slots)
 
     ExportSavesResponse:
       type: object
+      additionalProperties: false
       description: Response with pre-signed URL for downloading exported save archive
       required: [downloadUrl, expiresAt, sizeBytes]
       properties:
@@ -1899,6 +2015,7 @@ components:
 
     ImportSavesRequest:
       type: object
+      additionalProperties: false
       description: Request to import saves from an uploaded archive
       required: [archiveAssetId, targetGameId, targetOwnerId, targetOwnerType]
       properties:
@@ -1908,6 +2025,9 @@ components:
           description: Asset ID of uploaded export archive
         targetGameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         targetOwnerId:
           type: string
@@ -1922,6 +2042,7 @@ components:
 
     ImportSavesResponse:
       type: object
+      additionalProperties: false
       description: Result of save archive import with success and conflict counts
       required: [importedSlots, importedVersions, skippedSlots]
       properties:
@@ -1936,17 +2057,22 @@ components:
           description: Slots skipped due to conflicts
         conflicts:
           type: array
+          nullable: true
           items:
             type: string
-          description: Names of slots that had conflicts
+          description: Names of slots that had conflicts (null if none)
 
     VerifyIntegrityRequest:
       type: object
+      additionalProperties: false
       description: Request to verify data integrity of a save version via hash comparison
       required: [gameId, ownerId, ownerType, slotName]
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -1957,6 +2083,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the slot to verify
         versionNumber:
           type: integer
@@ -1965,8 +2093,9 @@ components:
 
     VerifyIntegrityResponse:
       type: object
+      additionalProperties: false
       description: Result of integrity verification with hash comparison details
-      required: [valid, versionNumber]
+      required: [valid, versionNumber, expectedHash]
       properties:
         valid:
           type: boolean
@@ -1988,11 +2117,15 @@ components:
 
     PromoteVersionRequest:
       type: object
+      additionalProperties: false
       description: Request to promote an older save version to be the latest
       required: [gameId, ownerId, ownerType, slotName, versionNumber]
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -2003,6 +2136,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the slot containing the version to promote
         versionNumber:
           type: integer
@@ -2028,11 +2163,15 @@ components:
 
     SaveDeltaRequest:
       type: object
+      additionalProperties: false
       description: Request to save incremental changes as a delta from a base version
       required: [gameId, ownerId, ownerType, slotName, baseVersion, delta]
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -2043,6 +2182,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the slot to save the delta to
         baseVersion:
           type: integer
@@ -2080,8 +2221,9 @@ components:
 
     SaveDeltaResponse:
       type: object
+      additionalProperties: false
       description: Result of delta save operation with size and chain information
-      required: [slotId, versionNumber, baseVersion, deltaSizeBytes, estimatedFullSizeBytes, createdAt]
+      required: [slotId, versionNumber, baseVersion, deltaSizeBytes, estimatedFullSizeBytes, chainLength, compressionSavings, createdAt]
       properties:
         slotId:
           type: string
@@ -2115,11 +2257,15 @@ components:
 
     CollapseDeltasRequest:
       type: object
+      additionalProperties: false
       description: Request to collapse a delta chain into a full snapshot
       required: [gameId, ownerId, ownerType, slotName]
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
           description: Game identifier for namespace isolation
         ownerId:
           type: string
@@ -2130,6 +2276,8 @@ components:
           description: Type of entity that owns this save slot
         slotName:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Name of the slot containing deltas to collapse
         versionNumber:
           type: integer

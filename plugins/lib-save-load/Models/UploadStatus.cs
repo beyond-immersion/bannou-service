@@ -8,15 +8,15 @@ public enum UploadStatus
     /// <summary>
     /// Upload is pending/queued
     /// </summary>
-    PENDING,
+    Pending,
 
     /// <summary>
     /// Upload completed successfully
     /// </summary>
-    COMPLETE,
+    Complete,
 
     /// <summary>
     /// Upload failed
     /// </summary>
-    FAILED
+    Failed
 }

@@ -55,18 +55,21 @@ public class PuppetmasterServiceConfiguration : BaseServiceConfiguration
     /// Maximum number of behavior documents to cache in memory
     /// Environment variable: PUPPETMASTER_BEHAVIOR_CACHE_MAX_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int BehaviorCacheMaxSize { get; set; } = 1000;
 
     /// <summary>
     /// Time-to-live for cached behavior documents in seconds
     /// Environment variable: PUPPETMASTER_BEHAVIOR_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int BehaviorCacheTtlSeconds { get; set; } = 3600;
 
     /// <summary>
     /// Timeout for downloading behavior YAML from asset service
     /// Environment variable: PUPPETMASTER_ASSET_DOWNLOAD_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int AssetDownloadTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
@@ -75,6 +78,20 @@ public class PuppetmasterServiceConfiguration : BaseServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 1)]
     public int SnapshotCacheTtlSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Page size for iterating actors when broadcasting behavior update notifications
+    /// Environment variable: PUPPETMASTER_BEHAVIOR_UPDATE_PAGE_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int BehaviorUpdatePageSize { get; set; } = 100;
+
+    /// <summary>
+    /// Maximum number of concurrent resource snapshot prefetch operations
+    /// Environment variable: PUPPETMASTER_SNAPSHOT_PREFETCH_CONCURRENCY
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int SnapshotPrefetchConcurrency { get; set; } = 5;
 
     /// <summary>
     /// Default watcher types to start for each realm (comma-separated in env var)

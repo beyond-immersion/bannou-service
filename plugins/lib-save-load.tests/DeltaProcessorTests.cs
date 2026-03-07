@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.SaveLoad;
 using BeyondImmersion.BannouService.SaveLoad.Delta;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -30,7 +31,7 @@ public class DeltaProcessorTests
         var target = Encoding.UTF8.GetBytes("""{"name":"Alice","age":26}""");
 
         // Act
-        var result = _processor.ComputeDelta(source, target, "JSON_PATCH");
+        var result = _processor.ComputeDelta(source, target, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.NotNull(result);
@@ -47,7 +48,7 @@ public class DeltaProcessorTests
         var target = Encoding.UTF8.GetBytes("""{"name":"Alice","email":"alice@example.com"}""");
 
         // Act
-        var result = _processor.ComputeDelta(source, target, "JSON_PATCH");
+        var result = _processor.ComputeDelta(source, target, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.NotNull(result);
@@ -64,7 +65,7 @@ public class DeltaProcessorTests
         var target = Encoding.UTF8.GetBytes("""{"name":"Alice"}""");
 
         // Act
-        var result = _processor.ComputeDelta(source, target, "JSON_PATCH");
+        var result = _processor.ComputeDelta(source, target, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.NotNull(result);
@@ -81,7 +82,7 @@ public class DeltaProcessorTests
         var target = Encoding.UTF8.GetBytes("""{"name":"Alice","age":25}""");
 
         // Act
-        var result = _processor.ComputeDelta(source, target, "JSON_PATCH");
+        var result = _processor.ComputeDelta(source, target, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.NotNull(result);
@@ -97,7 +98,7 @@ public class DeltaProcessorTests
         var target = Encoding.UTF8.GetBytes("""{"name":"Alice"}""");
 
         // Act
-        var result = _processor.ComputeDelta(source, target, "JSON_PATCH");
+        var result = _processor.ComputeDelta(source, target, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.Null(result);
@@ -112,7 +113,7 @@ public class DeltaProcessorTests
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() =>
-            _processor.ComputeDelta(source, target, "UNKNOWN_ALGO"));
+            _processor.ComputeDelta(source, target, (DeltaAlgorithm)999));
     }
 
     [Fact]
@@ -124,7 +125,7 @@ public class DeltaProcessorTests
 
         // Act & Assert
         Assert.Throws<NotSupportedException>(() =>
-            _processor.ComputeDelta(source, target, "BSDIFF"));
+            _processor.ComputeDelta(source, target, DeltaAlgorithm.Bsdiff));
     }
 
     #endregion
@@ -138,11 +139,11 @@ public class DeltaProcessorTests
         var source = Encoding.UTF8.GetBytes("""{"name":"Alice","age":25}""");
         var target = Encoding.UTF8.GetBytes("""{"name":"Alice","age":26}""");
 
-        var delta = _processor.ComputeDelta(source, target, "JSON_PATCH");
+        var delta = _processor.ComputeDelta(source, target, DeltaAlgorithm.JsonPatch);
         Assert.NotNull(delta);
 
         // Act
-        var result = _processor.ApplyDelta(source, delta, "JSON_PATCH");
+        var result = _processor.ApplyDelta(source, delta, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.NotNull(result);
@@ -158,11 +159,11 @@ public class DeltaProcessorTests
         var source = Encoding.UTF8.GetBytes("""{"items":[{"id":1},{"id":2}],"count":2}""");
         var target = Encoding.UTF8.GetBytes("""{"items":[{"id":1},{"id":2},{"id":3}],"count":3}""");
 
-        var delta = _processor.ComputeDelta(source, target, "JSON_PATCH");
+        var delta = _processor.ComputeDelta(source, target, DeltaAlgorithm.JsonPatch);
         Assert.NotNull(delta);
 
         // Act
-        var result = _processor.ApplyDelta(source, delta, "JSON_PATCH");
+        var result = _processor.ApplyDelta(source, delta, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.NotNull(result);
@@ -180,7 +181,7 @@ public class DeltaProcessorTests
         var delta = Encoding.UTF8.GetBytes("""[{"op":"replace","path":"/name","value":"Bob"}]""");
 
         // Act
-        var result = _processor.ApplyDelta(source, delta, "JSON_PATCH");
+        var result = _processor.ApplyDelta(source, delta, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.Null(result);
@@ -194,7 +195,7 @@ public class DeltaProcessorTests
         var delta = Encoding.UTF8.GetBytes("not valid patch");
 
         // Act
-        var result = _processor.ApplyDelta(source, delta, "JSON_PATCH");
+        var result = _processor.ApplyDelta(source, delta, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.Null(result);
@@ -211,7 +212,7 @@ public class DeltaProcessorTests
         var patch = Encoding.UTF8.GetBytes("""[{"op":"replace","path":"/name","value":"Bob"}]""");
 
         // Act
-        var result = _processor.ValidateDelta(patch, "JSON_PATCH");
+        var result = _processor.ValidateDelta(patch, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.True(result);
@@ -224,7 +225,7 @@ public class DeltaProcessorTests
         var patch = Encoding.UTF8.GetBytes("[]");
 
         // Act
-        var result = _processor.ValidateDelta(patch, "JSON_PATCH");
+        var result = _processor.ValidateDelta(patch, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.True(result);
@@ -237,7 +238,7 @@ public class DeltaProcessorTests
         var patch = Encoding.UTF8.GetBytes("not a valid patch");
 
         // Act
-        var result = _processor.ValidateDelta(patch, "JSON_PATCH");
+        var result = _processor.ValidateDelta(patch, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.False(result);
@@ -250,7 +251,7 @@ public class DeltaProcessorTests
         var data = new byte[] { 1, 2, 3, 4 };
 
         // Act
-        var result = _processor.ValidateDelta(data, "BSDIFF");
+        var result = _processor.ValidateDelta(data, DeltaAlgorithm.Bsdiff);
 
         // Assert
         Assert.True(result);
@@ -263,7 +264,7 @@ public class DeltaProcessorTests
         var data = Array.Empty<byte>();
 
         // Act
-        var result = _processor.ValidateDelta(data, "BSDIFF");
+        var result = _processor.ValidateDelta(data, DeltaAlgorithm.Bsdiff);
 
         // Assert
         Assert.False(result);
@@ -280,7 +281,7 @@ public class DeltaProcessorTests
         var patch = Encoding.UTF8.GetBytes("""[{"op":"replace","path":"/a","value":1},{"op":"add","path":"/b","value":2}]""");
 
         // Act
-        var count = _processor.GetOperationCount(patch, "JSON_PATCH");
+        var count = _processor.GetOperationCount(patch, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.Equal(2, count);
@@ -293,23 +294,23 @@ public class DeltaProcessorTests
         var patch = Encoding.UTF8.GetBytes("[]");
 
         // Act
-        var count = _processor.GetOperationCount(patch, "JSON_PATCH");
+        var count = _processor.GetOperationCount(patch, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.Equal(0, count);
     }
 
     [Fact]
-    public void GetOperationCount_WithNonJsonAlgorithm_ReturnsNegativeOne()
+    public void GetOperationCount_WithNonJsonAlgorithm_ReturnsNull()
     {
         // Arrange
         var data = new byte[] { 1, 2, 3, 4 };
 
         // Act
-        var count = _processor.GetOperationCount(data, "BSDIFF");
+        var count = _processor.GetOperationCount(data, DeltaAlgorithm.Bsdiff);
 
         // Assert
-        Assert.Equal(-1, count);
+        Assert.Null(count);
     }
 
     #endregion
@@ -327,7 +328,7 @@ public class DeltaProcessorTests
         var target = Encoding.UTF8.GetBytes("""{"a":10,"b":20,"c":30,"d":40}""");
 
         // Act
-        var result = limitedProcessor.ComputeDelta(source, target, "JSON_PATCH");
+        var result = limitedProcessor.ComputeDelta(source, target, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.Null(result);
@@ -343,7 +344,7 @@ public class DeltaProcessorTests
         var patch = Encoding.UTF8.GetBytes("""[{"op":"replace","path":"/a","value":1},{"op":"add","path":"/b","value":2}]""");
 
         // Act
-        var result = limitedProcessor.ValidateDelta(patch, "JSON_PATCH");
+        var result = limitedProcessor.ValidateDelta(patch, DeltaAlgorithm.JsonPatch);
 
         // Assert
         Assert.False(result);

@@ -50,9 +50,12 @@ public interface IObligationController : BeyondImmersion.BannouService.Controlle
     /// <br/>violation types (e.g., "attack_surrendered_enemy" → ["honor_combat", "show_mercy"]).
     /// </remarks>
 
+
+
     /// <returns>Mapping saved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActionMappingResponse>> SetActionMappingAsync(SetActionMappingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActionMappingResponse>> SetActionMapping(SetActionMappingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List registered action tag mappings
@@ -63,9 +66,12 @@ public interface IObligationController : BeyondImmersion.BannouService.Controlle
     /// <br/>Supports cursor-based pagination and optional text search.
     /// </remarks>
 
+
+
     /// <returns>Mappings retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListActionMappingsResponse>> ListActionMappingsAsync(ListActionMappingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListActionMappingsResponse>> ListActionMappings(ListActionMappingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete an action tag mapping
@@ -76,9 +82,12 @@ public interface IObligationController : BeyondImmersion.BannouService.Controlle
     /// <br/>fall back to convention-based 1:1 matching (tag name == violation type code).
     /// </remarks>
 
+
+
     /// <returns>Mapping deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteActionMappingAsync(DeleteActionMappingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteActionMapping(DeleteActionMappingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query active obligations for a character
@@ -94,9 +103,12 @@ public interface IObligationController : BeyondImmersion.BannouService.Controlle
     /// <br/>forceRefresh to bypass the cache and rebuild from current contract state.
     /// </remarks>
 
+
+
     /// <returns>Obligations retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryObligationsResponse>> QueryObligationsAsync(QueryObligationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryObligationsResponse>> QueryObligations(QueryObligationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Evaluate obligation violation costs for proposed actions
@@ -125,9 +137,12 @@ public interface IObligationController : BeyondImmersion.BannouService.Controlle
     /// <br/>cache (${obligations.*}) for performance.
     /// </remarks>
 
+
+
     /// <returns>Evaluation completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EvaluateActionResponse>> EvaluateActionAsync(EvaluateActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EvaluateActionResponse>> EvaluateAction(EvaluateActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Report a knowing obligation violation
@@ -150,9 +165,12 @@ public interface IObligationController : BeyondImmersion.BannouService.Controlle
     /// <br/>Idempotent: duplicate reports for the same violation are rejected (Conflict).
     /// </remarks>
 
+
+
     /// <returns>Violation recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReportViolationResponse>> ReportViolationAsync(ReportViolationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReportViolationResponse>> ReportViolation(ReportViolationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Query violation history for a character
@@ -164,9 +182,12 @@ public interface IObligationController : BeyondImmersion.BannouService.Controlle
     /// <br/>Ordered by timestamp descending (most recent first).
     /// </remarks>
 
+
+
     /// <returns>Violations retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryViolationsResponse>> QueryViolationsAsync(QueryViolationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryViolationsResponse>> QueryViolations(QueryViolationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Force obligation cache refresh for a character
@@ -181,9 +202,12 @@ public interface IObligationController : BeyondImmersion.BannouService.Controlle
     /// <br/>events. This endpoint is for administrative and debugging purposes.
     /// </remarks>
 
+
+
     /// <returns>Cache refreshed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InvalidateCacheResponse>> InvalidateCacheAsync(InvalidateCacheRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InvalidateCacheResponse>> InvalidateCache(InvalidateCacheRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get obligation data for character archival compression
@@ -194,9 +218,12 @@ public interface IObligationController : BeyondImmersion.BannouService.Controlle
     /// <br/>Returns violation history and cached obligation state for archival.
     /// </remarks>
 
+
+
     /// <returns>Compressed data returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ObligationArchive>> GetCompressDataAsync(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ObligationArchive>> GetCompressData(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore obligation data from archive
@@ -208,9 +235,12 @@ public interface IObligationController : BeyondImmersion.BannouService.Controlle
     /// <br/>is rebuilt automatically from active contracts, not from archive.
     /// </remarks>
 
+
+
     /// <returns>Restoration result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchiveAsync(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchive(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup all obligation data for a deleted character
@@ -223,15 +253,18 @@ public interface IObligationController : BeyondImmersion.BannouService.Controlle
     /// <br/>service-to-service calls during cascading resource cleanup.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class ObligationController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IObligationService))]
+public partial class ObligationController : Microsoft.AspNetCore.Mvc.ControllerBase, IObligationController
 {
     private IObligationService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

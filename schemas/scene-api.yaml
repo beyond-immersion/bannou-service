@@ -258,10 +258,6 @@ paths:
       responses:
         '200':
           description: Destruction recorded and event published
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DestroyInstanceResponse'
 
   # ========== VERSIONING ==========
   /scene/checkout:
@@ -346,10 +342,6 @@ paths:
       responses:
         '200':
           description: Discard successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DiscardResponse'
         '403':
           description: Invalid checkout token
 
@@ -359,6 +351,7 @@ paths:
       description: |
         Extends the checkout lock TTL. Should be called periodically
         during editing to prevent lock expiration.
+        Returns 409 Conflict when the extension limit has been reached.
       operationId: heartbeatCheckout
       tags:
       - Versioning
@@ -381,7 +374,7 @@ paths:
         '403':
           description: Invalid checkout token
         '409':
-          description: Checkout expired
+          description: Checkout expired or extension limit reached
 
   /scene/history:
     post:
@@ -433,10 +426,6 @@ paths:
       responses:
         '200':
           description: Rules registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RegisterValidationRulesResponse'
 
   /scene/get-validation-rules:
     post:
@@ -580,6 +569,8 @@ components:
       description: |
         Scene classification for querying and validation rule lookup.
         Different types may have different validation requirements per game.
+        DESIGN_DECISION: Whether this should be an opaque string instead of enum
+        (game-content codes vary per deployment). Tracked for future evaluation.
       enum:
       - Unknown
       - Region
@@ -638,6 +629,8 @@ components:
       description: |
         Types of affordances describing what an object can do or how it can be interacted with.
         Used by AI navigation, character controllers, and procedural content systems.
+        DESIGN_DECISION: Whether this should be an opaque string instead of enum
+        (game-content codes vary per deployment). Tracked for future evaluation.
       enum:
       - Walkable
       - Climbable
@@ -651,7 +644,10 @@ components:
 
     MarkerType:
       type: string
-      description: Types of marker nodes for spawn points, waypoints, and other positional markers.
+      description: |
+        Types of marker nodes for spawn points, waypoints, and other positional markers.
+        DESIGN_DECISION: Whether this should be an opaque string instead of enum
+        (game-content codes vary per deployment). Tracked for future evaluation.
       enum:
       - Generic
       - SpawnPoint
@@ -664,6 +660,7 @@ components:
 
     AttachmentPoint:
       type: object
+      additionalProperties: false
       description: |
         A predefined location where child objects can be attached.
         Used for decorating furniture, walls, and other objects with accessories.
@@ -674,6 +671,8 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 200
           description: |
             Unique name for this attachment point within the node.
             Examples: wall_hook_left, shelf_1, lamp_socket
@@ -682,6 +681,7 @@ components:
           description: Position and orientation relative to the owning node
         acceptsTags:
           type: array
+          nullable: true
           items:
             type: string
           description: |
@@ -699,6 +699,7 @@ components:
 
     Affordance:
       type: object
+      additionalProperties: false
       description: |
         Describes a capability or interaction mode for a node.
         Used by AI systems to understand what actions are possible and by
@@ -719,6 +720,7 @@ components:
 
     AssetSlot:
       type: object
+      additionalProperties: false
       description: |
         Defines acceptable asset types for procedural swapping at this node.
         Used by procedural generation systems to substitute assets while
@@ -728,11 +730,14 @@ components:
       properties:
         slotType:
           type: string
+          minLength: 1
+          maxLength: 200
           description: |
             Category of acceptable assets.
             Examples: chair, table, wall_art, floor_lamp
         acceptsTags:
           type: array
+          nullable: true
           items:
             type: string
           description: |
@@ -744,6 +749,7 @@ components:
           description: Default asset if no specific asset is bound
         variations:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/AssetReference'
           description: |
@@ -758,6 +764,14 @@ components:
       - CircularReference
       - DepthExceeded
       - AccessDenied
+
+    BrokenReferenceReason:
+      type: string
+      description: Reason why a scene reference became broken
+      enum:
+        - Deleted
+        - AccessRevoked
+        - Corrupted
 
     ValidationSeverity:
       type: string
@@ -789,6 +803,7 @@ components:
 
     Vector3:
       type: object
+      additionalProperties: false
       description: A point or direction in 3D space
       required:
       - x
@@ -810,6 +825,7 @@ components:
 
     Quaternion:
       type: object
+      additionalProperties: false
       description: Rotation represented as a quaternion
       required:
       - x
@@ -836,6 +852,7 @@ components:
 
     Transform:
       type: object
+      additionalProperties: false
       description: Position, rotation, and scale in 3D space
       required:
       - position
@@ -856,6 +873,7 @@ components:
 
     AssetReference:
       type: object
+      additionalProperties: false
       description: Reference to an asset in lib-asset
       required:
       - assetId
@@ -872,12 +890,14 @@ components:
         variantId:
           type: string
           nullable: true
+          maxLength: 200
           description: Variant identifier (consumer interprets meaning)
 
     # ========== SCENE NODE ==========
 
     SceneNode:
       type: object
+      additionalProperties: false
       description: |
         A node in the scene hierarchy. Nodes can contain children to form
         a tree structure. Each node has a local transform relative to its parent.
@@ -895,6 +915,8 @@ components:
         refId:
           type: string
           pattern: '^[a-z][a-z0-9_]*$'
+          minLength: 1
+          maxLength: 200
           description: |
             Scene-local reference identifier. Must be unique within the scene.
             Used for scripting and cross-referencing. Examples: main_door, npc_spawn_1
@@ -905,6 +927,8 @@ components:
           description: Parent node ID. Null for the root node only.
         name:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Human-readable display name for the node
         nodeType:
           $ref: '#/components/schemas/NodeType'
@@ -918,6 +942,7 @@ components:
           description: Optional asset binding (mesh, sound, particle effect)
         children:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/SceneNode'
           description: Child nodes in the hierarchy
@@ -931,6 +956,7 @@ components:
           description: Ordering among siblings for deterministic iteration
         tags:
           type: array
+          nullable: true
           items:
             type: string
           description: Arbitrary tags for consumer filtering (e.g., entrance, spawn, interactive)
@@ -944,6 +970,7 @@ components:
         # Scene Composer extensions for procedural content and AI systems
         attachmentPoints:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/AttachmentPoint'
           description: |
@@ -951,6 +978,7 @@ components:
             Used by Scene Composer for furniture decoration, wall accessories, etc.
         affordances:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/Affordance'
           description: |
@@ -992,6 +1020,7 @@ components:
 
     Scene:
       type: object
+      additionalProperties: false
       description: A complete scene document with hierarchical node structure
       required:
       - sceneId
@@ -1000,9 +1029,13 @@ components:
       - name
       - version
       - root
+      - schema
+      - createdAt
+      - updatedAt
       properties:
         schema:
           type: string
+          maxLength: 200
           description: Schema identifier for validation
           default: "bannou://schemas/scene/v1"
         sceneId:
@@ -1011,6 +1044,8 @@ components:
           description: Unique scene identifier
         gameId:
           type: string
+          minLength: 1
+          maxLength: 200
           description: |
             Game service identifier for partitioning. Treated as opaque string.
             Default is the nil UUID for unpartitioned scenes.
@@ -1020,20 +1055,25 @@ components:
           description: Scene classification for querying and validation
         name:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Human-readable scene name
         description:
           type: string
           nullable: true
+          maxLength: 2000
           description: Optional scene description
         version:
           type: string
           pattern: '^\d+\.\d+\.\d+$'
+          maxLength: 50
           description: Semantic version (MAJOR.MINOR.PATCH)
         root:
           $ref: '#/components/schemas/SceneNode'
           description: Root node of the scene hierarchy
         tags:
           type: array
+          nullable: true
           items:
             type: string
           description: Searchable tags for filtering scenes
@@ -1057,6 +1097,7 @@ components:
 
     CreateSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to create a new scene
       required:
       - scene
@@ -1067,6 +1108,7 @@ components:
 
     GetSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to retrieve a scene
       required:
       - sceneId
@@ -1078,6 +1120,7 @@ components:
         version:
           type: string
           nullable: true
+          maxLength: 50
           description: Specific version to retrieve (null = latest)
         resolveReferences:
           type: boolean
@@ -1092,6 +1135,7 @@ components:
 
     GetSceneResponse:
       type: object
+      additionalProperties: false
       description: Response containing a scene and resolution metadata
       required:
       - scene
@@ -1120,12 +1164,14 @@ components:
 
     ResolvedReference:
       type: object
+      additionalProperties: false
       description: A successfully resolved scene reference
       required:
       - nodeId
       - refId
       - referencedSceneId
       - scene
+      - depth
       properties:
         nodeId:
           type: string
@@ -1147,10 +1193,12 @@ components:
           description: The resolved scene content
         depth:
           type: integer
+          minimum: 0
           description: Depth level of this reference
 
     UnresolvedReference:
       type: object
+      additionalProperties: false
       description: A scene reference that could not be resolved
       required:
       - nodeId
@@ -1182,11 +1230,13 @@ components:
 
     ListScenesRequest:
       type: object
+      additionalProperties: false
       description: Request to list scenes with optional filters
       properties:
         gameId:
           type: string
           nullable: true
+          maxLength: 200
           description: Filter by game ID
         sceneType:
           $ref: '#/components/schemas/SceneType'
@@ -1207,6 +1257,7 @@ components:
         nameContains:
           type: string
           nullable: true
+          maxLength: 500
           description: Filter by name containing this substring (case-insensitive)
         offset:
           type: integer
@@ -1222,10 +1273,13 @@ components:
 
     ListScenesResponse:
       type: object
+      additionalProperties: false
       description: Response containing scene list and pagination info
       required:
       - scenes
       - total
+      - offset
+      - limit
       properties:
         scenes:
           type: array
@@ -1244,6 +1298,7 @@ components:
 
     SceneSummary:
       type: object
+      additionalProperties: false
       description: Summary of a scene for list results (excludes full node tree)
       required:
       - sceneId
@@ -1251,6 +1306,10 @@ components:
       - sceneType
       - name
       - version
+      - nodeCount
+      - createdAt
+      - updatedAt
+      - isCheckedOut
       properties:
         sceneId:
           type: string
@@ -1274,6 +1333,7 @@ components:
           description: Current version
         tags:
           type: array
+          nullable: true
           items:
             type: string
           description: Scene tags
@@ -1294,6 +1354,7 @@ components:
 
     UpdateSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to update an existing scene
       required:
       - scene
@@ -1304,10 +1365,12 @@ components:
         checkoutToken:
           type: string
           nullable: true
+          maxLength: 200
           description: Checkout token if updating via checkout workflow
 
     DeleteSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to delete a scene
       required:
       - sceneId
@@ -1319,31 +1382,25 @@ components:
         reason:
           type: string
           nullable: true
+          maxLength: 1000
           description: Optional reason for deletion (included in event)
 
     DeleteSceneResponse:
       type: object
-      description: Response confirming scene deletion
-      required:
-      - deleted
+      additionalProperties: false
+      description: Response for scene deletion
       properties:
-        deleted:
-          type: boolean
-          description: Whether the scene was successfully deleted
-        sceneId:
-          type: string
-          format: uuid
-          description: ID of the deleted scene
         referencingScenes:
           type: array
           items:
             type: string
             format: uuid
           nullable: true
-          description: If deletion failed, IDs of scenes that reference this one
+          description: If deletion was blocked (409), IDs of scenes that reference this one
 
     SceneResponse:
       type: object
+      additionalProperties: false
       description: Standard response containing a scene
       required:
       - scene
@@ -1354,6 +1411,7 @@ components:
 
     ValidateSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to validate a scene structure
       required:
       - scene
@@ -1368,6 +1426,7 @@ components:
 
     ValidationResult:
       type: object
+      additionalProperties: false
       description: Result of scene validation
       required:
       - valid
@@ -1390,6 +1449,7 @@ components:
 
     ValidationError:
       type: object
+      additionalProperties: false
       description: A single validation error or warning
       required:
       - ruleId
@@ -1398,9 +1458,11 @@ components:
       properties:
         ruleId:
           type: string
+          maxLength: 200
           description: Identifier of the validation rule that triggered this
         message:
           type: string
+          maxLength: 2000
           description: Human-readable error message
         severity:
           $ref: '#/components/schemas/ValidationSeverity'
@@ -1408,6 +1470,7 @@ components:
         nodePath:
           type: string
           nullable: true
+          maxLength: 1000
           description: Path to the problematic node (e.g., root.children[0].children[2])
         nodeId:
           type: string
@@ -1426,6 +1489,7 @@ components:
 
     InstantiateSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to record a scene instantiation
       required:
       - sceneAssetId
@@ -1440,6 +1504,7 @@ components:
         version:
           type: string
           nullable: true
+          maxLength: 50
           description: Specific version (null = validates latest exists)
         instanceId:
           type: string
@@ -1462,24 +1527,18 @@ components:
 
     InstantiateSceneResponse:
       type: object
+      additionalProperties: false
       description: Response confirming instantiation
       required:
-      - instanceId
       - sceneVersion
       properties:
-        instanceId:
-          type: string
-          format: uuid
-          description: The instance ID
         sceneVersion:
           type: string
           description: Version that was instantiated
-        eventPublished:
-          type: boolean
-          description: Whether the event was successfully published
 
     DestroyInstanceRequest:
       type: object
+      additionalProperties: false
       description: Request to record instance destruction
       required:
       - instanceId
@@ -1506,23 +1565,11 @@ components:
             Caller-provided metadata passed through to destruction events.
             No Bannou plugin reads specific keys from this field by convention.
 
-    DestroyInstanceResponse:
-      type: object
-      description: Response confirming destruction
-      required:
-      - destroyed
-      properties:
-        destroyed:
-          type: boolean
-          description: Whether destruction was recorded
-        eventPublished:
-          type: boolean
-          description: Whether the event was successfully published
-
     # ========== VERSIONING MODELS ==========
 
     CheckoutRequest:
       type: object
+      additionalProperties: false
       description: Request to checkout a scene for editing
       required:
       - sceneId
@@ -1538,6 +1585,7 @@ components:
         editorId:
           type: string
           nullable: true
+          maxLength: 200
           description: |
             Editor identifier. For Session type: the WebSocket session ID (UUID format).
             For Service type: the app-id or service name.
@@ -1545,10 +1593,13 @@ components:
         ttlMinutes:
           type: integer
           nullable: true
-          description: Custom lock TTL (uses default if not specified)
+          minimum: 1
+          maximum: 1440
+          description: Custom lock TTL in minutes (uses default if not specified)
 
     CheckoutResponse:
       type: object
+      additionalProperties: false
       description: Response containing checkout token and scene
       required:
       - checkoutToken
@@ -1568,6 +1619,7 @@ components:
 
     CommitRequest:
       type: object
+      additionalProperties: false
       description: Request to commit checkout changes
       required:
       - sceneId
@@ -1580,6 +1632,7 @@ components:
           description: Scene being committed
         checkoutToken:
           type: string
+          maxLength: 200
           description: Checkout token from checkout response
         scene:
           $ref: '#/components/schemas/Scene'
@@ -1587,18 +1640,16 @@ components:
         changesSummary:
           type: string
           nullable: true
+          maxLength: 2000
           description: Optional summary of changes for audit
 
     CommitResponse:
       type: object
+      additionalProperties: false
       description: Response confirming commit
       required:
-      - committed
       - newVersion
       properties:
-        committed:
-          type: boolean
-          description: Whether commit was successful
         newVersion:
           type: string
           description: New version after commit
@@ -1609,6 +1660,7 @@ components:
 
     DiscardRequest:
       type: object
+      additionalProperties: false
       description: Request to discard checkout
       required:
       - sceneId
@@ -1620,20 +1672,12 @@ components:
           description: Scene to discard changes for
         checkoutToken:
           type: string
+          maxLength: 200
           description: Checkout token
-
-    DiscardResponse:
-      type: object
-      description: Response confirming discard
-      required:
-      - discarded
-      properties:
-        discarded:
-          type: boolean
-          description: Whether discard was successful
 
     HeartbeatRequest:
       type: object
+      additionalProperties: false
       description: Request to extend checkout lock
       required:
       - sceneId
@@ -1645,28 +1689,29 @@ components:
           description: Scene being edited
         checkoutToken:
           type: string
+          maxLength: 200
           description: Checkout token
 
     HeartbeatResponse:
       type: object
+      additionalProperties: false
       description: Response confirming lock extension
       required:
-      - extended
       - newExpiresAt
+      - extensionsRemaining
       properties:
-        extended:
-          type: boolean
-          description: Whether extension was successful
         newExpiresAt:
           type: string
           format: date-time
           description: New expiration time
         extensionsRemaining:
           type: integer
+          minimum: 0
           description: Number of extensions remaining
 
     HistoryRequest:
       type: object
+      additionalProperties: false
       description: Request for scene version history
       required:
       - sceneId
@@ -1678,13 +1723,17 @@ components:
         limit:
           type: integer
           default: 10
+          minimum: 1
+          maximum: 1000
           description: Maximum versions to return
 
     HistoryResponse:
       type: object
+      additionalProperties: false
       description: Scene version history
       required:
       - sceneId
+      - currentVersion
       - versions
       properties:
         sceneId:
@@ -1702,10 +1751,12 @@ components:
 
     VersionInfo:
       type: object
+      additionalProperties: false
       description: Information about a specific version
       required:
       - version
       - createdAt
+      - nodeCount
       properties:
         version:
           type: string
@@ -1717,10 +1768,12 @@ components:
         createdBy:
           type: string
           nullable: true
+          maxLength: 200
           description: Who created this version
         changesSummary:
           type: string
           nullable: true
+          maxLength: 2000
           description: Summary of changes
         nodeCount:
           type: integer
@@ -1730,6 +1783,7 @@ components:
 
     RegisterValidationRulesRequest:
       type: object
+      additionalProperties: false
       description: Request to register validation rules
       required:
       - gameId
@@ -1738,6 +1792,8 @@ components:
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Game ID for these rules
         sceneType:
           $ref: '#/components/schemas/SceneType'
@@ -1746,24 +1802,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ValidationRule'
+          minItems: 1
           description: Validation rules to register
-
-    RegisterValidationRulesResponse:
-      type: object
-      description: Response confirming rule registration
-      required:
-      - registered
-      - ruleCount
-      properties:
-        registered:
-          type: boolean
-          description: Whether registration was successful
-        ruleCount:
-          type: integer
-          description: Number of rules registered
 
     GetValidationRulesRequest:
       type: object
+      additionalProperties: false
       description: Request to get validation rules
       required:
       - gameId
@@ -1771,6 +1815,8 @@ components:
       properties:
         gameId:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Game ID
         sceneType:
           $ref: '#/components/schemas/SceneType'
@@ -1778,6 +1824,7 @@ components:
 
     GetValidationRulesResponse:
       type: object
+      additionalProperties: false
       description: Response containing validation rules
       required:
       - gameId
@@ -1791,12 +1838,14 @@ components:
           description: Scene type
         rules:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/ValidationRule'
-          description: Registered rules (empty if none)
+          description: Registered rules (null if none)
 
     ValidationRule:
       type: object
+      additionalProperties: false
       description: A validation rule definition
       required:
       - ruleId
@@ -1806,9 +1855,13 @@ components:
       properties:
         ruleId:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Unique rule identifier within the gameId+sceneType
         description:
           type: string
+          minLength: 1
+          maxLength: 2000
           description: Human-readable description of the rule
         severity:
           $ref: '#/components/schemas/ValidationSeverity'
@@ -1823,47 +1876,57 @@ components:
 
     ValidationRuleConfig:
       type: object
-      description: Configuration for a validation rule
+      additionalProperties: false
+      description: Configuration for a validation rule (fields are conditional on rule type)
       properties:
         nodeType:
-          type: string
+          $ref: '#/components/schemas/NodeType'
           nullable: true
-          description: Filter to nodes of this type (for require_tag)
+          description: Filter to nodes of this type (for RequireTag, RequireNodeType)
         tag:
           type: string
           nullable: true
+          maxLength: 200
           description: Tag to check for
         minCount:
           type: integer
           nullable: true
+          minimum: 0
           description: Minimum occurrences required
         maxCount:
           type: integer
           nullable: true
+          minimum: 0
           description: Maximum occurrences allowed
         annotationPath:
           type: string
           nullable: true
-          description: JSONPath to required annotation field (for require_annotation)
+          maxLength: 500
+          description: JSONPath to required annotation field (for RequireAnnotation)
         expression:
           type: string
           nullable: true
-          description: Custom validation expression (for custom_expression)
+          maxLength: 2000
+          description: Custom validation expression (for CustomExpression)
 
     # ========== QUERY MODELS ==========
 
     SearchScenesRequest:
       type: object
+      additionalProperties: false
       description: Request for full-text search
       required:
       - query
       properties:
         query:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Search query text
         gameId:
           type: string
           nullable: true
+          maxLength: 200
           description: Filter by game ID
         sceneTypes:
           type: array
@@ -1874,14 +1937,18 @@ components:
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
         limit:
           type: integer
           default: 50
+          minimum: 1
+          maximum: 100
           description: Maximum results
 
     SearchScenesResponse:
       type: object
+      additionalProperties: false
       description: Search results
       required:
       - results
@@ -1898,6 +1965,7 @@ components:
 
     SearchResult:
       type: object
+      additionalProperties: false
       description: A single search result
       required:
       - scene
@@ -1912,10 +1980,12 @@ components:
         matchContext:
           type: string
           nullable: true
+          maxLength: 500
           description: Context around the match
 
     FindReferencesRequest:
       type: object
+      additionalProperties: false
       description: Request to find referencing scenes
       required:
       - sceneId
@@ -1927,6 +1997,7 @@ components:
 
     FindReferencesResponse:
       type: object
+      additionalProperties: false
       description: Scenes that reference the target
       required:
       - referencingScenes
@@ -1939,6 +2010,7 @@ components:
 
     ReferenceInfo:
       type: object
+      additionalProperties: false
       description: Information about a reference
       required:
       - sceneId
@@ -1966,6 +2038,7 @@ components:
 
     FindAssetUsageRequest:
       type: object
+      additionalProperties: false
       description: Request to find asset usage
       required:
       - assetId
@@ -1977,10 +2050,12 @@ components:
         gameId:
           type: string
           nullable: true
+          maxLength: 200
           description: Optional game filter
 
     FindAssetUsageResponse:
       type: object
+      additionalProperties: false
       description: Scenes using the asset
       required:
       - usages
@@ -1993,6 +2068,7 @@ components:
 
     AssetUsageInfo:
       type: object
+      additionalProperties: false
       description: Information about asset usage
       required:
       - sceneId
@@ -2023,6 +2099,7 @@ components:
 
     DuplicateSceneRequest:
       type: object
+      additionalProperties: false
       description: Request to duplicate a scene
       required:
       - sourceSceneId
@@ -2034,10 +2111,13 @@ components:
           description: Scene to duplicate
         newName:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Name for the duplicate
         newGameId:
           type: string
           nullable: true
+          maxLength: 200
           description: Optional different game ID
         newSceneType:
           $ref: '#/components/schemas/SceneType'

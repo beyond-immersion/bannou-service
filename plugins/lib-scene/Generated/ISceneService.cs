@@ -67,7 +67,7 @@ public partial interface ISceneService : IBannouService
         /// <summary>
         /// DestroyInstance operation
         /// </summary>
-        Task<(StatusCodes, DestroyInstanceResponse?)> DestroyInstanceAsync(DestroyInstanceRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<StatusCodes> DestroyInstanceAsync(DestroyInstanceRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// CheckoutScene operation
@@ -82,7 +82,7 @@ public partial interface ISceneService : IBannouService
         /// <summary>
         /// DiscardCheckout operation
         /// </summary>
-        Task<(StatusCodes, DiscardResponse?)> DiscardCheckoutAsync(DiscardRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<StatusCodes> DiscardCheckoutAsync(DiscardRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// HeartbeatCheckout operation
@@ -97,7 +97,7 @@ public partial interface ISceneService : IBannouService
         /// <summary>
         /// RegisterValidationRules operation
         /// </summary>
-        Task<(StatusCodes, RegisterValidationRulesResponse?)> RegisterValidationRulesAsync(RegisterValidationRulesRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<StatusCodes> RegisterValidationRulesAsync(RegisterValidationRulesRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// GetValidationRules operation

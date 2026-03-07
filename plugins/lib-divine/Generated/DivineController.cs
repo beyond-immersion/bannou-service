@@ -41,9 +41,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>starts a deity watcher actor via Puppetmaster.
     /// </remarks>
 
+
+
     /// <returns>Deity created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> CreateDeityAsync(CreateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> CreateDeity(CreateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a deity by ID
@@ -53,9 +56,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// Returns a single deity entity by its unique identifier.
     /// </remarks>
 
+
+
     /// <returns>Deity found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> GetDeityAsync(GetDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> GetDeity(GetDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a deity by code within a game service
@@ -65,9 +71,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// Looks up a deity by its unique code within a game service scope.
     /// </remarks>
 
+
+
     /// <returns>Deity found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> GetDeityByCodeAsync(GetDeityByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> GetDeityByCode(GetDeityByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List deities with optional filters
@@ -78,9 +87,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>filtered by domain code and status.
     /// </remarks>
 
+
+
     /// <returns>Deities listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDeitiesResponse>> ListDeitiesAsync(ListDeitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDeitiesResponse>> ListDeities(ListDeitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update deity properties
@@ -91,9 +103,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>Requires a distributed lock on the deity.
     /// </remarks>
 
+
+
     /// <returns>Deity updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> UpdateDeityAsync(UpdateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> UpdateDeity(UpdateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Activate a dormant deity
@@ -104,9 +119,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>watcher actor exists, starts one. Publishes a deity activated event.
     /// </remarks>
 
+
+
     /// <returns>Deity activated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> ActivateDeityAsync(ActivateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> ActivateDeity(ActivateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deactivate an active deity
@@ -117,9 +135,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>is available. Clears all attention slots. Publishes a deity dormant event.
     /// </remarks>
 
+
+
     /// <returns>Deity deactivated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> DeactivateDeityAsync(DeactivateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> DeactivateDeity(DeactivateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a deity
@@ -132,9 +153,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>lifecycle deleted event.
     /// </remarks>
 
+
+
     /// <returns>Deity deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteDeityAsync(DeleteDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteDeity(DeleteDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a deity's divinity balance
@@ -144,9 +168,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// Returns the current divinity balance for a deity by querying its currency wallet.
     /// </remarks>
 
+
+
     /// <returns>Balance retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityBalanceResponse>> GetDivinityBalanceAsync(GetDivinityBalanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityBalanceResponse>> GetDivinityBalance(GetDivinityBalanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Credit divinity to a deity
@@ -157,9 +184,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>in the deity's domain, direct grants, or other divinity generation sources.
     /// </remarks>
 
+
+
     /// <returns>Divinity credited</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityBalanceResponse>> CreditDivinityAsync(CreditDivinityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityBalanceResponse>> CreditDivinity(CreditDivinityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Debit divinity from a deity
@@ -171,9 +201,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>before debiting.
     /// </remarks>
 
+
+
     /// <returns>Divinity debited</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityBalanceResponse>> DebitDivinityAsync(DebitDivinityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityBalanceResponse>> DebitDivinity(DebitDivinityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get divinity transaction history
@@ -183,9 +216,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// Returns paginated transaction history for a deity's divinity wallet.
     /// </remarks>
 
+
+
     /// <returns>History retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityHistoryResponse>> GetDivinityHistoryAsync(GetDivinityHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityHistoryResponse>> GetDivinityHistory(GetDivinityHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Grant a blessing from a deity to an entity
@@ -199,9 +235,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>entity-agnostic -- characters, accounts, deities, or any entity type can receive them.
     /// </remarks>
 
+
+
     /// <returns>Blessing granted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BlessingResponse>> GrantBlessingAsync(GrantBlessingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BlessingResponse>> GrantBlessing(GrantBlessingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Revoke an active blessing
@@ -213,9 +252,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>revoked in collection. Updates the blessing record with revocation timestamp.
     /// </remarks>
 
+
+
     /// <returns>Blessing revoked</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BlessingResponse>> RevokeBlessingAsync(RevokeBlessingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BlessingResponse>> RevokeBlessing(RevokeBlessingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List blessings for an entity
@@ -225,9 +267,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// Returns paginated blessings granted to a specific entity.
     /// </remarks>
 
+
+
     /// <returns>Blessings listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBlessingsResponse>> ListBlessingsByEntityAsync(ListBlessingsByEntityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBlessingsResponse>> ListBlessingsByEntity(ListBlessingsByEntityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List blessings granted by a deity
@@ -237,9 +282,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// Returns paginated blessings granted by a specific deity, optionally filtered by tier.
     /// </remarks>
 
+
+
     /// <returns>Blessings listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBlessingsResponse>> ListBlessingsByDeityAsync(ListBlessingsByDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBlessingsResponse>> ListBlessingsByDeity(ListBlessingsByDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a blessing by ID
@@ -249,9 +297,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// Returns a single blessing record by its unique identifier.
     /// </remarks>
 
+
+
     /// <returns>Blessing found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BlessingResponse>> GetBlessingAsync(GetBlessingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BlessingResponse>> GetBlessing(GetBlessingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Register a character as a follower of a deity
@@ -263,9 +314,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>deity's attention slots if capacity is available.
     /// </remarks>
 
+
+
     /// <returns>Follower registered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FollowerResponse>> RegisterFollowerAsync(RegisterFollowerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FollowerResponse>> RegisterFollower(RegisterFollowerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Unregister a character as a follower
@@ -276,9 +330,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>deity's follower count, and removes the character from attention slots.
     /// </remarks>
 
+
+
     /// <returns>Follower unregistered</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UnregisterFollowerAsync(UnregisterFollowerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UnregisterFollower(UnregisterFollowerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get followers of a deity
@@ -288,9 +345,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// Returns paginated follower list for a deity by querying relationships.
     /// </remarks>
 
+
+
     /// <returns>Followers listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListFollowersResponse>> GetFollowersAsync(GetFollowersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListFollowersResponse>> GetFollowers(GetFollowersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup divine data for a deleted character
@@ -303,9 +363,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>attention slots.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> CleanupByCharacter(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup divine data for a deleted game service
@@ -317,15 +380,18 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
     /// <br/>slots, and associated resources.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> CleanupByGameServiceAsync(CleanupByGameServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> CleanupByGameService(CleanupByGameServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IDivineService))]
+public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase, IDivineController
 {
     private IDivineService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

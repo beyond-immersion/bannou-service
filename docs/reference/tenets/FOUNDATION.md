@@ -1,5 +1,7 @@
 # Foundation Tenets
 
+> ⛔ **FROZEN DOCUMENT** — Defines authoritative foundation tenets enforced across the codebase. AI agents MUST NOT add, remove, modify, or reinterpret any content without explicit user instruction. If you believe something is incorrect, report the concern and wait — do not "fix" it. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > **Category**: Architecture & Design
 > **When to Reference**: Before starting any new service, feature, or significant code change
 > **Tenets**: T4, T5, T6, T13, T15, T18, T27, T28, T29, T32
@@ -152,15 +154,21 @@ public static class MyServiceLuaScripts
 
 ### Infrastructure Lib Backend Access
 
-Each infrastructure lib accesses its specific backend directly - that's their purpose. Service code uses infrastructure lib interfaces, never backends directly.
+Each L0 infrastructure lib accesses its specific backend directly — that's their purpose. Service code uses infrastructure lib interfaces, never backends directly.
 
-| Infrastructure Lib | Direct Backend Access |
-|-------------------|----------------------|
+| L0 Infrastructure Lib | Direct Backend Access |
+|------------------------|----------------------|
 | lib-state | Redis, MySQL |
 | lib-messaging | RabbitMQ |
-| lib-orchestrator | Docker, Portainer, Kubernetes APIs |
-| lib-voice | RTPEngine, Kamailio |
-| lib-asset | MinIO |
+| lib-mesh | YARP, Redis |
+
+Some L3 AppFeatures services also access external backends directly because they **manage** those backends (not abstract them). These are optional services, not infrastructure libs:
+
+| L3 Service Plugin | Direct Backend Access | Reason |
+|-------------------|----------------------|--------|
+| lib-orchestrator | Docker, Portainer, Kubernetes APIs | Manages container orchestration |
+| lib-voice | RTPEngine, Kamailio | Manages VoIP infrastructure |
+| lib-asset | MinIO | Manages binary asset storage |
 
 ---
 
@@ -190,31 +198,39 @@ await _messageBus.PublishAsync("account.created", new { AccountId = id });
 
 ### Event Schema Pattern
 
+Custom service events MUST use `allOf` with `BaseServiceEvent` to produce C# inheritance (`IBannouEvent` implementation, `EventName` support). See [SCHEMA-RULES.md](../SCHEMA-RULES.md) for the full custom event structure requirements.
+
 ```yaml
 EventName:
+  allOf:
+    - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
   type: object
   additionalProperties: false
   description: Event published when an entity action occurs
-  required: [eventId, timestamp, entityId]
+  required: [eventName, eventId, timestamp, entityId]
   properties:
-    eventId:
+    eventName:
       type: string
-      format: uuid
-      description: Unique event identifier
-    timestamp:
-      type: string
-      format: date-time
-      description: When the event occurred
+      default: entity.action
+      description: 'Event type identifier: entity.action'
     entityId:
       type: string
       format: uuid
       description: Entity this event pertains to
     # ... entity-specific fields with descriptions
+    # NOTE: eventId and timestamp are inherited from BaseServiceEvent — do NOT redefine them
 ```
 
 ### Topic Naming Convention
 
-**Pattern**: `{entity}.{action}` (kebab-case entity, lowercase action). Examples: `account.created`, `game-session.player-joined`, `character.realm.joined`. Infrastructure events use `bannou.` prefix (e.g., `bannou.full-service-mappings`).
+Two patterns depending on service entity count:
+
+- **Pattern A** (single-entity): `{entity}.{action}` — e.g., `account.created`, `game-session.player-joined`
+- **Pattern C** (multi-entity namespaced): `{service}.{entity}.{action}` — e.g., `transit.connection.created`, `divine.blessing.granted`
+
+**Forbidden**: Pattern B (service name embedded in entity via hyphens, e.g., `transit-connection.created`). Use Pattern C instead.
+
+All parts use kebab-case. No underscores in topic strings. Infrastructure events use `bannou.` prefix (e.g., `bannou.full-service-mappings`). See [SCHEMA-RULES.md](../SCHEMA-RULES.md) for detailed Pattern A/C rules and the litmus test.
 
 ### Lifecycle Events (x-lifecycle) - NEVER MANUALLY CREATE
 
@@ -229,7 +245,7 @@ x-lifecycle:
     sensitive: [passwordHash, secretKey]  # Fields excluded from events
 ```
 
-This generates `EntityNameCreatedEvent` (full data), `EntityNameUpdatedEvent` (full data + `changedFields`), and `EntityNameDeletedEvent` (ID + `deletedReason`).
+This generates `EntityNameCreatedEvent` (full data), `EntityNameUpdatedEvent` (full data + `changedFields`), and `EntityNameDeletedEvent` (full data + nullable `deletedReason`). All three events carry the complete model (minus sensitive fields) so consumers can react without a follow-up lookup.
 
 ### Full-State Events Pattern
 
@@ -391,8 +407,13 @@ x-permissions: []
 | `role: user` | Authenticated operations | Any authenticated session |
 | `role: anonymous` | Pre-auth public (rare) | All connected clients |
 | `[]` (empty array) | **Service-to-service only** | **No WebSocket access** |
+| *(omitted entirely)* | Same as `[]` | **No WebSocket access** |
+
+**Note**: Omitting `x-permissions` entirely is functionally identical to `x-permissions: []` in the code generator (both result in the endpoint being excluded from the permission matrix). The codebase convention is to always use explicit `x-permissions: []` for clarity.
 
 **Common mistake**: `x-permissions: []` does NOT mean "anonymous" or "public." It means the endpoint is completely invisible to WebSocket clients. If you want an endpoint accessible without authentication, use `role: anonymous`.
+
+> **Choosing the right level**: T13 requires that all endpoints declare `x-permissions` — but which value? For the complete decision framework (7 permission levels, the Entry/Context/Exit pattern for state-gating, shortcut eligibility, anti-patterns, and per-service-type guidance), see [ENDPOINT-PERMISSION-GUIDELINES.md](../ENDPOINT-PERMISSION-GUIDELINES.md).
 
 ---
 
@@ -514,7 +535,7 @@ Eight established provider/listener patterns exist (interfaces in `bannou-servic
 | `IVariableProviderFactory` | L4 → L2 (data pull) | Actor pulls character data from L4 providers |
 | `IPrerequisiteProviderFactory` | L4 → L2 (data pull) | Quest pulls prerequisite checks from L4 providers |
 | `IBehaviorDocumentProvider` | L4 → L2 (data pull) | Actor pulls behavior docs from L4 providers |
-| `ISeededResourceProvider` | L4 → L1 (data pull) | Resource pulls compression data from L4 providers |
+| `ISeededResourceProvider` | L2/L3/L4 → L1 (data pull) | Resource discovers embedded/static resources (ABML behaviors, scenario templates) from higher-layer providers |
 | `ISeedEvolutionListener` | L2 → L4 (notification push) | Seed pushes evolution notifications to L4 listeners |
 | `ICollectionUnlockListener` | L2 → L4 (notification push) | Collection pushes unlock notifications to L4 listeners |
 | `ISessionActivityListener` | L1 → L1 (lifecycle push) | Connect pushes session lifecycle to Permission (high-frequency heartbeats) |
@@ -586,19 +607,30 @@ await _resourceClient.RegisterReferenceAsync(new RegisterReferenceRequest
 }, ct);
 ```
 
-**Step 2**: Higher-layer services implement cleanup callbacks via `ISeededResourceProvider`:
+**Step 2**: Higher-layer services declare cleanup callbacks in their API schema via `x-references`, which generates `RegisterResourceCleanupCallbacksAsync()`:
+
+```yaml
+# In character-encounter-api.yaml — declares cleanup callback endpoint
+info:
+  x-references:
+    - target: character
+      sourceType: character-encounter
+      field: characterId
+      onDelete: cascade
+      cleanup:
+        endpoint: /character-encounter/delete-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
+```
 
 ```csharp
-// L4 provides cleanup logic that lib-resource calls during deletion
-public class EncounterResourceProvider : ISeededResourceProvider
+// Generated: CharacterEncounterReferenceTracking.cs registers the callback at startup.
+// The service implements the cleanup endpoint in its service class:
+public async Task<(StatusCodes, DeleteByCharacterResponse?)> DeleteByCharacterAsync(
+    DeleteByCharacterRequest body, CancellationToken ct = default)
 {
-    public string SourceType => "character-encounter";
-
-    public async Task CleanupReferencesAsync(
-        string resourceType, Guid resourceId, CancellationToken ct)
-    {
-        await DeleteEncountersForCharacterAsync(resourceId, ct);
-    }
+    // Delete all encounter data for the character
+    await DeleteEncountersForCharacterAsync(body.CharacterId, ct);
+    return (StatusCodes.OK, new DeleteByCharacterResponse());
 }
 ```
 
@@ -618,8 +650,8 @@ var result = await _resourceClient.ExecuteCleanupAsync(new ExecuteCleanupRequest
 
 | Before (FORBIDDEN) | After (REQUIRED) |
 |---------------------|-------------------|
-| Character-Encounter subscribes to `character.deleted` | Character-Encounter registers with lib-resource, implements `ISeededResourceProvider` |
-| Any L4 plugin subscribes to L2 `*.deleted` for destruction | L4 registers references and cleanup with lib-resource |
+| Character-Encounter subscribes to `character.deleted` | Character-Encounter declares `x-references` in schema, implements cleanup endpoint, calls generated `RegisterResourceCleanupCallbacksAsync()` at startup |
+| Any L4 plugin subscribes to L2 `*.deleted` for destruction | L4 declares `x-references` in schema, implements cleanup endpoint |
 
 ### Events Are Still Valid for Live State Reactions
 
@@ -707,7 +739,7 @@ public interface IItemInstanceDestructionListener
 
 When adding a new service that stores data keyed by another service's entity:
 
-1. **Default**: Register references with lib-resource API when creating dependent data, implement `ISeededResourceProvider` for cleanup callbacks
+1. **Default**: Register references with lib-resource API when creating dependent data, declare `x-references` in the service's API schema for cleanup callback registration (see [SCHEMA-RULES.md](../SCHEMA-RULES.md))
 2. **Exception**: If ALL four criteria of the High-Frequency Instance Lifecycle Exception are met, use DI Listener + orphan reconciliation instead
 3. Do NOT add `x-event-subscriptions` for the parent entity's `*.deleted` event for cleanup purposes (regardless of which path you use)
 4. Do NOT add event handler methods for parent entity deletion
@@ -953,7 +985,7 @@ ownerId:
 | Publishing registration events at startup | T27 | Use DI Provider interface discovered via `IEnumerable<T>` |
 | Defining event schema to receive data from callers | T27 | Remove event; expose API endpoint; callers use generated client |
 | Lower-layer caching higher-layer data with event invalidation | T27 | Provider owns its cache; lower layer calls provider interface |
-| Subscribing to `*.deleted` for dependent data cleanup | T28 | Register with lib-resource; implement `ISeededResourceProvider` |
+| Subscribing to `*.deleted` for dependent data cleanup | T28 | Declare `x-references` in schema; implement cleanup endpoint; register via generated `RegisterResourceCleanupCallbacksAsync()` |
 | Event-based cleanup for persistent dependent data | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
 | Cleanup handler in `*ServiceEvents.cs` for another service's entity | T28 | Move to lib-resource cleanup callback; remove event subscription |
 | Using `additionalProperties: true` as cross-service data contract | T29 | Owning service defines its own schema, stores its own data |

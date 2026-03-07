@@ -7,7 +7,7 @@ info:
     session-specific RabbitMQ channels (CONNECT_SESSION_{sessionId}).
 
     These events are different from service-to-service events:
-    - Service events: RabbitMQ pub/sub between services via MassTransit
+    - Service events: RabbitMQ pub/sub between services via IMessageBus
     - Client events: Services → RabbitMQ → Connect service → WebSocket → Client
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:

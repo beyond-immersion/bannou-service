@@ -39,9 +39,12 @@ public interface IPuppetmasterController : BeyondImmersion.BannouService.Control
     /// Returns health status, cached behavior count, and active watcher count.
     /// </remarks>
 
+
+
     /// <returns>Status retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PuppetmasterStatusResponse>> GetStatusAsync(GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PuppetmasterStatusResponse>> GetStatus(GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Invalidate cached behavior documents
@@ -52,9 +55,12 @@ public interface IPuppetmasterController : BeyondImmersion.BannouService.Control
     /// <br/>If behaviorRef is null, invalidates all cached behaviors.
     /// </remarks>
 
+
+
     /// <returns>Invalidation completed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InvalidateBehaviorsResponse>> InvalidateBehaviorsAsync(InvalidateBehaviorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InvalidateBehaviorsResponse>> InvalidateBehaviors(InvalidateBehaviorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List active regional watchers
@@ -64,9 +70,12 @@ public interface IPuppetmasterController : BeyondImmersion.BannouService.Control
     /// Returns all currently active regional watcher instances.
     /// </remarks>
 
+
+
     /// <returns>Watchers listed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListWatchersResponse>> ListWatchersAsync(ListWatchersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListWatchersResponse>> ListWatchers(ListWatchersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Manually start a regional watcher
@@ -77,9 +86,12 @@ public interface IPuppetmasterController : BeyondImmersion.BannouService.Control
     /// <br/>If a watcher already exists for this realm and watcher type, returns the existing watcher.
     /// </remarks>
 
+
+
     /// <returns>Watcher started or already exists</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartWatcherResponse>> StartWatcherAsync(StartWatcherRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartWatcherResponse>> StartWatcher(StartWatcherRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Stop a regional watcher
@@ -89,9 +101,12 @@ public interface IPuppetmasterController : BeyondImmersion.BannouService.Control
     /// Stops an active regional watcher by its ID.
     /// </remarks>
 
+
+
     /// <returns>Watcher stopped successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StopWatcherResponse>> StopWatcherAsync(StopWatcherRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StopWatcherResponse>> StopWatcher(StopWatcherRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Start all relevant watchers for a realm
@@ -102,15 +117,18 @@ public interface IPuppetmasterController : BeyondImmersion.BannouService.Control
     /// <br/>Uses configured watcher templates to determine which watchers to start.
     /// </remarks>
 
+
+
     /// <returns>Watchers started for realm</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartWatchersForRealmResponse>> StartWatchersForRealmAsync(StartWatchersForRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartWatchersForRealmResponse>> StartWatchersForRealm(StartWatchersForRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class PuppetmasterController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IPuppetmasterService))]
+public partial class PuppetmasterController : Microsoft.AspNetCore.Mvc.ControllerBase, IPuppetmasterController
 {
     private IPuppetmasterService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

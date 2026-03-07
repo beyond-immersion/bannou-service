@@ -30,7 +30,7 @@ public class SceneValidationServiceTests
         // Assert
         Assert.False(result.Valid);
         Assert.NotNull(result.Errors);
-        Assert.Contains(result.Errors, e => e.Message.Contains("sceneId must be a valid non-empty UUID"));
+        Assert.Contains(result.Errors, e => e.Message.Contains("sceneId must be a valid non-default UUID"));
     }
 
     [Fact]
@@ -253,7 +253,7 @@ public class SceneValidationServiceTests
         // Assert
         Assert.False(result.Valid);
         Assert.NotNull(result.Errors);
-        Assert.Contains(result.Errors, e => e.Message.Contains("nodeId must be a valid non-empty UUID"));
+        Assert.Contains(result.Errors, e => e.Message.Contains("nodeId must be a valid non-default UUID"));
     }
 
     #endregion
@@ -304,7 +304,7 @@ public class SceneValidationServiceTests
                 Config = new ValidationRuleConfig
                 {
                     Tag = "required_tag",
-                    NodeType = "Group"
+                    NodeType = NodeType.Group
                 }
             }
         };
@@ -333,7 +333,7 @@ public class SceneValidationServiceTests
                 Config = new ValidationRuleConfig
                 {
                     Tag = "required_tag",
-                    NodeType = "Group"
+                    NodeType = NodeType.Group
                 }
             }
         };
@@ -418,7 +418,7 @@ public class SceneValidationServiceTests
                 Severity = ValidationSeverity.Error,
                 Config = new ValidationRuleConfig
                 {
-                    NodeType = "Marker"
+                    NodeType = NodeType.Marker
                 }
             }
         };
@@ -445,7 +445,7 @@ public class SceneValidationServiceTests
                 Severity = ValidationSeverity.Error,
                 Config = new ValidationRuleConfig
                 {
-                    NodeType = "Marker"
+                    NodeType = NodeType.Marker
                 }
             }
         };

@@ -40,9 +40,12 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>personality has been defined for this character.
     /// </remarks>
 
+
+
     /// <returns>Personality retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PersonalityResponse>> GetPersonalityAsync(GetPersonalityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PersonalityResponse>> GetPersonality(GetPersonalityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create or update personality for a character
@@ -53,9 +56,12 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>already exists, it will be completely replaced (not merged).
     /// </remarks>
 
+
+
     /// <returns>Personality saved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PersonalityResponse>> SetPersonalityAsync(SetPersonalityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PersonalityResponse>> SetPersonality(SetPersonalityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Record an experience that may evolve personality
@@ -73,9 +79,12 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>events occur during gameplay.
     /// </remarks>
 
+
+
     /// <returns>Experience recorded and evaluated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExperienceResult>> RecordExperienceAsync(RecordExperienceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExperienceResult>> RecordExperience(RecordExperienceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get personalities for multiple characters
@@ -89,9 +98,12 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>Maximum 100 characters per request.
     /// </remarks>
 
+
+
     /// <returns>Personalities retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchPersonalityResponse>> BatchGetPersonalitiesAsync(BatchGetPersonalitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchPersonalityResponse>> BatchGetPersonalities(BatchGetPersonalitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete personality for a character
@@ -102,9 +114,12 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>character compression or deletion.
     /// </remarks>
 
+
+
     /// <returns>Personality deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeletePersonalityAsync(DeletePersonalityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeletePersonality(DeletePersonalityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get combat preferences for a character
@@ -116,9 +131,12 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>style, positioning, and retreat conditions.
     /// </remarks>
 
+
+
     /// <returns>Combat preferences retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CombatPreferencesResponse>> GetCombatPreferencesAsync(GetCombatPreferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CombatPreferencesResponse>> GetCombatPreferences(GetCombatPreferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create or update combat preferences for a character
@@ -129,9 +147,12 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>already exist, they will be completely replaced (not merged).
     /// </remarks>
 
+
+
     /// <returns>Combat preferences saved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CombatPreferencesResponse>> SetCombatPreferencesAsync(SetCombatPreferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CombatPreferencesResponse>> SetCombatPreferences(SetCombatPreferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Record combat experience that may evolve preferences
@@ -145,9 +166,12 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>character more defensive), adjust risk tolerance, or change retreat thresholds.
     /// </remarks>
 
+
+
     /// <returns>Combat experience recorded and evaluated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CombatEvolutionResult>> EvolveCombatPreferencesAsync(EvolveCombatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CombatEvolutionResult>> EvolveCombatPreferences(EvolveCombatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete combat preferences for a character
@@ -158,9 +182,12 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>character compression or deletion.
     /// </remarks>
 
+
+
     /// <returns>Combat preferences deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteCombatPreferencesAsync(DeleteCombatPreferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteCombatPreferences(DeleteCombatPreferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get personality data for compression
@@ -171,9 +198,12 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>Returns personality traits and combat preferences for archival.
     /// </remarks>
 
+
+
     /// <returns>Compressed data returned</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterPersonalityArchive>> GetCompressDataAsync(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterPersonalityArchive>> GetCompressData(GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore personality data from archive
@@ -184,9 +214,12 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>Restores personality traits and combat preferences from archive data.
     /// </remarks>
 
+
+
     /// <returns>Restoration result</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchiveAsync(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchive(RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Cleanup all personality data for a deleted character
@@ -199,15 +232,18 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
     /// <br/>cascading resource cleanup.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class CharacterPersonalityController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ICharacterPersonalityService))]
+public partial class CharacterPersonalityController : Microsoft.AspNetCore.Mvc.ControllerBase, ICharacterPersonalityController
 {
     private ICharacterPersonalityService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

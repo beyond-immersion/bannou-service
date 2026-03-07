@@ -40,9 +40,12 @@ public interface IBehaviorController : BeyondImmersion.BannouService.Controllers
     /// <br/>Handles stackable behavior sets, cultural adaptations, and context variable resolution.
     /// </remarks>
 
+
+
     /// <returns>ABML behavior compiled successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileAbmlBehaviorAsync(CompileBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileAbmlBehavior(CompileBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Validate ABML definition
@@ -53,9 +56,12 @@ public interface IBehaviorController : BeyondImmersion.BannouService.Controllers
     /// <br/>Includes context variable validation and service dependency checking.
     /// </remarks>
 
+
+
     /// <returns>Validation completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateAbmlResponse>> ValidateAbmlAsync(ValidateAbmlRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateAbmlResponse>> ValidateAbml(ValidateAbmlRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get cached compiled behavior
@@ -66,9 +72,12 @@ public interface IBehaviorController : BeyondImmersion.BannouService.Controllers
     /// <br/>Used for performance optimization in high-frequency behavior execution.
     /// </remarks>
 
+
+
     /// <returns>Cached behavior retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CachedBehaviorResponse>> GetCachedBehaviorAsync(GetCachedBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CachedBehaviorResponse>> GetCachedBehavior(GetCachedBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Invalidate cached behavior
@@ -79,9 +88,12 @@ public interface IBehaviorController : BeyondImmersion.BannouService.Controllers
     /// <br/>Used when behavior definitions are updated.
     /// </remarks>
 
+
+
     /// <returns>Cache invalidated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InvalidateCachedBehavior(InvalidateCacheRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Generate GOAP plan
@@ -92,9 +104,12 @@ public interface IBehaviorController : BeyondImmersion.BannouService.Controllers
     /// <br/>Uses A* search to find the optimal sequence of actions.
     /// </remarks>
 
+
+
     /// <returns>Plan generated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GoapPlanResponse>> GenerateGoapPlanAsync(GoapPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GoapPlanResponse>> GenerateGoapPlan(GoapPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Validate existing GOAP plan
@@ -105,15 +120,18 @@ public interface IBehaviorController : BeyondImmersion.BannouService.Controllers
     /// <br/>Returns whether the plan is still valid or needs replanning.
     /// </remarks>
 
+
+
     /// <returns>Plan validation completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateGoapPlanResponse>> ValidateGoapPlanAsync(ValidateGoapPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateGoapPlanResponse>> ValidateGoapPlan(ValidateGoapPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IBehaviorService))]
+public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBase, IBehaviorController
 {
     private IBehaviorService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

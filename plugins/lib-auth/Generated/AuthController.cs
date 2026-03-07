@@ -38,7 +38,8 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 
     /// <returns>Login successful or MFA challenge issued</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginAsync(LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> Login(LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Register new user account
@@ -47,7 +48,8 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 
     /// <returns>Registration successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterResponse>> RegisterAsync(RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterResponse>> Register(RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Initialize OAuth2 flow (browser redirect)
@@ -63,7 +65,10 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 
 
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuthAsync(Provider provider, string redirectUri, string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuth(Provider provider, string redirectUri, string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Complete OAuth2 flow (browser redirect callback)
@@ -79,9 +84,11 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 
 
 
+
     /// <returns>OAuth authentication successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuth(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Verify Steam Session Ticket
@@ -93,62 +100,65 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>NEVER trust client-provided SteamID - it must come from Steam's authenticated response.
     /// </remarks>
 
+
+
     /// <returns>Steam authentication successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifySteamAuthAsync(SteamVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifySteamAuth(SteamVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Refresh access token
     /// </summary>
 
-    /// <param name="jwt">Current JWT access token for refresh</param>
 
 
     /// <returns>Token refreshed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> RefreshTokenAsync(string jwt, RefreshRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> RefreshToken(RefreshRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Validate access token
     /// </summary>
 
-    /// <param name="jwt">JWT access token for validation</param>
 
     /// <returns>Token is valid</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateTokenAsync(string jwt, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateToken(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Logout and invalidate tokens
     /// </summary>
 
-    /// <param name="jwt">JWT access token for session identification</param>
 
 
     /// <returns>Logged out successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LogoutAsync(string jwt, LogoutRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Logout(LogoutRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get active sessions for account
     /// </summary>
 
-    /// <param name="jwt">JWT access token for session identification</param>
 
     /// <returns>Active sessions retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionsResponse>> GetSessionsAsync(string jwt, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionsResponse>> GetSessions(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Terminate specific session
     /// </summary>
 
-    /// <param name="jwt">JWT access token for session identification</param>
 
 
     /// <returns>Session terminated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSessionAsync(string jwt, TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSession(TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current token revocation list
@@ -160,9 +170,12 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>revocations (all tokens issued before a timestamp).
     /// </remarks>
 
+
+
     /// <returns>Revocation list retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RevocationListResponse>> GetRevocationListAsync(GetRevocationListRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RevocationListResponse>> GetRevocationList(GetRevocationListRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Request password reset
@@ -171,7 +184,8 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 
     /// <returns>Reset email sent if account exists</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RequestPasswordResetAsync(PasswordResetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RequestPasswordReset(PasswordResetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Confirm password reset with token
@@ -180,7 +194,8 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 
     /// <returns>Password reset successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConfirmPasswordResetAsync(PasswordResetConfirmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConfirmPasswordReset(PasswordResetConfirmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List available authentication providers
@@ -194,7 +209,8 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 
     /// <returns>List of available providers</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ProvidersResponse>> ListProvidersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ProvidersResponse>> ListProviders(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Initialize MFA setup
@@ -206,11 +222,10 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>not active until confirmed via /auth/mfa/enable with a valid TOTP code.
     /// </remarks>
 
-    /// <param name="jwt">JWT access token</param>
-
     /// <returns>MFA setup initiated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MfaSetupResponse>> SetupMfaAsync(string jwt, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MfaSetupResponse>> SetupMfa(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Confirm MFA setup with TOTP code
@@ -222,12 +237,12 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>MFA is active for all subsequent password logins.
     /// </remarks>
 
-    /// <param name="jwt">JWT access token</param>
 
 
     /// <returns>MFA enabled successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EnableMfaAsync(string jwt, MfaEnableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EnableMfa(MfaEnableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Disable MFA for current account
@@ -239,12 +254,12 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>recovery codes from the account.
     /// </remarks>
 
-    /// <param name="jwt">JWT access token</param>
 
 
     /// <returns>MFA disabled successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DisableMfaAsync(string jwt, MfaDisableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DisableMfa(MfaDisableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Admin override to disable MFA
@@ -255,9 +270,12 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>For account recovery when a user has lost their authenticator and all recovery codes.
     /// </remarks>
 
+
+
     /// <returns>MFA disabled by admin</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AdminDisableMfaAsync(AdminDisableMfaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AdminDisableMfa(AdminDisableMfaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Verify MFA code during login
@@ -270,15 +288,18 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
     /// <br/>TTL (default 5 minutes).
     /// </remarks>
 
+
+
     /// <returns>MFA verified, tokens issued</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifyMfaAsync(MfaVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifyMfa(MfaVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public abstract class AuthControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IAuthService))]
+public abstract class AuthControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase, IAuthController
 {
     private IAuthService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

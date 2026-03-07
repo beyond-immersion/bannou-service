@@ -40,9 +40,12 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
     /// <br/>Returns queue configuration details including skill settings.
     /// </remarks>
 
+
+
     /// <returns>Queues retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListQueuesResponse>> ListQueuesAsync(ListQueuesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListQueuesResponse>> ListQueues(ListQueuesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get queue details
@@ -52,9 +55,12 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
     /// Get detailed configuration for a specific matchmaking queue.
     /// </remarks>
 
+
+
     /// <returns>Queue details retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueueResponse>> GetQueueAsync(GetQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueueResponse>> GetQueue(GetQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a new matchmaking queue
@@ -66,9 +72,12 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
     /// <br/>and exclusive group membership.
     /// </remarks>
 
+
+
     /// <returns>Queue created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueueResponse>> CreateQueueAsync(CreateQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueueResponse>> CreateQueue(CreateQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a matchmaking queue
@@ -79,9 +88,12 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
     /// <br/>Admin only. Changes take effect for new tickets only.
     /// </remarks>
 
+
+
     /// <returns>Queue updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueueResponse>> UpdateQueueAsync(UpdateQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueueResponse>> UpdateQueue(UpdateQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a matchmaking queue
@@ -92,9 +104,12 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
     /// <br/>Existing tickets in the queue will be cancelled with reason 'queue_disabled'.
     /// </remarks>
 
+
+
     /// <returns>Queue deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteQueueAsync(DeleteQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteQueue(DeleteQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Join matchmaking queue
@@ -107,9 +122,12 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
     /// <br/>via WebSocket push events.
     /// </remarks>
 
+
+
     /// <returns>Successfully joined matchmaking queue</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinMatchmakingResponse>> JoinMatchmakingAsync(JoinMatchmakingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinMatchmakingResponse>> JoinMatchmaking(JoinMatchmakingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Leave matchmaking queue
@@ -120,9 +138,12 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
     /// <br/>Only available when actively in a queue (shortcut/prebound).
     /// </remarks>
 
+
+
     /// <returns>Successfully left matchmaking queue</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveMatchmakingAsync(LeaveMatchmakingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveMatchmaking(LeaveMatchmakingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get matchmaking status
@@ -133,9 +154,12 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
     /// <br/>Only available when actively in a queue (shortcut/prebound).
     /// </remarks>
 
+
+
     /// <returns>Status retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MatchmakingStatusResponse>> GetMatchmakingStatusAsync(GetMatchmakingStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MatchmakingStatusResponse>> GetMatchmakingStatus(GetMatchmakingStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Accept a formed match
@@ -147,9 +171,12 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
     /// <br/>All players must accept within the timeout for the match to start.
     /// </remarks>
 
+
+
     /// <returns>Match acceptance recorded</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AcceptMatchResponse>> AcceptMatchAsync(AcceptMatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AcceptMatchResponse>> AcceptMatch(AcceptMatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Decline a formed match
@@ -161,9 +188,12 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
     /// <br/>Declining cancels the match for all participants.
     /// </remarks>
 
+
+
     /// <returns>Match declined</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeclineMatchAsync(DeclineMatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeclineMatch(DeclineMatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get queue statistics
@@ -174,15 +204,18 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
     /// <br/>Includes queue depths, average wait times, and match rates.
     /// </remarks>
 
+
+
     /// <returns>Statistics retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MatchmakingStatsResponse>> GetMatchmakingStatsAsync(GetMatchmakingStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MatchmakingStatsResponse>> GetMatchmakingStats(GetMatchmakingStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IMatchmakingService))]
+public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.ControllerBase, IMatchmakingController
 {
     private IMatchmakingService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

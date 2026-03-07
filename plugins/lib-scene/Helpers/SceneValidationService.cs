@@ -17,13 +17,13 @@ public class SceneValidationService : ISceneValidationService
         var errors = new List<ValidationError>();
         var warnings = new List<ValidationError>();
 
-        // Validate sceneId is not empty Guid
-        if (scene.SceneId == Guid.Empty)
+        // Validate sceneId is provided (non-default)
+        if (scene.SceneId == default)
         {
             errors.Add(new ValidationError
             {
                 RuleId = "valid-uuid",
-                Message = "sceneId must be a valid non-empty UUID",
+                Message = "sceneId must be a valid non-default UUID",
                 Severity = ValidationSeverity.Error
             });
         }
@@ -112,13 +112,13 @@ public class SceneValidationService : ISceneValidationService
                     });
                 }
 
-                // Validate nodeId is not empty
-                if (node.NodeId == Guid.Empty)
+                // Validate nodeId is provided (non-default)
+                if (node.NodeId == default)
                 {
                     errors.Add(new ValidationError
                     {
                         RuleId = "valid-uuid",
-                        Message = "nodeId must be a valid non-empty UUID",
+                        Message = "nodeId must be a valid non-default UUID",
                         Severity = ValidationSeverity.Error
                     });
                 }
@@ -227,7 +227,7 @@ public class SceneValidationService : ISceneValidationService
                 if (!string.IsNullOrEmpty(config?.Tag))
                 {
                     var matchingNodes = allNodes.Where(n =>
-                        (string.IsNullOrEmpty(config.NodeType) || n.NodeType.ToString() == config.NodeType) &&
+                        (config.NodeType == null || n.NodeType == config.NodeType) &&
                         n.Tags != null && n.Tags.Contains(config.Tag)).ToList();
 
                     var minCount = config.MinCount ?? 1;
@@ -271,9 +271,9 @@ public class SceneValidationService : ISceneValidationService
                 break;
 
             case ValidationRuleType.RequireNodeType:
-                if (!string.IsNullOrEmpty(config?.NodeType))
+                if (config?.NodeType != null)
                 {
-                    var matchingNodes = allNodes.Where(n => n.NodeType.ToString() == config.NodeType).ToList();
+                    var matchingNodes = allNodes.Where(n => n.NodeType == config.NodeType).ToList();
                     var minCount = config.MinCount ?? 1;
                     if (matchingNodes.Count < minCount)
                     {

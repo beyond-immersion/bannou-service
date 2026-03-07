@@ -105,12 +105,7 @@ public sealed class SpawnWatcherHandler : IActionHandler
 
             // Call Puppetmaster service via mesh
             using var serviceScope = _scopeFactory.CreateScope();
-            var puppetmasterClient = serviceScope.ServiceProvider.GetService<IPuppetmasterClient>();
-            if (puppetmasterClient == null)
-            {
-                _logger.LogError("spawn_watcher: IPuppetmasterClient not available");
-                return ActionResult.Error("spawn_watcher: Puppetmaster service not available");
-            }
+            var puppetmasterClient = serviceScope.ServiceProvider.GetRequiredService<IPuppetmasterClient>();
 
             var response = await puppetmasterClient.StartWatcherAsync(
                 new StartWatcherRequest
@@ -151,13 +146,13 @@ public sealed class SpawnWatcherHandler : IActionHandler
 
     private static bool TryParseGuid(object? value, out Guid result)
     {
-        if (value is Guid guid)
+        if (value is Guid guid && guid != Guid.Empty)
         {
             result = guid;
             return true;
         }
 
-        if (value is string str && Guid.TryParse(str, out var parsed))
+        if (value is string str && Guid.TryParse(str, out var parsed) && parsed != Guid.Empty)
         {
             result = parsed;
             return true;

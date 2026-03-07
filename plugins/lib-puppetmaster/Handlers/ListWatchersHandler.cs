@@ -92,12 +92,7 @@ public sealed class ListWatchersHandler : IActionHandler
 
             // Call Puppetmaster service via mesh
             using var serviceScope = _scopeFactory.CreateScope();
-            var puppetmasterClient = serviceScope.ServiceProvider.GetService<IPuppetmasterClient>();
-            if (puppetmasterClient == null)
-            {
-                _logger.LogError("list_watchers: IPuppetmasterClient not available");
-                return ActionResult.Error("list_watchers: Puppetmaster service not available");
-            }
+            var puppetmasterClient = serviceScope.ServiceProvider.GetRequiredService<IPuppetmasterClient>();
 
             var response = await puppetmasterClient.ListWatchersAsync(
                 new ListWatchersRequest { RealmId = realmId },
@@ -139,13 +134,13 @@ public sealed class ListWatchersHandler : IActionHandler
 
     private static bool TryParseGuid(object? value, out Guid result)
     {
-        if (value is Guid guid)
+        if (value is Guid guid && guid != Guid.Empty)
         {
             result = guid;
             return true;
         }
 
-        if (value is string str && Guid.TryParse(str, out var parsed))
+        if (value is string str && Guid.TryParse(str, out var parsed) && parsed != Guid.Empty)
         {
             result = parsed;
             return true;

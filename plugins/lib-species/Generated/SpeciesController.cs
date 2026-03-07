@@ -38,7 +38,8 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Species retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> GetSpeciesAsync(GetSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> GetSpecies(GetSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get species by code
@@ -48,9 +49,12 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
     /// Retrieve a species using its unique code (e.g., "HUMAN", "ELF", "DWARF")
     /// </remarks>
 
+
+
     /// <returns>Species retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> GetSpeciesByCodeAsync(GetSpeciesByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> GetSpeciesByCode(GetSpeciesByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List all species
@@ -60,9 +64,12 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
     /// Retrieve all species with optional realm filtering
     /// </remarks>
 
+
+
     /// <returns>Species retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesListResponse>> ListSpeciesAsync(ListSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesListResponse>> ListSpecies(ListSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List species available in a realm
@@ -72,9 +79,12 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
     /// Retrieve all species that are available in a specific realm
     /// </remarks>
 
+
+
     /// <returns>Species retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesListResponse>> ListSpeciesByRealmAsync(ListSpeciesByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesListResponse>> ListSpeciesByRealm(ListSpeciesByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create new species
@@ -83,7 +93,8 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Species created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> CreateSpeciesAsync(CreateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> CreateSpecies(CreateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update species
@@ -92,7 +103,8 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Species updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> UpdateSpeciesAsync(UpdateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> UpdateSpecies(UpdateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete species
@@ -104,9 +116,12 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
     /// <br/>(or VOID), then delete. Only deprecated species with zero references can be deleted.
     /// </remarks>
 
+
+
     /// <returns>Species deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteSpeciesAsync(DeleteSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteSpecies(DeleteSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Deprecate a species
@@ -121,9 +136,12 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
     /// <br/>- Can be hard-deleted after all references are removed
     /// </remarks>
 
+
+
     /// <returns>Species deprecated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> DeprecateSpeciesAsync(DeprecateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> DeprecateSpecies(DeprecateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Restore a deprecated species
@@ -134,9 +152,12 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
     /// <br/>available for new characters again.
     /// </remarks>
 
+
+
     /// <returns>Species restored successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> UndeprecateSpeciesAsync(UndeprecateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> UndeprecateSpecies(UndeprecateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Merge a deprecated species into another species
@@ -156,9 +177,12 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
     /// <br/>- Fails if source is not deprecated (safety check)
     /// </remarks>
 
+
+
     /// <returns>Merge completed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeSpeciesResponse>> MergeSpeciesAsync(MergeSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeSpeciesResponse>> MergeSpecies(MergeSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Add species to a realm
@@ -168,9 +192,12 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
     /// Make a species available in an additional realm
     /// </remarks>
 
+
+
     /// <returns>Species added to realm successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> AddSpeciesToRealmAsync(AddSpeciesToRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> AddSpeciesToRealm(AddSpeciesToRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Remove species from a realm
@@ -180,9 +207,12 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
     /// Remove a species from a realm (species must not have characters in that realm)
     /// </remarks>
 
+
+
     /// <returns>Species removed from realm successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> RemoveSpeciesFromRealmAsync(RemoveSpeciesFromRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> RemoveSpeciesFromRealm(RemoveSpeciesFromRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Seed species from configuration
@@ -194,15 +224,18 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
     /// <br/>Typically called at service startup with YAML-defined species.
     /// </remarks>
 
+
+
     /// <returns>Seed operation completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedSpeciesResponse>> SeedSpeciesAsync(SeedSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedSpeciesResponse>> SeedSpecies(SeedSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(ISpeciesService))]
+public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase, ISpeciesController
 {
     private ISpeciesService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

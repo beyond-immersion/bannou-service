@@ -2843,10 +2843,10 @@ public class ResourceServiceTests
         // Act
         var endpoints = ResourcePermissionRegistration.GetEndpoints();
 
-        // Assert
+        // Assert - All resource endpoints have x-permissions: [] (service-to-service only via lib-mesh).
+        // No endpoints are exposed to WebSocket clients, so no permission registrations.
         Assert.NotNull(endpoints);
-        Assert.NotEmpty(endpoints);
-        Assert.True(endpoints.Count >= 6, $"Expected at least 6 endpoints, got {endpoints.Count}");
+        Assert.Empty(endpoints);
     }
 
     [Fact]

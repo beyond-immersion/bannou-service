@@ -39,9 +39,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Returns full GameTimeSnapshot for a realm. Reads from Redis cache (hot path).
     /// </remarks>
 
+
+
     /// <returns>Current game time snapshot for the realm</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameTimeSnapshot>> GetRealmTimeAsync(GetRealmTimeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameTimeSnapshot>> GetRealmTime(GetRealmTimeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current game time by realm code
@@ -51,9 +54,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Convenience endpoint accepting realm code string instead of GUID. Resolves to realm ID via IRealmClient, then delegates to GetRealmTime.
     /// </remarks>
 
+
+
     /// <returns>Current game time snapshot for the realm</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameTimeSnapshot>> GetRealmTimeByCodeAsync(GetRealmTimeByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameTimeSnapshot>> GetRealmTimeByCode(GetRealmTimeByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get current game time for multiple realms
@@ -63,9 +69,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Returns GameTimeSnapshot for multiple realms in a single call. Used by services operating across realms.
     /// </remarks>
 
+
+
     /// <returns>Game time snapshots for the requested realms</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetRealmTimesResponse>> BatchGetRealmTimesAsync(BatchGetRealmTimesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetRealmTimesResponse>> BatchGetRealmTimes(BatchGetRealmTimesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Compute elapsed game-time between two real timestamps
@@ -75,9 +84,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Given a realmId, fromRealTime, and toRealTime, computes total game-seconds elapsed. Integrates over ratio history segments. Critical for lazy evaluation patterns.
     /// </remarks>
 
+
+
     /// <returns>Elapsed game time as raw seconds and decomposed calendar units</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetElapsedGameTimeResponse>> GetElapsedGameTimeAsync(GetElapsedGameTimeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetElapsedGameTimeResponse>> GetElapsedGameTime(GetElapsedGameTimeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Trigger a time sync event for an entity's sessions
@@ -87,9 +99,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Publishes a WorldstateTimeSyncEvent with syncReason TriggerSync to a specific entity's connected sessions. Primary caller is Agency (L4) on realm entry for immediate client time sync.
     /// </remarks>
 
+
+
     /// <returns>Time sync triggered successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TriggerTimeSyncResponse>> TriggerTimeSyncAsync(TriggerTimeSyncRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TriggerTimeSyncResponse>> TriggerTimeSync(TriggerTimeSyncRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Initialize a clock for a realm
@@ -99,9 +114,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// The primary path from "realm exists" to "realm has a clock." Validates realm existence, calendar template existence, and that no clock already exists. Registers reference with lib-resource.
     /// </remarks>
 
+
+
     /// <returns>Realm clock initialized successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InitializeRealmClockResponse>> InitializeRealmClockAsync(InitializeRealmClockRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InitializeRealmClockResponse>> InitializeRealmClock(InitializeRealmClockRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Change the time ratio for a realm
@@ -111,9 +129,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Materializes current clock state, records new ratio segment in history, updates realm clock. Setting ratio to 0.0 pauses the clock.
     /// </remarks>
 
+
+
     /// <returns>Time ratio changed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SetTimeRatioResponse>> SetTimeRatioAsync(SetTimeRatioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SetTimeRatioResponse>> SetTimeRatio(SetTimeRatioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Manually advance a realm's clock
@@ -123,9 +144,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Advances a realm's clock by a specified amount of game time. Used for testing and administrative fast-forward. Publishes all boundary events crossed during advancement.
     /// </remarks>
 
+
+
     /// <returns>Clock advanced successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdvanceClockResponse>> AdvanceClockAsync(AdvanceClockRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdvanceClockResponse>> AdvanceClock(AdvanceClockRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Create a calendar template
@@ -135,9 +159,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Creates a calendar template for a game service. Validates structural consistency (day period coverage, season-month mapping, day count sums). Registers reference with lib-resource for game-service target.
     /// </remarks>
 
+
+
     /// <returns>Calendar template created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalendarTemplateResponse>> SeedCalendarAsync(SeedCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalendarTemplateResponse>> SeedCalendar(SeedCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get a calendar template
@@ -147,9 +174,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Returns a calendar template by game service ID and template code.
     /// </remarks>
 
+
+
     /// <returns>Calendar template found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalendarTemplateResponse>> GetCalendarAsync(GetCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalendarTemplateResponse>> GetCalendar(GetCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List calendar templates for a game service
@@ -159,9 +189,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Returns all calendar templates registered for a game service.
     /// </remarks>
 
+
+
     /// <returns>Calendar templates listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCalendarsResponse>> ListCalendarsAsync(ListCalendarsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCalendarsResponse>> ListCalendars(ListCalendarsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update a calendar template
@@ -171,9 +204,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Partial update of a calendar template. Acquires distributed lock. Validates structural consistency. Cannot change template code or game service ID. Invalidates local cache and publishes CalendarTemplateUpdatedEvent for cross-node invalidation.
     /// </remarks>
 
+
+
     /// <returns>Calendar template updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalendarTemplateResponse>> UpdateCalendarAsync(UpdateCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalendarTemplateResponse>> UpdateCalendar(UpdateCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Delete a calendar template
@@ -183,9 +219,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Deletes a calendar template. Fails with Conflict if any active realm clocks reference this template. Acquires distributed lock. Unregisters reference with lib-resource.
     /// </remarks>
 
+
+
     /// <returns>Calendar template deleted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteCalendarResponse>> DeleteCalendarAsync(DeleteCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteCalendarResponse>> DeleteCalendar(DeleteCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Get realm worldstate configuration
@@ -195,9 +234,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Returns the realm's worldstate configuration including calendar template, time ratio, downtime policy, epoch, and active status.
     /// </remarks>
 
+
+
     /// <returns>Realm configuration found</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmConfigResponse>> GetRealmConfigAsync(GetRealmConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmConfigResponse>> GetRealmConfig(GetRealmConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Update realm worldstate configuration
@@ -207,9 +249,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Partial update of realm-level configuration. Acquires distributed lock. Supports changing downtimePolicy and calendarTemplateCode. Cannot change time ratio (use SetTimeRatio) or epoch (immutable).
     /// </remarks>
 
+
+
     /// <returns>Realm configuration updated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmConfigResponse>> UpdateRealmConfigAsync(UpdateRealmConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmConfigResponse>> UpdateRealmConfig(UpdateRealmConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// List active realm clocks
@@ -219,9 +264,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Lists all active realm clocks with summary info. Supports pagination and optional gameServiceId filter.
     /// </remarks>
 
+
+
     /// <returns>Realm clocks listed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRealmClocksResponse>> ListRealmClocksAsync(ListRealmClocksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRealmClocksResponse>> ListRealmClocks(ListRealmClocksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Clean up worldstate data for a deleted realm
@@ -231,9 +279,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Removes realm clock, ratio history, and realm configuration for a realm. Called exclusively by lib-resource during coordinated deletion. Unregisters reference with lib-resource. Publishes RealmConfigDeletedEvent.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealmAsync(CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealm(CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 
     /// <summary>
     /// Clean up worldstate data for a deleted game service
@@ -243,15 +294,18 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
     /// Removes all calendar templates for a game service. Realm configs are cleaned up transitively via realm deletion. Called exclusively by lib-resource. Unregisters references with lib-resource. Publishes CalendarTemplateDeletedEvent for each removed template.
     /// </remarks>
 
+
+
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByGameServiceResponse>> CleanupByGameServiceAsync(CleanupByGameServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByGameServiceResponse>> CleanupByGameService(CleanupByGameServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerBase
+[BeyondImmersion.BannouService.Attributes.BannouController(typeof(IWorldstateService))]
+public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerBase, IWorldstateController
 {
     private IWorldstateService _implementation;
     private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;

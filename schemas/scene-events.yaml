@@ -45,22 +45,14 @@ info:
     - topic: scene.committed
       event: SceneCommittedEvent
       description: Published when checkout changes are committed
-    - topic: scene.checkout.discarded
+    - topic: scene.checkout-discarded
       event: SceneCheckoutDiscardedEvent
       description: Published when checkout is discarded without saving
-    - topic: scene.checkout.expired
-      event: SceneCheckoutExpiredEvent
-      description: Published when a checkout lock expires due to TTL
 
     # Validation events
-    - topic: scene.validation-rules.updated
+    - topic: scene.validation-rules-updated
       event: SceneValidationRulesUpdatedEvent
       description: Published when validation rules are registered/updated
-
-    # Reference integrity events
-    - topic: scene.reference.broken
-      event: SceneReferenceBrokenEvent
-      description: Published when a referenced scene becomes unavailable
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/scene-lifecycle-events.yaml
@@ -87,14 +79,14 @@ components:
     # ========== INSTANTIATION EVENTS ==========
 
     SceneInstantiatedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Published when a scene is instantiated in the game world.
         Consumers (Mapping, Actor, etc.) react to spawn spatial objects and NPCs.
       required:
+        - eventId
+        - timestamp
         - instanceId
         - sceneAssetId
         - sceneVersion
@@ -104,6 +96,14 @@ components:
         - regionId
         - worldTransform
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
         instanceId:
           type: string
           format: uuid
@@ -144,14 +144,22 @@ components:
           description: App-id of the instantiator
 
     SceneDestroyedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scene instance is removed from the game world
       required:
+        - eventId
+        - timestamp
         - instanceId
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
         instanceId:
           type: string
           format: uuid
@@ -181,17 +189,25 @@ components:
     # ========== CHECKOUT WORKFLOW EVENTS ==========
 
     SceneCheckedOutEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scene is locked for editing
       required:
+        - eventId
+        - timestamp
         - sceneId
         - checkedOutByType
         - checkedOutById
         - expiresAt
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
         sceneId:
           type: string
           format: uuid
@@ -218,17 +234,25 @@ components:
           description: When the checkout lock expires
 
     SceneCommittedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when checkout changes are committed
       required:
+        - eventId
+        - timestamp
         - sceneId
         - version
         - committedByType
         - committedById
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
         sceneId:
           type: string
           format: uuid
@@ -266,16 +290,24 @@ components:
           description: Node count after commit
 
     SceneCheckoutDiscardedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a checkout is discarded without saving
       required:
+        - eventId
+        - timestamp
         - sceneId
         - discardedByType
         - discardedById
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
         sceneId:
           type: string
           format: uuid
@@ -297,56 +329,26 @@ components:
             Editor identifier. For Session type: the WebSocket session ID (UUID format).
             For Service type: the app-id or service name.
 
-    SceneCheckoutExpiredEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-      type: object
-      additionalProperties: false
-      description: Published when a checkout lock expires due to TTL
-      required:
-        - sceneId
-        - expiredAt
-      properties:
-        sceneId:
-          type: string
-          format: uuid
-          description: ID of the scene
-        sceneName:
-          type: string
-          nullable: true
-          description: Name of the scene
-        gameId:
-          type: string
-          nullable: true
-          description: Game ID of the scene
-        expiredAt:
-          type: string
-          format: date-time
-          description: When the lock actually expired
-        originalCheckoutByType:
-          $ref: 'scene-api.yaml#/components/schemas/SceneEditorType'
-          nullable: true
-          description: Type of editor that originally checked out the scene
-        originalCheckoutById:
-          type: string
-          nullable: true
-          description: |
-            Editor identifier of who originally checked out the scene.
-            For Session type: the WebSocket session ID (UUID format).
-            For Service type: the app-id or service name.
-
     # ========== VALIDATION EVENTS ==========
 
     SceneValidationRulesUpdatedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when validation rules are registered or updated
       required:
+        - eventId
+        - timestamp
         - gameId
         - sceneType
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
         gameId:
           type: string
           description: Game ID for the rules
@@ -360,58 +362,6 @@ components:
           type: string
           nullable: true
           description: Who updated the rules
-
-    # ========== REFERENCE INTEGRITY EVENTS ==========
-
-    BrokenReferenceReason:
-      type: string
-      description: Reason why a scene reference became broken
-      enum:
-        - Deleted
-        - AccessRevoked
-        - Corrupted
-
-    SceneReferenceBrokenEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-      type: object
-      additionalProperties: false
-      description: |
-        Published when a referenced scene becomes unavailable.
-        This is an edge case event - normally deletion is blocked if references exist.
-      required:
-        - affectedSceneId
-        - brokenReferenceSceneId
-        - reason
-      properties:
-        affectedSceneId:
-          type: string
-          format: uuid
-          description: Scene containing the broken reference
-        affectedSceneName:
-          type: string
-          nullable: true
-          description: Name of the affected scene
-        affectedNodeId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Node with the broken reference
-        affectedNodeRefId:
-          type: string
-          nullable: true
-          description: refId of the affected node
-        brokenReferenceSceneId:
-          type: string
-          format: uuid
-          description: Scene that is no longer available
-        brokenReferenceSceneName:
-          type: string
-          nullable: true
-          description: Name of the scene that is no longer available
-        reason:
-          $ref: '#/components/schemas/BrokenReferenceReason'
-          description: Why the reference broke
 
     # ========== SUPPORTING TYPES ==========
 

@@ -1,5 +1,7 @@
 # Plugin Deep Dive Template
 
+> ⛔ **FROZEN DOCUMENT** — Defines an authoritative template. AI agents MUST NOT modify any content without explicit user instruction. See CLAUDE.md § "Reference Documents Are Frozen."
+
 > This document defines the structure for per-plugin deep-dive documents.
 > Each plugin gets one document: `docs/plugins/{service-name}.md`
 

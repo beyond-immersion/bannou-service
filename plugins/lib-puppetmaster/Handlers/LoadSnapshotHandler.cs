@@ -173,13 +173,13 @@ public sealed class LoadSnapshotHandler : IActionHandler
 
     private static bool TryParseGuid(object? value, out Guid result)
     {
-        if (value is Guid guid)
+        if (value is Guid guid && guid != Guid.Empty)
         {
             result = guid;
             return true;
         }
 
-        if (value is string str && Guid.TryParse(str, out var parsed))
+        if (value is string str && Guid.TryParse(str, out var parsed) && parsed != Guid.Empty)
         {
             result = parsed;
             return true;

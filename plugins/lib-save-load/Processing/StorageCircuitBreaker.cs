@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.SaveLoad.Processing;
 public class StorageCircuitBreaker
 {
     /// <summary>Circuit breaker state store (Redis-backed for multi-instance coordination).</summary>
-    private readonly IStateStore<CircuitBreakerState> _circuitBreakerStore;
+    private readonly IStateStore<CircuitBreakerStateModel> _circuitBreakerStore;
     private readonly IMessageBus _messageBus;
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly ILogger<StorageCircuitBreaker> _logger;
@@ -35,10 +35,10 @@ public class StorageCircuitBreaker
     /// <summary>
     /// State model stored in Redis.
     /// </summary>
-    internal class CircuitBreakerState
+    internal class CircuitBreakerStateModel
     {
         /// <summary>Current circuit state.</summary>
-        public string State { get; set; } = "Closed";
+        public CircuitState State { get; set; } = CircuitState.Closed;
         /// <summary>Count of consecutive failures.</summary>
         public int ConsecutiveFailures { get; set; }
         /// <summary>When the circuit was opened.</summary>
@@ -61,7 +61,7 @@ public class StorageCircuitBreaker
         ILogger<StorageCircuitBreaker> logger,
         ITelemetryProvider telemetryProvider)
     {
-        _circuitBreakerStore = stateStoreFactory.GetStore<CircuitBreakerState>(StateStoreDefinitions.SaveLoadPending);
+        _circuitBreakerStore = stateStoreFactory.GetStore<CircuitBreakerStateModel>(StateStoreDefinitions.SaveLoadPending);
         _messageBus = messageBus;
         _configuration = configuration;
         _logger = logger;
@@ -75,7 +75,7 @@ public class StorageCircuitBreaker
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.GetStateAsync");
         var state = await GetOrCreateStateAsync(cancellationToken);
-        return ParseState(state.State);
+        return state.State;
     }
 
     /// <summary>
@@ -92,7 +92,7 @@ public class StorageCircuitBreaker
         }
 
         var state = await GetOrCreateStateAsync(cancellationToken);
-        var currentState = ParseState(state.State);
+        var currentState = state.State;
 
         switch (currentState)
         {
@@ -125,9 +125,8 @@ public class StorageCircuitBreaker
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.RecordSuccessAsync");
         var state = await GetOrCreateStateAsync(cancellationToken);
-        var currentState = ParseState(state.State);
 
-        switch (currentState)
+        switch (state.State)
         {
             case CircuitState.HalfOpen:
                 // Success in half-open state closes the circuit
@@ -152,9 +151,8 @@ public class StorageCircuitBreaker
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.RecordFailureAsync");
         var state = await GetOrCreateStateAsync(cancellationToken);
-        var currentState = ParseState(state.State);
 
-        switch (currentState)
+        switch (state.State)
         {
             case CircuitState.HalfOpen:
                 // Failure in half-open state reopens the circuit
@@ -190,18 +188,18 @@ public class StorageCircuitBreaker
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.ResetAsync");
         var state = await GetOrCreateStateAsync(cancellationToken);
-        if (ParseState(state.State) != CircuitState.Closed)
+        if (state.State != CircuitState.Closed)
         {
             await TransitionToClosedAsync(state, cancellationToken);
             _logger.LogInformation("Circuit breaker manually reset to closed state");
         }
     }
 
-    private async Task TransitionToOpenAsync(CircuitBreakerState state, CancellationToken cancellationToken)
+    private async Task TransitionToOpenAsync(CircuitBreakerStateModel state, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.TransitionToOpenAsync");
         var previousState = state.State;
-        state.State = "Open";
+        state.State = CircuitState.Open;
         state.OpenedAt = DateTimeOffset.UtcNow;
         state.HalfOpenAttempts = 0;
         state.LastStateChange = DateTimeOffset.UtcNow;
@@ -212,14 +210,14 @@ public class StorageCircuitBreaker
             "Circuit breaker OPENED after {FailureCount} consecutive failures",
             state.ConsecutiveFailures);
 
-        await PublishStateChangeAsync(previousState, "Open", state.ConsecutiveFailures, cancellationToken);
+        await PublishStateChangeAsync(previousState, CircuitState.Open, state.ConsecutiveFailures, cancellationToken);
     }
 
-    private async Task TransitionToHalfOpenAsync(CircuitBreakerState state, CancellationToken cancellationToken)
+    private async Task TransitionToHalfOpenAsync(CircuitBreakerStateModel state, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.TransitionToHalfOpenAsync");
         var previousState = state.State;
-        state.State = "HalfOpen";
+        state.State = CircuitState.HalfOpen;
         state.HalfOpenAttempts = 0;
         state.LastStateChange = DateTimeOffset.UtcNow;
 
@@ -227,14 +225,14 @@ public class StorageCircuitBreaker
 
         _logger.LogInformation("Circuit breaker transitioning to HALF-OPEN state");
 
-        await PublishStateChangeAsync(previousState, "HalfOpen", 0, cancellationToken);
+        await PublishStateChangeAsync(previousState, CircuitState.HalfOpen, 0, cancellationToken);
     }
 
-    private async Task TransitionToClosedAsync(CircuitBreakerState state, CancellationToken cancellationToken)
+    private async Task TransitionToClosedAsync(CircuitBreakerStateModel state, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.TransitionToClosedAsync");
         var previousState = state.State;
-        state.State = "Closed";
+        state.State = CircuitState.Closed;
         state.ConsecutiveFailures = 0;
         state.OpenedAt = null;
         state.HalfOpenAttempts = 0;
@@ -244,10 +242,10 @@ public class StorageCircuitBreaker
 
         _logger.LogInformation("Circuit breaker CLOSED - storage operations resuming normally");
 
-        await PublishStateChangeAsync(previousState, "Closed", 0, cancellationToken);
+        await PublishStateChangeAsync(previousState, CircuitState.Closed, 0, cancellationToken);
     }
 
-    private async Task PublishStateChangeAsync(string previousState, string newState, int failureCount, CancellationToken cancellationToken)
+    private async Task PublishStateChangeAsync(CircuitState previousState, CircuitState newState, int failureCount, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.PublishStateChangeAsync");
         try
@@ -256,13 +254,13 @@ public class StorageCircuitBreaker
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                PreviousState = ParsePreviousState(previousState),
-                NewState = ParseNewState(newState),
+                PreviousState = MapToEventState(previousState),
+                NewState = MapToEventState(newState),
                 FailureCount = failureCount
             };
 
             await _messageBus.TryPublishAsync(
-                "save.circuit-breaker-changed",
+                "save-load.circuit-breaker.state-changed",
                 stateChangeEvent,
                 cancellationToken: cancellationToken);
         }
@@ -272,46 +270,27 @@ public class StorageCircuitBreaker
         }
     }
 
-    private static CircuitBreakerStateChangedEventPreviousState ParsePreviousState(string state)
+    private static CircuitBreakerState MapToEventState(CircuitState state)
     {
         return state switch
         {
-            "Open" => CircuitBreakerStateChangedEventPreviousState.Open,
-            "HalfOpen" => CircuitBreakerStateChangedEventPreviousState.HalfOpen,
-            _ => CircuitBreakerStateChangedEventPreviousState.Closed
+            CircuitState.Open => CircuitBreakerState.Open,
+            CircuitState.HalfOpen => CircuitBreakerState.HalfOpen,
+            _ => CircuitBreakerState.Closed
         };
     }
 
-    private static CircuitBreakerStateChangedEventNewState ParseNewState(string state)
-    {
-        return state switch
-        {
-            "Open" => CircuitBreakerStateChangedEventNewState.Open,
-            "HalfOpen" => CircuitBreakerStateChangedEventNewState.HalfOpen,
-            _ => CircuitBreakerStateChangedEventNewState.Closed
-        };
-    }
-
-    private async Task<CircuitBreakerState> GetOrCreateStateAsync(CancellationToken cancellationToken)
+    private async Task<CircuitBreakerStateModel> GetOrCreateStateAsync(CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.GetOrCreateStateAsync");
         var state = await _circuitBreakerStore.GetAsync(CircuitStateKey, cancellationToken);
-        return state ?? new CircuitBreakerState();
+        return state ?? new CircuitBreakerStateModel();
     }
 
-    private async Task SaveStateAsync(CircuitBreakerState state, CancellationToken cancellationToken)
+    private async Task SaveStateAsync(CircuitBreakerStateModel state, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.SaveStateAsync");
         await _circuitBreakerStore.SaveAsync(CircuitStateKey, state, cancellationToken: cancellationToken);
     }
 
-    private static CircuitState ParseState(string state)
-    {
-        return state switch
-        {
-            "Open" => CircuitState.Open,
-            "HalfOpen" => CircuitState.HalfOpen,
-            _ => CircuitState.Closed
-        };
-    }
 }

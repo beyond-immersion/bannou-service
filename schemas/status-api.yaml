@@ -33,27 +33,26 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  x-references:
+  - target: character
+    sourceType: status-container
+    field: ownerId
+    onDelete: cascade
+    cleanup:
+      endpoint: /status/cleanup-by-owner
+      payloadTemplate: '{"ownerType": "character", "ownerId": "{{resourceId}}"}'
+  - target: account
+    sourceType: status-container
+    field: ownerId
+    onDelete: cascade
+    cleanup:
+      endpoint: /status/cleanup-by-owner
+      payloadTemplate: '{"ownerType": "account", "ownerId": "{{resourceId}}"}'
 x-service-layer: GameFeatures
 
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
-
-x-references:
-- target: character
-  sourceType: status-container
-  field: ownerId
-  onDelete: cascade
-  cleanup:
-    endpoint: /status/cleanup-by-owner
-    payloadTemplate: '{"ownerType": "character", "ownerId": "{{resourceId}}"}'
-- target: account
-  sourceType: status-container
-  field: ownerId
-  onDelete: cascade
-  cleanup:
-    endpoint: /status/cleanup-by-owner
-    payloadTemplate: '{"ownerType": "account", "ownerId": "{{resourceId}}"}'
 
 paths:
   # ===========================================================================
@@ -221,6 +220,91 @@ paths:
                 $ref: '#/components/schemas/SeedStatusTemplatesResponse'
         '400':
           description: Invalid request (validation errors)
+
+  /status/template/deprecate:
+    post:
+      operationId: deprecateStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Deprecate a status template
+      description: |
+        Mark a status template as deprecated. Deprecated templates cannot be used
+        for new grants. Idempotent -- returns OK if already deprecated.
+        Category A entity: deprecation is reversible via undeprecate.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template deprecated (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '404':
+          description: Status template not found
+
+  /status/template/undeprecate:
+    post:
+      operationId: undeprecateStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Undeprecate a status template
+      description: |
+        Remove deprecation from a status template, restoring it for use in grants.
+        Idempotent -- returns OK if not deprecated.
+        Category A entity: undeprecation is allowed.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template undeprecated (or was not deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '404':
+          description: Status template not found
+
+  /status/template/delete:
+    post:
+      operationId: deleteStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Delete a deprecated status template
+      description: |
+        Permanently delete a status template. The template must be deprecated first.
+        Returns BadRequest if the template is not deprecated.
+        Category A entity: deletion requires prior deprecation.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template deleted
+        '400':
+          description: Template is not deprecated (must deprecate before deleting)
+        '404':
+          description: Status template not found
 
   # ===========================================================================
   # Status Operations (7 endpoints)
@@ -492,9 +576,7 @@ paths:
         owner entity. Called by lib-resource cleanup callbacks when a character or
         account is deleted. Destroys inventory containers (cascades to items),
         deletes all instance records, and invalidates all caches.
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -580,6 +662,7 @@ components:
       description: |
         Why a status grant was rejected.
         - template_not_found: status template code does not exist for game service
+        - template_deprecated: status template has been deprecated and cannot grant new instances
         - entity_at_max_statuses: entity has reached maximum concurrent statuses
         - stack_limit_reached: status has reached maximum stack count
         - stack_behavior_ignore: template uses ignore stacking and status already present
@@ -587,6 +670,7 @@ components:
         - item_creation_failed: item instance creation via lib-item failed
       enum:
       - TemplateNotFound
+      - TemplateDeprecated
       - EntityAtMaxStatuses
       - StackLimitReached
       - StackBehaviorIgnore
@@ -638,6 +722,7 @@ components:
       properties:
         statusCode:
           type: string
+          maxLength: 128
           description: Status template code (item-based) or capability code (seed-derived)
         category:
           $ref: '#/components/schemas/StatusCategory'
@@ -657,6 +742,8 @@ components:
         fidelity:
           type: number
           format: float
+          minimum: 0.0
+          maximum: 1.0
           nullable: true
           description: Seed capability fidelity value (null for item-based effects)
         seedId:
@@ -683,13 +770,17 @@ components:
       properties:
         capabilityCode:
           type: string
+          maxLength: 128
           description: Capability code from the seed's capability manifest
         domain:
           type: string
+          maxLength: 128
           description: Seed domain this capability belongs to
         fidelity:
           type: number
           format: float
+          minimum: 0.0
+          maximum: 1.0
           description: Capability fidelity value (0.0 to 1.0)
         seedId:
           type: string
@@ -697,6 +788,7 @@ components:
           description: Seed providing this capability
         seedTypeCode:
           type: string
+          maxLength: 128
           description: Type code of the seed providing this capability
 
     # ==========================================================================
@@ -726,9 +818,11 @@ components:
           description: Unique status code within this game service
         displayName:
           type: string
+          maxLength: 256
           description: Human-readable display name for this status effect
         description:
           type: string
+          maxLength: 2000
           description: Detailed description of what this status effect does
         category:
           $ref: '#/components/schemas/StatusCategory'
@@ -739,6 +833,7 @@ components:
         maxStacks:
           type: integer
           minimum: 1
+          maximum: 100
           default: 1
           description: Maximum number of stacks when stackable is true
         stackBehavior:
@@ -790,6 +885,7 @@ components:
           description: Game service the template is scoped to
         code:
           type: string
+          maxLength: 128
           description: Unique status code within this game service
 
     ListStatusTemplatesRequest:
@@ -808,6 +904,10 @@ components:
           description: Optional filter by status category
           allOf:
           - $ref: '#/components/schemas/StatusCategory'
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated templates in results
         page:
           type: integer
           minimum: 1
@@ -833,10 +933,12 @@ components:
           description: Status template to update
         displayName:
           type: string
+          maxLength: 256
           nullable: true
           description: Updated display name (null means no change)
         description:
           type: string
+          maxLength: 2000
           nullable: true
           description: Updated description (null means no change)
         category:
@@ -851,6 +953,7 @@ components:
         maxStacks:
           type: integer
           minimum: 1
+          maximum: 100
           nullable: true
           description: Updated maximum stack count (null means no change)
         stackBehavior:
@@ -888,9 +991,51 @@ components:
           description: Game service to seed templates for (all templates must belong to this game service)
         templates:
           type: array
+          maxItems: 500
           items:
             $ref: '#/components/schemas/CreateStatusTemplateRequest'
           description: Status templates to create (duplicates are skipped)
+
+    DeprecateStatusTemplateRequest:
+      type: object
+      description: Request to deprecate a status template
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      - reason
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Status template to deprecate
+        reason:
+          type: string
+          maxLength: 500
+          description: Why this template is being deprecated
+
+    UndeprecateStatusTemplateRequest:
+      type: object
+      description: Request to undeprecate a status template (Category A -- reversible)
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Status template to undeprecate
+
+    DeleteStatusTemplateRequest:
+      type: object
+      description: Request to delete a deprecated status template
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Status template to delete (must be deprecated first)
 
     StatusTemplateResponse:
       type: object
@@ -907,6 +1052,7 @@ components:
       - maxStacks
       - stackBehavior
       - itemTemplateId
+      - isDeprecated
       - createdAt
       properties:
         statusTemplateId:
@@ -919,12 +1065,15 @@ components:
           description: Game service this template is scoped to
         code:
           type: string
+          maxLength: 128
           description: Unique status code within this game service
         displayName:
           type: string
+          maxLength: 256
           description: Human-readable display name
         description:
           type: string
+          maxLength: 2000
           description: Detailed description of this status effect
         category:
           $ref: '#/components/schemas/StatusCategory'
@@ -934,6 +1083,7 @@ components:
           description: Whether this status can stack
         maxStacks:
           type: integer
+          minimum: 1
           description: Maximum number of stacks
         stackBehavior:
           $ref: '#/components/schemas/StackBehavior'
@@ -949,6 +1099,7 @@ components:
           description: Item template used when granting this status
         defaultDurationSeconds:
           type: integer
+          minimum: 1
           nullable: true
           description: Default duration in seconds (null for permanent statuses)
         iconAssetId:
@@ -956,6 +1107,19 @@ components:
           format: uuid
           nullable: true
           description: Asset identifier for this status effect's icon
+        isDeprecated:
+          type: boolean
+          description: Whether this template is deprecated and unavailable for new grants
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Why this template was deprecated (null if not deprecated)
         createdAt:
           type: string
           format: date-time
@@ -978,6 +1142,7 @@ components:
       properties:
         templates:
           type: array
+          maxItems: 200
           items:
             $ref: '#/components/schemas/StatusTemplateResponse'
           description: Status templates in this page
@@ -1033,6 +1198,7 @@ components:
           description: Game service scope for template lookup
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Status template code to grant
         sourceId:
           type: string
@@ -1048,7 +1214,7 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: "Arbitrary key-value data passed to contract template values and stored on the status instance. Convention for Divine integration - set metadata.blessingTier to the blessing tier string (e.g., minor, standard, greater, supreme) so the Divine service can query active blessings by tier."
+          description: "Arbitrary key-value data passed to contract template values and stored on the status instance. Opaque to Status -- callers define their own semantics."
 
     RemoveStatusRequest:
       type: object
@@ -1129,6 +1295,7 @@ components:
           description: Entity type discriminator
         statusCode:
           type: string
+          maxLength: 128
           description: Status template code to check for
 
     ListStatusesRequest:
@@ -1197,6 +1364,7 @@ components:
           description: Status instance that was created or updated
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Status template code that was granted
         stackCount:
           type: integer
@@ -1286,6 +1454,7 @@ components:
           description: Entity type discriminator
         statusTemplateCode:
           type: string
+          maxLength: 128
           description: Status template code
         category:
           $ref: '#/components/schemas/StatusCategory'
@@ -1320,7 +1489,7 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Arbitrary metadata associated with this status instance
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
 
     ListStatusesResponse:
       type: object
@@ -1334,6 +1503,7 @@ components:
       properties:
         statuses:
           type: array
+          maxItems: 100
           items:
             $ref: '#/components/schemas/StatusEffectSummary'
           description: Active status effects (item-based and optionally seed-derived)
@@ -1424,6 +1594,7 @@ components:
           description: Number of seed-derived passive effects
         effects:
           type: array
+          maxItems: 500
           items:
             $ref: '#/components/schemas/StatusEffectSummary'
           description: All active effects with source attribution
@@ -1446,6 +1617,7 @@ components:
           description: Entity type discriminator
         effects:
           type: array
+          maxItems: 500
           items:
             $ref: '#/components/schemas/SeedEffectEntry'
           description: Seed-derived passive effects

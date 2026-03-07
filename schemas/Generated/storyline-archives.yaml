@@ -719,27 +719,27 @@ components:
       type: string
       description: Categories of historical events that realms can participate in
       enum:
-      - FOUNDING
-      - WAR
-      - TREATY
-      - CATACLYSM
-      - DISCOVERY
-      - MIGRATION
-      - CULTURAL_SHIFT
-      - ECONOMIC_CHANGE
-      - POLITICAL_UPHEAVAL
+      - Founding
+      - War
+      - Treaty
+      - Cataclysm
+      - Discovery
+      - Migration
+      - CulturalShift
+      - EconomicChange
+      - PoliticalUpheaval
     RealmEventRole:
       type: string
       description: How the realm participated in the historical event
       enum:
-      - ORIGIN
-      - AGGRESSOR
-      - DEFENDER
-      - MEDIATOR
-      - AFFECTED
-      - BENEFICIARY
-      - INSTIGATOR
-      - NEUTRAL_PARTY
+      - Origin
+      - Aggressor
+      - Defender
+      - Mediator
+      - Affected
+      - Beneficiary
+      - Instigator
+      - NeutralParty
     RealmHistoricalParticipation:
       type: object
       description: Record of a realm's participation in a historical event
@@ -805,35 +805,32 @@ components:
       description: |
         Compressed realm lore and history for archive storage and storyline SDK consumption.
         Inherits base archive properties from ResourceArchiveBase.
-        The realmId field equals resourceId for convenience.
+        Use resourceId from the base type to identify the realm.
       allOf:
       - $ref: '#/components/schemas/ResourceArchiveBase'
       additionalProperties: false
       required:
-      - realmId
       - hasLore
       - hasParticipations
       properties:
-        realmId:
-          type: string
-          format: uuid
-          description: Realm this data belongs to (equals resourceId)
         hasLore:
           type: boolean
           description: Whether lore elements exist
         loreElements:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/RealmLoreResponse'
-          description: Lore elements (empty if hasLore=false)
+          description: Lore elements (null if hasLore=false)
         hasParticipations:
           type: boolean
           description: Whether event participations exist
         participations:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/RealmHistoricalParticipation'
-          description: Event participations (empty if hasParticipations=false)
+          description: Event participations (null if hasParticipations=false)
         summaries:
           $ref: '#/components/schemas/RealmHistorySummaryResponse'
           nullable: true
@@ -843,14 +840,9 @@ components:
       description: Generated text summaries for realm archival
       additionalProperties: false
       required:
-      - realmId
       - keyLorePoints
       - majorHistoricalEvents
       properties:
-        realmId:
-          type: string
-          format: uuid
-          description: ID of the realm summarized
         keyLorePoints:
           type: array
           items:
@@ -915,26 +907,21 @@ components:
         Types of lore elements. Each type represents a different aspect
         of the realm's background that influences behavior.
       enum:
-      - ORIGIN_MYTH
-      - CULTURAL_PRACTICE
-      - POLITICAL_SYSTEM
-      - ECONOMIC_BASE
-      - RELIGIOUS_TRADITION
-      - GEOGRAPHIC_FEATURE
-      - FAMOUS_FIGURE
-      - TECHNOLOGICAL_LEVEL
+      - OriginMyth
+      - CulturalPractice
+      - PoliticalSystem
+      - EconomicBase
+      - ReligiousTradition
+      - GeographicFeature
+      - FamousFigure
+      - TechnologicalLevel
     RealmLoreResponse:
       type: object
       description: Complete lore data for a realm
       additionalProperties: false
       required:
-      - realmId
       - elements
       properties:
-        realmId:
-          type: string
-          format: uuid
-          description: ID of the realm this lore belongs to
         elements:
           type: array
           items:

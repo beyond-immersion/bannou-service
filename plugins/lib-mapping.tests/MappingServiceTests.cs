@@ -25,6 +25,7 @@ public class MappingServiceTests
     private readonly MappingServiceConfiguration _configuration;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IAssetClient> _mockAssetClient;
+    private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IAffordanceScorer> _mockAffordanceScorer;
 
@@ -33,7 +34,7 @@ public class MappingServiceTests
     private readonly Mock<IStateStore<MappingService.AuthorityRecord>> _mockAuthorityStore;
     private readonly Mock<IStateStore<MappingService.CheckoutRecord>> _mockCheckoutStore;
     private readonly Mock<IStateStore<MapObject>> _mockObjectStore;
-    private readonly Mock<IStateStore<List<Guid>>> _mockIndexStore;
+    private readonly Mock<ICacheableStateStore<MapObject>> _mockIndexStore;
     private readonly Mock<IStateStore<MappingService.LongWrapper>> _mockVersionStore;
     private readonly Mock<IStateStore<MappingService.CachedAffordanceResult>> _mockAffordanceCacheStore;
     private readonly Mock<IStateStore<MappingService.DefinitionRecord>> _mockDefinitionStore;
@@ -47,6 +48,9 @@ public class MappingServiceTests
         _mockLogger = new Mock<ILogger<MappingService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockAssetClient = new Mock<IAssetClient>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockServiceProvider.Setup(sp => sp.GetService(typeof(IAssetClient)))
+            .Returns(_mockAssetClient.Object);
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockAffordanceScorer = new Mock<IAffordanceScorer>();
 
@@ -82,7 +86,7 @@ public class MappingServiceTests
         _mockAuthorityStore = new Mock<IStateStore<MappingService.AuthorityRecord>>();
         _mockCheckoutStore = new Mock<IStateStore<MappingService.CheckoutRecord>>();
         _mockObjectStore = new Mock<IStateStore<MapObject>>();
-        _mockIndexStore = new Mock<IStateStore<List<Guid>>>();
+        _mockIndexStore = new Mock<ICacheableStateStore<MapObject>>();
         _mockVersionStore = new Mock<IStateStore<MappingService.LongWrapper>>();
         _mockAffordanceCacheStore = new Mock<IStateStore<MappingService.CachedAffordanceResult>>();
         _mockDefinitionStore = new Mock<IStateStore<MappingService.DefinitionRecord>>();
@@ -97,7 +101,7 @@ public class MappingServiceTests
             .Returns(_mockCheckoutStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<MapObject>(It.IsAny<string>()))
             .Returns(_mockObjectStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(It.IsAny<string>()))
+        _mockStateStoreFactory.Setup(f => f.GetCacheableStore<MapObject>(It.IsAny<string>()))
             .Returns(_mockIndexStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<MappingService.LongWrapper>(It.IsAny<string>()))
             .Returns(_mockVersionStore.Object);
@@ -128,8 +132,10 @@ public class MappingServiceTests
             .ReturnsAsync("etag");
         _mockObjectStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MapObject>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
-        _mockIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<Guid>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MapObject>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
+        _mockIndexStore.Setup(s => s.GetSetAsync<Guid>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
         _mockDefinitionStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.DefinitionRecord>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
         _mockDefinitionIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.DefinitionIndexEntry>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -145,7 +151,7 @@ public class MappingServiceTests
             _mockLogger.Object,
             _configuration,
             _mockEventConsumer.Object,
-            (IServiceProvider)_mockAssetClient.Object,
+            _mockServiceProvider.Object,
             _mockHttpClientFactory.Object,
             _mockAffordanceScorer.Object,
             Mock.Of<ITelemetryProvider>());
@@ -469,7 +475,7 @@ public class MappingServiceTests
         var objectId = Guid.NewGuid();
 
         // Setup spatial index to return our object
-        _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.GetSetAsync<Guid>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Guid> { objectId });
 
         // Setup object store
@@ -537,7 +543,7 @@ public class MappingServiceTests
         var objectId = Guid.NewGuid();
 
         // Setup type index
-        _mockIndexStore.Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("map:type-index:")), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.GetSetAsync<Guid>(It.Is<string>(k => k.Contains("map:type-index:")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Guid> { objectId });
 
         // Setup object store

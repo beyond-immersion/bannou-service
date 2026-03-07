@@ -1299,6 +1299,15 @@ namespace Bannou
         /** Bulk seed status templates */
         constexpr const TCHAR* StatusSeedStatusTemplates = TEXT("POST:/status/template/seed");
 
+        /** Deprecate a status template */
+        constexpr const TCHAR* StatusDeprecateStatusTemplate = TEXT("POST:/status/template/deprecate");
+
+        /** Undeprecate a status template */
+        constexpr const TCHAR* StatusUndeprecateStatusTemplate = TEXT("POST:/status/template/undeprecate");
+
+        /** Delete a deprecated status template */
+        constexpr const TCHAR* StatusDeleteStatusTemplate = TEXT("POST:/status/template/delete");
+
         /** Grant a status effect to an entity */
         constexpr const TCHAR* StatusGrantStatus = TEXT("POST:/status/grant");
 
@@ -1325,9 +1334,6 @@ namespace Bannou
 
         /** Get seed-derived passive effects for an entity */
         constexpr const TCHAR* StatusGetSeedEffects = TEXT("POST:/status/effects/get-seed");
-
-        /** Remove all statuses and containers for an owner */
-        constexpr const TCHAR* StatusCleanupByOwner = TEXT("POST:/status/cleanup-by-owner");
 
         // Storyline Service
         /** Compose a storyline plan from archive seeds */
@@ -4589,7 +4595,7 @@ namespace Bannou
                 TEXT("/scene/discard"),
                 TEXT("scene"),
                 TEXT("FDiscardRequest"),
-                TEXT("FDiscardResponse"),
+                TEXT(""),
                 TEXT("Release lock without saving changes")
             });
             Registry.Add(TEXT("SceneHeartbeatCheckout"), FEndpointInfo{
@@ -4912,6 +4918,30 @@ namespace Bannou
                 TEXT("FSeedStatusTemplatesResponse"),
                 TEXT("Bulk seed status templates")
             });
+            Registry.Add(TEXT("StatusDeprecateStatusTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/status/template/deprecate"),
+                TEXT("status"),
+                TEXT("FDeprecateStatusTemplateRequest"),
+                TEXT("FStatusTemplateResponse"),
+                TEXT("Deprecate a status template")
+            });
+            Registry.Add(TEXT("StatusUndeprecateStatusTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/status/template/undeprecate"),
+                TEXT("status"),
+                TEXT("FUndeprecateStatusTemplateRequest"),
+                TEXT("FStatusTemplateResponse"),
+                TEXT("Undeprecate a status template")
+            });
+            Registry.Add(TEXT("StatusDeleteStatusTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/status/template/delete"),
+                TEXT("status"),
+                TEXT("FDeleteStatusTemplateRequest"),
+                TEXT(""),
+                TEXT("Delete a deprecated status template")
+            });
             Registry.Add(TEXT("StatusGrantStatus"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/status/grant"),
@@ -4983,14 +5013,6 @@ namespace Bannou
                 TEXT("FGetSeedEffectsRequest"),
                 TEXT("FSeedEffectsResponse"),
                 TEXT("Get seed-derived passive effects for an entity")
-            });
-            Registry.Add(TEXT("StatusCleanupByOwner"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/status/cleanup-by-owner"),
-                TEXT("status"),
-                TEXT("FCleanupByOwnerRequest"),
-                TEXT("FCleanupResponse"),
-                TEXT("Remove all statuses and containers for an owner")
             });
             Registry.Add(TEXT("StorylineCompose"), FEndpointInfo{
                 TEXT("POST"),
