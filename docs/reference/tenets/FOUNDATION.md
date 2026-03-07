@@ -232,6 +232,20 @@ Two patterns depending on service entity count:
 
 All parts use kebab-case. No underscores in topic strings. Infrastructure events use `bannou.` prefix (e.g., `bannou.full-service-mappings`). See [SCHEMA-RULES.md](../SCHEMA-RULES.md) for detailed Pattern A/C rules and the litmus test.
 
+### Generated Topic Constants (PublishedTopics)
+
+Every service has a generated `{Service}PublishedTopics` static class in its `Generated/` directory containing `public const string` fields for each published event topic. These are generated from `x-event-publications` in the service's events schema by `scripts/generate-published-topics.py`.
+
+```csharp
+// CORRECT: Use generated topic constants
+await _messageBus.TryPublishAsync(QuestPublishedTopics.QuestAccepted, event, ct);
+
+// FORBIDDEN: Inline topic strings (typo-prone, no compile-time safety)
+await _messageBus.TryPublishAsync("quest.accepted", event, ct);
+```
+
+Services MUST use these generated constants instead of inline topic strings when calling `IMessageBus.TryPublishAsync`. This provides compile-time safety and ensures topic strings match the event schema. If a service also defines `private const string` topic fields (legacy pattern), prefer the generated constants and remove the manual definitions.
+
 ### Lifecycle Events (x-lifecycle) - NEVER MANUALLY CREATE
 
 CRUD-style lifecycle events MUST be auto-generated via `x-lifecycle` in the events schema. NEVER manually define `*CreatedEvent`/`*UpdatedEvent`/`*DeletedEvent`.
@@ -246,6 +260,21 @@ x-lifecycle:
 ```
 
 This generates `EntityNameCreatedEvent` (full data), `EntityNameUpdatedEvent` (full data + `changedFields`), and `EntityNameDeletedEvent` (full data + nullable `deletedReason`). All three events carry the complete model (minus sensitive fields) so consumers can react without a follow-up lookup.
+
+**Auto-injected fields**: The lifecycle generator automatically injects `createdAt` (required `DateTimeOffset`) and `updatedAt` (nullable `DateTimeOffset`) into all lifecycle events. Do NOT manually define these in `x-lifecycle` model blocks — they will be stripped and auto-injected with standardized descriptions.
+
+**Lifecycle Event Interfaces**: All generated lifecycle events implement typed interfaces from `BeyondImmersion.Bannou.Core`:
+
+| Interface | Implemented By | Properties |
+|-----------|---------------|------------|
+| `ILifecycleEvent` | All lifecycle events | `CreatedAt`, `UpdatedAt` |
+| `ILifecycleCreatedEvent` | `*CreatedEvent` | (inherits `ILifecycleEvent`) |
+| `ILifecycleUpdatedEvent` | `*UpdatedEvent` | `ChangedFields` |
+| `ILifecycleDeletedEvent` | `*DeletedEvent` | `DeletedReason` |
+
+These interfaces enable generic processing of lifecycle events (e.g., audit logging, analytics ingestion) without coupling to specific event types. The interfaces are implemented via companion partial class files (`*LifecycleEvents.Interfaces.cs`) generated alongside the lifecycle event schemas.
+
+**changedFields convention**: All `*.updated` events — whether lifecycle-generated or custom — MUST include a `changedFields` property containing camelCase property names of the fields that changed. This enables consumers to filter reactions to only the fields they care about. Lifecycle-generated events get this automatically; custom updated events must add it manually.
 
 ### Full-State Events Pattern
 
@@ -364,6 +393,80 @@ private async Task ProcessBatchAsync(IStateStoreFactory factory, CancellationTok
 3. Pass the store references as method parameters to all sub-methods within that scope
 4. Never pass `IStateStoreFactory` itself to sub-methods — pass the resolved stores
 5. Never store `IStateStoreFactory` as a field on the background service class
+
+### Background Worker Polling Loop (MANDATORY)
+
+Every `BackgroundService.ExecuteAsync` MUST follow this canonical skeleton. Getting the cancellation handling wrong causes shutdown to be logged as an error on every graceful restart.
+
+```csharp
+protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+{
+    // 1. Startup delay (configurable, with its own cancellation handler)
+    try
+    {
+        await Task.Delay(
+            TimeSpan.FromSeconds(_configuration.MyWorkerStartupDelaySeconds),
+            stoppingToken);
+    }
+    catch (OperationCanceledException) { return; }
+
+    _logger.LogInformation("{Worker} starting, interval: {Interval}s",
+        nameof(MyWorker), _configuration.MyWorkerIntervalSeconds);
+
+    // 2. Main loop
+    while (!stoppingToken.IsCancellationRequested)
+    {
+        // 3. Work with double-catch cancellation filter
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity(
+                "bannou.my-service", "MyWorker.ProcessCycle");
+            await ProcessCycleAsync(stoppingToken);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            break; // Graceful shutdown — NOT an error
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{Worker} cycle failed", nameof(MyWorker));
+            await _serviceProvider.TryPublishWorkerErrorAsync(
+                "my-service", "ProcessCycle", ex, _logger, stoppingToken);
+        }
+
+        // 4. Delay with its own cancellation handler
+        try
+        {
+            await Task.Delay(
+                TimeSpan.FromSeconds(_configuration.MyWorkerIntervalSeconds),
+                stoppingToken);
+        }
+        catch (OperationCanceledException) { break; }
+    }
+
+    _logger.LogInformation("{Worker} stopped", nameof(MyWorker));
+}
+```
+
+**Rules:**
+
+| Rule | Why |
+|------|-----|
+| `OperationCanceledException` filter with `when (stoppingToken.IsCancellationRequested)` MUST come before generic `Exception` catch | Prevents shutdown being logged as an error |
+| Startup delay MUST be configurable and have its own cancellation handler | Prevents startup exceptions on fast shutdown |
+| Cycle failures MUST publish error events via `WorkerErrorPublisher.TryPublishWorkerErrorAsync` | Workers have no generated controller catch-all |
+| `ExecuteAsync` itself MUST NOT have a `StartActivity` telemetry span | A span covering process lifetime (hours/days) produces no useful telemetry; instrument per-cycle instead |
+| No scoped dependencies in singleton constructor | Use `IServiceProvider` for scope creation; resolve scoped services per cycle |
+
+**Constructor dependencies** (standardized across all workers):
+
+```csharp
+public MyWorker(
+    IServiceProvider serviceProvider,      // For scope creation
+    ILogger<MyWorker> logger,
+    MyServiceConfiguration configuration,
+    ITelemetryProvider telemetryProvider)   // For per-cycle spans
+```
 
 ---
 

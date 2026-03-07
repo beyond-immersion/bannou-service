@@ -292,6 +292,32 @@ Local caches are acceptable when **both**: (1) loaded via API on startup from au
 private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSubscriptions = new();
 ```
 
+### Cache Invalidation Mechanisms (MANDATORY)
+
+Services using `ConcurrentDictionary` caches (including Variable Provider caches) MUST invalidate via self-event-subscription, not inline method calls. Inline invalidation only reaches the node that processed the request; other nodes serve stale data until TTL expiry.
+
+```csharp
+// CORRECT: Self-subscribe to own events for cross-node invalidation
+eventConsumer.RegisterHandler<IMyService, MyEntityUpdatedEvent>(
+    "my-entity.updated",
+    async (svc, evt) => ((MyService)svc)._cache.Invalidate(evt.EntityId));
+
+// WRONG: Inline invalidation — only works on the processing node
+await _store.SaveAsync(key, model, ct);
+_cache.Invalidate(model.EntityId);  // Other nodes never see this
+await _messageBus.TryPublishAsync("my-entity.updated", event, ct);
+```
+
+**Decision tree by cache type:**
+
+| Cache Type | Invalidation Mechanism | Example |
+|------------|----------------------|---------|
+| `ConcurrentDictionary` (in-memory) | Self-event-subscription via `IEventConsumer` | character-personality, character-encounter |
+| Redis cache with TTL | Explicit `DeleteAsync` at mutation sites + TTL as safety net | location, transit |
+| Redis cache without TTL | Explicit `DeleteAsync` at mutation sites (mandatory) | — |
+
+See also SERVICE-HIERARCHY.md § "DI Provider vs Listener: Distributed Safety" for the full distributed safety analysis of DI inversion patterns.
+
 ### Distributed Lock Pattern
 
 Lock stores are schema-first — defined in `schemas/state-stores.yaml` and referenced via `StateStoreDefinitions` constants (same as all state stores per T4). The `storeName` parameter MUST be a `StateStoreDefinitions` constant, never a hardcoded string.

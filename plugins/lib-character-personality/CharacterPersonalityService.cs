@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.CharacterPersonality.Caching;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -908,7 +909,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         try
         {
             var compressedBytes = Convert.FromBase64String(body.Data);
-            var jsonData = DecompressJsonData(compressedBytes);
+            var jsonData = CompressionHelper.DecompressJsonData(compressedBytes);
             archiveData = BannouJson.Deserialize<CharacterPersonalityArchive>(jsonData)
                 ?? throw new InvalidOperationException("Deserialized archive data is null");
         }
@@ -983,19 +984,6 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             PersonalityRestored = personalityRestored,
             CombatPreferencesRestored = combatPreferencesRestored
         });
-    }
-
-    /// <summary>
-    /// Decompresses gzipped JSON data.
-    /// </summary>
-    private static string DecompressJsonData(byte[] compressedData)
-    {
-        using var input = new System.IO.MemoryStream(compressedData);
-        using var gzip = new System.IO.Compression.GZipStream(
-            input, System.IO.Compression.CompressionMode.Decompress);
-        using var output = new System.IO.MemoryStream();
-        gzip.CopyTo(output);
-        return System.Text.Encoding.UTF8.GetString(output.ToArray());
     }
 
     // ============================================================================

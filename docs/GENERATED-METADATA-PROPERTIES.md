@@ -335,7 +335,7 @@ Compliant properties include one of these phrases in their description:
 | `UpdateDefinitionRequest` | `metadata` | `mapping-api.yaml` | Y | Updated client-provided definition metadata (replaces existing). No Bannou pl... |
 | `IngestPayload` | `data` | `mapping-events.yaml` | **N** | Schema-less object data (publisher-defined) |
 | `MapUpdatedEvent` | `payload` | `mapping-events.yaml` | **N** | Schema-less payload data |
-| `ObjectChangeEvent` | `data` | `mapping-events.yaml` | **N** | Object data (for created/updated) |
+| `ObjectChangeRecord` | `data` | `mapping-events.yaml` | **N** | Object data (for created/updated) |
 
 #### Realm History
 
@@ -453,7 +453,7 @@ or is it being misused as a cross-service data contract?
 | Connect | `InternalProxyRequest` | `body` | `connect-api.yaml` | Request body to forward to target service (null for no body). Uses additional... |
 | Connect | `GetEndpointMetaResponse` | `data` | `connect-api.yaml` | Metadata payload whose structure varies by metaType (endpoint-info returns su... |
 | Mapping | `IngestPayload` | `data` | `mapping-events.yaml` | Schema-less object data (publisher-defined) |
-| Mapping | `ObjectChangeEvent` | `data` | `mapping-events.yaml` | Object data (for created/updated) |
+| Mapping | `ObjectChangeRecord` | `data` | `mapping-events.yaml` | Object data (for created/updated) |
 | Mapping | `MapUpdatedEvent` | `payload` | `mapping-events.yaml` | Schema-less payload data |
 | State | `GetStateResponse` | `value` | `state-api.yaml` | The stored value (null if not found) |
 | State | `SaveStateRequest` | `value` | `state-api.yaml` | Value to store |

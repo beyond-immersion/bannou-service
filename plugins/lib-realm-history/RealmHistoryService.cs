@@ -855,7 +855,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         try
         {
             var compressedBytes = Convert.FromBase64String(body.Data);
-            var jsonData = DecompressJsonData(compressedBytes);
+            var jsonData = CompressionHelper.DecompressJsonData(compressedBytes);
             archiveData = BannouJson.Deserialize<RealmHistoryArchive>(jsonData)
                 ?? throw new InvalidOperationException("Deserialized archive data is null");
         }
@@ -1011,17 +1011,6 @@ public partial class RealmHistoryService : IRealmHistoryService
         };
 
         return $"{participation.EventName} ({roleVerb})";
-    }
-
-    /// <summary>
-    /// Decompresses a gzipped byte array into a UTF-8 JSON string.
-    /// </summary>
-    private static string DecompressJsonData(byte[] compressedBytes)
-    {
-        using var input = new System.IO.MemoryStream(compressedBytes);
-        using var gzip = new System.IO.Compression.GZipStream(input, System.IO.Compression.CompressionMode.Decompress);
-        using var reader = new System.IO.StreamReader(gzip, System.Text.Encoding.UTF8);
-        return reader.ReadToEnd();
     }
 
     // ============================================================================

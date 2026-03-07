@@ -468,7 +468,6 @@ This document lists all events defined in Bannou's event schemas.
 | `MappingAuthorityExpiredEvent` | Expiration | `mapping-authority.expired` | Published when authority expires (detected during ... |
 | `MappingAuthorityGrantedEvent` | Custom | `mapping-authority-granted` | Published when authority is granted over a mapping... |
 | `MappingAuthorityReleasedEvent` | Custom | `mapping-authority-released` | Published when authority is explicitly released ov... |
-| `ObjectChangeEvent` | Custom | `object-change` | A single object change in an event |
 
 ### Matchmaking
 

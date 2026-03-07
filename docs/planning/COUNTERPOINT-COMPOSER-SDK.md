@@ -3,7 +3,7 @@
 > **Type**: Architectural planning document
 > **Priority**: Medium (creative tooling, not blocking gameplay)
 > **Related**: [VISION.md](../reference/VISION.md) (North Star #5: Emergent Over Authored), [CINEMATIC-SYSTEM.md](CINEMATIC-SYSTEM.md) (parallel SDK pattern)
-> **Inspiration**: Bach's Goldberg Variations (quodlibet), Steve Reich's *Piano Phase* (offset compatibility), *Les Miserables* "One Day More" (deliberate melodic interlock), jazz contrafacts (new melody over shared chords), Renaissance parody masses (structural borrowing)
+> **Inspiration**: *Rigoletto* 1993 film "The Curse"/"The Melody Within" (high-independence counterpoint reveal), Bach's Goldberg Variations (quodlibet), Steve Reich's *Piano Phase* (offset compatibility), *Les Miserables* "One Day More" (deliberate melodic interlock), *The Music Man* "Lida Rose"/"Will I Ever Tell You" (Broadway counterpoint songs), jazz contrafacts (new melody over shared chords), Renaissance parody masses (structural borrowing)
 > **Services**: lib-music (existing L4), MusicTheory (existing SDK), MusicStoryteller (existing SDK), MusicComposer (new SDK)
 
 ---
@@ -189,7 +189,23 @@ This is not a new idea. It is one of the oldest ideas in Western music:
 | **Quodlibet** (Bach, Goldberg Var. 30) | 1741 | Two folk songs over shared bass = deliberate melodic interlock |
 | **Jazz contrafact** (Parker, et al.) | 1940s+ | New melody over existing chords = standard creative practice |
 | **Phase music** (Reich) | 1960s+ | Material designed for offset compatibility at ALL phase positions |
-| **Broadway ensemble** (Schonberg, Sondheim) | 1980s+ | 8+ independent vocal lines designed from the start to combine |
+| **Counterpoint songs** (Berlin, Willson) | 1950s+ | Two standalone songs composed to combine ("Lida Rose"/"Will I Ever Tell You" from *The Music Man*, Irving Berlin's "Play a Simple Melody"/"You're Just in Love") |
+| **Broadway ensemble** (Schonberg, Sondheim) | 1980s+ | 8+ independent vocal lines designed from the start to combine ("One Day More", "Tonight Quintet", "Prima Donna") |
+| **Film counterpoint** (Bestor/Cardon) | 1993 | Two songs that sound completely different independently, revealed to interlock ("The Curse"/"The Melody Within" from *Rigoletto* film) |
+
+#### The Independence Spectrum
+
+These examples sit on a spectrum of **how independent the individual pieces sound** when heard alone. This spectrum is critical because our target is the high-independence end:
+
+| Example | Independence | Combination Quality |
+|---|---|---|
+| Steve Reich "Piano Phase" | None (identical material) | Process-driven emergent patterns |
+| "One Day More" (*Les Miserables*) | Low (fragments, clearly parts of a whole) | Dramatic theatrical climax |
+| "Lida Rose"/"Will I Ever Tell You" (*The Music Man*) | Medium (each is a complete song, but clearly designed as a pair) | Satisfying theatrical reveal |
+| Bach's Goldberg quodlibet | Medium (folk songs, recognizable) | Clever academic demonstration |
+| "The Curse"/"The Melody Within" (*Rigoletto* film) | **High** (sound quite different, each stands alone) | Revelation -- "wait, these were connected?" |
+
+**Our target is the Rigoletto film end of this spectrum**: pieces with high independence that each stand as complete, self-sufficient musical works. The counterpoint compatibility is a hidden structural property, not an audible surface feature. When the pieces are combined, the effect is revelatory rather than expected. This is also the most legally clean position, because high independence means each piece clearly stands on its own creative merits.
 
 ### 2.2 Compatibility Tiers
 
@@ -386,6 +402,202 @@ The dual-agency model (autonomous character + guardian spirit) has a musical ana
 
 **Content Flywheel Music**
 When a character dies and their archive is compressed, their musical template is archived too. A ghost quest spawned from that archive uses a counterpoint to the dead character's theme -- musically linking the new content to the history that generated it. The player hears the echo of a past life in the music of their current adventure.
+
+---
+
+## Part 4B: The Constrained Decision Tree
+
+### 4B.1 Why Templates Collapse the Creative Effort
+
+A composer starting from a blank page faces decisions across every dimension of music simultaneously -- key, tempo, form, chords, contour, rhythm, register, dynamics. The decision space is effectively infinite, which is why composition is hard and slow.
+
+A composer starting from a structural template has most of those decisions **already made**:
+
+| Decision | From Blank Page | From Template |
+|---|---|---|
+| Key | 24 major/minor keys | Fixed |
+| Tempo | 40-200+ BPM | Fixed |
+| Time signature | Many options | Fixed |
+| Form / structure | Infinite | Fixed |
+| Section lengths | Arbitrary | Fixed |
+| Chord progression | Enormous harmonic space | Fixed (or constrained to compatible set) |
+| Energy curve | Arbitrary | Fixed |
+| Harmonic rhythm | Arbitrary | Fixed |
+| Register | Full range | Constrained (complementary to other parts) |
+| Melodic contour | Infinite | Constrained (contour hints + consonance rules) |
+| Specific notes | 12 per octave, any sequence | ~3-5 "good" options per strong beat |
+| Rhythmic pattern | Infinite | Constrained (complementary density) |
+
+The composer isn't deciding *what kind of piece to write* -- they're deciding *how to express themselves within a well-defined space*. The infinity of choice is replaced by a navigable set of options where almost every path sounds good, because the constraints encode music theory rules that define what "sounds good" means.
+
+### 4B.2 The Convergent Decision Tree
+
+At any given strong beat, the counterpoint note must be consonant with the template's chord at that point. In a typical diatonic context, that means 3-4 chord tones are "safe" choices, plus 2-3 scale tones that work as passing approaches. That's not "compose a melody" -- that's **pick from a short list**.
+
+And the picks cascade. Once you've chosen your note at beat 1, your options for beat 2 are further constrained by voice leading rules (prefer stepwise motion, avoid large leaps unless followed by contrary step). Beat 1's choice narrows beat 2, which narrows beat 3.
+
+This is a **convergent** decision tree, not a divergent one. Each choice makes subsequent choices *easier*, not harder. The deeper you go, the more the piece "writes itself" because the constraints leave fewer and fewer viable paths -- and crucially, almost all remaining paths sound good.
+
+The decision tree has natural layers of granularity:
+
+1. **Section-level choices** (broadest): "For the verse counterpoint, do you want an arch contour, ascending, or descending?" -- 3 options
+2. **Phrase-level choices** (medium): "This 4-bar phrase starts on which chord tone? Root, third, or fifth?" -- 3 options that determine emotional color
+3. **Beat-level choices** (finest): "At this climax point, step up to the 5th or leap to the octave?" -- 2-3 options
+
+At each level, the system can **preview** what each choice sounds like -- both alone and overlaid with the original at designed offsets. The composer isn't guessing; they're auditioning curated options where bad choices have already been filtered out.
+
+### 4B.3 The Composition Mini-Game
+
+This constrained decision tree is, functionally, a **mini-game**. A well-designed one, because:
+
+- **Every choice matters**: each decision shapes the character of the piece
+- **There are no bad options**: the constraint system ensures all choices produce musically valid results
+- **Results are immediately audible**: the composer hears the consequence of each choice
+- **Complexity scales with skill**: broad choices for beginners, fine choices for experts
+- **The output has real value**: the composed piece becomes a permanent artifact in the game world
+
+**Connection to Progressive Agency**: This maps directly to Arcadia's UX expansion model. The crafting domain in PLAYER-VISION.md describes progressive fidelity -- early spirits make broad choices, experienced spirits make fine choices. Music composition fits naturally:
+
+| Spirit Experience | Composition Fidelity | Choices Available |
+|---|---|---|
+| New | Section-level only | "Pick the mood for each section" (3-5 choices per section) |
+| Developing | Phrase-level | "Shape each phrase's opening and climax" (3 choices per phrase) |
+| Experienced | Beat-level | "Select individual notes at key moments" (2-4 choices per beat) |
+| Master | Full melodic authoring | Note-by-note composition within constraints (full decision tree) |
+
+At every fidelity level, the output sounds good. The difference is how much personal expression the spirit can inject. A new spirit's composition sounds pleasant and generic; a master spirit's composition sounds distinctive and intentional. Same system, same constraints, different depth of engagement.
+
+### 4B.4 The Combinatorial Web
+
+Templates don't just enable one counterpoint -- they enable a **family** of interchangeable parts.
+
+Given an original piece A composed against Template T:
+
+```
+Template T (structural skeleton)
+    |
+    +---> Piece A  (original, hand-authored)
+    +---> Piece B  (counterpoint to A, composed via decision tree)
+    +---> Piece B' (different counterpoint to A, different choices)
+    +---> Piece B" (yet another counterpoint, different character)
+```
+
+Since B, B', and B" all satisfy the same template constraints, they are all compatible with A. But they're also potentially compatible with **each other** (same key, same form, same harmonic rhythm). The system can verify this.
+
+Now extend: compose A' as a counterpoint to B (using B's derived template T'):
+
+```
+Template T ←──────────────────── Template T'
+    |                                |
+    +---> Piece A  ←──duet──→ Piece B
+    +---> Piece A' ←──duet──→ Piece B   (A' composed against T')
+    +---> Piece A  ←──duet──→ Piece B'
+    +---> Piece A' ←──duet──→ Piece B'  (cross-compatible)
+```
+
+Author 3 A-variants and 3 B-variants: **9 valid duet combinations**, plus 6 standalone tracks. 15 distinct musical experiences from 6 compositions, all guaranteed harmonically compatible because they share structural DNA.
+
+This is the content flywheel applied to music: a small number of authored seeds produces a combinatorial explosion of valid musical experiences.
+
+---
+
+## Part 4C: Role-Based Ensemble Composition
+
+### 4C.1 Beyond Duets: The Ensemble Template
+
+The duet model (two counterpoint positions) generalizes naturally to **N positions**. A template can define not just the structural skeleton but a set of **ensemble roles** -- named slots with distinct constraints that together form a complete arrangement.
+
+```yaml
+template:
+  name: "tavern-ballad-01"
+  # ... (key, tempo, form, harmony as before) ...
+
+  ensemble_roles:
+    - role: "melody"
+      register: { low: "C4", high: "C6" }
+      density: 0.7
+      contour_freedom: "high"       # most melodic liberty
+      rhythmic_character: "lyrical"  # sustained, flowing
+      doubling: false                # only one melody at a time
+
+    - role: "bass_line"
+      register: { low: "C2", high: "C4" }
+      density: 0.4
+      contour_freedom: "low"         # root-heavy, foundational
+      rhythmic_character: "steady"   # drives the pulse
+      doubling: false
+
+    - role: "harmony_pad"
+      register: { low: "G3", high: "G5" }
+      density: 0.3
+      contour_freedom: "minimal"     # sustained chords, slow movement
+      rhythmic_character: "sustained"
+      doubling: true                 # multiple harmony instruments welcome
+
+    - role: "rhythmic_counterpoint"
+      register: { low: "C3", high: "C5" }
+      density: 0.8
+      contour_freedom: "medium"      # syncopated fills
+      rhythmic_character: "syncopated"
+      doubling: true
+
+    - role: "ornamental_fill"
+      register: { low: "C5", high: "C7" }
+      density: 0.2
+      contour_freedom: "high"        # decorative, sparse
+      rhythmic_character: "sparse"   # fills gaps between phrases
+      doubling: true
+```
+
+Each role is a different set of constraints applied to the same structural skeleton. A composer (or a player in the mini-game) **picks a role first**, then composes within that role's constraints. The role selection determines the character of their contribution -- bass is foundational and steady, ornamental fill is decorative and sparse, melody is expressive and free.
+
+### 4C.2 Self-Organizing Ensemble
+
+The ensemble model requires no external conductor or synchronization mechanism. The template IS the synchronization:
+
+1. **Shared tempo**: all roles play at the same BPM (from the template)
+2. **Shared form**: all roles follow the same section structure (verse, chorus, bridge at the same bar numbers)
+3. **Shared harmonic rhythm**: all roles change chords at the same points
+4. **Shared key**: all notes are diatonic to the same scale (with chromatic exceptions validated by the constraint system)
+
+When multiple actors (NPC bards, player-influenced characters) want to play together, they:
+
+1. Check which roles are currently being performed at this location
+2. Pick an unfilled role (or a role that allows doubling)
+3. Start playing their independently-composed track for that role
+4. The shared structural DNA ensures automatic harmonic coherence
+
+This is how a **jazz combo** works in real life: everyone knows the chart (the template), everyone plays their role (bass walks, piano comps, sax solos), nobody needs a conductor. The chart IS the synchronization. The Counterpoint Composer SDK formalizes this into a system that guarantees the result sounds good even when the performers have never rehearsed together.
+
+### 4C.3 Emergent Ensemble in Arcadia
+
+Picture a tavern scene in Arcadia:
+
+- A **lutist NPC** has composed a melody track (section-level choices made by the NPC's personality traits via GOAP)
+- A **drummer NPC** has composed a rhythmic counterpoint track (different personality, different choices, same template)
+- A **player's bard character** enters the tavern and decides to join in
+- The player, through the composition mini-game, composes a bass line for the same template
+- The player's bard starts playing. The three tracks interlock automatically.
+- A fourth NPC picks up a flute and joins on the ornamental fill role
+- The music grows richer with each additional voice, and every combination was never explicitly authored by a developer
+
+**No two tavern performances are alike.** Different NPCs make different compositional choices (driven by their personality traits). Different players make different choices in the mini-game. The same template produces a different ensemble every time, but every combination is guaranteed to harmonize.
+
+This is "Emergent Over Authored" (North Star #5) applied directly to music: the developers author the template (the structural skeleton and the role definitions). The NPCs and players author the specific parts. The combinations are emergent. The content flywheel spins.
+
+### 4C.4 Role Compatibility Matrix
+
+Not all roles need to be checked against all other roles with equal strictness:
+
+| | Melody | Bass | Harmony | Rhythmic | Ornamental |
+|---|---|---|---|---|---|
+| **Melody** | -- | Full duet | Harmonic CP | Structural echo | Structural echo |
+| **Bass** | Full duet | -- | Harmonic CP | Harmonic CP | Structural echo |
+| **Harmony** | Harmonic CP | Harmonic CP | -- | Structural echo | Structural echo |
+| **Rhythmic** | Structural echo | Harmonic CP | Structural echo | -- | Structural echo |
+| **Ornamental** | Structural echo | Structural echo | Structural echo | Structural echo | -- |
+
+The melody and bass line need the tightest counterpoint compatibility (they define the harmonic framework). Harmony needs to align with both. Rhythmic and ornamental roles have more freedom because they fill in the texture rather than defining the structure. This mirrors how orchestration works in practice -- the outer voices (soprano and bass) carry the harmonic weight; inner voices have more latitude.
 
 ---
 
@@ -633,6 +845,7 @@ While the SDK is designed as a composer's workbench (human-authored output), the
 | **Invertible counterpoint** | Counterpoint designed to work with voices swapped |
 | **Quodlibet** | Composition combining multiple pre-existing melodies |
 | **Contrafact** | New melody over existing chord progression |
+| **Counterpoint songs** | Two standalone songs deliberately composed to combine when sung simultaneously (Broadway tradition: "Lida Rose"/"Will I Ever Tell You", "Play a Simple Melody"/"You're Just in Love") |
 | **Phase music** | Identical material played at slightly different speeds, producing emergent patterns |
 | **Consonance** | Intervals perceived as stable/resolved (unisons, thirds, fifths, sixths, octaves) |
 | **Dissonance** | Intervals perceived as unstable/requiring resolution (seconds, sevenths, tritones) |
@@ -643,6 +856,9 @@ While the SDK is designed as a composer's workbench (human-authored output), the
 | **Cadence** | A chord progression that marks the end of a phrase (authentic, half, deceptive, plagal) |
 | **Scenes a faire** | Legal doctrine: elements naturally associated with a genre are not copyrightable |
 | **Parsons code** | Melodic contour reduced to three symbols: Up, Down, Repeat |
+| **Ensemble role** | A named slot in a template with distinct constraints (register, density, rhythmic character) that defines one voice in a multi-part arrangement |
+| **Convergent decision tree** | A decision structure where each choice narrows subsequent options, making the process easier as it progresses |
+| **Combinatorial web** | A family of interchangeable compositions sharing structural DNA, where any combination of compatible parts produces a valid ensemble |
 
 ## Appendix B: Research Sources
 
@@ -659,6 +875,14 @@ While the SDK is designed as a composer's workbench (human-authored output), the
 - Lerdahl, F. & Jackendoff, R. *A Generative Theory of Tonal Music* (1983) -- structural analysis theory
 - Navarro et al. (2020) -- Tonal Tension Index formula (used in existing MusicTheory SDK)
 - Reich, S. "Piano Phase" (1967) -- temporal offset compatibility demonstration
+
+### Counterpoint Composition Examples
+- Bestor, K. & Cardon, S. "The Curse" / "The Melody Within" from *Rigoletto* (1993 film) -- high-independence counterpoint; two songs that sound completely different independently but combine in the finale reprise (Track 17: "Reprise - The Melody Within/The Curse"). Primary inspiration for the SDK's target: revelatory combination of independent pieces.
+- Willson, M. "Lida Rose" / "Will I Ever Tell You" from *The Music Man* (1957) -- the canonical Broadway counterpoint song pair
+- Berlin, I. "Play a Simple Melody" / "You're Just in Love" -- Irving Berlin's counterpoint song pairs, each standalone, combining into duets
+- Schonberg, C.M. "One Day More" from *Les Miserables* (1985) -- 8-9 simultaneous vocal parts reprising earlier songs, planned from composition to combine
+- Verdi, G. "Bella figlia dell'amore" quartet from *Rigoletto* (1851 opera) -- four completely different emotional vocal lines (flirtation, mockery, heartbreak, vengeance) harmonizing simultaneously; one of the greatest ensemble pieces in opera
+- Sondheim, S. "A Weekend in the Country" from *A Little Night Music* -- intricate ensemble counterpoint with preserved individual melodic identity
 
 ### Computational Music Research
 - Strasheela constraint-based composition system

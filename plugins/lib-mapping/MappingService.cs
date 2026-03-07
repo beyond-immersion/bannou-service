@@ -604,7 +604,7 @@ public partial class MappingService : IMappingService
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.ProcessAuthorizedObjectChangesAsync");
         var acceptedCount = 0;
         var rejectedCount = 0;
-        var changeEvents = new List<ObjectChangeEvent>();
+        var changeEvents = new List<ObjectChangeRecord>();
 
         foreach (var change in changes)
         {
@@ -614,7 +614,7 @@ public partial class MappingService : IMappingService
                 if (processed)
                 {
                     acceptedCount++;
-                    changeEvents.Add(new ObjectChangeEvent
+                    changeEvents.Add(new ObjectChangeRecord
                     {
                         ObjectId = change.ObjectId,
                         Action = change.Action,
@@ -2105,7 +2105,7 @@ public partial class MappingService : IMappingService
         await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: cancellationToken);
     }
 
-    private async Task PublishMapObjectsChangedEventAsync(ChannelRecord channel, long version, List<ObjectChangeEvent> changes, string? sourceAppId, CancellationToken cancellationToken)
+    private async Task PublishMapObjectsChangedEventAsync(ChannelRecord channel, long version, List<ObjectChangeRecord> changes, string? sourceAppId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.PublishMapObjectsChangedEventAsync");
         var windowMs = _configuration.EventAggregationWindowMs;
@@ -2152,7 +2152,7 @@ public partial class MappingService : IMappingService
         buffer.AddChanges(changes, version, sourceAppId);
     }
 
-    private async Task PublishMapObjectsChangedEventDirectAsync(ChannelRecord channel, long version, List<ObjectChangeEvent> changes, string? sourceAppId, CancellationToken cancellationToken)
+    private async Task PublishMapObjectsChangedEventDirectAsync(ChannelRecord channel, long version, List<ObjectChangeRecord> changes, string? sourceAppId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.PublishMapObjectsChangedEventDirectAsync");
         var eventData = new MapObjectsChangedEvent
@@ -2264,7 +2264,7 @@ public partial class MappingService : IMappingService
             var payloadsToProcess = evt.Payloads.Take(_configuration.MaxPayloadsPerPublish).ToList();
 
             // Process each payload according to its action
-            var changes = new List<ObjectChangeEvent>();
+            var changes = new List<ObjectChangeRecord>();
             foreach (var payload in payloadsToProcess)
             {
                 var objectId = payload.ObjectId ?? Guid.NewGuid();
@@ -2292,7 +2292,7 @@ public partial class MappingService : IMappingService
                 var success = await ProcessObjectChangeWithIndexCleanupAsync(channel.RegionId, channel.Kind, change, cancellationToken);
                 if (success)
                 {
-                    changes.Add(new ObjectChangeEvent
+                    changes.Add(new ObjectChangeRecord
                     {
                         ObjectId = objectId,
                         Action = payload.Action,
@@ -2363,7 +2363,7 @@ public partial class MappingService : IMappingService
     private async Task ProcessIngestPayloadsAsync(ChannelRecord channel, ICollection<IngestPayload> payloads, string? sourceAppId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.ProcessIngestPayloadsAsync");
-        var changes = new List<ObjectChangeEvent>();
+        var changes = new List<ObjectChangeRecord>();
         foreach (var payload in payloads.Take(_configuration.MaxPayloadsPerPublish))
         {
             var objectId = payload.ObjectId ?? Guid.NewGuid();
@@ -2391,7 +2391,7 @@ public partial class MappingService : IMappingService
             var success = await ProcessObjectChangeWithIndexCleanupAsync(channel.RegionId, channel.Kind, change, cancellationToken);
             if (success)
             {
-                changes.Add(new ObjectChangeEvent
+                changes.Add(new ObjectChangeRecord
                 {
                     ObjectId = objectId,
                     Action = payload.Action,
@@ -2521,11 +2521,11 @@ public partial class MappingService : IMappingService
         private readonly object _lock = new();
         private readonly Timer _flushTimer;
         private readonly Guid _channelId;
-        private readonly Func<Guid, List<ObjectChangeEvent>, long, string?, CancellationToken, Task> _flushCallback;
+        private readonly Func<Guid, List<ObjectChangeRecord>, long, string?, CancellationToken, Task> _flushCallback;
         private readonly Action<Guid> _removeCallback;
         private readonly Func<Guid, int, Exception, Task> _errorCallback;
         private readonly int _maxRetries;
-        private List<ObjectChangeEvent> _pendingChanges = new();
+        private List<ObjectChangeRecord> _pendingChanges = new();
         private long _latestVersion;
         private string? _sourceAppId;
         private bool _disposed;
@@ -2543,7 +2543,7 @@ public partial class MappingService : IMappingService
             Guid channelId,
             int windowMs,
             int maxRetries,
-            Func<Guid, List<ObjectChangeEvent>, long, string?, CancellationToken, Task> flushCallback,
+            Func<Guid, List<ObjectChangeRecord>, long, string?, CancellationToken, Task> flushCallback,
             Action<Guid> removeCallback,
             Func<Guid, int, Exception, Task> errorCallback)
         {
@@ -2558,7 +2558,7 @@ public partial class MappingService : IMappingService
         /// <summary>
         /// Adds changes to the pending buffer for aggregation.
         /// </summary>
-        public void AddChanges(List<ObjectChangeEvent> changes, long version, string? sourceAppId)
+        public void AddChanges(List<ObjectChangeRecord> changes, long version, string? sourceAppId)
         {
             lock (_lock)
             {
@@ -2571,7 +2571,7 @@ public partial class MappingService : IMappingService
 
         private void OnTimerElapsed(object? state)
         {
-            List<ObjectChangeEvent> changesToPublish;
+            List<ObjectChangeRecord> changesToPublish;
             long version;
             string? sourceAppId;
 
@@ -2579,7 +2579,7 @@ public partial class MappingService : IMappingService
             {
                 if (_disposed || _pendingChanges.Count == 0) return;
                 changesToPublish = _pendingChanges;
-                _pendingChanges = new List<ObjectChangeEvent>();
+                _pendingChanges = new List<ObjectChangeRecord>();
                 version = _latestVersion;
                 sourceAppId = _sourceAppId;
             }

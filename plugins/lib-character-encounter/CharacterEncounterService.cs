@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter.Caching;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -551,12 +552,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             await RegisterCharacterReferenceAsync(encounterId.ToString(), participantId, cancellationToken);
         }
 
-        // Invalidate encounter cache for all participants so Actor sees fresh data
-        foreach (var participantId in participantIds)
-        {
-            _encounterDataCache.Invalidate(participantId);
-        }
-
         _logger.LogInformation("Recorded encounter {EncounterId} with {Count} perspectives",
             encounterId, perspectives.Count);
 
@@ -1066,9 +1061,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             NewSentimentShift = body.SentimentShift
         }, cancellationToken: cancellationToken);
 
-        // Invalidate encounter cache for the affected character
-        _encounterDataCache.Invalidate(body.CharacterId);
-
         _logger.LogInformation("Updated perspective {PerspectiveId}", perspective.PerspectiveId);
 
         return (StatusCodes.OK, new PerspectiveResponse
@@ -1125,9 +1117,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             PreviousStrength = previousStrength,
             NewStrength = perspective.MemoryStrength
         }, cancellationToken: cancellationToken);
-
-        // Invalidate encounter cache for the affected character
-        _encounterDataCache.Invalidate(body.CharacterId);
 
         _logger.LogDebug("Refreshed memory {PerspectiveId}: {OldStrength} -> {NewStrength}",
             perspective.PerspectiveId, previousStrength, perspective.MemoryStrength);
@@ -1193,12 +1182,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         foreach (var participantId in participantIds)
         {
             await UnregisterCharacterReferenceAsync(body.EncounterId.ToString(), participantId, cancellationToken);
-        }
-
-        // Invalidate encounter cache for all participants
-        foreach (var participantId in participantIds)
-        {
-            _encounterDataCache.Invalidate(participantId);
         }
 
         _logger.LogInformation("Deleted encounter {EncounterId} with {Count} perspectives",
@@ -1282,12 +1265,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     DeletedByCharacterCleanup = true,
                     CleanupCharacterId = body.CharacterId
                 }, cancellationToken: cancellationToken);
-            }
-
-            // Invalidate encounter cache for all affected characters
-            foreach (var affectedId in affectedCharacterIds)
-            {
-                _encounterDataCache.Invalidate(affectedId);
             }
 
             _logger.LogInformation("Deleted {Encounters} encounters and {Perspectives} perspectives for character {CharacterId}",
@@ -1521,7 +1498,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         try
         {
             var compressedBytes = Convert.FromBase64String(body.Data);
-            var jsonData = DecompressJsonData(compressedBytes);
+            var jsonData = CompressionHelper.DecompressJsonData(compressedBytes);
             archiveData = BannouJson.Deserialize<CharacterEncounterArchive>(jsonData)
                 ?? throw new InvalidOperationException("Deserialized archive data is null");
         }
@@ -1624,19 +1601,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             EncountersRestored = encountersRestored,
             PerspectivesRestored = perspectivesRestored
         });
-    }
-
-    /// <summary>
-    /// Decompresses gzipped JSON data.
-    /// </summary>
-    private static string DecompressJsonData(byte[] compressedData)
-    {
-        using var input = new System.IO.MemoryStream(compressedData);
-        using var gzip = new System.IO.Compression.GZipStream(
-            input, System.IO.Compression.CompressionMode.Decompress);
-        using var output = new System.IO.MemoryStream();
-        gzip.CopyTo(output);
-        return System.Text.Encoding.UTF8.GetString(output.ToArray());
     }
 
     // ============================================================================

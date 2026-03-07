@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.CharacterHistory;
+using BeyondImmersion.BannouService.CharacterHistory.Caching;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Messaging;
@@ -30,6 +31,7 @@ public class CharacterHistoryServiceTests
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IResourceClient> _mockResourceClient;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IBackstoryCache> _mockBackstoryCache;
 
     private const string STATE_STORE = "character-history-statestore";
 
@@ -46,6 +48,7 @@ public class CharacterHistoryServiceTests
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockResourceClient = new Mock<IResourceClient>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockBackstoryCache = new Mock<IBackstoryCache>();
 
         // Default: lock provider succeeds
         var successLock = new Mock<ILockResponse>();
@@ -81,7 +84,8 @@ public class CharacterHistoryServiceTests
             configuration ?? new CharacterHistoryServiceConfiguration(),
             _mockLockProvider.Object,
             _mockResourceClient.Object,
-            _mockTelemetryProvider.Object);
+            _mockTelemetryProvider.Object,
+            _mockBackstoryCache.Object);
     }
 
     #region Constructor Validation

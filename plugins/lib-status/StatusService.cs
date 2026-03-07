@@ -95,6 +95,14 @@ public partial class StatusService : IStatusService
     private static string SeedEffectsCacheKey(Guid entityId, EntityType entityType) => $"seed:{entityId}:{entityType}";
     private static string EntityLockKey(EntityType entityType, Guid entityId) => $"entity:{entityType}:{entityId}";
 
+    /// <summary>
+    /// Maps an EntityType to ContainerOwnerType for inventory operations.
+    /// Name-matched values (Character, Account, Location, Guild) map directly;
+    /// all others fall back to Other. Uses shared EnumMapping helper per ENUM-BOUNDARIES Rule 7.
+    /// </summary>
+    internal static ContainerOwnerType MapToContainerOwnerType(EntityType entityType) =>
+        entityType.MapByNameOrDefault(ContainerOwnerType.Other);
+
     #endregion
 
     /// <summary>
@@ -1679,7 +1687,6 @@ public partial class StatusService : IStatusService
         }
 
         // Create container via inventory service
-        // ContainerOwnerType is an enum; status containers use Other for polymorphic entity support
         ContainerResponse containerResponse;
         try
         {
@@ -1687,7 +1694,7 @@ public partial class StatusService : IStatusService
                 new CreateContainerRequest
                 {
                     OwnerId = entityId,
-                    OwnerType = ContainerOwnerType.Other,
+                    OwnerType = MapToContainerOwnerType(entityType),
                     ContainerType = "status_effects",
                     ConstraintModel = ContainerConstraintModel.Unlimited
                 },

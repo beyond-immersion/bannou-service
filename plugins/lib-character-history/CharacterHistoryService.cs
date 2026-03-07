@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.CharacterHistory.Caching;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Resource;
@@ -31,6 +32,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     private readonly IBackstoryStorageHelper<BackstoryData, BackstoryElementData> _backstoryHelper;
     private readonly IResourceClient _resourceClient;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IBackstoryCache _backstoryCache;
 
     private const string PARTICIPATION_KEY_PREFIX = "participation-";
     private const string PARTICIPATION_BY_EVENT_KEY_PREFIX = "participation-event-";
@@ -56,7 +58,8 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         CharacterHistoryServiceConfiguration configuration,
         IDistributedLockProvider lockProvider,
         IResourceClient resourceClient,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IBackstoryCache backstoryCache)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -66,6 +69,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             StateStoreDefinitions.CharacterHistory);
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
+        _backstoryCache = backstoryCache;
 
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<ParticipationData>(
@@ -1000,7 +1004,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         try
         {
             var compressedBytes = Convert.FromBase64String(body.Data);
-            var jsonData = DecompressJsonData(compressedBytes);
+            var jsonData = CompressionHelper.DecompressJsonData(compressedBytes);
             archiveData = BannouJson.Deserialize<CharacterHistoryArchive>(jsonData)
                 ?? throw new InvalidOperationException("Deserialized archive data is null");
         }
@@ -1092,18 +1096,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         });
     }
 
-    /// <summary>
-    /// Decompresses gzipped JSON data.
-    /// </summary>
-    private static string DecompressJsonData(byte[] compressedData)
-    {
-        using var input = new System.IO.MemoryStream(compressedData);
-        using var gzip = new System.IO.Compression.GZipStream(
-            input, System.IO.Compression.CompressionMode.Decompress);
-        using var output = new System.IO.MemoryStream();
-        gzip.CopyTo(output);
-        return System.Text.Encoding.UTF8.GetString(output.ToArray());
-    }
 
     // ============================================================================
     // Permission Registration

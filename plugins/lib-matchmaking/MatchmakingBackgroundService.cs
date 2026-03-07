@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Matchmaking;
 
@@ -44,7 +45,6 @@ public class MatchmakingBackgroundService : BackgroundService
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingBackgroundService.ExecuteAsync");
         // Wait for other services to initialize
         await Task.Delay(TimeSpan.FromSeconds(_configuration.BackgroundServiceStartupDelaySeconds), stoppingToken);
 
@@ -60,6 +60,8 @@ public class MatchmakingBackgroundService : BackgroundService
         {
             try
             {
+                using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingBackgroundService.ProcessCycle");
+
                 // Create a scope for the scoped MatchmakingService
                 using (var scope = _serviceProvider.CreateScope())
                 {
@@ -90,6 +92,8 @@ public class MatchmakingBackgroundService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during matchmaking interval processing");
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "matchmaking", "ProcessCycle", ex, _logger, stoppingToken);
             }
 
             // Wait for next interval
