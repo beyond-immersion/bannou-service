@@ -205,8 +205,8 @@ public class TransitServiceTests
         // Full overload (5 params)
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             It.IsAny<string>(), It.IsAny<object>(),
-            It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+            It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
             {
                 _capturedEvents.Add((topic, evt));
             })

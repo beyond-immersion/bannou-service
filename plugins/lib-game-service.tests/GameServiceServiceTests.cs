@@ -1090,10 +1090,9 @@ public class GameServiceServiceTests
         object? capturedEvent = null;
         _mockMessageBus.Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(),
-                It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
-                (topic, evt, _, _, _) =>
+            .Callback<string, object, CancellationToken>(
+                (topic, evt, _) =>
                 {
                     capturedTopic = topic;
                     capturedEvent = evt;
@@ -1259,10 +1258,9 @@ public class GameServiceServiceTests
         object? capturedEvent = null;
         _mockMessageBus.Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(),
-                It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
-                (topic, evt, _, _, _) =>
+            .Callback<string, object, CancellationToken>(
+                (topic, evt, _) =>
                 {
                     capturedTopic = topic;
                     capturedEvent = evt;
@@ -1331,7 +1329,6 @@ public class GameServiceServiceTests
         // Verify NO event was published (nothing changed)
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             It.IsAny<string>(), It.IsAny<object>(),
-            It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -1417,10 +1414,9 @@ public class GameServiceServiceTests
         object? capturedEvent = null;
         _mockMessageBus.Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(),
-                It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
-                (topic, evt, _, _, _) =>
+            .Callback<string, object, CancellationToken>(
+                (topic, evt, _) =>
                 {
                     capturedTopic = topic;
                     capturedEvent = evt;
@@ -1487,10 +1483,9 @@ public class GameServiceServiceTests
         object? capturedEvent = null;
         _mockMessageBus.Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(),
-                It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
-                (topic, evt, _, _, _) => capturedEvent = evt)
+            .Callback<string, object, CancellationToken>(
+                (topic, evt, _) => capturedEvent = evt)
             .ReturnsAsync(true);
 
         // Act

@@ -112,7 +112,8 @@ public class AuthServiceTests
             .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
-        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
     }
 
@@ -1238,8 +1239,6 @@ public class AuthServiceTests
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "auth.login.failed",
             It.Is<AuthLoginFailedEvent>(e => e.Reason == AuthLoginFailedReason.RateLimited),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()),
             Times.Once);
 
@@ -1321,8 +1320,6 @@ public class AuthServiceTests
             It.Is<AuthLoginFailedEvent>(e =>
                 e.Reason == AuthLoginFailedReason.InvalidCredentials &&
                 e.AccountId == accountId),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -1370,8 +1367,6 @@ public class AuthServiceTests
             It.Is<AuthLoginFailedEvent>(e =>
                 e.Reason == AuthLoginFailedReason.AccountNotFound &&
                 e.AccountId == null),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -2781,8 +2776,9 @@ public class AuthServiceTests
         // Capture the published event
         AuthLoginSuccessfulEvent? capturedEvent = null;
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync("auth.login.successful", It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((_, evt, _, _, _) => capturedEvent = evt as AuthLoginSuccessfulEvent)
+            .Setup(m => m.TryPublishAsync("auth.login.successful", It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((_, evt, _) => capturedEvent = evt as AuthLoginSuccessfulEvent)
             .ReturnsAsync(true);
 
         var service = CreateAuthService();
@@ -2816,8 +2812,9 @@ public class AuthServiceTests
         // Capture the published event
         AuthRegistrationSuccessfulEvent? capturedEvent = null;
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync("auth.registration.successful", It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((_, evt, _, _, _) => capturedEvent = evt as AuthRegistrationSuccessfulEvent)
+            .Setup(m => m.TryPublishAsync("auth.registration.successful", It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((_, evt, _) => capturedEvent = evt as AuthRegistrationSuccessfulEvent)
             .ReturnsAsync(true);
 
         var service = CreateAuthService();

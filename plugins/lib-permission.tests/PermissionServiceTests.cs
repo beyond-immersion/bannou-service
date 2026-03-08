@@ -124,8 +124,6 @@ public class PermissionServiceTests
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             It.IsAny<string>(),
             It.IsAny<object>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 

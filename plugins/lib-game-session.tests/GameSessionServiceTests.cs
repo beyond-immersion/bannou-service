@@ -215,8 +215,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "game-session.created",
             It.IsAny<object>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -610,8 +608,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "game-session.player-joined",
             It.IsAny<object>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -942,8 +938,9 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         object? capturedEvent = null;
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+                It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
             {
                 if (topic == "game-session.player-joined")
                 {
@@ -1372,8 +1369,9 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         object? capturedEvent = null;
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+                It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
             {
                 if (topic == "game-session.player-left")
                 {
@@ -1815,8 +1813,9 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         object? capturedEvent = null;
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+                It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
             {
                 if (topic == "game-session.player-left")
                 {
@@ -2456,8 +2455,9 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         object? capturedEvent = null;
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+                It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
             {
                 capturedTopic = topic;
                 capturedEvent = evt;

@@ -71,7 +71,8 @@ public class AssetServiceTests
             .ReturnsAsync("etag");
 
         // Default TryPublishAsync for message bus (5-param overload)
-        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
     }
 
@@ -518,8 +519,6 @@ public class AssetServiceTests
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -610,8 +609,6 @@ public class AssetServiceTests
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -1185,8 +1182,6 @@ public class AssetServiceTests
             .Setup(m => m.TryPublishAsync(
                 "asset.bundle.created",
                 It.IsAny<BeyondImmersion.BannouService.Events.BundleCreatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -2923,11 +2918,9 @@ public class AssetServiceTests
             .Setup(m => m.TryPublishAsync(
                 It.Is<string>(t => t == "asset.bundle.updated"),
                 It.IsAny<BeyondImmersion.BannouService.Events.BundleUpdatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, BeyondImmersion.BannouService.Events.BundleUpdatedEvent, PublishOptions?, Guid?, CancellationToken>(
-                (topic, evt, _, _, _) => { capturedTopic = topic; capturedEvent = evt; })
+            .Callback<string, BeyondImmersion.BannouService.Events.BundleUpdatedEvent, CancellationToken>(
+                (topic, evt, _) => { capturedTopic = topic; capturedEvent = evt; })
             .ReturnsAsync(true);
 
         // Act
@@ -3111,11 +3104,9 @@ public class AssetServiceTests
             .Setup(m => m.TryPublishAsync(
                 It.Is<string>(t => t == "asset.bundle.deleted"),
                 It.IsAny<BeyondImmersion.BannouService.Events.BundleDeletedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, BeyondImmersion.BannouService.Events.BundleDeletedEvent, PublishOptions?, Guid?, CancellationToken>(
-                (_, evt, _, _, _) => capturedEvent = evt)
+            .Callback<string, BeyondImmersion.BannouService.Events.BundleDeletedEvent, CancellationToken>(
+                (_, evt, _) => capturedEvent = evt)
             .ReturnsAsync(true);
 
         // Act
@@ -3331,11 +3322,9 @@ public class AssetServiceTests
             .Setup(m => m.TryPublishAsync(
                 It.Is<string>(t => t == "asset.bundle.restored"),
                 It.IsAny<BeyondImmersion.BannouService.Events.BundleRestoredEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, BeyondImmersion.BannouService.Events.BundleRestoredEvent, PublishOptions?, Guid?, CancellationToken>(
-                (_, evt, _, _, _) => capturedEvent = evt)
+            .Callback<string, BeyondImmersion.BannouService.Events.BundleRestoredEvent, CancellationToken>(
+                (_, evt, _) => capturedEvent = evt)
             .ReturnsAsync(true);
 
         // Act
@@ -3852,10 +3841,8 @@ public class AssetServiceTests
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
             {
                 capturedTopic = topic;
                 capturedEvent = evt;
@@ -3944,10 +3931,8 @@ public class AssetServiceTests
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, _, _, _, _) =>
+            .Callback<string, object, CancellationToken>((topic, _, _) =>
             {
                 capturedTopic = topic;
             })

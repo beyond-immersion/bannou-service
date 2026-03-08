@@ -108,7 +108,7 @@ public abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigura
         MockMessageBus
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(),
-                It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         MockMessageBus
             .Setup(m => m.TryPublishAsync(

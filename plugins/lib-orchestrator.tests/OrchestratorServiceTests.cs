@@ -115,8 +115,6 @@ public class OrchestratorServiceTests
             .Setup(x => x.TryPublishAsync(
                 "orchestrator.health-ping",
                 It.IsAny<object>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -144,8 +142,6 @@ public class OrchestratorServiceTests
             .Setup(x => x.TryPublishAsync(
                 "orchestrator.health-ping",
                 It.IsAny<object>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Message bus unavailable"));
 

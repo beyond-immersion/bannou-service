@@ -200,7 +200,8 @@ public class MeshServiceTests
 
         _mockMessageBus
             .Setup(x => x.TryPublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var service = CreateService();
@@ -262,7 +263,8 @@ public class MeshServiceTests
 
         _mockMessageBus
             .Setup(x => x.TryPublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var service = CreateService();
@@ -308,7 +310,8 @@ public class MeshServiceTests
 
         _mockMessageBus
             .Setup(x => x.TryPublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var service = CreateService();
@@ -2003,7 +2006,7 @@ public class MeshInvocationClientTests : IDisposable
         _mockMessageBus.Setup(x => x.TryPublishAsync(
             It.IsAny<string>(),
             It.IsAny<object>(),
-            It.IsAny<PublishOptions>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);

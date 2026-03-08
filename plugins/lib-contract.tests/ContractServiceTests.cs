@@ -76,7 +76,8 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Default message bus setup
         _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Setup lock provider to always succeed
@@ -2856,8 +2857,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             m => m.TryPublishAsync(
                 "contract.prebound-api.executed",
                 It.IsAny<ContractPreboundApiExecutedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -2936,8 +2935,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             m => m.TryPublishAsync(
                 "contract.prebound-api.failed",
                 It.IsAny<ContractPreboundApiFailedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -3027,8 +3024,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             m => m.TryPublishAsync(
                 "contract.prebound-api.validation-failed",
                 It.IsAny<ContractPreboundApiValidationFailedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -3118,8 +3113,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             m => m.TryPublishAsync(
                 "contract.prebound-api.executed",
                 It.IsAny<ContractPreboundApiExecutedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Exactly(2));
     }
@@ -3273,8 +3266,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             m => m.TryPublishAsync(
                 "contract.prebound-api.failed",
                 It.IsAny<ContractPreboundApiFailedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -5065,11 +5056,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .Setup(m => m.TryPublishAsync(
                 "contract.payment.due",
                 It.IsAny<ContractPaymentDueEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ContractPaymentDueEvent, PublishOptions?, Guid?, CancellationToken>(
-                (_, evt, _, _, _) => publishedEvent = evt)
+            .Callback<string, ContractPaymentDueEvent, CancellationToken>(
+                (_, evt, _) => publishedEvent = evt)
             .ReturnsAsync(true);
 
         // Act
@@ -5131,8 +5120,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             m => m.TryPublishAsync(
                 "contract.activated",
                 It.IsAny<ContractActivatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
@@ -5171,8 +5158,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             m => m.TryPublishAsync(
                 "contract.activated",
                 It.IsAny<ContractActivatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -5210,16 +5195,12 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             m => m.TryPublishAsync(
                 "contract.activated",
                 It.IsAny<ContractActivatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
         _mockMessageBus.Verify(
             m => m.TryPublishAsync(
                 "contract.fulfilled",
                 It.IsAny<ContractFulfilledEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -5965,8 +5946,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             m => m.TryPublishAsync(
                 "contract.terminated",
                 It.IsAny<ContractTerminatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

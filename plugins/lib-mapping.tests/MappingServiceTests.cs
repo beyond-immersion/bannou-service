@@ -113,7 +113,8 @@ public class MappingServiceTests
             .Returns(_mockDefinitionIndexStore.Object);
 
         // Default behaviors
-        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockMessageSubscriber.Setup(m => m.SubscribeDynamicAsync<MapIngestEvent>(
                 It.IsAny<string>(),

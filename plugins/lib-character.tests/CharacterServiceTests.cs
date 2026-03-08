@@ -297,10 +297,8 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(m => m.TryPublishAsync(
                 "character.updated",
                 It.IsAny<CharacterUpdatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, CharacterUpdatedEvent, PublishOptions?, Guid?, CancellationToken>((_, e, _, _, _) => capturedEvent = e)
+            .Callback<string, CharacterUpdatedEvent, CancellationToken>((_, e, _) => capturedEvent = e)
             .ReturnsAsync(true);
 
         // Act
@@ -460,8 +458,6 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "character.updated",
             It.IsAny<CharacterUpdatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Never);
 
         // Verify NO client event published either (no changes)
@@ -1408,22 +1404,18 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterCreatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, CharacterCreatedEvent, PublishOptions?, Guid?, CancellationToken>(
-                (t, e, _, _, _) => { publishedTopics.Add(t); publishedEvents.Add(e); })
+            .Callback<string, CharacterCreatedEvent, CancellationToken>(
+                (t, e, _) => { publishedTopics.Add(t); publishedEvents.Add(e); })
             .ReturnsAsync(true);
 
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterRealmJoinedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, CharacterRealmJoinedEvent, PublishOptions?, Guid?, CancellationToken>(
-                (t, e, _, _, _) => { publishedTopics.Add(t); publishedEvents.Add(e); })
+            .Callback<string, CharacterRealmJoinedEvent, CancellationToken>(
+                (t, e, _) => { publishedTopics.Add(t); publishedEvents.Add(e); })
             .ReturnsAsync(true);
 
         // Act
@@ -1687,11 +1679,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterRealmLeftEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, CharacterRealmLeftEvent, PublishOptions?, Guid?, CancellationToken>(
-                (t, _, _, _, _) => publishedTopics.Add(t))
+            .Callback<string, CharacterRealmLeftEvent, CancellationToken>(
+                (t, _, _) => publishedTopics.Add(t))
             .ReturnsAsync(true);
 
         CharacterDeletedEvent? capturedDeletedEvent = null;
@@ -1699,11 +1689,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterDeletedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, CharacterDeletedEvent, PublishOptions?, Guid?, CancellationToken>(
-                (t, e, _, _, _) => { publishedTopics.Add(t); capturedDeletedEvent = e; })
+            .Callback<string, CharacterDeletedEvent, CancellationToken>(
+                (t, e, _) => { publishedTopics.Add(t); capturedDeletedEvent = e; })
             .ReturnsAsync(true);
 
         // Act
@@ -2014,11 +2002,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterRealmLeftEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, CharacterRealmLeftEvent, PublishOptions?, Guid?, CancellationToken>(
-                (t, _, _, _, _) => publishedTopics.Add(t))
+            .Callback<string, CharacterRealmLeftEvent, CancellationToken>(
+                (t, _, _) => publishedTopics.Add(t))
             .ReturnsAsync(true);
 
         CharacterRealmJoinedEvent? joinedEvent = null;
@@ -2026,22 +2012,18 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterRealmJoinedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, CharacterRealmJoinedEvent, PublishOptions?, Guid?, CancellationToken>(
-                (t, e, _, _, _) => { publishedTopics.Add(t); joinedEvent = e; })
+            .Callback<string, CharacterRealmJoinedEvent, CancellationToken>(
+                (t, e, _) => { publishedTopics.Add(t); joinedEvent = e; })
             .ReturnsAsync(true);
 
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterUpdatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, CharacterUpdatedEvent, PublishOptions?, Guid?, CancellationToken>(
-                (t, _, _, _, _) => publishedTopics.Add(t))
+            .Callback<string, CharacterUpdatedEvent, CancellationToken>(
+                (t, _, _) => publishedTopics.Add(t))
             .ReturnsAsync(true);
 
         // Act
@@ -2527,11 +2509,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterCompressedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, CharacterCompressedEvent, PublishOptions?, Guid?, CancellationToken>(
-                (_, e, _, _, _) => capturedEvent = e)
+            .Callback<string, CharacterCompressedEvent, CancellationToken>(
+                (_, e, _) => capturedEvent = e)
             .ReturnsAsync(true);
 
         // Act
@@ -2760,11 +2740,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterCompressedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, CharacterCompressedEvent, PublishOptions?, Guid?, CancellationToken>(
-                (_, e, _, _, _) => capturedEvent = e)
+            .Callback<string, CharacterCompressedEvent, CancellationToken>(
+                (_, e, _) => capturedEvent = e)
             .ReturnsAsync(true);
 
         // Act

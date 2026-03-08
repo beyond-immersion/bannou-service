@@ -704,6 +704,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockRealmStore
             .Setup(s => s.GetWithETagAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingModel, "mock-etag"));
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingModel);
 
         // Act
         var (status, response) = await service.DeprecateRealmAsync(request);
@@ -781,6 +784,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockRealmStore
             .Setup(s => s.GetWithETagAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingModel, "mock-etag"));
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingModel);
 
         // Act
         var (status, response) = await service.UndeprecateRealmAsync(request);

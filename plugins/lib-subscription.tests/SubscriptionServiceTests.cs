@@ -69,7 +69,8 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
-        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Setup default behavior for distributed lock provider - always acquire successfully
@@ -672,8 +673,6 @@ public class SubscriptionServiceTests
             It.Is<SubscriptionUpdatedEvent>(e =>
                 e.AccountId == accountId &&
                 e.Action == SubscriptionAction.Created),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify client event pushed via IEntitySessionRegistry
@@ -869,8 +868,6 @@ public class SubscriptionServiceTests
             It.Is<SubscriptionUpdatedEvent>(e =>
                 e.SubscriptionId == subscriptionId &&
                 e.Action == SubscriptionAction.Cancelled),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1501,11 +1498,9 @@ public class SubscriptionServiceTests
             .Setup(m => m.TryPublishAsync(
                 "subscription.updated",
                 It.IsAny<SubscriptionUpdatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
-                (topic, evt, opts, corrId, ct) => capturedEvent = evt as SubscriptionUpdatedEvent)
+            .Callback<string, object, CancellationToken>(
+                (topic, evt, ct) => capturedEvent = evt as SubscriptionUpdatedEvent)
             .ReturnsAsync(true);
 
         // Act

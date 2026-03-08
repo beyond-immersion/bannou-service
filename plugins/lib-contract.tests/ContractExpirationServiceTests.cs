@@ -805,11 +805,9 @@ public class ContractExpirationServiceTests
             .Setup(m => m.TryPublishAsync(
                 "contract.payment.due",
                 It.IsAny<ContractPaymentDueEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ContractPaymentDueEvent, PublishOptions?, Guid?, CancellationToken>(
-                (_, evt, _, _, _) => publishedPaymentEvent = evt)
+            .Callback<string, ContractPaymentDueEvent, CancellationToken>(
+                (_, evt, _) => publishedPaymentEvent = evt)
             .ReturnsAsync(true);
 
         using var worker = new ContractExpirationService(
@@ -829,8 +827,6 @@ public class ContractExpirationServiceTests
             m => m.TryPublishAsync(
                 "contract.payment.due",
                 It.IsAny<ContractPaymentDueEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.AtLeastOnce);
 
@@ -956,8 +952,6 @@ public class ContractExpirationServiceTests
             m => m.TryPublishAsync(
                 "contract.payment.due",
                 It.IsAny<ContractPaymentDueEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }

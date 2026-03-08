@@ -499,8 +499,6 @@ public class SessionServiceTests
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             It.IsAny<string>(),
             It.IsAny<SessionInvalidatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -520,8 +518,6 @@ public class SessionServiceTests
             It.Is<SessionInvalidatedEvent>(e =>
                 e.AccountId == accountId &&
                 e.SessionIds.Count == 2),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -544,8 +540,6 @@ public class SessionServiceTests
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             "session.invalidated",
             It.IsAny<SessionInvalidatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -560,8 +554,6 @@ public class SessionServiceTests
                 e.SessionIds.SequenceEqual(expectedSessionGuids) &&
                 e.Reason == reason &&
                 e.DisconnectClients == true),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -582,8 +574,6 @@ public class SessionServiceTests
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             "session.updated",
             It.IsAny<SessionUpdatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -599,8 +589,6 @@ public class SessionServiceTests
                 e.Roles.SequenceEqual(roles) &&
                 e.Authorizations.SequenceEqual(authorizations) &&
                 e.Reason == reason),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -753,8 +741,6 @@ public class SessionServiceTests
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             It.IsAny<string>(),
             It.IsAny<SessionInvalidatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -799,8 +785,6 @@ public class SessionServiceTests
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             It.IsAny<string>(),
             It.IsAny<SessionInvalidatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -820,8 +804,6 @@ public class SessionServiceTests
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "session.invalidated",
             It.IsAny<SessionInvalidatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

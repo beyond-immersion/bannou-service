@@ -287,10 +287,8 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<RelationshipCreatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, RelationshipCreatedEvent, PublishOptions?, Guid?, CancellationToken>((t, e, _, _, _) =>
+            .Callback<string, RelationshipCreatedEvent, CancellationToken>((t, e, _) =>
             {
                 capturedTopic = t;
                 capturedEvent = e;
@@ -411,10 +409,8 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<RelationshipUpdatedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, RelationshipUpdatedEvent, PublishOptions?, Guid?, CancellationToken>((t, e, _, _, _) =>
+            .Callback<string, RelationshipUpdatedEvent, CancellationToken>((t, e, _) =>
             {
                 capturedTopic = t;
                 capturedEvent = e;
@@ -540,10 +536,8 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<RelationshipDeletedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, RelationshipDeletedEvent, PublishOptions?, Guid?, CancellationToken>((t, e, _, _, _) =>
+            .Callback<string, RelationshipDeletedEvent, CancellationToken>((t, e, _) =>
             {
                 capturedTopic = t;
                 capturedEvent = e;
@@ -1387,10 +1381,8 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<RelationshipDeletedEvent>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, RelationshipDeletedEvent, PublishOptions?, Guid?, CancellationToken>((t, e, _, _, _) =>
+            .Callback<string, RelationshipDeletedEvent, CancellationToken>((t, e, _) =>
             {
                 capturedTopic = t;
                 capturedEvent = e;

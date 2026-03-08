@@ -913,8 +913,7 @@ public class VoiceServiceTests
                 e.SessionId == sessionId &&
                 e.Tier == VoiceTier.P2P &&
                 e.MaxParticipants == 6),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1058,8 +1057,7 @@ public class VoiceServiceTests
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "voice.room.created",
             It.Is<VoiceRoomCreatedEvent>(e => e.RoomId == roomId),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1255,8 +1253,7 @@ public class VoiceServiceTests
                 e.RoomId == roomId &&
                 e.PeerSessionId == sessionId &&
                 e.CurrentCount == 1),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1306,8 +1303,7 @@ public class VoiceServiceTests
             It.Is<VoicePeerLeftEvent>(e =>
                 e.RoomId == roomId &&
                 e.PeerSessionId == sessionId),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1407,8 +1403,7 @@ public class VoiceServiceTests
             It.Is<VoiceBroadcastStoppedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceBroadcastStoppedReason.ConsentRevoked),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1450,8 +1445,7 @@ public class VoiceServiceTests
             It.Is<VoiceRoomDeletedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceRoomDeletedReason.Manual),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1490,16 +1484,14 @@ public class VoiceServiceTests
             It.Is<VoiceBroadcastStoppedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceBroadcastStoppedReason.RoomClosed),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Once);
 
         // Also verify room deleted event was published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "voice.room.deleted",
             It.Is<VoiceRoomDeletedEvent>(e => e.RoomId == roomId),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1646,8 +1638,7 @@ public class VoiceServiceTests
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "voice.broadcast.approved",
             It.Is<VoiceBroadcastApprovedEvent>(e => e.RoomId == roomId),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1699,8 +1690,7 @@ public class VoiceServiceTests
             It.Is<VoiceBroadcastDeclinedEvent>(e =>
                 e.RoomId == roomId &&
                 e.DeclinedBySessionId == decliningSession),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1756,8 +1746,7 @@ public class VoiceServiceTests
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "voice.broadcast.approved",
             It.IsAny<VoiceBroadcastApprovedEvent>(),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -1837,8 +1826,7 @@ public class VoiceServiceTests
             It.Is<VoiceBroadcastStoppedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceBroadcastStoppedReason.Manual),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
                         It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify room was saved with Inactive state
@@ -2026,8 +2014,7 @@ public class VoiceServiceTests
                 e.PreviousTier == VoiceTier.P2P &&
                 e.NewTier == VoiceTier.Scaled &&
                 e.RtpAudioEndpoint == "rtp://media.test:5060"),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -2159,8 +2146,7 @@ public class ParticipantEvictionWorkerTests
             It.Is<VoicePeerLeftEvent>(e =>
                 e.RoomId == roomId &&
                 e.PeerSessionId == staleSessionId),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - permission state was cleared
@@ -2215,8 +2201,7 @@ public class ParticipantEvictionWorkerTests
             It.Is<VoiceRoomDeletedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceRoomDeletedReason.Empty),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -2258,8 +2243,7 @@ public class ParticipantEvictionWorkerTests
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "voice.room.deleted",
             It.IsAny<VoiceRoomDeletedEvent>(),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -2318,8 +2302,7 @@ public class ParticipantEvictionWorkerTests
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "voice.broadcast.declined",
             It.Is<VoiceBroadcastDeclinedEvent>(e => e.RoomId == roomId),
-            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
-            It.IsAny<Guid?>(),
+
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - participants were restored to in_room state
