@@ -225,9 +225,40 @@ public class PresetLoader
             }
         }
 
-        // TODO: Handle infrastructure configuration when implemented
-        // topology.Infrastructure = ConvertInfrastructure(preset.Topology?.Infrastructure);
+        topology.Infrastructure = ConvertInfrastructure(preset.Topology?.Infrastructure);
 
         return topology;
+    }
+
+    /// <summary>
+    /// Converts preset infrastructure configuration to API infrastructure config.
+    /// </summary>
+    /// <param name="infrastructure">Preset infrastructure definition.</param>
+    /// <returns>Infrastructure config for the service topology, or null if no infrastructure defined.</returns>
+    private static InfrastructureConfig? ConvertInfrastructure(PresetInfrastructure? infrastructure)
+    {
+        if (infrastructure == null)
+            return null;
+
+        return new InfrastructureConfig
+        {
+            Redis = ConvertInfraService(infrastructure.Redis),
+            Rabbitmq = ConvertInfraService(infrastructure.Rabbitmq),
+            Mysql = ConvertInfraService(infrastructure.Mysql)
+        };
+    }
+
+    /// <summary>
+    /// Converts an individual preset infrastructure service to API infra service config.
+    /// </summary>
+    private static InfraServiceConfig? ConvertInfraService(PresetInfraService? service)
+    {
+        if (service == null)
+            return null;
+
+        return new InfraServiceConfig
+        {
+            Enabled = service.Enabled
+        };
     }
 }

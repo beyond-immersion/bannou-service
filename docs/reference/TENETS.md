@@ -384,9 +384,11 @@ Tenets are organized into categories based on when they're needed:
 | Publishing registration events at startup | T27 | Use DI Provider interface discovered via `IEnumerable<T>` |
 | Defining event schema to receive data from callers | T27 | Remove event; expose API endpoint; callers use generated client |
 | Lower-layer caching higher-layer data and subscribing to invalidation events | T27 | Provider owns its cache; lower layer calls provider interface for fresh data |
-| Subscribing to `*.deleted` for dependent data cleanup | T28 | Declare `x-references` in schema; implement cleanup endpoint; register via generated `RegisterResourceCleanupCallbacksAsync()` |
-| Event-based cleanup for persistent dependent data | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
-| Cleanup handler in `*ServiceEvents.cs` for another service's entity | T28 | Move to lib-resource cleanup callback; remove event subscription |
+| Subscribing to `*.deleted` for dependent data cleanup (non-account entities) | T28 | Declare `x-references` in schema; implement cleanup endpoint; register via generated `RegisterResourceCleanupCallbacksAsync()` |
+| Event-based cleanup for persistent dependent data (non-account entities) | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
+| Cleanup handler in `*ServiceEvents.cs` for non-account entity deletion | T28 | Move to lib-resource cleanup callback; remove event subscription |
+| Service with `ownerType: Account` missing `account.deleted` handler | T28 | Add `HandleAccountDeletedAsync` in `*ServiceEvents.cs`; subscribe via `IEventConsumer` — Account Deletion Cleanup Obligation |
+| Using lib-resource to track account references | T28 | Subscribe to `account.deleted` instead; lib-resource registration for accounts is forbidden (privacy) |
 | Using lib-resource for high-frequency instance cleanup (items at scale) | T28 | Use DI Listener (`IItemInstanceDestructionListener`) + orphan reconciliation worker (T28 exception) |
 | Event subscription for high-frequency instance cleanup | T28 | Use DI Listener pattern, not event subscription — same T28 exception, but DI listener is the required mechanism |
 | Async helper method without `StartActivity` span | T30 | Add `using var activity = _telemetryProvider.StartActivity(...)` |

@@ -42,6 +42,8 @@ internal class AchievementDefinitionData
     public string Description { get; set; } = string.Empty;
     public string? HiddenDescription { get; set; }
     public AchievementType AchievementType { get; set; }
+    /// <summary>Game-defined category for UI grouping and filtering (e.g. Combat, Exploration, Social).</summary>
+    public string? Category { get; set; }
     public List<EntityType>? EntityTypes { get; set; }
     public int? ProgressTarget { get; set; }
     public int Points { get; set; }

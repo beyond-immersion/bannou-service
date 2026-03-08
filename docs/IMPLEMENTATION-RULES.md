@@ -143,7 +143,7 @@ Dependent data cleanup uses lib-resource exclusively — never subscribe to `*.d
 - **Producers** (services with dependent data in higher layers): Call `_resourceClient.ExecuteCleanupAsync()` in their delete flow
 - **Consumers** (services that store data referencing other entities): Implement `ISeededResourceProvider` and register with lib-resource
 
-Exception: Account is exempt from lib-resource for privacy reasons (per FOUNDATION TENETS). High-frequency instance cleanup (items at scale) uses DI Listener pattern instead.
+Exceptions: Account-owned data uses `account.deleted` event subscription instead of lib-resource (Account Deletion Cleanup Obligation — privacy prohibits centralized account reference tracking). High-frequency instance cleanup (items at scale) uses DI Listener pattern instead. See FOUNDATION TENETS for both exceptions.
 
 **See**: FOUNDATION TENETS in `tenets/FOUNDATION.md`
 

@@ -234,6 +234,7 @@ Client                    Asset Service                     MinIO Storage
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/526 -->
 
 6. **Internal tag hierarchy**: If hierarchical tag relationships are needed for smart bundling or query expansion (e.g., searching `furniture` finds `picture_frame`), Asset could implement a lightweight parent/child tag table in its own Redis state store. Asset (L3) cannot depend on lib-relationship (L2) for this — see [closed #117](https://github.com/beyond-immersion/bannou-service/issues/117). For hierarchical composition of assets, the Scene service (L4) already provides node trees with recursive resolution.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/586 -->
 
 ---
 

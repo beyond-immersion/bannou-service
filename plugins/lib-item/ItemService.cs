@@ -651,7 +651,19 @@ public partial class ItemService : IItemService
         // Apply modifications
         if (body.DurabilityDelta.HasValue && model.CurrentDurability.HasValue)
         {
-            model.CurrentDurability = Math.Max(0, model.CurrentDurability.Value + body.DurabilityDelta.Value);
+            var newDurability = Math.Max(0, model.CurrentDurability.Value + body.DurabilityDelta.Value);
+
+            // Cap positive deltas against template MaxDurability per IMPLEMENTATION TENETS
+            if (body.DurabilityDelta.Value > 0)
+            {
+                var template = await GetTemplateWithCacheAsync(model.TemplateId.ToString(), cancellationToken);
+                if (template?.MaxDurability.HasValue == true)
+                {
+                    newDurability = Math.Min(template.MaxDurability.Value, newDurability);
+                }
+            }
+
+            model.CurrentDurability = newDurability;
         }
         if (body.QuantityDelta.HasValue)
         {
@@ -2021,10 +2033,10 @@ public partial class ItemService : IItemService
             ? new List<string>()
             : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
 
-        var actualCount = ids.Count;
-        var effectiveLimit = _configuration.MaxInstancesPerQuery;
-        var wasTruncated = actualCount > effectiveLimit;
-        var idsToFetch = wasTruncated ? ids.Take(effectiveLimit).ToList() : ids;
+        var totalCount = ids.Count;
+        var effectiveLimit = Math.Min(body.Limit, _configuration.MaxInstancesPerQuery);
+        var idsToFetch = ids.Skip(body.Offset).Take(effectiveLimit).ToList();
+        var wasTruncated = totalCount > body.Offset + idsToFetch.Count;
 
         // Load all instances in bulk (cache + persistent store)
         var modelsById = await GetInstancesBulkWithCacheAsync(idsToFetch, cancellationToken);
@@ -2042,7 +2054,7 @@ public partial class ItemService : IItemService
         return (StatusCodes.OK, new ListItemsResponse
         {
             Items = items,
-            TotalCount = actualCount,
+            TotalCount = totalCount,
             WasTruncated = wasTruncated
         });
     }

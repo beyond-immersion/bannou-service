@@ -132,19 +132,6 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 
 ---
 
-## Dependencies (Events Consumed)
-
-| Topic | Handler | Source | Action |
-|-------|---------|--------|--------|
-| `voice.room.broadcast.approved` | `HandleVoiceBroadcastApprovedAsync` | lib-voice (L3) | Start RTMP output for voice room after all participants consent. Connects to room's RTP audio endpoint. Soft -- no-op if lib-voice absent. |
-| `voice.room.broadcast.stopped` | `HandleVoiceBroadcastStoppedAsync` | lib-voice (L3) | Stop RTMP output for voice room. Consent revoked, room closed, or manual stop. Soft -- no-op if lib-voice absent. |
-| `voice.participant.muted` | `HandleVoiceParticipantMutedAsync` | lib-voice (L3) | Exclude/include muted participant audio from RTMP output mixing. Soft -- no-op if lib-voice absent. |
-| `session.disconnected` | `HandleSessionDisconnectedAsync` | lib-connect (L1) | Cleanup broadcast platform session on WebSocket disconnect. Prevents orphaned Redis sessions. T28-compliant: sessions have TTL and would expire naturally; the event accelerates cleanup. |
-
-All consumed voice event models are redefined inline in `broadcast-events.yaml` (cannot `$ref` other service event files per FOUNDATION TENETS).
-
----
-
 ## Configuration
 
 | Property | Env Var | Type | Default | Validation | Purpose |
@@ -264,13 +251,12 @@ All consumed voice event models are redefined inline in `broadcast-events.yaml` 
 
 **Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
 
-<!-- AUDIT:SPEC_COMPLETE:2026-03-05 -->
 ### Phase 1: Schema & Generation
 - Create broadcast-api.yaml schema with all endpoints (22 endpoints across 6 groups -- includes 2 camera endpoints)
 - **T32 MANDATORY**: All user-facing endpoints (`x-permissions: [user]`) must NOT accept `accountId` in request bodies. Use `webSocketSessionId` and resolve account server-side. This applies to: link, unlink, list, start, stop, associate, status, list sessions. The implementation map pseudo-code currently uses `body.accountId` — the schema must use session-resolved identity instead.
 - ~~**Topic naming**: `x-lifecycle` entity names for BroadcastOutput should use `output` (not `broadcast-output`) to produce `broadcast.output.created/updated/deleted` rather than the redundant `broadcast.broadcast-output.*`.~~: **FIXED** (2026-03-05) - Updated implementation map to use `broadcast.output.*` topics and `OutputCreatedEvent`/`OutputUpdatedEvent`/`OutputDeletedEvent` type names throughout. Deep dive event reference also corrected.
 - Declare `x-service-layer: AppFeatures` at schema root (default is GameFeatures -- wrong layer without this)
-- Declare `x-references` block for lib-resource account cleanup
+- Declare `x-references` block for lib-resource cleanup of non-account entity references; for account-owned data, subscribe to `account.deleted` per T28's Account Deletion Cleanup Obligation
 - Create broadcast-events.yaml schema using `x-lifecycle` with `topic_prefix: broadcast` for PlatformLink, PlatformSession, and Output entities; plus 1 custom event (`broadcast.audience.pulse`)
 - Define consumed event models inline in `broadcast-events.yaml` (voice events, session events -- cannot `$ref` other service event files per FOUNDATION TENETS)
 - Create broadcast-configuration.yaml schema (36 configuration properties with validation ranges)
@@ -279,7 +265,6 @@ All consumed voice event models are redefined inline in `broadcast-events.yaml` 
 - Generate service code
 - Verify build succeeds
 
-<!-- AUDIT:SPEC_COMPLETE:2026-03-05 -->
 ### Phase 2: Platform Account Linking
 - Implement OAuth flow for Twitch (client ID, client secret, authorization code exchange)
 - Implement OAuth flow for YouTube
@@ -288,7 +273,6 @@ All consumed voice event models are redefined inline in `broadcast-events.yaml` 
 - Implement token refresh background worker with per-link distributed locking
 - Implement platform unlink with token revocation and session record cascade cleanup
 
-<!-- AUDIT:SPEC_COMPLETE:2026-03-05 -->
 ### Phase 3: Platform Session Management
 - Implement session start with platform live-status verification
 - Implement Twitch EventSub webhook handler (HMAC signature validation, event routing, `x-controller-only`)
@@ -311,7 +295,6 @@ All consumed voice event models are redefined inline in `broadcast-events.yaml` 
 
 **Spec gaps** ([#577](https://github.com/beyond-immersion/bannou-service/issues/577)): Implementation map is missing (1) event handler pseudo-code for all 4 consumed events (especially `HandleVoiceBroadcastApprovedAsync` which involves cross-service coordination), (2) `IBroadcastCoordinator` interface definition with method signatures, (3) `BroadcastModel`/`BroadcastContext` field-level schemas, (4) FFprobe command/success-criteria specification, (5) startup reconciliation pseudo-code.
 
-<!-- AUDIT:SPEC_COMPLETE:2026-03-05 -->
 ### Phase 5: Webhook Subscription Management
 - Implement Twitch EventSub subscription lifecycle (create, renew, delete)
 - Implement YouTube webhook subscription lifecycle
@@ -412,3 +395,4 @@ All consumed voice event models are redefined inline in `broadcast-events.yaml` 
 - **2026-03-05**: Audited Potential Extension #6 (broadcast recording) — created [GitHub Issue #570](https://github.com/beyond-immersion/bannou-service/issues/570) for unresolved design questions. The v1 architecture largely accommodates recording (FFmpeg tee muxer, localized IBroadcastCoordinator/BroadcastModel changes, Asset L3→L3 valid dependency). However, four design questions remain: (1) consent distinction between live broadcasting and persistent recording for VoiceRoom sources, (2) upload lifecycle orchestration, (3) local storage management configuration, (4) recording format/codec selection under T18. Annotated PE#6 in deep dive with NEEDS_DESIGN marker.
 - **2026-03-05**: Audited Potential Extension #7 (custom sentiment models) — created [GitHub Issue #572](https://github.com/beyond-immersion/bannou-service/issues/572) for unresolved design questions. The `ISentimentProcessor` DI interface already supports swapping processing logic (PE#1 addressed), but PE#7 asks for different output categories per game, which conflicts with Intentional Quirk #1's fixed 8-value `SentimentCategory` enum. Key design tension: fixed enum (Category C per T14) vs opaque strings (Category B) and cross-service impact on lib-showtime's deterministic audience behavior mapping. Annotated PE#7 in deep dive with NEEDS_DESIGN marker.
 - **2026-03-05**: Audited Potential Extension #8 (Director-coordinated broadcast priority) — created [GitHub Issue #576](https://github.com/beyond-immersion/bannou-service/issues/576) for unresolved design questions. Director's `DirectedEvent` model already has `broadcastPriority` (0-10) and references `IBroadcastClient` as a soft dependency, but the v1 Broadcast architecture has no priority-aware APIs, state models, or allocation logic. Six design questions remain: preemption vs. first-access model, reservation API design, priority conflict resolution, automated camera selection semantics, source quality differentiation, and `BroadcastModel` state changes for priority tracking. Annotated PE#8 in deep dive with NEEDS_DESIGN marker.
+- **2026-03-08**: Removed duplicate "Dependencies (Events Consumed)" operational section from deep dive per template migration checklist (Rule 6). Unique content (Source column, T28 compliance note) preserved in implementation map's Events Consumed table before removal.

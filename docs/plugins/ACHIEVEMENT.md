@@ -4,7 +4,7 @@
 > **Schema**: schemas/achievement-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
-> **State Store**: achievement-definition (Redis), achievement-progress (Redis)
+> **State Store**: achievement-definition (Redis), achievement-progress (Redis), achievement-sync (Redis)
 > **Implementation Map**: [docs/maps/ACHIEVEMENT.md](../maps/ACHIEVEMENT.md)
 
 ## Overview
@@ -45,6 +45,8 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 | RarityCalculationIntervalMinutes | `ACHIEVEMENT_RARITY_CALCULATION_INTERVAL_MINUTES` | 60 | Interval between periodic rarity recalculations |
 | RareThresholdPercent | `ACHIEVEMENT_RARE_THRESHOLD_PERCENT` | 5.0 | Percentage below which an achievement is flagged as rare |
 | RarityThresholdEarnedCount | `ACHIEVEMENT_RARITY_THRESHOLD_EARNED_COUNT` | 100 | Earned count below which an achievement is considered rare regardless of percentage |
+| SyncHistoryTtlSeconds | `ACHIEVEMENT_SYNC_HISTORY_TTL_SECONDS` | 0 | TTL for sync history data in Redis (0 = no expiry, sync history persists indefinitely) |
+| SyncStatusRetryAttempts | `ACHIEVEMENT_SYNC_STATUS_RETRY_ATTEMPTS` | 3 | Retry attempts for ETag conflicts when updating sync status records |
 
 ## Visual Aid
 
@@ -90,20 +92,21 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Xbox sync provider | Stub | `XboxAchievementSync` exists but `IsConfigured=false` and returns "not implemented". Skipped by service layer. Configuration properties (`XboxClientId`, `XboxClientSecret`) are defined in schema but unused - scaffolding for future implementation |
-| PlayStation sync provider | Stub | `PlayStationAchievementSync` exists but `IsConfigured=false` and returns "not implemented". Skipped by service layer. Configuration properties (`PlayStationClientId`, `PlayStationClientSecret`) are defined in schema but unused - scaffolding for future implementation |
+| Xbox sync provider | Stub | `XboxAchievementSync` exists but `IsConfigured=false` and returns "not implemented". Skipped by service layer. Configuration properties (`XboxClientId`, `XboxClientSecret`) are defined in schema but unused - scaffolding for future implementation <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/585 --> |
+| PlayStation sync provider | Stub | `PlayStationAchievementSync` exists but `IsConfigured=false` and returns "not implemented". Skipped by service layer. Configuration properties (`PlayStationClientId`, `PlayStationClientSecret`) are defined in schema but unused - scaffolding for future implementation <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/587 --> |
 | Internal sync provider | Active | `InternalAchievementSync` is a no-op provider (`IsConfigured=true`) for internal-only achievements |
-| Per-entity sync history tracking | Not implemented | `GetPlatformSyncStatusAsync` returns hardcoded zeros for synced/pending/failed counts |
-| TotalEligibleEntities population | Not implemented | Field exists on definition but is never written to by any endpoint; rarity calc only works when manually populated |
-| `SetProgressAsync` on platforms | Not called | IPlatformAchievementSync defines it, SteamAchievementSync implements it, but the service only calls `UnlockAsync` (never syncs incremental progress) |
+| ~~Per-entity sync history tracking~~ | ~~Not implemented~~ | **FIXED** (2026-03-08) — Added `achievement-sync` Redis state store with `PlatformSyncTrackingData` model. `RecordSyncOutcomeAsync` tracks sync outcomes with ETag-based optimistic concurrency. `GetPlatformSyncStatusAsync` now reads real data. `PendingCount` remains null (sync is immediate success/failure, no pending concept). |
+| TotalEligibleEntities population | Not implemented | Field exists on definition but is never written to by any endpoint; rarity calc only works when manually populated <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/581 --> |
+| `SetProgressAsync` on platforms | Not called | IPlatformAchievementSync defines it, SteamAchievementSync implements it, but the service only calls `UnlockAsync` (never syncs incremental progress) <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/592 --> |
 
 ## Potential Extensions
 
-- **Sync history store**: Add a new state store to track per-entity platform sync history, enabling accurate status reporting instead of hardcoded zeros
-- **TotalEligibleEntities automation**: Subscribe to subscription/account lifecycle events to maintain accurate eligible entity counts for rarity
-- **Progressive platform sync**: Call `SetProgressAsync` when progress updates occur (not just on unlock), enabling Steam stats to track incremental progress
-- **Achievement groups/categories**: Add a typed `category` field on achievement definitions for UI grouping/filtering
+- ~~**Sync history store**~~: **FIXED** (2026-03-08) — `achievement-sync` Redis state store added with `PlatformSyncTrackingData` model, `SyncHistoryTtlSeconds` and `SyncStatusRetryAttempts` configuration properties, and `RecordSyncOutcomeAsync` helper with ETag retry logic.
+- **TotalEligibleEntities automation**: Subscribe to subscription/account lifecycle events to maintain accurate eligible entity counts for rarity <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/581 -->
+- **Progressive platform sync**: Call `SetProgressAsync` when progress updates occur (not just on unlock), enabling Steam stats to track incremental progress <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/592 -->
+- ~~**Achievement groups/categories**~~: **FIXED** (2026-03-08) — Added nullable `category` string field (opaque, game-defined, max 100 chars) to `CreateAchievementDefinitionRequest`, `UpdateAchievementDefinitionRequest`, `AchievementDefinitionResponse`, `ListAchievementDefinitionsRequest` (as filter), `AchievementDefinitionData` (internal model), and lifecycle events. Category is a T14 Category B opaque string (game designers define values at deployment time).
 - **Leaderboard integration on unlock**: Publish achievement points to a leaderboard for gamerscore-style rankings
+  <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/596 -->
 
 ## Known Quirks & Caveats
 
@@ -142,8 +145,7 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 - **Platform sync is fire-and-forget on unlock**: When `AutoSyncOnUnlock=true`, platform syncs happen inline during unlock but failures don't prevent the local unlock from succeeding. Retry logic exists but if all retries fail, the sync is marked failed in the event and the achievement stays locally unlocked but not synced. No retry queue exists for permanently failed syncs.
   <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/583 -->
 
-- **GetPlatformSyncStatus returns hardcoded zeros**: Per-entity platform sync history is not tracked. The endpoint returns hardcoded zeros for synced/pending/failed counts and null for last sync timestamp and error. Needs a sync history store or progress store extension.
-  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/584 -->
+- ~~**GetPlatformSyncStatus returns hardcoded zeros**~~: **FIXED** (2026-03-08) — Added `achievement-sync` Redis state store (`PlatformSyncTrackingData`) tracking per-entity per-platform sync outcomes. `RecordSyncOutcomeAsync` records success/failure counts with ETag-based concurrency. `GetPlatformSyncStatusAsync` reads real data from the sync store. Configuration: `SyncHistoryTtlSeconds` (default 0), `SyncStatusRetryAttempts` (default 3). `PendingCount` remains null as sync is synchronous (no queuing).
 
 ## Work Tracking
 
@@ -151,6 +153,8 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
+- **2026-03-08**: Achievement groups/categories — Added nullable `category` string field across schema, lifecycle events, internal model, and service logic (create, update, list filter, response mapping)
+- **2026-03-08**: [#584](https://github.com/beyond-immersion/bannou-service/issues/584) — Per-entity sync history tracking via `achievement-sync` Redis store with `RecordSyncOutcomeAsync` ETag retry logic
 - **2026-03-06**: [#580](https://github.com/beyond-immersion/bannou-service/issues/580) — T13 review: `x-permissions: []` is correct (service-to-service only); root cause was misleading SCHEMA-RULES.md documentation, now fixed
 - **2026-03-06**: [#579](https://github.com/beyond-immersion/bannou-service/issues/579) — T28 lib-resource cleanup for character entity deletion
 - **2026-03-05**: [#578](https://github.com/beyond-immersion/bannou-service/issues/578) — Implemented `AchievementPrerequisiteProviderFactory` for Quest prerequisite validation
@@ -159,4 +163,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - [#581](https://github.com/beyond-immersion/bannou-service/issues/581) — TotalEligibleEntities automation for rarity calculation
 - [#582](https://github.com/beyond-immersion/bannou-service/issues/582) — Event handler N+1 definition loading — add caching layer
 - [#583](https://github.com/beyond-immersion/bannou-service/issues/583) — Platform sync permanent failure retry queue
-- [#584](https://github.com/beyond-immersion/bannou-service/issues/584) — GetPlatformSyncStatus sync history tracking
+- [#585](https://github.com/beyond-immersion/bannou-service/issues/585) — Xbox sync provider implementation (requires platform integration design)
+- [#587](https://github.com/beyond-immersion/bannou-service/issues/587) — PlayStation sync provider implementation (requires platform integration design)
+- [#592](https://github.com/beyond-immersion/bannou-service/issues/592) — SetProgressAsync never called for incremental platform progress sync
+- [#596](https://github.com/beyond-immersion/bannou-service/issues/596) — Leaderboard integration on unlock for gamerscore-style rankings

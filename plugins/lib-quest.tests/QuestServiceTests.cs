@@ -10,6 +10,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Quest;
 using BeyondImmersion.BannouService.Quest.Caching;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -44,6 +45,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IQuestDataCache> _mockQuestDataCache;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IResourceClient> _mockResourceClient;
     private readonly List<IPrerequisiteProviderFactory> _prerequisiteProviders;
 
     public QuestServiceTests()
@@ -66,6 +68,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockQuestDataCache = new Mock<IQuestDataCache>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockResourceClient = new Mock<IResourceClient>();
         _prerequisiteProviders = new List<IPrerequisiteProviderFactory>();
 
         // Setup factory to return typed stores
@@ -122,7 +125,8 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             _mockEventConsumer.Object,
             _mockQuestDataCache.Object,
             _prerequisiteProviders,
-            _mockTelemetryProvider.Object);
+            _mockTelemetryProvider.Object,
+            _mockResourceClient.Object);
     }
 
     #region Constructor Validation
@@ -523,6 +527,75 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task DeprecateQuestDefinitionAsync_AlreadyDeprecated_ReturnsOKIdempotent()
+    {
+        // Arrange
+        var service = CreateService();
+        var definitionId = Guid.NewGuid();
+        var existingModel = CreateTestDefinitionModel(definitionId);
+        existingModel.IsDeprecated = true;
+        existingModel.DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-1);
+        existingModel.DeprecationReason = "Previously deprecated";
+
+        _mockDefinitionStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingModel, "etag123"));
+
+        var request = new DeprecateQuestDefinitionRequest
+        {
+            DefinitionId = definitionId,
+            Reason = "Deprecating again"
+        };
+
+        // Act
+        var (status, response) = await service.DeprecateQuestDefinitionAsync(request, CancellationToken.None);
+
+        // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.IsDeprecated);
+    }
+
+    [Fact]
+    public async Task DeprecateQuestDefinitionAsync_SetsTimestampAndReason()
+    {
+        // Arrange
+        var service = CreateService();
+        var definitionId = Guid.NewGuid();
+        var existingModel = CreateTestDefinitionModel(definitionId);
+        existingModel.IsDeprecated = false;
+
+        _mockDefinitionStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingModel, "etag123"));
+
+        _mockDefinitionStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<QuestDefinitionModel>(),
+                It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        var request = new DeprecateQuestDefinitionRequest
+        {
+            DefinitionId = definitionId,
+            Reason = "No longer relevant"
+        };
+
+        // Act
+        var (status, response) = await service.DeprecateQuestDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.IsDeprecated);
+        Assert.NotNull(response.DeprecatedAt);
+        Assert.Equal("No longer relevant", response.DeprecationReason);
     }
 
     #endregion

@@ -41,6 +41,9 @@ public partial class CurrencyService : ICurrencyService
     /// <summary>State store for wallet models (MySQL-backed).</summary>
     private readonly IStateStore<WalletModel> _walletStore;
 
+    /// <summary>Queryable store for wallet models (MySQL-backed, for owner-based queries in cleanup).</summary>
+    private readonly IQueryableStateStore<WalletModel> _walletQueryStore;
+
     /// <summary>String index store for wallets (owner-to-wallet-ID mappings).</summary>
     private readonly IStateStore<string> _walletStringStore;
 
@@ -96,6 +99,7 @@ public partial class CurrencyService : ICurrencyService
         _definitionStore = stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
         _definitionStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
         _walletStore = stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
+        _walletQueryStore = stateStoreFactory.GetQueryableStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
         _walletStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyWallets);
         _balanceStore = stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
         _balanceStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyBalances);

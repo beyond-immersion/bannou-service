@@ -22,7 +22,7 @@ The Account plugin is an internal-only CRUD service (L1 AppFoundation) for manag
 | lib-auth | Subscribes to `account.deleted` to invalidate all sessions and cleanup OAuth links for deleted accounts |
 | lib-auth | Subscribes to `account.updated` to propagate role changes to active sessions |
 | lib-achievement (SteamAchievementSync) | Calls `auth-methods/list` via IAccountClient to look up Steam external IDs for platform sync |
-| lib-collection (CollectionService) | Subscribes to `account.deleted` to clean up all account-owned collections (Account exempt from lib-resource per FOUNDATION TENETS) |
+| lib-collection (CollectionService) | Subscribes to `account.deleted` to clean up all account-owned collections (Account Deletion Cleanup Obligation per FOUNDATION TENETS) |
 
 ## Configuration
 

@@ -59,6 +59,7 @@ x-lifecycle:
       displayName: { type: string, required: true, description: "Human-readable name" }
       description: { type: string, required: true, description: "How to earn this achievement" }
       hiddenDescription: { type: string, nullable: true, description: "Description shown before achievement is earned (for hidden types)" }
+      category: { type: string, nullable: true, description: "Game-defined category for UI grouping and filtering" }
       achievementType: { $ref: 'achievement-api.yaml#/components/schemas/AchievementType', required: true, description: "Classification of the achievement" }
       entityTypes: { type: array, items: { $ref: 'common-api.yaml#/components/schemas/EntityType' }, nullable: true, description: "Which entity types can earn this achievement" }
       progressTarget: { type: integer, nullable: true, description: "Target value for progressive achievements" }

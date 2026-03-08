@@ -421,9 +421,12 @@ POST /item/instance/list-by-container | Roles: [user]
 
 ```
 READ instance-store:"inst-container:{containerId}" -> instanceId list
-// Truncate to config.MaxInstancesPerQuery; set wasTruncated if capped
+totalCount = ids.Count
+effectiveLimit = min(body.limit, config.MaxInstancesPerQuery)
+idsToFetch = ids.Skip(body.offset).Take(effectiveLimit)
+wasTruncated = totalCount > body.offset + idsToFetch.Count
 // Bulk cache read-through: cache hits from Redis, misses from MySQL, populate cache for misses
-FOREACH instanceId in list (truncated)
+FOREACH instanceId in idsToFetch
   READ instance via bulk cache read-through
 RETURN (200, ListItemsResponse { items, totalCount, wasTruncated })
 ```

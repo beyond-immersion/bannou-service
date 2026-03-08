@@ -114,4 +114,9 @@ public partial interface IQuestService : IBannouService
         /// </summary>
         Task<(StatusCodes, QuestArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// DeleteByCharacter operation
+        /// </summary>
+        Task<(StatusCodes, DeleteByCharacterResponse?)> DeleteByCharacterAsync(DeleteByCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

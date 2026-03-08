@@ -3,10 +3,14 @@ using BeyondImmersion.Bannou.StorylineStoryteller.Planning;
 using BeyondImmersion.Bannou.StorylineStoryteller.Templates;
 using BeyondImmersion.Bannou.StorylineTheory.Arcs;
 using BeyondImmersion.Bannou.StorylineTheory.Spectrums;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Storyline;
+using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -797,6 +801,214 @@ public class EntityRequirementTests
 
 /// <summary>
 /// Tests for StorylineLink structure.
+/// </summary>
+public class StorylineDeprecationTests : ServiceTestBase<StorylineServiceConfiguration>
+{
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<IRelationshipClient> _mockRelationshipClient;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<ILogger<StorylineService>> _mockLogger;
+    private readonly Mock<IServiceProvider> _mockServiceProvider;
+
+    // State stores
+    private readonly Mock<IStateStore<CachedPlan>> _mockPlanStore;
+    private readonly Mock<ICacheableStateStore<PlanIndexEntry>> _mockPlanIndexStore;
+    private readonly Mock<IQueryableStateStore<ScenarioDefinitionModel>> _mockScenarioDefinitionStore;
+    private readonly Mock<ICacheableStateStore<ScenarioDefinitionModel>> _mockScenarioCacheStore;
+    private readonly Mock<IQueryableStateStore<ScenarioExecutionModel>> _mockScenarioExecutionStore;
+    private readonly Mock<ICacheableStateStore<CooldownMarker>> _mockCooldownStore;
+    private readonly Mock<ICacheableStateStore<ActiveScenarioEntry>> _mockActiveStore;
+    private readonly Mock<ICacheableStateStore<IdempotencyMarker>> _mockIdempotencyStore;
+
+    public StorylineDeprecationTests()
+    {
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockResourceClient = new Mock<IResourceClient>();
+        _mockRelationshipClient = new Mock<IRelationshipClient>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockLogger = new Mock<ILogger<StorylineService>>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
+
+        _mockPlanStore = new Mock<IStateStore<CachedPlan>>();
+        _mockPlanIndexStore = new Mock<ICacheableStateStore<PlanIndexEntry>>();
+        _mockScenarioDefinitionStore = new Mock<IQueryableStateStore<ScenarioDefinitionModel>>();
+        _mockScenarioCacheStore = new Mock<ICacheableStateStore<ScenarioDefinitionModel>>();
+        _mockScenarioExecutionStore = new Mock<IQueryableStateStore<ScenarioExecutionModel>>();
+        _mockCooldownStore = new Mock<ICacheableStateStore<CooldownMarker>>();
+        _mockActiveStore = new Mock<ICacheableStateStore<ActiveScenarioEntry>>();
+        _mockIdempotencyStore = new Mock<ICacheableStateStore<IdempotencyMarker>>();
+
+        // Setup state store factory
+        _mockStateStoreFactory.Setup(f => f.GetStore<CachedPlan>(StateStoreDefinitions.StorylinePlans)).Returns(_mockPlanStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetCacheableStore<PlanIndexEntry>(StateStoreDefinitions.StorylinePlanIndex)).Returns(_mockPlanIndexStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetQueryableStore<ScenarioDefinitionModel>(StateStoreDefinitions.StorylineScenarioDefinitions)).Returns(_mockScenarioDefinitionStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetCacheableStore<ScenarioDefinitionModel>(StateStoreDefinitions.StorylineScenarioCache)).Returns(_mockScenarioCacheStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetQueryableStore<ScenarioExecutionModel>(StateStoreDefinitions.StorylineScenarioExecutions)).Returns(_mockScenarioExecutionStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetCacheableStore<CooldownMarker>(StateStoreDefinitions.StorylineScenarioCooldown)).Returns(_mockCooldownStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetCacheableStore<ActiveScenarioEntry>(StateStoreDefinitions.StorylineScenarioActive)).Returns(_mockActiveStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetCacheableStore<IdempotencyMarker>(StateStoreDefinitions.StorylineScenarioIdempotency)).Returns(_mockIdempotencyStore.Object);
+
+        // Default message bus setup
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+    }
+
+    private StorylineService CreateService()
+    {
+        return new StorylineService(
+            _mockMessageBus.Object,
+            _mockStateStoreFactory.Object,
+            _mockResourceClient.Object,
+            _mockRelationshipClient.Object,
+            _mockServiceProvider.Object,
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object,
+            _mockLogger.Object,
+            Configuration);
+    }
+
+    private static ScenarioDefinitionModel CreateTestScenarioModel(Guid scenarioId, bool isDeprecated = false)
+    {
+        return new ScenarioDefinitionModel
+        {
+            ScenarioId = scenarioId,
+            Code = "TEST_SCENARIO",
+            Name = "Test Scenario",
+            Description = "A test scenario",
+            TriggerConditionsJson = "[]",
+            PhasesJson = "[]",
+            Priority = 1,
+            Enabled = !isDeprecated,
+            IsDeprecated = isDeprecated,
+            DeprecatedAt = isDeprecated ? DateTimeOffset.UtcNow.AddDays(-1) : null,
+            DeprecationReason = isDeprecated ? "Previously deprecated" : null,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Etag = Guid.NewGuid().ToString("N")
+        };
+    }
+
+    #region Deprecation Tests
+
+    [Fact]
+    public async Task DeprecateScenarioDefinitionAsync_ValidScenario_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var scenarioId = Guid.NewGuid();
+        var model = CreateTestScenarioModel(scenarioId);
+
+        // GetScenarioDefinitionWithCacheAsync checks cache first, then MySQL
+        _mockScenarioCacheStore
+            .Setup(s => s.GetAsync(scenarioId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        var request = new DeprecateScenarioDefinitionRequest
+        {
+            ScenarioId = scenarioId,
+            Reason = "No longer relevant"
+        };
+
+        // Act
+        var status = await service.DeprecateScenarioDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify the model was saved with deprecation fields
+        _mockScenarioDefinitionStore.Verify(
+            s => s.SaveAsync(
+                scenarioId.ToString(),
+                It.Is<ScenarioDefinitionModel>(m =>
+                    m.IsDeprecated &&
+                    m.DeprecatedAt != null &&
+                    m.DeprecationReason == "No longer relevant" &&
+                    !m.Enabled),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify cache was invalidated
+        _mockScenarioCacheStore.Verify(
+            s => s.DeleteAsync(scenarioId.ToString(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task DeprecateScenarioDefinitionAsync_NotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var scenarioId = Guid.NewGuid();
+
+        // Cache miss
+        _mockScenarioCacheStore
+            .Setup(s => s.GetAsync(scenarioId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ScenarioDefinitionModel?)null);
+
+        // MySQL miss
+        _mockScenarioDefinitionStore
+            .Setup(s => s.GetAsync(scenarioId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ScenarioDefinitionModel?)null);
+
+        var request = new DeprecateScenarioDefinitionRequest { ScenarioId = scenarioId };
+
+        // Act
+        var status = await service.DeprecateScenarioDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task DeprecateScenarioDefinitionAsync_SetsTripleFieldModel()
+    {
+        // Arrange
+        var service = CreateService();
+        var scenarioId = Guid.NewGuid();
+        var model = CreateTestScenarioModel(scenarioId);
+
+        _mockScenarioCacheStore
+            .Setup(s => s.GetAsync(scenarioId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        ScenarioDefinitionModel? savedModel = null;
+        _mockScenarioDefinitionStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<ScenarioDefinitionModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ScenarioDefinitionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        var request = new DeprecateScenarioDefinitionRequest
+        {
+            ScenarioId = scenarioId,
+            Reason = "Obsolete scenario"
+        };
+
+        // Act
+        await service.DeprecateScenarioDefinitionAsync(request, CancellationToken.None);
+
+        // Assert — triple-field model per IMPLEMENTATION TENETS (T31)
+        Assert.NotNull(savedModel);
+        Assert.True(savedModel.IsDeprecated);
+        Assert.NotNull(savedModel.DeprecatedAt);
+        Assert.Equal("Obsolete scenario", savedModel.DeprecationReason);
+        Assert.False(savedModel.Enabled);
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Tests for StorylineLink model.
 /// </summary>
 public class StorylineLinkTests
 {

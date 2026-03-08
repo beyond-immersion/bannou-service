@@ -304,8 +304,11 @@ Subscription Cache Architecture
 ## Potential Extensions
 
 1. **Spectator mode**: Allow joining with a `Spectator` role that receives events but cannot perform actions.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/594 -->
 2. **Session persistence/replay**: Store action history for replay or late-join state reconstruction.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/595 -->
 3. **Cross-instance lobby sync**: Replace the single `session-list` key with a proper indexed query for scaling.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/557 -->
 
 ---
 
@@ -327,6 +330,8 @@ Subscription Cache Architecture
 
 5. **Lock owner is random GUID per call**: Lock calls use `Guid.NewGuid().ToString()` as the lock owner. This means the same service instance cannot extend or re-acquire its own lock - each call gets a new identity.
 
+6. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. This is intentional — authorization is verified at join time; leave should always succeed regardless of subscription status. Trapping a player in a session because their subscription expired mid-game would be harmful UX.
+
 ### Design Considerations (Requires Planning)
 
 1. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
@@ -335,13 +340,15 @@ Subscription Cache Architecture
 2. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/557 -->
 
-3. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
-
-4. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
+3. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
 
 ---
 
 ## Work Tracking
 
 *This section tracks active development work. Markers are managed by `/audit-plugin` workflow.*
+
+### Completed
+
+- **Join validates subscriber session but Leave does not** — Moved from Design Considerations to Intentional Quirk #6 (2026-03-08). Behavior is correct: authorization verified at join time; leave always succeeds regardless of subscription status.
 

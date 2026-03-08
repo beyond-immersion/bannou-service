@@ -671,6 +671,41 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         Assert.NotNull(response);
     }
 
+    [Fact]
+    public async Task DeprecateRelationshipTypeAsync_AlreadyDeprecated_ReturnsOkIdempotent()
+    {
+        // Arrange
+        var service = CreateService();
+        var typeId = Guid.NewGuid();
+        var model = CreateTestRelationshipTypeModel(typeId, "OLD", "Old Type");
+        model.IsDeprecated = true;
+        model.DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-1);
+        model.DeprecationReason = "Previously deprecated";
+
+        _mockRtModelStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        var request = new DeprecateRelationshipTypeRequest
+        {
+            RelationshipTypeId = typeId,
+            Reason = "Deprecating again"
+        };
+
+        // Act
+        var (status, response) = await service.DeprecateRelationshipTypeAsync(request);
+
+        // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.IsDeprecated);
+
+        // Verify no save was attempted (already in desired state)
+        _mockRtModelStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipTypeModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     #endregion
 
     #region MergeRelationshipType Tests

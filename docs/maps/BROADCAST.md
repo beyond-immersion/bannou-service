@@ -110,12 +110,12 @@
 
 ## Events Consumed
 
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `voice.room.broadcast.approved` | `HandleVoiceBroadcastApprovedAsync` | Start RTMP output for voice room after consent. Connects to room's RTP audio. Soft -- no-op if lib-voice absent. |
-| `voice.room.broadcast.stopped` | `HandleVoiceBroadcastStoppedAsync` | Stop RTMP output for voice room. Consent revoked or room closed. Soft -- no-op if lib-voice absent. |
-| `voice.participant.muted` | `HandleVoiceParticipantMutedAsync` | Exclude/include muted participant audio from RTMP output mixing. Soft -- no-op if lib-voice absent. |
-| `session.disconnected` | `HandleSessionDisconnectedAsync` | Cleanup platform session on WebSocket disconnect. Prevents orphaned sessions. |
+| Topic | Handler | Source | Action |
+|-------|---------|--------|--------|
+| `voice.room.broadcast.approved` | `HandleVoiceBroadcastApprovedAsync` | lib-voice (L3) | Start RTMP output for voice room after consent. Connects to room's RTP audio. Soft -- no-op if lib-voice absent. |
+| `voice.room.broadcast.stopped` | `HandleVoiceBroadcastStoppedAsync` | lib-voice (L3) | Stop RTMP output for voice room. Consent revoked or room closed. Soft -- no-op if lib-voice absent. |
+| `voice.participant.muted` | `HandleVoiceParticipantMutedAsync` | lib-voice (L3) | Exclude/include muted participant audio from RTMP output mixing. Soft -- no-op if lib-voice absent. |
+| `session.disconnected` | `HandleSessionDisconnectedAsync` | lib-connect (L1) | Cleanup platform session on WebSocket disconnect. Prevents orphaned Redis sessions. T28-compliant: sessions have TTL and would expire naturally; the event accelerates cleanup. |
 
 All consumed voice event models are redefined inline in `broadcast-events.yaml` (cannot `$ref` other service event files per Foundation Tenets).
 

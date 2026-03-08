@@ -78,7 +78,7 @@
 
 **Special notes**:
 - Resource has zero service client dependencies. All cross-service coordination happens via `IServiceNavigator` executing opaque callback endpoint definitions stored as data in Redis. This satisfies L1 hierarchy isolation — Resource never knows what services it calls.
-- Account is exempt from lib-resource per T28 privacy exception.
+- Account is exempt from lib-resource reference tracking (privacy constraint). Services with account-owned data MUST instead subscribe to `account.deleted` per T28's Account Deletion Cleanup Obligation.
 
 ---
 

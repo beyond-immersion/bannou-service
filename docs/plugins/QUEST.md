@@ -144,8 +144,7 @@ None — all previously identified stubs have been implemented.
 4. **Client events for real-time objective tracking** ([#496](https://github.com/beyond-immersion/bannou-service/issues/496)): Push `QuestObjectiveProgressed` and `QuestStatusChanged` (consolidated lifecycle event with status discriminator for accepted/completed/failed/abandoned) client events via `IClientEventPublisher` using the Entity Session Registry (#426, now implemented). Sessions resolved via `character → session` bindings for all questor characters. Published from Quest's event handlers that process Contract state transitions. **Unblocked** — infrastructure dependency (#426) is closed.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/496 -->
 
-5. **T28 character deletion cleanup** ([#561](https://github.com/beyond-immersion/bannou-service/issues/561)): Quest stores data keyed by character IDs (instances, character indexes, cooldowns) but does not implement `ISeededResourceProvider` for cleanup when characters are deleted. Requires registering references with lib-resource and implementing cascade cleanup.
-<!-- AUDIT:NEEDS_IMPLEMENTATION:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/561 -->
+5. ~~**T28 character deletion cleanup**~~: **FIXED** (2026-03-08) - Added `x-references` to quest-api.yaml declaring character dependency with CASCADE policy. Generated reference tracking code. `AcceptQuestAsync` now registers character references; `DeleteByCharacterAsync` endpoint abandons active quests (with best-effort contract termination), deletes objective progress, cooldowns, and character index. Cleanup callbacks registered on startup via `QuestServicePlugin`.
 
 6. **Objective progress durability** ([#562](https://github.com/beyond-immersion/bannou-service/issues/562)): Redis-only progress storage with 5-minute TTL causes silent data loss for long-running quests. Contract milestones are binary and cannot store partial progress. Needs either durable storage or TTL aligned to quest deadline.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/562 -->
@@ -163,6 +162,7 @@ None currently identified.
 1. **Self-subscription for cache invalidation**: Quest service subscribes to its own events (`quest.accepted`, `quest.completed`, `quest.failed`, `quest.abandoned`) to invalidate the `QuestDataCache`. This ensures actors running on different instances see fresh data after quest state changes.
 
 2. **Contract termination reason parsing for ABANDONED vs FAILED** ([#563](https://github.com/beyond-immersion/bannou-service/issues/563)): `HandleContractTerminatedAsync` uses string.Contains checks for "abandoned" and "player" to determine if termination is abandonment vs failure. This is fragile — Contract's `reason` field is a free-form nullable string, not a typed enum. If Contract callers or future changes alter reason string conventions, Quest silently misclassifies quest outcomes. #563 proposes a typed `TerminationCategory` enum on the Contract termination event.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/563 -->
 
 3. **Objective progress TTL — durability concern** ([#562](https://github.com/beyond-immersion/bannou-service/issues/562)): Objective progress is stored in Redis with TTL from `ProgressCacheTtlSeconds` (default **5 minutes**). Progress is re-persisted on each update, refreshing the TTL. However, Contract milestones are **binary** (complete/not complete) and cannot store partial progress. If no progress is reported for longer than the TTL, partial progress (e.g., 7/10 goblins killed) and entity deduplication data (`TrackedEntityIds`) are silently lost. This is a real data loss risk for daily, weekly, exploration, and other long-running quest types. See #562 for proposed fixes.
 
@@ -194,6 +194,8 @@ None currently identified.
 - [#503](https://github.com/beyond-immersion/bannou-service/issues/503): Dynamic objectives — evaluate CUSTOM sufficiency before designing mutation
 - [#506](https://github.com/beyond-immersion/bannou-service/issues/506): Party quest acceptance and shared progress mechanics
 - [#508](https://github.com/beyond-immersion/bannou-service/issues/508): Localization support (cross-cutting, system-wide design)
-- [#561](https://github.com/beyond-immersion/bannou-service/issues/561): T28 character deletion cleanup via lib-resource
 - [#562](https://github.com/beyond-immersion/bannou-service/issues/562): Objective progress durability (Redis-only with 5-min TTL)
 - [#563](https://github.com/beyond-immersion/bannou-service/issues/563): Contract typed termination reason enum (Contract-side, benefits Quest)
+
+### Completed
+- [#561](https://github.com/beyond-immersion/bannou-service/issues/561): T28 character deletion cleanup via lib-resource (2026-03-08)

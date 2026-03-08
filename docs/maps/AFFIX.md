@@ -14,9 +14,9 @@
 |-------|-------|
 | Plugin | lib-affix |
 | Layer | L4 GameFeatures |
-| Endpoints | 26 |
+| Endpoints | 27 |
 | State Stores | affix-definitions (MySQL), affix-implicit-mappings (MySQL), affix-instances (MySQL), affix-definition-cache (Redis), affix-instance-cache (Redis), affix-pool-cache (Redis), affix-lock (Redis) |
-| Events Published | 9 (affix.definition.created, affix.definition.updated, affix.instance.initialized, affix.modifier.applied, affix.modifier.removed, affix.modifier.rerolled, affix.instance.state-changed, affix.batch.generated, affix.rarity.changed) |
+| Events Published | 10 (affix.definition.created, affix.definition.updated, affix.instance.initialized, affix.modifier.applied, affix.modifier.removed, affix.modifier.rerolled, affix.instance.state-changed, affix.influence.changed, affix.batch.generated, affix.rarity.changed) |
 | Events Consumed | 2 (item.template.created, item.template.updated) |
 | Client Events | 0 |
 | Background Services | 1 (OrphanReconciliationWorker) |
@@ -84,7 +84,7 @@
 |------------|-------|------|-------|
 | lib-state (IStateStoreFactory) | L0 | Hard | 7 stores: 3 MySQL (definitions, implicit mappings, instances), 3 Redis cache (definition, instance, pool), 1 Redis lock |
 | lib-state (IDistributedLockProvider) | L0 | Hard | Definition mutation locks, per-item affix modification locks, pool rebuild locks |
-| lib-messaging (IMessageBus) | L0 | Hard | Publishing 9 event topics |
+| lib-messaging (IMessageBus) | L0 | Hard | Publishing 10 event topics |
 | lib-messaging (IEventConsumer) | L0 | Hard | Subscribing to item.template.created and item.template.updated |
 | lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation (`"bannou.affix"` component) |
 | lib-resource (IResourceClient) | L1 | Hard | Cleanup callback registration for game-service deletion (OnRunningAsync) |
@@ -111,6 +111,7 @@
 | `affix.modifier.removed` | `AffixModifierRemovedEvent` | RemoveAffix |
 | `affix.modifier.rerolled` | `AffixModifierRerolledEvent` | RerollValues |
 | `affix.instance.state-changed` | `AffixInstanceStateChangedEvent` | SetItemState |
+| `affix.influence.changed` | `AffixInfluenceChangedEvent` | SetInfluence (T5: meaningful state change must publish event) |
 | `affix.batch.generated` | `AffixBatchGeneratedEvent` | BatchGenerateAffixSets (deduped by source within configurable window) |
 | `affix.rarity.changed` | `AffixRarityChangedEvent` | ApplyAffix, RemoveAffix (only when effective rarity transitions) |
 
@@ -130,7 +131,7 @@
 | Service | Role |
 |---------|------|
 | `ILogger<AffixService>` | Structured logging |
-| `AffixServiceConfiguration` | Typed configuration access (16 properties) |
+| `AffixServiceConfiguration` | Typed configuration access (18 properties) |
 | `IStateStoreFactory` | State store access (creates 7 stores) |
 | `IMessageBus` | Event publishing |
 | `IEventConsumer` | Event subscription for item template lifecycle events |
@@ -169,6 +170,7 @@
 | RemoveAffix | POST /affix/remove | [] | instance, instance-cache, stats-cache | affix.modifier.removed, affix.rarity.changed |
 | RerollValues | POST /affix/reroll-values | [] | instance, instance-cache, stats-cache | affix.modifier.rerolled |
 | SetItemState | POST /affix/state/set | [] | instance, instance-cache, stats-cache | affix.instance.state-changed |
+| SetInfluence | POST /affix/influence/set | [] | instance, instance-cache, pool-cache | affix.influence.changed |
 | GenerateAffixPool | POST /affix/generate/pool | [] | pool-cache (on miss) | - |
 | GenerateAffixSet | POST /affix/generate/set | [] | - | - |
 | BatchGenerateAffixSets | POST /affix/generate/batch | [] | - | affix.batch.generated |
@@ -462,6 +464,22 @@ LOCK _lockStore:"item:{itemInstanceId}"                             -> 409 if fa
   DELETE _instanceCache:"stats:{itemInstanceId}"
   PUBLISH affix.instance.state-changed { itemInstanceId, changedFlags: [{ flagName, oldValue, newValue }] }
 RETURN (200, SetItemStateResponse)
+
+---
+
+### SetInfluence
+POST /affix/influence/set | Roles: []
+
+LOCK _lockStore:"item:{itemInstanceId}"                             -> 409 if fails
+  READ _instanceStore:"inst:{itemInstanceId}" [with ETag]           -> 404 if null
+  // Validate: not mirrored                                         -> 400 if mirrored
+  // Update influences array from request
+  ETAG-WRITE _instanceStore:"inst:{itemInstanceId}" <- updatedInstance -> 409 if ETag mismatch
+  DELETE _instanceCache:"inst:{itemInstanceId}"
+  // Influence change affects eligible affix pools for this item
+  DELETE _poolCache:"pool:{gameServiceId}:{itemClass}:*"            // invalidate pools for affected item class
+  PUBLISH affix.influence.changed { itemInstanceId, previousInfluences, newInfluences }
+RETURN (200, SetInfluenceResponse)
 
 ---
 

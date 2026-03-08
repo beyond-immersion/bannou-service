@@ -862,24 +862,104 @@ Not all responses to state changes are "cleanup." Some are operational reactions
 | Reaction Type | Mechanism | Example |
 |---------------|-----------|---------|
 | **Dependent data destruction** | lib-resource (MANDATORY) | Delete encounter records when character is deleted |
+| **Account-owned data cleanup** | `account.deleted` event (MANDATORY) | Delete account-owned collections, wallets, containers — see Account Deletion Cleanup Obligation below |
 | **Cache invalidation** | Broadcast event (acceptable) | Invalidate analytics cache when character is updated |
 | **Live session management** | Broadcast event (acceptable) | Auth invalidates live sessions when account is deleted |
 | **State synchronization** | Broadcast event (acceptable) | Permission recompiles manifests when roles change |
 
-**The test**: "If this event were lost, would data integrity be violated?" If yes → lib-resource. If no (cache rebuilds, sessions expire naturally, state converges eventually) → events are acceptable.
+**The test**: "If this event were lost, would data integrity be violated?" If yes → lib-resource (or Account Deletion Cleanup Obligation for account-owned data). If no (cache rebuilds, sessions expire naturally, state converges eventually) → events are acceptable.
 
-### Account Privacy Exception
+### Account Deletion Cleanup Obligation
 
 Account resources (L1) are **exempt from lib-resource registration**. We do not track or compile historical reference data about accounts beyond what Analytics stores for its specific purpose. This is a deliberate privacy decision — the system should not maintain a centralized record of everything that references an account.
 
-Auth's subscription to `account.deleted` for session invalidation is acceptable because:
+**However, account-owned data MUST still be cleaned up.** Every service that stores data with account ownership (`ownerType: Account` or equivalent account-keyed data) MUST subscribe to the `account.deleted` broadcast event and delete all data belonging to that account. This is not optional — it is a **privacy and data hygiene obligation** that comes automatically with accepting account ownership.
 
-1. It's L1→L1 (same layer, not cross-layer cleanup)
-2. Sessions are live ephemeral state, not persistent dependent data
-3. Sessions expire naturally via TTL regardless — the event accelerates invalidation, it doesn't provide the only path to cleanup
-4. No data integrity violation if the event is lost (sessions time out)
+#### Why Account Is THE Exception to Event-Based Cleanup
 
-This exception does not extend to other L1 resources. It is specific to Account due to the privacy constraint.
+The standard T28 rule — "never subscribe to lifecycle events for destruction" — exists because lib-resource provides superior guarantees (ordering, blocking, confirmation, visibility, durability). But for accounts, lib-resource cannot work:
+
+1. **Privacy**: lib-resource would create a centralized registry of "everything referencing this account" — exactly the kind of tracking the privacy constraint prohibits
+2. **Hierarchy**: Account (L1) cannot inject L2/L3/L4 clients to call `ExecuteCleanupAsync`. The cleanup must be initiated by the data-owning services, not by Account
+3. **No alternative mechanism exists**: DI Listener patterns would require L1 code to reference L2+ types (hierarchy violation). Background reconciliation workers alone are insufficient — they introduce unacceptable delay for privacy-critical deletion
+
+The `account.deleted` broadcast event is the correct mechanism because it is genuinely a broadcast ("something happened, anyone can react") — Account doesn't know or care who is listening, and higher-layer services react independently.
+
+#### The Ownership Contract
+
+Making an entity's owner an account is an **explicit opt-in** to this cleanup obligation. This is fundamentally different from other ownership patterns:
+
+- **Character/Seed/Faction ownership**: The data has narrative or gameplay value that may need to persist beyond the owner's lifecycle. lib-resource manages this with CASCADE/RESTRICT/DETACH policies.
+- **Account ownership**: The data exists *because of* and *for* the account. When the account is deleted, this data has no owner, no purpose, and must be removed. There is no RESTRICT case — account deletion is always CASCADE.
+
+Services that want data to survive account deletion should NOT use account ownership. Assign ownership to a character, seed, game service, or other entity whose lifecycle is independent of the account.
+
+#### Multi-Node Idempotency Requirement
+
+`account.deleted` is a broadcast event delivered to all nodes via RabbitMQ fanout. Multiple service instances will receive and process the same deletion event concurrently. This is the durability guarantee — cleanup succeeds as long as any node processes it. Handlers MUST be idempotent:
+
+- State store deletes are naturally idempotent (deleting a non-existent key is a no-op)
+- "Not found" during cleanup is expected, not an error (another node may have already processed it, or the data may never have existed on this code path)
+- Log at `Debug` level when cleanup finds no data to delete; log at `Warning` level for per-item failures during cleanup; log at `Error` level only for infrastructure failures that prevent the cleanup attempt entirely
+
+#### Required Pattern
+
+Every service with account-owned data MUST implement a `HandleAccountDeletedAsync` handler in its `*ServiceEvents.cs` partial class:
+
+```csharp
+// In {Service}ServiceEvents.cs
+protected void RegisterEventConsumers(IEventConsumer eventConsumer)
+{
+    eventConsumer.RegisterHandler<IMyService, AccountDeletedEvent>(
+        "account.deleted",
+        async (svc, evt) => await ((MyService)svc).HandleAccountDeletedAsync(evt));
+}
+
+public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
+{
+    using var activity = _telemetryProvider.StartActivity(
+        "bannou.my-service", "MyService.HandleAccountDeleted");
+    _logger.LogInformation("Handling account.deleted for account {AccountId}", evt.AccountId);
+    try
+    {
+        // Delete all account-owned data — per-item isolation for batch operations
+        await CleanupDataForAccountAsync(evt.AccountId);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to clean up data for account {AccountId}", evt.AccountId);
+        await _messageBus.TryPublishErrorAsync(
+            "my-service", "CleanupDataForAccount", ex.GetType().Name, ex.Message,
+            endpoint: "account.deleted", details: $"accountId={evt.AccountId}",
+            stack: ex.StackTrace);
+    }
+}
+```
+
+**Handler requirements**:
+1. **Telemetry span** — event handlers have no generated controller boundary, so add `StartActivity` manually
+2. **Top-level try-catch** — same reason; catch-all with error event publishing
+3. **Per-item error isolation** — when cleaning up multiple records, wrap each item in try-catch so one corrupt record doesn't block the rest (log per-item failures at `Warning`)
+4. **Publish lifecycle events** — if the service has lifecycle events for its entities, publish `*.deleted` events for each cleaned-up entity so downstream consumers (lib-resource callbacks, cache invalidation, etc.) react correctly
+
+#### Enforcement
+
+When adding a new service that accepts `ownerType: Account` (or stores data keyed directly by `accountId`):
+
+1. **MANDATORY**: Add `HandleAccountDeletedAsync` in `*ServiceEvents.cs`
+2. **MANDATORY**: Register the handler via `IEventConsumer` in `RegisterEventConsumers`
+3. **MANDATORY**: Add `account-events.yaml` to `x-event-subscriptions` in the service's events schema
+4. **Structural test**: The `Service_CallsAllGeneratedEventPublishers` test pattern should be extended to verify account-deletion handler existence for services with account ownership
+
+**Detection**: Any service whose API schema includes an `ownerType` enum containing `Account`, or whose models include an `accountId` field used as an ownership key, MUST have a corresponding `account.deleted` event handler. Absence of this handler is a data hygiene violation.
+
+#### What This Exception Does NOT Cover
+
+This exception is specific to Account due to the privacy constraint — no other L1 resource has the same privacy implications. All other entity cleanup (characters, items, game services, realms, etc.) continues to use lib-resource per the base T28 rule. The fact that accounts are the exception **strengthens** the rule for everything else: if the only entity that bypasses lib-resource is the one where lib-resource fundamentally cannot work, that validates the pattern for all other cases.
+
+#### Reference Implementation
+
+lib-collection's `CollectionServiceEvents.cs` is the canonical reference for this pattern. It demonstrates: event consumer registration, telemetry spans, try-catch boundary, per-item error isolation in `CleanupCollectionsForOwnerAsync`, lifecycle event publishing for each deleted collection, and graceful handling of missing data.
 
 ### High-Frequency Instance Lifecycle Exception
 
@@ -942,9 +1022,10 @@ public interface IItemInstanceDestructionListener
 When adding a new service that stores data keyed by another service's entity:
 
 1. **Default**: Register references with lib-resource API when creating dependent data, declare `x-references` in the service's API schema for cleanup callback registration (see [SCHEMA-RULES.md](../SCHEMA-RULES.md))
-2. **Exception**: If ALL four criteria of the High-Frequency Instance Lifecycle Exception are met, use DI Listener + orphan reconciliation instead
-3. Do NOT add `x-event-subscriptions` for the parent entity's `*.deleted` event for cleanup purposes (regardless of which path you use)
-4. Do NOT add event handler methods for parent entity deletion
+2. **Account ownership exception**: If the service accepts `ownerType: Account` or stores data keyed by `accountId`, subscribe to `account.deleted` and implement `HandleAccountDeletedAsync` per the Account Deletion Cleanup Obligation above
+3. **High-frequency instance exception**: If ALL four criteria of the High-Frequency Instance Lifecycle Exception are met, use DI Listener + orphan reconciliation instead
+4. For all non-account entities: do NOT add `x-event-subscriptions` for the parent entity's `*.deleted` event for cleanup purposes (regardless of which path you use)
+5. For all non-account entities: do NOT add event handler methods for parent entity deletion
 
 ---
 

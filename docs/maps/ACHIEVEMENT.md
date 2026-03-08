@@ -14,7 +14,7 @@
 | Plugin | lib-achievement |
 | Layer | L4 GameFeatures |
 | Endpoints | 12 |
-| State Stores | achievement-definition (Redis), achievement-progress (Redis), achievement-lock (Redis) |
+| State Stores | achievement-definition (Redis), achievement-progress (Redis), achievement-sync (Redis), achievement-lock (Redis) |
 | Events Published | 5 (achievement.definition.created, achievement.definition.updated, achievement.progress.unlocked, achievement.progress.updated, achievement.platform.synced) |
 | Events Consumed | 3 (analytics.score.updated, analytics.milestone.reached, leaderboard.rank.changed) |
 | Client Events | 2 (achievement.progress.unlocked, achievement.progress.milestone-reached) |
@@ -37,6 +37,12 @@
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `{gameServiceId}:{entityType}:{entityId}` | `EntityProgressData` | All achievement progress for an entity — dictionary of achievementId to progress data, plus total points |
+
+**Store**: `achievement-sync` (Backend: Redis, IStateStore)
+
+| Key Pattern | Data Type | Purpose |
+|-------------|-----------|---------|
+| `{gameServiceId}:{entityId}:{platform}` | `PlatformSyncTrackingData` | Per-entity per-platform sync outcome tracking (synced count, failed count, last sync timestamp, last error) |
 
 **Store**: `achievement-lock` (Backend: Redis) — used via `IDistributedLockProvider` only
 
@@ -161,6 +167,7 @@ READ _definitionStore (set):achievement-definitions:{gameServiceId}
 FOREACH achievementId in set
   READ _definitionStore:{gameServiceId}:{achievementId}
     // Skip if null (orphaned index entry)
+  IF body.Category set AND definition.Category != it -> skip
   IF body.Platform set AND definition.Platforms !contains it -> skip
   IF body.AchievementType set AND doesn't match -> skip
   IF body.IsActive set AND doesn't match -> skip
@@ -175,7 +182,7 @@ POST /achievement/definition/update | Roles: [developer]
 
 ```
 READ _definitionStore:{gameServiceId}:{achievementId} [with ETag]  -> 404 if null
-// Updateable: DisplayName, Description, IsActive, PlatformMappings,
+// Updateable: DisplayName, Description, Category, IsActive, PlatformMappings,
 //   ScoreType, MilestoneType, MilestoneValue, MilestoneName, LeaderboardId, RankThreshold
 // Dirty-tracking: only apply fields that differ from current values
 IF changedFields is empty
@@ -337,8 +344,9 @@ FOREACH syncProvider in _platformSyncs
   CALL syncProvider.IsLinkedAsync(body.EntityId)
   IF linked
     CALL syncProvider.GetExternalIdAsync(body.EntityId)
-  // SyncedCount, PendingCount, FailedCount are all hardcoded 0
-  // LastSyncAt, LastError are null (per-entity sync history not tracked)
+  READ _syncStore:{gameServiceId}:{entityId}:{platform}
+  // SyncedCount, FailedCount, LastSyncAt, LastError from PlatformSyncTrackingData
+  // PendingCount is null (sync is synchronous, no queue)
 RETURN (200, PlatformSyncStatusResponse { entityId, entityType, platforms })
 ```
 

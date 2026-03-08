@@ -20,7 +20,10 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
-  x-event-subscriptions: []
+  x-event-subscriptions:
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      handler: HandleAccountDeleted
   x-event-publications:
     # Balance events
     - topic: currency.credited

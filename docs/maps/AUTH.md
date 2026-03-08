@@ -66,7 +66,7 @@
 | IHttpClientFactory | — | Hard | OAuth provider HTTP calls and CloudFlare KV API (injected into helper services) |
 
 **Notes:**
-- Auth is exempt from lib-resource for account-linked data (T28 privacy exception). Session cleanup on account deletion uses the `account.deleted` event, which is the sole acceptable event-based cleanup at L1 — sessions are ephemeral, TTL-bounded, and no data integrity violation occurs if the event is missed.
+- Auth subscribes to `account.deleted` for session invalidation per T28's Account Deletion Cleanup Obligation. Sessions are ephemeral, TTL-bounded state — no data integrity violation occurs if the event is missed (sessions time out naturally). Auth is L1→L1, making this the simplest case of the account cleanup pattern.
 - Auth is a leaf service at L1: calls only Account (L1) via service mesh. No L2+ dependencies.
 - IEntitySessionRegistry is a shared DI interface hosted by Connect, not a generated service client.
 

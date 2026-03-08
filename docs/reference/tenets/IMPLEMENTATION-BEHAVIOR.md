@@ -746,30 +746,6 @@ if (status != StatusCodes.OK || exists?.IsActive != true)
     return (StatusCodes.BadRequest, null);  // Realm is deprecated or missing
 ```
 
-### Known Violations (Tracked for Remediation)
-
-These are existing violations to be fixed, NOT patterns to follow:
-
-| Service | Violation | Correct Behavior |
-|---------|-----------|-----------------|
-| Species | Returns `Conflict` on already-deprecated | Return `OK` (idempotent) |
-| Realm | Returns `Conflict` on already-deprecated | Return `OK` (idempotent) |
-| Location | Returns `Conflict` on already-deprecated | Return `OK` (idempotent) |
-| Relationship Type | Returns `Conflict` on already-deprecated | Return `OK` (idempotent) |
-| Seed Type | Returns `Conflict` on already-deprecated | Return `OK` (idempotent) |
-| Species | Returns `Conflict` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
-| Realm | Returns `BadRequest` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
-| Location | Returns `BadRequest` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
-| Relationship Type | Returns `BadRequest` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
-| Seed Type | Returns `Conflict` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
-| Faction | Returns `BadRequest` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
-| Location | Delete does not require deprecation first | Require deprecation (Category A) |
-| Item Template | Uses dedicated `item-template.deprecated` event | Use `*.updated` with `changedFields` |
-| Item Template | Missing `DeprecationReason` field | Add to model and schema |
-| Quest Definition | Bare boolean, no timestamp or reason | Add full triple-field model |
-| Storyline Scenario | Bare boolean, no timestamp or reason | Add full triple-field model (or status enum) |
-| Item Template | Does not block instance creation for deprecated templates | Add deprecation check in `CreateInstanceAsync` |
-
 ---
 
 ## Quick Reference

@@ -110,7 +110,7 @@ None currently tracked.
 
 ### Bugs (Fix Immediately)
 
-None currently tracked.
+1. ~~**Dead event topic constants**~~: **FIXED** (2026-03-08) - Removed 6 unused `private const string` topic constants (`CHARACTER_CREATED_TOPIC`, etc.) that remained after migration to generated `CharacterEventPublisher` extension methods. Zero functional impact — the service already used generated publishers for all event publishing.
 
 ### Intentional Quirks (Documented Behavior)
 

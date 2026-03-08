@@ -118,7 +118,9 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 
 ### Consumed Events
 
-This plugin does not consume external events.
+| Topic | Source | Handler | Purpose |
+|-------|--------|---------|---------|
+| `account.deleted` | lib-account (L1) | `HandleAccountDeletedAsync` | CASCADE-delete all account-owned wallets with balances, holds, transactions, and indexes. Per FOUNDATION TENETS (Account Deletion Cleanup Obligation). |
 
 ### Published Client Events
 
@@ -506,7 +508,7 @@ Escrow Integration Flow
 
 ### Design Considerations
 
-1. **Entity deletion does not trigger wallet cleanup**: When an entity that owns a wallet (character, account, guild) is deleted, no mechanism currently closes or transfers the wallet's balances. Wallets remain active with orphaned `ownerId` references. Character deletion (L2→L2 same layer) could call `/currency/wallet/close` directly, but no integration exists. Account deletion has the privacy exception per T28 but the wallet should still be cleaned up. Needs design decisions on: whether to use lib-resource callbacks or direct API integration, what happens to remaining balances (transfer to treasury? burn?), and whether frozen wallets owned by deleted entities should be force-closed.
+1. ~~**Account deletion does not trigger wallet cleanup**~~: **FIXED** (2026-03-08) - Added `account.deleted` event handler that CASCADE-deletes all account-owned wallets with balances, holds, transactions, and indexes. Remaining balances are destroyed (not transferred) since the owning account no longer exists. Character/guild deletion still needs lib-resource integration — see issue #556.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/556 -->
 
 2. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
@@ -529,8 +531,9 @@ This section tracks active development work on items from the quirks/bugs lists 
 - [#471](https://github.com/beyond-immersion/bannou-service/issues/471) - Global supply cap enforcement needs aggregation strategy (shared with #211). `GlobalSupplyCap` stored but never checked during credits.
 - [#473](https://github.com/beyond-immersion/bannou-service/issues/473) - Item linkage enforcement: `LinkedToItem`, `LinkedItemTemplateId`, and `LinkageMode` fields are stored but have zero runtime enforcement. Needs design decisions on what each linkage mode means and which operations to gate.
 - [#478](https://github.com/beyond-immersion/bannou-service/issues/478) - Universal value anchoring for dynamic exchange rates. Needs design on coexistence vs replacement of `ExchangeRateToBase`, modifier ownership (L2 vs L4), value change triggers, and relationship to location-scoped exchange rates.
-- [#556](https://github.com/beyond-immersion/bannou-service/issues/556) - Entity deletion does not trigger wallet cleanup. Wallets remain active with orphaned `ownerId` references when owning entities are deleted. Needs design on integration mechanism, balance disposition, and frozen wallet handling.
+- [#556](https://github.com/beyond-immersion/bannou-service/issues/556) - Non-account entity deletion (characters, guilds) does not trigger wallet cleanup. Account deletion path implemented (2026-03-08). Character/guild paths still need lib-resource integration design (balance disposition, frozen wallet handling).
 
 ### Completed
 
+- **2026-03-08**: Account deletion wallet cleanup — Added `account.deleted` event handler with CASCADE deletion of all account-owned wallets, balances, holds, transactions, and indexes. Per T28 Account Deletion Cleanup Obligation. Issue [#556](https://github.com/beyond-immersion/bannou-service/issues/556) partially addressed (account path only; character/guild paths remain).
 - **2026-02-27**: Issue [#494](https://github.com/beyond-immersion/bannou-service/issues/494) - Client events for real-time wallet updates. Three client events published via IEntitySessionRegistry at all balance mutation and wallet lifecycle points.

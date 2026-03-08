@@ -117,6 +117,9 @@ public class QuestServicePlugin : BaseBannouPlugin
             // Register compression callback with lib-resource (generated from x-compression-callback)
             await RegisterCompressionCallbackAsync();
 
+            // Register resource cleanup callbacks with lib-resource (generated from x-references)
+            await RegisterCleanupCallbacksAsync();
+
             // Register event templates for emit_event: ABML action
             RegisterEventTemplates();
         }
@@ -150,6 +153,28 @@ public class QuestServicePlugin : BaseBannouPlugin
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Failed to register event templates");
+        }
+    }
+
+    /// <summary>
+    /// Registers resource cleanup callbacks with lib-resource for T28 character deletion cleanup.
+    /// Uses the schema-generated <see cref="QuestService.RegisterResourceCleanupCallbacksAsync"/> method.
+    /// </summary>
+    private async Task RegisterCleanupCallbacksAsync()
+    {
+        if (_serviceProvider == null) return;
+
+        // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
+        using var scope = _serviceProvider.CreateScope();
+        var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+
+        if (await QuestService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None))
+        {
+            Logger?.LogInformation("Registered quest cleanup callbacks with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register quest cleanup callbacks with lib-resource");
         }
     }
 

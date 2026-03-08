@@ -85,7 +85,7 @@ This plugin does not consume external events.
 |---------|------|
 | `ILogger<CharacterService>` | Structured logging |
 | `CharacterServiceConfiguration` | Pagination limits, retry counts, lock timeout, grace period |
-| `IStateStoreFactory` | State store access (inline acquisition, not constructor-cached) |
+| `IStateStoreFactory` | State store access (constructor-cached into 6 readonly store fields) |
 | `IDistributedLockProvider` | Distributed locking for character modifications |
 | `IMessageBus` | Event publishing |
 | `IEventConsumer` | Event handler registration (no handlers) |

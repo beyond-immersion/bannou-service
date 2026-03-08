@@ -74,7 +74,7 @@ Used for distributed locks on mutation operations. Lock keys use `tpl:{id}` for 
 
 **DI Listener interface**: Collection discovers `IEnumerable<ICollectionUnlockListener>` at construction. After each successful grant, dispatches `OnEntryUnlockedAsync` to all registered listeners with per-listener error isolation. Known implementors: `SeedCollectionUnlockListener` (lib-seed, L2), `FactionCollectionUnlockListener` (lib-faction, L4).
 
-**Cleanup patterns**: Character-owned collections use lib-resource cascade callback (`/collection/cleanup-by-character`). Account-owned collections use `account.deleted` event subscription (T28 privacy exception).
+**Cleanup patterns**: Character-owned collections use lib-resource cascade callback (`/collection/cleanup-by-character`). Account-owned collections use `account.deleted` event subscription (T28 Account Deletion Cleanup Obligation).
 
 ---
 
@@ -607,4 +607,4 @@ FOREACH collection in results
   PUBLISH collection.deleted { collectionId, ..., deletedReason: "Owner Account deleted" }
 ```
 
-Account cleanup uses event subscription (T28 privacy exception for Account). Character cleanup uses lib-resource cascade callback.
+Account cleanup uses event subscription (T28 Account Deletion Cleanup Obligation). Character cleanup uses lib-resource cascade callback.

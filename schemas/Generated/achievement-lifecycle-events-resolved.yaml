@@ -1,8 +1,10 @@
 openapi: 3.0.4
 info:
   title: Achievement Service Events Lifecycle Events
-  description: "Auto-generated lifecycle event schemas for achievement service.\nDO NOT EDIT - This file is completely overwritten
-    by generate-lifecycle-events.py.\nSource of truth: achievement-events.yaml x-lifecycle section."
+  description: "AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.\nDO NOT EDIT - Regenerate
+    with scripts/resolve-event-refs.py\nSource: achievement-lifecycle-events.yaml\n\nAuto-generated lifecycle event schemas
+    for achievement service.\nDO NOT EDIT - This file is completely overwritten by generate-lifecycle-events.py.\nSource of
+    truth: achievement-events.yaml x-lifecycle section."
   version: 1.0.0
 paths: {}
 components:
@@ -50,86 +52,90 @@ components:
           type: string
           nullable: true
           description: "Description shown before achievement is earned (for hidden types)"
-        achievementType: &id006
+        category: &id006
+          type: string
+          nullable: true
+          description: "Game-defined category for UI grouping and filtering"
+        achievementType: &id007
           $ref: ../achievement-api.yaml#/components/schemas/AchievementType
           description: "Classification of the achievement"
-        entityTypes: &id007
+        entityTypes: &id008
           type: array
           items: {$ref: '../common-api.yaml#/components/schemas/EntityType'}
           nullable: true
           description: "Which entity types can earn this achievement"
-        progressTarget: &id008
+        progressTarget: &id009
           type: integer
           nullable: true
           description: "Target value for progressive achievements"
-        points: &id009
+        points: &id010
           type: integer
           description: "Point value of this achievement"
-        iconUrl: &id010
+        iconUrl: &id011
           type: string
           nullable: true
           description: "Achievement icon URL"
-        platforms: &id011
+        platforms: &id012
           type: array
           items: {$ref: '#/components/schemas/Platform'}
           nullable: true
           description: "Available platforms"
-        platformMappings: &id012
+        platformMappings: &id013
           type: array
           items: {$ref: '#/components/schemas/PlatformMapping'}
           nullable: true
           description: "Platform-specific achievement ID mappings"
-        prerequisites: &id013
+        prerequisites: &id014
           type: array
           items: {type: string}
           nullable: true
           description: "Achievement IDs that must be unlocked first"
-        scoreType: &id014
+        scoreType: &id015
           type: string
           nullable: true
           description: "Score type code for analytics event matching"
-        milestoneType: &id015
+        milestoneType: &id016
           type: string
           nullable: true
           description: "Milestone type code for analytics event matching"
-        milestoneValue: &id016
+        milestoneValue: &id017
           type: number
           format: double
           nullable: true
           description: "Expected milestone value for analytics event matching"
-        milestoneName: &id017
+        milestoneName: &id018
           type: string
           nullable: true
           description: "Expected milestone name for analytics event matching"
-        leaderboardId: &id018
+        leaderboardId: &id019
           type: string
           nullable: true
           description: "Leaderboard ID for rank change event matching"
-        rankThreshold: &id019
+        rankThreshold: &id020
           type: integer
           format: int64
           nullable: true
           description: "Rank threshold for leaderboard achievements"
-        isActive: &id020
+        isActive: &id021
           type: boolean
           description: "Whether achievement is earnable"
-        isDeprecated: &id021
+        isDeprecated: &id022
           type: boolean
           description: "Whether this definition is deprecated"
-        deprecatedAt: &id022
+        deprecatedAt: &id023
           type: string
           format: date-time
           nullable: true
           description: "When deprecation occurred"
-        deprecationReason: &id023
+        deprecationReason: &id024
           type: string
           nullable: true
           description: "Audit reason for deprecation"
-        earnedCount: &id024
+        earnedCount: &id025
           type: integer
           format: int64
           description: "How many entities have earned this"
-        metadata: &id025
+        metadata: &id026
           type: object
           additionalProperties: true
           nullable: true
@@ -174,26 +180,27 @@ components:
         displayName: *id003
         description: *id004
         hiddenDescription: *id005
-        achievementType: *id006
-        entityTypes: *id007
-        progressTarget: *id008
-        points: *id009
-        iconUrl: *id010
-        platforms: *id011
-        platformMappings: *id012
-        prerequisites: *id013
-        scoreType: *id014
-        milestoneType: *id015
-        milestoneValue: *id016
-        milestoneName: *id017
-        leaderboardId: *id018
-        rankThreshold: *id019
-        isActive: *id020
-        isDeprecated: *id021
-        deprecatedAt: *id022
-        deprecationReason: *id023
-        earnedCount: *id024
-        metadata: *id025
+        category: *id006
+        achievementType: *id007
+        entityTypes: *id008
+        progressTarget: *id009
+        points: *id010
+        iconUrl: *id011
+        platforms: *id012
+        platformMappings: *id013
+        prerequisites: *id014
+        scoreType: *id015
+        milestoneType: *id016
+        milestoneValue: *id017
+        milestoneName: *id018
+        leaderboardId: *id019
+        rankThreshold: *id020
+        isActive: *id021
+        isDeprecated: *id022
+        deprecatedAt: *id023
+        deprecationReason: *id024
+        earnedCount: *id025
+        metadata: *id026
         createdAt:
           type: string
           format: date-time
@@ -238,26 +245,27 @@ components:
         displayName: *id003
         description: *id004
         hiddenDescription: *id005
-        achievementType: *id006
-        entityTypes: *id007
-        progressTarget: *id008
-        points: *id009
-        iconUrl: *id010
-        platforms: *id011
-        platformMappings: *id012
-        prerequisites: *id013
-        scoreType: *id014
-        milestoneType: *id015
-        milestoneValue: *id016
-        milestoneName: *id017
-        leaderboardId: *id018
-        rankThreshold: *id019
-        isActive: *id020
-        isDeprecated: *id021
-        deprecatedAt: *id022
-        deprecationReason: *id023
-        earnedCount: *id024
-        metadata: *id025
+        category: *id006
+        achievementType: *id007
+        entityTypes: *id008
+        progressTarget: *id009
+        points: *id010
+        iconUrl: *id011
+        platforms: *id012
+        platformMappings: *id013
+        prerequisites: *id014
+        scoreType: *id015
+        milestoneType: *id016
+        milestoneValue: *id017
+        milestoneName: *id018
+        leaderboardId: *id019
+        rankThreshold: *id020
+        isActive: *id021
+        isDeprecated: *id022
+        deprecatedAt: *id023
+        deprecationReason: *id024
+        earnedCount: *id025
+        metadata: *id026
         createdAt:
           type: string
           format: date-time

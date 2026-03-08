@@ -52,7 +52,7 @@ All data types stored in the same logical store, differentiated by key prefix.
 
 Account is a leaf node -- it does not call any other service via lib-mesh clients.
 
-**Privacy Exception (per FOUNDATION TENETS)**: Account is explicitly exempt from lib-resource reference registration. No centralized tracking of account references exists. Consumers that store data keyed by accountId manage their own cleanup independently.
+**Account Deletion Cleanup Obligation (per FOUNDATION TENETS)**: Account is exempt from lib-resource reference registration (privacy — no centralized tracking of account references). Instead, every service that stores account-owned data MUST subscribe to `account.deleted` and clean up all data for the deleted account. This is mandatory, not optional. See T28 in FOUNDATION.md for the full pattern and reference implementation (lib-collection).
 
 ---
 

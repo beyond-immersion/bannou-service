@@ -10,6 +10,7 @@ using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Quest.Caching;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +30,7 @@ namespace BeyondImmersion.BannouService.Quest;
 /// <para>
 /// <b>SERVICE HIERARCHY (L2 Game Foundation):</b>
 /// <list type="bullet">
-///   <item>Hard dependencies (constructor injection): IContractClient (L1), ICharacterClient (L2), ICurrencyClient (L2), IInventoryClient (L2), IItemClient (L2), IDistributedLockProvider (L0)</item>
+///   <item>Hard dependencies (constructor injection): IResourceClient (L1), IContractClient (L1), ICharacterClient (L2), ICurrencyClient (L2), IInventoryClient (L2), IItemClient (L2), IDistributedLockProvider (L0)</item>
 ///   <item>Dynamic dependencies (DI collection): IEnumerable&lt;IPrerequisiteProviderFactory&gt; for L4 prerequisite providers</item>
 /// </list>
 /// </para>
@@ -49,6 +50,7 @@ public partial class QuestService : IQuestService
     private readonly IQuestDataCache _questDataCache;
     private readonly IEnumerable<IPrerequisiteProviderFactory> _prerequisiteProviders;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IResourceClient _resourceClient;
 
     /// <summary>Queryable state store for quest definitions (MySQL).</summary>
     private readonly IQueryableStateStore<QuestDefinitionModel> _definitionStore;
@@ -109,6 +111,7 @@ public partial class QuestService : IQuestService
     /// <param name="questDataCache">Quest data cache for actor variable provider.</param>
     /// <param name="prerequisiteProviders">Prerequisite provider factories for L4 dynamic prerequisites.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    /// <param name="resourceClient">Resource client for reference tracking and cleanup (L1 hard dependency).</param>
     public QuestService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -123,7 +126,8 @@ public partial class QuestService : IQuestService
         IEventConsumer eventConsumer,
         IQuestDataCache questDataCache,
         IEnumerable<IPrerequisiteProviderFactory> prerequisiteProviders,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IResourceClient resourceClient)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -137,6 +141,7 @@ public partial class QuestService : IQuestService
         _questDataCache = questDataCache;
         _prerequisiteProviders = prerequisiteProviders;
         _telemetryProvider = telemetryProvider;
+        _resourceClient = resourceClient;
 
         // Eagerly resolve all state stores per FOUNDATION TENETS (constructor-cached, no lazy initialization)
         _definitionStore = stateStoreFactory.GetQueryableStore<QuestDefinitionModel>(StateStoreDefinitions.QuestDefinition);
@@ -684,6 +689,9 @@ public partial class QuestService : IQuestService
 
         var instanceKey = BuildInstanceKey(questInstanceId);
         await _instanceStore.SaveAsync(instanceKey, questInstance, cancellationToken: cancellationToken);
+
+        // Register character reference with lib-resource for T28 cleanup
+        await RegisterCharacterReferenceAsync(questInstanceId.ToString(), body.QuestorCharacterId, cancellationToken);
 
         // Initialize objective progress
         if (definition.Objectives != null)
@@ -2395,6 +2403,161 @@ public partial class QuestService : IQuestService
 
             return (StatusCodes.OK, archive);
         }
+    }
+
+    #endregion
+
+    #region Cleanup Endpoints
+
+    /// <summary>
+    /// Deletes all quest data for a character. Called by lib-resource during character deletion cleanup.
+    /// Abandons active quests, deletes objective progress, cooldowns, and character index.
+    /// </summary>
+    /// <param name="body">Request containing the character ID to clean up.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Counts of deleted records.</returns>
+    public async Task<(StatusCodes, DeleteByCharacterResponse?)> DeleteByCharacterAsync(
+        DeleteByCharacterRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Deleting all quest data for character {CharacterId}", body.CharacterId);
+
+        var indexKey = BuildCharacterIndexKey(body.CharacterId);
+        var characterIndex = await _characterIndex.GetAsync(indexKey, cancellationToken);
+
+        var instancesAbandoned = 0;
+        var progressRecordsDeleted = 0;
+        var cooldownsDeleted = 0;
+
+        // Query ALL quest instances for this character (active, completed, abandoned, failed)
+        // to ensure comprehensive reference cleanup — the character index only tracks active quests
+        var allInstances = await _instanceStore.QueryAsync(
+            i => i.QuestorCharacterIds.Contains(body.CharacterId),
+            cancellationToken: cancellationToken);
+
+        foreach (var instance in allInstances)
+        {
+            try
+            {
+                // Abandon active quests; completed/failed/abandoned instances just need reference cleanup
+                if (instance.Status == QuestStatus.Active)
+                {
+                    var instanceKey = BuildInstanceKey(instance.QuestInstanceId);
+                    var (current, etag) = await _instanceStore.GetWithETagAsync(instanceKey, cancellationToken);
+
+                    if (current != null && current.Status == QuestStatus.Active)
+                    {
+                        current.Status = QuestStatus.Abandoned;
+                        current.CompletedAt = DateTimeOffset.UtcNow;
+
+                        // GetWithETagAsync returns non-null etag for existing records;
+                        // coalesce satisfies compiler's nullable analysis (will never execute)
+                        await _instanceStore.TrySaveAsync(instanceKey, current, etag ?? string.Empty, cancellationToken: cancellationToken);
+
+                        // Terminate underlying contract (best effort)
+                        try
+                        {
+                            await _contractClient.TerminateContractInstanceAsync(
+                                new TerminateContractInstanceRequest
+                                {
+                                    ContractId = current.ContractInstanceId,
+                                    RequestingEntityId = body.CharacterId,
+                                    RequestingEntityType = EntityType.Character,
+                                    Reason = "Character deleted - quest cleanup"
+                                },
+                                cancellationToken);
+                        }
+                        catch (ApiException ex)
+                        {
+                            _logger.LogWarning(ex,
+                                "Failed to terminate contract for quest {QuestInstanceId} during character cleanup",
+                                instance.QuestInstanceId);
+                        }
+
+                        // Publish abandoned event
+                        var abandonedEvent = new QuestAbandonedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            QuestInstanceId = instance.QuestInstanceId,
+                            QuestCode = current.Code,
+                            AbandoningCharacterId = body.CharacterId
+                        };
+                        await _messageBus.PublishQuestAbandonedAsync(abandonedEvent, cancellationToken);
+
+                        // Delete objective progress records for this instance
+                        var definition = await GetDefinitionModelAsync(current.DefinitionId, cancellationToken);
+                        if (definition?.Objectives != null)
+                        {
+                            foreach (var objective in definition.Objectives)
+                            {
+                                var progressKey = BuildProgressKey(instance.QuestInstanceId, objective.Code);
+                                await _progressStore.DeleteAsync(progressKey, cancellationToken);
+                                progressRecordsDeleted++;
+                            }
+                        }
+
+                        instancesAbandoned++;
+                    }
+                }
+
+                // Unregister character reference for ALL instances (active, completed, abandoned)
+                try
+                {
+                    await UnregisterCharacterReferenceAsync(instance.QuestInstanceId.ToString(), body.CharacterId, cancellationToken);
+                }
+                catch (ApiException ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Failed to unregister character reference for quest {QuestInstanceId}",
+                        instance.QuestInstanceId);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Per-item error isolation per IMPLEMENTATION TENETS
+                _logger.LogWarning(ex,
+                    "Failed to clean up quest instance {QuestInstanceId} during character deletion",
+                    instance.QuestInstanceId);
+            }
+        }
+
+        // Delete cooldown entries using completed quest codes from the index
+        if (characterIndex?.CompletedQuestCodes != null)
+        {
+            foreach (var questCode in characterIndex.CompletedQuestCodes)
+            {
+                try
+                {
+                    var cooldownKey = BuildCooldownKey(body.CharacterId, questCode);
+                    await _cooldownStore.DeleteAsync(cooldownKey, cancellationToken);
+                    cooldownsDeleted++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Failed to delete cooldown for quest code {QuestCode} during character deletion",
+                        questCode);
+                }
+            }
+        }
+
+        // Delete the character index itself
+        if (characterIndex != null)
+        {
+            await _characterIndex.DeleteAsync(indexKey, cancellationToken);
+        }
+
+        _logger.LogInformation(
+            "Character cleanup complete for {CharacterId}: {InstancesAbandoned} instances abandoned, {ProgressDeleted} progress records deleted, {CooldownsDeleted} cooldowns deleted",
+            body.CharacterId, instancesAbandoned, progressRecordsDeleted, cooldownsDeleted);
+
+        return (StatusCodes.OK, new DeleteByCharacterResponse
+        {
+            InstancesAbandoned = instancesAbandoned,
+            ProgressRecordsDeleted = progressRecordsDeleted,
+            CooldownsDeleted = cooldownsDeleted
+        });
     }
 
     #endregion

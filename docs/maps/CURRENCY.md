@@ -14,7 +14,7 @@
 | Endpoints | 33 |
 | State Stores | currency-definitions (MySQL), currency-wallets (MySQL), currency-balances (MySQL), currency-transactions (MySQL), currency-holds (MySQL), currency-balance-cache (Redis), currency-holds-cache (Redis), currency-idempotency (Redis), currency-lock (Redis) |
 | Events Published | 16 (currency.credited, currency.debited, currency.transferred, currency.autogain.calculated, currency.earn-cap.reached, currency.wallet-cap.reached, currency.exchange-rate.updated, currency.definition.created, currency.definition.updated, currency.wallet.created, currency.wallet.frozen, currency.wallet.unfrozen, currency.wallet.closed, currency.hold.created, currency.hold.captured, currency.hold.released) |
-| Events Consumed | 3 (self-subscription for cache invalidation) |
+| Events Consumed | 4 (1 external: account.deleted; 3 self-subscription for cache invalidation) |
 | Client Events | 3 (currency.balance.changed, currency.wallet.frozen, currency.wallet.unfrozen) |
 | Background Services | 1 (CurrencyAutogainTaskService) |
 
@@ -135,11 +135,12 @@ Schema also defines `currency.expired` and `currency.hold.expired` — not yet i
 
 | Topic | Handler | Action |
 |-------|---------|--------|
+| `account.deleted` | `HandleAccountDeletedAsync` | CASCADE: Find all account-owned wallets via `_walletQueryStore.QueryAsync`, delete balances/holds/transactions/indexes/caches per wallet |
 | `currency.credited` | `HandleCurrencyCreditedAsync` | Invalidate `ICurrencyDataCache` for `evt.OwnerId` |
 | `currency.debited` | `HandleCurrencyDebitedAsync` | Invalidate `ICurrencyDataCache` for `evt.OwnerId` |
 | `currency.transferred` | `HandleCurrencyTransferredAsync` | Invalidate `ICurrencyDataCache` for both `SourceOwnerId` and `TargetOwnerId` |
 
-Self-subscription only — no external event consumption.
+`account.deleted` is mandatory per FOUNDATION TENETS (Account Deletion Cleanup Obligation). Self-subscriptions are for multi-node cache coherence.
 
 ---
 
@@ -149,7 +150,7 @@ Self-subscription only — no external event consumption.
 |---------|------|
 | `ILogger<CurrencyService>` | Structured logging |
 | `CurrencyServiceConfiguration` | All 18 config properties |
-| `IStateStoreFactory` | Constructor-cached into 13 typed store fields (factory not stored as field) |
+| `IStateStoreFactory` | Constructor-cached into 14 typed store fields including 1 queryable (factory not stored as field) |
 | `IDistributedLockProvider` | Distributed locks |
 | `IMessageBus` | Event publishing |
 | `ITelemetryProvider` | Telemetry spans |

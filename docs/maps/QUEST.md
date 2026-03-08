@@ -70,6 +70,7 @@
 | lib-state (IDistributedLockProvider) | L0 | Hard | Character lock during quest acceptance |
 | lib-messaging (IMessageBus) | L0 | Hard | Publishing 5 quest lifecycle events |
 | lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation on async helpers |
+| lib-resource (IResourceClient) | L1 | Hard | Character reference registration/unregistration (T28), cleanup callback registration |
 | lib-contract (IContractClient) | L1 | Hard | Template/instance CRUD, consent, milestone completion, termination |
 | lib-character (ICharacterClient) | L2 | Hard | Character existence validation on quest acceptance |
 | lib-currency (ICurrencyClient) | L2 | Hard | CURRENCY_AMOUNT prerequisite validation, wallet resolution for rewards |
@@ -78,7 +79,7 @@
 | IEnumerable\<IPrerequisiteProviderFactory\> | L4 via DI | Collection | Dynamic prerequisite providers (character_level, reputation, etc.) |
 
 **Notes:**
-- `IResourceClient` (L1) used at startup only in `QuestServicePlugin.OnRunningAsync` for compression callback registration; not stored in service.
+- `IResourceClient` (L1) is a hard constructor dependency: used for reference registration/unregistration (T28 cleanup) and at startup for compression/cleanup callback registration.
 - `IEventTemplateRegistry` resolved via `GetService<T>()` at startup for ABML event template registration; graceful degradation if absent.
 - `QuestProviderFactory` implements `IVariableProviderFactory` for Actor `${quest.*}` ABML variables (L2-to-L2 provider pattern for consistency with L4 data sources).
 
@@ -152,6 +153,7 @@ IF null or not Active -> return
 | `IStateStoreFactory` | Acquires 6 state stores in constructor (not stored as field) |
 | `IMessageBus` | Event publishing |
 | `IEventConsumer` | Event subscription registration (passed to RegisterEventConsumers) |
+| `IResourceClient` | Character reference tracking (T28 cleanup), compression/cleanup callback registration |
 | `IContractClient` | Contract template/instance CRUD, consent, milestones |
 | `ICharacterClient` | Character existence validation |
 | `ICurrencyClient` | Currency prerequisite checks and wallet resolution |
@@ -175,7 +177,7 @@ IF null or not Active -> return
 | ListQuestDefinitions | POST /quest/definition/list | user | - | - |
 | UpdateQuestDefinition | POST /quest/definition/update | developer | definition, cache | - |
 | DeprecateQuestDefinition | POST /quest/definition/deprecate | developer | definition, cache | - |
-| AcceptQuest | POST /quest/accept | user | instance, progress, index | quest.accepted |
+| AcceptQuest | POST /quest/accept | user | instance, progress, index, resource-ref | quest.accepted |
 | AbandonQuest | POST /quest/abandon | user | instance, index | quest.abandoned |
 | GetQuest | POST /quest/get | user | - | - |
 | ListQuests | POST /quest/list | user | - | - |
@@ -187,6 +189,7 @@ IF null or not Active -> return
 | HandleMilestoneCompleted | POST /quest/internal/milestone-completed | [] | - | - |
 | HandleQuestCompleted | POST /quest/internal/quest-completed | [] | instance, index, cooldown | quest.completed |
 | GetCompressData | POST /quest/get-compress-data | developer | - | - |
+| DeleteByCharacter | POST /quest/delete-by-character | [] | instance, progress, cooldown, index, resource-ref | quest.abandoned (per instance) |
 
 ---
 
@@ -316,6 +319,7 @@ LOCK "quest:lock:char:{questorCharacterId}" (QuestInstance store, LockExpirySeco
   CALL IContractClient.SetContractTemplateValuesAsync(...)   // best-effort
 
   WRITE _instanceStore:"inst:{questInstanceId}" <- QuestInstanceModel
+  CALL IResourceClient.RegisterReferenceAsync(character, questInstanceId)  // T28 cleanup tracking
   FOREACH objective in definition.Objectives
     WRITE _progressStore:"prog:{instanceId}:{objectiveCode}" <- ObjectiveProgressModel
       (TTL: ProgressCacheTtlSeconds)
@@ -538,6 +542,45 @@ FOREACH questCode in index.CompletedQuestCodes
   QUERY _definitionStore WHERE Code == questCode             // MySQL per code
 
 RETURN (200, QuestArchive { characterId, activeQuests, completedQuests, questCategories })
+```
+
+### DeleteByCharacter
+POST /quest/delete-by-character | Roles: [] (service-to-service only)
+
+```
+// Called by lib-resource during character deletion cleanup (T28 CASCADE)
+READ _characterIndex:"char:{characterId}"
+
+// Query ALL instances by character (MySQL) — index only tracks active quests,
+// but completed/abandoned instances also hold registered references
+QUERY _instanceStore WHERE QuestorCharacterIds CONTAINS characterId
+
+FOREACH instance in allInstances                      // per-item try-catch
+  IF status == Active
+    READ _instanceStore:"inst:{questInstanceId}" [with ETag]
+    // Set Status = Abandoned, CompletedAt = UtcNow
+    ETAG-WRITE _instanceStore:"inst:{questInstanceId}"
+
+    // Best-effort contract termination
+    TRY CALL IContractClient.TerminateContractInstanceAsync(...)
+    CATCH ApiException -> log warning, continue
+
+    PUBLISH "quest.abandoned" { questInstanceId, questCode, abandoningCharacterId: characterId }
+
+    // Delete objective progress for this instance
+    FOREACH objective in definition.Objectives
+      DELETE _progressStore:"prog:{questInstanceId}:{objectiveCode}"
+
+  // Unregister character reference for ALL instances (active, completed, abandoned)
+  TRY CALL IResourceClient.UnregisterReferenceAsync(...)
+  CATCH ApiException -> log warning, continue
+
+FOREACH questCode in index.CompletedQuestCodes        // per-item try-catch
+  DELETE _cooldownStore:"cd:{characterId}:{questCode}"
+
+DELETE _characterIndex:"char:{characterId}"
+
+RETURN (200, DeleteByCharacterResponse { instancesAbandoned, progressRecordsDeleted, cooldownsDeleted })
 ```
 
 ---

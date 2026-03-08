@@ -448,6 +448,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-03**: [#276](https://github.com/beyond-immersion/bannou-service/issues/276) - Automatic cleanup scheduler for periodic grace-period expiry processing (opt-in per resource type)
 - **2026-02-03**: [#278](https://github.com/beyond-immersion/bannou-service/issues/278) - Priority ordering for cleanup callbacks (mirroring compression's existing priority system)
 - **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for bulk entity deletion (affects character-history, character-encounter, character-personality, actor)
+- **2026-03-08**: [#598](https://github.com/beyond-immersion/bannou-service/issues/598) - Evaluate lib-scene lib-resource integration scope (character references, game service cleanup, asset tracking, scene-to-scene references)
 
 ### Active
 
@@ -460,6 +461,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Pending Integrations
 
 1. **lib-scene**: Not yet integrated with lib-resource (no `IResourceClient` usage, no generated reference tracking or compression files). When scene references to characters are added, will need `x-references` schema extension, cleanup endpoint, and optionally compression callbacks.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/598 -->
 
 2. **lib-seed**: Seed archival currently retains growth data, capability cache, and bond data indefinitely ([#366](https://github.com/beyond-immersion/bannou-service/issues/366)). Phase 2 of the seed cleanup strategy calls for lib-resource compression integration to archive growth/bond data before deletion, requiring `x-compression-callback` schema extension and compress/decompress endpoints in lib-seed.
 

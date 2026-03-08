@@ -383,7 +383,7 @@ Contract Binding Patterns
 
 ### Bugs
 
-1. **MaxDurability ceiling not enforced** ([#491](https://github.com/beyond-immersion/bannou-service/issues/491)): `ModifyItemInstanceAsync` applies `Math.Max(0, current + delta)` for durability changes but does not cap positive deltas against the template's `MaxDurability`. A `durabilityDelta: 1000` on an item with `maxDurability: 100` sets `CurrentDurability` to 1100. Fix: add `Math.Min(maxDurability, ...)` ceiling when applying positive deltas. This is independent of the repair endpoint design in #491.
+1. ~~**MaxDurability ceiling not enforced**~~: **FIXED** (2026-03-08) - `ModifyItemInstanceInternalAsync` now loads the template via cache when applying positive durability deltas and caps the result with `Math.Min(maxDurability, newDurability)`. Negative deltas remain floored at 0. If the template has no `MaxDurability`, no cap is applied. Uses cached template lookup so no additional store round-trip in hot path.
 
 ### Intentional Quirks
 
@@ -396,7 +396,7 @@ Contract Binding Patterns
 4. **Update doesn't track changedFields**: Unlike other services that track which fields changed, `UpdateItemTemplateAsync` applies all provided changes without changedFields list in the event. Consumers can't tell which fields were actually modified. This deviates from the standard `x-lifecycle` pattern where `*UpdatedEvent` includes `changedFields` automatically.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/558 -->
 
-5. **ListItemsByContainer doesn't support pagination**: Unlike `ListItemsByTemplate` which uses Offset/Limit from the request, `ListItemsByContainer` just returns up to `MaxInstancesPerQuery` items with no offset support. The `wasTruncated` flag signals when items are capped, but callers cannot page through them.
+5. ~~**ListItemsByContainer doesn't support pagination**~~: **FIXED** (2026-03-08) - Added `offset` (default 0) and `limit` (default 100) to `ListItemsByContainerRequest` schema. Implementation now applies `.Skip(offset).Take(min(limit, MaxInstancesPerQuery))` with `wasTruncated` reflecting whether more items exist beyond the current page. Matches the pagination pattern already used by `ListItemsByTemplate`.
 
 6. **Bind doesn't enforce SoulboundType**: `BindItemInstanceAsync` binds any item regardless of its template's `SoulboundType`. The soulbound type is metadata for game logic, not enforced by the service.
 
@@ -422,10 +422,12 @@ Contract Binding Patterns
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Active
-- **MaxDurability ceiling bug** (2026-03-04): Identified via [#491](https://github.com/beyond-immersion/bannou-service/issues/491). `ModifyItemInstanceAsync` doesn't cap positive durability deltas against `MaxDurability`. Added to Bugs section.
 - **`IItemInstanceDestructionListener` dispatch** (2026-03-04): Architecturally specified in SERVICE-HIERARCHY.md and AFFIX.md but not yet implemented. Added to Stubs section and DI Listener Dispatch section. Tracked via [#490](https://github.com/beyond-immersion/bannou-service/issues/490).
 - **changedFields gap on template updates** (2026-03-04): Quirk #4 deviation from standard `x-lifecycle` pattern. Tracked via [#558](https://github.com/beyond-immersion/bannou-service/issues/558).
 - **Batch item destruction** (2026-03-04): No batch destroy endpoint for high-frequency scenarios. Tracked via [#559](https://github.com/beyond-immersion/bannou-service/issues/559). See Potential Extensions #6.
+
+### Completed
+- **MaxDurability ceiling bug** (2026-03-08): Fixed. `ModifyItemInstanceInternalAsync` now caps positive durability deltas against template `MaxDurability` via cached template lookup. [#491](https://github.com/beyond-immersion/bannou-service/issues/491).
 
 ### Related (Cross-Service)
 - **[#153](https://github.com/beyond-immersion/bannou-service/issues/153)**: Escrow Asset Transfer Integration Broken - Affects lib-escrow's ability to use `IItemClient` for item-backed exchanges.
@@ -434,4 +436,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **[#407](https://github.com/beyond-immersion/bannou-service/issues/407)**: Item Decay/Expiration System - Time-based item lifecycle. Dependency for lib-status ([#417](https://github.com/beyond-immersion/bannou-service/issues/417)). See Potential Extensions #4.
 - **[#430](https://github.com/beyond-immersion/bannou-service/issues/430)**: lib-socket - Item socket, linking, and gem placement system. See Potential Extensions #5.
 - **[#486](https://github.com/beyond-immersion/bannou-service/issues/486)**: Deprecation cascade behavior - Design question for what happens to instances. See Stubs #1.
+- **[#482](https://github.com/beyond-immersion/bannou-service/issues/482)**: Item category indexing for inventory query optimization - Owned by lib-inventory, but may require lib-item to provide batch template lookups or category-indexed queries to resolve N+1 pattern at scale.
 - **[#489](https://github.com/beyond-immersion/bannou-service/issues/489)**: Template migration on deprecation - Sub-question of #486. See Potential Extensions #1.

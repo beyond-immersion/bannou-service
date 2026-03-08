@@ -502,6 +502,11 @@ components:
           nullable: true
           minimum: 1
           description: Rank threshold for leaderboard achievements (unlock when rank <= threshold)
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Game-defined category for UI grouping and filtering (e.g. Combat, Exploration, Social)
         isActive:
           type: boolean
           default: true
@@ -541,6 +546,11 @@ components:
           type: string
           format: uuid
           description: ID of the game service
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Filter by game-defined category
         platform:
           $ref: '#/components/schemas/Platform'
           nullable: true
@@ -602,6 +612,11 @@ components:
           maxLength: 500
           nullable: true
           description: New description
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: New category for UI grouping
         isActive:
           type: boolean
           nullable: true
@@ -703,6 +718,10 @@ components:
         achievementType:
           $ref: '#/components/schemas/AchievementType'
           description: Classification of the achievement
+        category:
+          type: string
+          nullable: true
+          description: Game-defined category for UI grouping and filtering
         entityTypes:
           type: array
           items:

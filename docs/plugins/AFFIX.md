@@ -451,6 +451,7 @@ Equipment Stat Computation Flow
 ## Stubs & Unimplemented Features
 
 **Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/490 -->
 
 ### Phase 1: Definition Infrastructure
 - Create affix-api.yaml schema with all endpoints
@@ -506,8 +507,10 @@ Equipment Stat Computation Flow
 ## Potential Extensions
 
 1. **Rarity slot limit definitions as configurable entities**: Instead of hardcoded slot counts per rarity, expose a `RaritySlotLimit` definition API that games use to define their own rarity tiers with custom slot counts. A game could define "Legendary" rarity with 4 prefixes and 4 suffixes, or "Mythic" with unlimited slots but exponentially increasing generation cost.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/588 -->
 
 2. **Affix trade index (materialized view)**: A denormalized MySQL store that indexes `(gameServiceId, statCode, statValue, itemInstanceId)` for fast trade-site-style queries ("find all items with +90 life and +30 fire res"). Built asynchronously from `affix.modifier.applied` and `affix.modifier.removed` events. Used by lib-market for search.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/589 -->
 
 3. **Unique item definitions**: A `UniqueItemDefinition` entity that maps an item template code to a fixed set of affix definitions with predetermined roll ranges. When a unique item drops, its affixes come from the unique definition (not weighted random). The unique definition is owned by lib-affix, not lib-item.
 
@@ -551,26 +554,34 @@ None. Plugin is aspirational -- no code exists to have bugs.
 
 10. **Generation events are batched, not per-item**: To prevent event flooding during mass loot generation (dungeon clear, batch NPC crafting), generation events are deduped by source and published in batches. Individual `affix.modifier.applied` events still fire for each application through the application endpoints.
 
-11. **Instance cleanup is DI-listener-driven, not synchronous**: When lib-item destroys an item, lib-affix's `IItemInstanceDestructionListener` implementation receives an in-process notification on the same node. There is a brief window where other nodes may still see cached affix data for a destroyed item. The affix instance cache TTL (5 minutes) means stale entries expire naturally. The orphan reconciliation worker (see Design Consideration #6) provides the durability guarantee for any missed notifications.
+11. **Instance cleanup is DI-listener-driven, not synchronous**: When lib-item destroys an item, lib-affix's `IItemInstanceDestructionListener` implementation receives an in-process notification on the same node. There is a brief window where other nodes may still see cached affix data for a destroyed item. The affix instance cache TTL (5 minutes) means stale entries expire naturally. The orphan reconciliation background worker provides the durability guarantee for any missed notifications (see Quirk #17).
 
-### Design Considerations (Requires Planning)
+12. **Equipment and effect stats are computed independently**: lib-affix computes equipment stats (base + affixes + sockets + quality). lib-status computes temporary effects (buffs, debuffs, blessings) and seed-derived capabilities. Consumers query both services independently. If unified queries are later needed, the `IEquipmentStatsContributor` DI pattern (Potential Extension #6) provides a clean integration path without coupling the services.
 
-1. **Cross-service stat computation authority**: lib-affix computes equipment stats (base + affixes + sockets + quality). lib-status computes temporary effects (buffs, debuffs, blessings) and seed-derived capabilities. A combat system or unified "character stats" query needs both. The current plan is for consumers to query both services independently. If unified queries are needed, the `IEquipmentStatsContributor` DI pattern (Potential Extension #6) provides a clean integration path without coupling the services.
+13. **Applied affixes are snapshots, not live references**: If a definition's stat grant ranges change (e.g., T3 life changed from 90-99 to 85-94), existing items with that affix retain their original rolled values. There is no automatic re-computation or migration. lib-affix treats applied affixes as snapshots at application time.
 
-2. **Affix data migration on definition changes**: If a definition's stat grant ranges change (e.g., T3 life changed from 90-99 to 85-94), existing items with that affix retain their old rolled values. There is no automatic re-computation or migration. lib-affix treats applied affixes as snapshots at application time. A "recompute" endpoint could be added for mass migration, but this is a significant operation (touching every item with that affix in the `affix-instances` store).
+14. **Implicit mappings are forward-only**: When implicit mappings change, newly created items get the new values, but existing items are unaffected. There is no mechanism to "re-roll" existing items' implicits unless the caller explicitly calls the application endpoints.
 
-3. **Implicit mapping hot-reload**: When implicit mappings change, newly created items get the new values, but existing items are unaffected. There is no mechanism to "re-roll" existing items' implicits unless the caller explicitly calls the application endpoints.
+15. **Influence application is caller-driven**: lib-affix tracks influences on items and gates affix pools by influence requirements, but the mechanism for giving an item an influence is via `/affix/influence/set`. The trigger is game-specific (in PoE, influences come from Shaper drops; in Arcadia, they might come from leyline exposure); lib-affix provides the storage and validation.
 
-4. **Influence application mechanism**: lib-affix tracks influences on items and gates affix pools by influence requirements, but the mechanism for GIVING an item an influence is via `/affix/influence/set`. In PoE, influences come from specific content (Shaper items drop from Shaper). In Arcadia, they might come from leyline exposure. The trigger is game-specific; lib-affix provides the storage and validation.
+16. **Equipment detection depends on inventory container flags**: The `AffixItemEvaluationProviderFactory` queries lib-inventory for equipment-type containers via `IInventoryClient.ListContainersAsync(ownerType, ownerId, isEquipmentSlot: true)`. Which container types count as equipment slots is game-specific, determined by how containers are created during game setup.
 
-5. **Variable provider equipment detection**: The `AffixItemEvaluationProviderFactory` needs to know which items are "equipped" for a character. This requires querying lib-inventory for equipment-type containers and their contents (via `IInventoryClient`, hard dependency). The definition of "equipped" is game-specific (which container types count as equipment slots).
+17. **Orphan reconciliation provides durability guarantee**: The `IItemInstanceDestructionListener` provides guaranteed in-process delivery on the node that processes the deletion, but if deletion occurs on a node where lib-affix is not loaded (unusual but possible in partitioned deployments), or if the listener throws, affix instances become orphaned. The orphan reconciliation background worker periodically scans affix instances, batch-checks item existence via `IItemClient`, and deletes orphaned records. This is the durability guarantee required by FOUNDATION TENETS (T28 High-Frequency Instance Lifecycle Exception). Configuration: `OrphanReconciliationIntervalMinutes` (default: 60), `OrphanReconciliationBatchSize` (default: 500).
 
-6. **Orphan reconciliation worker (planned)**: The `IItemInstanceDestructionListener` provides guaranteed in-process delivery on the node that processes the deletion, but if the deletion occurs on a node where lib-affix is not loaded (unusual but possible in partitioned deployments), or if the listener throws an unhandled exception, affix instances become orphaned -- they reference items that no longer exist. The instance cache TTL provides some protection (stale entries expire), but the MySQL records persist. A background worker must periodically scan affix instances, batch-check item existence via `IItemClient`, and delete orphaned records. This is the durability guarantee required by FOUNDATION TENETS (T28 High-Frequency Instance Lifecycle Exception). Configuration: `OrphanReconciliationIntervalMinutes` (default: 60), `OrphanReconciliationBatchSize` (default: 500).
-
-7. **Socket container detection**: Equipment stat computation needs to identify socket child containers within equipment containers. This relies on a container type convention (`"socket"`) in lib-inventory. If lib-inventory changes container type naming, socket detection breaks. This is a same-convention concern, mitigated by the fact that both lib-affix and the socket creation flow (orchestrated by the caller) agree on the container type string.
+18. **Socket detection uses container type convention**: Equipment stat computation identifies socket child containers by the `"socket"` container type string in lib-inventory. This is a shared naming convention between lib-affix and the socket creation flow (orchestrated by the caller). If lib-inventory changes container type naming, socket detection breaks -- mitigated by both sides agreeing on the convention string.
 
 ---
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.*
+### Active
+- [#490](https://github.com/beyond-immersion/bannou-service/issues/490) — Full implementation of lib-affix (all 6 phases). Open questions include item level sourcing, equipment query semantics, pool cache invalidation strategy, and socket integration prerequisites.
+- [#588](https://github.com/beyond-immersion/bannou-service/issues/588) — Decide scope for rarity slot limit definitions: static configuration vs dynamic API entities.
+- [#589](https://github.com/beyond-immersion/bannou-service/issues/589) — Affix trade index ownership: lib-affix vs lib-market.
+
+### Completed
+- (2026-03-08) Audit: linked Stubs & Unimplemented Features section to #490.
+- (2026-03-08) Audit: created #589 for trade index ownership design question (Potential Extension #2).
+- (2026-03-08) Audit: reclassified all 7 Design Considerations as Intentional Quirks #12-#18 — all were already-decided behaviors, not open questions requiring planning.
+
+*Plugin is in pre-implementation phase. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.*

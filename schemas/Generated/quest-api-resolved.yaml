@@ -12,6 +12,15 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+  - target: character
+    sourceType: quest
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /quest/delete-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
   # Compression callback for resource archival (see SCHEMA-RULES.md "x-compression-callback")
   x-compression-callback:
     resourceType: character
@@ -429,6 +438,30 @@ paths:
                 $ref: '#/components/schemas/QuestArchive'
         '404':
           description: No quest data for character
+
+  /quest/delete-by-character:
+    post:
+      summary: Delete all quest data for a character
+      operationId: deleteByCharacter
+      tags: [Cleanup]
+      description: |
+        Deletes all quest instances, objective progress, character index, and cooldown
+        entries for a specific character. Active quests are abandoned and their underlying
+        contracts terminated. Called by lib-resource during character deletion cleanup.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteByCharacterRequest'
+      responses:
+        '200':
+          description: Quest data deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteByCharacterResponse'
 
 components:
   schemas:
@@ -1391,6 +1424,41 @@ components:
           $ref: '#/components/schemas/QuestCategory'
           nullable: true
           description: Quest category (if available)
+
+    # === CLEANUP MODELS ===
+    DeleteByCharacterRequest:
+      type: object
+      description: Request to delete all quest data for a character during character deletion cleanup
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose quest data should be deleted
+
+    DeleteByCharacterResponse:
+      type: object
+      description: Response from delete-by-character operation
+      additionalProperties: false
+      required:
+      - instancesAbandoned
+      - progressRecordsDeleted
+      - cooldownsDeleted
+      properties:
+        instancesAbandoned:
+          type: integer
+          minimum: 0
+          description: Number of active quest instances abandoned
+        progressRecordsDeleted:
+          type: integer
+          minimum: 0
+          description: Number of objective progress records deleted
+        cooldownsDeleted:
+          type: integer
+          minimum: 0
+          description: Number of cooldown entries deleted
     ResourceArchiveBase:
       type: object
       description: |

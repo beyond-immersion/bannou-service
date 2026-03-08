@@ -422,7 +422,7 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Missing account cleanup callback registration**~~: **FIXED** (2026-02-12) - Added account cleanup callback registration in `StatusServicePlugin.RegisterResourceCleanupCallbacksAsync`. Both character and account callbacks now register independently with separate try-catch blocks. The `CleanupByOwnerAsync` endpoint was already polymorphic and required no changes.
+1. ~~**Missing account cleanup callback registration**~~: **FIXED** (2026-02-12) - Added account cleanup callback registration in `StatusServicePlugin.RegisterResourceCleanupCallbacksAsync`. Both character and account callbacks now register independently with separate try-catch blocks. The `CleanupByOwnerAsync` endpoint was already polymorphic and required no changes. **Note**: Per the updated T28 Account Deletion Cleanup Obligation, account cleanup should use `account.deleted` event subscription rather than lib-resource registration (privacy constraint — lib-resource must not track account references). The `CleanupByOwnerAsync` endpoint can remain as-is (polymorphic), but the account `x-references` entry in `status-api.yaml` should be removed and replaced with an `account.deleted` event handler that calls the same cleanup endpoint internally. Character cleanup continues to use lib-resource as normal.
 
 2. ~~**SeedStatusTemplatesAsync skips item template validation**~~: **FIXED** (2026-02-12) - Added item template validation in `SeedStatusTemplatesAsync`. Templates referencing non-existent item templates are now skipped with a warning log and counted as "skipped" in the response, consistent with the idempotent seeding pattern.
 

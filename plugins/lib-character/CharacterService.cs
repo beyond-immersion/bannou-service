@@ -62,14 +62,6 @@ public partial class CharacterService : ICharacterService
     private const string ARCHIVE_KEY_PREFIX = "archive:";
     private const string REF_COUNT_KEY_PREFIX = "refcount:";
 
-    // Event topics
-    private const string CHARACTER_CREATED_TOPIC = "character.created";
-    private const string CHARACTER_UPDATED_TOPIC = "character.updated";
-    private const string CHARACTER_DELETED_TOPIC = "character.deleted";
-    private const string CHARACTER_REALM_JOINED_TOPIC = "character.realm.joined";
-    private const string CHARACTER_REALM_LEFT_TOPIC = "character.realm.left";
-    private const string CHARACTER_COMPRESSED_TOPIC = "character.compressed";
-
     // Reference type constants for L2 services (Relationships, Contracts)
     // L4 references (Actor, Encounter) are tracked via lib-resource and queried dynamically
     private const string REFERENCE_TYPE_RELATIONSHIP = "RELATIONSHIP";

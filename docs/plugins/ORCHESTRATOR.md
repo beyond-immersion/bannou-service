@@ -255,7 +255,7 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
 | Idle timeout cleanup (pool) | No trigger | `IdleTimeoutMinutes` stored but no background timer |
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
-| Preset infrastructure config | Commented out | `ConvertInfrastructure` call in `PresetLoader.ConvertToTopology` is commented with TODO |
+| ~~Preset infrastructure config~~ | **FIXED** (2026-03-07) | `ConvertInfrastructure` now maps `PresetInfrastructure` to `InfrastructureConfig` (enabled flag per service). `Version` field is not mapped (no equivalent in API model). |
 
 ---
 
@@ -318,7 +318,9 @@ None currently active.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-No completed items. All items are tracked via AUDIT markers in the sections above.
+### Completed
+
+- **Preset infrastructure config** (2026-03-07): Implemented `ConvertInfrastructure` in `PresetLoader.cs` to map preset infrastructure definitions to `InfrastructureConfig` on the output `ServiceTopology`. All 4 presets with `infrastructure:` sections now surface that data in API responses.
 
 ---
 

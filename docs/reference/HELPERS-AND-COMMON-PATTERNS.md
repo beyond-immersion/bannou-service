@@ -180,6 +180,58 @@ protected void RegisterEventConsumers(IEventConsumer eventConsumer)
 
 Registration is idempotent. Handlers are failure-isolated. `IEventConsumer` is singleton.
 
+### Account Deletion Cleanup Pattern
+
+**Tenet**: T28 Account Deletion Cleanup Obligation (FOUNDATION.md)
+
+Every service that stores data with account ownership (`ownerType: Account` or data keyed by `accountId`) MUST subscribe to `account.deleted` and clean up all account-owned data. This is the one entity where event-based cleanup is mandatory because lib-resource cannot work (privacy + hierarchy constraints).
+
+**Reference implementation**: `plugins/lib-collection/CollectionServiceEvents.cs`
+
+**Required structure** in `{Service}ServiceEvents.cs`:
+
+```csharp
+protected void RegisterEventConsumers(IEventConsumer eventConsumer)
+{
+    eventConsumer.RegisterHandler<IMyService, AccountDeletedEvent>(
+        "account.deleted",
+        async (svc, evt) => await ((MyService)svc).HandleAccountDeletedAsync(evt));
+}
+
+public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
+{
+    using var activity = _telemetryProvider.StartActivity(
+        "bannou.my-service", "MyService.HandleAccountDeleted");
+    _logger.LogInformation("Handling account.deleted for account {AccountId}", evt.AccountId);
+    try
+    {
+        await CleanupForAccountAsync(evt.AccountId);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to clean up data for account {AccountId}", evt.AccountId);
+        await _messageBus.TryPublishErrorAsync(
+            "my-service", "CleanupForAccount", ex.GetType().Name, ex.Message,
+            endpoint: "account.deleted", details: $"accountId={evt.AccountId}",
+            stack: ex.StackTrace);
+    }
+}
+```
+
+**Checklist**:
+
+| Requirement | Why |
+|-------------|-----|
+| Telemetry span in handler | No generated controller boundary for event handlers |
+| Top-level try-catch with error event | Same — must provide own catch-all |
+| Per-item try-catch in cleanup loop | One corrupt record must not block all cleanup |
+| Per-item failures at `Warning` level | Expected/recoverable; `Error` is for infrastructure failures |
+| "Not found" is `Debug`, not `Warning` | Multi-node broadcast means another node may have already cleaned up |
+| Publish `*.deleted` lifecycle events for each cleaned entity | Downstream consumers (lib-resource callbacks, caches) need to react |
+| Add `account-events.yaml` to `x-event-subscriptions` | Schema declares the subscription |
+
+**Multi-node idempotency**: `account.deleted` is a broadcast event — all nodes receive it. State store deletes are naturally idempotent. Handlers must treat "not found" as success, not error.
+
 ### Error Event Publishing
 
 **Method**: `IMessageBus.TryPublishErrorAsync(...)` — always safe to call (internal catch prevents propagation).

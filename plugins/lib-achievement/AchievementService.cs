@@ -145,6 +145,7 @@ public partial class AchievementService : IAchievementService
             Description = body.Description,
             HiddenDescription = body.HiddenDescription,
             AchievementType = body.AchievementType,
+            Category = body.Category,
             EntityTypes = body.EntityTypes?.ToList() ?? new List<EntityType> { EntityType.Account },
             ProgressTarget = body.ProgressTarget,
             Points = body.Points,
@@ -234,6 +235,11 @@ public partial class AchievementService : IAchievementService
                 continue;
             }
 
+            if (!string.IsNullOrEmpty(body.Category) && definition.Category != body.Category)
+            {
+                continue;
+            }
+
             if (body.Platform.HasValue &&
                 (definition.Platforms == null || !definition.Platforms.Contains(body.Platform.Value)))
             {
@@ -304,6 +310,11 @@ public partial class AchievementService : IAchievementService
         {
             definition.Description = body.Description;
             changedFields.Add("description");
+        }
+        if (body.Category != null && body.Category != definition.Category)
+        {
+            definition.Category = body.Category;
+            changedFields.Add("category");
         }
         if (body.IsActive.HasValue && body.IsActive.Value != definition.IsActive)
         {
@@ -1581,6 +1592,7 @@ public partial class AchievementService : IAchievementService
             Description = definition.Description,
             HiddenDescription = definition.HiddenDescription,
             AchievementType = definition.AchievementType,
+            Category = definition.Category,
             EntityTypes = definition.EntityTypes ?? new List<EntityType>(),
             ProgressTarget = definition.ProgressTarget,
             Points = definition.Points,
@@ -1644,6 +1656,7 @@ public partial class AchievementService : IAchievementService
             Description = definition.Description,
             HiddenDescription = definition.HiddenDescription,
             AchievementType = definition.AchievementType,
+            Category = definition.Category,
             EntityTypes = definition.EntityTypes?.ToList(),
             ProgressTarget = definition.ProgressTarget,
             Points = definition.Points,
@@ -1691,6 +1704,7 @@ public partial class AchievementService : IAchievementService
             Description = definition.Description,
             HiddenDescription = definition.HiddenDescription,
             AchievementType = definition.AchievementType,
+            Category = definition.Category,
             EntityTypes = definition.EntityTypes?.ToList(),
             ProgressTarget = definition.ProgressTarget,
             Points = definition.Points,
