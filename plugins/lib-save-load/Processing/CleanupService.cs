@@ -86,6 +86,8 @@ public class CleanupService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during scheduled cleanup");
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "save-load", "Cleanup", ex, _logger, stoppingToken);
             }
 
             try

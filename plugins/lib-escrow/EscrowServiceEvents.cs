@@ -97,6 +97,7 @@ public partial class EscrowService
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.TransitionToFinalizingForContractAsync");
         var agreementKey = BuildAgreementKey(escrowId);
 
+        // Manual retry loop: mutation includes terminal/status state validation with early returns (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey);
@@ -194,6 +195,7 @@ public partial class EscrowService
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.RefundForContractTerminationAsync");
         var agreementKey = BuildAgreementKey(escrowId);
 
+        // Manual retry loop: mutation includes terminal/status state validation with early returns (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey);

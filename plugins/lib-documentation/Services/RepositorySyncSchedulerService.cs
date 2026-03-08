@@ -83,7 +83,8 @@ public class RepositorySyncSchedulerService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during scheduled sync check");
-                await TryPublishErrorAsync(ex, stoppingToken);
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "documentation", "ScheduledSync", ex, _logger, stoppingToken);
             }
 
             try
@@ -298,27 +299,4 @@ public class RepositorySyncSchedulerService : BackgroundService
         }
     }
 
-    /// <summary>
-    /// Tries to publish an error event.
-    /// </summary>
-    private async Task TryPublishErrorAsync(Exception ex, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RepositorySyncSchedulerService.TryPublishErrorAsync");
-        try
-        {
-            using var errorScope = _serviceProvider.CreateScope();
-            var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-            await messageBus.TryPublishErrorAsync(
-                "documentation",
-                "ScheduledSync",
-                ex.GetType().Name,
-                ex.Message,
-                severity: ServiceErrorEventSeverity.Error,
-                cancellationToken: cancellationToken);
-        }
-        catch
-        {
-            // Don't let error publishing failures affect the loop
-        }
-    }
 }

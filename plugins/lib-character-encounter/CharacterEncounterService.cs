@@ -1893,30 +1893,18 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromGlobalCharacterIndexAsync(Guid characterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromGlobalCharacterIndexAsync");
-        var globalIndexStore = _globalCharacterIndexStore;
 
-        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
+        var (result, _) = await _globalCharacterIndexStore.UpdateWithRetryAsync(
+            GLOBAL_CHAR_INDEX_KEY,
+            index => index.CharacterIds.Remove(characterId),
+            _configuration.ETagRetryMaxAttempts,
+            _logger,
+            cancellationToken);
+
+        if (result == UpdateResult.Conflict)
         {
-            var (globalIndex, etag) = await globalIndexStore.GetWithETagAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken);
-            if (globalIndex == null)
-            {
-                return;
-            }
-
-            globalIndex.CharacterIds.Remove(characterId);
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await globalIndexStore.TrySaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, etag ?? string.Empty, cancellationToken: cancellationToken);
-            if (saveResult == null)
-            {
-                _logger.LogDebug("Concurrent modification on global character index during remove, retrying (attempt {Attempt})", attempt + 1);
-                continue;
-            }
-
-            return;
+            _logger.LogWarning("Failed to remove character {CharacterId} from global character index after {MaxAttempts} attempts", characterId, _configuration.ETagRetryMaxAttempts);
         }
-
-        _logger.LogWarning("Failed to remove character {CharacterId} from global character index after {MaxAttempts} attempts", characterId, _configuration.ETagRetryMaxAttempts);
     }
 
     private async Task AddToCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
@@ -1951,30 +1939,18 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromCustomTypeIndexAsync");
-        var indexStore = _customTypeIndexStore;
 
-        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
+        var (result, _) = await _customTypeIndexStore.UpdateWithRetryAsync(
+            CUSTOM_TYPE_INDEX_KEY,
+            index => index.TypeCodes.Remove(typeCode),
+            _configuration.ETagRetryMaxAttempts,
+            _logger,
+            cancellationToken);
+
+        if (result == UpdateResult.Conflict)
         {
-            var (index, etag) = await indexStore.GetWithETagAsync(CUSTOM_TYPE_INDEX_KEY, cancellationToken);
-            if (index == null)
-            {
-                return;
-            }
-
-            index.TypeCodes.Remove(typeCode);
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await indexStore.TrySaveAsync(CUSTOM_TYPE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken: cancellationToken);
-            if (saveResult == null)
-            {
-                _logger.LogDebug("Concurrent modification on custom type index during remove, retrying (attempt {Attempt})", attempt + 1);
-                continue;
-            }
-
-            return;
+            _logger.LogWarning("Failed to remove type code {TypeCode} from custom type index after {MaxAttempts} attempts", typeCode, _configuration.ETagRetryMaxAttempts);
         }
-
-        _logger.LogWarning("Failed to remove type code {TypeCode} from custom type index after {MaxAttempts} attempts", typeCode, _configuration.ETagRetryMaxAttempts);
     }
 
     /// <summary>
@@ -2020,33 +1996,20 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromTypeEncounterIndexAsync(string typeCode, Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromTypeEncounterIndexAsync");
-        var indexStore = _typeEncounterIndexStore;
         var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
 
-        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
+        var (result, _) = await _typeEncounterIndexStore.UpdateWithRetryAsync(
+            key,
+            index => index.EncounterIds.Remove(encounterId),
+            _configuration.ETagRetryMaxAttempts,
+            _logger,
+            cancellationToken);
+
+        if (result == UpdateResult.Conflict)
         {
-            var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
-            if (index == null)
-            {
-                return;
-            }
-
-            index.EncounterIds.Remove(encounterId);
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
-            if (saveResult == null)
-            {
-                _logger.LogDebug("Concurrent modification on type-encounter index {TypeCode} during remove, retrying (attempt {Attempt})",
-                    typeCode, attempt + 1);
-                continue;
-            }
-
-            return;
+            _logger.LogWarning("Failed to remove encounter {EncounterId} from type-encounter index {TypeCode} after {MaxAttempts} attempts",
+                encounterId, typeCode, _configuration.ETagRetryMaxAttempts);
         }
-
-        _logger.LogWarning("Failed to remove encounter {EncounterId} from type-encounter index {TypeCode} after {MaxAttempts} attempts",
-            encounterId, typeCode, _configuration.ETagRetryMaxAttempts);
     }
 
     /// <summary>
@@ -2254,7 +2217,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromPairIndexesAsync(List<Guid> participantIds, Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromPairIndexesAsync");
-        var indexStore = _pairIndexStore;
 
         for (var i = 0; i < participantIds.Count; i++)
         {
@@ -2263,27 +2225,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 var pairKey = BuildPairKey(participantIds[i], participantIds[j]);
                 var key = $"{PAIR_INDEX_PREFIX}{pairKey}";
 
-                for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
-                {
-                    var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
-                    if (index == null)
-                    {
-                        break;
-                    }
-
-                    index.EncounterIds.Remove(encounterId);
-                    // GetWithETagAsync returns non-null etag for existing records;
-                    // coalesce satisfies compiler's nullable analysis (will never execute)
-                    var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
-                    if (saveResult == null)
-                    {
-                        _logger.LogDebug("Concurrent modification on pair index {PairKey} during remove, retrying (attempt {Attempt})",
-                            pairKey, attempt + 1);
-                        continue;
-                    }
-
-                    break;
-                }
+                await _pairIndexStore.UpdateWithRetryAsync(
+                    key,
+                    index => index.EncounterIds.Remove(encounterId),
+                    _configuration.ETagRetryMaxAttempts,
+                    _logger,
+                    cancellationToken);
             }
         }
     }
@@ -2323,33 +2270,20 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromLocationIndexAsync(Guid locationId, Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromLocationIndexAsync");
-        var indexStore = _locationIndexStore;
         var key = $"{LOCATION_INDEX_PREFIX}{locationId}";
 
-        for (var attempt = 0; attempt < _configuration.ETagRetryMaxAttempts; attempt++)
+        var (result, _) = await _locationIndexStore.UpdateWithRetryAsync(
+            key,
+            index => index.EncounterIds.Remove(encounterId),
+            _configuration.ETagRetryMaxAttempts,
+            _logger,
+            cancellationToken);
+
+        if (result == UpdateResult.Conflict)
         {
-            var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
-            if (index == null)
-            {
-                return;
-            }
-
-            index.EncounterIds.Remove(encounterId);
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken: cancellationToken);
-            if (saveResult == null)
-            {
-                _logger.LogDebug("Concurrent modification on location index {LocationId} during remove, retrying (attempt {Attempt})",
-                    locationId, attempt + 1);
-                continue;
-            }
-
-            return;
+            _logger.LogWarning("Failed to remove encounter {EncounterId} from location index {LocationId} after {MaxAttempts} attempts",
+                encounterId, locationId, _configuration.ETagRetryMaxAttempts);
         }
-
-        _logger.LogWarning("Failed to remove encounter {EncounterId} from location index {LocationId} after {MaxAttempts} attempts",
-            encounterId, locationId, _configuration.ETagRetryMaxAttempts);
     }
 
     // ============================================================================

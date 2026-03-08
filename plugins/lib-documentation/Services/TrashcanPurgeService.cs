@@ -85,7 +85,8 @@ public class TrashcanPurgeService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during trashcan purge cycle");
-                await TryPublishErrorAsync(ex, stoppingToken);
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "documentation", "TrashcanPurge", ex, _logger, stoppingToken);
             }
 
             try
@@ -289,28 +290,4 @@ public class TrashcanPurgeService : BackgroundService
         return expiredIds.Count;
     }
 
-    /// <summary>
-    /// Tries to publish an error event for unexpected failures.
-    /// </summary>
-    private async Task TryPublishErrorAsync(Exception ex, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity(
-            "bannou.documentation", "TrashcanPurgeService.TryPublishErrorAsync");
-        try
-        {
-            using var errorScope = _serviceProvider.CreateScope();
-            var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-            await messageBus.TryPublishErrorAsync(
-                "documentation",
-                "TrashcanPurge",
-                ex.GetType().Name,
-                ex.Message,
-                severity: ServiceErrorEventSeverity.Error,
-                cancellationToken: cancellationToken);
-        }
-        catch
-        {
-            // Don't let error publishing failures affect the loop
-        }
-    }
 }

@@ -18,6 +18,7 @@ public partial class EscrowService
     {
         var agreementKey = BuildAgreementKey(body.EscrowId);
 
+        // Manual retry loop: mutation includes contract/status validation with early BadRequest returns (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);
@@ -179,6 +180,7 @@ public partial class EscrowService
     {
         var agreementKey = BuildAgreementKey(body.EscrowId);
 
+        // Manual retry loop: mutation includes terminal state validation with early BadRequest return (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);
@@ -310,6 +312,7 @@ public partial class EscrowService
     {
         var agreementKey = BuildAgreementKey(body.EscrowId);
 
+        // Manual retry loop: mutation includes status/party validation with early returns (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);

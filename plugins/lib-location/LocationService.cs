@@ -3,6 +3,7 @@ using BeyondImmersion.Bannou.Location.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Resource;
@@ -175,25 +176,16 @@ public partial class LocationService : ILocationService
         }
 
         var filteredList = filtered.ToList();
-        var totalCount = filteredList.Count;
-
-        // Apply pagination
-        var page = body.Page;
-        var pageSize = body.PageSize;
-        var pagedList = filteredList
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(MapToResponse)
-            .ToList();
+        var paginationResult = PaginationHelper.Paginate(filteredList, body.Page, body.PageSize);
 
         return (StatusCodes.OK, new LocationListResponse
         {
-            Locations = pagedList,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize,
-            HasNextPage = page * pageSize < totalCount,
-            HasPreviousPage = page > 1
+            Locations = paginationResult.Items.Select(MapToResponse).ToList(),
+            TotalCount = paginationResult.TotalCount,
+            Page = paginationResult.Page,
+            PageSize = paginationResult.PageSize,
+            HasNextPage = paginationResult.HasNextPage,
+            HasPreviousPage = paginationResult.HasPreviousPage
         });
     }
 
@@ -232,25 +224,16 @@ public partial class LocationService : ILocationService
         }
 
         var filteredList = filtered.ToList();
-        var totalCount = filteredList.Count;
-
-        // Apply pagination
-        var page = body.Page;
-        var pageSize = body.PageSize;
-        var pagedList = filteredList
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(MapToResponse)
-            .ToList();
+        var paginationResult = PaginationHelper.Paginate(filteredList, body.Page, body.PageSize);
 
         return (StatusCodes.OK, new LocationListResponse
         {
-            Locations = pagedList,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize,
-            HasNextPage = page * pageSize < totalCount,
-            HasPreviousPage = page > 1
+            Locations = paginationResult.Items.Select(MapToResponse).ToList(),
+            TotalCount = paginationResult.TotalCount,
+            Page = paginationResult.Page,
+            PageSize = paginationResult.PageSize,
+            HasNextPage = paginationResult.HasNextPage,
+            HasPreviousPage = paginationResult.HasPreviousPage
         });
     }
 
@@ -298,25 +281,16 @@ public partial class LocationService : ILocationService
         }
 
         var filteredList = filtered.ToList();
-        var totalCount = filteredList.Count;
-
-        // Apply pagination
-        var page = body.Page;
-        var pageSize = body.PageSize;
-        var pagedList = filteredList
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(MapToResponse)
-            .ToList();
+        var paginationResult = PaginationHelper.Paginate(filteredList, body.Page, body.PageSize);
 
         return (StatusCodes.OK, new LocationListResponse
         {
-            Locations = pagedList,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize,
-            HasNextPage = page * pageSize < totalCount,
-            HasPreviousPage = page > 1
+            Locations = paginationResult.Items.Select(MapToResponse).ToList(),
+            TotalCount = paginationResult.TotalCount,
+            Page = paginationResult.Page,
+            PageSize = paginationResult.PageSize,
+            HasNextPage = paginationResult.HasNextPage,
+            HasPreviousPage = paginationResult.HasPreviousPage
         });
     }
 
@@ -355,25 +329,16 @@ public partial class LocationService : ILocationService
         }
 
         var filteredList = filtered.ToList();
-        var totalCount = filteredList.Count;
-
-        // Apply pagination
-        var page = body.Page;
-        var pageSize = body.PageSize;
-        var pagedList = filteredList
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(MapToResponse)
-            .ToList();
+        var paginationResult = PaginationHelper.Paginate(filteredList, body.Page, body.PageSize);
 
         return (StatusCodes.OK, new LocationListResponse
         {
-            Locations = pagedList,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize,
-            HasNextPage = page * pageSize < totalCount,
-            HasPreviousPage = page > 1
+            Locations = paginationResult.Items.Select(MapToResponse).ToList(),
+            TotalCount = paginationResult.TotalCount,
+            Page = paginationResult.Page,
+            PageSize = paginationResult.PageSize,
+            HasNextPage = paginationResult.HasNextPage,
+            HasPreviousPage = paginationResult.HasPreviousPage
         });
     }
 
@@ -545,25 +510,16 @@ public partial class LocationService : ILocationService
         }
 
         var filteredList = filtered.ToList();
-        var totalCount = filteredList.Count;
-
-        // Apply pagination
-        var page = body.Page;
-        var pageSize = body.PageSize;
-        var pagedList = filteredList
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(MapToResponse)
-            .ToList();
+        var paginationResult = PaginationHelper.Paginate(filteredList, body.Page, body.PageSize);
 
         return (StatusCodes.OK, new LocationListResponse
         {
-            Locations = pagedList,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize,
-            HasNextPage = page * pageSize < totalCount,
-            HasPreviousPage = page > 1
+            Locations = paginationResult.Items.Select(MapToResponse).ToList(),
+            TotalCount = paginationResult.TotalCount,
+            Page = paginationResult.Page,
+            PageSize = paginationResult.PageSize,
+            HasNextPage = paginationResult.HasNextPage,
+            HasPreviousPage = paginationResult.HasPreviousPage
         });
     }
 
@@ -649,20 +605,16 @@ public partial class LocationService : ILocationService
         matchingModels.Sort((a, b) => b.Depth.CompareTo(a.Depth));
 
         // Paginate
-        var totalCount = matchingModels.Count;
-        var page = body.Page;
-        var pageSize = body.PageSize;
-        var skip = (page - 1) * pageSize;
-        var pagedResults = matchingModels.Skip(skip).Take(pageSize).Select(MapToResponse).ToList();
+        var paginationResult = PaginationHelper.Paginate(matchingModels, body.Page, body.PageSize);
 
         return (StatusCodes.OK, new LocationListResponse
         {
-            Locations = pagedResults,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize,
-            HasNextPage = skip + pageSize < totalCount,
-            HasPreviousPage = page > 1
+            Locations = paginationResult.Items.Select(MapToResponse).ToList(),
+            TotalCount = paginationResult.TotalCount,
+            Page = paginationResult.Page,
+            PageSize = paginationResult.PageSize,
+            HasNextPage = paginationResult.HasNextPage,
+            HasPreviousPage = paginationResult.HasPreviousPage
         });
     }
 

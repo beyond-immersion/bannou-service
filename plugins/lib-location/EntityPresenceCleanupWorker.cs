@@ -75,21 +75,8 @@ public class EntityPresenceCleanupWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during entity presence cleanup cycle");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "location",
-                        "EntityPresenceCleanup",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing cleanup loop");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "location", "EntityPresenceCleanup", ex, _logger, stoppingToken);
             }
 
             try

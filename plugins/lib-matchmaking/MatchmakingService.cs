@@ -957,9 +957,22 @@ public partial class MatchmakingService : IMatchmakingService
         // Update tickets
         foreach (var ticket in tickets)
         {
+            var previousStatus = ticket.Status;
             ticket.Status = TicketStatus.MatchFound;
             ticket.MatchId = matchId;
             await SaveTicketAsync(ticket, cancellationToken);
+
+            // Publish ticket updated event for status change
+            await _messageBus.PublishMatchmakingTicketUpdatedAsync(new MatchmakingTicketUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                TicketId = ticket.TicketId,
+                PreviousStatus = previousStatus,
+                NewStatus = TicketStatus.MatchFound,
+                IntervalsElapsed = ticket.IntervalsElapsed,
+                CurrentSkillRange = _algorithm.GetCurrentSkillRange(queue, ticket.IntervalsElapsed)
+            }, cancellationToken);
 
             // Store pending match for reconnection
             await StorePendingMatchAsync(ticket.AccountId, matchId, cancellationToken);
@@ -1205,6 +1218,17 @@ public partial class MatchmakingService : IMatchmakingService
                 existingTicket.Status = TicketStatus.Searching;
                 existingTicket.MatchId = null;
                 await SaveTicketAsync(existingTicket, cancellationToken);
+
+                // Publish ticket updated event for requeue status change
+                await _messageBus.PublishMatchmakingTicketUpdatedAsync(new MatchmakingTicketUpdatedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    TicketId = existingTicket.TicketId,
+                    PreviousStatus = TicketStatus.MatchFound,
+                    NewStatus = TicketStatus.Searching,
+                    IntervalsElapsed = existingTicket.IntervalsElapsed
+                }, cancellationToken);
 
                 // Update state back to in_queue
                 try
@@ -1812,6 +1836,18 @@ public partial class MatchmakingService : IMatchmakingService
             // Increment interval counter
             ticket.IntervalsElapsed++;
             await SaveTicketAsync(ticket, cancellationToken);
+
+            // Publish ticket updated event for skill window expansion
+            await _messageBus.PublishMatchmakingTicketUpdatedAsync(new MatchmakingTicketUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                TicketId = ticket.TicketId,
+                PreviousStatus = TicketStatus.Searching,
+                NewStatus = TicketStatus.Searching,
+                IntervalsElapsed = ticket.IntervalsElapsed,
+                CurrentSkillRange = _algorithm.GetCurrentSkillRange(queue, ticket.IntervalsElapsed)
+            }, cancellationToken);
 
             // Check for timeout
             if (ticket.IntervalsElapsed >= queue.MaxIntervals)

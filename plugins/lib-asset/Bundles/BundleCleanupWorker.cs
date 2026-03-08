@@ -65,21 +65,8 @@ public sealed class BundleCleanupWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during bundle cleanup scan");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "asset",
-                        "BundleCleanup",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing cleanup loop");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "asset", "BundleCleanup", ex, _logger, stoppingToken);
             }
 
             try

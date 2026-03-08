@@ -91,22 +91,8 @@ public class JourneyArchivalWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during journey archival check");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "transit",
-                        "JourneyArchivalWorker.ArchiveCompletedJourneys",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    // Don't let error publishing failures affect the loop
-                    _logger.LogDebug(pubEx, "Failed to publish error event for journey archival failure");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "transit", "JourneyArchivalWorker.ArchiveCompletedJourneys", ex, _logger, stoppingToken);
             }
 
             try

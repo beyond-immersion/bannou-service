@@ -72,22 +72,8 @@ public class EscrowConfirmationTimeoutService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during confirmation timeout check");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "escrow",
-                        "ConfirmationTimeoutCheck",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    // Don't let error publishing failures affect the loop
-                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing timeout loop");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "escrow", "ConfirmationTimeoutCheck", ex, _logger, stoppingToken);
             }
 
             try

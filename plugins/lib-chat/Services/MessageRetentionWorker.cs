@@ -96,21 +96,8 @@ public class MessageRetentionWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during message retention cycle");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "chat",
-                        "MessageRetentionWorker",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing retention loop");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "chat", "MessageRetentionWorker", ex, _logger, stoppingToken);
             }
 
             try

@@ -23,6 +23,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     private readonly IOrchestratorEventManager _eventManager;
     private readonly IControlPlaneServiceProvider _controlPlaneProvider;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly IMessageBus _messageBus;
     private readonly ITelemetryProvider _telemetryProvider;
 
     // Cache of current service routings to detect changes
@@ -52,6 +53,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         IControlPlaneServiceProvider controlPlaneProvider,
         IMeshInstanceIdentifier instanceIdentifier,
         IDistributedLockProvider lockProvider,
+        IMessageBus messageBus,
         ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
@@ -64,6 +66,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         _controlPlaneProvider = controlPlaneProvider;
         _instanceId = instanceIdentifier.InstanceId;
         _lockProvider = lockProvider;
+        _messageBus = messageBus;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
 
@@ -241,6 +244,13 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         {
             _logger.LogError(ex, "Failed to write heartbeat/routing for instance {InstanceId} ({AppId})",
                 heartbeat.ServiceId, heartbeat.AppId);
+            await _messageBus.TryPublishErrorAsync(
+                "orchestrator",
+                "WriteHeartbeatAndUpdateRouting",
+                ex.GetType().Name,
+                ex.Message,
+                severity: ServiceErrorEventSeverity.Warning,
+                stack: ex.StackTrace);
         }
     }
 
@@ -411,6 +421,13 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish full service mappings");
+            await _messageBus.TryPublishErrorAsync(
+                "orchestrator",
+                "PublishFullMappings",
+                ex.GetType().Name,
+                ex.Message,
+                severity: ServiceErrorEventSeverity.Warning,
+                stack: ex.StackTrace);
         }
     }
 
@@ -727,6 +744,13 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             {
                 _logger.LogError(ex,
                     "Failed to reclaim expired leases for pool {PoolType}", poolType);
+                await _messageBus.TryPublishErrorAsync(
+                    "orchestrator",
+                    "ReclaimExpiredLeases",
+                    ex.GetType().Name,
+                    ex.Message,
+                    severity: ServiceErrorEventSeverity.Warning,
+                    stack: ex.StackTrace);
             }
         }
     }

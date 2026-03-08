@@ -98,21 +98,8 @@ public class IdleRoomCleanupWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during idle room cleanup cycle");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "chat",
-                        "IdleRoomCleanupWorker",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing cleanup loop");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "chat", "IdleRoomCleanupWorker", ex, _logger, stoppingToken);
             }
 
             try

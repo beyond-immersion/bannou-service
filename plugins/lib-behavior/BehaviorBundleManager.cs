@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Asset;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -22,6 +23,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     /// <summary>State store for cached GOAP metadata records keyed by behavior ID.</summary>
     private readonly IStateStore<CachedGoapMetadata> _goapMetadataStore;
 
+    private readonly IMessageBus _messageBus;
     private readonly IServiceProvider _serviceProvider;
     private readonly BehaviorServiceConfiguration _configuration;
     private readonly ILogger<BehaviorBundleManager> _logger;
@@ -33,12 +35,14 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     /// Initializes a new instance of the <see cref="BehaviorBundleManager"/> class.
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for persistence.</param>
+    /// <param name="messageBus">Message bus for publishing bundle lifecycle events.</param>
     /// <param name="serviceProvider">Service provider for resolving optional L3 dependencies.</param>
     /// <param name="configuration">Behavior service configuration.</param>
     /// <param name="logger">Logger for structured logging.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public BehaviorBundleManager(
         IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         IServiceProvider serviceProvider,
         BehaviorServiceConfiguration configuration,
         ILogger<BehaviorBundleManager> logger,
@@ -47,6 +51,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         _metadataStore = stateStoreFactory.GetStore<BehaviorMetadata>(StateStoreDefinitions.Behavior);
         _membershipStore = stateStoreFactory.GetStore<BundleMembership>(StateStoreDefinitions.Behavior);
         _goapMetadataStore = stateStoreFactory.GetStore<CachedGoapMetadata>(StateStoreDefinitions.Behavior);
+        _messageBus = messageBus;
         _serviceProvider = serviceProvider;
         _configuration = configuration;
         _logger = logger;
@@ -140,7 +145,9 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         var membershipKey = $"{_configuration.BundleMembershipKeyPrefix}{bundleId}";
 
         // Get or create bundle membership
-        var membership = await _membershipStore.GetAsync(membershipKey, cancellationToken) ?? new BundleMembership
+        var existingMembership = await _membershipStore.GetAsync(membershipKey, cancellationToken);
+        var isNewBundle = existingMembership == null;
+        var membership = existingMembership ?? new BundleMembership
         {
             BundleId = bundleId,
             BehaviorAssetIds = new Dictionary<string, string>(),
@@ -152,6 +159,36 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         membership.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _membershipStore.SaveAsync(membershipKey, membership, cancellationToken: cancellationToken);
+
+        // Publish bundle lifecycle event
+        var now = DateTimeOffset.UtcNow;
+        if (isNewBundle)
+        {
+            await _messageBus.PublishBehaviorBundleCreatedAsync(new BehaviorBundleCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                BundleId = bundleId,
+                Name = bundleId,
+                BehaviorCount = membership.BehaviorAssetIds.Count,
+                CreatedAt = membership.CreatedAt,
+                UpdatedAt = membership.UpdatedAt
+            }, cancellationToken);
+        }
+        else
+        {
+            await _messageBus.PublishBehaviorBundleUpdatedAsync(new BehaviorBundleUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                BundleId = bundleId,
+                Name = bundleId,
+                BehaviorCount = membership.BehaviorAssetIds.Count,
+                CreatedAt = membership.CreatedAt,
+                UpdatedAt = membership.UpdatedAt,
+                ChangedFields = new List<string> { "behaviorAssetIds" }
+            }, cancellationToken);
+        }
 
         _logger.LogDebug(
             "Bundle {BundleId} now has {Count} behaviors",
@@ -208,7 +245,20 @@ public class BehaviorBundleManager : IBehaviorBundleManager
                 cancellationToken);
 
             membership.AssetBundleId = response.BundleId;
+            membership.UpdatedAt = DateTimeOffset.UtcNow;
             await _membershipStore.SaveAsync(membershipKey, membership, cancellationToken: cancellationToken);
+
+            await _messageBus.PublishBehaviorBundleUpdatedAsync(new BehaviorBundleUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                BundleId = bundleId,
+                Name = bundleId,
+                BehaviorCount = membership.BehaviorAssetIds.Count,
+                CreatedAt = membership.CreatedAt,
+                UpdatedAt = membership.UpdatedAt,
+                ChangedFields = new List<string> { "assetBundleId" }
+            }, cancellationToken);
 
             _logger.LogInformation(
                 "Created asset bundle {AssetBundleId} for behavior bundle {BundleId} with {Count} behaviors",
@@ -301,7 +351,40 @@ public class BehaviorBundleManager : IBehaviorBundleManager
             {
                 membership.BehaviorAssetIds.Remove(behaviorId);
                 membership.UpdatedAt = DateTimeOffset.UtcNow;
-                await _membershipStore.SaveAsync(membershipKey, membership, cancellationToken: cancellationToken);
+
+                if (membership.BehaviorAssetIds.Count == 0)
+                {
+                    // Bundle is now empty — delete it
+                    await _membershipStore.DeleteAsync(membershipKey, cancellationToken);
+
+                    await _messageBus.PublishBehaviorBundleDeletedAsync(new BehaviorBundleDeletedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        BundleId = metadata.BundleId,
+                        Name = metadata.BundleId,
+                        BehaviorCount = 0,
+                        CreatedAt = membership.CreatedAt,
+                        UpdatedAt = membership.UpdatedAt,
+                        DeletedReason = "Last behavior removed from bundle"
+                    }, cancellationToken);
+                }
+                else
+                {
+                    await _membershipStore.SaveAsync(membershipKey, membership, cancellationToken: cancellationToken);
+
+                    await _messageBus.PublishBehaviorBundleUpdatedAsync(new BehaviorBundleUpdatedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        BundleId = metadata.BundleId,
+                        Name = metadata.BundleId,
+                        BehaviorCount = membership.BehaviorAssetIds.Count,
+                        CreatedAt = membership.CreatedAt,
+                        UpdatedAt = membership.UpdatedAt,
+                        ChangedFields = new List<string> { "behaviorAssetIds" }
+                    }, cancellationToken);
+                }
             }
         }
 

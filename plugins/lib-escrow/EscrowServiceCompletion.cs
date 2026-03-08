@@ -22,6 +22,7 @@ public partial class EscrowService
     {
         var agreementKey = BuildAgreementKey(body.EscrowId);
 
+        // Manual retry loop: mutation includes status validation and branching save paths (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);
@@ -228,6 +229,7 @@ public partial class EscrowService
     {
         var agreementKey = BuildAgreementKey(body.EscrowId);
 
+        // Manual retry loop: mutation includes status validation with early BadRequest return (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);
@@ -349,6 +351,7 @@ public partial class EscrowService
     {
         var agreementKey = BuildAgreementKey(body.EscrowId);
 
+        // Manual retry loop: mutation includes status validation with early BadRequest return (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);
@@ -456,6 +459,7 @@ public partial class EscrowService
     {
         var agreementKey = BuildAgreementKey(body.EscrowId);
 
+        // Manual retry loop: mutation includes status validation and party lookup with early Forbidden return (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);
@@ -562,6 +566,7 @@ public partial class EscrowService
     {
         var agreementKey = BuildAgreementKey(body.EscrowId);
 
+        // Manual retry loop: mutation includes status/arbiter validation and resolution branching (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);
@@ -726,6 +731,7 @@ public partial class EscrowService
     {
         var agreementKey = BuildAgreementKey(body.EscrowId);
 
+        // Manual retry loop: mutation includes status/party/token validation with early returns (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);
@@ -864,6 +870,7 @@ public partial class EscrowService
     {
         var agreementKey = BuildAgreementKey(body.EscrowId);
 
+        // Manual retry loop: mutation includes status/party validation with early returns (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);

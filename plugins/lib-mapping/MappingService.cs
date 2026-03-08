@@ -384,8 +384,15 @@ public partial class MappingService : IMappingService
             // Subscribe to ingest topic for this channel
             await SubscribeToIngestTopicAsync(channelId, ingestTopic, cancellationToken);
 
-            // Publish channel created event
-            await PublishChannelCreatedEventAsync(channel, cancellationToken);
+            // Publish channel lifecycle event
+            if (existingChannel != null)
+            {
+                await PublishChannelUpdatedEventAsync(channel, existingChannel, cancellationToken);
+            }
+            else
+            {
+                await PublishChannelCreatedEventAsync(channel, cancellationToken);
+            }
 
             // Publish authority granted event
             await _messageBus.PublishMappingAuthorityGrantedAsync(new MappingAuthorityGrantedEvent
@@ -2076,6 +2083,33 @@ public partial class MappingService : IMappingService
         };
 
         await _messageBus.PublishMappingChannelCreatedAsync(eventData, cancellationToken);
+    }
+
+    private async Task PublishChannelUpdatedEventAsync(ChannelRecord channel, ChannelRecord previousChannel, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.PublishChannelUpdatedEventAsync");
+
+        var changedFields = new List<string>();
+        if (channel.NonAuthorityHandling != previousChannel.NonAuthorityHandling) changedFields.Add("nonAuthorityHandling");
+        if (channel.Kind != previousChannel.Kind) changedFields.Add("kind");
+        if (channel.Version != previousChannel.Version) changedFields.Add("version");
+        if (channel.UpdatedAt != previousChannel.UpdatedAt) changedFields.Add("updatedAt");
+
+        var eventData = new MappingChannelUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ChannelId = channel.ChannelId,
+            RegionId = channel.RegionId,
+            Kind = channel.Kind,
+            NonAuthorityHandling = channel.NonAuthorityHandling,
+            Version = channel.Version,
+            CreatedAt = channel.CreatedAt,
+            UpdatedAt = channel.UpdatedAt,
+            ChangedFields = changedFields
+        };
+
+        await _messageBus.PublishMappingChannelUpdatedAsync(eventData, cancellationToken);
     }
 
     private async Task PublishMapUpdatedEventAsync(ChannelRecord channel, Bounds? bounds, long version, DeltaType deltaType, MapPayload payload, string? sourceAppId, CancellationToken cancellationToken)

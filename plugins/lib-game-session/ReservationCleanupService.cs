@@ -21,9 +21,6 @@ namespace BeyondImmersion.BannouService.GameSession;
 public class ReservationCleanupService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly IMessageBus _messageBus;
-    private readonly IClientEventPublisher _clientEventPublisher;
-    private readonly IDistributedLockProvider _lockProvider;
     private readonly GameSessionServiceConfiguration _configuration;
     private readonly ILogger<ReservationCleanupService> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -35,26 +32,17 @@ public class ReservationCleanupService : BackgroundService
     /// <summary>
     /// Creates a new ReservationCleanupService instance.
     /// </summary>
-    /// <param name="serviceProvider">Service provider for creating scoped state store access (FOUNDATION TENETS).</param>
-    /// <param name="messageBus">Message bus for publishing events.</param>
-    /// <param name="clientEventPublisher">Client event publisher for WebSocket notifications.</param>
-    /// <param name="lockProvider">Distributed lock provider for multi-instance coordination.</param>
+    /// <param name="serviceProvider">Service provider for creating scoped service access (FOUNDATION TENETS).</param>
     /// <param name="configuration">Game session service configuration.</param>
     /// <param name="logger">Logger for this service.</param>
     /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
     public ReservationCleanupService(
         IServiceProvider serviceProvider,
-        IMessageBus messageBus,
-        IClientEventPublisher clientEventPublisher,
-        IDistributedLockProvider lockProvider,
         GameSessionServiceConfiguration configuration,
         ILogger<ReservationCleanupService> logger,
         ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
-        _messageBus = messageBus;
-        _clientEventPublisher = clientEventPublisher;
-        _lockProvider = lockProvider;
         _configuration = configuration;
         _logger = logger;
         _telemetryProvider = telemetryProvider;
@@ -65,11 +53,12 @@ public class ReservationCleanupService : BackgroundService
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var activity = _telemetryProvider.StartActivity(
-            "bannou.game-session", "ReservationCleanupService.ExecuteAsync");
-
         // Wait for other services to initialize
-        await Task.Delay(TimeSpan.FromSeconds(_configuration.CleanupServiceStartupDelaySeconds), stoppingToken);
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.CleanupServiceStartupDelaySeconds), stoppingToken);
+        }
+        catch (OperationCanceledException) { return; }
 
         _logger.LogInformation(
             "ReservationCleanupService starting with interval of {IntervalSeconds} seconds",
@@ -91,18 +80,14 @@ public class ReservationCleanupService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during reservation cleanup");
+                await _serviceProvider.TryPublishWorkerErrorAsync("game-session", "ReservationCleanup", ex, _logger, stoppingToken);
             }
 
-            // Wait for next interval
             try
             {
                 await Task.Delay(interval, stoppingToken);
             }
-            catch (OperationCanceledException)
-            {
-                // Expected during shutdown
-                break;
-            }
+            catch (OperationCanceledException) { break; }
         }
 
         _logger.LogInformation("ReservationCleanupService stopped");
@@ -117,12 +102,15 @@ public class ReservationCleanupService : BackgroundService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.game-session", "ReservationCleanupService.CleanupExpiredReservations");
 
-        // Create a scope to resolve scoped state stores (BackgroundService cannot constructor-inject them)
+        // Create a scope to resolve scoped services (BackgroundService cannot constructor-inject them)
         using var scope = _serviceProvider.CreateScope();
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
         var cleanupStore = stateStoreFactory.GetStore<CleanupSessionModel>(StateStoreDefinitions.GameSession);
         var sessionListStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
         var fullSessionStore = stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
+        var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
+        var clientEventPublisher = scope.ServiceProvider.GetRequiredService<IClientEventPublisher>();
+        var lockProvider = scope.ServiceProvider.GetRequiredService<IDistributedLockProvider>();
 
         // Get all session IDs
         var sessionIds = await sessionListStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
@@ -162,7 +150,7 @@ public class ReservationCleanupService : BackgroundService
             if (claimedCount < totalReservations)
             {
                 // Acquire per-session lock to prevent duplicate cancellation across instances
-                await using var sessionLock = await _lockProvider.LockAsync(
+                await using var sessionLock = await lockProvider.LockAsync(
                     StateStoreDefinitions.GameSessionLock, SESSION_KEY_PREFIX + sessionId, Guid.NewGuid().ToString(),
                     _configuration.LockTimeoutSeconds, cancellationToken);
                 if (!sessionLock.Success)
@@ -183,7 +171,7 @@ public class ReservationCleanupService : BackgroundService
                     "Cancelling matchmade session {SessionId}: only {Claimed}/{Total} reservations claimed before expiry",
                     sessionId, claimedCount, totalReservations);
 
-                await CancelExpiredSessionAsync(session, sessionId, cleanupStore, sessionListStore, fullSessionStore, cancellationToken);
+                await CancelExpiredSessionAsync(session, sessionId, cleanupStore, sessionListStore, fullSessionStore, messageBus, clientEventPublisher, lockProvider, cancellationToken);
                 expiredCount++;
             }
         }
@@ -196,13 +184,16 @@ public class ReservationCleanupService : BackgroundService
 
     /// <summary>
     /// Cancels an expired matchmade session and notifies players.
-    /// Receives pre-resolved state stores from the caller's scope (FOUNDATION TENETS).
+    /// Receives pre-resolved services from the caller's scope (FOUNDATION TENETS).
     /// </summary>
     /// <param name="session">The cleanup session model for the expired session.</param>
     /// <param name="sessionId">The session ID string.</param>
     /// <param name="cleanupStore">Pre-resolved cleanup session store.</param>
     /// <param name="sessionListStore">Pre-resolved session list store.</param>
     /// <param name="fullSessionStore">Pre-resolved full session model store.</param>
+    /// <param name="messageBus">Scope-resolved message bus for publishing events.</param>
+    /// <param name="clientEventPublisher">Scope-resolved client event publisher for WebSocket notifications.</param>
+    /// <param name="lockProvider">Scope-resolved distributed lock provider for multi-instance coordination.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     private async Task CancelExpiredSessionAsync(
         CleanupSessionModel session,
@@ -210,6 +201,9 @@ public class ReservationCleanupService : BackgroundService
         IStateStore<CleanupSessionModel> cleanupStore,
         IStateStore<List<string>> sessionListStore,
         IStateStore<GameSessionModel> fullSessionStore,
+        IMessageBus messageBus,
+        IClientEventPublisher clientEventPublisher,
+        IDistributedLockProvider lockProvider,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity(
@@ -226,7 +220,7 @@ public class ReservationCleanupService : BackgroundService
                     var player = session.Players.FirstOrDefault(p => p.AccountId == reservation.AccountId);
                     if (player != null && player.WebSocketSessionId.HasValue)
                     {
-                        await _clientEventPublisher.PublishToSessionAsync(
+                        await clientEventPublisher.PublishToSessionAsync(
                             player.WebSocketSessionId.Value.ToString(),
                             new SessionCancelledClientEvent
                             {
@@ -245,7 +239,7 @@ public class ReservationCleanupService : BackgroundService
             }
 
             // Publish server-side domain event
-            await _messageBus.PublishGameSessionCancelledAsync(
+            await messageBus.PublishGameSessionCancelledAsync(
                 new GameSessionCancelledEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -260,7 +254,7 @@ public class ReservationCleanupService : BackgroundService
             if (fullModel != null)
             {
                 // Publish lifecycle deleted event using shared helper
-                await _messageBus.PublishGameSessionDeletedAsync(
+                await messageBus.PublishGameSessionDeletedAsync(
                     GameSessionService.BuildDeletedEvent(fullModel, "Reservation timeout - not enough players"),
                     cancellationToken);
             }
@@ -269,7 +263,7 @@ public class ReservationCleanupService : BackgroundService
             await cleanupStore.DeleteAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
 
             // Remove from session list under distributed lock (read-modify-write)
-            await using var listLock = await _lockProvider.LockAsync(
+            await using var listLock = await lockProvider.LockAsync(
                 StateStoreDefinitions.GameSessionLock, SESSION_LIST_KEY, Guid.NewGuid().ToString(),
                 _configuration.LockTimeoutSeconds, cancellationToken);
             if (listLock.Success)

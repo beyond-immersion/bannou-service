@@ -111,22 +111,8 @@ public class MemoryDecaySchedulerService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during scheduled memory decay processing");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "character-encounter",
-                        "ScheduledMemoryDecay",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    // Don't let error publishing failures affect the loop
-                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing decay loop");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "character-encounter", "ScheduledMemoryDecay", ex, _logger, stoppingToken);
             }
 
             try

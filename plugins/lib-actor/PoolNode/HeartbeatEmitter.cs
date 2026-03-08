@@ -125,6 +125,14 @@ public sealed class HeartbeatEmitter : IAsyncDisposable
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error emitting heartbeat");
+                await _messageBus.TryPublishErrorAsync(
+                    "actor",
+                    "Heartbeat",
+                    ex.GetType().Name,
+                    ex.Message,
+                    severity: ServiceErrorEventSeverity.Warning,
+                    stack: ex.StackTrace,
+                    cancellationToken: ct);
             }
 
             try

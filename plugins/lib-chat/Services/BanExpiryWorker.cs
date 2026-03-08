@@ -96,21 +96,8 @@ public class BanExpiryWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during ban expiry cycle");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "chat",
-                        "BanExpiryWorker",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing ban expiry loop");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "chat", "BanExpiryWorker", ex, _logger, stoppingToken);
             }
 
             try

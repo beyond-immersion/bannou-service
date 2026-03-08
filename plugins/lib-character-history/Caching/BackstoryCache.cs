@@ -5,25 +5,22 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.CharacterHistory.Caching;
 
 /// <summary>
 /// Caches character backstory data for actor behavior execution.
-/// Uses ConcurrentDictionary for thread-safety (IMPLEMENTATION TENETS compliant).
+/// Composes <see cref="VariableProviderCacheBucket{TKey, TData}"/> for thread-safe
+/// TTL-based caching with stale-data fallback (IMPLEMENTATION TENETS compliant).
 /// </summary>
 public sealed class BackstoryCache : IBackstoryCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<BackstoryCache> _logger;
-    private readonly ITelemetryProvider _telemetryProvider;
-    private readonly ConcurrentDictionary<Guid, CachedBackstory> _backstoryCache = new();
-    private readonly TimeSpan _cacheTtl;
+    private readonly VariableProviderCacheBucket<Guid, BackstoryResponse> _backstoryBucket;
 
     /// <summary>
     /// Creates a new backstory cache.
@@ -35,76 +32,34 @@ public sealed class BackstoryCache : IBackstoryCache
         ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
-        _logger = logger;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
-        _telemetryProvider = telemetryProvider;
-        _cacheTtl = TimeSpan.FromMinutes(config.BackstoryCacheTtlMinutes);
+        _backstoryBucket = new VariableProviderCacheBucket<Guid, BackstoryResponse>(
+            TimeSpan.FromMinutes(config.BackstoryCacheTtlMinutes),
+            logger, telemetryProvider, "bannou.character-history", "BackstoryCache");
     }
 
     /// <inheritdoc/>
     public async Task<BackstoryResponse?> GetOrLoadAsync(Guid characterId, CancellationToken ct = default)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.character-history", "BackstoryCache.GetOrLoadAsync");
-        // Check cache first
-        if (_backstoryCache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
-        {
-            _logger.LogDebug("Backstory cache hit for character {CharacterId}", characterId);
-            return cached.Backstory;
-        }
-
-        // Load from service
-        _logger.LogDebug("Backstory cache miss for character {CharacterId}, loading from service", characterId);
-
-        try
+        return await _backstoryBucket.GetOrLoadAsync(characterId, async loadCt =>
         {
             using var scope = _scopeFactory.CreateScope();
             var client = scope.ServiceProvider.GetRequiredService<ICharacterHistoryClient>();
-
-            var response = await client.GetBackstoryAsync(
+            return await client.GetBackstoryAsync(
                 new GetBackstoryRequest { CharacterId = characterId },
-                ct);
-
-            if (response != null)
-            {
-                var newCached = new CachedBackstory(response, DateTimeOffset.UtcNow.Add(_cacheTtl));
-                _backstoryCache[characterId] = newCached;
-                _logger.LogDebug("Cached backstory for character {CharacterId} with {ElementCount} elements",
-                    characterId, response.Elements.Count);
-            }
-
-            return response;
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            _logger.LogDebug("No backstory found for character {CharacterId}", characterId);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to load backstory for character {CharacterId}", characterId);
-            return cached?.Backstory; // Return stale data if available
-        }
+                loadCt);
+        }, ct);
     }
 
     /// <inheritdoc/>
     public void Invalidate(Guid characterId)
     {
-        _backstoryCache.TryRemove(characterId, out _);
-        _logger.LogDebug("Invalidated backstory cache for character {CharacterId}", characterId);
+        _backstoryBucket.Invalidate(characterId);
     }
 
     /// <inheritdoc/>
     public void InvalidateAll()
     {
-        _backstoryCache.Clear();
-        _logger.LogInformation("Cleared all backstory cache entries");
-    }
-
-    /// <summary>
-    /// Cached backstory data with expiration time.
-    /// </summary>
-    private sealed record CachedBackstory(BackstoryResponse? Backstory, DateTimeOffset ExpiresAt)
-    {
-        public bool IsExpired => DateTimeOffset.UtcNow >= ExpiresAt;
+        _backstoryBucket.InvalidateAll();
     }
 }

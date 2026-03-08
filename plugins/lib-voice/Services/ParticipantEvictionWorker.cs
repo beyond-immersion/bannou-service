@@ -103,21 +103,8 @@ public class ParticipantEvictionWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during participant eviction cycle");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "voice",
-                        "ParticipantEvictionWorker",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing eviction loop");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "voice", "ParticipantEvictionWorker", ex, _logger, stoppingToken);
             }
 
             try

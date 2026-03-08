@@ -26,21 +26,6 @@ public class GeneratedCodeValidationTests
             && t != typeof(BaseServiceEvent))
         .ToArray();
 
-    /// <summary>
-    /// All generated controller files across all plugins (plugins/lib-*/Generated/*Controller.cs).
-    /// Excludes Meta.cs files which are partial class extensions, not the main controller.
-    /// </summary>
-    private static readonly string[] AllGeneratedControllerFiles = Directory
-        .GetFiles(
-            Path.Combine(FindRepositoryRoot(), "plugins"),
-            "*Controller.cs",
-            SearchOption.AllDirectories)
-        .Where(f =>
-            f.Contains(Path.Combine("Generated", "")) // Backslash-safe path check
-            && !f.EndsWith("Controller.Meta.cs")
-            && !f.EndsWith("EventsController.cs"))
-        .ToArray();
-
     #region Service Event Validation
 
     /// <summary>
@@ -142,96 +127,6 @@ public class GeneratedCodeValidationTests
 
     #endregion
 
-    #region Controller Validation
-
-    /// <summary>
-    /// Verifies that at least 50 generated controller files are found (we have 55+ plugins).
-    /// Guards against path issues, broken glob patterns, or structural changes that would
-    /// make the other controller tests vacuously pass on an empty set.
-    /// </summary>
-    [Fact]
-    public void Controllers_AtLeastFiftyGeneratedControllersExist()
-    {
-        Assert.True(
-            AllGeneratedControllerFiles.Length >= 50,
-            $"Expected at least 50 generated controller files (we have 55+ plugins), " +
-            $"but found only {AllGeneratedControllerFiles.Length}. " +
-            $"Check that the file glob and repository root detection are working correctly.");
-    }
-
-    /// <summary>
-    /// Every generated controller class MUST implement I{Service}Controller (which extends
-    /// IBannouController). Without this, the controller is invisible to the IBannouController
-    /// discovery system used for runtime controller enumeration and service-to-controller mapping.
-    ///
-    /// If this test fails, the Controller.liquid NSwag template is not emitting the interface
-    /// implementation on the controller class declaration.
-    /// </summary>
-    [Fact]
-    public void Controllers_AllImplementIBannouController()
-    {
-        var violations = new List<string>();
-
-        foreach (var file in AllGeneratedControllerFiles)
-        {
-            var content = File.ReadAllText(file);
-
-            // Every generated controller must have the I{Service}Controller interface declaration
-            if (!content.Contains(": IBannouController"))
-            {
-                // Check if it implements via I{Service}Controller (which extends IBannouController)
-                // Pattern: "class FooController ... , IFooController" or "class FooControllerBase ... , IFooController"
-                var hasControllerInterface = System.Text.RegularExpressions.Regex.IsMatch(
-                    content,
-                    @"class \w+Controller(?:Base)?\s*:.*,\s*I\w+Controller\b");
-
-                if (!hasControllerInterface)
-                    violations.Add(Path.GetFileName(file));
-            }
-        }
-
-        var report = string.Join("\n", violations.Select(v => $"  - {v}"));
-
-        Assert.True(
-            violations.Count == 0,
-            $"Found {violations.Count} generated controller(s) that do NOT implement I{{Service}}Controller " +
-            $"(IBannouController). These controllers are invisible to runtime discovery.\n" +
-            $"Fix Controller.liquid template, then regenerate.\n\n" +
-            report);
-    }
-
-    /// <summary>
-    /// Every generated controller class MUST have the [BannouController] attribute linking it
-    /// to its service interface. Without this, the IBannouController discovery system cannot
-    /// map controllers to their services.
-    ///
-    /// If this test fails, the Controller.liquid NSwag template is not emitting the
-    /// [BannouController(typeof(I{Service}Service))] attribute.
-    /// </summary>
-    [Fact]
-    public void Controllers_AllHaveBannouControllerAttribute()
-    {
-        var violations = new List<string>();
-
-        foreach (var file in AllGeneratedControllerFiles)
-        {
-            var content = File.ReadAllText(file);
-
-            if (!content.Contains("[BeyondImmersion.BannouService.Attributes.BannouController(typeof(I"))
-                violations.Add(Path.GetFileName(file));
-        }
-
-        var report = string.Join("\n", violations.Select(v => $"  - {v}"));
-
-        Assert.True(
-            violations.Count == 0,
-            $"Found {violations.Count} generated controller(s) missing [BannouController] attribute.\n" +
-            $"Fix Controller.liquid template, then regenerate.\n\n" +
-            report);
-    }
-
-    #endregion
-
     #region Helpers
 
     /// <summary>
@@ -275,29 +170,6 @@ public class GeneratedCodeValidationTests
         }
 
         return eventTypeName.ToLowerInvariant();
-    }
-
-    private static string FindRepositoryRoot()
-    {
-        var dir = AppDomain.CurrentDomain.BaseDirectory;
-        while (dir != null)
-        {
-            if (Directory.Exists(Path.Combine(dir, ".git")))
-                return dir;
-            dir = Directory.GetParent(dir)?.FullName;
-        }
-
-        // Fallback: walk up from assembly location
-        dir = Path.GetDirectoryName(typeof(GeneratedCodeValidationTests).Assembly.Location);
-        while (dir != null)
-        {
-            if (Directory.Exists(Path.Combine(dir, "plugins")))
-                return dir;
-            dir = Directory.GetParent(dir)?.FullName;
-        }
-
-        throw new InvalidOperationException(
-            "Could not find repository root. Expected .git directory or plugins/ directory in parent path.");
     }
 
     #endregion

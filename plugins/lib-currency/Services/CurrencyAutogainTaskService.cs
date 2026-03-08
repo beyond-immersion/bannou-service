@@ -77,7 +77,8 @@ public class CurrencyAutogainTaskService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during autogain processing cycle");
-                await TryPublishErrorAsync(ex, stoppingToken);
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "currency", "AutogainTask", ex, _logger, stoppingToken);
             }
 
             try
@@ -315,30 +316,6 @@ public class CurrencyAutogainTaskService : BackgroundService
             _logger.LogError(ex, "Error processing autogain for wallet {WalletId}, currency {CurrencyId}",
                 walletId, definition.DefinitionId);
             return false;
-        }
-    }
-
-    /// <summary>
-    /// Tries to publish an error event for autogain task failures.
-    /// </summary>
-    private async Task TryPublishErrorAsync(Exception ex, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyAutogainTaskService.TryPublishErrorAsync");
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
-            await messageBus.TryPublishErrorAsync(
-                "currency",
-                "AutogainTask",
-                ex.GetType().Name,
-                ex.Message,
-                severity: ServiceErrorEventSeverity.Error,
-                cancellationToken: cancellationToken);
-        }
-        catch
-        {
-            // Don't let error publishing failures affect the loop
         }
     }
 

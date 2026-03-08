@@ -76,21 +76,8 @@ public class TypingExpiryWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during typing expiry cycle");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "chat",
-                        "TypingExpiryWorker",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing typing expiry loop");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "chat", "TypingExpiryWorker", ex, _logger, stoppingToken);
             }
 
             try

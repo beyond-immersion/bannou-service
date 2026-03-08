@@ -6,26 +6,26 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Item;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Inventory.Caching;
 
 /// <summary>
 /// Caches character inventory data for actor behavior execution.
-/// Uses ConcurrentDictionary for thread-safety (IMPLEMENTATION TENETS compliant).
+/// Uses <see cref="VariableProviderCacheBucket{TKey, TData}"/> for thread-safe
+/// TTL-based caching with stale-data fallback (IMPLEMENTATION TENETS compliant).
 /// </summary>
 public sealed class InventoryDataCache : IInventoryDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<InventoryDataCache> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
-    private readonly TimeSpan _cacheTtl;
     private readonly int _queryPageSize;
-    private readonly ConcurrentDictionary<Guid, CachedEntry> _cache = new();
+    private readonly VariableProviderCacheBucket<Guid, CachedInventoryData> _bucket;
 
     // Long-lived templateId→code mapping that persists across cache refreshes
     private readonly ConcurrentDictionary<Guid, string> _templateCodeCache = new();
@@ -47,26 +47,19 @@ public sealed class InventoryDataCache : IInventoryDataCache
         _logger = logger;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
-        _cacheTtl = TimeSpan.FromSeconds(config.ProviderCacheTtlSeconds);
         _queryPageSize = config.QueryPageSize;
+        _bucket = new VariableProviderCacheBucket<Guid, CachedInventoryData>(
+            TimeSpan.FromSeconds(config.ProviderCacheTtlSeconds),
+            logger,
+            telemetryProvider,
+            "bannou.inventory",
+            "InventoryDataCache");
     }
 
     /// <inheritdoc/>
     public async Task<CachedInventoryData?> GetOrLoadAsync(Guid characterId, CancellationToken ct = default)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.inventory", "InventoryDataCache.GetOrLoadAsync");
-
-        // Check cache first
-        if (_cache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
-        {
-            _logger.LogDebug("Inventory cache hit for character {CharacterId}", characterId);
-            return cached.Data;
-        }
-
-        // Load from service
-        _logger.LogDebug("Inventory cache miss for character {CharacterId}, loading from service", characterId);
-
-        try
+        return await _bucket.GetOrLoadAsync(characterId, async innerCt =>
         {
             using var scope = _scopeFactory.CreateScope();
             var inventoryClient = scope.ServiceProvider.GetRequiredService<IInventoryClient>();
@@ -79,14 +72,12 @@ public sealed class InventoryDataCache : IInventoryDataCache
                     OwnerId = characterId,
                     OwnerType = ContainerOwnerType.Character,
                 },
-                ct);
+                innerCt);
 
             var containers = containersResponse?.Containers;
             if (containers == null || containers.Count == 0)
             {
-                var emptyData = CachedInventoryData.Empty;
-                _cache[characterId] = new CachedEntry(emptyData, DateTimeOffset.UtcNow.Add(_cacheTtl));
-                return emptyData;
+                return CachedInventoryData.Empty;
             }
 
             // Step 2: Query all items across all containers
@@ -104,7 +95,7 @@ public sealed class InventoryDataCache : IInventoryDataCache
                         Offset = offset,
                         Limit = _queryPageSize,
                     },
-                    ct);
+                    innerCt);
 
                 if (itemsResponse?.Items == null || itemsResponse.Items.Count == 0)
                     break;
@@ -114,7 +105,7 @@ public sealed class InventoryDataCache : IInventoryDataCache
                     totalItemCount++;
 
                     // Resolve templateId to code
-                    var code = await ResolveTemplateCodeAsync(item.TemplateId, itemClient, ct);
+                    var code = await ResolveTemplateCodeAsync(item.TemplateId, itemClient, innerCt);
                     if (code != null)
                     {
                         if (itemCounts.TryGetValue(code, out var existing))
@@ -167,7 +158,10 @@ public sealed class InventoryDataCache : IInventoryDataCache
                 }
             }
 
-            var data = new CachedInventoryData
+            _logger.LogDebug("Loaded inventory data for character {CharacterId}: {ContainerCount} containers, {ItemCount} items",
+                characterId, containers.Count, totalItemCount);
+
+            return new CachedInventoryData
             {
                 ItemCountsByTemplateCode = itemCounts,
                 TotalContainers = containers.Count,
@@ -176,32 +170,20 @@ public sealed class InventoryDataCache : IInventoryDataCache
                 UsedSlots = usedSlots,
                 HasSpace = hasSpace,
             };
-
-            _cache[characterId] = new CachedEntry(data, DateTimeOffset.UtcNow.Add(_cacheTtl));
-            _logger.LogDebug("Cached inventory data for character {CharacterId}: {ContainerCount} containers, {ItemCount} items",
-                characterId, containers.Count, totalItemCount);
-
-            return data;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to load inventory data for character {CharacterId}", characterId);
-            // Stale-if-error: return cached data if available
-            return cached?.Data;
-        }
+        }, ct);
     }
 
     /// <inheritdoc/>
     public void Invalidate(Guid characterId)
     {
-        _cache.TryRemove(characterId, out _);
+        _bucket.Invalidate(characterId);
         _logger.LogDebug("Invalidated inventory data cache for character {CharacterId}", characterId);
     }
 
     /// <inheritdoc/>
     public void InvalidateAll()
     {
-        _cache.Clear();
+        _bucket.InvalidateAll();
         _logger.LogInformation("Cleared all inventory data cache entries");
     }
 
@@ -239,13 +221,5 @@ public sealed class InventoryDataCache : IInventoryDataCache
         }
 
         return null;
-    }
-
-    /// <summary>
-    /// Cached inventory data entry with expiration time.
-    /// </summary>
-    private sealed record CachedEntry(CachedInventoryData Data, DateTimeOffset ExpiresAt)
-    {
-        public bool IsExpired => DateTimeOffset.UtcNow >= ExpiresAt;
     }
 }

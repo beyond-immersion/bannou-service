@@ -378,81 +378,88 @@ public partial class RealmService : IRealmService
         _logger.LogDebug("Updating realm: {RealmId}", body.RealmId);
 
         var realmKey = BuildRealmKey(body.RealmId);
+        var changedFields = new List<string>();
 
-        for (var attempt = 0; attempt < _configuration.OptimisticRetryAttempts; attempt++)
-        {
-            var (model, etag) = await _realmStore.GetWithETagAsync(realmKey, cancellationToken);
-
-            if (model == null)
+        var (result, entity, errorStatus) = await _realmStore.UpdateWithRetryAsync(
+            realmKey,
+            async model =>
             {
+                changedFields.Clear();
+
+                if (body.Name != null && body.Name != model.Name)
+                {
+                    model.Name = body.Name;
+                    changedFields.Add("name");
+                }
+                if (body.Description != null && body.Description != model.Description)
+                {
+                    model.Description = body.Description;
+                    changedFields.Add("description");
+                }
+                if (body.Category != null && body.Category != model.Category)
+                {
+                    model.Category = body.Category;
+                    changedFields.Add("category");
+                }
+                if (body.IsActive.HasValue && body.IsActive.Value != model.IsActive)
+                {
+                    model.IsActive = body.IsActive.Value;
+                    changedFields.Add("isActive");
+                }
+                if (body.IsSystemType.HasValue && body.IsSystemType.Value != model.IsSystemType)
+                {
+                    model.IsSystemType = body.IsSystemType.Value;
+                    changedFields.Add("isSystemType");
+                }
+                if (body.GameServiceId.HasValue && body.GameServiceId.Value != model.GameServiceId)
+                {
+                    model.GameServiceId = body.GameServiceId.Value;
+                    changedFields.Add("gameServiceId");
+                }
+                if (body.Metadata != null)
+                {
+                    model.Metadata = body.Metadata;
+                    changedFields.Add("metadata");
+                }
+
+                if (changedFields.Count == 0)
+                {
+                    return MutationResult.SkipWith(StatusCodes.OK);
+                }
+
+                model.UpdatedAt = DateTimeOffset.UtcNow;
+                await Task.CompletedTask;
+                return MutationResult.Mutated;
+            },
+            _configuration.OptimisticRetryAttempts,
+            _logger,
+            cancellationToken);
+
+        switch (result)
+        {
+            case UpdateResult.NotFound:
                 _logger.LogDebug("Realm not found for update: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
-            }
 
-            // Track changed fields and apply updates
-            var changedFields = new List<string>();
-
-            if (body.Name != null && body.Name != model.Name)
-            {
-                model.Name = body.Name;
-                changedFields.Add("name");
-            }
-            if (body.Description != null && body.Description != model.Description)
-            {
-                model.Description = body.Description;
-                changedFields.Add("description");
-            }
-            if (body.Category != null && body.Category != model.Category)
-            {
-                model.Category = body.Category;
-                changedFields.Add("category");
-            }
-            if (body.IsActive.HasValue && body.IsActive.Value != model.IsActive)
-            {
-                model.IsActive = body.IsActive.Value;
-                changedFields.Add("isActive");
-            }
-            if (body.IsSystemType.HasValue && body.IsSystemType.Value != model.IsSystemType)
-            {
-                model.IsSystemType = body.IsSystemType.Value;
-                changedFields.Add("isSystemType");
-            }
-            if (body.GameServiceId.HasValue && body.GameServiceId.Value != model.GameServiceId)
-            {
-                model.GameServiceId = body.GameServiceId.Value;
-                changedFields.Add("gameServiceId");
-            }
-            if (body.Metadata != null)
-            {
-                model.Metadata = body.Metadata;
-                changedFields.Add("metadata");
-            }
-
-            if (changedFields.Count == 0)
-            {
+            case UpdateResult.ValidationFailed when errorStatus == StatusCodes.OK:
+                // No fields changed — return current state as success
+                var unchanged = await _realmStore.GetAsync(realmKey, cancellationToken);
                 _logger.LogInformation("Updated realm: {RealmId} (no changes)", body.RealmId);
-                return (StatusCodes.OK, MapToResponse(model));
-            }
+                return (StatusCodes.OK, unchanged != null ? MapToResponse(unchanged) : null);
 
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
-            if (result != null)
-            {
-                await PublishRealmUpdatedEventAsync(model, changedFields, cancellationToken);
+            case UpdateResult.Success:
+                await PublishRealmUpdatedEventAsync(entity!, changedFields, cancellationToken);
                 _logger.LogInformation("Updated realm: {RealmId}", body.RealmId);
-                return (StatusCodes.OK, MapToResponse(model));
-            }
+                return (StatusCodes.OK, MapToResponse(entity!));
 
-            _logger.LogDebug("Concurrent modification on realm {RealmId}, retrying update (attempt {Attempt})",
-                body.RealmId, attempt + 1);
+            case UpdateResult.Conflict:
+                _logger.LogWarning("Failed to update realm {RealmId} after {Attempts} attempts due to concurrent modifications",
+                    body.RealmId, _configuration.OptimisticRetryAttempts);
+                return (StatusCodes.Conflict, null);
+
+            default:
+                return (StatusCodes.Conflict, null);
         }
-
-        _logger.LogWarning("Failed to update realm {RealmId} after {Attempts} attempts due to concurrent modifications",
-            body.RealmId, _configuration.OptimisticRetryAttempts);
-        return (StatusCodes.Conflict, null);
     }
 
     /// <summary>
@@ -569,45 +576,53 @@ public partial class RealmService : IRealmService
 
         var realmKey = BuildRealmKey(body.RealmId);
 
-        for (var attempt = 0; attempt < _configuration.OptimisticRetryAttempts; attempt++)
-        {
-            var (model, etag) = await _realmStore.GetWithETagAsync(realmKey, cancellationToken);
-
-            if (model == null)
+        var (result, entity, errorStatus) = await _realmStore.UpdateWithRetryAsync(
+            realmKey,
+            async model =>
             {
+                // Idempotent per FOUNDATION TENETS — caller's intent (deprecate) is already satisfied
+                if (model.IsDeprecated)
+                {
+                    return MutationResult.SkipWith(StatusCodes.OK);
+                }
+
+                model.IsDeprecated = true;
+                model.DeprecatedAt = DateTimeOffset.UtcNow;
+                model.DeprecationReason = body.Reason;
+                model.UpdatedAt = DateTimeOffset.UtcNow;
+
+                await Task.CompletedTask;
+                return MutationResult.Mutated;
+            },
+            _configuration.OptimisticRetryAttempts,
+            _logger,
+            cancellationToken);
+
+        switch (result)
+        {
+            case UpdateResult.NotFound:
                 _logger.LogDebug("Realm not found for deprecation: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
-            }
 
-            // Idempotent per FOUNDATION TENETS — caller's intent (deprecate) is already satisfied
-            if (model.IsDeprecated)
-            {
+            case UpdateResult.ValidationFailed when errorStatus == StatusCodes.OK:
+                // Already deprecated — idempotent success
+                var existing = await _realmStore.GetAsync(realmKey, cancellationToken);
                 _logger.LogDebug("Realm {RealmId} already deprecated, returning OK (idempotent)", body.RealmId);
-                return (StatusCodes.OK, MapToResponse(model));
-            }
+                return (StatusCodes.OK, existing != null ? MapToResponse(existing) : null);
 
-            model.IsDeprecated = true;
-            model.DeprecatedAt = DateTimeOffset.UtcNow;
-            model.DeprecationReason = body.Reason;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
-            if (result != null)
-            {
-                await PublishRealmUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
+            case UpdateResult.Success:
+                await PublishRealmUpdatedEventAsync(entity!, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
                 _logger.LogInformation("Deprecated realm: {RealmId}", body.RealmId);
-                return (StatusCodes.OK, MapToResponse(model));
-            }
+                return (StatusCodes.OK, MapToResponse(entity!));
 
-            _logger.LogDebug("Concurrent modification on realm {RealmId}, retrying deprecation (attempt {Attempt})",
-                body.RealmId, attempt + 1);
+            case UpdateResult.Conflict:
+                _logger.LogWarning("Failed to deprecate realm {RealmId} after {Attempts} attempts due to concurrent modifications",
+                    body.RealmId, _configuration.OptimisticRetryAttempts);
+                return (StatusCodes.Conflict, null);
+
+            default:
+                return (StatusCodes.Conflict, null);
         }
-
-        _logger.LogWarning("Failed to deprecate realm {RealmId} after {Attempts} attempts due to concurrent modifications",
-            body.RealmId, _configuration.OptimisticRetryAttempts);
-        return (StatusCodes.Conflict, null);
     }
 
     /// <summary>
@@ -621,45 +636,53 @@ public partial class RealmService : IRealmService
 
         var realmKey = BuildRealmKey(body.RealmId);
 
-        for (var attempt = 0; attempt < _configuration.OptimisticRetryAttempts; attempt++)
-        {
-            var (model, etag) = await _realmStore.GetWithETagAsync(realmKey, cancellationToken);
-
-            if (model == null)
+        var (result, entity, errorStatus) = await _realmStore.UpdateWithRetryAsync(
+            realmKey,
+            async model =>
             {
+                // Idempotent per FOUNDATION TENETS — caller's intent (undeprecate) is already satisfied
+                if (!model.IsDeprecated)
+                {
+                    return MutationResult.SkipWith(StatusCodes.OK);
+                }
+
+                model.IsDeprecated = false;
+                model.DeprecatedAt = null;
+                model.DeprecationReason = null;
+                model.UpdatedAt = DateTimeOffset.UtcNow;
+
+                await Task.CompletedTask;
+                return MutationResult.Mutated;
+            },
+            _configuration.OptimisticRetryAttempts,
+            _logger,
+            cancellationToken);
+
+        switch (result)
+        {
+            case UpdateResult.NotFound:
                 _logger.LogDebug("Realm not found for undeprecation: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
-            }
 
-            // Idempotent per FOUNDATION TENETS — caller's intent (undeprecate) is already satisfied
-            if (!model.IsDeprecated)
-            {
+            case UpdateResult.ValidationFailed when errorStatus == StatusCodes.OK:
+                // Not deprecated — idempotent success
+                var existing = await _realmStore.GetAsync(realmKey, cancellationToken);
                 _logger.LogDebug("Realm {RealmId} not deprecated, returning OK (idempotent)", body.RealmId);
-                return (StatusCodes.OK, MapToResponse(model));
-            }
+                return (StatusCodes.OK, existing != null ? MapToResponse(existing) : null);
 
-            model.IsDeprecated = false;
-            model.DeprecatedAt = null;
-            model.DeprecationReason = null;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
-            if (result != null)
-            {
-                await PublishRealmUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
+            case UpdateResult.Success:
+                await PublishRealmUpdatedEventAsync(entity!, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
                 _logger.LogInformation("Undeprecated realm: {RealmId}", body.RealmId);
-                return (StatusCodes.OK, MapToResponse(model));
-            }
+                return (StatusCodes.OK, MapToResponse(entity!));
 
-            _logger.LogDebug("Concurrent modification on realm {RealmId}, retrying undeprecation (attempt {Attempt})",
-                body.RealmId, attempt + 1);
+            case UpdateResult.Conflict:
+                _logger.LogWarning("Failed to undeprecate realm {RealmId} after {Attempts} attempts due to concurrent modifications",
+                    body.RealmId, _configuration.OptimisticRetryAttempts);
+                return (StatusCodes.Conflict, null);
+
+            default:
+                return (StatusCodes.Conflict, null);
         }
-
-        _logger.LogWarning("Failed to undeprecate realm {RealmId} after {Attempts} attempts due to concurrent modifications",
-            body.RealmId, _configuration.OptimisticRetryAttempts);
-        return (StatusCodes.Conflict, null);
     }
 
     #endregion

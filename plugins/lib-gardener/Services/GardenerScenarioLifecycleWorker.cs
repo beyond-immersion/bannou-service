@@ -101,21 +101,8 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during scenario lifecycle processing cycle");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "gardener",
-                        "GardenerScenarioLifecycleWorker",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing lifecycle loop");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "gardener", "GardenerScenarioLifecycleWorker", ex, _logger, stoppingToken);
             }
 
             try

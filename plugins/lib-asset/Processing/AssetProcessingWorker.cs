@@ -13,6 +13,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -39,15 +40,14 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 public sealed class AssetProcessingWorker : BackgroundService
 {
     private readonly AssetProcessorRegistry _processorRegistry;
-    private readonly IStateStore<AssetMetadata> _stateStore;
     private readonly IAssetStorageProvider _storageProvider;
-    private readonly IOrchestratorClient _orchestratorClient;
     private readonly IAssetProcessorPoolManager _poolManager;
     private readonly IMessageBus _messageBus;
     private readonly AssetServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IHostApplicationLifetime _applicationLifetime;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<AssetProcessingWorker> _logger;
 
     // Job tracking for load reporting
@@ -59,21 +59,18 @@ public sealed class AssetProcessingWorker : BackgroundService
     /// </summary>
     public AssetProcessingWorker(
         AssetProcessorRegistry processorRegistry,
-        IStateStoreFactory stateStoreFactory,
         IAssetStorageProvider storageProvider,
-        IOrchestratorClient orchestratorClient,
         IAssetProcessorPoolManager poolManager,
         IMessageBus messageBus,
         AssetServiceConfiguration configuration,
         AppConfiguration appConfiguration,
         ITelemetryProvider telemetryProvider,
         IHostApplicationLifetime applicationLifetime,
+        IServiceProvider serviceProvider,
         ILogger<AssetProcessingWorker> logger)
     {
         _processorRegistry = processorRegistry;
-        _stateStore = stateStoreFactory.GetStore<AssetMetadata>(StateStoreDefinitions.Asset);
         _storageProvider = storageProvider;
-        _orchestratorClient = orchestratorClient;
         _poolManager = poolManager;
         _messageBus = messageBus;
         _configuration = configuration;
@@ -81,6 +78,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
         _applicationLifetime = applicationLifetime;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -426,6 +424,14 @@ public sealed class AssetProcessingWorker : BackgroundService
 
         try
         {
+            // FOUNDATION TENETS: Resolve scoped dependencies per job via DI scope.
+            // IStateStoreFactory and IOrchestratorClient are scoped and must not be
+            // constructor-injected into this singleton BackgroundService.
+            using var scope = _serviceProvider.CreateScope();
+            var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
+            var assetStore = stateStoreFactory.GetStore<AssetMetadata>(StateStoreDefinitions.Asset);
+            var orchestratorClient = scope.ServiceProvider.GetRequiredService<IOrchestratorClient>();
+
             // Create processing context from dispatched event
             var context = new AssetProcessingContext
             {
@@ -446,12 +452,12 @@ public sealed class AssetProcessingWorker : BackgroundService
             var result = await processor.ProcessAsync(context, cancellationToken);
 
             // Update asset metadata with processing results
-            await UpdateAssetMetadataAsync(job.AssetId, result, cancellationToken);
+            await UpdateAssetMetadataAsync(assetStore, job.AssetId, result, cancellationToken);
 
             // Release the processor lease
             if (job.LeaseId.HasValue)
             {
-                await ReleaseProcessorLeaseAsync(job.LeaseId.Value, result.Success, cancellationToken);
+                await ReleaseProcessorLeaseAsync(orchestratorClient, job.LeaseId.Value, result.Success, cancellationToken);
             }
 
             // Emit completion or failure event
@@ -460,7 +466,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             // If processing succeeded, publish asset.ready event
             if (result.Success)
             {
-                await EmitAssetReadyEventAsync(job, result, cancellationToken);
+                await EmitAssetReadyEventAsync(assetStore, job, result, cancellationToken);
             }
 
             _logger.LogInformation(
@@ -483,7 +489,11 @@ public sealed class AssetProcessingWorker : BackgroundService
             // Release the processor lease on failure
             if (job.LeaseId.HasValue)
             {
-                await ReleaseProcessorLeaseAsync(job.LeaseId.Value, false, cancellationToken);
+                // Resolve a fresh scope for the error path since the original scope
+                // may have been disposed if the exception occurred during processing
+                using var errorScope = _serviceProvider.CreateScope();
+                var orchestratorClient = errorScope.ServiceProvider.GetRequiredService<IOrchestratorClient>();
+                await ReleaseProcessorLeaseAsync(orchestratorClient, job.LeaseId.Value, false, cancellationToken);
             }
 
             // Emit failure event
@@ -499,6 +509,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     }
 
     private async Task UpdateAssetMetadataAsync(
+        IStateStore<AssetMetadata> assetStore,
         string assetId,
         AssetProcessingResult result,
         CancellationToken cancellationToken)
@@ -508,7 +519,7 @@ public sealed class AssetProcessingWorker : BackgroundService
 
         try
         {
-            var existingMetadata = await _stateStore.GetAsync(stateKey, cancellationToken);
+            var existingMetadata = await assetStore.GetAsync(stateKey, cancellationToken);
 
             if (existingMetadata == null)
             {
@@ -522,7 +533,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 : ProcessingStatus.Failed;
             existingMetadata.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _stateStore.SaveAsync(stateKey, existingMetadata, null, cancellationToken);
+            await assetStore.SaveAsync(stateKey, existingMetadata, null, cancellationToken);
 
             _logger.LogDebug(
                 "Updated metadata for asset {AssetId}: Status={Status}",
@@ -539,6 +550,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     }
 
     private async Task ReleaseProcessorLeaseAsync(
+        IOrchestratorClient orchestratorClient,
         Guid leaseId,
         bool success,
         CancellationToken cancellationToken)
@@ -546,7 +558,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.ReleaseProcessorLeaseAsync");
         try
         {
-            await _orchestratorClient.ReleaseProcessorAsync(
+            await orchestratorClient.ReleaseProcessorAsync(
                 new ReleaseProcessorRequest
                 {
                     LeaseId = leaseId,
@@ -655,6 +667,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     /// Publishes an asset.ready event after successful processing.
     /// </summary>
     private async Task EmitAssetReadyEventAsync(
+        IStateStore<AssetMetadata> assetStore,
         AssetProcessingJobDispatchedEvent job,
         AssetProcessingResult result,
         CancellationToken cancellationToken)
@@ -664,7 +677,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         {
             // Read asset metadata to populate the ready event
             var stateKey = $"{_configuration.AssetKeyPrefix}{job.AssetId}";
-            var metadata = await _stateStore.GetAsync(stateKey, cancellationToken);
+            var metadata = await assetStore.GetAsync(stateKey, cancellationToken);
 
             if (metadata == null)
             {

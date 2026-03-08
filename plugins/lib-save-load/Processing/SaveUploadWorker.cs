@@ -80,6 +80,8 @@ public class SaveUploadWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during upload processing");
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "save-load", "UploadProcessing", ex, _logger, stoppingToken);
             }
 
             try

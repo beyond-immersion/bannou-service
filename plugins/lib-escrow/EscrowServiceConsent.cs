@@ -19,6 +19,7 @@ public partial class EscrowService
     {
         var agreementKey = BuildAgreementKey(body.EscrowId);
 
+        // Manual retry loop: mutation includes status/token validation and token store reads (cannot use UpdateWithRetryAsync)
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);

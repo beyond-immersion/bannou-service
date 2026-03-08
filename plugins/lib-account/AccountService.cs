@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -299,21 +300,20 @@ public partial class AccountService : IAccountService
         // Sort by creation time descending (newest first) and paginate in-memory
         filteredAccounts.Sort((a, b) => b.CreatedAt.CompareTo(a.CreatedAt));
 
-        var offset = (page - 1) * pageSize;
-        var pagedAccounts = filteredAccounts.Skip(offset).Take(pageSize).ToList();
+        var paginationResult = PaginationHelper.Paginate(filteredAccounts, page, pageSize);
 
         var response = new AccountListResponse
         {
-            Accounts = pagedAccounts,
-            TotalCount = filteredAccounts.Count,
-            Page = page,
-            PageSize = pageSize,
-            HasNextPage = (page * pageSize) < filteredAccounts.Count,
-            HasPreviousPage = page > 1
+            Accounts = paginationResult.Items.ToList(),
+            TotalCount = paginationResult.TotalCount,
+            Page = paginationResult.Page,
+            PageSize = paginationResult.PageSize,
+            HasNextPage = paginationResult.HasNextPage,
+            HasPreviousPage = paginationResult.HasPreviousPage
         };
 
         _logger.LogInformation("Returning {Count} accounts (Total: {Total}, provider-filtered)",
-            pagedAccounts.Count, filteredAccounts.Count);
+            paginationResult.Items.Count, paginationResult.TotalCount);
         return (StatusCodes.OK, response);
     }
 

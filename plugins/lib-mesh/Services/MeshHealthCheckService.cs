@@ -119,7 +119,8 @@ public class MeshHealthCheckService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during mesh health check cycle");
-                await TryPublishErrorAsync(ex, stoppingToken);
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "mesh", "HealthCheck", ex, _logger, stoppingToken);
             }
 
             try
@@ -395,31 +396,6 @@ public class MeshHealthCheckService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish health check failed event for endpoint {InstanceId}", endpoint.InstanceId);
-        }
-    }
-
-    /// <summary>
-    /// Tries to publish an error event for health check failures.
-    /// </summary>
-    private async Task TryPublishErrorAsync(Exception ex, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.health.publish_error", ActivityKind.Internal);
-
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
-            await messageBus.TryPublishErrorAsync(
-                "mesh",
-                "HealthCheck",
-                ex.GetType().Name,
-                ex.Message,
-                severity: ServiceErrorEventSeverity.Error,
-                cancellationToken: cancellationToken);
-        }
-        catch
-        {
-            // Don't let error publishing failures affect the loop
         }
     }
 

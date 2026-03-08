@@ -334,54 +334,44 @@ public partial class QuestService : IQuestService
     {
         var definitionKey = BuildDefinitionKey(body.DefinitionId);
 
-        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+        var (result, definition) = await _definitionStore.UpdateWithRetryAsync(
+            definitionKey,
+            d =>
+            {
+                // Update mutable fields only
+                if (!string.IsNullOrWhiteSpace(body.Name))
+                    d.Name = body.Name;
+                if (body.Description != null)
+                    d.Description = body.Description;
+                if (body.Category.HasValue)
+                    d.Category = body.Category.Value;
+                if (body.Difficulty.HasValue)
+                    d.Difficulty = body.Difficulty.Value;
+                if (body.Tags != null)
+                    d.Tags = body.Tags.ToList();
+            },
+            _configuration.MaxConcurrencyRetries,
+            _logger,
+            cancellationToken);
+
+        if (result == UpdateResult.NotFound)
         {
-            var (definition, etag) = await _definitionStore.GetWithETagAsync(
-                definitionKey,
-                cancellationToken);
-
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Update mutable fields only
-            if (!string.IsNullOrWhiteSpace(body.Name))
-                definition.Name = body.Name;
-            if (body.Description != null)
-                definition.Description = body.Description;
-            if (body.Category.HasValue)
-                definition.Category = body.Category.Value;
-            if (body.Difficulty.HasValue)
-                definition.Difficulty = body.Difficulty.Value;
-            if (body.Tags != null)
-                definition.Tags = body.Tags.ToList();
-
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await _definitionStore.TrySaveAsync(
-                definitionKey,
-                definition,
-                etag ?? string.Empty,
-                cancellationToken: cancellationToken);
-
-            if (saveResult == null)
-            {
-                _logger.LogDebug("Concurrent modification updating quest definition {DefinitionId}, retrying (attempt {Attempt})",
-                    body.DefinitionId, attempt + 1);
-                continue;
-            }
-
-            // Invalidate cache
-            await _definitionCache.DeleteAsync(definitionKey, cancellationToken);
-
-            _logger.LogInformation("Quest definition updated: {DefinitionId}", body.DefinitionId);
-            return (StatusCodes.OK, MapToDefinitionResponse(definition));
+            return (StatusCodes.NotFound, null);
         }
 
-        _logger.LogWarning("Failed to update quest definition {DefinitionId} after {MaxRetries} attempts",
-            body.DefinitionId, _configuration.MaxConcurrencyRetries);
-        return (StatusCodes.Conflict, null);
+        if (result == UpdateResult.Conflict)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        // UpdateWithRetryAsync guarantees non-null entity on Success
+        var updatedDefinition = definition ?? throw new InvalidOperationException("UpdateWithRetryAsync returned Success with null entity");
+
+        // Invalidate cache
+        await _definitionCache.DeleteAsync(definitionKey, cancellationToken);
+
+        _logger.LogInformation("Quest definition updated: {DefinitionId}", body.DefinitionId);
+        return (StatusCodes.OK, MapToDefinitionResponse(updatedDefinition));
     }
 
     /// <inheritdoc/>
@@ -391,52 +381,52 @@ public partial class QuestService : IQuestService
     {
         var definitionKey = BuildDefinitionKey(body.DefinitionId);
 
-        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+        QuestDefinitionModel? idempotentEntity = null;
+        var (result, entity, errorStatus) = await _definitionStore.UpdateWithRetryAsync(
+            definitionKey,
+            async def =>
+            {
+                if (def.IsDeprecated)
+                {
+                    // Already deprecated - idempotent success
+                    idempotentEntity = def;
+                    return MutationResult.SkipWith(StatusCodes.OK);
+                }
+
+                def.IsDeprecated = true;
+                def.DeprecatedAt = DateTimeOffset.UtcNow;
+                def.DeprecationReason = body.Reason;
+
+                await Task.CompletedTask;
+                return MutationResult.Mutated;
+            },
+            _configuration.MaxConcurrencyRetries,
+            _logger,
+            cancellationToken);
+
+        switch (result)
         {
-            var (definition, etag) = await _definitionStore.GetWithETagAsync(
-                definitionKey,
-                cancellationToken);
+            case UpdateResult.Success:
+                // UpdateWithRetryAsync guarantees non-null entity on Success
+                var deprecatedDefinition = entity ?? throw new InvalidOperationException("UpdateWithRetryAsync returned Success with null entity");
 
-            if (definition == null)
-            {
+                // Invalidate cache
+                await _definitionCache.DeleteAsync(definitionKey, cancellationToken);
+
+                _logger.LogInformation("Quest definition deprecated: {DefinitionId}", body.DefinitionId);
+                return (StatusCodes.OK, MapToDefinitionResponse(deprecatedDefinition));
+
+            case UpdateResult.ValidationFailed when errorStatus == StatusCodes.OK:
+                // Idempotent success - already deprecated
+                var alreadyDeprecated = idempotentEntity ?? throw new InvalidOperationException("Idempotent deprecation path reached with null entity");
+                return (StatusCodes.OK, MapToDefinitionResponse(alreadyDeprecated));
+
+            case UpdateResult.NotFound:
                 return (StatusCodes.NotFound, null);
-            }
 
-            if (definition.IsDeprecated)
-            {
-                // Already deprecated - idempotent success
-                return (StatusCodes.OK, MapToDefinitionResponse(definition));
-            }
-
-            definition.IsDeprecated = true;
-            definition.DeprecatedAt = DateTimeOffset.UtcNow;
-            definition.DeprecationReason = body.Reason;
-
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await _definitionStore.TrySaveAsync(
-                definitionKey,
-                definition,
-                etag ?? string.Empty,
-                cancellationToken: cancellationToken);
-
-            if (saveResult == null)
-            {
-                _logger.LogDebug("Concurrent modification deprecating quest definition {DefinitionId}, retrying (attempt {Attempt})",
-                    body.DefinitionId, attempt + 1);
-                continue;
-            }
-
-            // Invalidate cache
-            await _definitionCache.DeleteAsync(definitionKey, cancellationToken);
-
-            _logger.LogInformation("Quest definition deprecated: {DefinitionId}", body.DefinitionId);
-            return (StatusCodes.OK, MapToDefinitionResponse(definition));
+            default:
+                return (StatusCodes.Conflict, null);
         }
-
-        _logger.LogWarning("Failed to deprecate quest definition {DefinitionId} after {MaxRetries} attempts",
-            body.DefinitionId, _configuration.MaxConcurrencyRetries);
-        return (StatusCodes.Conflict, null);
     }
 
     #endregion

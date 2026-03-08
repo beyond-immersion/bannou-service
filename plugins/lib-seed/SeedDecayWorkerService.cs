@@ -102,21 +102,8 @@ public class SeedDecayWorkerService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during seed decay processing cycle");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "seed",
-                        "SeedDecayWorker",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing decay loop");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "seed", "SeedDecayWorker", ex, _logger, stoppingToken);
             }
 
             try

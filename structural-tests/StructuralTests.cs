@@ -89,6 +89,161 @@ public class StructuralTests
     }
 
     /// <summary>
+    /// Validates that each service's generated controller correctly implements
+    /// IBannouController (via the generated I{Service}Controller interface) and
+    /// has the [BannouController] attribute pointing to the correct service interface.
+    /// Catches Controller.liquid template regressions.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_HasValidController(Type serviceType)
+    {
+        var violations = ControllerValidator.GetControllerViolations(serviceType);
+
+        Assert.True(
+            violations.Length == 0,
+            $"{serviceType.Name}: {violations.Length} controller violation(s):\n" +
+            string.Join("\n", violations.Select(v => $"  - {v}")));
+    }
+
+    /// <summary>
+    /// Validates that the generated PermissionRegistration endpoint count matches the
+    /// number of endpoints with non-empty x-permissions in the API schema. A mismatch
+    /// means the permission generation script silently skipped or duplicated endpoints.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_PermissionRegistrationEndpointCountMatchesSchema(Type serviceType)
+    {
+        var attr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
+        if (attr == null)
+            return;
+
+        var serviceName = attr.Name;
+        var schemaPath = Path.Combine(TestAssemblyDiscovery.RepoRoot, "schemas", $"{serviceName}-api.yaml");
+        if (!File.Exists(schemaPath))
+            return; // No schema file (e.g., stub services)
+
+        // Count endpoints with non-empty x-permissions in the schema
+        var schemaEndpointCount = CountSchemaEndpointsWithPermissions(schemaPath);
+        if (schemaEndpointCount == 0)
+            return; // All endpoints are service-only (x-permissions: [])
+
+        // Find the PermissionRegistration class and call GetEndpoints()
+        var registrationType = serviceType.Assembly.GetTypes()
+            .FirstOrDefault(t => t.IsClass && t.IsAbstract && t.IsSealed // static class
+                && t.Name.EndsWith("PermissionRegistration", StringComparison.Ordinal));
+
+        Assert.True(
+            registrationType != null,
+            $"{serviceType.Name}: has {schemaEndpointCount} endpoint(s) with x-permissions roles " +
+            $"but no *PermissionRegistration class found in assembly");
+
+        var getEndpointsMethod = registrationType.GetMethod("GetEndpoints",
+            BindingFlags.Public | BindingFlags.Static);
+        Assert.True(
+            getEndpointsMethod != null,
+            $"{serviceType.Name}: {registrationType.Name} has no GetEndpoints() method");
+
+        var endpoints = getEndpointsMethod.Invoke(null, null);
+        var registrationCount = endpoints is System.Collections.ICollection collection
+            ? collection.Count
+            : 0;
+
+        Assert.True(
+            registrationCount == schemaEndpointCount,
+            $"{serviceType.Name}: PermissionRegistration has {registrationCount} endpoint(s) " +
+            $"but schema has {schemaEndpointCount} endpoint(s) with non-empty x-permissions");
+    }
+
+    /// <summary>
+    /// Counts endpoints in an API schema that have non-empty x-permissions
+    /// (i.e., endpoints exposed to WebSocket clients with role requirements).
+    /// Uses line-based parsing — no YAML library needed.
+    /// </summary>
+    private static int CountSchemaEndpointsWithPermissions(string schemaPath)
+    {
+        var lines = File.ReadAllLines(schemaPath);
+        var count = 0;
+        var inEndpoint = false;
+        var currentIndent = 0;
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i];
+            var trimmed = line.TrimStart();
+
+            // Detect HTTP method entries under paths (post:, get:, put:, delete:)
+            if (trimmed.StartsWith("post:", StringComparison.Ordinal) ||
+                trimmed.StartsWith("get:", StringComparison.Ordinal) ||
+                trimmed.StartsWith("put:", StringComparison.Ordinal) ||
+                trimmed.StartsWith("delete:", StringComparison.Ordinal))
+            {
+                inEndpoint = true;
+                currentIndent = line.Length - trimmed.Length;
+                continue;
+            }
+
+            if (!inEndpoint)
+                continue;
+
+            // Check if we've left the current endpoint block
+            if (trimmed.Length > 0 && (line.Length - trimmed.Length) <= currentIndent)
+            {
+                inEndpoint = false;
+                // Re-check this line for another endpoint
+                i--;
+                continue;
+            }
+
+            // Look for x-permissions within this endpoint
+            if (trimmed.StartsWith("x-permissions:", StringComparison.Ordinal))
+            {
+                // x-permissions: [] means empty (service-only), skip
+                // x-permissions: followed by items means has roles
+                var value = trimmed["x-permissions:".Length..].Trim();
+                if (value != "[]")
+                {
+                    count++;
+                }
+                inEndpoint = false;
+            }
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    /// Validates that each service's generated configuration class can be instantiated
+    /// via Activator.CreateInstance() without throwing. Configuration classes must have
+    /// parameterless constructors and sensible defaults. A broken config class blocks
+    /// the entire service at startup.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_ConfigurationClassIsInstantiable(Type serviceType)
+    {
+        var configType = serviceType.Assembly.GetTypes()
+            .FirstOrDefault(t => t.GetCustomAttribute<ServiceConfigurationAttribute>()
+                ?.ServiceImplementationType == serviceType);
+
+        if (configType == null)
+            return; // Service has no configuration class
+
+        // Must have a public parameterless constructor
+        var ctor = configType.GetConstructor(Type.EmptyTypes);
+        Assert.True(
+            ctor != null,
+            $"{serviceType.Name}: configuration class {configType.Name} has no public parameterless constructor");
+
+        // Must be instantiable without throwing
+        var ex = Record.Exception(() => Activator.CreateInstance(configType));
+        Assert.True(
+            ex == null,
+            $"{serviceType.Name}: configuration class {configType.Name} threw on instantiation: {ex?.Message}");
+    }
+
+    /// <summary>
     /// Validates that every generated Publish*Async extension method on the service's
     /// *EventPublisher class is called from somewhere in the plugin assembly.
     /// An uncalled method means a declared event topic is never published.
@@ -139,6 +294,162 @@ public class StructuralTests
             $"{serviceType.Name}: {missing.Length} cleanup method(s) required by " +
             $"[ResourceCleanupRequired] (from x-references) but not found:\n" +
             string.Join("\n", missing.Select(m => $"  - {m}")));
+    }
+
+    /// <summary>
+    /// Validates that each service has a {Service}ServiceEvents.cs file on disk,
+    /// confirming the partial class pattern required by T6 (service logic in
+    /// *Service.cs, event handlers in *ServiceEvents.cs).
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_HasServiceEventsFile(Type serviceType)
+    {
+        var attr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
+        if (attr == null)
+            return;
+
+        var serviceName = attr.Name;
+        var pluginDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins", $"lib-{serviceName}");
+        if (!Directory.Exists(pluginDir))
+            return;
+
+        var eventsFileName = $"{serviceType.Name}Events.cs";
+        var eventsFilePath = Path.Combine(pluginDir, eventsFileName);
+
+        Assert.True(
+            File.Exists(eventsFilePath),
+            $"{serviceType.Name}: missing {eventsFileName} in lib-{serviceName}/ " +
+            $"— T6 requires partial class split for event handlers");
+    }
+
+    /// <summary>
+    /// Validates that no plugin assembly directly calls System.Text.Json.JsonSerializer
+    /// methods (Serialize, Deserialize). All JSON serialization must go through
+    /// BannouJson.Serialize/Deserialize for consistent settings (T20).
+    /// Uses IL-level metadata scanning to catch compiled violations.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_NoDirectJsonSerializer(Type serviceType)
+    {
+        var assemblyPath = serviceType.Assembly.Location;
+        if (string.IsNullOrEmpty(assemblyPath))
+            return;
+
+        string[] methods = ["Serialize", "Deserialize"];
+        var found = AssemblyMetadataScanner.GetReferencedMethods(
+            assemblyPath, "JsonSerializer", methods);
+
+        Assert.True(
+            found.Count == 0,
+            $"{serviceType.Name}: directly references JsonSerializer.{string.Join(", ", found)} " +
+            $"— use BannouJson instead (T20)");
+    }
+
+    /// <summary>
+    /// Validates that no plugin assembly directly calls Environment.GetEnvironmentVariable().
+    /// All configuration must go through generated configuration classes (T21).
+    /// Uses IL-level metadata scanning to catch compiled violations.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_NoDirectEnvironmentGetVariable(Type serviceType)
+    {
+        var assemblyPath = serviceType.Assembly.Location;
+        if (string.IsNullOrEmpty(assemblyPath))
+            return;
+
+        string[] methods = ["GetEnvironmentVariable"];
+        var found = AssemblyMetadataScanner.GetReferencedMethods(
+            assemblyPath, "Environment", methods);
+
+        Assert.True(
+            found.Count == 0,
+            $"{serviceType.Name}: directly calls Environment.GetEnvironmentVariable() " +
+            $"— use service configuration class instead (T21)");
+    }
+
+    /// <summary>
+    /// Validates that no non-infrastructure plugin assembly directly references
+    /// infrastructure client types (StackExchange.Redis, RabbitMQ.Client, MySqlConnector).
+    /// Non-L0 services must use lib-state, lib-messaging, lib-mesh abstractions (T4).
+    /// Uses IL-level metadata scanning to catch compiled violations.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_NoDirectInfrastructureImports(Type serviceType)
+    {
+        var attr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
+        if (attr == null)
+            return;
+
+        // L0 infrastructure services are allowed to use these
+        if (attr.Layer == ServiceLayer.Infrastructure)
+            return;
+
+        var assemblyPath = serviceType.Assembly.Location;
+        if (string.IsNullOrEmpty(assemblyPath))
+            return;
+
+        var violations = new List<string>();
+
+        // Check for StackExchange.Redis direct usage
+        if (AssemblyMetadataScanner.ReferencesMethodOnType(
+            assemblyPath, "ConnectionMultiplexer", "Connect", "ConnectAsync"))
+            violations.Add("StackExchange.Redis.ConnectionMultiplexer");
+
+        if (AssemblyMetadataScanner.ReferencesMethodOnType(
+            assemblyPath, "IDatabase", "StringGetAsync", "StringSetAsync", "KeyDeleteAsync"))
+            violations.Add("StackExchange.Redis.IDatabase");
+
+        // Check for RabbitMQ.Client direct usage
+        if (AssemblyMetadataScanner.ReferencesMethodOnType(
+            assemblyPath, "ConnectionFactory", "CreateConnectionAsync"))
+            violations.Add("RabbitMQ.Client.ConnectionFactory");
+
+        // Check for MySqlConnector direct usage
+        if (AssemblyMetadataScanner.ReferencesMethodOnType(
+            assemblyPath, "MySqlConnection", "OpenAsync"))
+            violations.Add("MySqlConnector.MySqlConnection");
+
+        Assert.True(
+            violations.Count == 0,
+            $"{serviceType.Name} (Layer {attr.Layer}): directly references infrastructure types " +
+            $"— use lib-state/lib-messaging/lib-mesh instead (T4):\n" +
+            string.Join("\n", violations.Select(v => $"  - {v}")));
+    }
+
+    /// <summary>
+    /// Validates that no plugin assembly uses Microsoft.AspNetCore.Http.StatusCodes.
+    /// All services must use BeyondImmersion.BannouService.StatusCodes instead (T8).
+    /// Uses IL-level metadata scanning to catch compiled violations.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_UsesCorrectStatusCodesEnum(Type serviceType)
+    {
+        var assemblyPath = serviceType.Assembly.Location;
+        if (string.IsNullOrEmpty(assemblyPath))
+            return;
+
+        // Check for references to the ASP.NET StatusCodes class fields (Status200OK, etc.)
+        // These are static field reads, not method calls, so we check for type reference instead
+        string[] statusFields = ["Status200OK", "Status400BadRequest", "Status404NotFound",
+            "Status500InternalServerError", "Status201Created", "Status204NoContent",
+            "Status401Unauthorized", "Status403Forbidden", "Status409Conflict"];
+
+        var found = AssemblyMetadataScanner.GetReferencedMethods(
+            assemblyPath, "StatusCodes", statusFields);
+
+        // Only flag if the reference is to Microsoft's StatusCodes, not our own.
+        // Since both have the same type name, we can't distinguish via IL alone.
+        // But our StatusCodes doesn't have Status-prefixed members, so any match
+        // is the ASP.NET version.
+        Assert.True(
+            found.Count == 0,
+            $"{serviceType.Name}: references Microsoft.AspNetCore.Http.StatusCodes " +
+            $"({string.Join(", ", found)}) — use BannouService.StatusCodes instead (T8)");
     }
 
     /// <summary>

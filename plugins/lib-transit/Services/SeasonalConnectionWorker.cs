@@ -83,22 +83,8 @@ public class SeasonalConnectionWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during seasonal connection check");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "transit",
-                        "SeasonalConnectionWorker.CheckSeasonalConnections",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    // Don't let error publishing failures affect the loop
-                    _logger.LogDebug(pubEx, "Failed to publish error event for seasonal connection check failure");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "transit", "SeasonalConnectionWorker.CheckSeasonalConnections", ex, _logger, stoppingToken);
             }
 
             try

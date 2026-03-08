@@ -75,22 +75,8 @@ public class WorldstateClockWorkerService : BackgroundService
                 // Per-realm errors are caught inside ProcessTickAsync so a single realm failure
                 // does not stop the worker. This catch handles infrastructure-level failures.
                 _logger.LogError(ex, "Error during worldstate clock tick");
-                try
-                {
-                    using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
-                    await messageBus.TryPublishErrorAsync(
-                        "worldstate",
-                        "WorldstateClockWorkerService.ProcessTick",
-                        ex.GetType().Name,
-                        ex.Message,
-                        severity: ServiceErrorEventSeverity.Error);
-                }
-                catch (Exception pubEx)
-                {
-                    // Don't let error publishing failures affect the loop
-                    _logger.LogDebug(pubEx, "Failed to publish error event for clock worker tick failure");
-                }
+                await _serviceProvider.TryPublishWorkerErrorAsync(
+                    "worldstate", "WorldstateClockWorkerService.ProcessTick", ex, _logger, stoppingToken);
             }
 
             try

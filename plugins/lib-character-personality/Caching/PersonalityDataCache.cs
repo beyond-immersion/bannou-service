@@ -5,26 +5,23 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.CharacterPersonality.Caching;
 
 /// <summary>
 /// Caches character personality and combat preferences data for actor behavior execution.
-/// Uses ConcurrentDictionary for thread-safety (IMPLEMENTATION TENETS compliant).
+/// Composes <see cref="VariableProviderCacheBucket{TKey, TData}"/> for thread-safe
+/// TTL-based caching with stale-data fallback (IMPLEMENTATION TENETS compliant).
 /// </summary>
 public sealed class PersonalityDataCache : IPersonalityDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<PersonalityDataCache> _logger;
-    private readonly ITelemetryProvider _telemetryProvider;
-    private readonly TimeSpan _cacheTtl;
-    private readonly ConcurrentDictionary<Guid, CachedPersonality> _personalityCache = new();
-    private readonly ConcurrentDictionary<Guid, CachedCombatPreferences> _combatCache = new();
+    private readonly VariableProviderCacheBucket<Guid, PersonalityResponse> _personalityBucket;
+    private readonly VariableProviderCacheBucket<Guid, CombatPreferencesResponse> _combatBucket;
 
     /// <summary>
     /// Creates a new personality data cache.
@@ -36,130 +33,52 @@ public sealed class PersonalityDataCache : IPersonalityDataCache
         ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
-        _logger = logger;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
-        _telemetryProvider = telemetryProvider;
-        _cacheTtl = TimeSpan.FromMinutes(config.PersonalityCacheTtlMinutes);
+
+        var ttl = TimeSpan.FromMinutes(config.PersonalityCacheTtlMinutes);
+        _personalityBucket = new VariableProviderCacheBucket<Guid, PersonalityResponse>(
+            ttl, logger, telemetryProvider, "bannou.character-personality", "PersonalityCache");
+        _combatBucket = new VariableProviderCacheBucket<Guid, CombatPreferencesResponse>(
+            ttl, logger, telemetryProvider, "bannou.character-personality", "CombatPreferencesCache");
     }
 
     /// <inheritdoc/>
     public async Task<PersonalityResponse?> GetOrLoadPersonalityAsync(Guid characterId, CancellationToken ct = default)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.character-personality", "PersonalityDataCache.GetOrLoadPersonalityAsync");
-        // Check cache first
-        if (_personalityCache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
-        {
-            _logger.LogDebug("Personality cache hit for character {CharacterId}", characterId);
-            return cached.Personality;
-        }
-
-        // Load from service
-        _logger.LogDebug("Personality cache miss for character {CharacterId}, loading from service", characterId);
-
-        try
+        return await _personalityBucket.GetOrLoadAsync(characterId, async loadCt =>
         {
             using var scope = _scopeFactory.CreateScope();
             var client = scope.ServiceProvider.GetRequiredService<ICharacterPersonalityClient>();
-
-            var response = await client.GetPersonalityAsync(
+            return await client.GetPersonalityAsync(
                 new GetPersonalityRequest { CharacterId = characterId },
-                ct);
-
-            if (response != null)
-            {
-                var newCached = new CachedPersonality(response, DateTimeOffset.UtcNow.Add(_cacheTtl));
-                _personalityCache[characterId] = newCached;
-                _logger.LogDebug("Cached personality for character {CharacterId}, version {Version}",
-                    characterId, response.Version);
-            }
-
-            return response;
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            _logger.LogDebug("No personality found for character {CharacterId}", characterId);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to load personality for character {CharacterId}", characterId);
-            return cached?.Personality; // Return stale data if available
-        }
+                loadCt);
+        }, ct);
     }
 
     /// <inheritdoc/>
     public async Task<CombatPreferencesResponse?> GetOrLoadCombatPreferencesAsync(Guid characterId, CancellationToken ct = default)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.character-personality", "PersonalityDataCache.GetOrLoadCombatPreferencesAsync");
-        // Check cache first
-        if (_combatCache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
-        {
-            _logger.LogDebug("Combat preferences cache hit for character {CharacterId}", characterId);
-            return cached.Preferences;
-        }
-
-        // Load from service
-        _logger.LogDebug("Combat preferences cache miss for character {CharacterId}, loading from service", characterId);
-
-        try
+        return await _combatBucket.GetOrLoadAsync(characterId, async loadCt =>
         {
             using var scope = _scopeFactory.CreateScope();
             var client = scope.ServiceProvider.GetRequiredService<ICharacterPersonalityClient>();
-
-            var response = await client.GetCombatPreferencesAsync(
+            return await client.GetCombatPreferencesAsync(
                 new GetCombatPreferencesRequest { CharacterId = characterId },
-                ct);
-
-            if (response != null)
-            {
-                var newCached = new CachedCombatPreferences(response, DateTimeOffset.UtcNow.Add(_cacheTtl));
-                _combatCache[characterId] = newCached;
-                _logger.LogDebug("Cached combat preferences for character {CharacterId}", characterId);
-            }
-
-            return response;
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            _logger.LogDebug("No combat preferences found for character {CharacterId}", characterId);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to load combat preferences for character {CharacterId}", characterId);
-            return cached?.Preferences; // Return stale data if available
-        }
+                loadCt);
+        }, ct);
     }
 
     /// <inheritdoc/>
     public void Invalidate(Guid characterId)
     {
-        _personalityCache.TryRemove(characterId, out _);
-        _combatCache.TryRemove(characterId, out _);
-        _logger.LogDebug("Invalidated personality data cache for character {CharacterId}", characterId);
+        _personalityBucket.Invalidate(characterId);
+        _combatBucket.Invalidate(characterId);
     }
 
     /// <inheritdoc/>
     public void InvalidateAll()
     {
-        _personalityCache.Clear();
-        _combatCache.Clear();
-        _logger.LogInformation("Cleared all personality data cache entries");
-    }
-
-    /// <summary>
-    /// Cached personality data with expiration time.
-    /// </summary>
-    private sealed record CachedPersonality(PersonalityResponse? Personality, DateTimeOffset ExpiresAt)
-    {
-        public bool IsExpired => DateTimeOffset.UtcNow >= ExpiresAt;
-    }
-
-    /// <summary>
-    /// Cached combat preferences data with expiration time.
-    /// </summary>
-    private sealed record CachedCombatPreferences(CombatPreferencesResponse? Preferences, DateTimeOffset ExpiresAt)
-    {
-        public bool IsExpired => DateTimeOffset.UtcNow >= ExpiresAt;
+        _personalityBucket.InvalidateAll();
+        _combatBucket.InvalidateAll();
     }
 }

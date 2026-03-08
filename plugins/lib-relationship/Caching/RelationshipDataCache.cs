@@ -5,26 +5,26 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Relationship.Caching;
 
 /// <summary>
 /// Caches character relationship data for actor behavior execution.
-/// Uses ConcurrentDictionary for thread-safety (IMPLEMENTATION TENETS compliant).
+/// Uses <see cref="VariableProviderCacheBucket{TKey, TData}"/> for thread-safe
+/// TTL-based caching with stale-data fallback (IMPLEMENTATION TENETS compliant).
 /// </summary>
 public sealed class RelationshipDataCache : IRelationshipDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<RelationshipDataCache> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
-    private readonly TimeSpan _cacheTtl;
     private readonly int _queryPageSize;
-    private readonly ConcurrentDictionary<Guid, CachedEntry> _cache = new();
+    private readonly VariableProviderCacheBucket<Guid, CachedRelationshipData> _bucket;
 
     // Long-lived typeId→code mapping that persists across cache refreshes
     private readonly ConcurrentDictionary<Guid, string> _typeCodeCache = new();
@@ -45,24 +45,19 @@ public sealed class RelationshipDataCache : IRelationshipDataCache
         _scopeFactory = scopeFactory;
         _logger = logger;
         _telemetryProvider = telemetryProvider;
-        _cacheTtl = TimeSpan.FromSeconds(configuration.ProviderCacheTtlSeconds);
         _queryPageSize = configuration.ProviderQueryPageSize;
+        _bucket = new VariableProviderCacheBucket<Guid, CachedRelationshipData>(
+            TimeSpan.FromSeconds(configuration.ProviderCacheTtlSeconds),
+            logger,
+            telemetryProvider,
+            "bannou.relationship",
+            "RelationshipDataCache");
     }
 
     /// <inheritdoc/>
     public async Task<CachedRelationshipData?> GetOrLoadAsync(Guid characterId, CancellationToken ct)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipDataCache.GetOrLoadAsync");
-
-        // Check cache first
-        if (_cache.TryGetValue(characterId, out CachedEntry? cached) && cached.ExpiresAt > DateTimeOffset.UtcNow)
-        {
-            return cached.Data;
-        }
-
-        _logger.LogDebug("Relationship cache miss for character {CharacterId}, loading from service", characterId);
-
-        try
+        return await _bucket.GetOrLoadAsync(characterId, async innerCt =>
         {
             using var scope = _scopeFactory.CreateScope();
             var relationshipClient = scope.ServiceProvider.GetRequiredService<IRelationshipClient>();
@@ -83,7 +78,7 @@ public sealed class RelationshipDataCache : IRelationshipDataCache
                         Page = page,
                         PageSize = _queryPageSize,
                     },
-                    ct);
+                    innerCt);
 
                 if (response?.Relationships == null || response.Relationships.Count == 0)
                     break;
@@ -93,7 +88,7 @@ public sealed class RelationshipDataCache : IRelationshipDataCache
                     totalCount++;
 
                     // Resolve typeId to code
-                    var code = await ResolveTypeCodeAsync(rel.RelationshipTypeId, relationshipClient, ct);
+                    var code = await ResolveTypeCodeAsync(rel.RelationshipTypeId, relationshipClient, innerCt);
                     if (code != null)
                     {
                         if (countsByTypeCode.TryGetValue(code, out var existing))
@@ -113,37 +108,28 @@ public sealed class RelationshipDataCache : IRelationshipDataCache
                 page++;
             }
 
-            var data = new CachedRelationshipData
+            _logger.LogDebug("Loaded relationship data for character {CharacterId}: {TotalCount} relationships, {TypeCount} types",
+                characterId, totalCount, countsByTypeCode.Count);
+
+            return new CachedRelationshipData
             {
                 CountsByTypeCode = countsByTypeCode,
                 TotalCount = totalCount,
             };
-
-            _cache[characterId] = new CachedEntry(data, DateTimeOffset.UtcNow.Add(_cacheTtl));
-            _logger.LogDebug("Cached relationship data for character {CharacterId}: {TotalCount} relationships, {TypeCount} types",
-                characterId, totalCount, countsByTypeCode.Count);
-
-            return data;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to load relationship data for character {CharacterId}", characterId);
-            // Stale-if-error: return cached data if available
-            return cached?.Data;
-        }
+        }, ct);
     }
 
     /// <inheritdoc/>
     public void Invalidate(Guid characterId)
     {
-        _cache.TryRemove(characterId, out _);
+        _bucket.Invalidate(characterId);
         _logger.LogDebug("Invalidated relationship data cache for character {CharacterId}", characterId);
     }
 
     /// <inheritdoc/>
     public void InvalidateAll()
     {
-        _cache.Clear();
+        _bucket.InvalidateAll();
         _logger.LogInformation("Cleared all relationship data cache entries");
     }
 
@@ -182,9 +168,4 @@ public sealed class RelationshipDataCache : IRelationshipDataCache
 
         return null;
     }
-
-    /// <summary>
-    /// Cached relationship data entry with expiration time.
-    /// </summary>
-    private sealed record CachedEntry(CachedRelationshipData Data, DateTimeOffset ExpiresAt);
 }
