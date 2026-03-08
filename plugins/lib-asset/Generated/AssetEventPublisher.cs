@@ -5,6 +5,7 @@
 
 #nullable enable
 
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 
@@ -96,6 +97,15 @@ public static class AssetEventPublisher
         AssetProcessingJobDispatchedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(AssetPublishedTopics.AssetProcessingJobDispatched, eventData, cancellationToken);
+
+    /// <summary>Published when a processing job is dispatched to a pool-type-specific topic (e.g., asset.processing.job.audio). Parameterized overload for dynamic topic resolution.</summary>
+    [ParameterizedTopic(typeof(string))]
+    public static Task<bool> PublishAssetProcessingJobDispatchedAsync(
+        this IMessageBus messageBus,
+        AssetProcessingJobDispatchedEvent eventData,
+        string poolType,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync($"asset.processing.job.{poolType}", eventData, cancellationToken);
 
     /// <summary>Published when processing needs to be retried after no processors are available.</summary>
     public static Task<bool> PublishAssetProcessingRetryAsync(

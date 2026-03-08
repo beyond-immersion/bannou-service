@@ -533,7 +533,7 @@ These don't necessarily need new tenets but should be addressed for consistency.
 | Area | Current State | Best Practice | Fix Scope | Status |
 |------|--------------|---------------|-----------|--------|
 | Worker error event publishing | Matchmaking: log only. Currency/subscription: publish error events. | All workers MUST publish error events | Per-worker fix | ✅ FIXED — matchmaking uses TryPublishWorkerErrorAsync |
-| Worker DI scope approach | Matchmaking: delegates to service. Currency: independent store access. Subscription: hybrid. | Document both delegation and independent as valid; deprecate hybrid (both resolving service AND doing direct store access) | Documentation | ⏸️ DEFERRED — User needs more information before deciding on standardization |
+| Worker DI scope approach | Matchmaking: delegates to service. Currency: independent store access. Subscription: hybrid. | Document both delegation and independent as valid; deprecate hybrid (both resolving service AND doing direct store access) | Documentation | ✅ FIXED — Hybrid anti-pattern (ReservationCleanupService) converted to independent pattern. AssetProcessingWorker captive dependency fixed (scoped services resolved per-job instead of constructor). AssetProcessorPoolManager was flagged but is a false alarm — all constructor params are genuine singletons (L0 infra + config + logger), and constructor-cached stores follow T6. |
 | Config property naming for workers | `BackgroundServiceStartupDelaySeconds` vs `StartupDelaySeconds` vs `AutogainTaskStartupDelaySeconds` | `{WorkerName}StartupDelaySeconds`, `{WorkerName}IntervalSeconds` | Schema renames | ✅ DONE — standardized in worker tenet rules |
 | Config interval units | Seconds vs minutes vs milliseconds for same concept | Prefer seconds; milliseconds only for sub-second precision | Schema renames | ✅ FIXED — currency `autogainTaskIntervalMs` renamed to `autogainTaskIntervalSeconds` |
 | Pagination response shape | Location: full metadata (`Page`, `PageSize`, `HasNextPage`, `HasPreviousPage`). Transit/Worldstate: `TotalCount` only. | Standardize pagination response wrapper | Schema + SCHEMA-RULES addition | ✅ DONE — PaginationHelper + PaginationResult<T> in bannou-service |
@@ -562,42 +562,24 @@ These are opportunities to add shared infrastructure in `bannou-service/` that w
 **Impact**: Eliminate 4 identical copies. One-line calls in each service.
 
 #### 2. `StateStoreExtensions.UpdateWithRetryAsync<T>` ✅
-**Status**: DONE — Implemented at `bannou-service/Services/StateStoreExtensions.cs` with `(UpdateResult, T?)` return tuple (Success/NotFound/Conflict).
-**Current state**: 7+ identical ETag retry loops across quest and escrow, each 15-20 lines.
-**Proposed location**: `bannou-service/Extensions/StateStoreExtensions.cs`
-**Signature sketch**:
-```csharp
-public static async Task<(T? entity, bool saved)> UpdateWithRetryAsync<T>(
-    this IStateStore<T> store,
-    string key,
-    Action<T> mutate,
-    int maxRetries,
-    ILogger logger,
-    CancellationToken ct)
-```
-**Impact**: Reduces each call site from 15 lines to 3. Enforces correct retry semantics (debug per attempt, warning on exhaustion).
+**Status**: DONE — Two overloads implemented at `bannou-service/Services/StateStoreExtensions.cs`:
+1. `Action<T> mutate` → returns `(UpdateResult, T?)` — for pure mutations (6 call sites migrated: quest `UpdateQuestDefinitionAsync`, character-encounter 5 index mutations)
+2. `Func<T, Task<MutationResult>> validateAndMutate` → returns `(UpdateResult, T?, StatusCodes)` — for validate-then-mutate patterns with `MutationResult.Mutated`, `.SkipWith(StatusCodes)`, `.Delete` outcomes and `UpdateResult.ValidationFailed`/`Deleted` results (4 call sites migrated: realm `UpdateRealmAsync`/`DeprecateRealmAsync`/`UndeprecateRealmAsync`, quest `DeprecateQuestDefinitionAsync`)
+
+**Adoption exhausted**: All ~60 retry loops across 20+ plugins were examined. The remaining ~50 loops are uncapturable: inter-service calls between get/save (escrow token validation, quest contract completion), dual save paths per iteration (escrow release), complex post-save branching, lock-based patterns (species), or single-save without retry (auth sessions via atomic Redis ops).
+**Impact**: 10 call sites migrated total, each reducing 15-20 lines to 3-5 lines.
 
 #### 3. Worker Error Publishing Helper ✅
 **Status**: DONE — Implemented at `bannou-service/Services/WorkerErrorPublisher.cs` as `IServiceProvider.TryPublishWorkerErrorAsync()` extension method.
-**Current state**: Currency extracts error publishing into a private helper. Subscription does it inline. Matchmaking doesn't do it at all.
-**Proposed location**: `bannou-service/Extensions/BackgroundServiceExtensions.cs` or `bannou-service/Workers/WorkerErrorPublisher.cs`
-**Signature sketch**:
-```csharp
-public static async Task TryPublishWorkerErrorAsync(
-    this IServiceProvider serviceProvider,
-    string serviceName,
-    string operationName,
-    Exception exception,
-    CancellationToken ct)
-```
+**Adoption complete**: All 23 qualifying workers across 15 plugins migrated. Workers that use L0 singleton `IMessageBus` directly (HeartbeatEmitter, ServiceHealthMonitor) call `_messageBus.TryPublishErrorAsync` instead.
 **Impact**: Handles scope creation, `IMessageBus` resolution, and the safety catch-all. Workers call one method instead of 10 lines of scope/resolve/publish/catch. Prevents the "forgot to publish error events" bug.
 
 ### B. Worth Evaluating (Moderate Benefit)
 
 #### 4. `VariableProviderCacheBucket<TKey, TData>` Composition Helper ✅
-**Status**: DONE — Implemented at `bannou-service/Providers/VariableProviderCacheBucket.cs` as a composition helper (not a base class). Encapsulates ConcurrentDictionary + CachedEntry record + get-or-load with stale fallback + 404 handling + invalidate/invalidateWhere/invalidateAll. Concrete caches compose one or more buckets: BackstoryCache uses 1, PersonalityDataCache uses 2, EncounterDataCache uses 4. The base class approach was rejected because EncounterDataCache has 4 dictionaries with different key types (Guid vs string pair keys) and different data types — composition fits naturally, inheritance would be awkward.
-**Proposed location**: `bannou-service/Providers/VariableProviderCacheBucket.cs`
-**Impact**: Each concrete cache reduces to: bucket declarations, constructor wiring, and thin delegation methods. Eliminates 6 duplicate `CachedEntry` record types and ~80% of the get-or-load boilerplate. Includes event-driven invalidation documentation in XML remarks.
+**Status**: DONE — Implemented at `bannou-service/Providers/VariableProviderCacheBucket.cs` as a composition helper (not a base class).
+**Adoption**: 5 of 8 candidate caches migrated: PersonalityDataCache (2 buckets), BackstoryCache (1 bucket), EncounterDataCache (4 buckets with different key types), RelationshipDataCache (1 bucket), InventoryDataCache (1 bucket). 3 skipped for structural reasons: nested dictionaries, no stale fallback pattern, multi-param load functions that don't match the single-key-to-data signature.
+**Impact**: Each concrete cache reduces to: bucket declarations, constructor wiring, and thin delegation methods. Eliminates 6 duplicate `CachedEntry` record types and ~80% of the get-or-load boilerplate.
 
 #### 5. Dual-Key State Store Wrapper ✅
 **Status**: DONE — Implemented as `DualIndexHelper<TRecord>` at `bannou-service/History/DualIndexHelper.cs` with full interface, config class, distributed locking, and 6+ methods.
@@ -622,9 +604,8 @@ public static async Task DeleteDualKeyAsync<T>(
 
 #### 6. Standard Pagination Helper ✅
 **Status**: DONE — Implemented at `bannou-service/History/PaginationHelper.cs` with `PaginationResult<T>` record, `Paginate<T>()`, and metadata methods (HasNextPage, HasPreviousPage, TotalPages). Defaults: PageSize=20, MaxPageSize=100.
-**Current state**: Multiple services implement `Skip/Take` + count inline. Response shapes vary (some include `HasNextPage`/`HasPreviousPage`, some only `TotalCount`).
-**Proposed location**: `bannou-service/Pagination/PaginationHelper.cs`
-**Impact**: Enforces consistent pagination response shape. Low priority given the simplicity of the arithmetic, but would standardize the response contract.
+**Adoption**: 7 pagination sites migrated across 2 plugins (Location: 6 sites, Account: 1 site). Remaining services not migrated: 3 need schema changes before adoption (Currency, Documentation, Scene — response models lack pagination metadata fields), 3 use cursor-based pagination that PaginationHelper doesn't support (Contract, Collection, License).
+**Impact**: Enforces consistent pagination response shape at adopted sites.
 
 ### C. Not Worth Extracting (Domain-Specific)
 

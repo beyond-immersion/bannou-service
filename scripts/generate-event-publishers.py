@@ -52,12 +52,19 @@ except ImportError:
     sys.exit(1)
 
 
+class TopicParam(NamedTuple):
+    """A typed parameter extracted from a parameterized topic string."""
+    name: str               # e.g., 'poolType'
+    schema_type: str        # e.g., 'string', 'uuid', 'MapKind'
+
+
 class PublishedTopic(NamedTuple):
     """Information about a published event topic."""
     topic: str              # e.g., 'quest.accepted'
     event_type_name: str    # e.g., 'QuestAcceptedEvent'
     constant_name: str      # e.g., 'QuestAccepted'
     description: str        # From the publication declaration
+    topic_params: tuple     # Tuple of TopicParam (empty for non-parameterized)
 
 
 def to_pascal_case(name: str) -> str:
@@ -66,6 +73,25 @@ def to_pascal_case(name: str) -> str:
         word.capitalize()
         for word in name.replace('-', ' ').replace('_', ' ').split()
     )
+
+
+# Mapping from schema topic-param type to (C# type name, C# typeof expression)
+SCHEMA_TYPE_TO_CSHARP = {
+    'string': ('string', 'string'),
+    'uuid': ('Guid', 'Guid'),
+}
+
+
+def map_schema_type(schema_type: str) -> tuple:
+    """Map a schema topic-param type to (C# type, C# typeof expression).
+
+    Known types: 'string' -> string, 'uuid' -> Guid.
+    Unknown types are assumed to be C# type names (e.g., enum names like MapKind).
+    """
+    if schema_type in SCHEMA_TYPE_TO_CSHARP:
+        return SCHEMA_TYPE_TO_CSHARP[schema_type]
+    # Assume it's a C# type name directly (e.g., MapKind enum)
+    return (schema_type, schema_type)
 
 
 def extract_service_name(events_file: Path) -> str:
@@ -118,11 +144,20 @@ def extract_publications(schema: Dict[str, Any], service_name: str) -> List[Publ
 
         constant_name = derive_constant_name(event_type)
 
+        # Extract topic-params for parameterized topics
+        raw_params = pub.get('topic-params', [])
+        topic_params = tuple(
+            TopicParam(name=p['name'], schema_type=p['type'])
+            for p in raw_params
+            if 'name' in p and 'type' in p
+        )
+
         topics.append(PublishedTopic(
             topic=topic,
             event_type_name=event_type,
             constant_name=constant_name,
-            description=description
+            description=description,
+            topic_params=topic_params
         ))
 
     return topics
@@ -138,12 +173,55 @@ def generate_method_name(constant_name: str) -> str:
     return f'Publish{constant_name}Async'
 
 
+def generate_parameterized_overload(
+    topic: 'PublishedTopic',
+    method_name: str,
+    desc: str
+) -> str:
+    """Generate a parameterized overload for a topic with topic-params.
+
+    The overload accepts typed parameters for each placeholder in the topic string
+    and uses C# string interpolation to produce the concrete topic at publish time.
+    """
+    # Build parameter list: C# type + name for each topic-param
+    param_declarations = []
+    typeof_args = []
+    for tp in topic.topic_params:
+        csharp_type, typeof_expr = map_schema_type(tp.schema_type)
+        param_declarations.append(f'        {csharp_type} {tp.name},')
+        typeof_args.append(f'typeof({typeof_expr})')
+
+    # Build the attribute: [ParameterizedTopic(typeof(string), typeof(Guid), ...)]
+    attr_args = ', '.join(typeof_args)
+    attribute = f'    [ParameterizedTopic({attr_args})]'
+
+    # Build parameter block
+    params_block = '\n'.join(param_declarations)
+
+    # The topic string with {placeholders} becomes a C# interpolated string
+    interpolated_topic = f'$"{topic.topic}"'
+
+    return (
+        f'    /// <summary>{desc} Parameterized overload for dynamic topic resolution.</summary>\n'
+        f'{attribute}\n'
+        f'    public static Task<bool> {method_name}(\n'
+        f'        this IMessageBus messageBus,\n'
+        f'        {topic.event_type_name} eventData,\n'
+        f'{params_block}\n'
+        f'        CancellationToken cancellationToken = default)\n'
+        f'        => messageBus.TryPublishAsync({interpolated_topic}, eventData, cancellationToken);'
+    )
+
+
 def generate_event_publisher_code(
     service_name: str,
     topics: List[PublishedTopic]
 ) -> str:
     """Generate C# static extension class with typed publish methods."""
     service_pascal = to_pascal_case(service_name)
+
+    # Check if any topic has parameters (need extra using)
+    has_parameterized = any(topic.topic_params for topic in topics)
 
     methods = []
     for topic in topics:
@@ -153,6 +231,7 @@ def generate_event_publisher_code(
 
         method_name = generate_method_name(topic.constant_name)
 
+        # Base method (uses topic constant — template string for parameterized topics)
         methods.append(
             f'    /// <summary>{desc}</summary>\n'
             f'    public static Task<bool> {method_name}(\n'
@@ -162,7 +241,21 @@ def generate_event_publisher_code(
             f'        => messageBus.TryPublishAsync({service_pascal}PublishedTopics.{topic.constant_name}, eventData, cancellationToken);'
         )
 
+        # Parameterized overload (uses string interpolation with typed params)
+        if topic.topic_params:
+            methods.append(generate_parameterized_overload(topic, method_name, desc))
+
     methods_block = "\n\n".join(methods)
+
+    # Build using block — add Attributes using only when needed
+    usings = [
+        'using BeyondImmersion.BannouService.Events;',
+        'using BeyondImmersion.BannouService.Services;',
+    ]
+    if has_parameterized:
+        usings.insert(0, 'using BeyondImmersion.BannouService.Attributes;')
+
+    usings_block = '\n'.join(usings)
 
     return f'''// <auto-generated>
 // This code was generated by generate-event-publishers.py from {service_name}-events.yaml.
@@ -171,8 +264,7 @@ def generate_event_publisher_code(
 
 #nullable enable
 
-using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Services;
+{usings_block}
 
 namespace BeyondImmersion.BannouService.{service_pascal};
 
@@ -246,10 +338,16 @@ def main():
         try:
             code = generate_event_publisher_code(service_name, topics)
             output_file.write_text(code)
-            generated_files.append((service_name, len(topics)))
+            param_count = sum(1 for t in topics if t.topic_params)
+            method_count = len(topics) + param_count  # base + overloads
+            generated_files.append((service_name, method_count))
             for topic in topics:
                 method_name = generate_method_name(topic.constant_name)
-                print(f"  {service_name}: {method_name}({topic.event_type_name})")
+                if topic.topic_params:
+                    param_types = ', '.join(map_schema_type(tp.schema_type)[0] for tp in topic.topic_params)
+                    print(f"  {service_name}: {method_name}({topic.event_type_name}) + overload({param_types})")
+                else:
+                    print(f"  {service_name}: {method_name}({topic.event_type_name})")
         except Exception as e:
             errors.append(f"{service_name}: {e}")
 

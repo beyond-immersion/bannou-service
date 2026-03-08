@@ -35,6 +35,7 @@ public static class EventPublishingValidator
             .Where(m => m.Name.StartsWith("Publish", StringComparison.Ordinal)
                         && m.Name.EndsWith("Async", StringComparison.Ordinal))
             .Select(m => m.Name)
+            .Distinct()
             .ToArray();
 
         if (methods.Length == 0)

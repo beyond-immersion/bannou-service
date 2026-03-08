@@ -56,6 +56,9 @@ info:
     - topic: "asset.processing.job.{poolType}"
       event: AssetProcessingJobDispatchedEvent
       description: Published when a processing job is dispatched to a pool-type-specific topic (e.g., asset.processing.job.audio)
+      topic-params:
+        - name: poolType
+          type: string
     - topic: asset.processing.retry
       event: AssetProcessingRetryEvent
       description: Published when processing needs to be retried after no processors are available

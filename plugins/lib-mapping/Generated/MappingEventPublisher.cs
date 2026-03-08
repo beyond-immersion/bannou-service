@@ -5,6 +5,7 @@
 
 #nullable enable
 
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 
@@ -48,6 +49,16 @@ public static class MappingEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(MappingPublishedTopics.MapUpdated, eventData, cancellationToken);
 
+    /// <summary>Published when map data is updated. Parameterized overload for dynamic topic resolution.</summary>
+    [ParameterizedTopic(typeof(Guid), typeof(MapKind))]
+    public static Task<bool> PublishMapUpdatedAsync(
+        this IMessageBus messageBus,
+        MapUpdatedEvent eventData,
+        Guid regionId,
+        MapKind kind,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync($"map.{regionId}.{kind}.updated", eventData, cancellationToken);
+
     /// <summary>Published when a full snapshot is available.</summary>
     public static Task<bool> PublishMapSnapshotAsync(
         this IMessageBus messageBus,
@@ -55,12 +66,32 @@ public static class MappingEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(MappingPublishedTopics.MapSnapshot, eventData, cancellationToken);
 
+    /// <summary>Published when a full snapshot is available. Parameterized overload for dynamic topic resolution.</summary>
+    [ParameterizedTopic(typeof(Guid), typeof(MapKind))]
+    public static Task<bool> PublishMapSnapshotAsync(
+        this IMessageBus messageBus,
+        MapSnapshotEvent eventData,
+        Guid regionId,
+        MapKind kind,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync($"map.{regionId}.{kind}.snapshot", eventData, cancellationToken);
+
     /// <summary>Published when map objects are created/updated/deleted.</summary>
     public static Task<bool> PublishMapObjectsChangedAsync(
         this IMessageBus messageBus,
         MapObjectsChangedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(MappingPublishedTopics.MapObjectsChanged, eventData, cancellationToken);
+
+    /// <summary>Published when map objects are created/updated/deleted. Parameterized overload for dynamic topic resolution.</summary>
+    [ParameterizedTopic(typeof(Guid), typeof(MapKind))]
+    public static Task<bool> PublishMapObjectsChangedAsync(
+        this IMessageBus messageBus,
+        MapObjectsChangedEvent eventData,
+        Guid regionId,
+        MapKind kind,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync($"map.{regionId}.{kind}.objects.changed", eventData, cancellationToken);
 
     /// <summary>Published when non-authority attempts to publish.</summary>
     public static Task<bool> PublishMapUnauthorizedPublishWarningAsync(

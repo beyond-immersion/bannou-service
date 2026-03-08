@@ -196,7 +196,7 @@ Tenets are organized into categories based on when they're needed:
 | # | Name | Core Rule |
 |---|------|-----------|
 | **T4** | Infrastructure Libs Pattern | MUST use lib-state, lib-messaging, lib-mesh; direct DB/queue access forbidden; L0/L1/L2 dependencies are hard (fail at startup) |
-| **T5** | Event-Driven Architecture | All state changes publish typed events; no anonymous objects |
+| **T5** | Event-Driven Architecture | All state changes publish typed events; no anonymous objects; use generated `Publish*Async` extension methods (parameterized overloads for dynamic topics) |
 | **T6** | Service Implementation Pattern | Partial class structure with standardized dependencies; state store key builders with `Build*Key()` methods |
 | **T13** | X-Permissions Usage | All endpoints declare x-permissions; `[]` = service-only (no WebSocket); `role: anonymous` = pre-auth public. See [ENDPOINT-PERMISSION-GUIDELINES.md](ENDPOINT-PERMISSION-GUIDELINES.md) for the decision framework |
 | **T15** | Browser-Facing Endpoints | GET/path-params only for OAuth, Website, WebSocket upgrade (exceptional) |
@@ -279,6 +279,9 @@ Tenets are organized into categories based on when they're needed:
 | Graceful degradation for L0/L1/L2 dependency | T4 | Use constructor injection; see SERVICE-HIERARCHY.md |
 | Anonymous event objects | T5 | Define typed event in schema |
 | Manually defining lifecycle events | T5 | Use `x-lifecycle` in events schema |
+| Inline topic string when generated publisher exists | T5 | Use `_messageBus.Publish*Async()` extension method |
+| Inline `$"topic.{param}"` for parameterized topic | T5 | Use generated parameterized overload with typed params |
+| Missing `topic-params` on parameterized `x-event-publications` entry | T1, T5 | Add `topic-params` with name/type for each `{placeholder}` |
 | Service class missing `partial` | T6 | Add `partial` keyword |
 | Inline `GetStore<T>()` calls in service method bodies | T4, T6 | Constructor-cache all store references as `readonly` fields |
 | Storing `IStateStoreFactory` as a field when only used in constructor | T4, T6 | Use constructor parameter directly; do not store as field |

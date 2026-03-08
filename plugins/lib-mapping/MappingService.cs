@@ -2131,8 +2131,7 @@ public partial class MappingService : IMappingService
             Payload = payload.Data
         };
 
-        var topic = $"map.{channel.RegionId}.{channel.Kind}.updated";
-        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: cancellationToken);
+        await _messageBus.PublishMapUpdatedAsync(eventData, channel.RegionId, channel.Kind, cancellationToken);
     }
 
     private async Task PublishMapObjectsChangedEventAsync(ChannelRecord channel, long version, List<ObjectChangeRecord> changes, string? sourceAppId, CancellationToken cancellationToken)
@@ -2197,8 +2196,7 @@ public partial class MappingService : IMappingService
             Changes = changes
         };
 
-        var topic = $"map.{channel.RegionId}.{channel.Kind}.objects.changed";
-        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: cancellationToken);
+        await _messageBus.PublishMapObjectsChangedAsync(eventData, channel.RegionId, channel.Kind, cancellationToken);
     }
 
     private async Task PublishUnauthorizedWarningAsync(ChannelRecord channel, MapPayload payload, string? attemptedPublisher, bool accepted, CancellationToken cancellationToken)

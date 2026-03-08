@@ -2616,7 +2616,7 @@ public partial class AssetService : IAssetService
                 processorResponse.ProcessorId, poolType, assetId, processorResponse.ExpiresAt);
 
             // Publish processing job event for the processor to pick up
-            await _messageBus.TryPublishAsync($"asset.processing.job.{poolType}", new AssetProcessingJobDispatchedEvent
+            await _messageBus.PublishAssetProcessingJobDispatchedAsync(new AssetProcessingJobDispatchedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -2630,7 +2630,7 @@ public partial class AssetService : IAssetService
                 AppId = processorResponse.AppId,
                 LeaseId = processorResponse.LeaseId,
                 ExpiresAt = processorResponse.ExpiresAt
-            }).ConfigureAwait(false);
+            }, poolType).ConfigureAwait(false);
 
             // Publish asset.processing.queued event for service-level tracking
             await _messageBus.PublishAssetProcessingQueuedAsync(

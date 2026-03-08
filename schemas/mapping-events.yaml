@@ -44,12 +44,27 @@ info:
     - topic: map.{regionId}.{kind}.updated
       event: MapUpdatedEvent
       description: Published when map data is updated
+      topic-params:
+        - name: regionId
+          type: uuid
+        - name: kind
+          type: MapKind
     - topic: map.{regionId}.{kind}.snapshot
       event: MapSnapshotEvent
       description: Published when a full snapshot is available
+      topic-params:
+        - name: regionId
+          type: uuid
+        - name: kind
+          type: MapKind
     - topic: map.{regionId}.{kind}.objects.changed
       event: MapObjectsChangedEvent
       description: Published when map objects are created/updated/deleted
+      topic-params:
+        - name: regionId
+          type: uuid
+        - name: kind
+          type: MapKind
 
     # Warning events
     - topic: map.warnings.unauthorized-publish
