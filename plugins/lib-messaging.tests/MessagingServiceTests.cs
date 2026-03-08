@@ -147,8 +147,10 @@ public class MessagingServiceTests : IDisposable
             .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, CancellationToken>((t, p, ct) => { })
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((t, p, opts, mid, ct) => { capturedOptions = opts; })
             .ReturnsAsync(true);
 
         // Act
@@ -177,6 +179,8 @@ public class MessagingServiceTests : IDisposable
             .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("RabbitMQ connection failed"));
 
@@ -219,8 +223,10 @@ public class MessagingServiceTests : IDisposable
             .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, CancellationToken>((t, p, ct) => { })
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((t, p, opts, mid, ct) => { capturedOptions = opts; })
             .ReturnsAsync(true);
 
         // Act
@@ -250,8 +256,10 @@ public class MessagingServiceTests : IDisposable
             .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, CancellationToken>((t, p, ct) => { })
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((t, p, opts, mid, ct) => { capturedOptions = opts; })
             .ReturnsAsync(true);
 
         // Act
