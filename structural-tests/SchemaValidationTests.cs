@@ -32,6 +32,20 @@ public class SchemaValidationTests
     }
 
     /// <summary>
+    /// Strips inline YAML comments (e.g., "value  # comment" -> "value").
+    /// </summary>
+    private static string StripYamlComment(string value)
+    {
+        // Don't strip # inside quoted strings; for unquoted values, # preceded by whitespace is a comment
+        var commentIndex = value.IndexOf('#');
+        if (commentIndex > 0 && value[commentIndex - 1] == ' ')
+        {
+            return value[..commentIndex].TrimEnd();
+        }
+        return value;
+    }
+
+    /// <summary>
     /// Validates that all enum values in schema files use PascalCase.
     /// Wrong casing breaks NSwag C# code generation and causes serialization mismatches.
     /// Per SCHEMA-RULES.md and T16 naming conventions.
@@ -47,22 +61,61 @@ public class SchemaValidationTests
             var fileName = Path.GetFileName(file);
             var lines = File.ReadAllLines(file);
             var inEnum = false;
+            var isIntegerEnum = false;
+            var inComponentSchemas = false;
 
             for (var i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
                 var trimmed = line.TrimStart();
+                var indent = line.Length - trimmed.Length;
+
+                // Track whether we're inside components/schemas (where domain enums live).
+                // Enums in paths/ (e.g., header parameter constraints like "websocket") are
+                // protocol-level constants, not domain enums subject to PascalCase rules.
+                if (indent == 0 && trimmed.StartsWith("components:", StringComparison.Ordinal))
+                {
+                    // Could be components section; schemas: follows at indent 2
+                    continue;
+                }
+                if (indent == 2 && trimmed == "schemas:")
+                {
+                    inComponentSchemas = true;
+                    continue;
+                }
+                // Any other top-level key exits components/schemas
+                if (indent == 0 && trimmed.Length > 0 && !trimmed.StartsWith("#", StringComparison.Ordinal))
+                {
+                    inComponentSchemas = false;
+                }
+
+                // Only validate enums defined in components/schemas
+                if (!inComponentSchemas && !inEnum)
+                    continue;
+
+                // Track type: integer/number to skip integer enums
+                if (trimmed.StartsWith("type:", StringComparison.Ordinal))
+                {
+                    var typeValue = trimmed["type:".Length..].Trim();
+                    isIntegerEnum = typeValue is "integer" or "number";
+                }
 
                 // Detect enum: array start
                 if (trimmed.StartsWith("enum:", StringComparison.Ordinal))
                 {
+                    // Integer enums use x-enumNames for naming; values are numeric
+                    if (isIntegerEnum)
+                    {
+                        continue;
+                    }
+
                     inEnum = true;
                     // Check for inline enum: [Value1, Value2] format
                     var inlineMatch = Regex.Match(trimmed, @"enum:\s*\[(.+)\]");
                     if (inlineMatch.Success)
                     {
                         var values = inlineMatch.Groups[1].Value.Split(',')
-                            .Select(v => v.Trim().Trim('\'', '"'));
+                            .Select(v => StripYamlComment(v.Trim().Trim('\'', '"')));
                         foreach (var val in values)
                         {
                             if (!string.IsNullOrEmpty(val) && !pascalCasePattern.IsMatch(val))
@@ -81,7 +134,7 @@ public class SchemaValidationTests
                 // Enum items are "  - Value" lines
                 if (trimmed.StartsWith("- ", StringComparison.Ordinal))
                 {
-                    var value = trimmed[2..].Trim().Trim('\'', '"');
+                    var value = StripYamlComment(trimmed[2..].Trim().Trim('\'', '"'));
                     if (!string.IsNullOrEmpty(value) && !pascalCasePattern.IsMatch(value))
                     {
                         violations.Add($"{fileName}:{i + 1}: enum value '{value}'");
@@ -91,6 +144,7 @@ public class SchemaValidationTests
                 {
                     // Non-item, non-comment line = end of enum block
                     inEnum = false;
+                    isIntegerEnum = false;
                 }
             }
         }

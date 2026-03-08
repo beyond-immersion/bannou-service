@@ -470,6 +470,7 @@ Memory Relevance Scoring (Keyword-Based)
 1. ~~**Bundle management partial**~~: **FIXED** (2026-03-08) - `BehaviorBundleManager` is fully implemented with 9 methods covering behavior recording, bundle membership tracking, asset bundle creation via lib-asset (L3 soft dependency), GOAP metadata caching, and all 3 bundle lifecycle event publications (created/updated/deleted). What remains unimplemented: no dedicated HTTP endpoints for bundle querying/listing, no bundle versioning, and no metabundle (merged super-bundle) support. These are tracked as Potential Extensions, not stubs.
 
 2. **Cinematic extension delivery**: The `CinematicExtensionAvailableEvent` schema and event model are defined but no code in lib-behavior actually publishes this event. The event model exists in generated code and `CinematicInterpreterTests.cs` references it, but the publishing path and the actual extension attachment to a running interpreter (matching `continuationPointName` to an active `ContinuationPoint` opcode) are not yet implemented.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/603 -->
 
 3. **Embedding-based memory store**: `IMemoryStore` interface is designed for swappable implementations. Only `ActorLocalMemoryStore` (keyword-based) exists. The embedding-based implementation for semantic similarity matching is documented as a future migration path in BEHAVIOR-SYSTEM.md section 7.5.
 

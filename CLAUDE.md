@@ -241,7 +241,7 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 - **Rules**: `SCHEMA-RULES.md`, `ENDPOINT-PERMISSION-GUIDELINES.md`
 - **Architecture**: `SERVICE-HIERARCHY.md`, `ORCHESTRATION-PATTERNS.md`
 - **Vision**: `VISION.md`, `PLAYER-VISION.md`
-- **Templates & Reference**: `DEEP-DIVE-TEMPLATE.md`, `IMPLEMENTATION-MAP-TEMPLATE.md`, `PLAN-EXAMPLE.md`, `COMPRESSION-CHARTS.md`
+- **Templates & Reference**: `templates/DEEP-DIVE-TEMPLATE.md`, `templates/IMPLEMENTATION-MAP-TEMPLATE.md`, `templates/PLAN-EXAMPLE.md`, `COMPRESSION-CHARTS.md`
 
 **Why this rule exists**: An agent wrote an incorrect rule into SCHEMA-RULES.md stating that service events should NOT use `allOf` with `BaseServiceEvent`. This was factually wrong — NSwag requires `allOf` for C# inheritance. But because it was written into an authoritative document, other agents enforced it as inviolable law, systematically "fixing" dozens of event schemas to comply with the bad rule. The protective guardrails that prevent casual modification also prevented agents from correcting the error. Bad rules were permanently enshrined and actively enforced, causing cascading damage across the codebase.
 
@@ -369,7 +369,7 @@ These documents provide the high-level architectural north-star context for the 
 
 **Other Planning References**:
 
-- **Plan Example**: `docs/reference/PLAN-EXAMPLE.md` - A preserved real implementation plan (Seed service) showing the expected structure, detail level, and patterns for planning a new Bannou service. Read this when creating implementation plans for new services or major features to match the established planning format.
+- **Plan Example**: `docs/reference/templates/PLAN-EXAMPLE.md` - A preserved real implementation plan (Seed service) showing the expected structure, detail level, and patterns for planning a new Bannou service. Read this when creating implementation plans for new services or major features to match the established planning format.
 - **Implementation Maps**: `docs/maps/{SERVICE}.md` - Method-by-method specifications for each plugin. Contains pseudocode, state store key patterns, dependency tables, event inventories, DI service lists, and full endpoint indexes. Every implemented service has one. **Do not confuse with deep dives** (`docs/plugins/{SERVICE}.md`) — deep dives are high-level context; maps are detailed specifications.
 
 **Auto-Generated References** (regenerate with `make generate-docs`):

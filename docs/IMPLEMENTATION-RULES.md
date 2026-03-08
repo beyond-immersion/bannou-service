@@ -2,7 +2,7 @@
 
 > **Purpose**: Concentrated reference for implementing service methods and writing implementation maps.
 > **Authority**: This document summarizes rules from the [Tenets](reference/TENETS.md). The tenet documents are authoritative; this is a focused subset.
-> **Related**: [Implementation Map Template](reference/IMPLEMENTATION-MAP-TEMPLATE.md)
+> **Related**: [Implementation Map Template](reference/templates/IMPLEMENTATION-MAP-TEMPLATE.md)
 
 ---
 
