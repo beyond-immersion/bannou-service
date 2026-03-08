@@ -305,9 +305,9 @@ POST /location/exists | Roles: [user]
 
 ```
 READ store:location:{locationId}
-IF null
-  RETURN (200, LocationExistsResponse { exists: false, isActive: false })
-RETURN (200, LocationExistsResponse { exists: true, isActive: !model.IsDeprecated, realmId: model.RealmId })
+IF null                                            -> 404
+RETURN (200, LocationExistsResponse { isActive: !model.IsDeprecated, realmId: model.RealmId })
+// T8: 200 = exists, 404 = not found. No `exists` boolean needed.
 ```
 
 ### QueryLocationsByPosition

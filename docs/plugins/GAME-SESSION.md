@@ -95,7 +95,7 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 | `CleanupServiceStartupDelaySeconds` | `GAME_SESSION_CLEANUP_SERVICE_STARTUP_DELAY_SECONDS` | `10` | Delay before cleanup service starts |
 | `StartupServiceDelaySeconds` | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | `2` | Delay before subscription cache warmup |
 | `SubscriberSessionRetryMaxAttempts` | `GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS` | `3` | Max retries for ETag-based optimistic concurrency |
-| `SupportedGameServices` | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `generic` | Comma-separated game service stub names (see Horizontal Scaling) |
+| `SupportedGameServices` | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `generic` | Game service stub names for horizontal scaling partitioning (T21: should be typed array in config schema, not comma-delimited string) |
 | `GenericLobbiesEnabled` | `GAME_SESSION_GENERIC_LOBBIES_ENABLED` | `false` | Auto-publish generic shortcuts without subscription (see Generic Lobbies) |
 | `LockTimeoutSeconds` | `GAME_SESSION_LOCK_TIMEOUT_SECONDS` | `60` | Timeout in seconds for distributed session locks |
 
@@ -103,7 +103,7 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 
 ## Horizontal Scaling by Game
 
-The `SupportedGameServices` configuration enables **per-game horizontal scaling** by partitioning which game-session instances handle which games. This is a comma-delimited list (CDL) that filters which `subscription.updated` events the instance processes.
+The `SupportedGameServices` configuration enables **per-game horizontal scaling** by partitioning which game-session instances handle which games. Currently implemented as a comma-delimited string (T21 violation — should be a typed array in the configuration schema). Filters which `subscription.updated` events the instance processes.
 
 ### How It Works
 
@@ -340,7 +340,7 @@ Subscription Cache Architecture
 2. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/557 -->
 
-3. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
+3. ~~**CleanupPlayerModel property name mismatch**~~: **FIXED** (2026-03-08) - `CleanupPlayerModel.WebSocketSessionId` did not match `GamePlayer.SessionId`'s JSON key, so it always deserialized as null and players were never notified of matchmade session cancellation via WebSocket. Renamed to `SessionId` to match. The minimal cleanup model pattern itself is intentional (performance optimization for periodic cleanup cycles); a comment now documents the property-name alignment requirement.
 
 ---
 
@@ -351,4 +351,5 @@ Subscription Cache Architecture
 ### Completed
 
 - **Join validates subscriber session but Leave does not** — Moved from Design Considerations to Intentional Quirk #6 (2026-03-08). Behavior is correct: authorization verified at join time; leave always succeeds regardless of subscription status.
+- **CleanupPlayerModel property name mismatch** — Fixed (2026-03-08). `WebSocketSessionId` renamed to `SessionId` to match `GamePlayer`'s serialized JSON key. Players are now correctly notified of matchmade session cancellation.
 

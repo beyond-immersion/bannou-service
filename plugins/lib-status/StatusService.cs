@@ -1291,6 +1291,29 @@ public partial class StatusService : IStatusService
                 await _instanceStore.DeleteAsync(
                     InstanceIdKey(instance.StatusInstanceId), cancellationToken);
                 statusesRemoved++;
+
+                // Publish status.removed lifecycle event per FOUNDATION TENETS (T28 requirement #4)
+                try
+                {
+                    await _messageBus.PublishStatusRemovedAsync(
+                        new StatusRemovedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            EntityId = instance.EntityId,
+                            EntityType = instance.EntityType,
+                            StatusTemplateCode = instance.StatusTemplateCode,
+                            StatusInstanceId = instance.StatusInstanceId,
+                            Reason = StatusRemoveReason.SourceRemoved
+                        },
+                        cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Failed to publish status.removed event for instance {StatusInstanceId} during cleanup",
+                        instance.StatusInstanceId);
+                }
             }
 
             // Delete container via inventory

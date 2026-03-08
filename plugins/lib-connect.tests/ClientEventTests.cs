@@ -54,7 +54,7 @@ public class ClientEventTests
     public void IsValidEventName_WithValidGameSessionEvent_ShouldReturnTrue()
     {
         // Act
-        var result = ClientEventWhitelist.IsValidEventName("game-session.state-changed");
+        var result = ClientEventWhitelist.IsValidEventName("game.session.state-changed");
 
         // Assert
         Assert.True(result);
@@ -100,7 +100,7 @@ public class ClientEventTests
         // Assert
         Assert.NotEmpty(eventNames);
         Assert.Contains("connect.capability-manifest", eventNames);
-        Assert.Contains("game-session.state-changed", eventNames);
+        Assert.Contains("game.session.state-changed", eventNames);
         Assert.Contains("system.error", eventNames);
     }
 
@@ -117,13 +117,13 @@ public class ClientEventTests
     [Theory]
     [InlineData("connect.capability-manifest")]
     [InlineData("connect.disconnect-notification")]
-    [InlineData("game-session.action-result")]
-    [InlineData("game-session.chat-received")]
-    [InlineData("game-session.player-joined")]
-    [InlineData("game-session.player-kicked")]
-    [InlineData("game-session.player-left")]
-    [InlineData("game-session.state-changed")]
-    [InlineData("game-session.state-updated")]
+    [InlineData("game.session.action-result")]
+    [InlineData("game.session.chat-received")]
+    [InlineData("game.session.player-joined")]
+    [InlineData("game.session.player-kicked")]
+    [InlineData("game.session.player-left")]
+    [InlineData("game.session.state-changed")]
+    [InlineData("game.session.state-updated")]
     [InlineData("system.error")]
     [InlineData("system.notification")]
     public void IsValidEventName_AllRegisteredEvents_ShouldReturnTrue(string eventName)

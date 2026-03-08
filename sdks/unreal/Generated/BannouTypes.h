@@ -1513,6 +1513,10 @@ struct FAchievementDefinitionResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FAchievementType AchievementType;
 
+    /** Game-defined category for UI grouping and filtering */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
+
     /** Allowed entity types */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FEntityType> EntityTypes;
@@ -7992,6 +7996,10 @@ struct FCreateAchievementDefinitionRequest
     /** Rank threshold for leaderboard achievements (unlock when rank <= threshold) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int64> RankThreshold;
+
+    /** Game-defined category for UI grouping and filtering (e.g. Combat, Exploration, Social) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
 
     /** Whether this achievement can be earned */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -17391,6 +17399,10 @@ struct FListAchievementDefinitionsRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid GameServiceId;
 
+    /** Filter by game-defined category */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
+
     /** Filter by platform */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FPlatform> Platform;
@@ -18252,6 +18264,14 @@ struct FListItemsByContainerRequest
     /** Container to list items from */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid ContainerId;
+
+    /** Number of items to skip for pagination */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Offset;
+
+    /** Maximum number of items to return per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Limit;
 
 };
 
@@ -30712,6 +30732,10 @@ struct FUpdateAchievementDefinitionRequest
     /** New description */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Description;
+
+    /** New category for UI grouping */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
 
     /** New active status */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")

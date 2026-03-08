@@ -102,7 +102,9 @@ Generic save/load system (L4 GameFeatures) for game state persistence with polym
 
 ### Consumed Events
 
-This plugin does not consume external events.
+| Topic | Event Type | Handler |
+|-------|-----------|---------|
+| `account.deleted` | `AccountDeletedEvent` | `HandleAccountDeletedAsync` — Deletes all save slots, versions, hot cache entries, and associated assets owned by the deleted account. Required by T28 (Account Deletion Cleanup Obligation) because Save-Load supports `ownerType: Account`. |
 
 ---
 
@@ -554,5 +556,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **BSDIFF delta algorithm** - Library selection and design decisions needed. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)
 - **XDELTA delta algorithm** - Consolidated with BSDIFF; same library selection and design questions apply. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)
 - **JSON Schema validation** - Method exists but is never called; design decisions needed on where/when to invoke validation. See [#229](https://github.com/beyond-immersion/bannou-service/issues/229). (2026-02-01)
-- **IAssetClient dependency pattern** - Save-load is L4 and Asset is L3; hierarchy allows hard dependency (constructor injection). Currently uses constructor injection, which is correct. However, if Asset were disabled, save-load would crash at startup. Consider whether graceful degradation (soft dependency with reduced functionality — local-only saves without MinIO persistence) is desirable. (2026-03-07)
+- **IAssetClient dependency pattern** - Save-load is L4 and Asset is L3; per SERVICE-HIERARCHY.md, L4→L3 dependencies MUST be soft (graceful degradation). Currently uses constructor injection, which would crash at startup if Asset were disabled. Must be changed to runtime resolution via `IServiceProvider.GetService<IAssetClient>()` with graceful degradation to local-only saves (Redis hot cache without MinIO persistence) when Asset is unavailable. (2026-03-07)
 - **SaveUploadWorker store resolution pattern** - SaveUploadWorker resolves stores per-scope via `IStateStoreFactory` in `ProcessPendingUploadsAsync` rather than caching store references. This is a stylistic T6 consideration — BackgroundServices that create scopes should resolve stores once per scope and pass as parameters. Current pattern works but could be tightened. (2026-03-07)

@@ -144,9 +144,10 @@ internal class CleanupReservationModel
 
 /// <summary>
 /// Minimal player model for cleanup service.
+/// Property names must match GamePlayer's serialized JSON keys (e.g., SessionId not WebSocketSessionId).
 /// </summary>
 internal class CleanupPlayerModel
 {
     public Guid AccountId { get; set; }
-    public Guid? WebSocketSessionId { get; set; }
+    public Guid? SessionId { get; set; }
 }

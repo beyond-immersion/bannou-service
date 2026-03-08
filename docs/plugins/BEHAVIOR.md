@@ -68,11 +68,11 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 | `behavior.created` | `BehaviorCreatedEvent` | New behavior compiled and stored (lifecycle) |
 | `behavior.updated` | `BehaviorUpdatedEvent` | Behavior recompiled/updated (lifecycle) |
 | `behavior.deleted` | `BehaviorDeletedEvent` | Behavior deleted/invalidated (lifecycle) |
-| `behavior.bundle.created` | `BehaviorBundleCreatedEvent` | Bundle created (lifecycle) - **schema-defined but not yet published by code** |
-| `behavior.bundle.updated` | `BehaviorBundleUpdatedEvent` | Bundle updated (lifecycle) - **schema-defined but not yet published by code** |
-| `behavior.bundle.deleted` | `BehaviorBundleDeletedEvent` | Bundle deleted (lifecycle) - **schema-defined but not yet published by code** |
+| `behavior.bundle.created` | `BehaviorBundleCreatedEvent` | Bundle created (lifecycle) — published by `BehaviorBundleManager.AddToBundleAsync` when first behavior added to a new bundle |
+| `behavior.bundle.updated` | `BehaviorBundleUpdatedEvent` | Bundle updated (lifecycle) — published by `AddToBundleAsync`, `CreateAssetBundleAsync`, `RemoveBehaviorAsync` on membership changes |
+| `behavior.bundle.deleted` | `BehaviorBundleDeletedEvent` | Bundle deleted (lifecycle) — published by `RemoveBehaviorAsync` when last behavior removed from bundle |
 | `behavior.compilation-failed` | `BehaviorCompilationFailedEvent` | ABML compilation fails (monitoring/alerting) |
-| `behavior.goap.plan-generated` | `GoapPlanGeneratedEvent` | GOAP planner generates new plan |
+| `behavior.goap-plan-generated` | `GoapPlanGeneratedEvent` | GOAP planner generates new plan |
 | `behavior.cinematic-extension` | `CinematicExtensionAvailableEvent` | Cinematic extension available for injection at continuation point - **schema-defined but not yet published by code** |
 
 ### Consumed Events
@@ -467,7 +467,7 @@ Memory Relevance Scoring (Keyword-Based)
 
 ## Stubs & Unimplemented Features
 
-1. **Bundle management partial**: `IBehaviorBundleManager` interface is defined and injected but the full bundle lifecycle (creation from multiple behaviors, versioning, metabundles) routes through the asset service. The local `BehaviorBundleManager` handles membership tracking in state but asset upload/download for bundles is delegated to lib-asset.
+1. ~~**Bundle management partial**~~: **FIXED** (2026-03-08) - `BehaviorBundleManager` is fully implemented with 9 methods covering behavior recording, bundle membership tracking, asset bundle creation via lib-asset (L3 soft dependency), GOAP metadata caching, and all 3 bundle lifecycle event publications (created/updated/deleted). What remains unimplemented: no dedicated HTTP endpoints for bundle querying/listing, no bundle versioning, and no metabundle (merged super-bundle) support. These are tracked as Potential Extensions, not stubs.
 
 2. **Cinematic extension delivery**: The `CinematicExtensionAvailableEvent` schema and event model are defined but no code in lib-behavior actually publishes this event. The event model exists in generated code and `CinematicInterpreterTests.cs` references it, but the publishing path and the actual extension attachment to a running interpreter (matching `continuationPointName` to an active `ContinuationPoint` opcode) are not yet implemented.
 
@@ -477,7 +477,7 @@ Memory Relevance Scoring (Keyword-Based)
 
 5. **Compiler optimizations**: `CompilationOptions.EnableOptimizations` flag exists and `CompilationOptions.Release` preset enables it, but no optimization passes are currently implemented in the compiler pipeline. The flag is a placeholder for future dead-code elimination, constant folding, etc.
 
-6. **Bundle lifecycle events not published**: The `x-lifecycle` schema defines `BehaviorBundleCreatedEvent`, `BehaviorBundleUpdatedEvent`, and `BehaviorBundleDeletedEvent` (auto-generated to `BehaviorLifecycleEvents.cs`), but `BehaviorBundleManager` never calls `_messageBus.TryPublishAsync()` for these events. The bundle manager handles state store operations for membership tracking but does not publish lifecycle events when bundles are created, updated, or deleted.
+6. ~~**Bundle lifecycle events not published**~~: **FIXED** (2026-03-08) - `BehaviorBundleManager` DOES publish all 3 bundle lifecycle events via generated `PublishBehaviorBundle*Async` extension methods: created in `AddToBundleAsync` (line 167), updated in `AddToBundleAsync`/`CreateAssetBundleAsync`/`RemoveBehaviorAsync`, deleted in `RemoveBehaviorAsync` when bundle becomes empty (line 360). The previous documentation was factually incorrect.
 
 7. **Behavior Stack system (not DI-registered)**: Complete behavior stacking subsystem exists in `Stack/` directory (`BehaviorStack.cs`, `BehaviorStackRegistry.cs`, `IntentStackMerger.cs`, `SituationalTriggerManager.cs`) with interfaces defined in `bannou-service/Behavior/IBehaviorStack.cs`. Implements multi-layer intent composition with category-based priority. Code is complete but none of the types are registered in `BehaviorServicePlugin.ConfigureServices()`, making the entire subsystem inactive.
 
@@ -515,7 +515,7 @@ Memory Relevance Scoring (Keyword-Based)
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. ~~**T16 violation: Bundle event topics use Pattern B (forbidden)**~~: **FIXED** — Changed 3 bundle topics in `behavior-events.yaml` from Pattern B (`behavior-bundle.{action}`) to Pattern C (`behavior.bundle.{action}`). Regeneration needed to update generated publisher.
 
 ### Intentional Quirks
 
@@ -1047,7 +1047,7 @@ flows:
 
 ### Completed
 
-*(Historical entries cleared — see git history for prior completions.)*
+- **2026-03-08**: Fixed stale documentation for Stub #1 (Bundle management partial) and Stub #6 (Bundle lifecycle events not published). Both were factually incorrect — `BehaviorBundleManager` is fully implemented with event publishing. Updated Published Events table to remove incorrect "not yet published" annotations. Fixed GOAP topic typo (`behavior.goap.plan-generated` → `behavior.goap-plan-generated`). Added T16 bug for Pattern B topic naming in bundle events.
 
 ### AUDIT Markers
 

@@ -56,12 +56,12 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     #endregion
 
     // Event topics - must match schema definitions in character-history-events.yaml
-    private const string PARTICIPATION_RECORDED_TOPIC = "character-history.participation.recorded";
-    private const string PARTICIPATION_DELETED_TOPIC = "character-history.participation.deleted";
-    private const string BACKSTORY_CREATED_TOPIC = "character-history.backstory.created";
-    private const string BACKSTORY_UPDATED_TOPIC = "character-history.backstory.updated";
-    private const string BACKSTORY_DELETED_TOPIC = "character-history.backstory.deleted";
-    private const string HISTORY_DELETED_TOPIC = "character-history.deleted";
+    private const string PARTICIPATION_RECORDED_TOPIC = "character.history.participation.recorded";
+    private const string PARTICIPATION_DELETED_TOPIC = "character.history.participation.deleted";
+    private const string BACKSTORY_CREATED_TOPIC = "character.history.backstory.created";
+    private const string BACKSTORY_UPDATED_TOPIC = "character.history.backstory.updated";
+    private const string BACKSTORY_DELETED_TOPIC = "character.history.backstory.deleted";
+    private const string HISTORY_DELETED_TOPIC = "character.history.deleted";
 
     /// <summary>
     /// Initializes the CharacterHistory service with required dependencies.

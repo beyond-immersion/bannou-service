@@ -202,6 +202,18 @@ No Chat changes are needed for this integration path -- the transport layer is r
 
 15. **SendMessageBatch publishes per-message service events**: `SendMessageBatch` publishes a `ChatMessageSentEvent` for each successfully sent message in the batch, matching `SendMessage` behavior exactly. This ensures downstream consumers see all messages regardless of send path. RabbitMQ handles the per-message event volume efficiently even for large batches.
 
+### Deprecation Lifecycle (T31 Category B)
+
+Room types are **Category B entities** — rooms reference room types by code, and existing rooms must continue to function after a room type is deprecated. Per T31:
+
+- **Deprecation is one-way**: Once deprecated, a room type cannot be undeprecated. No undeprecate endpoint exists.
+- **No delete endpoint**: Room type definitions persist forever. Only deprecation is supported (see quirk #6).
+- **Instance creation guard**: Creating new rooms with a deprecated room type code must be rejected with `BadRequest`.
+- **Storage model**: Room type definitions use triple-field deprecation: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?).
+- **Idempotent deprecation**: Deprecating an already-deprecated room type returns `OK` (not `Conflict`).
+- **List filtering**: `ListRoomTypes` includes `includeDeprecated` parameter (default: `false`).
+- **Events**: Deprecation is communicated via `chat.room-type.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per T31).
+
 ### Design Considerations (Requires Planning)
 
 1. **AdminGetStats has O(N) participant counting**: Queries up to 1000 rooms, then performs individual `HashCount` calls for each room to sum total participants. Could become slow with many active rooms. Consider maintaining a running total or using a dedicated counter.

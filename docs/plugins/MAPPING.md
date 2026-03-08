@@ -430,7 +430,7 @@ Authoring Workflow
 
 5. **Definition index is a single key**: All definition IDs are stored in one `List<Guid>`. With hundreds of definitions, this key becomes large and every CRUD operation requires loading/saving the entire list. A Redis SET or secondary index would scale better.
 
-6. **Per-kind TTL conventions**: Durable kinds (terrain, static_geometry, navigation, ownership) use `-1` meaning no TTL. Ephemeral kinds (combat_effects at 30s, visual_effects at 60s) auto-expire from Redis. If an ephemeral object's spatial index entry outlives the object, queries will find the index entry but the object load returns null (safely filtered out, but wastes a round-trip).
+6. **Per-kind TTL conventions**: Durable kinds (terrain, static_geometry, navigation, ownership) use `null` TTL meaning no expiry. Ephemeral kinds (combat_effects at 30s, visual_effects at 60s) auto-expire from Redis. T26 violation note: the original design used `-1` as a sentinel for "no TTL" — this should be nullable (`int?`) where `null` means no expiry. If an ephemeral object's spatial index entry outlives the object, queries will find the index entry but the object load returns null (safely filtered out, but wastes a round-trip).
 
 7. **ExtractFeatures returns null for single-feature results**: The method always adds `objectType` to the features dictionary, then returns `null` if `features.Count <= 1`. When no relevant data properties are found, the result is always null.
 

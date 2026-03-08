@@ -46,7 +46,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 23 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Bannou Puppetmaster Service API](#puppetmaster) | `client.Puppetmaster` | 6 | Orchestration service for dynamic behaviors, regional watche... |
-| [Bannou Quest Service API](#quest) | `client.Quest` | 17 | Quest system providing objective-based gameplay progression ... |
+| [Bannou Quest Service API](#quest) | `client.Quest` | 18 | Quest system providing objective-based gameplay progression ... |
 | [Bannou Realm Service API](#realm) | `client.Realm` | 13 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 21 | Relationship and relationship type management service for en... |
@@ -1797,6 +1797,12 @@ Orchestration service for dynamic behaviors, regional watchers, and encounter co
 
 Quest system providing objective-based gameplay progression as a thin orchestration layer over lib-contract. Quests are contracts with game-flavore...
 
+### Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `DeleteBycharacterAsync` | `DeleteByCharacterRequest` | `DeleteByCharacterResponse` | Delete all quest data for a character |
+
 ### Compression
 
 | Method | Request | Response | Summary |
@@ -2551,7 +2557,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 55
-- **Total methods**: 893
+- **Total methods**: 894
 
 ---
 

@@ -109,6 +109,7 @@ Direct API
 The Glicko-2 algorithm includes a concept of "rating period decay" where a player's rating deviation increases over time when they don't play. The `CalculateGlicko2Update` handles the no-games case (deviation increases by volatility), but there is no scheduled task or event that triggers this decay for inactive players. Players who stop playing retain their last RD indefinitely.
 
 ### Per-Game Milestone Definitions
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/602 -->
 
 Milestones are configurable via `MilestoneThresholds` as a global comma-separated list. There is no API to define custom milestone values per game service or score type. All entities use the same configured threshold set regardless of context.
 
@@ -123,9 +124,9 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 ### Bugs (Fix Immediately)
 
-1. **`QueryControllerHistory` ignores `Offset` parameter**: The `QueryControllerHistoryAsync` method accepts an `Offset` field on the request but hardcodes `0` as the offset argument to `JsonQueryPagedAsync`. Callers expecting pagination beyond the first page will always receive the same results.
+1. ~~**`QueryControllerHistory` ignores `Offset` parameter**~~: **FIXED** (2026-03-08) - The schema was missing the `offset` field entirely on `QueryControllerHistoryRequest`. Added `offset` (integer, default 0, minimum 0) to the schema, regenerated, updated the method to pass `body.Offset` instead of hardcoded `0`, and added offset validation matching the `QueryEntitySummariesAsync` pattern.
 
-2. **`IngestEvent` drops `SessionId` from request**: When building a `BufferedAnalyticsEvent` in `IngestEventAsync` and `IngestEventBatchAsync`, the `SessionId` field from the request body is never assigned to the buffered event. Event handlers (e.g., `HandleGameSessionCreatedAsync`) correctly set `SessionId`, but the direct API ingestion path loses it. The `SessionId` value propagates into `AnalyticsScoreUpdatedEvent` during flush, so downstream consumers (Achievement, Leaderboard) receive `null` for API-ingested events.
+2. ~~**`IngestEvent` drops `SessionId` from request**~~: **FIXED** (2026-03-08) - Added `sessionId` (nullable Guid) to `IngestEventRequest` schema and wired `SessionId = body.SessionId` in both `IngestEventAsync` and `IngestEventBatchAsync`. Downstream consumers (Achievement, Leaderboard) now receive the session ID for API-ingested events via `AnalyticsScoreUpdatedEvent`.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -137,13 +138,13 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 4. **Cache invalidation is best-effort**: Handlers for `character.updated` and `realm.updated` events catch exceptions and log warnings but do not fail. Stale cache entries will eventually expire via TTL.
 
+5. **`string.Empty` default for internal POCO string fields**: `BufferedAnalyticsEvent.EventType`, `GameSessionMappingData.GameType`, and `SkillRatingData.RatingType` use `= string.Empty` defaults. These are standard NRT compliance — every construction site sets these fields explicitly, and the defaults only serve as deserialization safety for non-nullable string properties.
+
 ### Design Considerations (Requires Planning)
 
-1. **`string.Empty` default for internal POCO string fields** - `BufferedAnalyticsEvent.EventType`, `GameSessionMappingData.GameType`, and `SkillRatingData.RatingType` use `= string.Empty` defaults. While not a T25 violation (these are strings, not enums), empty strings could mask bugs. Consider using nullable strings with validation at ingestion boundaries.
+1. **No automatic controller history cleanup** - The `CleanupControllerHistory` endpoint exists but must be called manually (e.g., via scheduled cron job or orchestrator task). There is no background service that automatically purges expired records. For production deployments, consider adding a periodic cleanup task or documenting the requirement for external scheduling.
 
-2. **No automatic controller history cleanup** - The `CleanupControllerHistory` endpoint exists but must be called manually (e.g., via scheduled cron job or orchestrator task). There is no background service that automatically purges expired records. For production deployments, consider adding a periodic cleanup task or documenting the requirement for external scheduling.
-
-3. **Constructor injects 4 service clients individually** - The constructor takes `IGameServiceClient`, `IGameSessionClient`, `IRealmClient`, and `ICharacterClient` as separate parameters. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
+2. **Constructor injects 4 service clients individually** - The constructor takes `IGameServiceClient`, `IGameSessionClient`, `IRealmClient`, and `ICharacterClient` as separate parameters. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 
 ## Work Tracking
 

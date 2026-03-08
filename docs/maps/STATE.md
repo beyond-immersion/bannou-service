@@ -139,8 +139,8 @@ POST /state/delete | Roles: []
 ```
 IF NOT factory.HasStore(storeName)              -> 404
 DELETE {storeName}:{key}
-// Non-existent key returns 200 with deleted=false (idempotent)
-RETURN (200, DeleteStateResponse { deleted })
+// Idempotent: returns 200 whether key existed or not (T8: status code communicates result)
+RETURN (200)
 ```
 
 ### QueryState

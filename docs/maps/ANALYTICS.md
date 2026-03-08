@@ -148,8 +148,7 @@ All history event handlers follow fail-fast: if game service resolution fails, t
 POST /analytics/event/ingest | Roles: []
 
 ```
-// Build buffered event from request
-// NOTE: request.SessionId is NOT assigned to buffered event (bug)
+// Build buffered event from request (including optional SessionId)
 WRITE buffer-entry:analytics-event-buffer-entry:{newGuid} <- BufferedAnalyticsEvent from request
 WRITE buffer-index:analytics-event-buffer-index (sorted set add, score=timestamp ms)
 // Inline flush check after enqueue

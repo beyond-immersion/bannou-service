@@ -156,9 +156,9 @@ POST /realm/exists | Roles: [user]
 
 ```
 READ realm:{realmId}
-IF model == null
-  RETURN (200, RealmExistsResponse { exists: false, isActive: false })
-RETURN (200, RealmExistsResponse { exists: true, isActive: model.IsActive && !model.IsDeprecated })
+IF model == null                                   -> 404
+RETURN (200, RealmExistsResponse { isActive: model.IsActive && !model.IsDeprecated })
+// T8: 200 = exists, 404 = not found. No `exists` boolean needed.
 ```
 
 ---

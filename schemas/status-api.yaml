@@ -41,13 +41,8 @@ info:
     cleanup:
       endpoint: /status/cleanup-by-owner
       payloadTemplate: '{"ownerType": "character", "ownerId": "{{resourceId}}"}'
-  - target: account
-    sourceType: status-container
-    field: ownerId
-    onDelete: cascade
-    cleanup:
-      endpoint: /status/cleanup-by-owner
-      payloadTemplate: '{"ownerType": "account", "ownerId": "{{resourceId}}"}'
+  # Account cleanup uses account.deleted event subscription per FOUNDATION TENETS
+  # (Account Deletion Cleanup Obligation) — lib-resource registration for accounts is forbidden.
 x-service-layer: GameFeatures
 
 servers:

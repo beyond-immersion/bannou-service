@@ -4521,6 +4521,18 @@ public partial class ItemController
                     "type": "string",
                     "format": "uuid",
                     "description": "Container to list items from"
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 0,
+                    "description": "Number of items to skip for pagination"
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 100,
+                    "description": "Maximum number of items to return per page"
                 }
             }
         }

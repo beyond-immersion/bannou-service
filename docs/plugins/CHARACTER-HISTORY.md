@@ -60,7 +60,7 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 | `eventCategory` | C (System State) | `EventCategory` enum | Finite set of historical event categories (WAR, NATURAL_DISASTER, POLITICAL, ECONOMIC, RELIGIOUS, CULTURAL, PERSONAL). System-defined; drives query filtering and summarization logic. |
 | `role` | C (System State) | `ParticipationRole` enum | Finite set of participation roles (LEADER, COMBATANT, VICTIM, WITNESS, BENEFICIARY, CONSPIRATOR, HERO, SURVIVOR). System-defined; drives text summarization templates. |
 | `elementType` | C (System State) | `BackstoryElementType` enum | Finite set of backstory element categories (ORIGIN, OCCUPATION, TRAINING, TRAUMA, ACHIEVEMENT, SECRET, GOAL, FEAR, BELIEF). System-defined; used as keyed dimensions in behavior system lookups. |
-| `relatedEntityType` | A (Entity Reference) | Plain string | References the type of a related entity (location, organization, character) on a backstory element. Currently a plain string rather than `EntityType` enum because the set of relatable entity types is not yet formalized in schema. |
+| `relatedEntityType` | A (Entity Reference) | `EntityType` enum (nullable) | References the type of a related entity (location, organization, character) on a backstory element. Uses `$ref: 'common-api.yaml#/components/schemas/EntityType'` with `nullable: true` per T14 decision tree test 4 (all valid values are Bannou entity types). |
 
 ---
 
@@ -87,11 +87,13 @@ This plugin does not consume external events.
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `BackstoryCacheTtlSeconds` | `CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS` | 600 | TTL in seconds for backstory cache entries |
+| `BackstoryCacheTtlMinutes` | `CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_MINUTES` | 10 | TTL in minutes for backstory cache entries; backstory data is nearly immutable so longer TTLs are appropriate |
 | `MaxBackstoryElements` | `CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS` | 100 | Maximum backstory elements per character; returns BadRequest when exceeded |
+| `MaxCompressBackstoryPoints` | `CHARACTER_HISTORY_MAX_COMPRESS_BACKSTORY_POINTS` | 10 | Maximum backstory points to include in compression archive summaries |
+| `MaxCompressLifeEvents` | `CHARACTER_HISTORY_MAX_COMPRESS_LIFE_EVENTS` | 10 | Maximum life events to include in compression archive summaries |
 | `IndexLockTimeoutSeconds` | `CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | 15 | Distributed lock timeout for DualIndexHelper and BackstoryStorageHelper write operations |
 
-The generated `CharacterHistoryServiceConfiguration` is injected into both `BackstoryCache` (for TTL) and `CharacterHistoryService` (for element limits).
+The generated `CharacterHistoryServiceConfiguration` is injected into `BackstoryCache` (for TTL), `CharacterHistoryService` (for element limits and compression summary limits).
 
 ---
 
@@ -100,7 +102,7 @@ The generated `CharacterHistoryServiceConfiguration` is injected into both `Back
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CharacterHistoryService>` | Scoped | Structured logging |
-| `CharacterHistoryServiceConfiguration` | Singleton | Typed configuration (BackstoryCacheTtlSeconds, MaxBackstoryElements, IndexLockTimeoutSeconds); injected into service constructor and `BackstoryCache` |
+| `CharacterHistoryServiceConfiguration` | Singleton | Typed configuration (BackstoryCacheTtlMinutes, MaxBackstoryElements, MaxCompressBackstoryPoints, MaxCompressLifeEvents, IndexLockTimeoutSeconds); injected into service constructor and `BackstoryCache` |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IMessageBus` | Scoped | Event publishing |
 | `IEventConsumer` | Scoped | Event registration (no handlers) |
@@ -256,7 +258,7 @@ None.
 
 1. ~~**Metadata stored as `object?`**~~: **Resolved** - Participation metadata is client-only opaque data. No Bannou plugin reads specific keys by convention. Schema descriptions updated per FOUNDATION TENETS (T29).
 
-2. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
+2. ~~**AddBackstoryElement is upsert**~~: **Resolved** ([#311](https://github.com/beyond-immersion/bannou-service/issues/311), closed 2026-02-08) - Upsert semantics are intentional. No downstream consumer needs to distinguish element-added vs element-updated; lib-analytics aggregates events without this distinction, and lib-actor uses cache-based reads (not events). Adding the distinction would be premature complexity.
 
 ---
 

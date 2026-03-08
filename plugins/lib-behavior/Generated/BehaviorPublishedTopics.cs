@@ -27,13 +27,13 @@ public static class BehaviorPublishedTopics
     public const string BehaviorDeleted = "behavior.deleted";
 
     /// <summary>Published when a new behavior bundle is created.</summary>
-    public const string BehaviorBundleCreated = "behavior-bundle.created";
+    public const string BehaviorBundleCreated = "behavior.bundle.created";
 
     /// <summary>Published when a behavior bundle is updated.</summary>
-    public const string BehaviorBundleUpdated = "behavior-bundle.updated";
+    public const string BehaviorBundleUpdated = "behavior.bundle.updated";
 
     /// <summary>Published when a behavior bundle is deleted.</summary>
-    public const string BehaviorBundleDeleted = "behavior-bundle.deleted";
+    public const string BehaviorBundleDeleted = "behavior.bundle.deleted";
 
     /// <summary>Published when a cinematic extension is available for injection at a continuation point.</summary>
     public const string CinematicExtensionAvailable = "behavior.cinematic-extension";

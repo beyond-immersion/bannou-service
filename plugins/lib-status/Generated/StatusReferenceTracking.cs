@@ -72,52 +72,6 @@ public partial class StatusService
             cancellationToken);
     }
 
-    /// <summary>
-    /// Registers a reference from a status-container entity to a account resource.
-    /// Call this after creating an entity that references the resource.
-    /// </summary>
-    /// <param name="statusContainerId">The ID of the status-container entity holding the reference.</param>
-    /// <param name="accountId">The ID of the account resource being referenced.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    protected async Task RegisterAccountReferenceAsync(
-        string statusContainerId,
-        Guid accountId,
-        CancellationToken cancellationToken = default)
-    {
-        await _resourceClient.RegisterReferenceAsync(
-            new RegisterReferenceRequest
-            {
-                ResourceType = "account",
-                ResourceId = accountId,
-                SourceType = "status-container",
-                SourceId = statusContainerId
-            },
-            cancellationToken);
-    }
-
-    /// <summary>
-    /// Unregisters a reference from a status-container entity to a account resource.
-    /// Call this before deleting an entity that references the resource.
-    /// </summary>
-    /// <param name="statusContainerId">The ID of the status-container entity releasing the reference.</param>
-    /// <param name="accountId">The ID of the account resource being dereferenced.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    protected async Task UnregisterAccountReferenceAsync(
-        string statusContainerId,
-        Guid accountId,
-        CancellationToken cancellationToken = default)
-    {
-        await _resourceClient.UnregisterReferenceAsync(
-            new UnregisterReferenceRequest
-            {
-                ResourceType = "account",
-                ResourceId = accountId,
-                SourceType = "status-container",
-                SourceId = statusContainerId
-            },
-            cancellationToken);
-    }
-
     // ═══════════════════════════════════════════════════════════════════════════
     // Cleanup Callback Registration
     // ═══════════════════════════════════════════════════════════════════════════
@@ -148,27 +102,6 @@ public partial class StatusService
                     CallbackEndpoint = "/status/cleanup-by-owner",
                     PayloadTemplate = "{\"ownerType\": \"character\", \"ownerId\": \"{{resourceId}}\"}",
                     Description = "Cleanup status-container entities referencing deleted character"
-                },
-                cancellationToken);
-        }
-        catch (ApiException)
-        {
-            allSucceeded = false;
-        }
-
-        // Register cleanup callback for account references
-        try
-        {
-            await resourceClient.DefineCleanupCallbackAsync(
-                new DefineCleanupRequest
-                {
-                    ResourceType = "account",
-                    SourceType = "status-container",
-                    OnDeleteAction = OnDeleteAction.Cascade,
-                    ServiceName = "status",
-                    CallbackEndpoint = "/status/cleanup-by-owner",
-                    PayloadTemplate = "{\"ownerType\": \"account\", \"ownerId\": \"{{resourceId}}\"}",
-                    Description = "Cleanup status-container entities referencing deleted account"
                 },
                 cancellationToken);
         }

@@ -18,20 +18,20 @@ namespace BeyondImmersion.BannouService.CharacterHistory;
 public static class CharacterHistoryPublishedTopics
 {
     /// <summary>Published when a character's participation in a historical event is recorded.</summary>
-    public const string CharacterParticipationRecorded = "character-history.participation.recorded";
+    public const string CharacterParticipationRecorded = "character.history.participation.recorded";
 
     /// <summary>Published when a character's participation record is deleted.</summary>
-    public const string CharacterParticipationDeleted = "character-history.participation.deleted";
+    public const string CharacterParticipationDeleted = "character.history.participation.deleted";
 
     /// <summary>Published when a character's backstory is first created.</summary>
-    public const string CharacterBackstoryCreated = "character-history.backstory.created";
+    public const string CharacterBackstoryCreated = "character.history.backstory.created";
 
     /// <summary>Published when a character's backstory is updated.</summary>
-    public const string CharacterBackstoryUpdated = "character-history.backstory.updated";
+    public const string CharacterBackstoryUpdated = "character.history.backstory.updated";
 
     /// <summary>Published when a character's backstory is deleted.</summary>
-    public const string CharacterBackstoryDeleted = "character-history.backstory.deleted";
+    public const string CharacterBackstoryDeleted = "character.history.backstory.deleted";
 
     /// <summary>Published when all history data for a character is deleted.</summary>
-    public const string CharacterHistoryDeleted = "character-history.deleted";
+    public const string CharacterHistoryDeleted = "character.history.deleted";
 }

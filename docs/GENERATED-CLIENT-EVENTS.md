@@ -52,14 +52,14 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `CurrencyBalanceChangedClientEvent` | `currency.balance.changed` | Sent to the wallet owner when any balance mutation occurs: c... |
 | `CurrencyWalletFrozenClientEvent` | `currency.wallet.frozen` | Sent to the wallet owner when their wallet is frozen (escrow... |
 | `CurrencyWalletUnfrozenClientEvent` | `currency.wallet.unfrozen` | Sent to the wallet owner when their wallet is unfrozen and u... |
-| `GameActionResultClientEvent` | `game-session.action-result` | Sent to relevant players when a game action produces results... |
-| `SessionChatReceivedClientEvent` | `game-session.chat-received` | Sent to recipients when a chat message is posted in the sess... |
-| `PlayerJoinedClientEvent` | `game-session.player-joined` | Sent to all session participants when a new player joins. |
-| `PlayerKickedClientEvent` | `game-session.player-kicked` | Sent to all session participants when a player is kicked. |
-| `PlayerLeftClientEvent` | `game-session.player-left` | Sent to all session participants when a player leaves volunt... |
-| `SessionCancelledClientEvent` | `game-session.session-cancelled` | Sent to players who claimed their reservation when a matchma... |
-| `SessionStateChangedClientEvent` | `game-session.state-changed` | Sent to all session participants when the session state chan... |
-| `GameStateUpdatedClientEvent` | `game-session.state-updated` | Sent when game state changes that all players should see. |
+| `GameActionResultClientEvent` | `game.session.action-result` | Sent to relevant players when a game action produces results... |
+| `SessionChatReceivedClientEvent` | `game.session.chat-received` | Sent to recipients when a chat message is posted in the sess... |
+| `PlayerJoinedClientEvent` | `game.session.player-joined` | Sent to all session participants when a new player joins. |
+| `PlayerKickedClientEvent` | `game.session.player-kicked` | Sent to all session participants when a player is kicked. |
+| `PlayerLeftClientEvent` | `game.session.player-left` | Sent to all session participants when a player leaves volunt... |
+| `SessionCancelledClientEvent` | `game.session.session-cancelled` | Sent to players who claimed their reservation when a matchma... |
+| `SessionStateChangedClientEvent` | `game.session.state-changed` | Sent to all session participants when the session state chan... |
+| `GameStateUpdatedClientEvent` | `game.session.state-updated` | Sent when game state changes that all players should see. |
 | `InventoryContainerFullClientEvent` | `inventory.container.full` | Sent to sessions observing a container owner when one of the... |
 | `InventoryItemChangedClientEvent` | `inventory.item.changed` | Sent to sessions observing a container owner when an item is... |
 | `InventoryItemTransferredClientEvent` | `inventory.item.transferred` | Sent to sessions observing either the source or target conta... |
@@ -853,7 +853,7 @@ Server-to-client push events for the Game Session service. These events notify c
 
 ### `GameActionResultClientEvent`
 
-**Event Name**: `game-session.action-result`
+**Event Name**: `game.session.action-result`
 
 Sent to relevant players when a game action produces results.
 
@@ -871,7 +871,7 @@ Sent to relevant players when a game action produces results.
 
 ### `SessionChatReceivedClientEvent`
 
-**Event Name**: `game-session.chat-received`
+**Event Name**: `game.session.chat-received`
 
 Sent to recipients when a chat message is posted in the session.
 
@@ -889,7 +889,7 @@ Sent to recipients when a chat message is posted in the session.
 
 ### `PlayerJoinedClientEvent`
 
-**Event Name**: `game-session.player-joined`
+**Event Name**: `game.session.player-joined`
 
 Sent to all session participants when a new player joins.
 
@@ -904,7 +904,7 @@ Sent to all session participants when a new player joins.
 
 ### `PlayerKickedClientEvent`
 
-**Event Name**: `game-session.player-kicked`
+**Event Name**: `game.session.player-kicked`
 
 Sent to all session participants when a player is kicked.
 
@@ -919,7 +919,7 @@ Sent to all session participants when a player is kicked.
 
 ### `PlayerLeftClientEvent`
 
-**Event Name**: `game-session.player-left`
+**Event Name**: `game.session.player-left`
 
 Sent to all session participants when a player leaves voluntarily.
 
@@ -935,7 +935,7 @@ Sent to all session participants when a player leaves voluntarily.
 
 ### `SessionCancelledClientEvent`
 
-**Event Name**: `game-session.session-cancelled`
+**Event Name**: `game.session.session-cancelled`
 
 Sent to players who claimed their reservation when a matchmade session
 
@@ -948,7 +948,7 @@ Sent to players who claimed their reservation when a matchmade session
 
 ### `SessionStateChangedClientEvent`
 
-**Event Name**: `game-session.state-changed`
+**Event Name**: `game.session.state-changed`
 
 Sent to all session participants when the session state changes.
 
@@ -964,7 +964,7 @@ Sent to all session participants when the session state changes.
 
 ### `GameStateUpdatedClientEvent`
 
-**Event Name**: `game-session.state-updated`
+**Event Name**: `game.session.state-updated`
 
 Sent when game state changes that all players should see.
 

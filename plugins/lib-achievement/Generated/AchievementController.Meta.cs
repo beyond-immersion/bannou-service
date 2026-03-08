@@ -152,6 +152,12 @@ public partial class AchievementController
                     "minimum": 1,
                     "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
                 },
+                "category": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Game-defined category for UI grouping and filtering (e.g. Combat, Exploration, Social)"
+                },
                 "isActive": {
                     "type": "boolean",
                     "default": true,
@@ -257,6 +263,11 @@ public partial class AchievementController
                 "achievementType": {
                     "$ref": "#/$defs/AchievementType",
                     "description": "Classification of the achievement"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Game-defined category for UI grouping and filtering"
                 },
                 "entityTypes": {
                     "type": "array",
@@ -559,6 +570,11 @@ public partial class AchievementController
                     "$ref": "#/$defs/AchievementType",
                     "description": "Classification of the achievement"
                 },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Game-defined category for UI grouping and filtering"
+                },
                 "entityTypes": {
                     "type": "array",
                     "items": {
@@ -799,6 +815,12 @@ public partial class AchievementController
                     "format": "uuid",
                     "description": "ID of the game service"
                 },
+                "category": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Filter by game-defined category"
+                },
                 "platform": {
                     "$ref": "#/$defs/Platform",
                     "nullable": true,
@@ -914,6 +936,11 @@ public partial class AchievementController
                 "achievementType": {
                     "$ref": "#/$defs/AchievementType",
                     "description": "Classification of the achievement"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Game-defined category for UI grouping and filtering"
                 },
                 "entityTypes": {
                     "type": "array",
@@ -1174,6 +1201,12 @@ public partial class AchievementController
                     "nullable": true,
                     "description": "New description"
                 },
+                "category": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "New category for UI grouping"
+                },
                 "isActive": {
                     "type": "boolean",
                     "nullable": true,
@@ -1308,6 +1341,11 @@ public partial class AchievementController
                 "achievementType": {
                     "$ref": "#/$defs/AchievementType",
                     "description": "Classification of the achievement"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Game-defined category for UI grouping and filtering"
                 },
                 "entityTypes": {
                     "type": "array",
@@ -1615,6 +1653,11 @@ public partial class AchievementController
                 "achievementType": {
                     "$ref": "#/$defs/AchievementType",
                     "description": "Classification of the achievement"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Game-defined category for UI grouping and filtering"
                 },
                 "entityTypes": {
                     "type": "array",

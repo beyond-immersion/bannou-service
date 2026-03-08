@@ -476,6 +476,7 @@ None currently.
     **Backward-compatible**: If no sovereign exists (sovereignty not yet implemented for a deployment), `QueryApplicableNorms` continues with the existing "most specific wins" behavior -- all norms are social/personal. The legal channel only activates when a Sovereign faction exists.
 
     This is the single largest prerequisite for lib-arbitration. See the [Arbitration deep dive's Faction Sovereignty Dependency section](ARBITRATION.md#faction-sovereignty-dependency) for the complete list of changes from lib-arbitration's perspective, and the [Obligation deep dive's multi-channel costs design consideration](OBLIGATION.md#design-considerations-requires-planning) for how costs become authority-tagged.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/601 -->
 
 ## Work Tracking
 

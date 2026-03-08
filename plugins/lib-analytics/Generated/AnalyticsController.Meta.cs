@@ -65,6 +65,12 @@ public partial class AnalyticsController
                     "nullable": true,
                     "description": "Numeric value associated with the event (e.g., score amount, null if event is presence-only)"
                 },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Optional session ID for correlating this event with a game session"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -223,6 +229,12 @@ public partial class AnalyticsController
                     "format": "double",
                     "nullable": true,
                     "description": "Numeric value associated with the event (e.g., score amount, null if event is presence-only)"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Optional session ID for correlating this event with a game session"
                 },
                 "metadata": {
                     "type": "object",
@@ -1238,6 +1250,12 @@ public partial class AnalyticsController
                     "minimum": 1,
                     "maximum": 1000,
                     "description": "Maximum results to return"
+                },
+                "offset": {
+                    "type": "integer",
+                    "default": 0,
+                    "minimum": 0,
+                    "description": "Number of results to skip for pagination"
                 }
             }
         }

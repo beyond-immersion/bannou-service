@@ -132,7 +132,7 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 | `arbitration.case.updated` | `ArbitrationCaseUpdatedEvent` | x-lifecycle: case metadata updated |
 | `arbitration.case.deleted` | `ArbitrationCaseDeletedEvent` | x-lifecycle: case record deleted (cleanup only) |
 
-**Domain-specific events** (manually defined, flat structure — follow Quest pattern, NOT Divine's `allOf` pattern):
+**Domain-specific events** (manually defined, `allOf` with `BaseServiceEvent` per FOUNDATION TENETS):
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
@@ -895,6 +895,7 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 ### Design Considerations (Requires Planning)
 
 1. **Faction sovereignty implementation**: The `authorityLevel` field, governance data model, delegation endpoint, and enhanced `QueryApplicableNorms` are all prerequisites that must be designed and implemented in lib-faction before lib-arbitration can be built. This is the single largest prerequisite.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/601 -->
 
 2. **Contract template authoring**: Procedural templates (dissolution-standard, criminal-trial-standard, etc.) must be authored and registered in lib-contract at deployment time. Template design is a game design task, not a service engineering task -- but the template structure must support the milestone patterns described in this document.
 
@@ -933,7 +934,7 @@ When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitratio
 - `x-lifecycle` for `ArbitrationCase` entity (generates created/updated/deleted lifecycle events)
 - `x-event-subscriptions` for all 6 consumed events (contract milestones, faction territory)
 - `x-event-publications` for all domain-specific events
-- **Flat event structure** (inline `eventId`/`timestamp`) — follow Quest's pattern, NOT Divine's `allOf` with `BaseServiceEvent`
+- All domain-specific events use `allOf` with `BaseServiceEvent` (per FOUNDATION TENETS T5 — both Quest and Divine follow this pattern)
 - All event topic strings use kebab-case (no underscores)
 
 ### Configuration Schema (`arbitration-configuration.yaml`)
@@ -952,19 +953,20 @@ When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitratio
 
 ## Work Tracking
 
-Plugin is in pre-implementation phase. Prerequisites must be completed before schema creation can begin. Deep dive L4-audited (2026-03-05): all spec violations fixed in-document.
+Plugin is in pre-implementation phase. Prerequisites must be completed before schema creation can begin. Deep dive L4-audited (2026-03-05): all spec violations fixed in-document. Documentation audit (2026-03-08): fixed incorrect event schema guidance (was advising against `allOf` with `BaseServiceEvent`, contradicting T5 — both Quest and Divine use the mandated `allOf` pattern).
 
-### Prerequisites (blocking — no GH issues exist yet)
+### Prerequisites (blocking)
 
 | Prerequisite | Blocker For | Reference |
 |-------------|-------------|-----------|
-| **Faction sovereignty** (`authorityLevel` field, governance data model, delegation, `QueryGovernanceData`) | All of Arbitration (no jurisdiction without sovereignty) | [Faction deep dive DC #6](FACTION.md#design-considerations-requires-planning) |
+| **Faction sovereignty** (`authorityLevel` field, governance data model, delegation, `QueryGovernanceData`) | All of Arbitration (no jurisdiction without sovereignty) | [#601](https://github.com/beyond-immersion/bannou-service/issues/601), [Faction deep dive DC #6](FACTION.md#design-considerations-requires-planning) |
 | **Obligation multi-channel costs** (legal/social/personal authority tagging) | Phase 1, ruling consequence distinction | [Obligation deep dive DCs](OBLIGATION.md#design-considerations-requires-planning) |
 
 ### Related Open Issues
 
 | Issue | Relevance |
 |-------|-----------|
+| [#601](https://github.com/beyond-immersion/bannou-service/issues/601) | **P0 BLOCKER** — Faction sovereignty prerequisite (`authorityLevel`, governance data, delegation, `QueryGovernanceData`) |
 | [#435](https://github.com/beyond-immersion/bannou-service/issues/435) | Sovereignty transfer consequences — affects active case continuity during jurisdiction changes |
 | [#436](https://github.com/beyond-immersion/bannou-service/issues/436) | Household split mechanic — blocks dissolution case type (Phase 5), cross-references DC #7 |
 | [#410](https://github.com/beyond-immersion/bannou-service/issues/410) | Second Thoughts / Obligation + Faction — parent design issue for both prerequisites |
@@ -974,6 +976,6 @@ Plugin is in pre-implementation phase. Prerequisites must be completed before sc
 
 ### Issues To Create
 
-- Faction sovereignty prerequisite tracking issue (P0 blocker)
+- ~~Faction sovereignty prerequisite tracking issue (P0 blocker)~~: Created as [#601](https://github.com/beyond-immersion/bannou-service/issues/601) (2026-03-08)
 - Obligation multi-channel costs prerequisite tracking issue (P1 blocker)
 - Arbitration master implementation tracking issue (Phases 2-6)

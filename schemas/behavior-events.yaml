@@ -29,13 +29,13 @@ info:
       event: BehaviorDeletedEvent
       description: Published when a behavior is deleted/invalidated
     # Bundle lifecycle events (auto-generated from x-lifecycle, currently not published - stub)
-    - topic: behavior-bundle.created
+    - topic: behavior.bundle.created
       event: BehaviorBundleCreatedEvent
       description: Published when a new behavior bundle is created
-    - topic: behavior-bundle.updated
+    - topic: behavior.bundle.updated
       event: BehaviorBundleUpdatedEvent
       description: Published when a behavior bundle is updated
-    - topic: behavior-bundle.deleted
+    - topic: behavior.bundle.deleted
       event: BehaviorBundleDeletedEvent
       description: Published when a behavior bundle is deleted
     # Cinematic streaming events

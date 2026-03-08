@@ -327,4 +327,22 @@ public sealed class QuestProxy
         return _client.InvokeAsync<GetCompressDataRequest, QuestArchive>(
             "/quest/get-compress-data", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Delete all quest data for a character
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing DeleteByCharacterResponse on success.</returns>
+    public Task<ApiResponse<DeleteByCharacterResponse>> DeleteByCharacterAsync(
+        DeleteByCharacterRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeleteByCharacterRequest, DeleteByCharacterResponse>(
+            "/quest/delete-by-character", request, channel, timeout, cancellationToken);
+    }
 }

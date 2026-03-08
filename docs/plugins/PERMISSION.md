@@ -131,9 +131,9 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-### Analytics Observability Events (GH#461)
+### Service Registration Observability Event (GH#461)
 
-Permission currently publishes no topic-based events via `IMessageBus` — capability updates go exclusively to session-specific channels via `IClientEventPublisher`. GH#461 proposes adding two observability-only events (`permission.recompiled`, `permission.service_registered`) for Analytics aggregation. These would be fire-and-forget with no functional dependency. High-volume consideration: a single service registration recompiles all active sessions, so at 10K+ concurrent sessions, `permission.recompiled` could produce 10K+ events per registration. Sampling or batched aggregate events may be needed. Low priority — no functional gap exists.
+Permission already publishes `permission.capability-update` via `IMessageBus` on every session recompilation (containing sessionId, version, capabilities, reason) — this serves as the recompilation observability event. GH#461 originally proposed two events, but `permission.recompiled` is redundant with the existing `permission.capability-update`. The remaining proposal is a `permission.service_registered` event for Analytics aggregation of service startup patterns and registration frequency. This would be fire-and-forget with no functional dependency. Low priority — no functional gap exists.
 
 ---
 

@@ -100,7 +100,7 @@ _stateStore = stateStoreFactory.GetStore<AccountModel>("account-statestore");
 | `ISearchableStateStore<T>` | Redis+Search only | Full-text search with FT.* commands |
 | `IRedisOperations` | Redis only | Lua scripts, atomic counters, hashes, TTL |
 
-**Factory methods**: `GetStore<T>()` (all), `GetCacheableStore<T>()` (Redis/InMemory), `GetQueryableStore<T>()` (MySQL), `GetJsonQueryableStore<T>()` (MySQL), `GetSearchableStore<T>()` (Redis+Search), `GetRedisOperations()` (Redis, returns null otherwise).
+**Factory methods**: `GetStore<T>()` (all), `GetCacheableStore<T>()` (Redis/InMemory), `GetQueryableStore<T>()` (MySQL), `GetJsonQueryableStore<T>()` (MySQL), `GetSearchableStore<T>()` (Redis+Search), `GetRedisOperations()` (Redis, returns null otherwise). See [Helpers & Common Patterns § State Store Helpers](../HELPERS-AND-COMMON-PATTERNS.md#1-state-store-helpers) for `UpdateWithRetryAsync`, distributed locking, and factory method reference.
 
 **IRedisOperations use cases**: Lua scripts for atomic multi-key operations, `INCR`/`DECR` counters, `HGET`/`HSET` hashes, TTL manipulation, cross-store atomic operations. Keys are NOT prefixed (raw Redis keys).
 
@@ -305,6 +305,8 @@ For atomically consistent state across instances, include complete state + monot
 
 Each `{service}-events.yaml` MUST contain ONLY canonical definitions for events that service PUBLISHES. No `$ref` references to other service event files - NSwag follows `$ref` and generates ALL types it encounters, causing duplicate type definitions.
 
+> **Helpers**: See [Helpers & Common Patterns § Event & Messaging](../HELPERS-AND-COMMON-PATTERNS.md#2-event--messaging-helpers) for generated publishers, `IEventConsumer`, error event publishing, and topic constants.
+
 ---
 
 ## Tenet 6: Service Implementation Pattern (STANDARDIZED)
@@ -479,6 +481,8 @@ protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 | `ExecuteAsync` itself MUST NOT have a `StartActivity` telemetry span | A span covering process lifetime (hours/days) produces no useful telemetry; instrument per-cycle instead |
 | No scoped dependencies in singleton constructor | Use `IServiceProvider` for scope creation; resolve scoped services per cycle |
 
+> **Helpers**: See [Helpers & Common Patterns § Background Workers](../HELPERS-AND-COMMON-PATTERNS.md#3-background-worker-helpers) for `WorkerErrorPublisher` and the canonical worker skeleton summary.
+
 **Constructor dependencies** (standardized across all workers):
 
 ```csharp
@@ -538,7 +542,7 @@ var location = await _locationStore.GetAsync($"{LOCATION_KEY_PREFIX}{body.Locati
 
 **Why `internal static`**: Provider factories (which live in the same assembly) often need to construct keys for cache loading. For example, Transit's `TransitVariableProviderFactory` calls `TransitService.BuildJourneyKey()`. Using `private` forces the factory to duplicate the key format — violating DRY and creating a drift risk.
 
-**Validation**: `StateStoreKeyValidator.ValidateKeyBuilders<TService>()` in `test-utilities/` verifies the structural pattern via reflection (prefix constants exist, builder methods exist, visibility is correct).
+**Validation**: `StateStoreKeyValidator.ValidateKeyBuilders<TService>()` in `test-utilities/` verifies the structural pattern via reflection (prefix constants exist, builder methods exist, visibility is correct). See [Helpers & Common Patterns § Test Validators](../HELPERS-AND-COMMON-PATTERNS.md#13-test-validators) for all available structural validators.
 
 ```csharp
 // One-line test per service (same pattern as ServiceConstructorValidator)
@@ -730,7 +734,7 @@ When a lower-layer service uses DI Provider interfaces (`IVariableProviderFactor
 
 ### DI Interface Pattern Reference
 
-Eight established provider/listener patterns exist (interfaces in `bannou-service/Providers/`):
+Nine established provider/listener patterns exist (interfaces in `bannou-service/Providers/`). See [Helpers & Common Patterns § DI Provider & Listener Interfaces](../HELPERS-AND-COMMON-PATTERNS.md#4-di-provider--listener-interfaces) for usage patterns and the complete interface catalog.
 
 | Interface | Direction | Purpose |
 |-----------|-----------|---------|
@@ -738,6 +742,7 @@ Eight established provider/listener patterns exist (interfaces in `bannou-servic
 | `IPrerequisiteProviderFactory` | L4 → L2 (data pull) | Quest pulls prerequisite checks from L4 providers |
 | `IBehaviorDocumentProvider` | L4 → L2 (data pull) | Actor pulls behavior docs from L4 providers |
 | `ISeededResourceProvider` | L2/L3/L4 → L1 (data pull) | Resource discovers embedded/static resources (ABML behaviors, scenario templates) from higher-layer providers |
+| `ITransitCostModifierProvider` | L4 → L2 (data pull) | Transit pulls route cost modifiers from L4 providers |
 | `ISeedEvolutionListener` | L2 → L4 (notification push) | Seed pushes evolution notifications to L4 listeners |
 | `ICollectionUnlockListener` | L2 → L4 (notification push) | Collection pushes unlock notifications to L4 listeners |
 | `ISessionActivityListener` | L1 → L1 (lifecycle push) | Connect pushes session lifecycle to Permission (high-frequency heartbeats) |

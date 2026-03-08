@@ -20441,6 +20441,11 @@
             "$ref": "#/components/schemas/AchievementType",
             "description": "Classification of the achievement"
           },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Game-defined category for UI grouping and filtering"
+          },
           "entityTypes": {
             "type": "array",
             "items": {
@@ -28620,6 +28625,12 @@
             "nullable": true,
             "minimum": 1,
             "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "Game-defined category for UI grouping and filtering (e.g. Combat, Exploration, Social)"
           },
           "isActive": {
             "type": "boolean",
@@ -40395,6 +40406,12 @@
             "format": "uuid",
             "description": "ID of the game service"
           },
+          "category": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "Filter by game-defined category"
+          },
           "platform": {
             "$ref": "#/components/schemas/Platform",
             "nullable": true,
@@ -41459,6 +41476,18 @@
             "type": "string",
             "format": "uuid",
             "description": "Container to list items from"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "Number of items to skip for pagination"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 100,
+            "description": "Maximum number of items to return per page"
           }
         }
       },
@@ -57409,6 +57438,12 @@
             "maxLength": 500,
             "nullable": true,
             "description": "New description"
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "New category for UI grouping"
           },
           "isActive": {
             "type": "boolean",

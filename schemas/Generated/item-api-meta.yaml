@@ -1829,8 +1829,12 @@ paths:
         description\": \"Request to list items in a container\",\n            \"additionalProperties\": false,\n         \
         \   \"required\": [\n                \"containerId\"\n            ],\n            \"properties\": {\n            \
         \    \"containerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
-        \                  \"description\": \"Container to list items from\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        \                  \"description\": \"Container to list items from\"\n                },\n                \"offset\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"default\"\
+        : 0,\n                    \"description\": \"Number of items to skip for pagination\"\n                },\n      \
+        \          \"limit\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n       \
+        \             \"default\": 100,\n                    \"description\": \"Maximum number of items to return per page\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListItemsResponse\"\
         ,\n    \"$defs\": {\n        \"ListItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"List of item instances\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
@@ -3170,6 +3174,16 @@ components:
           type: string
           format: uuid
           description: Container to list items from
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Number of items to skip for pagination
+        limit:
+          type: integer
+          minimum: 1
+          default: 100
+          description: Maximum number of items to return per page
     ListItemsByTemplateRequest:
       type: object
       description: Request to list instances of a template

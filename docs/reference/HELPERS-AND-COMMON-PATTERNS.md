@@ -102,14 +102,16 @@ internal static string BuildEntityKey(Guid id)
 
 ### State Store Interface Hierarchy
 
-| Interface | Backends | Factory Method | Purpose |
-|-----------|----------|----------------|---------|
-| `IStateStore<T>` | All | `GetStore<T>()` | Core CRUD, bulk ops, ETags |
-| `ICacheableStateStore<T>` | Redis, InMemory | `GetCacheableStore<T>()` | Sets, Sorted Sets |
-| `IQueryableStateStore<T>` | MySQL | `GetQueryableStore<T>()` | LINQ queries with pagination |
-| `IJsonQueryableStateStore<T>` | MySQL | `GetJsonQueryableStore<T>()` | JSON path queries |
-| `ISearchableStateStore<T>` | Redis+Search | `GetSearchableStore<T>()` | Full-text search |
-| `IRedisOperations` | Redis | `GetRedisOperations()` | Lua scripts, counters, hashes |
+See T4 in [FOUNDATION.md](tenets/FOUNDATION.md) for the canonical interface hierarchy table and backend rules. Factory methods for quick reference:
+
+| Factory Method | Interface | Backends |
+|----------------|-----------|----------|
+| `GetStore<T>()` | `IStateStore<T>` | All |
+| `GetCacheableStore<T>()` | `ICacheableStateStore<T>` | Redis, InMemory |
+| `GetQueryableStore<T>()` | `IQueryableStateStore<T>` | MySQL |
+| `GetJsonQueryableStore<T>()` | `IJsonQueryableStateStore<T>` | MySQL |
+| `GetSearchableStore<T>()` | `ISearchableStateStore<T>` | Redis+Search |
+| `GetRedisOperations()` | `IRedisOperations` | Redis |
 
 All stores use `StateStoreDefinitions` constants (schema-first).
 
@@ -685,6 +687,24 @@ Helpers for creating test configuration instances.
 ---
 
 ## 14. Miscellaneous Helpers
+
+### AppConstants
+
+**File**: `bannou-service/AppConstants.cs`
+
+Shared constants used across the platform. Contains default infrastructure names, ports, environment variable name constants, and protocol constants.
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| `DEFAULT_APP_NAME` | `"bannou"` | Omnipotent routing fallback (use `Program.Configuration.EffectiveAppId` for routing decisions) |
+| `ORCHESTRATOR_SERVICE_NAME` | `"orchestrator"` | Logical name for orchestrator control plane |
+| `PUBSUB_NAME` | `"bannou-pubsub"` | Default pub/sub component name |
+| `DEFAULT_REDIS_PORT` | `6379` | Redis connection default |
+| `DEFAULT_RABBITMQ_PORT` | `5672` | RabbitMQ AMQP default |
+| `DEFAULT_BANNOU_HTTP_PORT` | `3500` | Service mesh HTTP default |
+| `ENV_BANNOU_APP_ID` | `"BANNOU_APP_ID"` | Env var name for app ID (used by test runners per T21 exception 4) |
+| `ENV_BANNOU_HTTP_ENDPOINT` | `"BANNOU_HTTP_ENDPOINT"` | Env var name for HTTP endpoint (test runners) |
+| `BROADCAST_GUID` | `FFFFFFFF-...` | Special GUID for broadcast messages in Relayed/Internal connection modes |
 
 ### ExtensionMethods
 

@@ -294,11 +294,12 @@ POST /currency/wallet/get-or-create | Roles: []
 READ wallets:wallet-owner:{ownerKey}
 IF found
   // Load wallet + balances (same as GetWallet)
-  RETURN (200, GetOrCreateWalletResponse { created: false })
+  RETURN (200, GetOrCreateWalletResponse { wallet, balances })
 // Delegate to CreateWalletAsync
 IF create returns 409                              // race condition
   // Re-read wallet-owner index and return existing
-RETURN (200, GetOrCreateWalletResponse { created: true })
+RETURN (201, GetOrCreateWalletResponse { wallet, balances })
+// T8: 201 Created vs 200 OK distinguishes which path was taken
 ```
 
 ### FreezeWallet

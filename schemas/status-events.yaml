@@ -12,6 +12,7 @@ info:
     - Status events: granted, removed, expired, stacked, grant-failed, cleansed
 
     **Consumed Events**:
+    - account.deleted: Cleanup account-owned statuses (Account exempt from lib-resource per FOUNDATION TENETS)
     - seed.capability.updated: Invalidate seed effects cache for affected entity
     - item.expired: Clean up expired status instance records (blocked on #407)
 
@@ -24,6 +25,9 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      handler: HandleAccountDeleted
     - topic: seed.capability.updated
       event: SeedCapabilityUpdatedEvent
       handler: HandleSeedCapabilityUpdated

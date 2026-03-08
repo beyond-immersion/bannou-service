@@ -126,7 +126,7 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 
 5. **Orphaned progress data**: Since definitions cannot be deleted (Category B), progress records may reference deprecated definitions. Orphaned entries are filtered at read time by verifying each definition still exists.
 
-6. **Client milestone events at configurable thresholds**: Progress milestone client events fire at configurable percentage thresholds (default: 25%, 50%, 75%) via `ProgressMilestonePercents` configuration. Values are parsed from string array at runtime.
+6. **Client milestone events at configurable thresholds**: Progress milestone client events fire at configurable percentage thresholds (default: 25%, 50%, 75%) via `ProgressMilestonePercents` configuration. T21 violation: values are parsed from string array at runtime — should be defined as a typed array in the configuration schema.
 
 ### Design Considerations (Requires Planning)
 

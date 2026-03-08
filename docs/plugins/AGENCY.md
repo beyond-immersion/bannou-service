@@ -132,7 +132,7 @@ All formula coefficients are configurable: `ComplianceResentmentWeight` (default
 ### How It Works
 
 ```
-1. Game designers register domains, modules, and influence types via API
+1. Game designers create domains, modules, and influence types via API
    (or seed from configuration on startup)
 
 2. Player connects -> Gardener determines their active seed
@@ -304,8 +304,8 @@ perception_handler:
 ### Phase 1: Core Registry (6 endpoints)
 - Create schemas for domains, modules, influences
 - Generate code
-- Implement domain CRUD (register, get, list, delete)
-- Implement module register and list
+- Implement domain CRUD (create, get, list, delete)
+- Implement module create and list
 - Add state stores (agency-domains, agency-modules, agency-influences)
 
 ### Phase 2: Manifest Engine (4 endpoints)
@@ -316,7 +316,7 @@ perception_handler:
 - Implement ManifestRecomputeWorker with debouncing
 
 ### Phase 3: Influence System (7 endpoints)
-- Implement influence register, update, get, list, delete
+- Implement influence create, update, get, list, delete
 - Implement influence evaluate and execute
 - Add rate limiting via Redis counters
 - Publish influence execution/rejection/resistance events
@@ -370,7 +370,7 @@ perception_handler:
 
 9. **Influence frequency counters must use Redis** (sorted sets or atomic counters), not in-memory state, for multi-instance safety (T9).
 
-10. **Custom events must use flat structure** with inline `eventId`/`timestamp`, not `allOf` with `BaseServiceEvent` per SCHEMA-RULES.md.
+10. ~~**Custom events must use flat structure**~~: **FIXED** (2026-03-08) - Original finding was incorrect. SCHEMA-RULES.md explicitly requires custom events to use `allOf` composition with `BaseServiceEvent` (line 962: "Custom service events MUST use `allOf` composition with `BaseServiceEvent`"). The `allOf` pattern produces C# inheritance, `IBannouEvent` implementation, and `EventName` for message tap forwarding. `eventId` and `timestamp` are inherited from `BaseServiceEvent` and must NOT be redefined as properties (only listed in `required`).
 
 11. **FidelityCurve needs validation keywords**: `minItems: 1`, reasonable `maxItems`, `minimum: 0.0` on items.
 
@@ -388,7 +388,7 @@ perception_handler:
 
 18. **Manifest nested types** (`ManifestDomain`, `ManifestModule`, `ManifestInfluence`) must be defined as named schemas for `$ref` reuse.
 
-19. **Inconsistent create/delete naming**: uses "register" for create but "delete" for remove. Use `register/unregister` or `create/delete` consistently per T16.
+19. ~~**Inconsistent create/delete naming**~~: **FIXED** (2026-03-08) - Standardized to `create/delete` throughout deep dive and implementation map. Agency's entities are Category A definitions with full CRUD lifecycle (not type registrations), matching the established pattern (item templates, quest definitions, currency definitions).
 
 20. **Telemetry spans** required on all async helpers per T30 (add `ITelemetryProvider` to DI services).
 

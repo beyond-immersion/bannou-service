@@ -576,6 +576,7 @@ The DI inversion patterns above come in two forms: **Providers** (pull) and **Li
 | `IPrerequisiteProviderFactory` | L4→L2 pull | Provider | Always safe | Consumer initiates; reads distributed state |
 | `IBehaviorDocumentProvider` | L4→L2 pull | Provider | Always safe | Consumer initiates; reads distributed state |
 | `ISeededResourceProvider` | L2/L3/L4→L1 pull | Provider | Always safe | Consumer initiates; reads distributed state |
+| `ITransitCostModifierProvider` | L4→L2 pull | Provider | Always safe | Consumer initiates; reads distributed state |
 | `ISeedEvolutionListener` | L2→L4 push | Listener | Safe\* | \*Only when reaction writes to distributed state |
 | `ICollectionUnlockListener` | L2→L4 push | Listener | Safe\* | \*Only when reaction writes to distributed state |
 | `ISessionActivityListener` | L1→L1 push | Listener | Safe\* | \*Permission writes to Redis (distributed state); heartbeat frequency prohibits event bus |

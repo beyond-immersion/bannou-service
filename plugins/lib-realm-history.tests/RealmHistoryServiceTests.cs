@@ -190,7 +190,7 @@ public class RealmHistoryServiceTests
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((t, e, _) =>
             {
-                if (t == "realm-history.participation.recorded")
+                if (t == "realm.history.participation.recorded")
                 {
                     capturedTopic = t;
                     capturedEvent = e;
@@ -223,7 +223,7 @@ public class RealmHistoryServiceTests
         Assert.Equal(0.8f, savedData.Impact);
 
         // Assert on captured event
-        Assert.Equal("realm-history.participation.recorded", capturedTopic);
+        Assert.Equal("realm.history.participation.recorded", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<RealmParticipationRecordedEvent>(capturedEvent);
         Assert.Equal(realmId, typedEvent.RealmId);
@@ -550,7 +550,7 @@ public class RealmHistoryServiceTests
 
         // Verify lore.created event was published with correct data
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "realm-history.lore.created",
+            "realm.history.lore.created",
             It.Is<RealmLoreCreatedEvent>(e => e.RealmId == realmId && e.ElementCount == 1),
             It.IsAny<CancellationToken>()), Times.Once);
 
@@ -611,7 +611,7 @@ public class RealmHistoryServiceTests
 
         // Verify lore.updated event was published with correct data
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "realm-history.lore.updated",
+            "realm.history.lore.updated",
             It.Is<RealmLoreUpdatedEvent>(e => e.RealmId == realmId && e.ElementCount == 1),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -901,7 +901,7 @@ public class RealmHistoryServiceTests
         _mockLoreStore.Verify(s => s.DeleteAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()), Times.Once);
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "realm-history.lore.deleted",
+            "realm.history.lore.deleted",
             It.Is<RealmLoreDeletedEvent>(e => e.RealmId == realmId),
             It.IsAny<CancellationToken>()), Times.Once);
 
@@ -1014,7 +1014,7 @@ public class RealmHistoryServiceTests
 
         // Verify deletion event was published with correct data
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "realm-history.deleted",
+            "realm.history.deleted",
             It.Is<RealmHistoryDeletedEvent>(e => e.RealmId == realmId && e.ParticipationsDeleted == 1 && e.LoreDeleted),
             It.IsAny<CancellationToken>()), Times.Once);
 

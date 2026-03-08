@@ -319,13 +319,13 @@ ws.onmessage = (event) => {
 
 function handleServerEvent(header, payload) {
   switch (payload.event_type) {
-    case 'capabilities_updated':
+    case 'connect.capability-manifest':
       updateCapabilities(payload.capabilities);
       break;
-    case 'session_invalidated':
+    case 'connect.disconnect-notification':
       handleDisconnect(payload.reconnection_token);
       break;
-    case 'world_state_update':
+    case 'game.session.state-updated':
       updateWorldState(payload.state);
       break;
   }
@@ -532,9 +532,9 @@ var authEndpoints = ClientEndpointMetadata.GetEndpointsByService("Auth");
 
 // Event type ↔ name mapping
 string? name = ClientEventRegistry.GetEventName<ChatMessageReceivedEvent>();
-// Returns: "game_session.chat_received"
+// Returns: "game.session.chat-received"
 
-Type? type = ClientEventRegistry.GetEventType("voice.peer_joined");
+Type? type = ClientEventRegistry.GetEventType("voice.peer-joined");
 // Returns: typeof(VoicePeerJoinedEvent)
 
 // Check if event is registered
@@ -596,7 +596,7 @@ const account = await client.call('account/get', {
 const stats = await client.callShortcut('get_my_character_stats');
 
 // Handle events
-client.on('world_state_update', (state) => {
+client.on('game.session.state-updated', (state) => {
   updateGameWorld(state);
 });
 

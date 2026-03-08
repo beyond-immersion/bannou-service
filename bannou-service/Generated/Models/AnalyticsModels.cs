@@ -103,6 +103,12 @@ public partial class IngestEventRequest
     public double? Value { get; set; } = default!;
 
     /// <summary>
+    /// Optional session ID for correlating this event with a game session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    public System.Guid? SessionId { get; set; } = default!;
+
+    /// <summary>
     /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
@@ -729,6 +735,13 @@ public partial class QueryControllerHistoryRequest
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
     [System.ComponentModel.DataAnnotations.Range(1, 1000)]
     public int Limit { get; set; } = 100;
+
+    /// <summary>
+    /// Number of results to skip for pagination
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int Offset { get; set; } = 0;
 
 }
 

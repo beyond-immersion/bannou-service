@@ -5658,4 +5658,120 @@ public partial class QuestController
             _GetCompressData_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for DeleteByCharacter
+
+    private static readonly string _DeleteByCharacter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteByCharacterRequest",
+    "$defs": {
+        "DeleteByCharacterRequest": {
+            "type": "object",
+            "description": "Request to delete all quest data for a character during character deletion cleanup",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character whose quest data should be deleted"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteByCharacter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteByCharacterResponse",
+    "$defs": {
+        "DeleteByCharacterResponse": {
+            "type": "object",
+            "description": "Response from delete-by-character operation",
+            "additionalProperties": false,
+            "required": [
+                "instancesAbandoned",
+                "progressRecordsDeleted",
+                "cooldownsDeleted"
+            ],
+            "properties": {
+                "instancesAbandoned": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of active quest instances abandoned"
+                },
+                "progressRecordsDeleted": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of objective progress records deleted"
+                },
+                "cooldownsDeleted": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of cooldown entries deleted"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteByCharacter_Info = """
+{
+    "summary": "Delete all quest data for a character",
+    "description": "Deletes all quest instances, objective progress, character index, and cooldown\nentries for a specific character. Active quests are abandoned and their underlying\ncontracts terminated. Called by lib-resource during character deletion cleanup.\n",
+    "tags": [
+        "Cleanup"
+    ],
+    "deprecated": false,
+    "operationId": "deleteByCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/delete-by-character/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteByCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Quest",
+            "POST",
+            "/quest/delete-by-character",
+            _DeleteByCharacter_Info));
+
+    /// <summary>Returns request schema for DeleteByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/delete-by-character/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteByCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Quest",
+            "POST",
+            "/quest/delete-by-character",
+            "request-schema",
+            _DeleteByCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/delete-by-character/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteByCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Quest",
+            "POST",
+            "/quest/delete-by-character",
+            "response-schema",
+            _DeleteByCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/delete-by-character/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteByCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Quest",
+            "POST",
+            "/quest/delete-by-character",
+            _DeleteByCharacter_Info,
+            _DeleteByCharacter_RequestSchema,
+            _DeleteByCharacter_ResponseSchema));
+
+    #endregion
 }

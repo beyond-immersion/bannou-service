@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +10,10 @@ namespace BeyondImmersion.BannouService.Status;
 
 /// <summary>
 /// Partial class for StatusService event handling.
-/// Contains event consumer registration and handler implementations.
+/// Contains event consumer registration and handler implementations for
+/// seed cache invalidation and account deletion cleanup per FOUNDATION TENETS
+/// (Account Deletion Cleanup Obligation).
+/// Note: Character cleanup uses lib-resource (x-references), not event subscription.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -27,9 +31,49 @@ public partial class StatusService
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
+        // Account deletion cleanup per FOUNDATION TENETS (Account Deletion Cleanup Obligation).
+        // Account-owned status containers must be deleted when the owning account is deleted.
+        eventConsumer.RegisterHandler<IStatusService, AccountDeletedEvent>(
+            "account.deleted",
+            async (svc, evt) => await ((StatusService)svc).HandleAccountDeletedAsync(evt));
+
         eventConsumer.RegisterHandler<IStatusService, SeedCapabilityUpdatedEvent>(
             "seed.capability.updated",
             async (svc, evt) => await ((StatusService)svc).HandleSeedCapabilityUpdatedAsync(evt));
+    }
+
+    /// <summary>
+    /// Handles account.deleted events by cleaning up all account-owned status containers.
+    /// Delegates to the existing CleanupByOwnerAsync endpoint logic.
+    /// Per FOUNDATION TENETS: Account deletion is always CASCADE — data has no owner and must be removed.
+    /// </summary>
+    internal async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.HandleAccountDeleted");
+        _logger.LogInformation("Handling account.deleted for account {AccountId}", evt.AccountId);
+
+        try
+        {
+            await CleanupByOwnerAsync(
+                new CleanupByOwnerRequest
+                {
+                    OwnerType = EntityType.Account,
+                    OwnerId = evt.AccountId
+                }, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to clean up status containers for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "status",
+                "CleanupStatusForAccount",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: null,
+                endpoint: "account.deleted",
+                details: $"accountId={evt.AccountId}",
+                stack: ex.StackTrace);
+        }
     }
 
     /// <summary>

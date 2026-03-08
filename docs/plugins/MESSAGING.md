@@ -40,7 +40,7 @@ The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrast
 | Dependent | Relationship |
 |-----------|-------------|
 | Every service | Uses `IMessageBus` for event publishing and `IMessageSubscriber` for static subscriptions |
-| lib-connect | Uses `IMessageBus` for client event routing; uses `IMessageTap` for session-scoped event forwarding |
+| lib-connect | Uses `IClientEventPublisher` for client event routing; uses `IMessageTap` for session-scoped event forwarding |
 | lib-actor | Uses `IMessageBus` for actor lifecycle, heartbeats, pool management |
 | lib-documentation | Uses `IMessageBus` for git sync and search indexing |
 | lib-permission | Uses `IMessageBus` for permission registration broadcasts |

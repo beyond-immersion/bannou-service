@@ -14,7 +14,10 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
 
-  x-event-subscriptions: []
+  x-event-subscriptions:
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      handler: HandleAccountDeleted
 
   x-event-publications:
     # Container lifecycle (auto-generated from x-lifecycle)

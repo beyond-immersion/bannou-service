@@ -383,6 +383,8 @@ info:
 - Helper methods: `Register{Target}ReferenceAsync()`, `Unregister{Target}ReferenceAsync()`
 - Cleanup callback registration via `RegisterResourceCleanupCallbacksAsync()` static method, called from plugin startup (`OnRunningAsync`)
 
+See [Helpers & Common Patterns § Test Validators](HELPERS-AND-COMMON-PATTERNS.md#13-test-validators) for `ResourceCleanupValidator` which verifies services with `[ResourceCleanupRequired]` implement their declared cleanup methods.
+
 ### x-resource-lifecycle (Resource Cleanup Configuration)
 
 Defined in foundational service API schemas (`*-api.yaml`), declares grace period and cleanup policy for resources tracked by lib-resource.
@@ -915,7 +917,7 @@ encounter.memory.faded            # encounter IS the entity, memory is sub-entit
 | Service Events | `{service}-events.yaml` | `IMessageBus.PublishAsync` |
 | Client Events | `{service}-client-events.yaml` | `IClientEventPublisher.PublishToSessionAsync` |
 
-**Never use `IMessageBus` for client events** - it uses the wrong RabbitMQ exchange.
+**Never use `IMessageBus` for client events** - it uses the wrong RabbitMQ exchange. Use `IClientEventPublisher` instead.
 
 ### Client Event `eventName` Naming Rules
 

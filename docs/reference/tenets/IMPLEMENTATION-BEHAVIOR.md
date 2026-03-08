@@ -62,7 +62,7 @@ public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
 }
 ```
 
-Registration is idempotent. Handlers are isolated (one throwing doesn't prevent others). `IEventConsumer` is singleton.
+Registration is idempotent. Handlers are isolated (one throwing doesn't prevent others). `IEventConsumer` is singleton. See [Helpers & Common Patterns § Event & Messaging](../HELPERS-AND-COMMON-PATTERNS.md#2-event--messaging-helpers) for the full `IEventConsumer` API and error event publishing helpers.
 
 ---
 
@@ -285,6 +285,8 @@ await _contractClient.ConsentAsync(consentRequest, ct);  // May fail
 await _contractClient.ConsentAsync(consentRequest, ct);
 ```
 
+> **Helpers**: See [Helpers & Common Patterns § Event & Messaging](../HELPERS-AND-COMMON-PATTERNS.md#2-event--messaging-helpers) for `TryPublishErrorAsync` and `WorkerErrorPublisher` usage patterns.
+
 ---
 
 ## Tenet 8: Return Pattern (MANDATORY)
@@ -451,7 +453,7 @@ _serverSalt = GuidGenerator.GetSharedServerSalt();
 _serverSalt = GuidGenerator.GenerateServerSalt();
 ```
 
-**Detection**: If a service has Singleton lifetime + generates cryptographic values in constructor + participates in distributed deployment → MUST use shared/deterministic values.
+**Detection**: If a service has Singleton lifetime + generates cryptographic values in constructor + participates in distributed deployment → MUST use shared/deterministic values. See [Helpers & Common Patterns § Miscellaneous](../HELPERS-AND-COMMON-PATTERNS.md#14-miscellaneous-helpers) for `GuidGenerator` and `VariableProviderCacheBucket` (which uses `ConcurrentDictionary` correctly).
 
 ---
 
@@ -476,6 +478,8 @@ await _clientEventPublisher.PublishToSessionAsync(sessionId, clientEvent);
 // WRONG: Uses fanout exchange - never reaches client
 await _messageBus.PublishAsync($"CONNECT_SESSION_{sessionId}", clientEvent);
 ```
+
+> **Helpers**: See [Helpers & Common Patterns § Client Event Publishing](../HELPERS-AND-COMMON-PATTERNS.md#7-client-event-publishing) for `IClientEventPublisher`, `IEntitySessionRegistry`, and client event model details.
 
 ---
 
@@ -562,7 +566,7 @@ _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingServiceEvents
 
 ### Dependency
 
-Services that need to create spans must have access to `ITelemetryProvider`. This is already available via DI (constructor injection) in all services since it's an L0 infrastructure dependency. Helper DI services should accept `ITelemetryProvider` in their constructors.
+Services that need to create spans must have access to `ITelemetryProvider`. This is already available via DI (constructor injection) in all services since it's an L0 infrastructure dependency. Helper DI services should accept `ITelemetryProvider` in their constructors. See [Helpers & Common Patterns § Telemetry](../HELPERS-AND-COMMON-PATTERNS.md#10-telemetry) for `ITelemetryProvider` API and `NullTelemetryProvider`.
 
 ---
 

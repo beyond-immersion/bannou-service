@@ -99,6 +99,8 @@ var model = JsonSerializer.Deserialize<MyModel>(jsonString);
 | **Null values** | Ignored when writing |
 | **Numbers** | Strict parsing (no string coercion) |
 
+> **Helpers**: See [Helpers & Common Patterns § Shared Models](../HELPERS-AND-COMMON-PATTERNS.md#11-shared-models--enums) for `BannouJson` location and usage.
+
 ---
 
 ## Tenet 21: Configuration-First Development (MANDATORY)
@@ -111,7 +113,7 @@ var model = JsonSerializer.Deserialize<MyModel>(jsonString);
 2. **Use Injected Configuration**: Access via `{Service}ServiceConfiguration` class
 3. **Fail-Fast Required Config**: Required values without defaults MUST throw at startup
 4. **No Hardcoded Credentials**: Never fall back to hardcoded credentials or connection strings
-5. **Use AppConstants**: Shared defaults use `AppConstants` constants
+5. **Use AppConstants**: Shared defaults use `AppConstants` constants (see [Helpers & Common Patterns § Miscellaneous](../HELPERS-AND-COMMON-PATTERNS.md#14-miscellaneous-helpers))
 6. **No Dead Configuration**: Every defined config property MUST be referenced in the plugin (service, cache, provider, worker, etc.)
 7. **No Hardcoded Tunables**: Any limit, timeout, threshold, or capacity MUST be a configuration property
 8. **Use Defined Infrastructure**: If `schemas/state-stores.yaml` defines a cache store for the service, implement cache read-through using that store
@@ -344,7 +346,7 @@ var quality = "Major";  // Should already be ChordSymbolQuality.Major by this po
 
 **Diagnostic test**: "Is this string/enum from a separately-compiled SDK or parser, and am I at the point where it enters the generated-model world?" If yes, the conversion is an A2 boundary mapping. If the string exists inside service logic after the boundary, it's a V4 violation.
 
-**Required**: Every A2 boundary mapping MUST have a corresponding `EnumMappingValidator` test (see TESTING-PATTERNS.md § Enum Boundary Mapping Tests).
+**Required**: Every A2 boundary mapping MUST have a corresponding `EnumMappingValidator` test (see TESTING-PATTERNS.md § Enum Boundary Mapping Tests). See [Helpers & Common Patterns § Enum Mapping](../HELPERS-AND-COMMON-PATTERNS.md#9-enum-mapping) for `MapByName`, `MapByNameOrDefault`, and `TryMapByName` extension methods.
 
 Tests follow the same rules. `DeploymentMode = "bannou"` in a test is wrong - use `DeploymentMode.Bannou`.
 

@@ -184,8 +184,9 @@ Tenets are organized into categories based on when they're needed:
 | [**Implementation: Behavior**](tenets/IMPLEMENTATION-BEHAVIOR.md) | T3, T7, T8, T9, T17, T30, T31 | While designing service method behavior |
 | [**Implementation: Data**](tenets/IMPLEMENTATION-DATA.md) | T14, T20, T21, T23, T24, T25, T26 | While writing code and modeling data |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
+| [**Helpers & Common Patterns**](HELPERS-AND-COMMON-PATTERNS.md) | *(reference)* | When implementing — shared helpers, test validators, common patterns |
 
-> **Note**: Tenets 1 and 2 reference standalone documents (SCHEMA-RULES.md and SERVICE-HIERARCHY.md) that contain their own detailed rules.
+> **Note**: Tenets 1 and 2 reference standalone documents (SCHEMA-RULES.md and SERVICE-HIERARCHY.md) that contain their own detailed rules. Helpers & Common Patterns is not a rules document — it catalogs available infrastructure to help implement the tenets correctly.
 
 ---
 

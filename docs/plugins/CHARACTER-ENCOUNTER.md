@@ -395,6 +395,8 @@ No stubs or unimplemented features remain.
 
 6. **Lazy decay concurrent modifications silently skipped**: During bulk lazy decay in queries, if a perspective's ETag has changed between read and write (concurrent modification), the decay update is silently skipped with no logging. The perspective will be decayed on the next access instead.
 
+7. **Lazy decay write amplification**: When `MemoryDecayMode` is `lazy` (default), every read of a perspective older than one decay interval triggers a write-back (updating `MemoryStrength` and `LastDecayedAtUnix`). High-read workloads on stale data will generate significant write traffic, and `encounter.memory.faded` events are published on read paths. This is inherent to lazy evaluation. Mitigation: switch `CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE` to `scheduled` to move decay processing to the background `MemoryDecaySchedulerService`, eliminating all read-path writes.
+
 ### Design Considerations (Requires Planning)
 
 1. ~~**No pagination for GetAllPerspectiveIdsAsync**~~: **FIXED** (2026-02-09) - Refactored `DecayMemoriesAsync` to iterate per-character instead of collecting all perspective IDs into a single list. Memory is now bounded to one character's perspectives at a time. Removed the dead `GetAllPerspectiveIdsAsync` method. Pattern matches `MemoryDecaySchedulerService` which already iterated per-character.
@@ -402,8 +404,9 @@ No stubs or unimplemented features remain.
 2. ~~**Pair index combinatorial explosion**~~: **FIXED** (2026-02-09) - Added `MaxParticipantsPerEncounter` config property (default: 20, range 2-100) and server-side validation in `RecordEncounterAsync` rejecting requests exceeding the limit. With 20 participants, max pair indexes per encounter is 190, which is a reasonable upper bound. Also added `maxItems: 100` to schema `participantIds` as a hard ceiling. The O(N^2) behavior is inherent to the pair index design but is now bounded.
 
 3. **No transactionality**: Recording an encounter involves multiple sequential writes (encounter, perspectives, character indexes, pair indexes, location index). If the service crashes mid-operation, indexes can become inconsistent with actual data.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/600 -->
 
-4. **Lazy decay write amplification**: Every read of a perspective older than one decay interval triggers a write-back. High-read workloads on stale data will generate significant write traffic. The `encounter.memory.faded` event is also published on read paths.
+4. ~~**Lazy decay write amplification**~~: **FIXED** (2026-03-08) - Moved to Intentional Quirks (#7). Write amplification is inherent to lazy evaluation mode; scheduled mode already exists as the alternative. No code changes needed — this is a documented operational trade-off with a configurable mitigation.
 
 5. **Global character index unbounded growth**: The `global-char-idx` list grows without bound as new characters encounter each other. Even after `DeleteByCharacter` removes a character, the global index is cleaned up, but during active operation this list could contain tens of thousands of character IDs.
 

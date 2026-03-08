@@ -41,13 +41,6 @@ info:
     cleanup:
       endpoint: /status/cleanup-by-owner
       payloadTemplate: '{"ownerType": "character", "ownerId": "{{resourceId}}"}'
-  - target: account
-    sourceType: status-container
-    field: ownerId
-    onDelete: cascade
-    cleanup:
-      endpoint: /status/cleanup-by-owner
-      payloadTemplate: '{"ownerType": "account", "ownerId": "{{resourceId}}"}'
 x-service-layer: GameFeatures
 servers:
 - url: http://localhost:5012

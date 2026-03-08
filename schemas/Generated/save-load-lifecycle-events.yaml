@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to save-load.save-slot.created when a saveslot is created
+      description: Published to save.load.save-slot.created when a saveslot is created
       required:
       - eventName
       - eventId
@@ -32,8 +32,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save-load.save-slot.created
-          description: 'Event type identifier: save-load.save-slot.created'
+          default: save.load.save-slot.created
+          description: 'Event type identifier: save.load.save-slot.created'
         slotId: &id001
           type: string
           format: uuid
@@ -88,7 +88,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to save-load.save-slot.updated when a saveslot is updated
+      description: Published to save.load.save-slot.updated when a saveslot is updated
       required:
       - eventName
       - eventId
@@ -109,8 +109,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save-load.save-slot.updated
-          description: 'Event type identifier: save-load.save-slot.updated'
+          default: save.load.save-slot.updated
+          description: 'Event type identifier: save.load.save-slot.updated'
         slotId: *id001
         gameId: *id002
         ownerId: *id003
@@ -141,7 +141,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to save-load.save-slot.deleted when a saveslot is deleted
+      description: Published to save.load.save-slot.deleted when a saveslot is deleted
       required:
       - eventName
       - eventId
@@ -161,8 +161,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save-load.save-slot.deleted
-          description: 'Event type identifier: save-load.save-slot.deleted'
+          default: save.load.save-slot.deleted
+          description: 'Event type identifier: save.load.save-slot.deleted'
         slotId: *id001
         gameId: *id002
         ownerId: *id003

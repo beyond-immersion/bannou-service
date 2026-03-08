@@ -21,41 +21,41 @@ public partial class AnalyticsService
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
         eventConsumer.RegisterHandler<IAnalyticsService, GameSessionActionPerformedEvent>(
-            "game-session.action.performed",
+            "game.session.action.performed",
             async (svc, evt) => await ((AnalyticsService)svc).HandleGameActionPerformedAsync(evt));
 
         eventConsumer.RegisterHandler<IAnalyticsService, GameSessionCreatedEvent>(
-            "game-session.created",
+            "game.session.created",
             async (svc, evt) => await ((AnalyticsService)svc).HandleGameSessionCreatedAsync(evt));
 
         eventConsumer.RegisterHandler<IAnalyticsService, GameSessionDeletedEvent>(
-            "game-session.deleted",
+            "game.session.deleted",
             async (svc, evt) => await ((AnalyticsService)svc).HandleGameSessionDeletedAsync(evt));
 
         // Character history events
         eventConsumer.RegisterHandler<IAnalyticsService, CharacterParticipationRecordedEvent>(
-            "character-history.participation.recorded",
+            "character.history.participation.recorded",
             async (svc, evt) => await ((AnalyticsService)svc).HandleCharacterParticipationRecordedAsync(evt));
 
         eventConsumer.RegisterHandler<IAnalyticsService, CharacterBackstoryCreatedEvent>(
-            "character-history.backstory.created",
+            "character.history.backstory.created",
             async (svc, evt) => await ((AnalyticsService)svc).HandleCharacterBackstoryCreatedAsync(evt));
 
         eventConsumer.RegisterHandler<IAnalyticsService, CharacterBackstoryUpdatedEvent>(
-            "character-history.backstory.updated",
+            "character.history.backstory.updated",
             async (svc, evt) => await ((AnalyticsService)svc).HandleCharacterBackstoryUpdatedAsync(evt));
 
         // Realm history events
         eventConsumer.RegisterHandler<IAnalyticsService, RealmParticipationRecordedEvent>(
-            "realm-history.participation.recorded",
+            "realm.history.participation.recorded",
             async (svc, evt) => await ((AnalyticsService)svc).HandleRealmParticipationRecordedAsync(evt));
 
         eventConsumer.RegisterHandler<IAnalyticsService, RealmLoreCreatedEvent>(
-            "realm-history.lore.created",
+            "realm.history.lore.created",
             async (svc, evt) => await ((AnalyticsService)svc).HandleRealmLoreCreatedAsync(evt));
 
         eventConsumer.RegisterHandler<IAnalyticsService, RealmLoreUpdatedEvent>(
-            "realm-history.lore.updated",
+            "realm.history.lore.updated",
             async (svc, evt) => await ((AnalyticsService)svc).HandleRealmLoreUpdatedAsync(evt));
 
         // Cache invalidation events

@@ -29,26 +29,26 @@ info:
       handler: HandleSubscriptionUpdated
   x-event-publications:
     # Game session lifecycle events (auto-generated)
-    - topic: game-session.created
+    - topic: game.session.created
       event: GameSessionCreatedEvent
       description: Published when a new game session is created
-    - topic: game-session.updated
+    - topic: game.session.updated
       event: GameSessionUpdatedEvent
       description: Published when a game session is updated
-    - topic: game-session.deleted
+    - topic: game.session.deleted
       event: GameSessionDeletedEvent
       description: Published when a game session is deleted
     # Custom player events (manually defined)
-    - topic: game-session.player-joined
+    - topic: game.session.player-joined
       event: GameSessionPlayerJoinedEvent
       description: Published when a player joins a game session
-    - topic: game-session.player-left
+    - topic: game.session.player-left
       event: GameSessionPlayerLeftEvent
       description: Published when a player leaves a game session
-    - topic: game-session.cancelled
+    - topic: game.session.cancelled
       event: GameSessionCancelledEvent
       description: Published when a matchmade session is cancelled due to reservation expiry
-    - topic: game-session.action.performed
+    - topic: game.session.action.performed
       event: GameSessionActionPerformedEvent
       description: Published when a game action is performed in a session
 # Lifecycle events auto-generated from this definition
@@ -93,8 +93,8 @@ components:
       properties:
         eventName:
           type: string
-          default: game-session.player-joined
-          description: 'Event type identifier: game-session.player-joined'
+          default: game.session.player-joined
+          description: 'Event type identifier: game.session.player-joined'
         sessionId:
           type: string
           format: uuid
@@ -119,8 +119,8 @@ components:
       properties:
         eventName:
           type: string
-          default: game-session.player-left
-          description: 'Event type identifier: game-session.player-left'
+          default: game.session.player-left
+          description: 'Event type identifier: game.session.player-left'
         sessionId:
           type: string
           format: uuid
@@ -153,8 +153,8 @@ components:
       properties:
         eventName:
           type: string
-          default: game-session.cancelled
-          description: 'Event type identifier: game-session.cancelled'
+          default: game.session.cancelled
+          description: 'Event type identifier: game.session.cancelled'
         sessionId:
           type: string
           format: uuid
@@ -180,8 +180,8 @@ components:
       properties:
         eventName:
           type: string
-          default: game-session.action.performed
-          description: 'Event type identifier: game-session.action.performed'
+          default: game.session.action.performed
+          description: 'Event type identifier: game.session.action.performed'
         sessionId:
           type: string
           format: uuid

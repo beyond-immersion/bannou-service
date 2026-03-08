@@ -73,7 +73,7 @@
 | Dependency | Layer | Type | Usage |
 |------------|-------|------|-------|
 | lib-state (IStateStoreFactory) | L0 | Hard | 6 typed stores + lock store |
-| lib-state (IDistributedLockProvider) | L0 | Hard | Uniqueness locks on register/delete operations |
+| lib-state (IDistributedLockProvider) | L0 | Hard | Uniqueness locks on create/delete operations |
 | lib-messaging (IMessageBus) | L0 | Hard | Publishing lifecycle + custom events; consuming seed/actor/connect events |
 | lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation on async helpers |
 | lib-seed (ISeedClient) | L2 | Hard | Read capability manifests for manifest computation |
@@ -90,13 +90,13 @@
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `agency.domain.created` | lifecycle | RegisterDomain |
+| `agency.domain.created` | lifecycle | CreateDomain |
 | `agency.domain.updated` | lifecycle | (future: DeprecateDomain / UndeprecateDomain) |
 | `agency.domain.deleted` | lifecycle | DeleteDomain |
-| `agency.module.created` | lifecycle | RegisterModule |
+| `agency.module.created` | lifecycle | CreateModule |
 | `agency.module.updated` | lifecycle | UpdateModule |
 | `agency.module.deleted` | lifecycle | DeleteModule, DeleteDomain (cascade) |
-| `agency.influence.created` | lifecycle | RegisterInfluence |
+| `agency.influence.created` | lifecycle | CreateInfluence |
 | `agency.influence.updated` | lifecycle | UpdateInfluence |
 | `agency.influence.deleted` | lifecycle | DeleteInfluence, DeleteDomain (cascade) |
 | `agency.manifest.updated` | `AgencyManifestUpdatedEvent` | RecomputeManifest, ManifestRecomputeWorker (on seed capability change) |
@@ -124,7 +124,7 @@
 | `ILogger<AgencyService>` | Structured logging |
 | `AgencyServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (used in constructor, not stored as field) |
-| `IDistributedLockProvider` | Distributed locking for register/delete operations |
+| `IDistributedLockProvider` | Distributed locking for create/delete operations |
 | `IMessageBus` | Event publishing and subscription |
 | `ISeedClient` | Read seed capability manifests (L2 hard dependency) |
 | `ITelemetryProvider` | Span creation for async helpers |
@@ -139,16 +139,16 @@
 
 | Method | Route | Roles | Mutates | Publishes |
 |--------|-------|-------|---------|-----------|
-| RegisterDomain | POST /agency/domain/register | developer | domains | agency.domain.created |
+| CreateDomain | POST /agency/domain/create | developer | domains | agency.domain.created |
 | GetDomain | POST /agency/domain/get | developer | - | - |
 | ListDomains | POST /agency/domain/list | developer | - | - |
 | DeleteDomain | POST /agency/domain/delete | developer | domains, modules, influences | agency.domain.deleted, agency.module.deleted, agency.influence.deleted |
-| RegisterModule | POST /agency/module/register | developer | modules | agency.module.created |
+| CreateModule | POST /agency/module/create | developer | modules | agency.module.created |
 | UpdateModule | POST /agency/module/update | developer | modules | agency.module.updated |
 | GetModule | POST /agency/module/get | developer | - | - |
 | ListModules | POST /agency/module/list | developer | - | - |
 | DeleteModule | POST /agency/module/delete | developer | modules | agency.module.deleted |
-| RegisterInfluence | POST /agency/influence/register | developer | influences | agency.influence.created |
+| CreateInfluence | POST /agency/influence/create | developer | influences | agency.influence.created |
 | UpdateInfluence | POST /agency/influence/update | developer | influences | agency.influence.updated |
 | GetInfluence | POST /agency/influence/get | developer | - | - |
 | ListInfluences | POST /agency/influence/list | developer | - | - |
@@ -166,8 +166,8 @@
 
 ## Methods
 
-### RegisterDomain
-POST /agency/domain/register | Roles: [developer]
+### CreateDomain
+POST /agency/domain/create | Roles: [developer]
 
 ```
 LOCK agency-lock:domain:{request.DomainCode}                 -> 409 if lock fails
@@ -231,8 +231,8 @@ RETURN (200, null)
 
 ---
 
-### RegisterModule
-POST /agency/module/register | Roles: [developer]
+### CreateModule
+POST /agency/module/create | Roles: [developer]
 
 ```
 READ _domainsStore:domain:{request.DomainCode}                -> 404 if null
@@ -302,8 +302,8 @@ RETURN (200, null)
 
 ---
 
-### RegisterInfluence
-POST /agency/influence/register | Roles: [developer]
+### CreateInfluence
+POST /agency/influence/create | Roles: [developer]
 
 ```
 READ _domainsStore:domain:{request.DomainCode}                -> 404 if null

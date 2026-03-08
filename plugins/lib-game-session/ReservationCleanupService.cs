@@ -218,10 +218,10 @@ public class ReservationCleanupService : BackgroundService
                 {
                     // Find the player in the session
                     var player = session.Players.FirstOrDefault(p => p.AccountId == reservation.AccountId);
-                    if (player != null && player.WebSocketSessionId.HasValue)
+                    if (player != null && player.SessionId.HasValue)
                     {
                         await clientEventPublisher.PublishToSessionAsync(
-                            player.WebSocketSessionId.Value.ToString(),
+                            player.SessionId.Value.ToString(),
                             new SessionCancelledClientEvent
                             {
                                 SessionId = session.SessionId,

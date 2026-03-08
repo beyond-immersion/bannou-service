@@ -13569,6 +13569,10 @@ components:
         achievementType:
           $ref: '#/components/schemas/AchievementType'
           description: Classification of the achievement
+        category:
+          type: string
+          nullable: true
+          description: Game-defined category for UI grouping and filtering
         entityTypes:
           type: array
           items:
@@ -20228,6 +20232,12 @@ components:
           minimum: 1
           description: Rank threshold for leaderboard achievements (unlock when 
             rank <= threshold)
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Game-defined category for UI grouping and filtering (e.g.
+            Combat, Exploration, Social)
         isActive:
           type: boolean
           default: true
@@ -29807,6 +29817,11 @@ components:
           type: string
           format: uuid
           description: ID of the game service
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Filter by game-defined category
         platform:
           $ref: '#/components/schemas/Platform'
           nullable: true
@@ -30628,6 +30643,16 @@ components:
           type: string
           format: uuid
           description: Container to list items from
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Number of items to skip for pagination
+        limit:
+          type: integer
+          minimum: 1
+          default: 100
+          description: Maximum number of items to return per page
     ListItemsResponse:
       type: object
       description: List of item instances
@@ -43449,6 +43474,11 @@ components:
           maxLength: 500
           nullable: true
           description: New description
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: New category for UI grouping
         isActive:
           type: boolean
           nullable: true

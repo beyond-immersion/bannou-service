@@ -51,7 +51,7 @@ public partial class GardenerService
             async (svc, evt) => await ((GardenerService)svc).HandleSeedActivatedAsync(evt));
 
         eventConsumer.RegisterHandler<IGardenerService, GameSessionDeletedEvent>(
-            "game-session.deleted",
+            "game.session.deleted",
             async (svc, evt) => await ((GardenerService)svc).HandleGameSessionDeletedAsync(evt));
 
         // Location entity presence events for entity session registry bindings

@@ -676,7 +676,7 @@ COUNT rooms WHERE $.Status = Active                              // activeRooms
 COUNT rooms WHERE $.Status = Locked                              // lockedRooms
 COUNT rooms WHERE $.Status = Archived                            // archivedRooms
 COUNT room-types WHERE $.Code EXISTS                             // totalRoomTypes
-QUERY rooms WHERE $.RoomId EXISTS PAGED(0, 1000)                 // hardcoded cap
+QUERY rooms WHERE $.RoomId EXISTS PAGED(0, config.AdminStatsMaxRooms)  // T21: configurable cap (default 1000)
 FOREACH room in results
   READ participants:{roomId} HashCount                           // sequential, O(N)
 RETURN (200, AdminStatsResponse { totalRooms, activeRooms, lockedRooms, archivedRooms, totalParticipants, totalRoomTypes })

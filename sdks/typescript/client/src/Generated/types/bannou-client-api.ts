@@ -10606,6 +10606,8 @@ export interface components {
       hiddenDescription?: string | null;
       /** @description Classification of the achievement */
       achievementType: components['schemas']['AchievementType'];
+      /** @description Game-defined category for UI grouping and filtering */
+      category?: string | null;
       /** @description Allowed entity types */
       entityTypes?: components['schemas']['EntityType'][] | null;
       /** @description Target for progressive achievements */
@@ -14721,6 +14723,8 @@ export interface components {
        * @description Rank threshold for leaderboard achievements (unlock when rank <= threshold)
        */
       rankThreshold?: number | null;
+      /** @description Game-defined category for UI grouping and filtering (e.g. Combat, Exploration, Social) */
+      category?: string | null;
       /**
        * @description Whether this achievement can be earned
        * @default true
@@ -20821,6 +20825,8 @@ export interface components {
        * @description ID of the game service
        */
       gameServiceId: string;
+      /** @description Filter by game-defined category */
+      category?: string | null;
       /** @description Filter by platform */
       platform?: components['schemas']['Platform'];
       /** @description Filter by achievement classification */
@@ -21319,6 +21325,16 @@ export interface components {
        * @description Container to list items from
        */
       containerId: string;
+      /**
+       * @description Number of items to skip for pagination
+       * @default 0
+       */
+      offset: number;
+      /**
+       * @description Maximum number of items to return per page
+       * @default 100
+       */
+      limit: number;
     };
     /** @description List of item instances */
     ListItemsResponse: {
@@ -29250,6 +29266,8 @@ export interface components {
       displayName?: string | null;
       /** @description New description */
       description?: string | null;
+      /** @description New category for UI grouping */
+      category?: string | null;
       /** @description New active status */
       isActive?: boolean | null;
       /** @description Updated platform ID mappings */

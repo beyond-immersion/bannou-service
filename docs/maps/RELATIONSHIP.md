@@ -336,16 +336,17 @@ POST /relationship-type/matches-hierarchy | Roles: [user]
 
 ```
 IF typeId == ancestorTypeId
-  RETURN (200, MatchesHierarchyResponse { matches: true, depth: 0 })
+  RETURN (200, MatchesHierarchyResponse { depth: 0 })
 READ type-model-store:"type:{typeId}"                      -> 404 if null
 READ type-model-store:"type:{ancestorTypeId}"              -> 404 if null
 // Walk parent chain from typeId upward
 FOREACH depth in 1..MaxHierarchyDepth
   READ type-model-store:"type:{currentParentId}"
   IF currentParentId == ancestorTypeId
-    RETURN (200, MatchesHierarchyResponse { matches: true, depth })
+    RETURN (200, MatchesHierarchyResponse { depth })
   IF no parent: break
-RETURN (200, MatchesHierarchyResponse { matches: false, depth: null })
+RETURN (404)
+// T8: 200 = matches (with depth), 404 = no match. No `matches` boolean needed.
 ```
 
 ### GetAncestors

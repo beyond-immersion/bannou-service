@@ -209,6 +209,7 @@ public partial class AnalyticsService : IAnalyticsService
                 EventType = body.EventType,
                 Timestamp = body.Timestamp,
                 Value = body.Value,
+                SessionId = body.SessionId,
                 Metadata = body.Metadata
             };
 
@@ -250,6 +251,7 @@ public partial class AnalyticsService : IAnalyticsService
                     EventType = evt.EventType,
                     Timestamp = evt.Timestamp,
                     Value = evt.Value,
+                    SessionId = evt.SessionId,
                     Metadata = evt.Metadata
                 };
 
@@ -681,6 +683,12 @@ public partial class AnalyticsService : IAnalyticsService
                 return (StatusCodes.BadRequest, null);
             }
 
+            if (body.Offset < 0)
+            {
+                _logger.LogDebug("Invalid offset {Offset} for controller history query", body.Offset);
+                return (StatusCodes.BadRequest, null);
+            }
+
             if (body.StartTime.HasValue && body.EndTime.HasValue && body.StartTime > body.EndTime)
             {
                 _logger.LogDebug("Invalid controller history time range {StartTime} to {EndTime}",
@@ -752,7 +760,7 @@ public partial class AnalyticsService : IAnalyticsService
 
             var result = await _historyDataQueryStore.JsonQueryPagedAsync(
                 conditions,
-                0,
+                body.Offset,
                 body.Limit,
                 sortSpec,
                 cancellationToken);

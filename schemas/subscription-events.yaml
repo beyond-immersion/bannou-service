@@ -11,7 +11,10 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
-  x-event-subscriptions: []  # Subscription service doesn't subscribe to external events
+  x-event-subscriptions:
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      handler: HandleAccountDeleted
   x-event-publications:
     # Subscription state change events
     - topic: subscription.updated

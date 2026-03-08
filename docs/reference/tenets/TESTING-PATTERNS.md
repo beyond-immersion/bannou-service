@@ -142,6 +142,8 @@ Assert.Equal(request.DisplayName, savedModel.DisplayName);
 
 ## Constructor Tests: Use ServiceConstructorValidator
 
+> See [Helpers & Common Patterns § Test Validators](../HELPERS-AND-COMMON-PATTERNS.md#13-test-validators) for the complete catalog of structural validators (`ServiceConstructorValidator`, `StateStoreKeyValidator`, `ServiceHierarchyValidator`, `EnumMappingValidator`, `EventPublishingValidator`, `ResourceCleanupValidator`, `PermissionMatrixValidator`, `ControllerValidator`).
+
 ### Purpose
 
 Constructor validation catches AI-introduced DI mistakes before expensive integration testing. These issues include wrong parameter names, optional parameters, and constructor overloads.
@@ -192,7 +194,7 @@ public void MyService_ConstructorIsValid() =>
 
 ## Enum Boundary Mapping Tests (REQUIRED)
 
-Every plugin that maps between enum types — SDK boundary (A2), subset/superset, or lossy switch — MUST have corresponding unit tests using `EnumMappingValidator` from `test-utilities`. These tests catch value drift at compile/test time rather than at runtime.
+Every plugin that maps between enum types — SDK boundary (A2), subset/superset, or lossy switch — MUST have corresponding unit tests using `EnumMappingValidator` from `test-utilities`. These tests catch value drift at compile/test time rather than at runtime. See [Helpers & Common Patterns § Enum Mapping](../HELPERS-AND-COMMON-PATTERNS.md#9-enum-mapping) for the mapping extension methods.
 
 ### Infrastructure
 

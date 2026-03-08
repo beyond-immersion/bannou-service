@@ -331,65 +331,65 @@ export const eventRegistry = new Map<string, EventMetadata>([
     },
   ],
   [
-    'game-session.action-result',
+    'game.session.action-result',
     {
-      eventName: 'game-session.action-result',
+      eventName: 'game.session.action-result',
       typeName: 'GameActionResultClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game-session.chat-received',
+    'game.session.chat-received',
     {
-      eventName: 'game-session.chat-received',
+      eventName: 'game.session.chat-received',
       typeName: 'SessionChatReceivedClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game-session.player-joined',
+    'game.session.player-joined',
     {
-      eventName: 'game-session.player-joined',
+      eventName: 'game.session.player-joined',
       typeName: 'PlayerJoinedClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game-session.player-kicked',
+    'game.session.player-kicked',
     {
-      eventName: 'game-session.player-kicked',
+      eventName: 'game.session.player-kicked',
       typeName: 'PlayerKickedClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game-session.player-left',
+    'game.session.player-left',
     {
-      eventName: 'game-session.player-left',
+      eventName: 'game.session.player-left',
       typeName: 'PlayerLeftClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game-session.session-cancelled',
+    'game.session.session-cancelled',
     {
-      eventName: 'game-session.session-cancelled',
+      eventName: 'game.session.session-cancelled',
       typeName: 'SessionCancelledClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game-session.state-changed',
+    'game.session.state-changed',
     {
-      eventName: 'game-session.state-changed',
+      eventName: 'game.session.state-changed',
       typeName: 'SessionStateChangedClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game-session.state-updated',
+    'game.session.state-updated',
     {
-      eventName: 'game-session.state-updated',
+      eventName: 'game.session.state-updated',
       typeName: 'GameStateUpdatedClientEvent',
       service: 'game-session',
     },

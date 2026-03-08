@@ -148,28 +148,28 @@ namespace Bannou
         constexpr const TCHAR* CurrencyWalletUnfrozen = TEXT("currency.wallet.unfrozen");
 
         /** Sent to relevant players when a game action produces results. */
-        constexpr const TCHAR* GameSessionActionResult = TEXT("game-session.action-result");
+        constexpr const TCHAR* GameSessionActionResult = TEXT("game.session.action-result");
 
         /** Sent to recipients when a chat message is posted in the session. */
-        constexpr const TCHAR* GameSessionChatReceived = TEXT("game-session.chat-received");
+        constexpr const TCHAR* GameSessionChatReceived = TEXT("game.session.chat-received");
 
         /** Sent to all session participants when a new player joins. */
-        constexpr const TCHAR* GameSessionPlayerJoined = TEXT("game-session.player-joined");
+        constexpr const TCHAR* GameSessionPlayerJoined = TEXT("game.session.player-joined");
 
         /** Sent to all session participants when a player is kicked. */
-        constexpr const TCHAR* GameSessionPlayerKicked = TEXT("game-session.player-kicked");
+        constexpr const TCHAR* GameSessionPlayerKicked = TEXT("game.session.player-kicked");
 
         /** Sent to all session participants when a player leaves voluntarily. */
-        constexpr const TCHAR* GameSessionPlayerLeft = TEXT("game-session.player-left");
+        constexpr const TCHAR* GameSessionPlayerLeft = TEXT("game.session.player-left");
 
         /** Sent to players who claimed their reservation when a matchmade session */
-        constexpr const TCHAR* GameSessionSessionCancelled = TEXT("game-session.session-cancelled");
+        constexpr const TCHAR* GameSessionSessionCancelled = TEXT("game.session.session-cancelled");
 
         /** Sent to all session participants when the session state changes. */
-        constexpr const TCHAR* GameSessionStateChanged = TEXT("game-session.state-changed");
+        constexpr const TCHAR* GameSessionStateChanged = TEXT("game.session.state-changed");
 
         /** Sent when game state changes that all players should see. */
-        constexpr const TCHAR* GameSessionStateUpdated = TEXT("game-session.state-updated");
+        constexpr const TCHAR* GameSessionStateUpdated = TEXT("game.session.state-updated");
 
         /** Sent to sessions observing a container owner when one of their containers */
         constexpr const TCHAR* InventoryContainerFull = TEXT("inventory.container.full");

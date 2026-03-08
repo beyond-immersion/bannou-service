@@ -108,30 +108,30 @@ Subscribe to server-push events:
 
 ```typescript
 // Game session events
-client.onEvent('game_session.player_joined', (event) => {
+client.onEvent('game.session.player-joined', (event) => {
   console.log(`Player ${event.playerId} joined the session`);
   updatePlayerList(event.players);
 });
 
-client.onEvent('game_session.chat_received', (event) => {
+client.onEvent('game.session.chat-received', (event) => {
   addChatMessage(event.senderId, event.message);
 });
 
-client.onEvent('game_session.state_updated', (event) => {
+client.onEvent('game.session.state-updated', (event) => {
   updateGameState(event.state);
 });
 
 // Matchmaking events
-client.onEvent('matchmaking.match_found', (event) => {
+client.onEvent('matchmaking.match-found', (event) => {
   showMatchFoundDialog(event.matchId, event.players);
 });
 
-client.onEvent('matchmaking.queue_joined', (event) => {
+client.onEvent('matchmaking.queue-joined', (event) => {
   updateQueueStatus(event.position, event.estimatedWait);
 });
 
 // Voice events
-client.onEvent('voice.peer_joined', (event) => {
+client.onEvent('voice.peer-joined', (event) => {
   initializeVoiceForPeer(event.peerId, event.sdpOffer);
 });
 ```
@@ -289,7 +289,7 @@ function GameLobby({ token }: { token: string }) {
       });
 
     // Subscribe to session updates
-    client.onEvent('game_session.state_changed', (event) => {
+    client.onEvent('game.session.state-changed', (event) => {
       // Refresh session list
     });
   }, [client, connected]);
@@ -362,7 +362,7 @@ async function createBotClient(botToken: string) {
   await client.sessions.joinAsync({ sessionId: 'target-session' });
 
   // Listen for game events
-  client.onEvent('game_session.action_result', (event) => {
+  client.onEvent('game.session.action-result', (event) => {
     // Process game action results
     handleBotResponse(event);
   });

@@ -138,15 +138,15 @@ POST /permission/validate | Roles: []
 ```
 READ permission:"session:{sessionId}:permissions"
 IF permissions null OR serviceId not present
-  RETURN (200, ValidationResponse { allowed: false, reason: "No permissions registered" })
+  RETURN (403, reason: "No permissions registered")
 // Deserialize endpoint list for requested service
 IF endpoint in allowed list
-  RETURN (200, ValidationResponse { allowed: true })
+  RETURN (200)
 ELSE
-  RETURN (200, ValidationResponse { allowed: false, reason: "Endpoint not in allowed list" })
+  RETURN (403, reason: "Endpoint not in allowed list")
 ```
 
-// Always returns 200. Access denial is in the response body, not status codes.
+// T8: 200 = allowed, 403 = denied. Status code communicates result.
 
 ### RegisterServicePermissions
 POST /permission/register-service | Roles: []

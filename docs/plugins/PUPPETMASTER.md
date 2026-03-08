@@ -462,7 +462,7 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 1. **Watcher-Actor Integration**: The `ActorId` field on `WatcherInfo` is always `null`. The TODO comment at line 213 indicates actor spawning is not yet implemented. Watchers don't actually execute any behavior - they're just registered in memory.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/388 -->
 
-2. ~~**Configurable Default Watcher Types**~~: **FIXED** (2026-02-11) - Added `DefaultWatcherTypes` config property (default `["regional"]`). Set via `PUPPETMASTER_DEFAULT_WATCHER_TYPES` env var as comma-separated string. Also added comma-delimited array binding support to `IServiceConfiguration` infrastructure for all plugins.
+2. ~~**Configurable Default Watcher Types**~~: **FIXED** (2026-02-11) - Added `DefaultWatcherTypes` config property (default `["regional"]`). T21 violation: currently set via `PUPPETMASTER_DEFAULT_WATCHER_TYPES` env var as comma-separated string parsed at runtime. Should be defined as a typed array in the configuration schema instead of a parseable string.
 
 3. ~~**ResourceSnapshotCache TTL Configuration**~~: **FIXED** (2026-02-11) - Added `SnapshotCacheTtlSeconds` config property (default 300s, minimum 1s). ResourceSnapshotCache now injects `PuppetmasterServiceConfiguration` and uses the config value instead of hardcoded 5-minute TTL.
 
