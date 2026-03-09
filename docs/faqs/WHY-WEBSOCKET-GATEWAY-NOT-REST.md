@@ -1,6 +1,11 @@
 # Why Does Bannou Route Everything Through a WebSocket Gateway Instead of Using REST?
 
-> **Short Answer**: Because the system needs persistent, bidirectional, low-latency connections to support 100,000+ concurrent AI NPCs pushing real-time state to clients. REST is request-response -- the server cannot push to the client. WebSocket is bidirectional -- the server pushes capability updates, game events, NPC actions, and permission changes without the client polling.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Connect (L1), Auth (L1), Permission (L1), Mesh (L0), Game Session (L2), Matchmaking (L4), Asset (L3), Voice (L3), Website (L3), Behavior (L4)
+> **Short Answer**: The system needs persistent, bidirectional, low-latency connections to support
+> 100,000+ concurrent AI NPCs pushing real-time state to clients. REST is request-response so the
+> server cannot push to the client. WebSocket is bidirectional so the server pushes capability
+> updates, game events, NPC actions, and permission changes without the client polling.
 
 ---
 

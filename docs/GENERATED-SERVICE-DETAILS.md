@@ -137,7 +137,7 @@ Recipe-based crafting orchestration service (L4 GameFeatures) for production wor
 
 **Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Endpoints**: 33 | **Deep Dive**: [docs/plugins/CURRENCY.md](plugins/CURRENCY.md) | **Map**: [docs/maps/CURRENCY.md](maps/CURRENCY.md)
 
-Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features a background autogain worker for passive income and transaction history with configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
+Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features three background workers: autogain for passive income, currency expiration for removing expired balances, and hold expiration for auto-releasing stale authorization holds. Transaction history has configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
 
 ## Director {#director}
 
@@ -267,7 +267,7 @@ Loot table management and generation service (L4 GameFeatures) for weighted drop
 
 ## Mapping {#mapping}
 
-**Version**: 1.0.0 | **Schema**: `schemas/mapping-api.yaml` | **Endpoints**: 18 | **Deep Dive**: [docs/plugins/MAPPING.md](plugins/MAPPING.md)
+**Version**: 1.0.0 | **Schema**: `schemas/mapping-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/MAPPING.md](plugins/MAPPING.md)
 
 Spatial data management service (L4 GameFeatures) for Arcadia game worlds. Provides authority-based channel ownership for exclusive write access to spatial regions, high-throughput ingest via dynamic RabbitMQ subscriptions, 3D spatial indexing with affordance queries, and design-time authoring workflows (checkout/commit/release). Purely a spatial data store -- does not perform rendering or physics. Game servers and NPC brains publish spatial data to and query from it.
 
@@ -490,7 +490,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 76
-- **Total endpoints**: 901
+- **Total endpoints**: 902
 
 ---
 

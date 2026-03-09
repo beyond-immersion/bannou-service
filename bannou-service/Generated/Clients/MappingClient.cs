@@ -56,6 +56,20 @@ public partial interface IMappingClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
+    /// Delete a map channel and all its data
+    /// </summary>
+    /// <remarks>
+    /// Permanently deletes a channel, its authority record, all map objects,
+    /// <br/>spatial/type/region indexes, version counter, and ingest subscription.
+    /// <br/>Requires the channel to have no active authority (release first).
+    /// </remarks>
+    /// <returns>Channel deleted successfully</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task DeleteChannelAsync(DeleteChannelRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
     /// Release authority over a channel
     /// </summary>
     /// <remarks>
@@ -503,6 +517,97 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
                         throw new BeyondImmersion.Bannou.Core.ApiException("Channel already exists with active authority", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Delete a map channel and all its data
+    /// </summary>
+    /// <remarks>
+    /// Permanently deletes a channel, its authority record, all map objects,
+    /// <br/>spatial/type/region indexes, version counter, and ingest subscription.
+    /// <br/>Requires the channel to have no active authority (release first).
+    /// </remarks>
+    /// <returns>Channel deleted successfully</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task DeleteChannelAsync(DeleteChannelRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "mapping/delete-channel"
+        urlBuilder_.Append("mapping/delete-channel");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        return;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Channel not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 409)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Channel has active authority (release first)", status_, responseText_, headers_, null);
                     }
                     else
                     {

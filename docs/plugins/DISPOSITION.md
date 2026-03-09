@@ -1,11 +1,11 @@
 # Disposition Plugin Deep Dive
 
-> **Plugin**: lib-disposition
-> **Schema**: schemas/disposition-api.yaml
-> **Version**: 1.0.0
+> **Plugin**: lib-disposition (not yet created)
+> **Schema**: `schemas/disposition-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: disposition-feelings (MySQL), disposition-drives (MySQL), disposition-cache (Redis), disposition-lock (Redis) — all planned
 > **Layer**: GameFeatures
-> **State Stores**: disposition-feelings (MySQL), disposition-drives (MySQL), disposition-cache (Redis), disposition-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [STORY-SYSTEM.md](../guides/STORY-SYSTEM.md), [MORALITY-SYSTEM.md](../guides/MORALITY-SYSTEM.md), [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md)
 
 ## Overview
@@ -516,6 +516,8 @@ weight their personal experience higher.
 | lib-storyline (L4, planned) | Storyline can query disposition for emotional state preconditions (feeling thresholds) and drive-based scenario matching (drive categories, intensity, satisfaction) |
 | lib-puppetmaster (L4, planned) | Regional watcher god actors query disposition for characters at emotional turning points (near drive fulfillment, high frustration, strong feelings about other entities) |
 | lib-gardener (L4, planned) | Player experience orchestration can use disposition to surface "how your character feels" as a player-facing emotional state indicator |
+| lib-agency (L4) | Reads guardian feeling axes (trust, resentment, familiarity) for compliance computation in the spirit influence pipeline; records feeling updates after influence outcomes |
+| lib-director (L4, planned) | Drive session checkpoints may read/write drive state when a developer takes and releases control of an actor |
 
 ---
 
@@ -618,7 +620,7 @@ All feeling and drive events carry `characterId`. Per SCHEMA-RULES, events schem
 | `relationship.deleted` | `HandleRelationshipDeletedAsync` | Triggers feeling resynthesis (relationship component removed from base). Does NOT remove feelings -- emotional residue persists after bonds break. |
 | `obligation.violation.reported` | `HandleViolationReportedAsync` | If the violation was against another character, shifts feelings (resentment toward self, guilt modifier). If witnessed, witnesses gain negative feelings toward violator. Checks for `redeem_past` drive formation. |
 | `character-history.backstory.created` | `HandleBackstoryCreatedAsync` | Checks drive formation from backstory elements (GOAL elements → identity/mastery drives, TRAUMA elements → survival/social drives). |
-| `seed.phase.changed` | `HandleSeedPhaseChangedAsync` | When a guardian spirit seed changes phase, updates guardian spirit feelings (familiarity increase, trust shift based on phase milestone). Only processes seeds with owner type matching the character. Per GH #497. |
+| `seed.phase.changed` | `HandleSeedPhaseChangedAsync` | When a guardian spirit seed changes phase, updates guardian spirit feelings (familiarity increase, trust shift based on phase milestone). Only processes seeds with owner type matching the character. Integration identified during GH #497 (Seed client events design). |
 | `hearsay.belief.acquired` | `HandleBeliefAcquiredAsync` | Triggers feeling resynthesis for affected character-target pairs (new hearsay changes the base signal). **Phase 4+** — deferred until lib-hearsay is implemented. |
 | `hearsay.belief.corrected` | `HandleBeliefCorrectedAsync` | Triggers feeling resynthesis (corrected belief changes hearsay signal, may cause feeling swing). **Phase 4+** — deferred until lib-hearsay is implemented. |
 
@@ -1270,16 +1272,21 @@ History (my PAST)             ─┤    (what I WANT)                        GOA
 ### Design Considerations (Requires Planning)
 
 1. **Scale considerations**: With 100,000+ NPCs, each potentially having 200 feelings and 10 drives, storage and synthesis processing could become significant. The synthesis worker must be efficient. May need spatial partitioning or priority-based synthesis (active actors synthesize more frequently than background NPCs).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/616 -->
 
-2. **Synthesis source ordering**: When multiple soft dependencies are unavailable, the remaining sources must redistribute weight correctly. The order in which sources are checked and the redistribution algorithm need careful design to avoid edge cases (e.g., all sources unavailable except personality → feelings are entirely personality bias).
+2. ~~**Synthesis source ordering**~~: **RESOLVED** (2026-03-08) - Addressed by three mechanisms already in this document: (a) proportional weight redistribution is order-independent — `new_w_i = w_i / (1 - w_unavailable)` for remaining sources, (b) SynthesisBreakdown model stores effective weights after redistribution, making the actual algorithm auditable per feeling, and (c) graceful degradation § "If ALL sources are unavailable, base defaults to 0.0" handles the degenerate case. No ordering concern exists because the formula is a mathematical weighted sum, not a sequential pipeline.
 
-3. **Drive formation conditions**: The conditions under which drives form from personality + context are complex. The mapping between personality trait combinations, domain engagement thresholds, and resulting drives needs to be data-driven (configurable), not hardcoded. Similar to Obligation's trait-to-violation-type mapping concern.
+3. ~~**Drive formation conditions**~~: **RESOLVED** (2026-03-08) - Addressed by the document's own specification: drive codes and categories are opaque strings (same extensibility pattern as collection types, seed types, violation type codes), formation thresholds are configurable via the Configuration table (`DriveMinIntensityThreshold`, `DriveFulfillmentThreshold`, etc.), and the four formation paths (personality-innate, experience-catalyzed, backstory-seeded, circumstance-derived) each define clear trigger conditions. The mapping between personality traits and eligible drives follows the standard Bannou pattern of configuration-driven opaque code mapping at deployment time — no architectural design decision remains.
 
 4. **Guardian spirit input tracking**: The Actor service needs to record spirit nudge events in a format Disposition can consume. The exact event schema and the boundary between "Actor tracks spirit input" and "Disposition computes alignment" needs design.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/621 -->
 
-5. **Variable provider performance**: The disposition manifest cache must be fast enough for Actor's 100-500ms decision cycle. Pre-synthesis in Redis is the current plan. May need character-scoped sub-caching for frequently accessed feelings (e.g., feelings about nearby characters, guardian feelings).
+5. **Game-time vs real-time for decay rates**: Modifier decay rates and drive satisfaction decay are specified as "per day" but the time domain (game-time via Worldstate or real-time) is unspecified. At a 72:1 time ratio, this is a 72x difference in decay speed. Affects all three background workers and may require `IWorldstateClient` (L2) as an additional hard dependency. Related to GH #545 (Currency/Seed game-time migration).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/623 -->
 
-6. **Hearsay dependency timing**: Hearsay is also pre-implementation. Disposition should be designed to function fully without Hearsay (Phase 1-3) and gain hearsay integration later (Phase 4). The synthesis pipeline must cleanly handle the hearsay source being absent initially and appearing later.
+6. ~~**Variable provider performance**~~: **RESOLVED** (2026-03-08) - Addressed by three mechanisms already in this document: (a) Redis-backed manifest cache (`disposition-cache`, key `manifest:{characterId}`) with configurable TTL (`CacheTtlMinutes`, default 5min) and event-driven invalidation, (b) confidence threshold filtering (`MinConfidenceForProvider`, default 0.05) excluding low-magnitude feelings from the provider payload, and (c) `DispositionSynthesisWorkerService` periodically resynthesizing base values to keep the cache current. Whether additional sub-caching is needed for frequently accessed feelings is an implementation-time optimization concern, not a design question.
+
+7. ~~**Hearsay dependency timing**~~: **RESOLVED** (2026-03-08) - Addressed by three mechanisms already in this document: (a) graceful degradation via weight redistribution when hearsay is unavailable (see Core Mechanics § Base Value Synthesis), (b) phased implementation deferring hearsay to Phase 4 (see Stubs § Phase 4), and (c) explicit "Phase 4+" deferral markers on hearsay consumed event handlers.
 
 ---
 

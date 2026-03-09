@@ -253,6 +253,7 @@ This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hy
 | lib-game-service (`IGameServiceClient`) | Game service existence validation for event scoping (L2) |
 | lib-connect (`IConnectClient`) | Session awareness for player targeting, shortcut publishing for event entry, session-to-developer resolution (L1) |
 | lib-permission (`IPermissionClient`) | Developer role verification for all endpoints (L1) |
+| lib-quest (`IQuestClient`) | Event-related quest creation for drawing players to event regions (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
@@ -264,7 +265,6 @@ This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hy
 | lib-showtime (`IShowtimeClient`) | Audience pool priming, hype train amplification, content tag injection | No in-game audience metagame effects; event coordination still works |
 | lib-divine (`IDivineClient`) | Deity state queries for divine actor observation, blessing coordination during events | Cannot query divine-specific data; actor-level observation still works through Actor APIs |
 | lib-hearsay (`IHearsayClient`) | Rumor injection for organic player awareness of events | No NPC rumor-based player drawing; other targeting methods still available |
-| lib-quest (`IQuestClient`) | Event-related quest creation for drawing players to event regions | No quest-based player targeting; other methods still available |
 | lib-analytics (`IAnalyticsClient`) | Post-event metrics (player participation, engagement, broadcast reach) | No post-event analytics; event completion still works |
 
 ---
@@ -349,16 +349,18 @@ This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hy
 
 ### Published Events
 
-**x-lifecycle generated events** (auto-generated via `x-lifecycle` in `director-events.yaml`, `topic_prefix: director`):
+**x-lifecycle generated events** (auto-generated via `x-lifecycle` in `director-events.yaml`, `topic_prefix: director`).
+
+**Naming note**: The x-lifecycle entity for directed events is `DirectorEvent` (not `DirectedEvent`) so that kebab-case `director-event` starts with the prefix `director-` and strips to produce topic `director.event.*`. Internal models (`DirectedEventModel`, `DirectedEventStatus`, etc.) use the `Directed` form since they are not constrained by x-lifecycle naming rules.
 
 | Topic | Event Type | Trigger |
 |---|---|---|
 | `director.session.created` | `DirectorSessionCreatedEvent` | Developer starts a director session |
 | `director.session.updated` | `DirectorSessionUpdatedEvent` | Director session state changes (taps added/removed, status changed) |
 | `director.session.deleted` | `DirectorSessionDeletedEvent` | Director session ended (explicit or timeout) |
-| `director.event.created` | `DirectedEventCreatedEvent` | Directed event created |
-| `director.event.updated` | `DirectedEventUpdatedEvent` | Directed event modified (status changes, actors added, targets changed, phase transitions). Phase transitions (`Active`, `Climax`, `WindDown`, `Completed`, `Cancelled`) publish as `*.updated` with `changedFields` including `status` and relevant timestamp -- per IMPLEMENTATION TENETS, status changes are field updates, not separate lifecycle events. |
-| `director.event.deleted` | `DirectedEventDeletedEvent` | Directed event deleted (game-service cleanup cascade) |
+| `director.event.created` | `DirectorEventCreatedEvent` | Directed event created |
+| `director.event.updated` | `DirectorEventUpdatedEvent` | Directed event modified (status changes, actors added, targets changed, phase transitions). Phase transitions (`Active`, `Climax`, `WindDown`, `Completed`, `Cancelled`) publish as `*.updated` with `changedFields` including `status` and relevant timestamp -- per IMPLEMENTATION TENETS, status changes are field updates, not separate lifecycle events. |
+| `director.event.deleted` | `DirectorEventDeletedEvent` | Directed event deleted (game-service cleanup cascade) |
 
 **Custom domain events** (manually defined):
 
@@ -437,7 +439,8 @@ This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hy
 | `IGameServiceClient` | Game service validation for event scoping (L2 hard) |
 | `IConnectClient` | Session awareness, shortcut publishing, session-to-developer resolution (L1 hard) |
 | `IPermissionClient` | Developer role verification (L1 hard) |
-| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Puppetmaster, Gardener, Broadcast, Showtime, Divine, Hearsay, Quest, Analytics) |
+| `IQuestClient` | Event-related quest creation for player targeting (L2 hard) |
+| `IServiceProvider` | Runtime resolution of soft L3/L4 dependencies (Puppetmaster, Gardener, Broadcast, Showtime, Divine, Hearsay, Analytics) |
 | `IClientEventPublisher` | Push tap data and approval requests to developer's WebSocket session |
 | `DirectorOverrideProviderFactory` | `IVariableProviderFactory` implementation for `${director.*}` namespace |
 | `ITapRelayManager` | Manages RabbitMQ subscriptions for actor tap data relay (internal) |
@@ -712,21 +715,30 @@ The Director follows the same structural pattern as lib-divine, lib-showtime, li
 ### Design Considerations (Requires Planning)
 
 1. **Tap data protocol design**: The RabbitMQ tap relay needs careful protocol design. Raw per-tick actor state is too much data for WebSocket delivery. Options: delta compression (only send changed fields), sampling (every Nth tick), priority-based filtering (only send perceptions above urgency threshold), or configurable data stream selection (perception-only, variable-only, etc.). The configuration properties provide knobs but the protocol format needs specification.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/609 -->
 
 2. **Drive session checkpoint mechanism**: When a developer releases a driven actor, the ABML execution must resume from a meaningful point. The simplest approach: resume from the `on_tick` entry point with all state changes preserved (feelings, goals, memories the developer set during the drive session are available to ABML). This avoids needing to track execution position within the ABML document, which would be complex. The trade-off is that any in-progress ABML action chain is abandoned on drive, then restarted from tick entry on release.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/612 -->
 
-3. **GOAP override provider discovery**: The `DirectorOverrideProviderFactory` needs to check Redis on every GOAP evaluation for the actor's overrides. For non-directed actors (the vast majority), this is a Redis miss that should be fast. For directed actors, it's a Redis hit with small payload. Caching is dangerous because overrides can change mid-plan. A `ConcurrentDictionary` local cache with RabbitMQ invalidation might be needed for 100K+ actor scale.
+3. ~~**GOAP override provider discovery**~~: **FIXED** (2026-03-08) - Resolved via established Variable Provider Factory caching pattern. All 15 existing `IVariableProviderFactory` implementations do per-tick state store reads via `CreateAsync()` (called by `ActorRunner.CreateExecutionScopeAsync()` every tick). The standard approach — factory injects an `IDirectorOverrideCache`, calls `GetOrLoadAsync()`, cache handles Redis reads — applies directly. For non-directed actors, a Redis GET returning null is a fast miss identical to what every other provider does at 100K+ scale. No ConcurrentDictionary+RabbitMQ invalidation needed at baseline; if scale testing reveals a bottleneck, it becomes a Potential Extension.
 
-4. **Cross-node actor driving**: In pool deployment mode, a driven actor runs on a pool node while the developer's session is on the main Bannou node. Drive commands must route through the mesh to the correct pool node. The existing `IMeshInvocationClient` forwarding pattern (used by Actor for remote pool operations) applies, but the interactive latency requirements for drive sessions may need optimization.
+4. ~~**Cross-node actor driving**~~: **FIXED** (2026-03-08) - Resolved via established Actor pool forwarding pattern. Actor's encounter operations (`StartEncounter`, `UpdateEncounterPhase`, `EndEncounter`, `GetEncounter`) already implement transparent cross-node forwarding: check local registry → read `actor-assignments` Redis → forward via `IMeshInvocationClient.InvokeMethodAsync(nodeAppId, route, body)` → return result. Director's drive commands follow this identical pattern — the mesh client handles routing to the correct pool node. Note: `InjectPerception` is currently local-only (no pool forwarding) but applying the same encounter forwarding pattern is a straightforward Actor enhancement, not a Director design question. The Tier 3 (Drive) Actor-side prerequisites (pause/resume behavior loop, external action handler access) are tracked in Actor issue #599. Interactive latency is an empirical performance concern for post-implementation testing, not an architectural decision.
 
-5. **Directed event persistence scope**: Directed events are MySQL-persisted for post-hoc analysis, but the active coordination state (taps, overrides, drive sessions) is Redis-ephemeral. If Redis restarts during an active event, overrides and taps are lost but the event record survives. Should overrides be reconstructable from the event record, or is "restart interrupts active coordination" an acceptable failure mode?
+5. ~~**Directed event persistence scope**~~: **FIXED** (2026-03-08) - "Restart interrupts active coordination" is the correct failure mode, consistent with every comparable Bannou service. No Bannou service reconstructs Redis ephemeral state from MySQL backup: Connect accepts session loss (clients reconnect), Permission accepts capability loss (recompiled on next heartbeat), Actor accepts scheduled event loss (behavior re-execution re-schedules). Director follows the same pattern: the directed event record (MySQL) survives; active taps, overrides, and drive sessions (Redis) are lost; the developer — who is human and present during active coordination — re-establishes state through normal Director APIs. This is also consistent with Director's own Intentional Quirk #1 (fail-open everywhere): drive sessions auto-release, events auto-complete, the autonomous system never waits for human recovery.
 
-6. **Gardener integration depth**: How deeply should Director integrate with Gardener for player targeting? Option A: Director calls Gardener APIs directly (spawn POI, create template, boost scores). Option B: Director publishes targeting intents and Gardener has a consumer that implements them. Option A is simpler but tightly couples. Option B is cleaner but requires Gardener to understand Director targeting concepts.
+6. ~~**Gardener integration depth**~~: **FIXED** (2026-03-08) - Resolved per FOUNDATION TENETS (Cross-Service Communication Discipline). Director (L4) and Gardener (L4) are same-layer services. T27 mandates direct API calls for same-layer dependencies: `GetService<IGardenerClient>()` + null check with graceful degradation. Option B (publishing targeting intents for Gardener to consume) is the forbidden Inverted Subscription Anti-Pattern — a disguised API call with no synchronous confirmation, no validation feedback, and fire-and-forget semantics for operations requiring reliability. The deep dive already correctly classifies Gardener as a soft dependency with the right degradation behavior ("Player steering unavailable; actors still controllable, event still trackable"). No new pattern needed; this is the standard L4-to-L4 optional dependency pattern used across the codebase.
 
-7. **Action handler pipeline access for drive sessions**: The `ExecuteAction` endpoint needs to route through the actor's `IActionHandler` pipeline. In bannou mode, this is direct access to the ActorRunner's document executor. In pool mode, this requires forwarding the action to the pool node, executing it in the actor's context, and returning the result. The existing pool command pattern (RabbitMQ commands to `actor.node.{appId}.*`) may need a request-reply variant for synchronous drive commands.
+7. ~~**Action handler pipeline access for drive sessions**~~: **FIXED** (2026-03-08) - Resolved as a subset of Design Consideration #4 (cross-node actor driving). In bannou mode, `ExecuteAction` routes through the ActorRunner's `IActionHandler` pipeline directly. In pool mode, Director uses the same `IMeshInvocationClient` forwarding pattern that Actor encounter operations already use — forward the request to the pool node's Actor service instance, which executes locally and returns the response through the mesh. No RabbitMQ request-reply variant needed; the existing mesh HTTP forwarding is synchronous request-response. The Actor-side requirement (exposing `IActionHandler` pipeline for external commands) is tracked in Actor issue #599 as a prerequisite for Tier 3 (Drive).
 
 ---
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase.*
+### Completed
+
+- **Dependency classification fix** (2026-03-08): Moved lib-quest (`IQuestClient`) from soft to hard dependency. L2 dependencies are always hard for L4 services per SERVICE-HIERARCHY.md. Updated dependency table and DI Services list.
+- **Event type naming fix** (2026-03-08): Renamed lifecycle event types from `DirectedEvent*Event` to `DirectorEvent*Event`. With `topic_prefix: director`, the x-lifecycle entity must be `DirectorEvent` (kebab: `director-event`, starts with `director-`) to produce topic `director.event.*` per SCHEMA-RULES.md Pattern C naming rules. `DirectedEvent` (kebab: `directed-event`) would produce `director.directed-event.*` instead.
+- **GOAP override provider discovery resolved** (2026-03-08): Design Consideration #3 resolved — the established Variable Provider Factory caching pattern (used by all 15 existing IVariableProviderFactory implementations) fully answers this concern. Per-tick Redis reads with service-owned cache interface is the standard approach.
+- **Gardener integration depth resolved** (2026-03-08): Design Consideration #6 resolved — T27 mandates direct API calls for same-layer (L4→L4) dependencies with graceful degradation. Option B (publish targeting intents) is the forbidden Inverted Subscription Anti-Pattern. Standard `GetService<IGardenerClient>()` + null check pattern applies.
+- **Cross-node actor driving resolved** (2026-03-08): Design Considerations #4 and #7 resolved — Actor's encounter operations already implement transparent cross-node forwarding via `IMeshInvocationClient`. Director drive commands follow the same mesh forwarding pattern. Actor-side Tier 3 prerequisites (pause/resume, action handler access) tracked in Actor issue #599.
+- **Directed event persistence scope resolved** (2026-03-08): Design Consideration #5 resolved — "restart interrupts active coordination" is the correct failure mode per universal Bannou Redis-ephemeral patterns (Connect sessions, Permission capabilities, Actor scheduled events). No service reconstructs Redis state from MySQL. Developer re-establishes coordination through normal APIs after Redis recovery.

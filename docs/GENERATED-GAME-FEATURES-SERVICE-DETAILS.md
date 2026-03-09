@@ -149,7 +149,7 @@ Loot table management and generation service (L4 GameFeatures) for weighted drop
 
 ## Mapping {#mapping}
 
-**Version**: 1.0.0 | **Schema**: `schemas/mapping-api.yaml` | **Endpoints**: 18 | **Deep Dive**: [docs/plugins/MAPPING.md](plugins/MAPPING.md)
+**Version**: 1.0.0 | **Schema**: `schemas/mapping-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/MAPPING.md](plugins/MAPPING.md)
 
 Spatial data management service (L4 GameFeatures) for Arcadia game worlds. Provides authority-based channel ownership for exclusive write access to spatial regions, high-throughput ingest via dynamic RabbitMQ subscriptions, 3D spatial indexing with affordance queries, and design-time authoring workflows (checkout/commit/release). Purely a spatial data store -- does not perform rendering or physics. Game servers and NPC brains publish spatial data to and query from it.
 
@@ -252,7 +252,7 @@ Time-based automated production service (L4 GameFeatures) for continuous backgro
 ## Summary
 
 - **Services in layer**: 40
-- **Endpoints in layer**: 347
+- **Endpoints in layer**: 348
 
 ---
 

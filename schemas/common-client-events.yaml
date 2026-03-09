@@ -248,7 +248,7 @@ components:
           description: Fixed event type identifier
         notificationType:
           type: string
-          enum: [info, warning, maintenance, announcement]
+          enum: [Info, Warning, Maintenance, Announcement]
           description: Type of notification
         message:
           type: string

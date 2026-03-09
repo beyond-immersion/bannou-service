@@ -1,6 +1,12 @@
 # Why Are Realms Flat and Not Hierarchical?
 
-> **Short Answer**: Because realms are parallel worlds, not nested subdivisions. Arcadia and Fantasia are not regions of a larger world -- they are independent universes with different rules, different species, different cultures, and different histories. Hierarchy implies containment and shared context. Flatness reflects the actual relationship: peer worlds with no structural dependency on each other.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Realm (L2), Location (L2), Game Service (L2), Subscription (L2), Seed (L2), Species (L2), Realm History (L4), Currency (L2)
+> **Short Answer**: Because realms are parallel worlds, not nested subdivisions. Arcadia and
+> Fantasia are not regions of a larger world -- they are independent universes with different
+> rules, different species, different cultures, and different histories. Hierarchy implies
+> containment and shared context. Flatness reflects the actual relationship: peer worlds with
+> no structural dependency on each other.
 
 ---
 

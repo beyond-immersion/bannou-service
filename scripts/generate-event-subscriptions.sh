@@ -159,7 +159,8 @@ if command -v python3 &> /dev/null; then
     fi
 fi
 
-# If no subscriptions found, exit gracefully
+# Determine if we have subscriptions
+HAS_SUBSCRIPTIONS=true
 if [ -z "$SUBSCRIPTIONS_JSON" ] || [ "$SUBSCRIPTIONS_JSON" == "[]" ]; then
     # Check both files for subscription definitions
     HAS_EVENTS_SUBS=false
@@ -171,13 +172,65 @@ if [ -z "$SUBSCRIPTIONS_JSON" ] || [ "$SUBSCRIPTIONS_JSON" == "[]" ]; then
         HAS_API_SUBS=true
     fi
 
-    if [ "$HAS_EVENTS_SUBS" = false ] && [ "$HAS_API_SUBS" = false ]; then
-        echo -e "${YELLOW}  No event subscriptions found - skipping${NC}"
-        exit 0
-    else
-        echo -e "${YELLOW}  Could not parse event subscriptions (Python/PyYAML required)${NC}"
-        exit 0
+    if [ "$HAS_EVENTS_SUBS" = true ] || [ "$HAS_API_SUBS" = true ]; then
+        # Check if the subscriptions are actually non-empty (grep finds the key but value may be [])
+        ACTUALLY_HAS_SUBS=false
+        if [ -f "$EVENTS_SCHEMA" ]; then
+            ACTUALLY_HAS_SUBS=$(python3 -c "
+import yaml, sys
+try:
+    with open('$EVENTS_SCHEMA') as f:
+        schema = yaml.safe_load(f)
+    subs = schema.get('info', {}).get('x-event-subscriptions', [])
+    print('true' if subs else 'false', end='')
+except:
+    print('false', end='')
+" 2>/dev/null || echo "false")
+        fi
+        if [ "$ACTUALLY_HAS_SUBS" = "true" ]; then
+            echo -e "${YELLOW}  Could not parse event subscriptions (Python/PyYAML required)${NC}"
+            exit 0
+        fi
     fi
+
+    HAS_SUBSCRIPTIONS=false
+    echo -e "${YELLOW}  No event subscriptions found${NC}"
+fi
+
+# Generate empty ServiceEvents template if no subscriptions (ensures file always exists)
+if [ "$HAS_SUBSCRIPTIONS" = false ]; then
+    if [ -f "$SERVICE_EVENTS_FILE" ]; then
+        echo -e "${YELLOW}📝 ServiceEvents file already exists, skipping: $SERVICE_EVENTS_FILE${NC}"
+    else
+        echo -e "${YELLOW}🔄 Generating empty ServiceEvents partial class...${NC}"
+
+        cat > "$SERVICE_EVENTS_FILE" << CSHARP_EVENTS_EMPTY
+using BeyondImmersion.BannouService.Events;
+using Microsoft.Extensions.Logging;
+
+namespace BeyondImmersion.BannouService.${SERVICE_PASCAL};
+
+/// <summary>
+/// Partial class for ${SERVICE_PASCAL}Service event handling.
+/// Contains event consumer registration and handler implementations.
+/// </summary>
+public partial class ${SERVICE_PASCAL}Service
+{
+    /// <summary>
+    /// Registers event consumers for pub/sub events this service handles.
+    /// Called from the main service constructor.
+    /// </summary>
+    /// <param name="eventConsumer">The event consumer for registering handlers.</param>
+    protected void RegisterEventConsumers(IEventConsumer eventConsumer)
+    {
+    }
+}
+CSHARP_EVENTS_EMPTY
+
+        echo -e "${GREEN}✅ Generated: $SERVICE_EVENTS_FILE${NC}"
+    fi
+    echo -e "${GREEN}✅ Event subscription generation completed${NC}"
+    exit 0
 fi
 
 # Report which source was used

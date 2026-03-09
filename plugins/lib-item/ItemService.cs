@@ -336,35 +336,36 @@ public partial class ItemService : IItemService
 
         var now = DateTimeOffset.UtcNow;
 
-        // Update mutable fields
-        if (!string.IsNullOrEmpty(body.Name)) model.Name = body.Name;
-        if (body.Description is not null) model.Description = body.Description;
-        if (body.Subcategory is not null) model.Subcategory = body.Subcategory;
-        if (body.Tags is not null) model.Tags = body.Tags.ToList();
-        if (body.Rarity.HasValue) model.Rarity = body.Rarity.Value;
-        if (body.Weight.HasValue) model.Weight = body.Weight;
-        if (body.Volume.HasValue) model.Volume = body.Volume;
-        if (body.GridWidth.HasValue) model.GridWidth = body.GridWidth;
-        if (body.GridHeight.HasValue) model.GridHeight = body.GridHeight;
-        if (body.CanRotate.HasValue) model.CanRotate = body.CanRotate;
-        if (body.BaseValue.HasValue) model.BaseValue = body.BaseValue;
-        if (body.Tradeable.HasValue) model.Tradeable = body.Tradeable.Value;
-        if (body.Destroyable.HasValue) model.Destroyable = body.Destroyable.Value;
-        if (body.MaxDurability.HasValue) model.MaxDurability = body.MaxDurability;
-        if (body.AvailableRealms is not null) model.AvailableRealms = body.AvailableRealms.ToList();
-        if (body.Stats is not null) model.Stats = BannouJson.Serialize(body.Stats);
-        if (body.Effects is not null) model.Effects = BannouJson.Serialize(body.Effects);
-        if (body.Requirements is not null) model.Requirements = BannouJson.Serialize(body.Requirements);
-        if (body.Display is not null) model.Display = BannouJson.Serialize(body.Display);
-        if (body.Metadata is not null) model.Metadata = BannouJson.Serialize(body.Metadata);
+        // Update mutable fields, tracking which fields changed
+        var changedFields = new List<string>();
+        if (!string.IsNullOrEmpty(body.Name)) { model.Name = body.Name; changedFields.Add("name"); }
+        if (body.Description is not null) { model.Description = body.Description; changedFields.Add("description"); }
+        if (body.Subcategory is not null) { model.Subcategory = body.Subcategory; changedFields.Add("subcategory"); }
+        if (body.Tags is not null) { model.Tags = body.Tags.ToList(); changedFields.Add("tags"); }
+        if (body.Rarity.HasValue) { model.Rarity = body.Rarity.Value; changedFields.Add("rarity"); }
+        if (body.Weight.HasValue) { model.Weight = body.Weight; changedFields.Add("weight"); }
+        if (body.Volume.HasValue) { model.Volume = body.Volume; changedFields.Add("volume"); }
+        if (body.GridWidth.HasValue) { model.GridWidth = body.GridWidth; changedFields.Add("gridWidth"); }
+        if (body.GridHeight.HasValue) { model.GridHeight = body.GridHeight; changedFields.Add("gridHeight"); }
+        if (body.CanRotate.HasValue) { model.CanRotate = body.CanRotate; changedFields.Add("canRotate"); }
+        if (body.BaseValue.HasValue) { model.BaseValue = body.BaseValue; changedFields.Add("baseValue"); }
+        if (body.Tradeable.HasValue) { model.Tradeable = body.Tradeable.Value; changedFields.Add("tradeable"); }
+        if (body.Destroyable.HasValue) { model.Destroyable = body.Destroyable.Value; changedFields.Add("destroyable"); }
+        if (body.MaxDurability.HasValue) { model.MaxDurability = body.MaxDurability; changedFields.Add("maxDurability"); }
+        if (body.AvailableRealms is not null) { model.AvailableRealms = body.AvailableRealms.ToList(); changedFields.Add("availableRealms"); }
+        if (body.Stats is not null) { model.Stats = BannouJson.Serialize(body.Stats); changedFields.Add("stats"); }
+        if (body.Effects is not null) { model.Effects = BannouJson.Serialize(body.Effects); changedFields.Add("effects"); }
+        if (body.Requirements is not null) { model.Requirements = BannouJson.Serialize(body.Requirements); changedFields.Add("requirements"); }
+        if (body.Display is not null) { model.Display = BannouJson.Serialize(body.Display); changedFields.Add("display"); }
+        if (body.Metadata is not null) { model.Metadata = BannouJson.Serialize(body.Metadata); changedFields.Add("metadata"); }
         // Contract template IDs: null in request means "don't change", explicit value updates it
         // To clear, caller must pass the null GUID explicitly via a separate endpoint or admin action
-        if (body.UseBehaviorContractTemplateId.HasValue) model.UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId;
-        if (body.CanUseBehaviorContractTemplateId.HasValue) model.CanUseBehaviorContractTemplateId = body.CanUseBehaviorContractTemplateId;
-        if (body.OnUseFailedBehaviorContractTemplateId.HasValue) model.OnUseFailedBehaviorContractTemplateId = body.OnUseFailedBehaviorContractTemplateId;
-        if (body.ItemUseBehavior.HasValue) model.ItemUseBehavior = body.ItemUseBehavior.Value;
-        if (body.CanUseBehavior.HasValue) model.CanUseBehavior = body.CanUseBehavior.Value;
-        if (body.IsActive.HasValue) model.IsActive = body.IsActive.Value;
+        if (body.UseBehaviorContractTemplateId.HasValue) { model.UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId; changedFields.Add("useBehaviorContractTemplateId"); }
+        if (body.CanUseBehaviorContractTemplateId.HasValue) { model.CanUseBehaviorContractTemplateId = body.CanUseBehaviorContractTemplateId; changedFields.Add("canUseBehaviorContractTemplateId"); }
+        if (body.OnUseFailedBehaviorContractTemplateId.HasValue) { model.OnUseFailedBehaviorContractTemplateId = body.OnUseFailedBehaviorContractTemplateId; changedFields.Add("onUseFailedBehaviorContractTemplateId"); }
+        if (body.ItemUseBehavior.HasValue) { model.ItemUseBehavior = body.ItemUseBehavior.Value; changedFields.Add("itemUseBehavior"); }
+        if (body.CanUseBehavior.HasValue) { model.CanUseBehavior = body.CanUseBehavior.Value; changedFields.Add("canUseBehavior"); }
+        if (body.IsActive.HasValue) { model.IsActive = body.IsActive.Value; changedFields.Add("isActive"); }
         model.UpdatedAt = now;
 
         await _templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
@@ -397,7 +398,8 @@ public partial class ItemService : IItemService
             DeprecationReason = model.DeprecationReason,
             MigrationTargetId = model.MigrationTargetId,
             CreatedAt = model.CreatedAt,
-            UpdatedAt = now
+            UpdatedAt = now,
+            ChangedFields = changedFields
         }, cancellationToken);
 
         _logger.LogDebug("Updated item template {TemplateId}", body.TemplateId);

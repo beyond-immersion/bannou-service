@@ -1,5 +1,7 @@
 # Why Is Game Session at Layer 2 Instead of Layer 4?
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Game Session (L2), Matchmaking (L4), Subscription (L2), Permission (L1), Connect (L1), Gardener (L4)
 > **Short Answer**: Because "characters are in a game session" is a foundational fact about the game world, not an optional feature. Game Session tracks which characters are actively playing, manages lobby entry points for subscribed accounts, and coordinates permission state transitions. If Game Session were L4, the foundational services (Character, Actor, Quest) could not assume characters have active sessions, and the Matchmaking service (L4) would have no guaranteed session infrastructure to create matches into.
 
 ---
@@ -57,7 +59,7 @@ Game Session is deliberately minimal. It manages session existence, session memb
 
 - **Run game logic.** The actual game simulation is a client-side and game-server concern. Game Session tracks "who is in this session," not "what is happening in this session."
 - **Handle matchmaking logic.** Queue management, skill windows, party grouping, and match algorithms are in Matchmaking (L4). Game Session just provides the sessions that matchmaking creates.
-- **Manage voice channels.** Voice room lifecycle is handled by the Voice service (L4). Game Session integrates with Voice (when a session starts, a voice room may be created) but does not manage the voice infrastructure.
+- **Manage voice channels.** Voice room lifecycle is handled by the Voice service (L3). Game Session integrates with Voice (when a session starts, a voice room may be created) but does not manage the voice infrastructure.
 - **Store game state.** Game state persistence is handled by Save-Load (L4). Game Session knows the session exists; Save-Load knows what happened in it.
 
 This minimalism is why it belongs at L2. It provides the foundational fact ("these characters are in a session together") without any optional feature logic.
@@ -101,7 +103,7 @@ The distinction between Game Session (L2) and Matchmaking (L4) illustrates the l
 |---------|-------------------|-------------------|
 | What it does | Manages session existence and membership | Finds matches between players |
 | Always needed? | Yes -- every game has sessions | No -- not every game has competitive matching |
-| Dependencies | L1 (Connect, Permission), L2 (Subscription) | L2 (Game Session, Character), L4 (Analytics for skill ratings) |
+| Dependencies | L1 (Connect, Permission), L2 (Subscription) | L1 (Permission), L2 (Game Session) |
 | If disabled | Game cannot start -- no sessions to join | Game works -- players join lobbies directly |
 | Scaling model | Per-game partitioning | Queue processing intervals |
 

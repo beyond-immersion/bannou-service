@@ -1,6 +1,12 @@
 # Why Does Bannou Use Client-Salted GUIDs Instead of Endpoint URLs?
 
-> **Short Answer**: Because fixed endpoint URLs are a security liability in a persistent-connection architecture. If every client uses the same URL for the same endpoint, a captured message from one session can be replayed against another. Client-salted GUIDs make each session's endpoint identifiers unique, ephemeral, and cryptographically useless outside their originating session.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Connect (L1), Permission (L1)
+> **Short Answer**: Because fixed endpoint URLs are a security liability in a
+> persistent-connection architecture. If every client uses the same URL for the
+> same endpoint, a captured message from one session can be replayed against
+> another. Client-salted GUIDs make each session's endpoint identifiers unique,
+> ephemeral, and cryptographically useless outside their originating session.
 
 ---
 
@@ -100,7 +106,7 @@ Client-salted GUIDs make debugging harder. You cannot look at a captured message
 Bannou accepts this trade-off because:
 
 - **Development tooling compensates.** Swagger UI is available for HTTP-based testing. The edge-tester project provides structured WebSocket testing. The binary protocol is documented. Every service also exposes its meta endpoints via standard HTTP GET, so direct service testing during development works with conventional tools.
-- **Meta endpoints work through the same protocol.** Clients can request runtime schema introspection for any endpoint by sending a message with the Meta flag (0x40) set and the endpoint's salted GUID. Connect intercepts the meta request and returns the endpoint's JSON schema -- request format, response format, operation metadata -- through the same binary protocol. This means even with opaque GUIDs, a client SDK can dynamically discover not just *what* endpoints exist (via the capability manifest) but *what they accept and return* (via meta requests). The GUIDs are opaque for security, but the protocol is fully self-describing for functionality.
+- **Meta endpoints work through the same protocol.** Clients can request runtime schema introspection for any endpoint by sending a message with the Meta flag (0x80) set and the endpoint's salted GUID. Connect intercepts the meta request and returns the endpoint's JSON schema -- request format, response format, operation metadata -- through the same binary protocol. This means even with opaque GUIDs, a client SDK can dynamically discover not just *what* endpoints exist (via the capability manifest) but *what they accept and return* (via meta requests). The GUIDs are opaque for security, but the protocol is fully self-describing for functionality.
 - **Security is load-bearing.** In a system where 100,000+ concurrent connections share the same infrastructure, cross-session message injection is a real threat, not a theoretical concern.
 - **The manifest is self-documenting.** Clients do not need external API documentation to discover available endpoints. The manifest tells them what exists, meta requests tell them how to call it, and both update in real time.
 

@@ -72,4 +72,17 @@ python3 "$SCRIPT_DIR/generate-client-events-docs.py"
 echo "  → Generating metadata properties reference..."
 python3 "$SCRIPT_DIR/generate-metadata-docs.py"
 
+# Generate document catalogs
+echo "  → Generating guides catalog..."
+python3 "$SCRIPT_DIR/generate-guides-catalog.py"
+
+echo "  → Generating planning catalog..."
+python3 "$SCRIPT_DIR/generate-planning-catalog.py"
+
+echo "  → Generating FAQ catalog..."
+python3 "$SCRIPT_DIR/generate-faq-catalog.py"
+
+echo "  → Generating operations catalog..."
+python3 "$SCRIPT_DIR/generate-operations-catalog.py"
+
 echo "✅ Documentation generation complete"

@@ -506,13 +506,6 @@ public partial class NonAuthorityAlertConfig
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// Custom topic for warnings (default map.warnings.unauthorized-publish)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("alertTopic")]
-    [System.ComponentModel.DataAnnotations.StringLength(512)]
-    public string? AlertTopic { get; set; } = default!;
-
-    /// <summary>
     /// Include truncated payload in warning for debugging
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includePayloadSummary")]
@@ -674,6 +667,23 @@ public partial class CreateChannelRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("initialSnapshot")]
     public System.Collections.Generic.ICollection<MapPayload>? InitialSnapshot { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to delete a map channel and all its data
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteChannelRequest
+{
+
+    /// <summary>
+    /// Channel to delete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("channelId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ChannelId { get; set; } = default!;
 
 }
 

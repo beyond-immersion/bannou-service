@@ -1,6 +1,11 @@
 # Why Are Character Personality, History, and Encounters THREE Separate Services?
 
-> **Short Answer**: Because they have different data lifecycles, different scaling profiles, different consumers, and different eviction strategies. Merging them would either couple the Actor runtime to a monolithic dependency or force a single service to juggle three incompatible state management patterns.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Character Personality (L4), Character History (L4), Character Encounter (L4), Character (L2), Actor (L2)
+> **Short Answer**: Because they have different data lifecycles, different scaling profiles,
+> different consumers, and different eviction strategies. Merging them would either couple
+> the Actor runtime to a monolithic dependency or force a single service to juggle three
+> incompatible state management patterns.
 
 ---
 
@@ -20,19 +25,19 @@ The answer has nothing to do with organizational preference and everything to do
 
 Personality traits are **continuously mutating floating-point values on bipolar axes**. Aggression, curiosity, loyalty, discipline -- each is a number between -1.0 and 1.0 that shifts probabilistically based on character experiences. A character who witnesses repeated betrayals drifts toward suspicion. One who succeeds at diplomacy drifts toward sociability.
 
-These values change **frequently** (potentially every behavior tick), change **incrementally** (small floating-point adjustments), and are **read on every NPC decision cycle** (every 100-500ms for active actors). The storage pattern is a hot Redis cache with periodic MySQL persistence. The eviction strategy is "never evict active characters" because the Actor runtime reads personality values on every tick.
+These values change **frequently** (potentially every behavior tick), change **incrementally** (small floating-point adjustments), and are **read on every NPC decision cycle** (every 100-500ms for active actors). The storage pattern is MySQL persistence with a singleton in-memory cache (`IPersonalityDataCache`) that has a configurable TTL and is invalidated on evolution events. The eviction strategy is "keep active characters cached" because the Actor runtime reads personality values on every tick via the variable provider factory.
 
 ### Character History
 
 History entries are **append-only records of participation in world events**. A character fought in the Battle of Ironvale. A character witnessed the coronation of Queen Sera. A character survived the Red Plague. These are written once, never modified, and queried infrequently -- primarily during character compression (when the character dies and their life archive is created for the content flywheel) or when the Storyline service needs backstory data for narrative generation.
 
-The storage pattern is MySQL-primary with minimal Redis caching. Records accumulate over a character's lifetime and can number in the hundreds. They are rarely read during active gameplay -- the behavior system only accesses a summarized backstory, not individual historical events.
+The storage pattern is MySQL with a singleton in-memory backstory cache (`IBackstoryCache`) that has a longer TTL (backstory data is nearly immutable). Records accumulate over a character's lifetime and can number in the hundreds. They are rarely read during active gameplay -- the behavior system only accesses a summarized backstory via the cache, not individual historical events.
 
 ### Character Encounters
 
 Encounters are **decaying interaction records between character pairs**. When two characters interact memorably (trade, fight, have a conversation, betray each other), the encounter is recorded with per-participant sentiment perspectives. These records decay over time -- a grudge from five years ago weighs less than one from yesterday. The service maintains per-character and per-pair limits, automatically pruning the least significant encounters when limits are exceeded.
 
-The storage pattern is Redis-primary with time-weighted scoring. Encounters are read frequently during NPC decisions ("have I met this person before? do I like them?") but are also actively pruned and re-scored. The eviction strategy involves both TTL-based decay and active limit enforcement -- fundamentally different from both personality's "never evict" and history's "never delete."
+The storage pattern is MySQL with a singleton in-memory cache (`IEncounterDataCache`) for actor behavior queries, plus lazy or scheduled memory decay. Encounters are read frequently during NPC decisions ("have I met this person before? do I like them?") but are also actively pruned and re-scored. The eviction strategy involves both time-based memory decay (strength reduction per interval) and active limit enforcement (per-character and per-pair maximums with oldest-first pruning) -- fundamentally different from both personality's "cache and invalidate on evolution" and history's "cache with long TTL."
 
 ---
 
@@ -40,11 +45,11 @@ The storage pattern is Redis-primary with time-weighted scoring. Encounters are 
 
 At the target scale of 100,000+ concurrent NPCs:
 
-- **Personality** is read-heavy with small, frequent writes. 100,000 NPCs reading personality every 100-500ms means 200,000-1,000,000 reads per second. This is a hot cache problem.
+- **Personality** is read-heavy with small, frequent writes. 100,000 NPCs reading personality every 100-500ms means 200,000-1,000,000 reads per second. This is a hot cache problem solved by singleton in-memory caching with event-driven invalidation.
 - **History** is write-heavy with infrequent reads. Events happen, characters participate, records are appended. Reads happen mainly during compression or narrative generation -- batch operations, not real-time queries.
-- **Encounters** are read-write with active pruning. Every NPC interaction potentially creates or updates an encounter record AND triggers decay recalculation for existing records. This is a sorted-set problem best solved with Redis ZRANGEBYSCORE operations.
+- **Encounters** are read-write with active pruning. Every NPC interaction potentially creates or updates an encounter record AND triggers decay recalculation for existing records. This is an index-heavy problem with multiple access patterns (per-character, per-pair, per-location, per-type) and dual eviction strategies (memory decay and limit enforcement).
 
-If these were one service, you would need to scale it to handle the combined load of all three patterns simultaneously. Since the read-heavy personality pattern dominates, you would massively over-provision for history writes. Since the pruning pattern of encounters requires different Redis data structures than the simple key-value pattern of personality, you would need both patterns in the same service's state management.
+If these were one service, you would need to scale it to handle the combined load of all three patterns simultaneously. Since the read-heavy personality pattern dominates, you would massively over-provision for history writes. Since the pruning and multi-index pattern of encounters requires different state management than the simple key-value pattern of personality, you would need both patterns in the same service's state management.
 
 Keeping them separate means each scales according to its own characteristics.
 
@@ -66,7 +71,7 @@ Merging them into one service means one failure takes out all three variable nam
 
 ## The Hierarchy Argument
 
-All three are Layer 4 (Game Features). They all depend on Character (Layer 2) for the entity they describe. None of them depend on each other.
+All three are Layer 4 (Game Features). They all describe aspects of a Character (Layer 2) entity -- Character Encounter directly injects `ICharacterClient` for participant validation, while Character Personality and Character History are linked to characters via lib-resource cleanup callbacks (triggered when a character is deleted). None of the three depend on each other.
 
 This independence is architecturally significant. Character Personality evolves from experience events. Character History records from world events. Character Encounters form from interaction events. These are three independent event streams with three independent consumers. Merging them into one service creates artificial coupling between event processing pipelines that have no reason to be coupled.
 
@@ -78,7 +83,7 @@ If a bug in encounter pruning logic causes the service to crash, personality evo
 
 Imagine a deployment that wants NPCs with personality and backstory but doesn't need encounter tracking (maybe it's a single-player narrative game, not a social simulation).
 
-With three services: disable `lib-character-encounter`. The Actor runtime's Variable Provider Factory discovers two providers instead of three. NPCs make decisions without encounter data. Everything else works.
+With three services: disable `lib-character-encounter`. The Actor runtime's Variable Provider Factory discovers three providers instead of four (Character Personality registers two: `${personality.*}` and `${combat.*}`; Character History registers one: `${backstory.*}`). NPCs make decisions without encounter data. Everything else works.
 
 With one merged service: you can't disable encounter tracking without also losing personality and history. The "optional Game Features" promise of Layer 4 breaks down.
 

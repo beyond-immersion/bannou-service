@@ -45,6 +45,22 @@ public sealed class MappingProxy
     }
 
     /// <summary>
+    /// Delete a map channel and all its data
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task DeleteChannelEventAsync(
+        DeleteChannelRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<DeleteChannelRequest>(
+            "/mapping/delete-channel", request, channel, cancellationToken);
+    }
+
+    /// <summary>
     /// Release authority over a channel
     /// </summary>
     /// <param name="request">The request payload.</param>

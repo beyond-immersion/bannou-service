@@ -118,12 +118,6 @@ public partial class MappingController
                     "default": true,
                     "description": "Whether to emit warning events"
                 },
-                "alertTopic": {
-                    "type": "string",
-                    "maxLength": 512,
-                    "description": "Custom topic for warnings (default map.warnings.unauthorized-publish)",
-                    "nullable": true
-                },
                 "includePayloadSummary": {
                     "type": "boolean",
                     "default": false,
@@ -303,6 +297,90 @@ public partial class MappingController
             _CreateChannel_Info,
             _CreateChannel_RequestSchema,
             _CreateChannel_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteChannel
+
+    private static readonly string _DeleteChannel_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteChannelRequest",
+    "$defs": {
+        "DeleteChannelRequest": {
+            "type": "object",
+            "description": "Request to delete a map channel and all its data",
+            "additionalProperties": false,
+            "required": [
+                "channelId"
+            ],
+            "properties": {
+                "channelId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Channel to delete"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteChannel_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DeleteChannel_Info = """
+{
+    "summary": "Delete a map channel and all its data",
+    "description": "Permanently deletes a channel, its authority record, all map objects,\nspatial/type/region indexes, version counter, and ingest subscription.\nRequires the channel to have no active authority (release first).\n",
+    "tags": [
+        "Authority"
+    ],
+    "deprecated": false,
+    "operationId": "deleteChannel"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteChannel</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/mapping/delete-channel/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteChannel_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Mapping",
+            "POST",
+            "/mapping/delete-channel",
+            _DeleteChannel_Info));
+
+    /// <summary>Returns request schema for DeleteChannel</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/mapping/delete-channel/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteChannel_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "POST",
+            "/mapping/delete-channel",
+            "request-schema",
+            _DeleteChannel_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteChannel</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/mapping/delete-channel/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteChannel_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "POST",
+            "/mapping/delete-channel",
+            "response-schema",
+            _DeleteChannel_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteChannel</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/mapping/delete-channel/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteChannel_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Mapping",
+            "POST",
+            "/mapping/delete-channel",
+            _DeleteChannel_Info,
+            _DeleteChannel_RequestSchema,
+            _DeleteChannel_ResponseSchema));
 
     #endregion
 

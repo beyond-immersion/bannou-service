@@ -1,5 +1,7 @@
 # How Do NPCs Actually Think? (The ABML/GOAP Behavior Stack)
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Actor (L2), Behavior (L4), Puppetmaster (L4), Character Personality (L4), Character Encounter (L4), Character History (L4), Storyline (L4), Music (L4)
 > **Short Answer**: NPCs run a 5-stage cognition pipeline (perceive, appraise, remember, evaluate goals, form intentions) powered by two complementary systems: ABML (Arcadia Behavior Markup Language) for reactive scripted behaviors compiled to portable bytecode, and GOAP (Goal-Oriented Action Planning) for dynamic goal-seeking through A* search over action spaces. The Actor service (L2) executes the bytecode; the Behavior service (L4) compiles it and runs the planner.
 
 ---
@@ -122,9 +124,10 @@ GOAP is Arcadia's universal planner. The same A* search over action spaces is us
 
 - **NPC behavior** (Actor + Behavior): "How do I achieve my goal given available actions?"
 - **Narrative generation** (Storyline): "What sequence of narrative phases transforms this archive into a compelling story?"
-- **Music composition** (Music): "What sequence of harmonic techniques transforms the current emotional state into the target emotion?"
 - **Combat choreography** (Event Brain via Actor): "What sequence of moves creates a cinematic exchange given these two characters' capabilities?"
 
-One planning paradigm means one set of improvements benefits every system. A better cost heuristic for GOAP planning makes NPCs more efficient, narratives more coherent, compositions more sophisticated, and combat more cinematic simultaneously.
+Music composition uses a related but separate approach: the `MusicStoryteller` SDK plans emotional arcs through narrative templates and contour/density guidance rather than GOAP's A* action search. The planning metaphor is similar (transform current state into target state), but the implementation is SDK-specific rather than sharing the GOAP planner.
+
+For the systems that do share GOAP, one planning paradigm means one set of improvements benefits every system. A better cost heuristic for GOAP planning makes NPCs more efficient, narratives more coherent, and combat more cinematic simultaneously.
 
 This is not accidental. It is a deliberate design principle: emergent behavior from general systems rather than scripted behavior from special-case systems.

@@ -26,6 +26,8 @@ Three subsystems:
 
 3. **Influence Registry**: Definitions of spirit influence types (nudges) that the player can send to their possessed character. Each influence maps to an Actor perception type and has compliance factors that determine how likely the character is to accept it.
 
+**Cross-generational persistence**: Guardian seed growth persists across character lifetimes because seeds are account-owned, not character-owned. When a character dies, the spirit's accumulated capabilities (and therefore its UX manifest) are unaffected. The spirit carries its full agency into whatever character it possesses next.
+
 **What Agency is NOT**:
 - **Not a permission system.** Permission (L1) gates API endpoint access based on roles and states. Agency gates UX module visibility based on spirit growth. They use similar push mechanisms but serve orthogonal purposes.
 - **Not a skill system.** Seed (L2) tracks capability depth and fidelity. Agency translates those numbers into UX decisions. Agency does not own growth, thresholds, or capability computation -- Seed does.
@@ -273,8 +275,11 @@ perception_handler:
     # Actor (L2) publishes to its own namespace; Agency (L4) subscribes and
     # re-publishes as agency.influence.resisted (hierarchy-safe relay)
     # Resistance may increase resentment (via Disposition)
+    # NOTE: Disposition's actual recording API shape must be confirmed during
+    # implementation — the endpoint may accept structured feeling records rather
+    # than raw axis+delta pairs. Coordinate with Disposition's schema design.
     - call: /disposition/feeling/record
-      with: { target: "guardian", axis: "resentment", delta: 0.02 }
+      with: { targetType: "Character", targetId: guardian_character_id, axis: "resentment", delta: 0.02 }
 ```
 
 ---
@@ -283,19 +288,22 @@ perception_handler:
 
 ### ManifestRecomputeWorker
 
-**Trigger**: `seed.capability.updated` and `seed.growth.recorded` events, debounced by `ManifestRecomputeDebounceMs`.
+**Trigger**: `seed.capability.updated`, `seed.growth.recorded`, and `disposition.guardian.shifted` events, debounced by `ManifestRecomputeDebounceMs`.
+
+The `disposition.guardian.shifted` trigger is necessary because `${spirit.compliance_base}` depends on Disposition's guardian feelings (trust, resentment, familiarity). When guardian feelings change (e.g., after repeated forced overrides or positive compliance), the compliance base changes, which affects which influences are effectively available and how the character responds to nudges. Without this subscription, compliance variables would go stale until the next seed growth event.
 
 **Multi-instance safety**: Debounce timers MUST be Redis-based (e.g., Redis key with TTL per seed), not in-memory. In-memory timers are per-instance and would cause duplicate recomputation across nodes (T9).
 
 **Process**:
-1. Receive seed capability change event
+1. Receive seed capability change event or disposition guardian shift event
 2. Check Redis debounce key -- if another event for this seed arrived within the debounce window, reset TTL
 3. After debounce settles, fetch seed's full capability manifest from Seed service
 4. If `CrossSeedPollinationEnabled`, also fetch capabilities from other seeds owned by the same account (apply `CrossSeedPollinationFactor` multiplier to cross-seed depths)
-5. For each registered module, evaluate whether depth meets threshold and compute fidelity level
-6. For each registered influence, evaluate whether depth meets threshold
-7. Compare with cached manifest
-8. If changed: update Redis cache, write to history store, publish `agency.manifest.updated`
+5. Fetch guardian feelings from Disposition (soft dependency -- use `DefaultComplianceBase` if unavailable)
+6. For each registered module, evaluate whether depth meets threshold and compute fidelity level
+7. For each registered influence, evaluate whether depth meets threshold
+8. Compare with cached manifest
+9. If changed: update Redis cache, write to history store, publish `agency.manifest.updated`
 
 ---
 
@@ -310,7 +318,7 @@ perception_handler:
 
 ### Phase 2: Manifest Engine (4 endpoints)
 - Implement manifest computation from seed capabilities
-- Add Redis caching (agency-manifests)
+- Add Redis caching (agency-manifest-cache)
 - Implement manifest get, recompute, diff, history
 - Subscribe to seed.capability.updated events
 - Implement ManifestRecomputeWorker with debouncing
@@ -350,13 +358,13 @@ perception_handler:
 
 **Critical (must resolve before writing schemas):**
 
-1. **Missing x-lifecycle events.** Three CRUD entity types (domains, modules, influences) only define custom "registered" events. Must use `x-lifecycle` with `topic_prefix: agency` for full CRUD event coverage per T5.
+1. ~~**Missing x-lifecycle events**~~: **FIXED** (2026-03-08) - Implementation map now specifies 9 lifecycle events (created/updated/deleted for domain, module, influence) using `x-lifecycle` with `topic_prefix: agency` for Pattern C topic naming (`agency.domain.created`, etc.).
 
-2. **Missing x-permissions on all 22 endpoints.** Per T13, every endpoint must declare x-permissions. Admin CRUD endpoints need `developer` role; runtime query endpoints need appropriate permissions.
+2. ~~**Missing x-permissions on all 22 endpoints**~~: **FIXED** (2026-03-08) - Implementation map specifies roles for all 22 endpoints: `developer` for admin CRUD (domain/module/influence management, seed-config, recompute), `user` for runtime queries (manifest get/diff/history, influence evaluate/execute).
 
-3. **ComplianceFactors schema must be typed.** ~~Described as "dict" which implies `additionalProperties: true`.~~ Fixed above: use array of `{axisCode, weight}` objects since Agency reads specific keys (T29).
+3. ~~**ComplianceFactors schema must be typed**~~: **FIXED** (2026-03-08) - ComplianceFactors defined as typed array of `{axisCode: string, weight: float}` objects. Agency reads specific keys per T29; `additionalProperties: true` pattern avoided.
 
-4. **Actor→Agency event hierarchy violation.** ~~ABML example had `publish: agency.influence.resisted` from Actor (L2) to Agency (L4) namespace.~~ Fixed above: Actor publishes `actor.spirit-nudge.resisted`; Agency subscribes and relays.
+4. ~~**Actor→Agency event hierarchy violation**~~: **FIXED** (2026-03-08) - Actor (L2) now publishes `actor.spirit-nudge.resisted` to its own namespace; Agency (L4) subscribes and relays as `agency.influence.resisted`. Hierarchy-safe event relay pattern.
 
 5. **Missing lib-resource integration for seed-keyed data.** `agency-manifest-history` (MySQL) is persistent data keyed by seedId. Must implement `ISeededResourceProvider` and declare `x-references` with `target: seed, onDelete: cascade` per T28.
 
@@ -364,9 +372,9 @@ perception_handler:
 
 6. **ManifestRecomputeWorker debouncing must use Redis**, not in-memory timers. Per-instance timers cause duplicate recomputation across nodes (T9).
 
-7. **Compliance formula magic numbers** now extracted to config properties (see [Implementation Map](../maps/AGENCY.md) Configuration section).
+7. ~~**Compliance formula magic numbers**~~: **FIXED** (2026-03-08) - All formula coefficients (`ComplianceResentmentWeight`, `ComplianceFamiliarityScale`, `ComplianceFamiliarityFloor`, `DefaultComplianceBase`) documented as configurable properties in deep dive and referenced throughout implementation map pseudo-code.
 
-8. **Rolling window for influence frequency** now configurable via `InfluenceFrequencyWindowMinutes` (see [Implementation Map](../maps/AGENCY.md) Configuration section).
+8. ~~**Rolling window for influence frequency**~~: **FIXED** (2026-03-08) - `InfluenceFrequencyWindowMinutes` configurable property documented in deep dive (default 5 minutes) and referenced in implementation map pseudo-code for rolling window calculation.
 
 9. **Influence frequency counters must use Redis** (sorted sets or atomic counters), not in-memory state, for multi-instance safety (T9).
 
@@ -374,7 +382,7 @@ perception_handler:
 
 11. **FidelityCurve needs validation keywords**: `minItems: 1`, reasonable `maxItems`, `minimum: 0.0` on items.
 
-12. **State store naming**: rename `agency-manifests` to `agency-manifest-cache` per naming convention. Add `agency-lock` for distributed locking. Add `prefix` to Redis store declarations.
+12. ~~**State store naming**~~: **FIXED** (2026-03-08) - Header and implementation map updated to `agency-manifest-cache`; `agency-lock` added for distributed locking. Redis `prefix` declarations will be added when `state-stores.yaml` entries are created during implementation.
 
 13. **All config properties need `env:` keys** with `AGENCY_` prefix in configuration schema.
 
@@ -411,6 +419,7 @@ perception_handler:
 ### Design Considerations (Requires Planning)
 
 1. **Cross-seed capability aggregation.** PLAYER-VISION says "accumulated experience crosses seed boundaries." Same-type cross-seed sharing is implemented in Seed ([#353](https://github.com/beyond-immersion/bannou-service/issues/353), closed). Cross-type transfer deferred ([#354](https://github.com/beyond-immersion/bannou-service/issues/354), open). **Needs clarification**: does Agency apply its own `CrossSeedPollinationFactor` on top of what Seed already handles internally, or does it just read the already-pollinated capabilities from Seed? If Seed's `SameOwnerGrowthMultiplier` already handles same-type pollination, Agency's `CrossSeedPollinationFactor` may be redundant or may only apply to cross-type scenarios.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/610 -->
 
 2. **Realm-specific module sets.** Game-service scoping is sufficient for now. Realm-specific scoping would require a RealmId field on module definitions.
 

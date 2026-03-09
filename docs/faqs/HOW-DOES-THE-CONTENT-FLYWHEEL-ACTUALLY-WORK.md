@@ -1,5 +1,7 @@
 # How Does the Content Flywheel Actually Work?
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Character History (L4), Character Personality (L4), Character Encounter (L4), Realm History (L4), Resource (L1), Storyline (L4), Puppetmaster (L4), Actor (L2), Quest (L2), Contract (L1), Procedural (L4)
 > **Short Answer**: When characters die, their life data is compressed into archives. The Storyline service generates narrative seeds from those archives. Regional Watchers orchestrate those seeds into new scenarios. New players encounter those scenarios, live their own lives, die, and become new archives. The loop accelerates: Year 1 produces roughly 1,000 story seeds; Year 5 produces roughly 500,000.
 
 ---

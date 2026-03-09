@@ -106,6 +106,48 @@ public class CurrencyServiceConfiguration : BaseServiceConfiguration
     public int HoldMaxDurationDays { get; set; } = 7;
 
     /// <summary>
+    /// Delay in seconds before first currency expiration task cycle (allows services to start)
+    /// Environment variable: CURRENCY_EXPIRATION_TASK_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
+    public int CurrencyExpirationTaskStartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
+    /// How often to process currency expirations in milliseconds (default 1 hour)
+    /// Environment variable: CURRENCY_EXPIRATION_TASK_INTERVAL_MS
+    /// </summary>
+    [ConfigRange(Minimum = 1000, Maximum = 86400000)]
+    public int CurrencyExpirationTaskIntervalMs { get; set; } = 3600000;
+
+    /// <summary>
+    /// Number of expired currency records to process per cycle
+    /// Environment variable: CURRENCY_EXPIRATION_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100000)]
+    public int CurrencyExpirationBatchSize { get; set; } = 500;
+
+    /// <summary>
+    /// Delay in seconds before first hold expiration task cycle (allows services to start)
+    /// Environment variable: CURRENCY_HOLD_EXPIRATION_TASK_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
+    public int HoldExpirationTaskStartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
+    /// How often to process hold expirations in milliseconds (default 5 minutes)
+    /// Environment variable: CURRENCY_HOLD_EXPIRATION_TASK_INTERVAL_MS
+    /// </summary>
+    [ConfigRange(Minimum = 1000, Maximum = 86400000)]
+    public int HoldExpirationTaskIntervalMs { get; set; } = 300000;
+
+    /// <summary>
+    /// Number of expired holds to process per cycle
+    /// Environment variable: CURRENCY_HOLD_EXPIRATION_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100000)]
+    public int HoldExpirationBatchSize { get; set; } = 500;
+
+    /// <summary>
     /// TTL in seconds for currency variable provider in-memory cache entries
     /// Environment variable: CURRENCY_PROVIDER_CACHE_TTL_SECONDS
     /// </summary>

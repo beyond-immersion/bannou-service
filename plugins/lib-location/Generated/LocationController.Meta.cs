@@ -188,18 +188,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -441,18 +441,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -771,18 +771,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -1101,18 +1101,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -1431,18 +1431,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -1761,18 +1761,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -2048,18 +2048,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -2164,8 +2164,8 @@ public partial class LocationController
             "type": "string",
             "description": "Territory validation mode for constraint checking",
             "enum": [
-                "exclusive",
-                "inclusive"
+                "Exclusive",
+                "Inclusive"
             ]
         }
     }
@@ -2525,18 +2525,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -2713,18 +2713,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -2878,18 +2878,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -3056,18 +3056,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -3221,18 +3221,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -3472,18 +3472,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -3717,18 +3717,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -4052,18 +4052,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -4303,18 +4303,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -4548,18 +4548,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -4973,18 +4973,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -5187,18 +5187,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }
@@ -6037,18 +6037,18 @@ public partial class LocationController
             "type": "string",
             "description": "Precision level of spatial bounds for a location",
             "enum": [
-                "exact",
-                "approximate",
-                "none"
+                "Exact",
+                "Approximate",
+                "None"
             ]
         },
         "CoordinateMode": {
             "type": "string",
             "description": "How this location's coordinate system relates to its parent",
             "enum": [
-                "inherit",
-                "local",
-                "portal"
+                "Inherit",
+                "Local",
+                "Portal"
             ]
         }
     }

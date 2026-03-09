@@ -489,7 +489,7 @@ Equipment Stat Computation Flow
 - Implement variable provider factory (`AffixItemEvaluationProviderFactory`)
 
 ### Phase 5: Socket Integration
-- Coordinate with lib-item for `maxSocketCount` on ItemTemplate
+- Coordinate with lib-socket (#430) for socket configuration state and lib-item for `maxSocketCount` on ItemTemplate
 - Coordinate with lib-inventory for socket child container creation
 - Extend `ComputeItemStats` to include socketed gem contributions
 - Extend `ComputeEquipmentStats` for socket-aware equipment totals
@@ -497,6 +497,7 @@ Equipment Stat Computation Flow
 ### Phase 6: Events, Cleanup, and Background Workers
 - Implement all event publishing (lifecycle, application, state change, generation batch)
 - Implement event handlers for item template lifecycle events
+- Declare `x-references` in `affix-api.yaml` targeting `game-service` with cleanup endpoint `/affix/cleanup-by-game-service` for lib-resource integration
 - Implement resource cleanup endpoint (`/affix/cleanup-by-game-service`)
 - Implement orphan reconciliation background worker (periodic scan + batch item existence check)
 - Wire analytics integration (soft dependency)
@@ -578,10 +579,16 @@ None. Plugin is aspirational -- no code exists to have bugs.
 - [#490](https://github.com/beyond-immersion/bannou-service/issues/490) — Full implementation of lib-affix (all 6 phases). Open questions include item level sourcing, equipment query semantics, pool cache invalidation strategy, and socket integration prerequisites.
 - [#588](https://github.com/beyond-immersion/bannou-service/issues/588) — Decide scope for rarity slot limit definitions: static configuration vs dynamic API entities.
 - [#589](https://github.com/beyond-immersion/bannou-service/issues/589) — Affix trade index ownership: lib-affix vs lib-market.
+- [#607](https://github.com/beyond-immersion/bannou-service/issues/607) — Design: quality-to-affix tier mapping contract between lib-craft and lib-affix.
+
+### Related / Dependencies
+- [#430](https://github.com/beyond-immersion/bannou-service/issues/430) — lib-socket: Phase 5 (Socket Integration) is blocked until lib-socket's state ownership and container conventions are designed.
+- [#559](https://github.com/beyond-immersion/bannou-service/issues/559) — Item batch instance destruction: if implemented, `IItemInstanceDestructionListener` may need a batch overload for efficient multi-item cleanup.
 
 ### Completed
 - (2026-03-08) Audit: linked Stubs & Unimplemented Features section to #490.
 - (2026-03-08) Audit: created #589 for trade index ownership design question (Potential Extension #2).
 - (2026-03-08) Audit: reclassified all 7 Design Considerations as Intentional Quirks #12-#18 — all were already-decided behaviors, not open questions requiring planning.
+- (2026-03-08) Review: added #607 to Active tracking (cross-service design question with lib-craft). Added #430 and #559 as Related/Dependencies. Added `x-references` declaration to Phase 6. Updated Phase 5 to reference lib-socket (#430) coordination.
 
 *Plugin is in pre-implementation phase. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.*

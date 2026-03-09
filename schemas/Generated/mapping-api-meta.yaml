@@ -95,29 +95,27 @@ paths:
         \            \"type\": \"object\",\n            \"description\": \"Configuration for non-authority publish alerts\"\
         ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"enabled\": {\n \
         \                   \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether to emit warning events\"\n                },\n                \"alertTopic\": {\n                    \"\
-        type\": \"string\",\n                    \"maxLength\": 512,\n                    \"description\": \"Custom topic
-        for warnings (default map.warnings.unauthorized-publish)\",\n                    \"nullable\": true\n            \
-        \    },\n                \"includePayloadSummary\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": false,\n                    \"description\": \"Include truncated payload in warning for debugging\"\
-        \n                }\n            }\n        },\n        \"MapPayload\": {\n            \"type\": \"object\",\n   \
-        \         \"description\": \"Schema-less payload. Only envelope fields are validated. The data field can contain anything
-        the publisher wants. lib-mapping does not validate contents.\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"objectType\"\n            ],\n            \"properties\": {\n      \
-        \          \"objectId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"Unique ID for this object (generated if not provided)\",\n               \
-        \     \"nullable\": true\n                },\n                \"objectType\": {\n                    \"type\": \"\
-        string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"\
-        description\": \"Publisher-defined type (used for indexing and filtering)\"\n                },\n                \"\
-        position\": {\n                    \"allOf\": [\n                        {\n                            \"type\":
-        \"object\"\n                        }\n                    ],\n                    \"description\": \"Position for
-        point objects\",\n                    \"nullable\": true\n                },\n                \"bounds\": {\n    \
-        \                \"allOf\": [\n                        {\n                            \"type\": \"object\"\n     \
-        \                   }\n                    ],\n                    \"description\": \"Bounds for area objects\",\n\
-        \                    \"nullable\": true\n                },\n                \"data\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific
-        spatial object data. lib-mapping stores and returns this as-is. No Bannou plugin reads specific keys from this field
-        by convention.\",\n                    \"nullable\": true\n                }\n            }\n        }\n    }\n}"
+        : \"Whether to emit warning events\"\n                },\n                \"includePayloadSummary\": {\n         \
+        \           \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\":
+        \"Include truncated payload in warning for debugging\"\n                }\n            }\n        },\n        \"MapPayload\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Schema-less payload. Only envelope fields are
+        validated. The data field can contain anything the publisher wants. lib-mapping does not validate contents.\",\n \
+        \           \"additionalProperties\": false,\n            \"required\": [\n                \"objectType\"\n      \
+        \      ],\n            \"properties\": {\n                \"objectId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique ID for this object (generated
+        if not provided)\",\n                    \"nullable\": true\n                },\n                \"objectType\": {\n\
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 256,\n                    \"description\": \"Publisher-defined type (used for indexing and filtering)\"\n      \
+        \          },\n                \"position\": {\n                    \"allOf\": [\n                        {\n    \
+        \                        \"type\": \"object\"\n                        }\n                    ],\n               \
+        \     \"description\": \"Position for point objects\",\n                    \"nullable\": true\n                },\n\
+        \                \"bounds\": {\n                    \"allOf\": [\n                        {\n                    \
+        \        \"type\": \"object\"\n                        }\n                    ],\n                    \"description\"\
+        : \"Bounds for area objects\",\n                    \"nullable\": true\n                },\n                \"data\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"description\": \"Game-specific spatial object data. lib-mapping stores and returns this as-is. No Bannou
+        plugin reads specific keys from this field by convention.\",\n                    \"nullable\": true\n           \
+        \     }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthorityGrant\"\
         ,\n    \"$defs\": {\n        \"AuthorityGrant\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Granted authority over a map channel\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -145,6 +143,41 @@ paths:
         : \"Creates a new region+kind channel and grants authority to caller.\\nReturns ingestTopic for high-throughput event
         publishing.\\nIf channel already exists with active authority, returns Conflict.\\n\",\n    \"tags\": [\n        \"\
         Authority\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createChannel\"\n}"
+  /mapping/delete-channel:
+    post:
+      summary: Delete a map channel and all its data
+      description: |
+        Permanently deletes a channel, its authority record, all map objects,
+        spatial/type/region indexes, version counter, and ingest subscription.
+        Requires the channel to have no active authority (release first).
+      operationId: deleteChannel
+      tags:
+      - Authority
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteChannelRequest'
+      responses:
+        '200':
+          description: Channel deleted successfully
+        '404':
+          description: Channel not found
+        '409':
+          description: Channel has active authority (release first)
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteChannelRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteChannelRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to delete a map channel and all its data\",\n            \"additionalProperties\": false,\n          \
+        \  \"required\": [\n                \"channelId\"\n            ],\n            \"properties\": {\n               \
+        \ \"channelId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
+        \             \"description\": \"Channel to delete\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete a map channel and all its data\",\n    \"description\": \"Permanently
+        deletes a channel, its authority record, all map objects,\\nspatial/type/region indexes, version counter, and ingest
+        subscription.\\nRequires the channel to have no active authority (release first).\\n\",\n    \"tags\": [\n       \
+        \ \"Authority\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteChannel\"\n}"
   /mapping/release-authority:
     post:
       summary: Release authority over a channel
@@ -1752,11 +1785,6 @@ components:
           type: boolean
           default: true
           description: Whether to emit warning events
-        alertTopic:
-          type: string
-          maxLength: 512
-          description: Custom topic for warnings (default map.warnings.unauthorized-publish)
-          nullable: true
         includePayloadSummary:
           type: boolean
           default: false
@@ -1871,6 +1899,17 @@ components:
             $ref: '#/components/schemas/MapPayload'
           description: Optional initial data to populate channel
           nullable: true
+    DeleteChannelRequest:
+      type: object
+      description: Request to delete a map channel and all its data
+      additionalProperties: false
+      required:
+      - channelId
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: Channel to delete
     ReleaseAuthorityRequest:
       type: object
       description: Request to release authority over a channel

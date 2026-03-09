@@ -1,6 +1,11 @@
 # Why Can't the Website Show Character Profiles or Game Data?
 
-> **Short Answer**: Because Bannou is a platform, not just a game backend. The same codebase deploys as a real-time cloud service with zero game concepts. If the website imports character data, it can't be deployed without the game stack -- and that kills the platform.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Website (L3), Character (L2)
+> **Short Answer**: Because Website is L3 (App Features) and character data lives in L2 (Game
+> Foundation). L3 services cannot depend on L2 — that is a hard hierarchy rule. If the website
+> imported character data, it could not be deployed without the entire game stack, which kills
+> Bannou's ability to deploy as a non-game cloud service platform.
 
 ---
 
@@ -41,7 +46,7 @@ You have three options, and all of them are bad:
 
 **Make it a soft dependency** (check for null at runtime). Now the website's character profile page shows "Character data unavailable" in a deployment that never had characters. Every page that touches game data needs conditional logic. The UI is a patchwork of "this feature exists if you also run the game stack." The website doesn't know what it is anymore -- is it a game portal or a platform homepage? It tries to be both and does neither well.
 
-**Require the game stack for Website**. Now you cannot deploy a Bannou-powered cloud service with a website unless you also spin up the entire game foundation -- character, realm, species, location, currency, item, inventory, game-session, subscription, relationship, actor, quest, seed. Fourteen services that have no purpose in your collaboration tool, consuming resources and creating deployment complexity, because the website wanted to show character profiles.
+**Require the game stack for Website**. Now you cannot deploy a Bannou-powered cloud service with a website unless you also spin up the entire game foundation -- character, realm, species, location, currency, item, inventory, game-session, subscription, relationship, actor, quest, seed, collection, game-service, transit, worldstate. Seventeen services that have no purpose in your collaboration tool, consuming resources and creating deployment complexity, because the website wanted to show character profiles.
 
 **Keep the separation**. The Website shows what every deployment needs. Game-specific portals live elsewhere.
 

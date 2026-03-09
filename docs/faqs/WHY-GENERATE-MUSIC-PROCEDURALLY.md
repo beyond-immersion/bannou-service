@@ -1,6 +1,11 @@
 # Why Does Bannou Generate Music Procedurally Instead of Using Audio Files?
 
-> **Short Answer**: Because music in Arcadia is a game system, not ambiance. NPCs compose it, players collect it, areas theme it, and the Collection service gates which tracks are available. Pre-recorded audio files can't participate in the content flywheel or respond to world state. Procedural music can.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Music (L4), Collection (L2), Actor (L2), Behavior (L4)
+> **Short Answer**: Because music in Arcadia is a game system, not ambiance. NPCs compose
+> it, players collect it, areas theme it, and the Collection service gates which tracks are
+> available. Pre-recorded audio files cannot participate in the content flywheel or respond
+> to world state. Procedural music can.
 
 ---
 
@@ -18,7 +23,7 @@ In Arcadia, music is not ambiance -- it is a dimension of the simulation:
 
 ### NPCs Compose Music
 
-Bard characters, using the Music service's GOAP-based composition system, generate pieces through a narrative-driven process. The `MusicStoryteller` SDK plans emotional arcs (tension, resolution, melancholy, triumph), and the `MusicTheory` SDK realizes those arcs as actual harmonic progressions, melodies, and voicings following formal music theory rules.
+Bard characters, using the Music service's narrative-driven composition system, generate pieces through a structured process. The `MusicStoryteller` SDK plans emotional arcs (tension, resolution, melancholy, triumph), and the `MusicTheory` SDK realizes those arcs as actual harmonic progressions, melodies, and voicings following formal music theory rules. The NPC bard's Actor behavior (via GOAP in the Behavior service) decides when and why to compose; the Music service handles the how.
 
 This means an NPC bard in a tavern is not playing a pre-recorded track. They are generating a composition influenced by their personality, their current emotional state, and the narrative context. A bard who witnessed a battle might compose a piece with more tension and dissonance than one who spent the day trading peacefully.
 
@@ -58,17 +63,17 @@ The Music service outputs MIDI-JSON, not audio. The server decides WHAT to play 
 
 ### Decoupled from the Collection Pipeline
 
-If music generation were embedded in the Collection service, the Collection service would need music theory dependencies. If it were embedded in the Actor service, every NPC would need composition capabilities even if they are not bards. As a standalone service, music generation is available to any consumer: Collection for track management, Actor for NPC composition, Event Brain for cinematic scoring, Puppetmaster for scenario ambiance.
+If music generation were embedded in the Collection service, the Collection service would need music theory dependencies. If it were embedded in the Actor service, every NPC would need composition capabilities even if they are not bards. As a standalone service, music generation is available to any consumer that needs it: Actor for NPC composition actions, Collection for track management, and any future service that needs generated compositions.
 
 ---
 
-## GOAP as the Universal Planner
+## How GOAP and Music Interact
 
-This is one of Arcadia's design principles: GOAP (Goal-Oriented Action Planning) is the universal planner used across NPC behavior, narrative generation, combat choreography, and music composition.
+GOAP (Goal-Oriented Action Planning) is the universal planner for NPC behavior, used by the Behavior service (L4) and Actor runtime (L2). GOAP decides what an NPC does -- including deciding to compose music. But the Music service's internal composition pipeline does not use GOAP.
 
-For music, this means composition is structured as goal-seeking behavior. The `MusicStoryteller` SDK defines a desired emotional trajectory (start contemplative, build tension, resolve triumphantly) as a goal state. The GOAP planner searches the action space of available musical techniques (modulation, rhythmic intensification, harmonic tension, melodic development) to find a path from the current state to the goal.
+Instead, the `MusicStoryteller` SDK uses narrative templates with emotional state planning: it defines a desired emotional trajectory (start contemplative, build tension, resolve triumphantly) and guides the `MusicTheory` SDK to realize that trajectory as harmonic progressions, melodies, and voicings. This is template-driven composition, not A*-based goal search.
 
-This is architecturally significant because improvements to the GOAP planner benefit music composition alongside every other system that uses GOAP. A better A* heuristic makes NPCs smarter AND compositions more sophisticated.
+The architectural connection is at the NPC level: a bard NPC's GOAP planner selects "compose music" as an action, and the action handler calls the Music service to generate the actual composition. Improvements to GOAP make NPCs better at deciding when to compose; improvements to MusicStoryteller make the compositions themselves more sophisticated.
 
 ---
 

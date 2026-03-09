@@ -392,6 +392,7 @@ All 11 API endpoints are fully implemented. The following supporting integration
     - **Personal violation** → triggers contract breach via existing `BreachReportEnabled` mechanism
 
     **Backward-compatible**: If no sovereign exists (faction sovereignty not yet implemented for a deployment), everything is social/personal as it is today. The legal channel only activates when a sovereign faction exists with norms for that violation type. This is a prerequisite for lib-arbitration (see [Arbitration deep dive](ARBITRATION.md)).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/605 -->
 
 ---
 

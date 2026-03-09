@@ -1,5 +1,7 @@
 # Why Does the Escrow Service Need a 13-State State Machine?
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Escrow (L4), Currency (L2), Inventory (L2), Contract (L1)
 > **Short Answer**: Because multi-party asset exchanges in a living economy have failure modes at every stage -- creation, deposit, consent, condition verification, release, and refund all need distinct states to prevent asset loss, double-spending, and deadlocks. The 13 states are the minimum needed to handle every real failure scenario, not an exercise in over-specification.
 
 ---
@@ -110,10 +112,10 @@ Each of these is a real scenario that the 13-state machine handles cleanly. Fewe
 
 ## The Integration Surface
 
-Escrow does not operate in isolation. It calls:
+Escrow does not operate in isolation. It integrates with:
 
-- **lib-currency** for deposit/release/refund of monetary assets
-- **lib-inventory** for deposit/release/refund of items
-- **lib-contract** for conditional release (contract milestone triggers state transition)
+- **lib-currency** (L2) for deposit/release/refund of monetary assets (direct API calls)
+- **lib-inventory** (L2) for deposit/release/refund of items (direct API calls)
+- **lib-contract** (L1) for conditional release (subscribes to `contract.fulfilled` and `contract.terminated` events to trigger state transitions on contract-bound escrows)
 
-Each of these is a separate service with its own failure modes. The Escrow state machine is the coordination layer that ensures these three services remain consistent with each other across the lifecycle of an exchange. The 13 states are not about the escrow's internal logic -- they are about maintaining transactional consistency across three independent services in a distributed system.
+Each of these is a separate service with its own failure modes. The Escrow state machine is the coordination layer that ensures these services remain consistent with each other across the lifecycle of an exchange. The 13 states are not about the escrow's internal logic -- they are about maintaining transactional consistency across independent services in a distributed system.

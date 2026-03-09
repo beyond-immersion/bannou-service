@@ -1,6 +1,15 @@
-# Why Is Quest Just a Wrapper Around Contract?
+# Why Is Quest a Contract Wrapper?
 
-> **Short Answer**: Because quests ARE contracts. A quest is a binding agreement between parties (quest giver and quest taker) with milestones (objectives), terms (rewards and penalties), consent flows (accepting the quest), and state machine progression (objective completion sequence). Building a bespoke quest engine would mean reimplementing Contract's state machine, cleanup orchestration, and prebound API execution -- all of which already exist and are battle-tested. Quest translates game-flavored semantics into Contract infrastructure and adds quest-specific concerns (prerequisites, quest giver roles, reward distribution).
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Quest (L2), Contract (L1), Escrow (L4), License (L4), Actor (L2)
+> **Short Answer**: Because quests ARE contracts. A quest is a binding agreement between
+> parties (quest giver and quest taker) with milestones (objectives), terms (rewards and
+> penalties), consent flows (accepting the quest), and state machine progression (objective
+> completion sequence). Building a bespoke quest engine would mean reimplementing Contract's
+> state machine, cleanup orchestration, and prebound API execution -- all of which already
+> exist and are battle-tested. Quest translates game-flavored semantics into Contract
+> infrastructure and adds quest-specific concerns (prerequisites, quest giver roles, reward
+> distribution).
 
 ---
 

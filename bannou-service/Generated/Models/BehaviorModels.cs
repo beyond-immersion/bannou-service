@@ -671,6 +671,12 @@ public partial class GoapPlanningOptions
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int TimeoutMs { get; set; } = 100;
 
+    /// <summary>
+    /// Maximum total plan cost. Nodes whose accumulated cost exceeds this bound are pruned during search. Null means no cost limit (default).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxCostBound")]
+    public float? MaxCostBound { get; set; } = default!;
+
 }
 
 /// <summary>

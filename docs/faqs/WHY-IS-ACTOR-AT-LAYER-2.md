@@ -1,5 +1,7 @@
 # Why Is Actor at Layer 2 Instead of Layer 4?
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Actor (L2), Behavior (L4), Character Personality (L4), Character Encounter (L4), Character History (L4), Puppetmaster (L4)
 > **Short Answer**: Because behavior execution is foundational infrastructure, not an optional feature. If every NPC in the world runs an actor brain -- shopkeepers, guards, farmers, dungeon cores, regional watchers -- then the runtime that executes those brains is as fundamental as characters, realms, or items. The distinction is between the execution engine (foundational) and the content it executes (optional).
 
 ---
@@ -35,7 +37,6 @@ The classification becomes clear when you look at what depends on Actor being av
 **Things that need actors to exist (and thus need Actor at L2 or below):**
 - Every NPC in every realm. Shopkeepers need to decide what to stock. Guards need to decide patrol routes. Farmers need to decide what to plant. These are not optional AI features -- they are the baseline behavior of the world.
 - Quest NPCs. The Quest service (L2) exposes quest data to actors via the Variable Provider Factory pattern. Quest givers need actor brains to offer and manage quests.
-- Game sessions. NPCs participate in game sessions. If Actor were L4, Game Session (L2) could not assume actors exist.
 
 **Things that are truly optional L4 features:**
 - Personality evolution (Character Personality). An actor can run without personality data -- it just has fewer variables available.

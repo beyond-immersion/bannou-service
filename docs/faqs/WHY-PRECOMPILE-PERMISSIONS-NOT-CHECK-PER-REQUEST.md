@@ -1,6 +1,12 @@
 # Why Does Bannou Precompile Permission Manifests Instead of Checking Permissions Per-Request?
 
-> **Short Answer**: Because the system routes 100,000+ concurrent NPC decisions and player actions through the WebSocket gateway. Checking a multi-dimensional permission matrix on every message would add latency to every single operation. Precompiling the manifest once and pushing it to the client turns permission enforcement into a local lookup at the gateway -- zero additional latency per message.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Permission (L1), Connect (L1), Auth (L1), Game Session (L2), Matchmaking (L4), Voice (L3)
+> **Short Answer**: Because the system routes 100,000+ concurrent NPC decisions and player actions
+> through the WebSocket gateway. Checking a multi-dimensional permission matrix on every message
+> would add latency to every single operation. Precompiling the manifest once and pushing it to
+> the client turns permission enforcement into a local lookup at the gateway with zero additional
+> latency per message.
 
 ---
 

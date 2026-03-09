@@ -249,10 +249,19 @@ public sealed class CompilationContext
             ModelBuilder.WithDebugInfo(SourcePath, DebugLineMap);
         }
 
+        var bytecode = Emitter.ToArray();
+
+        // Apply peephole optimizations when enabled
+        if (Options.EnableOptimizations)
+        {
+            var optimizer = new BytecodeOptimizer();
+            bytecode = optimizer.Optimize(bytecode, Constants);
+        }
+
         return ModelBuilder
             .WithConstantPool(Constants)
             .WithStringTable(Strings)
-            .WithBytecode(Emitter)
+            .WithBytecode(bytecode)
             .Build();
     }
 

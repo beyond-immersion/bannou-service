@@ -1,5 +1,7 @@
-# Why Don't Characters Belong to Player Accounts?
+# Why Don't Characters Belong To Player Accounts?
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Character (L2), Account (L1), Actor (L2), Seed (L2), Relationship (L2), Resource (L1), Storyline (L4), Subscription (L2), Game Service (L2)
 > **Short Answer**: Because characters are world citizens, not player possessions. The player's guardian spirit possesses and influences characters, but characters exist independently in the world with their own lives, relationships, and agency. Tying characters to accounts would break the living world, the content flywheel, and the guardian spirit model.
 
 ---

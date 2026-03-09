@@ -79,13 +79,13 @@ public enum LocationType
 public enum BoundsPrecision
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"exact")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Exact")]
     Exact = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"approximate")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Approximate")]
     Approximate = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
     None = 2,
 
 }
@@ -99,13 +99,13 @@ public enum BoundsPrecision
 public enum CoordinateMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"inherit")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Inherit")]
     Inherit = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"local")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Local")]
     Local = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"portal")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Portal")]
     Portal = 2,
 
 }
@@ -119,10 +119,10 @@ public enum CoordinateMode
 public enum TerritoryMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"exclusive")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Exclusive")]
     Exclusive = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"inclusive")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Inclusive")]
     Inclusive = 1,
 
 }

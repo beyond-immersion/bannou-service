@@ -1,6 +1,12 @@
 # Why Does the Resource Service Exist at L1 Instead of Letting Services Manage Their Own Cleanup?
 
-> **Short Answer**: Because foundational services (L2) cannot know about the higher-layer services (L3/L4) that reference their entities. Without a layer-agnostic intermediary, you either violate the service hierarchy or accept orphaned data and unsafe deletions.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Resource (L1), Character (L2), Actor (L2), Character Personality (L4), Character History (L4), Character Encounter (L4), Storyline (L4)
+> **Short Answer**: Because foundational services (L2) cannot know about the higher-layer services
+> (L3/L4) that reference their entities. Without a layer-agnostic intermediary at L1, you either
+> violate the service hierarchy or accept orphaned data and unsafe deletions. Resource also
+> centralizes hierarchical compression for the content flywheel, providing unified archives that
+> Storyline uses to generate narrative seeds from accumulated play history.
 
 ---
 
@@ -15,7 +21,7 @@ Consider the Character service (L2 Game Foundation). A character can be referenc
 
 When someone tries to delete a character, the Character service needs to answer: "Is anything still referencing this character? If so, should the deletion be blocked (RESTRICT), should referencing data be cleaned up first (CASCADE), or should references be silently detached (DETACH)?"
 
-The problem is that Character (L2) **cannot depend on** Actor, Character Personality, Character History, or Character Encounter. The service hierarchy forbids L2 from depending on L4. Character cannot inject `ICharacterPersonalityClient` to ask "do you have data for this character?" -- that would be a hierarchy violation.
+The problem is that Character (L2) **cannot depend on** Character Personality, Character History, or Character Encounter -- all L4 services. The service hierarchy forbids L2 from depending on L4. Character cannot inject `ICharacterPersonalityClient` to ask "do you have data for this character?" -- that would be a hierarchy violation.
 
 ---
 
@@ -29,6 +35,7 @@ public class CharacterService
 {
     private readonly ICharacterPersonalityClient _personality;  // L4 -- VIOLATION
     private readonly ICharacterEncounterClient _encounters;     // L4 -- VIOLATION
+    private readonly ICharacterHistoryClient _history;          // L4 -- VIOLATION
 
     public async Task<bool> CanDeleteAsync(Guid characterId)
     {
@@ -83,7 +90,7 @@ Character (L2) -> Resource (L1): /resource/check (resourceType: "character", res
     <- Returns: { references: [{sourceType: "actor", ...}, {sourceType: "character-personality", ...}], count: 2 }
 ```
 
-Character depends on Resource (L1 -> L1: allowed). Resource depends on nothing above L0. The L4 services depend on Resource (L4 -> L1: allowed). No hierarchy violations anywhere.
+Character depends on Resource (L2 -> L1: allowed). Resource depends on nothing above L0. The L4 services depend on Resource (L4 -> L1: allowed). No hierarchy violations anywhere.
 
 ### 2. Cleanup Coordination
 

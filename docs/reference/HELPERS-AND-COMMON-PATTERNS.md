@@ -22,6 +22,7 @@
 12. [Attributes](#12-attributes)
 13. [Test Validators](#13-test-validators)
 14. [Miscellaneous Helpers](#14-miscellaneous-helpers)
+15. [Category B Deprecation Template](#15-category-b-deprecation-template)
 
 ---
 
@@ -756,6 +757,235 @@ Resolves service names to app-ids for mesh routing.
 
 ---
 
+## 15. Category B Deprecation Template
+
+Category B entities are content templates where instances persist independently — the template must remain readable forever because historical instances reference it. T31 defines the rules; this section provides the copy-paste reference implementation. See [IMPLEMENTATION-BEHAVIOR.md § Category B Reference Pattern](tenets/IMPLEMENTATION-BEHAVIOR.md#category-b-reference-pattern-checklist) for the full checklist.
+
+**Reference implementations**: `lib-item` (Item Template) for lifecycle infrastructure and storage, `lib-collection` (Collection Entry Template) for correct idempotent endpoint pattern.
+
+### API Schema Pattern (`{service}-api.yaml`)
+
+#### Deprecate Endpoint
+
+```yaml
+  /myservice/template/deprecate:
+    post:
+      operationId: deprecateTemplate
+      tags:
+      - Template
+      summary: Deprecate a template
+      description: |
+        Marks a template as deprecated. Deprecated templates cannot be used
+        to create new instances, but existing instances remain valid.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateTemplateRequest'
+      responses:
+        '200':
+          description: Template deprecated successfully (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '404':
+          description: Template not found
+        # NO '409' — idempotent deprecation returns OK when already deprecated
+```
+
+#### Deprecate Request Model
+
+```yaml
+    DeprecateTemplateRequest:
+      type: object
+      description: Request to deprecate a template (Category B — one-way, no delete)
+      additionalProperties: false
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended for audit trail)
+```
+
+#### Response Model Deprecation Fields
+
+Add these fields to the response model alongside existing entity fields:
+
+```yaml
+    TemplateResponse:
+      type: object
+      # ... other properties ...
+      properties:
+        # ... entity-specific fields ...
+        isDeprecated:
+          type: boolean
+          description: Whether this template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+```
+
+**Status enum alternative**: Use ONLY when the entity has a Draft lifecycle state that the triple-field model cannot represent. The enum must include `Deprecated` as a terminal value:
+
+```yaml
+    TemplateStatus:
+      type: string
+      description: Template lifecycle status
+      enum: [Draft, Active, Deprecated]
+```
+
+When using the status enum, the response model uses `status` instead of `isDeprecated`, but `deprecatedAt` and `deprecationReason` are still recommended as separate fields for audit purposes.
+
+#### List Endpoint `includeDeprecated` Parameter
+
+Add to the list/query request model:
+
+```yaml
+    ListTemplatesRequest:
+      type: object
+      properties:
+        # ... other filters ...
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated templates in results (excluded by default)
+```
+
+### Events Schema Pattern (`{service}-events.yaml`)
+
+#### x-event-publications
+
+```yaml
+info:
+  x-event-publications:
+    # Template lifecycle events (auto-generated from x-lifecycle)
+    - topic: myservice.template.created
+      event: MyTemplateCreatedEvent
+      description: Published when a new template is created
+    - topic: myservice.template.updated
+      event: MyTemplateUpdatedEvent
+      description: Published when a template is updated (including deprecation via changedFields)
+    # NOTE: *.deleted is unused Category B infrastructure — exists for future safe deletion pattern
+    # Do not remove; do not count as a "published event"; structural tests should exclude it
+```
+
+**Topic naming**: Use dot-separated Pattern C per T16: `{service}.{entity}.{action}`. NOT hyphenated Pattern B (`service-entity.action`).
+
+#### x-lifecycle
+
+```yaml
+x-lifecycle:
+  topic_prefix: myservice
+  MyTemplate:
+    model:
+      templateId: { type: string, format: uuid, primary: true, required: true, description: "Unique template identifier" }
+      code: { type: string, required: true, description: "Unique template code" }
+      # ... entity-specific fields ...
+      isDeprecated: { type: boolean, required: true, description: "Whether template is deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the template was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
+    sensitive: []
+```
+
+### Implementation Pattern (`{Service}Service.cs`)
+
+#### Deprecate Method
+
+```csharp
+public async Task<(StatusCodes, TemplateResponse?)> DeprecateTemplateAsync(
+    DeprecateTemplateRequest body, CancellationToken ct)
+{
+    var key = BuildTemplateKey(body.TemplateId);
+    var template = await _templateStore.GetAsync(key, ct);
+    if (template == null)
+        return (StatusCodes.NotFound, null);
+
+    // Idempotent: already deprecated = OK (per IMPLEMENTATION TENETS)
+    if (template.IsDeprecated)
+        return (StatusCodes.OK, MapToResponse(template));
+
+    template.IsDeprecated = true;
+    template.DeprecatedAt = DateTimeOffset.UtcNow;
+    template.DeprecationReason = body.Reason;
+    template.UpdatedAt = DateTimeOffset.UtcNow;
+
+    await _templateStore.SaveAsync(key, template, ct);
+
+    // Publish as *.updated with changedFields — NOT a dedicated deprecation event
+    await _messageBus.PublishTemplateUpdatedAsync(template,
+        changedFields: new[] { "isDeprecated", "deprecatedAt", "deprecationReason" });
+
+    return (StatusCodes.OK, MapToResponse(template));
+}
+```
+
+#### Instance Creation Guard
+
+```csharp
+public async Task<(StatusCodes, InstanceResponse?)> CreateInstanceAsync(
+    CreateInstanceRequest body, CancellationToken ct)
+{
+    var templateKey = BuildTemplateKey(body.TemplateId);
+    var template = await _templateStore.GetAsync(templateKey, ct);
+    if (template == null)
+        return (StatusCodes.NotFound, null);
+
+    // Category B instance creation guard (per IMPLEMENTATION TENETS)
+    if (template.IsDeprecated)
+        return (StatusCodes.BadRequest, null);
+
+    // ... create instance logic ...
+}
+```
+
+#### List Filtering
+
+```csharp
+public async Task<(StatusCodes, ListTemplatesResponse?)> ListTemplatesAsync(
+    ListTemplatesRequest body, CancellationToken ct)
+{
+    var templates = await _templateStore.QueryAsync(/* ... */, ct);
+
+    // Filter deprecated unless explicitly requested (per IMPLEMENTATION TENETS)
+    if (!body.IncludeDeprecated)
+        templates = templates.Where(t => !t.IsDeprecated);
+
+    // ... pagination, mapping, return ...
+}
+```
+
+### What NOT to Include
+
+| Anti-Pattern | Why |
+|---|---|
+| `POST /{entity}/undeprecate` | Category B deprecation is one-way and terminal |
+| `POST /{entity}/delete` | Template persists forever (future safe deletion pattern will add this) |
+| `409` response for "already deprecated" | Violates idempotency — return `OK` |
+| Dedicated `*.deprecated` event | Use `*.updated` with changedFields |
+| `isActive` field for deprecation | `isActive` is a separate concept (admin disable); deprecation is `isDeprecated` |
+
+---
+
 ## Quick Reference: "I need to..."
 
 | Task | Helper/Pattern | Location |
@@ -775,6 +1005,7 @@ Resolves service names to app-ids for mesh routing.
 | Validate enum mappings (test) | `EnumMappingValidator` | `test-utilities/` |
 | Validate event publishing (test) | `EventPublishingValidator` | `test-utilities/` |
 | Validate resource cleanup (test) | `ResourceCleanupValidator` | `test-utilities/` |
+| Add Category B deprecation to a template entity | Category B Deprecation Template | § 15 (schema + implementation patterns) |
 
 ---
 

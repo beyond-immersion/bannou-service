@@ -808,7 +808,8 @@ public partial class BehaviorService : IBehaviorService
             {
                 MaxDepth = body.Options.MaxDepth,
                 MaxNodesExpanded = body.Options.MaxNodes,
-                TimeoutMs = body.Options.TimeoutMs
+                TimeoutMs = body.Options.TimeoutMs,
+                MaxCostBound = body.Options.MaxCostBound
             }
             : PlanningOptions.Default;
 

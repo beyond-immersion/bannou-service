@@ -35,6 +35,11 @@ public partial interface IMappingService : IBannouService
         Task<(StatusCodes, AuthorityGrant?)> CreateChannelAsync(CreateChannelRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DeleteChannel operation
+        /// </summary>
+        Task<StatusCodes> DeleteChannelAsync(DeleteChannelRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// ReleaseAuthority operation
         /// </summary>
         Task<StatusCodes> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, CancellationToken cancellationToken = default(CancellationToken));

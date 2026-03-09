@@ -1,6 +1,11 @@
 # What Is the Variable Provider Factory Pattern and Why Does It Matter?
 
-> **Short Answer**: It is the architectural mechanism that allows the Actor runtime (Layer 2) to access personality, encounter, history, and quest data from Layer 4 services without depending on them. Without it, either the service hierarchy breaks or NPCs cannot think.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Actor (L2), Character Personality (L4), Character Encounter (L4), Character History (L4), Quest (L2), Obligation (L4), Faction (L4), Seed (L2), Location (L2), Transit (L2), Worldstate (L2), Currency (L2), Inventory (L2), Relationship (L2), Puppetmaster (L4)
+> **Short Answer**: It is the dependency inversion mechanism that allows the Actor runtime (Layer 2)
+> to access data from Layer 4 services like Character Personality, Character Encounter, and Obligation
+> without depending on them. L4 services implement a shared interface and register via DI; Actor
+> discovers providers at runtime. Without it, either the service hierarchy breaks or NPCs cannot think.
 
 ---
 
@@ -42,9 +47,9 @@ public interface IVariableProvider
 
 Actor depends on these interfaces. That is allowed -- shared code is not a service.
 
-### Step 2: L4 Services Implement and Register
+### Step 2: Services Implement and Register
 
-Each L4 service that wants to provide data to the behavior system implements the factory:
+Each service that wants to provide data to the behavior system implements the factory (typically L4, but L2 services like Quest and Worldstate also participate for consistency and caching benefits):
 
 ```csharp
 // In lib-character-personality (L4)
@@ -136,15 +141,35 @@ This extensibility is what makes the pattern powerful at scale. The behavior sys
 
 ## Where Else This Pattern Appears
 
-The Variable Provider Factory is one instance of a broader pattern used throughout Bannou for cross-layer data access:
+The Variable Provider Factory is one instance of a broader DI inversion pattern used throughout Bannou for cross-layer data access. As of this writing, Actor has 14 registered variable provider factories:
 
-| Pattern | L2 Consumer | Interface | L4 Implementors |
-|---------|-------------|-----------|-----------------|
-| Variable Provider Factory | Actor | `IVariableProviderFactory` | Character Personality, Character Encounter, Character History, Quest |
-| Prerequisite Provider Factory | Quest | `IPrerequisiteProviderFactory` | Skills, Magic, Achievement (future) |
-| Behavior Document Provider | Actor | `IBehaviorDocumentProvider` | Puppetmaster (loads from Asset service) |
+| Factory | Namespace | Owning Plugin | Layer |
+|---------|-----------|---------------|-------|
+| `PersonalityProviderFactory` | `personality` | Character Personality | L4 |
+| `CombatPreferencesProviderFactory` | `combat` | Character Personality | L4 |
+| `BackstoryProviderFactory` | `backstory` | Character History | L4 |
+| `EncountersProviderFactory` | `encounters` | Character Encounter | L4 |
+| `ObligationProviderFactory` | `obligations` | Obligation | L4 |
+| `FactionProviderFactory` | `faction` | Faction | L4 |
+| `QuestProviderFactory` | `quest` | Quest | L2 |
+| `SeedProviderFactory` | `seed` | Seed | L2 |
+| `LocationContextProviderFactory` | `location` | Location | L2 |
+| `TransitVariableProviderFactory` | `transit` | Transit | L2 |
+| `WorldProviderFactory` | `world` | Worldstate | L2 |
+| `CurrencyProviderFactory` | `currency` | Currency | L2 |
+| `InventoryProviderFactory` | `inventory` | Inventory | L2 |
+| `RelationshipProviderFactory` | `relationship` | Relationship | L2 |
 
-All three follow the same structure: L2 defines what it needs as an interface in shared code, L4 implements and registers, L2 discovers via DI collection. The principle is always the same: **the dependency is on the interface (shared), not on the implementation (L4)**.
+Note that L2 services also use the pattern for consistency and caching benefits, even though Actor (also L2) could call their clients directly.
+
+The same DI inversion principle appears in two other interfaces:
+
+| Pattern | Consumer | Interface | Implementors |
+|---------|----------|-----------|--------------|
+| Prerequisite Provider Factory | Quest (L2) | `IPrerequisiteProviderFactory` | Skills, Magic, Achievement (future L4) |
+| Behavior Document Provider | Actor (L2) | `IBehaviorDocumentProvider` | Puppetmaster (L4, loads from Asset service) |
+
+All follow the same structure: the consumer defines what it needs as an interface in shared code (`bannou-service/`), higher-layer services implement and register, the consumer discovers via DI collection. The principle is always the same: **the dependency is on the interface (shared), not on the implementation (L4)**.
 
 ---
 

@@ -605,6 +605,8 @@ GENERATION 3: Thane grows up carrying both bloodlines
 | lib-resource (`IResourceClient`) | Triggering archive compression on death, reference tracking, cleanup callback registration (L1) |
 | lib-seed (`ISeedClient`) | Recording guardian spirit growth on character death (fulfillment → logos), querying household seed (L2) |
 | lib-game-service (`IGameServiceClient`) | Game service scope validation for templates (L2) |
+| lib-inventory (`IInventoryClient`) | Heirloom transfer during inheritance processing (L2) |
+| lib-currency (`ICurrencyClient`) | Inheritance: wallet transfer or division during death processing (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
@@ -616,8 +618,6 @@ GENERATION 3: Thane grows up carrying both bloodlines
 | lib-character-history (`ICharacterHistoryClient`) | Seeding backstory elements for newborn characters (family context, birth circumstances) | No backstory seeded at birth. Characters start with blank history. |
 | lib-character-encounter (`ICharacterEncounterClient`) | Creating "met at birth" encounter records between newborn and family members | No birth encounters recorded. |
 | lib-hearsay (`IHearsayClient`) | Seeding initial beliefs in newborn from family cultural context (what the family "knows") | No inherited beliefs. Characters start with no hearsay. |
-| lib-inventory (`IInventoryClient`) | Heirloom transfer during inheritance processing | No heirloom transfer on death. Items remain in deceased's inventory for manual handling. |
-| lib-currency (`ICurrencyClient`) | Inheritance: wallet transfer or division during death processing | No currency inheritance. Wallets remain with deceased character's organization. |
 | lib-analytics (`IAnalyticsClient`) | Population statistics: birth rates, death rates, average lifespan, bloodline distribution | No population analytics. |
 
 ---
@@ -840,6 +840,8 @@ Archives lifecycle summary (stages traversed, marriages, children, fulfillment) 
 | `IResourceClient` | Archive compression trigger, reference tracking (L1) |
 | `ISeedClient` | Guardian spirit growth recording (L2) |
 | `IGameServiceClient` | Game service scope validation (L2) |
+| `IInventoryClient` | Heirloom transfer during inheritance processing (L2) |
+| `ICurrencyClient` | Wallet transfer or division during death processing (L2) |
 | `IServiceProvider` | Runtime resolution of soft L4 dependencies |
 
 ### Background Workers
@@ -1468,6 +1470,12 @@ Heritage provides the NATURE. Personality/Disposition/History provide the NURTUR
 ## Work Tracking
 
 *No active work items. Plugin is in pre-implementation phase.*
+
+### Completed
+
+- ~~**Dependency table: lib-inventory and lib-currency misclassified as soft**~~: **FIXED** (2026-03-08) - Moved lib-inventory (L2) and lib-currency (L2) from soft dependencies to hard dependencies per T4/SERVICE-HIERARCHY.md. L4 services MUST use constructor injection for L0/L1/L2 deps. Also added `IInventoryClient` and `ICurrencyClient` to DI Services table.
+
+### Active
 
 - **#436**: Character-Lifecycle service implementation (tracks all phases)
 - **#385**: Organization Phase 5 — household pattern (prerequisite for marriage/procreation)

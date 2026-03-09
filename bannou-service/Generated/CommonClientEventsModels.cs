@@ -542,16 +542,16 @@ public partial class SessionShortcutMetadata
 public enum SystemNotificationClientEventNotificationType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"info")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Info")]
     Info = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"warning")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Warning")]
     Warning = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Maintenance")]
     Maintenance = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"announcement")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Announcement")]
     Announcement = 3,
 
 }

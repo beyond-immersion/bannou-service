@@ -449,6 +449,7 @@ NPC crafting decisions are driven by GOAP:
 | lib-game-service (`IGameServiceClient`) | Validating game service existence for recipe scoping (L2) |
 | lib-seed (`ISeedClient`) | Reading/updating proficiency seeds for crafting skill tracking (L2) |
 | lib-location (`ILocationClient`) | Resolving station locations for proximity checks (L2) |
+| lib-character (`ICharacterClient`) | Resolving character's current location for variable provider station proximity checks (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
@@ -612,13 +613,14 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 | `IGameServiceClient` | Game service existence validation (L2 hard) |
 | `ISeedClient` | Proficiency seed reading/updating (L2 hard) |
 | `ILocationClient` | Station location resolution for proximity checks (L2 hard) |
+| `ICharacterClient` | Character location resolution for variable provider station proximity (L2 hard) |
 | `IServiceProvider` | Runtime resolution of soft L4 dependencies |
 
 ### Variable Provider Factories
 
 | Factory | Namespace | Data Source | Registration |
 |---------|-----------|-------------|--------------|
-| `CraftDecisionProviderFactory` | `${craft.*}` | Reads entity's proficiency (via lib-seed), known recipes, nearby stations, inventory materials | `IVariableProviderFactory` (DI singleton) |
+| `CraftDecisionProviderFactory` | `${craft.*}` | Reads entity's proficiency (via lib-seed), known recipes, nearby stations (via lib-character for entity location + lib-location for station lookup), inventory materials | `IVariableProviderFactory` (DI singleton) |
 
 ---
 
@@ -910,6 +912,8 @@ Crafting Session Lifecycle (Production)
 
 10. **Client events**: `craft-client-events.yaml` for pushing real-time session progress to connected WebSocket clients (step completed, quality rolling, item created).
 
+11. **Socket integration**: If lib-socket ([#430](https://github.com/beyond-immersion/bannou-service/issues/430)) is implemented, socket operations (recolor, relink, add/remove sockets, gem placement) would be orchestrated as modification recipes. Socket recoloring and relinking map to the modification recipe paradigm with `affixOperation`-style socket operation enums. lib-craft would call lib-socket's API at session completion, paralleling how it calls lib-affix for modifier operations.
+
 ---
 
 ## Known Quirks & Caveats
@@ -936,21 +940,26 @@ Crafting Session Lifecycle (Production)
 
 8. **Discovery hints are opaque strings**: The discovery system matches entity-provided material combinations against recipe hint strings using a configurable matching algorithm. The default is exact-match on sorted material codes, but games can implement fuzzy matching via configuration.
 
+9. **Proficiency seed type registration order**: lib-craft registers `proficiency:{domain}` seed types on startup for each domain it discovers in recipe definitions. This means seed type registration happens after recipe seeding — the seed types are derived from the recipe data, not predefined.
+
 ### Design Considerations (Requires Planning)
 
 1. **Quality-to-affix mapping**: When a modification recipe produces a quality score, how does that map to lib-affix tier selection? A linear mapping (quality 0.8 = 80th percentile tier) is simple but may not match game feel. May need configurable quality curves per game.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/607 -->
 
-2. **Concurrent crafting and item modification**: If entity A is crafting with a target item and entity B tries to modify the same item, who wins? The item lock in lib-affix prevents concurrent modification, but lib-craft should also check item lock state before starting a modification session.
+2. ~~**Concurrent crafting and item modification**~~: **RESOLVED** (2026-03-08) - Not a design question. lib-affix's internal per-operation distributed lock on `item:{itemInstanceId}` already serializes concurrent modifications (returns 409 Conflict). lib-craft does not need to check lock state — it attempts the affix operation at session completion and handles 409 as a session failure. First caller wins. This follows the same advisory reservation pattern as Quirk #4 (material reservation). No lock-checking API exists or is needed.
 
-3. **Real-time step durations**: Steps with `durationSeconds` need a timer mechanism. Options: (a) Contract timer milestones, (b) client-side timer with server validation, (c) background service polling. Contract timer milestones are the cleanest architectural fit.
+3. ~~**Real-time step durations**~~: **RESOLVED** (2026-03-08) - Contract timer milestones are the correct mechanism. Steps with `durationSeconds` map to Contract milestones with timer-based auto-completion, consistent with lib-contract's existing milestone progression infrastructure. No background polling or client-side-only timers needed.
 
-4. **Proficiency seed type registration**: lib-craft registers `proficiency:{domain}` seed types on startup for each domain it discovers in recipe definitions. This means seed type registration happens after recipe seeding.
+4. ~~**Proficiency seed type registration**~~: **RESOLVED** (2026-03-08) - Implementation ordering constraint, not a design question. lib-craft registers `proficiency:{domain}` seed types on startup for each domain it discovers in recipe definitions. Seed type registration happens after recipe seeding. Moved to Intentional Quirks #9.
 
 5. **Cross-entity crafting**: Can entity A start a session and entity B advance a step? (e.g., an apprentice assists a master). The current model assumes single-entity sessions. Multi-entity crafting could use Contract's multi-party model.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/613 -->
 
-6. **Material quality propagation**: How does material quality get set in the first place? Production recipe outputs carry quality from the session. But raw materials (mined ore, harvested herbs) need quality set at creation time by the gathering system (future lib-gathering or game-specific logic).
+6. ~~**Material quality propagation**~~: **RESOLVED** (2026-03-08) - Not a lib-craft design question. lib-craft reads material quality from item instance metadata (set by the creating system). Production recipe outputs carry quality from the session. Raw material quality is set at creation time by the source system (mining, harvesting, looting, or game-specific logic). lib-craft is the consumer, not the producer, of material quality data.
 
-7. **Offline NPC crafting**: When an NPC's actor is running and they're crafting, step advancement happens through GOAP actions. But what about when the NPC's actor is suspended? Options: (a) sessions pause when actor suspends, (b) sessions auto-complete on a timer, (c) sessions are represented as Contract timer milestones that progress independently of the actor.
+7. **Offline NPC crafting**: When an NPC's actor is running and they're crafting, step advancement happens through GOAP actions. But what about when the NPC's actor is suspended? Options: (a) sessions pause when actor suspends, (b) sessions auto-complete on a timer, (c) sessions are represented as Contract timer milestones that progress independently of the actor, (d) NPC crafting delegates to lib-workshop blueprints that reference lib-craft recipes — Workshop's lazy evaluation pattern handles "production continues when nobody is watching" natively via piecewise rate segments and background materialization, avoiding duplicate infrastructure. Option (d) would mean player crafting uses Contract-backed live sessions (interactive, skill checks) while NPC crafting uses Workshop (lazy, scalable to 100k+ artisans). Workshop already has a soft dependency on lib-craft for recipe-referenced blueprints.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/614 -->
 
 ---
 
@@ -961,4 +970,8 @@ Crafting Session Lifecycle (Production)
 **Predecessor**: [#285](https://github.com/beyond-immersion/bannou-service/issues/285) (World Events and Crafting as Contract-Orchestrated Systems) — crafting portion superseded by this deep dive. World Events portion is a separate concern.
 
 **Audit History**:
+- **2026-03-08**: Pre-implementation audit (pass 4). Created issue for remaining design question: #7 (offline NPC crafting → [#614](https://github.com/beyond-immersion/bannou-service/issues/614)). All design considerations now have AUDIT markers.
+- **2026-03-08**: Pre-implementation audit (pass 3). Created issues for remaining design questions: #5 (cross-entity crafting → [#613](https://github.com/beyond-immersion/bannou-service/issues/613)), #7 (offline NPC crafting → pending).
+- **2026-03-08**: Pre-implementation audit (pass 2). Resolved Design Considerations #3 (real-time step durations → Contract timer milestones), #4 (proficiency seed type registration → implementation ordering note, moved to Intentional Quirks #9), #6 (material quality propagation → external dependency, lib-craft is consumer not producer). Two genuine design questions remain: #5 (cross-entity crafting) and #7 (offline NPC crafting).
+- **2026-03-08**: Pre-implementation audit. Resolved Design Consideration #2 (concurrent crafting and item modification) — lib-affix's internal per-operation locking handles this; no lib-craft pre-check needed.
 - **2026-03-06**: L4 audit pass. Fixed: Pattern B→C event topics (all 10), T29 violations (`requiredStates: object?` → typed predicates, `affixOperationParams: object?` → typed config), `affixOperation` reclassified Category B→C (service-specific enum), T31 Category B explicitly designated with deprecation guard on StartSession, `isActive` removed (use deprecation lifecycle), `ProficiencySource` local fallback removed (lib-seed guaranteed), `craft-proficiency-store` removed, `ownerType` typed to `EntityType?`, x-permissions added to all endpoint groups, location cleanup target added, `CraftStepCompletedEvent` → `CraftSessionStepCompletedEvent`. T29 "Archive Shape" tenet added to FOUNDATION.md to prevent future agents from suggesting compression callbacks for game-mechanical operational state.

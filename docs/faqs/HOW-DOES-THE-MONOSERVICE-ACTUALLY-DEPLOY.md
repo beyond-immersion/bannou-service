@@ -1,6 +1,11 @@
 # How Does One Binary Actually Deploy as Both a Monolith and Microservices?
 
-> **Short Answer**: Every service is a plugin assembly loaded at startup based on environment variables. The same compiled binary runs all 48 services in one process for development, or one service per container in production. The code does not know or care how it is deployed.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Mesh (L0), State (L0), Messaging (L0), Orchestrator (L3)
+> **Short Answer**: Every service is a plugin assembly loaded at startup based on environment
+> variables. The same compiled binary runs all 74 services in one process for development,
+> or one service per container in production. The code does not know or care how it is
+> deployed.
 
 ---
 
@@ -14,7 +19,7 @@ It is not. The deployment flexibility is real, and it works through three concre
 
 ## Mechanism 1: Plugin Assembly Loading
 
-Each of Bannou's 48 services is compiled into an independent .NET assembly (DLL). The `PluginLoader` discovers and loads these assemblies at startup based on configuration:
+Each of Bannou's 74 services is compiled into an independent .NET assembly (DLL). The `PluginLoader` discovers and loads these assemblies at startup based on configuration:
 
 ```bash
 # Development: load everything
@@ -49,15 +54,15 @@ This is not a feature flag that disables code paths. The code is literally not l
 The PluginLoader does not load assemblies randomly. It reads the `ServiceLayer` attribute from each service's `[BannouService]` attribute and loads them in hierarchy order:
 
 1. **L0** (Infrastructure): state, messaging, mesh, telemetry
-2. **L1** (App Foundation): account, auth, connect, permission, contract, resource
-3. **L2** (Game Foundation): character, realm, species, location, ...
-4. **L3** (App Features): asset, orchestrator, documentation, website
-5. **L4** (Game Features): behavior, actor, matchmaking, voice, ...
+2. **L1** (App Foundation): account, auth, chat, connect, permission, contract, resource
+3. **L2** (Game Foundation): character, realm, species, location, actor, ...
+4. **L3** (App Features): asset, orchestrator, documentation, website, voice, broadcast
+5. **L4** (Game Features): behavior, matchmaking, puppetmaster, achievement, ...
 6. **L5** (Extensions): third-party plugins
 
 Within each layer, plugins load alphabetically. This guarantees that when a service's constructor runs, all services in lower layers are already registered in the DI container. An L2 service can safely inject L1 clients in its constructor because L1 loaded first.
 
-This loading order is identical whether you run all 48 services in one process or one service per container. The single-service container just has fewer layers to load.
+This loading order is identical whether you run all 74 services in one process or one service per container. The single-service container just has fewer layers to load.
 
 ---
 
@@ -105,7 +110,7 @@ REDIS_CONNECTION_STRING=redis:6379
 RABBITMQ_CONNECTION_STRING=amqp://guest:guest@rabbitmq:5672
 ```
 
-One `docker-compose up`. One process runs all 48 services. Service calls are in-process. State is in a local Redis container. Events flow through a local RabbitMQ container. Total containers: 4 (app, Redis, RabbitMQ, MySQL).
+One `docker-compose up`. One process runs all 74 services. Service calls are in-process. State is in a local Redis container. Events flow through a local RabbitMQ container. Total containers: 4 (app, Redis, RabbitMQ, MySQL).
 
 A developer can set breakpoints in any service, trace a request from the WebSocket gateway through auth, through character creation, through event publication, all in one debugger session.
 

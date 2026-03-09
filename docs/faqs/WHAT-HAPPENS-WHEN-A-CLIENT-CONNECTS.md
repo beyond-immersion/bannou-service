@@ -1,12 +1,18 @@
 # What Happens When a Client Connects to Bannou?
 
-> **Short Answer**: The client authenticates via HTTP, receives a JWT and a WebSocket URL, establishes a persistent WebSocket connection, gets a session-specific capability manifest pushed to it, and from that point forward all communication flows through the binary-framed WebSocket protocol. Five L1 services coordinate to make this happen.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Auth (L1), Account (L1), Connect (L1), Permission (L1)
+> **Short Answer**: The client authenticates via HTTP through Auth, receives a JWT and
+> WebSocket URL, establishes a persistent WebSocket connection through Connect, receives
+> a permission-filtered capability manifest compiled by Permission and delivered by
+> Connect, and from that point forward all communication flows through the binary-framed
+> WebSocket protocol. Four L1 services coordinate to make this happen.
 
 ---
 
 ## The Full Connection Flow
 
-The connection flow touches every L1 service except Contract and Resource. Understanding it reveals why these services are separate and how they cooperate.
+The connection flow touches four of the seven L1 services: Auth, Account, Connect, and Permission. Chat, Contract, and Resource are not involved. Understanding the flow reveals why these services are separate and how they cooperate.
 
 ### Step 1: Authentication (Auth Service)
 
@@ -40,9 +46,10 @@ The client opens a WebSocket connection to the provided URL, sending the JWT as 
 Connect:
 1. Validates the JWT by calling Auth (`IAuthClient.ValidateTokenAsync`).
 2. Creates a `ConnectionStateData` entry in Redis with the session ID, account ID, roles, authorizations, and timestamps.
-3. Generates a **session-specific salt** and computes client-salted GUIDs for every registered endpoint.
-4. Sets up a **per-session RabbitMQ subscription** (`CONNECT_SESSION_{sessionId}`) for server-to-client event delivery.
-5. Publishes a `session.connected` event to notify other services.
+3. Sets up a **per-session RabbitMQ subscription** (`CONNECT_SESSION_{sessionId}`) for server-to-client event delivery.
+4. Publishes a `session.connected` event to notify other services.
+
+At this point, no capability manifest has been sent yet -- Connect waits for Permission to compile and push session capabilities before generating GUIDs and delivering the manifest (see Step 4).
 
 **Services involved**: Connect (primary), Auth (validation via mesh).
 
@@ -57,11 +64,12 @@ Permission receives the `session.connected` event and:
 
 **Services involved**: Permission (primary), Connect (receives the pushed event via RabbitMQ).
 
-### Step 4: Capability Manifest Delivery (Connect Service)
+### Step 4: GUID Generation & Capability Manifest Delivery (Connect Service)
 
 Connect receives the `SessionCapabilitiesEvent` on the session's RabbitMQ queue and:
-1. Builds a capability manifest mapping endpoint names to client-salted GUIDs, filtered to only include endpoints the session is permitted to access.
-2. Serializes the manifest and sends it to the client over the WebSocket connection.
+1. Generates **client-salted GUIDs** for each permitted endpoint using the shared server salt combined with the session ID (making each GUID unique per session despite the salt being shared across instances).
+2. Builds a capability manifest mapping endpoint names to client-salted GUIDs, filtered to only include endpoints the session is permitted to access.
+3. Serializes the manifest and sends it to the client over the WebSocket connection.
 
 The client now has a complete map of every API it can call, with session-specific GUIDs for each.
 
@@ -94,7 +102,7 @@ If the WebSocket connection drops (network interruption, app backgrounding):
 4. If the client reconnects within the window, it provides the reconnection token.
 5. Connect validates the token, restores the session (same GUIDs, same permissions, same state), and publishes `session.reconnected`.
 
-The reconnection is seamless -- the client does not need to re-authenticate or receive a new capability manifest. Other services (GameSession, Matchmaking) subscribe to `session.reconnected` to restore their own state.
+The reconnection is seamless -- the client does not need to re-authenticate or receive a new capability manifest. Other services (GameSession, Matchmaking, Voice) subscribe to `session.reconnected` to restore their own state.
 
 ---
 
@@ -106,7 +114,7 @@ When a client disconnects permanently (logout, token expiry, connection timeout 
 2. Connect tears down the per-session RabbitMQ subscription.
 3. Connect removes the session from its in-memory connection state and Redis.
 4. Permission receives the event and removes the session from `active_connections`.
-5. Other services (GameSession, Matchmaking, Actor) receive the event and clean up session-specific state.
+5. Other services (GameSession, Matchmaking, Actor, Voice) receive the event and clean up session-specific state.
 
 If the disconnection is triggered by Auth (session invalidation, account deletion):
 

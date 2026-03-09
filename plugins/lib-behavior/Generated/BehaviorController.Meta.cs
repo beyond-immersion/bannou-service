@@ -991,6 +991,12 @@ public partial class BehaviorController
                     "minimum": 1,
                     "default": 100,
                     "description": "Planning timeout in milliseconds"
+                },
+                "maxCostBound": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Maximum total plan cost. Nodes whose accumulated cost exceeds this bound are pruned during search. Null means no cost limit (default)."
                 }
             }
         }

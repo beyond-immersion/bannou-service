@@ -1,6 +1,13 @@
 # Why Doesn't Bannou Use AI/LLM for Content Generation?
 
-> **Short Answer**: Because Bannou's computational systems follow a deliberate "formal theory over AI" design pattern. Music uses formal music theory and GOAP planning. Behavior uses ABML (a formal DSL) and GOAP planning. Storyline uses formal narrative theory and GOAP planning. Compression uses deterministic template-based archival. Every system that produces content does so through auditable, deterministic, reproducible formal rules -- not through non-deterministic neural inference. This is not a temporary limitation; it is a core architectural decision.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Music (L4), Behavior (L4), Storyline (L4), Character History (L4), Actor (L2), Resource (L1)
+> **Short Answer**: Every content-producing system in Bannou uses formal theory and
+> deterministic rules instead of neural inference -- music uses formal music theory,
+> behavior uses ABML and GOAP planning, storyline uses formal narrative theory, and
+> compression uses deterministic templates. This is a core architectural decision
+> enabling Redis caching, test reproducibility, zero external dependencies, and
+> constant-cost scaling to 100,000+ concurrent NPCs.
 
 ---
 

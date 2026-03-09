@@ -15915,9 +15915,9 @@ components:
       type: string
       description: Precision level of spatial bounds for a location
       enum:
-      - exact
-      - approximate
-      - none
+      - Exact
+      - Approximate
+      - None
     BreachResponse:
       type: object
       description: Breach record details
@@ -19988,9 +19988,9 @@ components:
       type: string
       description: How this location's coordinate system relates to its parent
       enum:
-      - inherit
-      - local
-      - portal
+      - Inherit
+      - Local
+      - Portal
     CopySaveRequest:
       description: Request to copy save data from one slot to another, 
         optionally across different entities or games.

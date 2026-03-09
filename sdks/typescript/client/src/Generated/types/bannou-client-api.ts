@@ -12080,7 +12080,7 @@ export interface components {
      * @description Precision level of spatial bounds for a location
      * @enum {string}
      */
-    BoundsPrecision: 'exact' | 'approximate' | 'none';
+    BoundsPrecision: 'Exact' | 'Approximate' | 'None';
     /** @description Breach record details */
     BreachResponse: {
       /**
@@ -14592,7 +14592,7 @@ export interface components {
      * @description How this location's coordinate system relates to its parent
      * @enum {string}
      */
-    CoordinateMode: 'inherit' | 'local' | 'portal';
+    CoordinateMode: 'Inherit' | 'Local' | 'Portal';
     /** @description Request to copy save data from one slot to another, optionally across different entities or games. */
     CopySaveRequest: {
       /** @description Game identifier of the source save */

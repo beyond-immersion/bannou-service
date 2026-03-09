@@ -1,6 +1,12 @@
 # Why Doesn't Bannou Build Anti-Cheat, Replays, or Game Hosting?
 
-> **Short Answer**: Because these are commodity concerns better served by specialist providers. Bannou focuses on composable primitives that create emergent gameplay systems. Anti-cheat is an arms race (use EasyAntiCheat/BattlEye). Game server hosting requires massive infrastructure (use Agones/GameLift). Replays are deeply game-specific (use Save-Load patterns). Content moderation needs ML and legal expertise (use Perspective API or third-party services). Push notifications are a solved platform problem (use Firebase/APNs). Admin dashboards are taste-dependent (use the APIs directly with Swagger + Grafana). Bannou provides the primitives and integration hooks; specialist providers handle the commodity layer.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Connect (L1), Permission (L1), Chat (L1), Contract (L1), Game Session (L2), Analytics (L4), Save Load (L4), Mapping (L4), Orchestrator (L3), Mesh (L0), Telemetry (L0), Documentation (L3), Website (L3)
+> **Short Answer**: Bannou builds composable primitives that create emergent gameplay, not
+> commodity infrastructure better served by specialists. Anti-cheat, game server hosting,
+> replays, content moderation, push notifications, and admin dashboards all fail the
+> composability test -- Bannou provides the integration hooks and server-authoritative
+> primitives while specialist providers handle the commodity layer.
 
 ---
 

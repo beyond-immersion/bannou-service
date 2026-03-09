@@ -15,7 +15,7 @@ namespace BeyondImmersion.Bannou.Behavior.Compiler;
 /// All imported flows are renamed with their namespace prefix.
 /// This enables bytecode compilation to produce a single self-contained model.
 /// </summary>
-public sealed class DocumentMerger
+public sealed class DocumentMerger : IDocumentMerger
 {
     /// <summary>
     /// Merges a LoadedDocument tree into a single flat AbmlDocument.

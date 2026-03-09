@@ -1,6 +1,13 @@
-# Why Is Puppetmaster a Separate Service from Behavior?
+# Why Is Puppetmaster Separate from Behavior?
 
-> **Short Answer**: Behavior compiles ABML and runs the GOAP planner -- it is a pure computation service. Puppetmaster orchestrates which behaviors run where, loads them dynamically from the Asset service, manages Regional Watchers, and coordinates encounters. They solve fundamentally different problems: Behavior answers "what should this NPC do?", Puppetmaster answers "what should be happening in this region?"
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Actor (L2), Asset (L3), Behavior (L4), Puppetmaster (L4)
+> **Short Answer**: Behavior compiles ABML and runs the GOAP planner -- it is a
+> computation service. Puppetmaster orchestrates which behaviors run where, loads
+> them dynamically from the Asset service, manages Regional Watchers, and
+> coordinates encounters. They solve fundamentally different problems: Behavior
+> answers "what should this NPC do?", Puppetmaster answers "what should be
+> happening in this region?"
 
 ---
 

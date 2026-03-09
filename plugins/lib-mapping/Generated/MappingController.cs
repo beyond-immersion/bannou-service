@@ -49,6 +49,23 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
 
 
     /// <summary>
+    /// Delete a map channel and all its data
+    /// </summary>
+
+    /// <remarks>
+    /// Permanently deletes a channel, its authority record, all map objects,
+    /// <br/>spatial/type/region indexes, version counter, and ingest subscription.
+    /// <br/>Requires the channel to have no active authority (release first).
+    /// </remarks>
+
+
+
+    /// <returns>Channel deleted successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteChannel(DeleteChannelRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
     /// Release authority over a channel
     /// </summary>
 
@@ -426,6 +443,56 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:mapping/create-channel",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Delete a map channel and all its data
+    /// </summary>
+    /// <remarks>
+    /// Permanently deletes a channel, its authority record, all map objects,
+    /// <br/>spatial/type/region indexes, version counter, and ingest subscription.
+    /// <br/>Requires the channel to have no active authority (release first).
+    /// </remarks>
+    /// <returns>Channel deleted successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("mapping/delete-channel")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteChannel([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteChannelRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.DeleteChannel",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/delete-channel");
+        try
+        {
+
+            var statusCode = await _implementation.DeleteChannelAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/delete-channel");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:mapping/delete-channel");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "mapping",
+                "DeleteChannel",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:mapping/delete-channel",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

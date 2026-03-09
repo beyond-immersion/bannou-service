@@ -1,6 +1,11 @@
-# Why Is Authentication Separated from Account Management?
+# Why Is Authentication Separated From Account Management?
 
-> **Short Answer**: Because the two services have fundamentally different trust boundaries, scaling characteristics, and failure modes. Merging them creates a single service that is simultaneously internet-facing and the authoritative data store -- a security and operational anti-pattern.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Account (L1), Auth (L1), Connect (L1)
+> **Short Answer**: Because the two services have fundamentally different trust
+> boundaries, scaling characteristics, and failure modes. Merging them creates a
+> single service that is simultaneously internet-facing and the authoritative
+> data store -- a security and operational anti-pattern.
 
 ---
 

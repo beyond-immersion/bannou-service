@@ -13,10 +13,10 @@
 | Layer | L2 GameFoundation |
 | Endpoints | 33 |
 | State Stores | currency-definitions (MySQL), currency-wallets (MySQL), currency-balances (MySQL), currency-transactions (MySQL), currency-holds (MySQL), currency-balance-cache (Redis), currency-holds-cache (Redis), currency-idempotency (Redis), currency-lock (Redis) |
-| Events Published | 16 (currency.credited, currency.debited, currency.transferred, currency.autogain.calculated, currency.earn-cap.reached, currency.wallet-cap.reached, currency.exchange-rate.updated, currency.definition.created, currency.definition.updated, currency.wallet.created, currency.wallet.frozen, currency.wallet.unfrozen, currency.wallet.closed, currency.hold.created, currency.hold.captured, currency.hold.released) |
+| Events Published | 18 (currency.credited, currency.debited, currency.transferred, currency.autogain.calculated, currency.earn-cap.reached, currency.wallet-cap.reached, currency.expired, currency.exchange-rate.updated, currency.definition.created, currency.definition.updated, currency.wallet.created, currency.wallet.frozen, currency.wallet.unfrozen, currency.wallet.closed, currency.hold.created, currency.hold.captured, currency.hold.released, currency.hold.expired) |
 | Events Consumed | 4 (1 external: account.deleted; 3 self-subscription for cache invalidation) |
 | Client Events | 3 (currency.balance.changed, currency.wallet.frozen, currency.wallet.unfrozen) |
-| Background Services | 1 (CurrencyAutogainTaskService) |
+| Background Services | 3 (CurrencyAutogainTaskService, CurrencyExpirationTaskService, HoldExpirationTaskService) |
 
 ---
 
@@ -96,7 +96,7 @@
 |------------|-------|------|-------|
 | lib-state (`IStateStoreFactory`) | L0 | Hard | All 9 state stores |
 | lib-state (`IDistributedLockProvider`) | L0 | Hard | Balance, hold, wallet, index, autogain locks |
-| lib-messaging (`IMessageBus`) | L0 | Hard | Publishing 16 event topics |
+| lib-messaging (`IMessageBus`) | L0 | Hard | Publishing 18 event topics |
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation |
 | lib-connect (`IEntitySessionRegistry`) | L1 | Hard | Client events to wallet owner WebSocket sessions |
 
@@ -126,8 +126,8 @@
 | `currency.hold.created` | `CurrencyHoldCreatedEvent` | CreateHold |
 | `currency.hold.captured` | `CurrencyHoldCapturedEvent` | CaptureHold |
 | `currency.hold.released` | `CurrencyHoldReleasedEvent` | ReleaseHold |
-
-Schema also defines `currency.expired` and `currency.hold.expired` — not yet implemented.
+| `currency.expired` | `CurrencyExpiredEvent` | CurrencyExpirationTaskService |
+| `currency.hold.expired` | `CurrencyHoldExpiredEvent` | HoldExpirationTaskService |
 
 ---
 
@@ -149,7 +149,7 @@ Schema also defines `currency.expired` and `currency.hold.expired` — not yet i
 | Service | Role |
 |---------|------|
 | `ILogger<CurrencyService>` | Structured logging |
-| `CurrencyServiceConfiguration` | All 18 config properties |
+| `CurrencyServiceConfiguration` | All 23 config properties |
 | `IStateStoreFactory` | Constructor-cached into 14 typed store fields including 1 queryable (factory not stored as field) |
 | `IDistributedLockProvider` | Distributed locks |
 | `IMessageBus` | Event publishing |
@@ -157,7 +157,9 @@ Schema also defines `currency.expired` and `currency.hold.expired` — not yet i
 | `IEntitySessionRegistry` | Client event publishing to wallet owner sessions |
 | `ICurrencyDataCache` | In-memory actor variable provider cache (invalidated by self-subscribed events) |
 | `IEventConsumer` | Self-subscribes to credited/debited/transferred for cache invalidation |
-| `CurrencyAutogainTaskService` | Hosted singleton background worker |
+| `CurrencyAutogainTaskService` | Hosted singleton background worker for proactive autogain |
+| `CurrencyExpirationTaskService` | Hosted singleton background worker that scans and zeroes expired balances |
+| `HoldExpirationTaskService` | Hosted singleton background worker that auto-releases holds past their ExpiresAt |
 | `CurrencyProviderFactory` | Singleton `IVariableProviderFactory` for `${currency.*}` ABML namespace |
 
 ---
@@ -199,6 +201,8 @@ Schema also defines `currency.expired` and `currency.hold.expired` — not yet i
 | CaptureHold | POST /currency/hold/capture | [] | hold, bal, tx, hold-wallet, idempotency | currency.hold.captured, currency.debited |
 | ReleaseHold | POST /currency/hold/release | [] | hold, hold-wallet | currency.hold.released |
 | GetHold | POST /currency/hold/get | [] | - | - |
+| CurrencyExpirationTaskService.ProcessExpirationCycleAsync | background | - | bal, tx | currency.expired |
+| HoldExpirationTaskService.ProcessHoldExpirationCycleAsync | background | - | hold, hold-wallet | currency.hold.expired |
 
 ---
 
@@ -751,3 +755,156 @@ FOREACH definition where autogainEnabled
         PUBLISH currency.autogain.calculated { walletId, periodsApplied, amountGained, newBalance }
         PUSH CurrencyBalanceChangedClientEvent to owner sessions
 ```
+
+### CurrencyExpirationTaskService
+**Interval**: `config.CurrencyExpirationTaskIntervalMs` (default 3600000ms = 1 hour)
+**Startup Delay**: `config.CurrencyExpirationTaskStartupDelaySeconds` (default 30s)
+**Active when**: always (no mode guard; runs unconditionally as a hosted service)
+
+```
+// ProcessExpirationCycleAsync — per-cycle span via ITelemetryProvider
+// Scope created once per cycle; all stores resolved once from scoped IStateStoreFactory
+READ definitions:all-defs                          // JSON list of definition IDs
+FOREACH definitionId in allIds
+  READ definitions:def:{definitionId}
+  IF definition is null OR !definition.Expires     // skip non-expiring currencies
+    CONTINUE
+
+  // Determine whether this policy has a global cutoff (FixedDate) or per-balance cutoff
+  IF expirationPolicy == FixedDate
+    IF definition.ExpirationDate is null OR now < definition.ExpirationDate
+      CONTINUE                                     // not yet expired globally
+  ELSE IF expirationPolicy == EndOfSeason
+    CONTINUE                                       // deferred: requires Worldstate integration
+  // DurationFromEarn: no global cutoff; evaluated per-balance below
+
+  READ balances:bal-currency:{definitionId}        // JSON list of walletIds
+  IF empty
+    CONTINUE
+
+  FOREACH walletId in walletIds in batches of CurrencyExpirationBatchSize
+    // Per-item try-catch: one corrupt balance must not block the rest (IMPLEMENTATION TENETS)
+    READ balances:bal:{walletId}:{definitionId}
+    IF balance is null OR balance.Amount <= 0
+      CONTINUE                                     // nothing to expire
+
+    IF expirationPolicy == DurationFromEarn
+      // Parse ISO 8601 duration from definition.ExpirationDuration (XmlConvert.ToTimeSpan)
+      cutoff = balance.CreatedAt + duration
+      IF now < cutoff
+        CONTINUE                                   // this individual balance has not yet expired
+
+    // Balance is expired — zero it out under distributed lock
+    LOCK balance:{walletId}:{definitionId}         // currency-balance lock (same as credit/debit)
+      // Re-read under lock: amount may have changed since pre-lock check
+      READ balances:bal:{walletId}:{definitionId}
+      IF balance is null OR balance.Amount <= 0
+        CONTINUE                                   // already zeroed concurrently
+
+      amountExpired = balance.Amount
+      balance.Amount = 0
+      balance.LastModifiedAt = now
+      WRITE balances:bal:{walletId}:{definitionId} <- zeroed balance
+      WRITE balance-cache:bal:{walletId}:{definitionId}
+
+      // Record expiration transaction (TransactionType = System) for history visibility
+      WRITE transactions:tx:{transactionId}        <- new TransactionModel {
+                                                        TargetWalletId = walletId,
+                                                        Amount = amountExpired,
+                                                        TransactionType = System,
+                                                        TargetBalanceBefore = amountExpired,
+                                                        TargetBalanceAfter = 0
+                                                      }
+      LOCK index:tx-wallet:{walletId}
+        // AddToListAsync
+
+      READ wallets:wallet:{walletId}               // for ownerId in event
+      PUBLISH currency.expired {
+        transactionId,
+        walletId,
+        ownerId,
+        currencyDefinitionId = definitionId,
+        currencyCode = definition.Code,
+        amountExpired,
+        expirationPolicy
+      }
+
+// Cycle summary: log Information with count of expired balances and currencies processed
+```
+
+**Design notes**:
+- `FixedDate`: global cutoff — once `now >= ExpirationDate`, every wallet holding the currency is zeroed in one cycle. Subsequent cycles see `Amount == 0` and skip cleanly.
+- `DurationFromEarn`: per-balance cutoff using `balance.CreatedAt + duration`. Each balance expires at a different time. New balances created after a prior expiry are independent.
+- `EndOfSeason`: deferred until Worldstate is implemented. Requires resolving `SeasonId` to a season-end timestamp. Worker skips currencies with this policy.
+- Expiration transaction type is `System` (not a new enum value). It appears in transaction history so operators can see why a balance went to zero.
+- No idempotency key on the transaction: if the worker crashes after zeroing the balance but before recording the transaction, the next cycle sees `Amount == 0` and skips. The missing transaction is an acceptable edge case preferable to complex recovery logic.
+- Per-item error isolation: each wallet's balance is processed in an individual try-catch (IMPLEMENTATION TENETS — per-item batch isolation). Lock contention or a corrupt record logs a Warning and continues to the next wallet.
+
+### HoldExpirationTaskService
+**Interval**: `config.HoldExpirationTaskIntervalMs` (default 300000ms = 5 minutes)
+**Startup Delay**: `config.HoldExpirationTaskStartupDelaySeconds` (default 30s)
+**Active when**: always (no mode guard; runs unconditionally as a hosted service)
+
+```
+// ProcessHoldExpirationCycleAsync — per-cycle span via ITelemetryProvider
+// Scope created once per cycle; all stores resolved once from scoped IStateStoreFactory
+READ definitions:all-defs                          // JSON list of definition IDs
+FOREACH definitionId in allIds
+  // No global holds-by-currency index exists.
+  // Strategy: use the bal-currency reverse index (wallets holding this currency)
+  // then check each wallet's per-currency hold index.
+  READ balances:bal-currency:{definitionId}        // JSON list of walletIds
+  IF empty
+    CONTINUE
+
+  FOREACH walletId in walletIds in batches of HoldExpirationBatchSize
+    READ holds:hold-wallet:{walletId}:{definitionId}   // JSON list of holdIds
+    IF empty
+      CONTINUE
+
+    FOREACH holdId in holdIds
+      // Per-item try-catch: one corrupt hold must not block the rest (IMPLEMENTATION TENETS)
+      // Check Redis cache first, fall back to MySQL (same pattern as GetHold)
+      READ holds-cache:hold:{holdId}
+      IF cache miss
+        READ holds:hold:{holdId}
+      IF hold is null OR hold.Status != Active
+        CONTINUE                                   // already captured, released, or gone
+
+      IF hold.ExpiresAt > now
+        CONTINUE                                   // not yet expired
+
+      // Hold is expired — auto-release under hold-level distributed lock
+      LOCK hold:{holdId}                           // hold-level lock (same as CaptureHold/ReleaseHold)
+        READ holds:hold:{holdId} [with ETag]       // re-read under lock for optimistic concurrency
+        IF hold is null OR hold.Status != Active
+          CONTINUE                                 // status changed while waiting for lock
+
+        // Set status = Released, completedAt = now (no balance modification needed)
+        hold.Status = Released
+        hold.CompletedAt = now
+        ETAG-WRITE holds:hold:{holdId}             -> skip on ETag conflict (concurrent API call won)
+        WRITE holds-cache:hold:{holdId}
+
+        LOCK index:hold-wallet:{walletId}:{definitionId}
+          // RemoveFromListAsync (prune expired hold from active hold index)
+
+        READ wallets:wallet:{walletId}             // for ownerId in event
+        PUBLISH currency.hold.expired {
+          holdId,
+          walletId,
+          ownerId,
+          currencyDefinitionId = definitionId,
+          amount = hold.Amount,
+          originalExpiresAt = hold.ExpiresAt
+        }
+
+// Cycle summary: log Information with count of expired holds processed
+```
+
+**Design notes**:
+- No balance modification: hold expiration is semantically identical to `ReleaseHold`. The held amount was never subtracted from `balance.Amount` — it was only reserved in the effective balance calculation (`balance.Amount - sum(active holds)`). Setting the hold to Released removes it from the active hold index, which restores the effective balance without any balance record write.
+- ETag conflict is expected and safe: if a concurrent `CaptureHold` or `ReleaseHold` API call races with the expiration worker, the ETag write fails. The worker skips this hold. The concurrent API call has already transitioned the hold to a terminal state. No compensation needed.
+- Lock ordering: hold-level lock only (`hold:{holdId}`). No balance-level lock required since no balance record is written.
+- Publishes `currency.hold.expired`, not `currency.hold.released`: consumers that need to distinguish between user-initiated release and system auto-expiry (e.g., for audit trails or rebooking workflows) can subscribe to the specific event.
+- Per-item error isolation: each hold is processed in an individual try-catch. Lock contention or a corrupt hold logs a Warning and continues to the next hold.

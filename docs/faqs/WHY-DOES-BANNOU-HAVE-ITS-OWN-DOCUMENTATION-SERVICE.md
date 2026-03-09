@@ -1,5 +1,7 @@
 # Why Does Bannou Have Its Own Documentation Service Instead of Using a Wiki or CMS?
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Documentation (L3), Website (L3)
 > **Short Answer**: Because the primary consumer of Bannou's documentation is not a human with a browser -- it is an AI agent with an HTTP client. The Documentation service is a knowledge base API, not a wiki.
 
 ---
@@ -79,10 +81,10 @@ If the Documentation service needed to index game-specific content (character lo
 
 ## The Browser Exception
 
-The Documentation service is one of only two Bannou services (alongside Website) that exposes browser-facing GET endpoints. This is an explicit exception to Bannou's POST-only API pattern:
+The Documentation service is one of four Bannou services (alongside Website, Auth, and Connect) that exposes browser-facing GET endpoints. This is an explicit exception to Bannou's POST-only API pattern:
 
-- `GET /documentation/render/{namespaceId}/{slug}` renders a markdown document as HTML
-- `GET /documentation/render/{namespaceId}` renders a namespace index page
+- `GET /documentation/view/{slug}` renders a markdown document as HTML
+- `GET /documentation/raw/{slug}` returns raw markdown content
 
 These exist because documentation is one of the few things where a bookmarkable, browser-accessible URL is genuinely useful. An engineer debugging a production issue should be able to paste a documentation URL into Slack and have it render in a browser without requiring a POST client.
 

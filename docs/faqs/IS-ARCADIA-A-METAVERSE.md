@@ -1,6 +1,10 @@
 # Is Arcadia a Metaverse?
 
-> **Short Answer**: No. A metaverse is a virtual world designed around its users. Arcadia is a virtual world that has users.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Actor (L2), Resource (L1), Storyline (L4), Currency (L2), Escrow (L4), Character Lifecycle (L4), Divine (L4)
+> **Short Answer**: No. A metaverse is a virtual world designed around its users. Arcadia is a virtual
+> world that has users. Metaverses are anthropocentric platforms for human activity; Arcadia is a
+> cosmocentric simulation with 100,000+ autonomous NPCs that runs whether players are present or not.
 
 ---
 
@@ -65,8 +69,8 @@ The anti-metaverse position is **clearly stronger**, and the distinction isn't j
 - Characters-as-independent-entities required the entire dual-agency Actor system with autonomous NPC brains.
 - Intentional inequality required the world-state-driven scenario system instead of scripted content.
 - The content flywheel required the Resource compression pipeline, Storyline Composer, and generational cycles.
-- "Emergent over authored" required GOAP as the universal planner across six different systems.
+- "Emergent over authored" required GOAP as the universal planner across seven different systems.
 
-Every piece of the 45-service architecture was designed to produce a world that **doesn't need you**. A metaverse is a stage built for humans. Arcadia is an ecosystem that humans happen to inhabit.
+Every piece of the 75-service architecture was designed to produce a world that **doesn't need you**. A metaverse is a stage built for humans. Arcadia is an ecosystem that humans happen to inhabit.
 
 **If someone calls it a metaverse, the most accurate response is**: *"A metaverse is a virtual world designed around its users. Arcadia is a virtual world that has users."*

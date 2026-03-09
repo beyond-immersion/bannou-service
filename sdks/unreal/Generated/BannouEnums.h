@@ -176,9 +176,9 @@ enum class EBondStatus : uint8
 UENUM(BlueprintType)
 enum class EBoundsPrecision : uint8
 {
-    Exact UMETA(DisplayName = "exact"),
-    Approximate UMETA(DisplayName = "approximate"),
-    None UMETA(DisplayName = "none"),
+    Exact UMETA(DisplayName = "Exact"),
+    Approximate UMETA(DisplayName = "Approximate"),
+    None UMETA(DisplayName = "None"),
 };
 
 /** Current status of a breach record */
@@ -541,9 +541,9 @@ enum class EContractStatus : uint8
 UENUM(BlueprintType)
 enum class ECoordinateMode : uint8
 {
-    Inherit UMETA(DisplayName = "inherit"),
-    Local UMETA(DisplayName = "local"),
-    Portal UMETA(DisplayName = "portal"),
+    Inherit UMETA(DisplayName = "Inherit"),
+    Local UMETA(DisplayName = "Local"),
+    Portal UMETA(DisplayName = "Portal"),
 };
 
 /** How the currency handles decimal values (immutable after creation) */

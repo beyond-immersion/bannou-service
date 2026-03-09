@@ -1,6 +1,10 @@
 # Why Does Bannou Have an Orchestrator Service When Kubernetes Already Exists?
 
-> **Short Answer**: Kubernetes orchestrates containers. The Orchestrator orchestrates Bannou services. These are different problems at different abstraction levels, and Kubernetes is one of several backends the Orchestrator can use.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Orchestrator (L3), Actor (L2), Mesh (L0)
+> **Short Answer**: Kubernetes orchestrates containers. The Orchestrator orchestrates
+> Bannou services. These are different problems at different abstraction levels, and
+> Kubernetes is one of several backends the Orchestrator can use.
 
 ---
 
@@ -21,7 +25,7 @@ If you already have Kubernetes, why build another orchestration layer?
 Kubernetes knows about containers, pods, deployments, and services. It knows how to schedule workloads, restart crashed pods, and expose network endpoints. It is very good at this.
 
 Kubernetes does not know:
-- **Which Bannou services are enabled in which container**. A single Bannou binary can run any combination of 48 services. Kubernetes sees one deployment of one image. The Orchestrator knows that this container is running Account, Auth, and Connect while that container is running Character, Realm, and Species.
+- **Which Bannou services are enabled in which container**. A single Bannou binary can run any combination of its 70+ services. Kubernetes sees one deployment of one image. The Orchestrator knows that this container is running Account, Auth, and Connect while that container is running Character, Realm, and Species.
 - **The service hierarchy**. Kubernetes does not know that L1 services must start before L2 services, or that disabling L2 means L4 should also be disabled. The Orchestrator understands deployment modes and layer dependencies.
 - **Service-to-app-id routing**. When a Bannou service calls another service via lib-mesh, the mesh needs to know which container instance hosts the target service. The Orchestrator maintains and broadcasts service routing tables (`bannou.full-service-mappings`) that map service names to container app-ids. Kubernetes service discovery works at the container level; Bannou needs service-level routing within containers.
 - **Processing pool semantics**. The Actor service needs on-demand worker containers for NPC brain execution. These are not standard Kubernetes workloads -- they are leased processing nodes acquired for a specific task, released when done, with metrics tracking and pool scaling. The Orchestrator provides acquire/release/metrics semantics that Kubernetes HPA does not model.
@@ -76,7 +80,7 @@ You could model this in Kubernetes with custom resources, operators, and control
 
 Kubernetes has liveness and readiness probes. These tell Kubernetes whether a container is running and ready to receive traffic. They do not tell you:
 
-- Which of the 48 services inside the container are healthy
+- Which of the many services inside the container are healthy
 - Whether a specific service's state store is connected
 - Whether the messaging infrastructure is operational for a specific service
 - What the service's current capacity utilization is

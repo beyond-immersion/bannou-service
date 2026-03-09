@@ -485,7 +485,13 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CURRENCY_CONVERSION_ROUNDING_PRECISION` | int | `8` | Number of decimal places for currency conversion rounding |
 | `CURRENCY_DEFAULT_ALLOW_NEGATIVE` | bool | `false` | Default for currencies that do not specify allowNegative |
 | `CURRENCY_EXCHANGE_RATE_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts for exchange rate update with optimis... |
+| `CURRENCY_EXPIRATION_BATCH_SIZE` | int | `500` | Number of expired currency records to process per cycle |
+| `CURRENCY_EXPIRATION_TASK_INTERVAL_MS` | int | `3600000` | How often to process currency expirations in milliseconds (d... |
+| `CURRENCY_EXPIRATION_TASK_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before first currency expiration task cycle... |
 | `CURRENCY_HOLD_CACHE_TTL_SECONDS` | int | `120` | TTL in seconds for hold cache entries |
+| `CURRENCY_HOLD_EXPIRATION_BATCH_SIZE` | int | `500` | Number of expired holds to process per cycle |
+| `CURRENCY_HOLD_EXPIRATION_TASK_INTERVAL_MS` | int | `300000` | How often to process hold expirations in milliseconds (defau... |
+| `CURRENCY_HOLD_EXPIRATION_TASK_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before first hold expiration task cycle (al... |
 | `CURRENCY_HOLD_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for hold-level distributed locks |
 | `CURRENCY_HOLD_MAX_DURATION_DAYS` | int | `7` | Maximum duration for authorization holds in days |
 | `CURRENCY_IDEMPOTENCY_TTL_SECONDS` | int | `3600` | How long to cache idempotency keys in seconds |
@@ -1302,9 +1308,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 1008
+- **Total properties**: 1014
 - **Required (no default)**: 58
-- **Optional (has default)**: 950
+- **Optional (has default)**: 956
 
 ## Environment Variable Naming Convention
 

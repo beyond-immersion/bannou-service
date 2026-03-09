@@ -144,6 +144,13 @@ public sealed class GoapPlanner : IGoapPlanner
 
                 // Calculate costs
                 var gCost = current.GCost + action.Cost;
+
+                // Cost bound pruning: skip nodes exceeding the budget
+                if (options.MaxCostBound.HasValue && gCost > options.MaxCostBound.Value)
+                {
+                    continue;
+                }
+
                 var hCost = newState.DistanceToGoal(goal) * options.HeuristicWeight;
                 var newNode = new PlanNode(newState, action, current, gCost, hCost);
 

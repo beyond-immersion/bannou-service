@@ -1,5 +1,7 @@
 # What Is the Difference Between License and Collection?
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: License (L4), Collection (L2), Item (L2), Inventory (L2), Contract (L1), Seed (L2)
 > **Short Answer**: License manages progression boards where unlocking nodes costs something and follows structured rules (skill trees, tech trees, license boards). Collection manages content archives where entries are granted by experiencing them (bestiaries, music galleries, recipe books). License is about earning and spending. Collection is about discovering and cataloging.
 
 ---

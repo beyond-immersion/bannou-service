@@ -1,6 +1,12 @@
 # How Does the Economy Work Without Players?
 
-> **Short Answer**: NPCs drive the economy. The Currency, Item, and Inventory services provide the infrastructure for multi-currency wallets, item instances, and container management. NPCs -- running as actors with GOAP planning -- make economic decisions based on their needs, personality, and world state. They buy, sell, craft, and trade according to their own goals. Player economies layer on top of this NPC economic substrate. If every player logs off, the economy continues because the participants are world citizens, not player avatars.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Currency (L2), Item (L2), Inventory (L2), Actor (L2), Escrow (L4), Trade (L4), Market (L4), Workshop (L4)
+> **Short Answer**: NPCs drive the economy autonomously. The Currency, Item, and Inventory
+> services (all L2) provide wallets, goods, and containers, while Actor (L2) runs NPC brains
+> with GOAP planning that make economic decisions based on needs, personality, and world state.
+> If every player logs off, the economy continues because the participants are world citizens,
+> not player avatars.
 
 ---
 
@@ -14,9 +20,9 @@ For a living world where the simulation runs continuously whether players are wa
 
 ## The Three-Layer Economic Architecture
 
-Bannou's economy has three distinct layers, each at a different service hierarchy level:
+Bannou's economy has three conceptual layers spanning two service hierarchy levels (L2 GameFoundation and L4 GameFeatures):
 
-### Layer 1: The Infrastructure (Currency, Item, Inventory)
+### The Primitives: Currency, Item, Inventory (all L2)
 
 **Currency (L2)** provides the monetary primitives:
 - **Currency definitions** with scope and realm restrictions. A currency can be global (used across all realms) or realm-specific (only valid in Arcadia, not Fantasia).
@@ -38,7 +44,7 @@ Bannou's economy has three distinct layers, each at a different service hierarch
 
 These three services know nothing about economics. They provide the mechanical primitives -- wallets hold currencies, instances represent goods, containers store instances. The economic behavior emerges from how these primitives are used.
 
-### Layer 2: The Participants (Actor + GOAP)
+### The Participants: Actor + GOAP (L2)
 
 The Actor service (L2) runs NPC brains. Each NPC has goals, and GOAP (Goal-Oriented Action Planning) finds action sequences to achieve those goals. Economic behavior emerges from NPC goals interacting with the world:
 
@@ -54,7 +60,7 @@ The blacksmith's buy/sell decisions are not scripted. They emerge from goal sati
 
 **A farmer NPC** decides what to plant based on current market prices, soil conditions, and personal preference (via personality traits). If wheat prices are high because a drought destroyed crops in a neighboring region, more farmers plant wheat, supply increases, prices normalize. Basic supply and demand -- but driven by individual NPC decisions, not by a global "economy manager" script.
 
-### Layer 3: The Orchestration (Escrow at L4, Gods)
+### The Orchestration: Escrow, Trade, Market, Workshop (L4)
 
 **Escrow (L4)** provides atomic multi-party exchanges. When an NPC blacksmith sells a sword to a player character, the transaction goes through escrow:
 1. Buyer deposits gold.
@@ -63,6 +69,12 @@ The blacksmith's buy/sell decisions are not scripted. They emerge from goal sati
 4. Escrow atomically releases the sword to the buyer and the gold to the seller.
 
 This prevents race conditions, ensures atomicity, and handles failure gracefully (if either party backs out, deposits are returned).
+
+**Market (L4)** provides marketplace orchestration -- auctions, NPC vendor management, and price discovery. NPC vendors set prices through GOAP-driven formulas and personality, and auctions discover prices through bidding. Market composes Escrow for item custody during listings, Currency for financial operations, and Item/Inventory for goods management.
+
+**Trade (L4)** handles economic logistics -- moving goods across distances over game-time, enforcing border policies, calculating supply/demand dynamics, and enabling NPC economic decision-making. Trade composes Transit for movement, Currency for payments, Item/Inventory for cargo, and Escrow for custody into higher-level economic flows. Distance creates value: iron costs 10g at the mine and 25g in the capital because someone paid the transit cost, bore the risk, and waited the travel time.
+
+**Workshop (L4)** provides continuous background production. An NPC blacksmith who forges swords all day does not need a GOAP action for every single sword -- Workshop provides a running production line that produces swords at their skill level, consuming materials from supply inventories and filling shop inventories. This operates via lazy evaluation with game-time-aware piecewise rate segments.
 
 **Regional Watcher gods** (specifically Hermes/Commerce) monitor economic event streams and can intervene narratively. If a realm's economy is stagnating, Hermes might orchestrate a trade route event -- caravans from a distant realm arrive with exotic goods, stimulating trade. If inflation is rampant, Hermes might inspire an NPC noble to establish a new tax. These are not mechanical economic controls -- they are narrative events that have economic consequences.
 
@@ -80,7 +92,7 @@ A guard earns a salary from the realm treasury. The realm treasury is funded by 
 
 ---
 
-## Why This Requires Separate L2 Services
+## Why This Requires Separate Services
 
 The question "why not just have one economy service?" is natural. The answer is that the economy is not one system -- it is an emergent property of multiple independent systems interacting:
 
@@ -88,9 +100,12 @@ The question "why not just have one economy service?" is natural. The answer is 
 - **Item** manages the goods. It does not know about currency or containers.
 - **Inventory** manages the placement. It does not know about currency or item definitions.
 - **Actor** manages the participants. It calls Currency, Item, and Inventory to execute economic decisions but does not contain economic logic.
-- **Escrow** manages the transactions. It calls Currency and Inventory to execute atomic exchanges but does not determine prices or trade routes.
+- **Escrow** manages atomic exchanges. It calls Currency and Inventory to execute multi-party swaps but does not determine prices or trade routes.
+- **Market** manages points of sale. It composes Escrow, Currency, and Item/Inventory to deliver auctions and vendor mechanics.
+- **Trade** manages logistics. It composes Transit, Currency, Item/Inventory, and Escrow to move goods across distances with tariffs and supply/demand dynamics.
+- **Workshop** manages continuous production. It consumes from and produces to inventories over game-time without cognitive overhead.
 
-No single service "is" the economy. The economy is the interaction pattern between these services as mediated by NPC behavior. This decomposition means each service can be independently scaled (Currency gets more load during peak trading hours), independently tested (Currency's distributed lock logic can be unit-tested without Item or Inventory), and independently evolved (adding a new quantity model to Item does not affect Currency).
+No single service "is" the economy. The economy is the interaction pattern between these services as mediated by NPC behavior. The L2 services (Currency, Item, Inventory, Actor) provide the primitives that are always on; the L4 services (Escrow, Market, Trade, Workshop) provide optional orchestration layers that compose those primitives into richer economic flows. This decomposition means each service can be independently scaled (Currency gets more load during peak trading hours), independently tested (Currency's distributed lock logic can be unit-tested without Item or Inventory), and independently evolved (adding a new quantity model to Item does not affect Currency).
 
 ---
 
@@ -101,9 +116,10 @@ When every player logs off:
 1. NPC actors continue running (Actor is L2, always on).
 2. NPCs continue making economic decisions via GOAP.
 3. NPCs continue buying, selling, crafting, and trading via Currency, Item, and Inventory.
-4. The autogain worker continues generating baseline income.
-5. Supply and demand continue fluctuating based on NPC activity.
-6. Regional Watcher gods continue monitoring economic event streams and orchestrating narrative interventions.
+4. Workshop production lines continue generating goods via lazy evaluation against game-time.
+5. The autogain worker continues generating baseline income.
+6. Supply and demand continue fluctuating based on NPC activity.
+7. Regional Watcher gods continue monitoring economic event streams and orchestrating narrative interventions.
 
 When players log back in, the economy has evolved. Prices have shifted. The blacksmith sold out of steel swords because a war started and the guard captain bought them all. Wheat prices dropped because the drought ended and farmers overplanted. The merchant guild raised tariffs on imported goods.
 

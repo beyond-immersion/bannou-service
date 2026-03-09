@@ -1,5 +1,7 @@
 # Why Is the Contract Service at L1 (App Foundation) Instead of a Game Layer?
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Contract (L1), Quest (L2), Escrow (L4), License (L4)
 > **Short Answer**: Because Contract provides a generic finite state machine with consent flows and milestone-based progression. It knows nothing about games, quests, escrow, or any specific domain. It is reusable infrastructure -- like a database or a message broker, but for multi-party agreements.
 
 ---
@@ -58,21 +60,13 @@ License uses Contract for node unlock behavior. Each license node unlock goes th
 
 Contract qualifies for L1 (App Foundation) because:
 
-**1. Zero game dependencies.** Contract depends on lib-state, lib-messaging, lib-mesh, and (problematically) lib-location. It does not depend on Character, Realm, Currency, Item, or any game-specific service. It has no concept of "player", "NPC", "world", or "game." Its entities are opaque IDs with types.
+**1. Zero game dependencies.** Contract depends only on L0 infrastructure: lib-state, lib-messaging, and lib-mesh. It does not depend on Character, Realm, Currency, Item, Location, or any game-specific service. It has no concept of "player", "NPC", "world", or "game." Its entities are opaque IDs with types.
 
 **2. Useful outside games.** A SaaS platform could use Contract for: service-level agreements with milestone tracking, multi-party approval workflows, subscription contracts with term enforcement, or vendor agreements with automated payment callbacks on delivery milestones. None of these are game concepts.
 
-**3. Multiple consumers across layers.** Quest (L2), Escrow (L4), and License (L4) all depend on Contract. If Contract were at L2, that would be fine for Quest but would create an unnecessary layer coupling for the L4 consumers. At L1, all layers can depend on it without hierarchy concerns.
+**3. Multiple consumers across layers.** Chat (L1), Quest (L2), Character (L2), Item (L2), Location (L2), Escrow (L4), License (L4), Status (L4), Obligation (L4), and others all depend on Contract. If Contract were at L2, the L1 consumer (Chat, which uses contracts for room governance) could not use it at all -- that would be a hierarchy violation. At L1, all layers can depend on it without hierarchy concerns.
 
 **4. The "is it infrastructure?" test.** Would you expect this service to exist in a non-game deployment? Yes. Multi-party agreements with consent flows and state machine tracking are a common business requirement. Just as Auth exists because any deployment needs authentication, Contract exists because any deployment with multi-party workflows needs agreement management.
-
----
-
-## The Honest Caveat
-
-Contract has a **known L1-to-L2 hierarchy violation**: it depends on lib-location for territory constraint checking. This is documented as a known issue with identified remediation paths (remove the dependency, move territory logic to an L4 extension service, or have Location provide its own validation definition to Contract).
-
-This violation does not change the fundamental justification for Contract being L1. Territory constraints are a single feature that leaked across the boundary. The service's core machinery -- FSM, consent, milestones, prebound APIs -- is entirely layer-agnostic. The violation should be fixed, not used as evidence that Contract belongs in a higher layer.
 
 ---
 
@@ -80,6 +74,7 @@ This violation does not change the fundamental justification for Contract being 
 
 If Contract were at L2 (Game Foundation):
 
+- **L1 consumers would break.** Chat (L1) uses Contract for room governance. L1 cannot depend on L2. Moving Contract to L2 would force either removing contract-governed chat rooms or moving Chat to L2 -- neither is acceptable.
 - L3 services (App Features) could not use it. Any non-game workflow needing agreement management would be out of luck.
 - L4 services (Escrow, License) could still use it, but it would be categorized alongside Character, Realm, and Currency -- game-specific foundational entities. This misrepresents what Contract is. Contract is not a game entity. It is infrastructure that game entities consume.
 - The conceptual clarity of L2 ("required for game deployments") would be diluted. Contract is required for ANY deployment that uses multi-party workflows, not just game deployments.
@@ -94,7 +89,7 @@ Contract follows the same pattern as other L1 services:
 |---------|--------------------------|------------------------|
 | **Auth** | JWT generation, OAuth flows, session management | Game sessions, voice calls, matchmaking |
 | **Permission** | RBAC matrix, capability manifests, state tracking | in_game state, in_match state, in_call state |
-| **Resource** | Reference counting, cleanup coordination, compression | Character archival, NPC lifecycle, encounter cleanup |
+| **Resource** | Reference tracking, cleanup coordination, compression | Character archival, NPC lifecycle, encounter cleanup |
 | **Contract** | FSM, consent flows, milestone tracking, prebound APIs | Quest objectives, escrow releases, license unlocks |
 
 Each provides general-purpose infrastructure that becomes game-specific only through how higher-layer services use it. Contract is not a game service. It is a state machine service that games happen to need.

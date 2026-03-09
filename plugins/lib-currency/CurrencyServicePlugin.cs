@@ -35,8 +35,10 @@ public class CurrencyServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register CurrencyServiceConfiguration here
 
-        // Register autogain background task processing service
+        // Register background task processing services
         services.AddHostedService<CurrencyAutogainTaskService>();
+        services.AddHostedService<CurrencyExpirationTaskService>();
+        services.AddHostedService<HoldExpirationTaskService>();
 
         // Register currency data cache and variable provider factory for ABML expressions
         services.AddSingleton<ICurrencyDataCache, CurrencyDataCache>();

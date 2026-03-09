@@ -11,7 +11,7 @@
 
 ## Overview
 
-Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features a background autogain worker for passive income and transaction history with configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
+Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features three background workers: autogain for passive income, currency expiration for removing expired balances, and hold expiration for auto-releasing stale authorization holds. Transaction history has configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
 
 ---
 
@@ -103,7 +103,7 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 | `currency.autogain.calculated` | `CurrencyAutogainCalculatedEvent` | Autogain applied (lazy or task mode) |
 | `currency.earn-cap.reached` | `CurrencyEarnCapReachedEvent` | Credit limited by daily/weekly earn cap |
 | `currency.wallet-cap.reached` | `CurrencyWalletCapReachedEvent` | Credit hit wallet cap with cap_and_lose behavior |
-| `currency.expired` | `CurrencyExpiredEvent` | Currency expired (schema-defined, not yet implemented) |
+| `currency.expired` | `CurrencyExpiredEvent` | Currency expired; balance zeroed by the currency expiration background worker |
 | `currency.exchange-rate.updated` | `CurrencyExchangeRateUpdatedEvent` | Exchange rate changed |
 | `currency.definition.created` | `CurrencyDefinitionCreatedEvent` | New currency definition created |
 | `currency.definition.updated` | `CurrencyDefinitionUpdatedEvent` | Currency definition updated |
@@ -114,7 +114,7 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 | `currency.hold.created` | `CurrencyHoldCreatedEvent` | Authorization hold created |
 | `currency.hold.captured` | `CurrencyHoldCapturedEvent` | Hold captured (funds debited) |
 | `currency.hold.released` | `CurrencyHoldReleasedEvent` | Hold released (funds available again) |
-| `currency.hold.expired` | `CurrencyHoldExpiredEvent` | Hold auto-released (schema-defined, not yet implemented) |
+| `currency.hold.expired` | `CurrencyHoldExpiredEvent` | Hold auto-released by the hold expiration background worker when ExpiresAt is passed |
 
 ### Consumed Events
 
@@ -147,6 +147,12 @@ Client events are published via `IEntitySessionRegistry.PublishToEntitySessionsA
 | `AutogainTaskStartupDelaySeconds` | `CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS` | `15` | Delay before first autogain background cycle |
 | `AutogainTaskIntervalMs` | `CURRENCY_AUTOGAIN_TASK_INTERVAL_MS` | `60000` | Background task processing interval (1 minute) |
 | `AutogainBatchSize` | `CURRENCY_AUTOGAIN_BATCH_SIZE` | `1000` | Wallets processed per batch in task mode |
+| `CurrencyExpirationTaskStartupDelaySeconds` | `CURRENCY_EXPIRATION_TASK_STARTUP_DELAY_SECONDS` | `30` | Delay before first currency expiration background cycle |
+| `CurrencyExpirationTaskIntervalMs` | `CURRENCY_EXPIRATION_TASK_INTERVAL_MS` | `3600000` | Currency expiration task processing interval (1 hour) |
+| `CurrencyExpirationBatchSize` | `CURRENCY_EXPIRATION_BATCH_SIZE` | `500` | Balances processed per batch in the currency expiration task |
+| `HoldExpirationTaskStartupDelaySeconds` | `CURRENCY_HOLD_EXPIRATION_TASK_STARTUP_DELAY_SECONDS` | `30` | Delay before first hold expiration background cycle |
+| `HoldExpirationTaskIntervalMs` | `CURRENCY_HOLD_EXPIRATION_TASK_INTERVAL_MS` | `300000` | Hold expiration task processing interval (5 minutes) |
+| `HoldExpirationBatchSize` | `CURRENCY_HOLD_EXPIRATION_BATCH_SIZE` | `500` | Holds processed per batch in the hold expiration task |
 | `TransactionRetentionDays` | `CURRENCY_TRANSACTION_RETENTION_DAYS` | `365` | Transaction history retention period |
 | `IdempotencyTtlSeconds` | `CURRENCY_IDEMPOTENCY_TTL_SECONDS` | `3600` | Idempotency key expiry (1 hour) |
 | `HoldMaxDurationDays` | `CURRENCY_HOLD_MAX_DURATION_DAYS` | `7` | Maximum authorization hold duration |
@@ -167,7 +173,7 @@ Client events are published via `IEntitySessionRegistry.PublishToEntitySessionsA
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CurrencyService>` | Scoped | Structured logging |
-| `CurrencyServiceConfiguration` | Singleton | All 17 config properties (see Configuration section) |
+| `CurrencyServiceConfiguration` | Singleton | All 23 config properties (see Configuration section) |
 | `IStateStoreFactory` | Singleton | Constructor-cached into 13 typed store fields (5 typed model stores + 6 string index stores + 1 idempotency store + 1 balance cache + 1 hold cache) per T4/T6 |
 | `IDistributedLockProvider` | Singleton | Balance locks (`currency-balance`), hold locks (`currency-hold`), wallet locks (`currency-wallet`), index locks (`currency-index`), autogain locks (`currency-autogain`) |
 | `ITelemetryProvider` | Singleton | Telemetry span instrumentation for all async helper methods |
@@ -175,6 +181,8 @@ Client events are published via `IEntitySessionRegistry.PublishToEntitySessionsA
 | `IEntitySessionRegistry` | Singleton | Client event publishing to wallet owner WebSocket sessions |
 | `ICurrencyDataCache` | Singleton | In-memory cache for ABML variable provider |
 | `CurrencyAutogainTaskService` | Hosted (Singleton) | Background worker for proactive autogain |
+| `CurrencyExpirationTaskService` | Hosted (Singleton) | Background worker that scans and expires balances with elapsed expiration policies |
+| `HoldExpirationTaskService` | Hosted (Singleton) | Background worker that auto-releases authorization holds past their ExpiresAt timestamp |
 
 Service lifetime is **Scoped** (per-request). All state store references are constructor-cached per T4/T6 (factory is used in constructor only, not stored as a field). Background service is a hosted singleton.
 
@@ -359,8 +367,8 @@ Authorization Hold Pattern (Reserve / Capture / Release)
        |           |           |
        v           v           v
   Debit actual   No balance  Auto-release
-  amount from    change -    (not yet
-  wallet         funds free  implemented)
+  amount from    change -    via hold
+  wallet         funds free  expiration
        |           |
        v           v
   status=        status=
@@ -449,9 +457,9 @@ Escrow Integration Flow
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/211 -->
 2. **Wallet distribution analytics**: `GetWalletDistribution` returns all zeros for wallet count, averages, percentiles, and Gini coefficient. No statistical computation is implemented.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/470 -->
-3. **Currency expiration**: The `CurrencyExpiredEvent` is defined in the events schema and the definition model has `Expires`, `ExpirationPolicy`, `ExpirationDate`, `ExpirationDuration`, and `SeasonId` fields, but no background task or lazy check implements expiration logic.
+3. ~~**Currency expiration**~~: **IMPLEMENTED** (2026-03-08) — Added `CurrencyExpirationTaskService` background worker that scans balances with expiration policies and zeroes expired amounts, publishing `currency.expired`. Supported policies: `fixed_date`, `duration_from_earn`, `end_of_season`.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
-4. **Hold expiration**: The `CurrencyHoldExpiredEvent` is defined in the events schema but no mechanism (background task or lazy check) auto-releases expired holds. Expired holds remain Active and continue to reduce effective balance.
+4. ~~**Hold expiration**~~: **IMPLEMENTED** (2026-03-08) — Added `HoldExpirationTaskService` background worker that scans active holds past their `ExpiresAt` timestamp and auto-releases them, returning reserved funds to available balance and publishing `currency.hold.expired`.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 5. **Global supply cap enforcement**: `GlobalSupplyCap` is stored on currency definitions but never checked during credit operations. There is no aggregate tracking of total minted supply.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/471 -->
@@ -466,9 +474,9 @@ Escrow Integration Flow
 
 1. **Aggregate tracking for analytics**: Maintain running totals (minted, burned, in-circulation) via transaction events. Use pre-computed Redis counters updated on each credit/debit for O(1) supply queries.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/211 -->
-2. **Hold expiration background task**: Similar to CurrencyAutogainTaskService, periodically scan active holds and auto-release those past ExpiresAt, publishing `currency.hold.expired`.
+2. ~~**Hold expiration background task**~~: **IMPLEMENTED** (2026-03-08) — Added `HoldExpirationTaskService` background worker.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/222 -->
-3. **Currency expiration background task**: Scan balances for currencies with expiration policies. Apply expiration logic (zero-out, reduce, or convert) based on ExpirationPolicy.
+3. ~~**Currency expiration background task**~~: **IMPLEMENTED** (2026-03-08) — Added `CurrencyExpirationTaskService` background worker.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 4. **Global supply cap enforcement**: Track total supply per currency in a Redis counter. Check cap during credit operations. Reject or truncate credits that would exceed global cap.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/471 -->
@@ -535,5 +543,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
+- **2026-03-08**: Issue [#222](https://github.com/beyond-immersion/bannou-service/issues/222) (partial) — Currency expiration background worker (`CurrencyExpirationTaskService`). Transaction cleanup from #222 remains pending.
+- **2026-03-08**: Issue [#222](https://github.com/beyond-immersion/bannou-service/issues/222) (partial) — Hold expiration background worker (`HoldExpirationTaskService`).
 - **2026-03-08**: Account deletion wallet cleanup — Added `account.deleted` event handler with CASCADE deletion of all account-owned wallets, balances, holds, transactions, and indexes. Per T28 Account Deletion Cleanup Obligation. Issue [#556](https://github.com/beyond-immersion/bannou-service/issues/556) partially addressed (account path only; character/guild paths remain).
 - **2026-02-27**: Issue [#494](https://github.com/beyond-immersion/bannou-service/issues/494) - Client events for real-time wallet updates. Three client events published via IEntitySessionRegistry at all balance mutation and wallet lifecycle points.

@@ -1,6 +1,11 @@
 # Why Is There No Player Housing Plugin?
 
-> **Short Answer**: Because player housing is not a *thing* in Bannou -- it is a *garden type* that composes entirely from existing primitives. The conceptual space is Gardener (garden type: `housing`). Capability progression is Seed (housing seed type with phase-based unlocks). Physical layout is Scene (node trees including voxel nodes). Interactive building is the Voxel Builder SDK (pure computation). Persistence is Save-Load (versioned delta saves). Furnishing is Item + Inventory (furniture as item instances placed in a housing container). Experience management is a divine god-actor running via Puppetmaster on the Actor runtime. Visitor access is Game Session + Permission (role matrix for owner/visitor/trusted friend). A dedicated `lib-housing` plugin would duplicate what these services already compose together.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Actor (L2), Agency (L4), Asset (L3), Behavior (L4), Connect (L1), Craft (L4), Divine (L4), Game Session (L2), Gardener (L4), Inventory (L2), Item (L2), Permission (L1), Puppetmaster (L4), Save Load (L4), Scene (L4), Seed (L2)
+> **Short Answer**: Player housing is not a dedicated service but a garden type that composes
+> entirely from existing primitives. Gardener provides the conceptual space, Seed provides
+> progressive capability unlocks, Scene stores the layout, Item and Inventory handle furnishing,
+> and a divine god-actor via Puppetmaster orchestrates the experience.
 
 ---
 
@@ -145,7 +150,7 @@ The god-actor doesn't know it's managing a house. It's executing an ABML behavio
 
 ## Why This Matches the Dungeon Pattern
 
-The strongest evidence that housing doesn't need a plugin: dungeons don't have one either. Dungeon cores are structurally identical to player housing:
+Dungeon cores are structurally very similar to player housing -- they compose the same primitives. Dungeon does have a thin orchestration plugin (lib-dungeon at L4), but that exists because dungeons need atomic multi-service orchestration APIs (spawn monster, activate trap, seal passage, manifest memory) that housing does not. The comparison is instructive:
 
 | Aspect | Dungeon Core | Player Housing |
 |---|---|---|
@@ -158,7 +163,7 @@ The strongest evidence that housing doesn't need a plugin: dungeons don't have o
 | Capability unlocks | Room generation, trap complexity, memory depth | Room count, decoration slots, crafting stations |
 | Persistence | Save-Load + Asset | Save-Load + Asset |
 
-If a dungeon -- with its complex layout shifting, trap activation, memory manifestation, and creature spawning -- can compose from existing primitives, a player house certainly can.
+The dungeon's complexity (layout shifting, trap activation, memory manifestation, creature spawning) justifies a thin orchestration plugin for atomic multi-service coordination. Housing operations -- placing furniture, editing voxels, managing visitors -- are all single-service API calls that a gardener behavior document can coordinate without a dedicated orchestration layer.
 
 ---
 

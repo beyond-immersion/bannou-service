@@ -186,7 +186,7 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 
 | Dependent | Relationship |
 |-----------|-------------|
-| *(none discovered)* | No other plugins currently reference `IGardenerClient` or subscribe to gardener events |
+| lib-agency (L4) *(planned)* | Gardener is the routing layer for Agency's manifest push and spirit influence validation. Calls `/agency/manifest/get` to retrieve UX manifests for connected players. Calls `/agency/influence/execute` to validate spirit nudges against the manifest before forwarding to the character's Actor. Subscribes to `agency.manifest.updated` events and pushes manifest updates to clients via Entity Session Registry / Connect per-session RabbitMQ queues. See [AGENCY.md](AGENCY.md) |
 | lib-director *(planned)* | During directed events, Director calls Gardener APIs to amplify player targeting: boosting POI scoring weights for event-targeted players, spawning event-themed scenario templates with elevated priority, and adjusting garden orchestration to draw players toward event regions. Director also subscribes to `gardener.scenario.completed` for event participation metrics. See [DIRECTOR.md](DIRECTOR.md) Player Targeting Methods |
 
 ## State Storage

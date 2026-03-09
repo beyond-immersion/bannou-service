@@ -196,9 +196,9 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 | `JurisdictionCacheTtlMinutes` | `ARBITRATION_JURISDICTION_CACHE_TTL_MINUTES` | `30` | TTL for cached jurisdiction resolutions |
 | `CaseCodePrefix` | `ARBITRATION_CASE_CODE_PREFIX` | `ARB` | Prefix for human-readable case codes |
 | `DistributedLockTimeoutSeconds` | `ARBITRATION_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for distributed lock acquisition |
-| `DefaultDeadlineCheckIntervalMinutes` | `ARBITRATION_DEFAULT_DEADLINE_CHECK_INTERVAL_MINUTES` | `60` | How often the deadline worker checks for expired milestones |
-| `DefaultDeadlineCheckDelayMinutes` | `ARBITRATION_DEFAULT_DEADLINE_CHECK_DELAY_MINUTES` | `5` | Initial delay before deadline worker starts |
-| `DefaultDeadlineCheckBatchSize` | `ARBITRATION_DEFAULT_DEADLINE_CHECK_BATCH_SIZE` | `50` | Cases per batch in deadline worker |
+| `DeadlineCheckIntervalMinutes` | `ARBITRATION_DEADLINE_CHECK_INTERVAL_MINUTES` | `60` | How often the deadline worker checks for expired milestones |
+| `DeadlineCheckDelayMinutes` | `ARBITRATION_DEADLINE_CHECK_DELAY_MINUTES` | `5` | Initial delay before deadline worker starts |
+| `DeadlineCheckBatchSize` | `ARBITRATION_DEADLINE_CHECK_BATCH_SIZE` | `50` | Cases per batch in deadline worker |
 | `QueryPageSize` | `ARBITRATION_QUERY_PAGE_SIZE` | `20` | Default page size for paged queries |
 | `DivineArbitrationTimeoutDays` | `ARBITRATION_DIVINE_ARBITRATION_TIMEOUT_DAYS` | `7` | How long to wait for divine arbiter response before falling back to mortal |
 
@@ -229,7 +229,7 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 
 | Worker | Interval Config | Lock Key | Purpose |
 |--------|----------------|----------|---------|
-| `ArbitrationDeadlineWorkerService` | `DefaultDeadlineCheckIntervalMinutes` | `arb:lock:deadline-worker` | Periodically checks for cases with expired milestones (response deadlines, evidence windows, appeal windows). Advances expired milestones to trigger default proceedings or case closure. |
+| `ArbitrationDeadlineWorkerService` | `DeadlineCheckIntervalMinutes` | `arb:lock:deadline-worker` | Periodically checks for cases with expired milestones (response deadlines, evidence windows, appeal windows). Advances expired milestones to trigger default proceedings or case closure. |
 
 ---
 
@@ -905,9 +905,10 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 
 5. **Deadline enforcement model**: The deadline worker checks for expired milestones periodically. This means deadlines are enforced with up to `DefaultDeadlineCheckIntervalMinutes` latency. For time-sensitive proceedings (criminal cases, emergency exile), the worker may need shorter intervals. This is configurable per deployment but not per case.
 
-6. **Evidence model design**: Evidence is currently described as "structured data -- not free text." The exact structure needs design. Options: typed evidence models per case type (most structured, most rigid), generic key-value evidence (most flexible, least structured), or a hybrid where evidence has a type tag and a payload schema resolved from the type.
+6. ~~**Evidence model design**~~: **FIXED** (2026-03-08) - Schema Creation Guidance (added during L4 audit) resolved this: evidence `content` must be a typed model, NOT `additionalProperties: true` (per FOUNDATION TENETS T29). Remaining options are typed per evidence type or discriminated union — both are valid and will be decided during Phase 2 schema creation. The generic key-value approach is eliminated.
 
 7. **Household split integration**: The dissolution case type's consequence includes household fragmentation, which is a cross-cutting concern involving Organization (if it exists), Relationship, Character, and Seed. The boundary between "arbitration ruling consequence" and "household split mechanic" needs clear delineation. Arbitration issues the ruling; the household split is executed by the downstream services in response.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/436 -->
 
 8. **Multi-game template portability**: Different games within the same Bannou deployment may have radically different legal systems. The governance data + contract template architecture handles this (each sovereign faction references its own templates), but template portability and sharing across game services needs design.
 
@@ -931,7 +932,7 @@ When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitratio
 - Governance data on case model: `object?` (genuine opaque pass-through)
 
 ### Events Schema (`arbitration-events.yaml`)
-- `x-lifecycle` for `ArbitrationCase` entity (generates created/updated/deleted lifecycle events)
+- `x-lifecycle` for `ArbitrationCase` entity with `topic_prefix: arbitration` (generates created/updated/deleted lifecycle events with Pattern C topics: `arbitration.case.created`, etc. — without `topic_prefix`, the entity `ArbitrationCase` would produce forbidden Pattern B topics like `arbitration-case.created`)
 - `x-event-subscriptions` for all 6 consumed events (contract milestones, faction territory)
 - `x-event-publications` for all domain-specific events
 - All domain-specific events use `allOf` with `BaseServiceEvent` (per FOUNDATION TENETS T5 — both Quest and Divine follow this pattern)
@@ -942,7 +943,7 @@ When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitratio
 - All integer properties need `minimum: 1` validation bounds
 - `QueryPageSize` needs `maximum` cap (e.g., 100)
 - `CaseCodePrefix` needs `minLength: 1`, `maxLength: 10`
-- Drop redundant `Default` prefix from deadline worker config names (e.g., `DeadlineCheckIntervalMinutes` instead of `DefaultDeadlineCheckIntervalMinutes`)
+- ~~Drop redundant `Default` prefix from deadline worker config names~~: **FIXED** (2026-03-08) - Configuration table updated to use `DeadlineCheckIntervalMinutes`, `DeadlineCheckDelayMinutes`, `DeadlineCheckBatchSize`
 
 ### Implementation Notes
 - Helper service decomposition recommended for the 14 constructor dependencies: consider `JurisdictionResolver` (Faction + Location + cache), `ConsequenceExecutor` (Relationship + Currency + Escrow + Obligation + Status), reducing constructor to ~8 parameters
@@ -953,29 +954,31 @@ When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitratio
 
 ## Work Tracking
 
-Plugin is in pre-implementation phase. Prerequisites must be completed before schema creation can begin. Deep dive L4-audited (2026-03-05): all spec violations fixed in-document. Documentation audit (2026-03-08): fixed incorrect event schema guidance (was advising against `allOf` with `BaseServiceEvent`, contradicting T5 — both Quest and Divine use the mandated `allOf` pattern).
+Plugin is in pre-implementation phase. Prerequisites must be completed before schema creation can begin. Deep dive L4-audited (2026-03-05): all spec violations fixed in-document. Documentation audit (2026-03-08): fixed incorrect event schema guidance (was advising against `allOf` with `BaseServiceEvent`, contradicting T5 — both Quest and Divine use the mandated `allOf` pattern). Documentation audit (2026-03-08): resolved DC #6 (evidence model design) — Schema Creation Guidance already eliminated the generic key-value option per T29; remaining choice (typed per type vs discriminated union) deferred to Phase 2 schema creation. Documentation audit (2026-03-08): fixed Configuration table inconsistency — dropped redundant `Default` prefix from deadline worker config property names and env vars to match Schema Creation Guidance. Added AUDIT marker to DC #7 (household split integration) linking to existing issue #436. Documentation audit (2026-03-08): added `topic_prefix: arbitration` requirement to Schema Creation Guidance events section — without it, `ArbitrationCase` lifecycle would produce forbidden Pattern B topics (`arbitration-case.created`) instead of correct Pattern C (`arbitration.case.created`). Documentation audit (2026-03-08): created master implementation tracking issue [#615](https://github.com/beyond-immersion/bannou-service/issues/615) for Phases 2-6 (blocked by #601, #605).
 
 ### Prerequisites (blocking)
 
 | Prerequisite | Blocker For | Reference |
 |-------------|-------------|-----------|
 | **Faction sovereignty** (`authorityLevel` field, governance data model, delegation, `QueryGovernanceData`) | All of Arbitration (no jurisdiction without sovereignty) | [#601](https://github.com/beyond-immersion/bannou-service/issues/601), [Faction deep dive DC #6](FACTION.md#design-considerations-requires-planning) |
-| **Obligation multi-channel costs** (legal/social/personal authority tagging) | Phase 1, ruling consequence distinction | [Obligation deep dive DCs](OBLIGATION.md#design-considerations-requires-planning) |
+| **Obligation multi-channel costs** (legal/social/personal authority tagging) | Phase 1, ruling consequence distinction | [#605](https://github.com/beyond-immersion/bannou-service/issues/605), [Obligation deep dive DCs](OBLIGATION.md#design-considerations-requires-planning) |
 
 ### Related Open Issues
 
 | Issue | Relevance |
 |-------|-----------|
 | [#601](https://github.com/beyond-immersion/bannou-service/issues/601) | **P0 BLOCKER** — Faction sovereignty prerequisite (`authorityLevel`, governance data, delegation, `QueryGovernanceData`) |
+| [#605](https://github.com/beyond-immersion/bannou-service/issues/605) | **P1 BLOCKER** — Obligation multi-channel costs prerequisite (legal/social/personal authority tagging) |
 | [#435](https://github.com/beyond-immersion/bannou-service/issues/435) | Sovereignty transfer consequences — affects active case continuity during jurisdiction changes |
 | [#436](https://github.com/beyond-immersion/bannou-service/issues/436) | Household split mechanic — blocks dissolution case type (Phase 5), cross-references DC #7 |
 | [#410](https://github.com/beyond-immersion/bannou-service/issues/410) | Second Thoughts / Obligation + Faction — parent design issue for both prerequisites |
 | [#362](https://github.com/beyond-immersion/bannou-service/issues/362) | Seed bond dissolution endpoint — needed for ruling consequences that dissolve seed bonds |
 | [#560](https://github.com/beyond-immersion/bannou-service/issues/560) | Contract ILocationClient hierarchy violation — affects handler pattern Arbitration relies on |
 | [#153](https://github.com/beyond-immersion/bannou-service/issues/153) | Escrow asset transfer integration — affects asset division capability |
+| [#615](https://github.com/beyond-immersion/bannou-service/issues/615) | **Master tracking** — Arbitration implementation Phases 2-6 (blocked by #601, #605) |
 
 ### Issues To Create
 
 - ~~Faction sovereignty prerequisite tracking issue (P0 blocker)~~: Created as [#601](https://github.com/beyond-immersion/bannou-service/issues/601) (2026-03-08)
-- Obligation multi-channel costs prerequisite tracking issue (P1 blocker)
-- Arbitration master implementation tracking issue (Phases 2-6)
+- ~~Obligation multi-channel costs prerequisite tracking issue (P1 blocker)~~: Created as [#605](https://github.com/beyond-immersion/bannou-service/issues/605) (2026-03-08)
+- ~~Arbitration master implementation tracking issue (Phases 2-6)~~: Created as [#615](https://github.com/beyond-immersion/bannou-service/issues/615) (2026-03-08)

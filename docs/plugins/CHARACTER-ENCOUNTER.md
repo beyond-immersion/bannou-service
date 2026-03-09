@@ -409,6 +409,7 @@ No stubs or unimplemented features remain.
 4. ~~**Lazy decay write amplification**~~: **FIXED** (2026-03-08) - Moved to Intentional Quirks (#7). Write amplification is inherent to lazy evaluation mode; scheduled mode already exists as the alternative. No code changes needed — this is a documented operational trade-off with a configurable mitigation.
 
 5. **Global character index unbounded growth**: The `global-char-idx` list grows without bound as new characters encounter each other. Even after `DeleteByCharacter` removes a character, the global index is cleaned up, but during active operation this list could contain tens of thousands of character IDs.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/604 -->
 
 ---
 

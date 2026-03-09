@@ -37,7 +37,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [License Service API](#license) | `client.License` | 20 | Grid-based progression boards via itemized contracts. |
 | [Bannou Location Service API](#location) | `client.Location` | 25 | Location management service for game worlds. |
-| [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
+| [Bannou Mapping Service API](#mapping) | `client.Mapping` | 19 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
 | [Bannou Mesh Service API](#mesh) | `client.Mesh` | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Bannou Messaging Service API](#messaging) | `client.Messaging` | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
@@ -1481,6 +1481,7 @@ Spatial data management service for game worlds.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `CreateChannelAsync` | `CreateChannelRequest` | `AuthorityGrant` | Create a new map channel and become its authority |
+| `DeleteChannelEventAsync` | `DeleteChannelRequest` | *(fire-and-forget)* | Delete a map channel and all its data |
 | `ReleaseauthorityEventAsync` | `ReleaseAuthorityRequest` | *(fire-and-forget)* | Release authority over a channel |
 | `AuthorityheartbeatAsync` | `AuthorityHeartbeatRequest` | `AuthorityHeartbeatResponse` | Maintain authority over channel |
 
@@ -2557,7 +2558,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 55
-- **Total methods**: 894
+- **Total methods**: 895
 
 ---
 

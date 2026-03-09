@@ -1,5 +1,7 @@
 # Why Don't Assets Route Through the WebSocket Gateway Like Everything Else?
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Asset (L3), Connect (L1)
 > **Short Answer**: Because routing a 500MB texture file through a 31-byte binary header protocol designed for JSON messages would be architecturally insane. Assets use pre-signed URLs so clients upload and download directly to object storage. The WebSocket gateway never touches the bytes.
 
 ---

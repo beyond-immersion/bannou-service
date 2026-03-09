@@ -1,6 +1,13 @@
-# Why Is There No Combat / Skill / Magic / Class Plugin?
+# Why Are There No Skill, Magic, Or Combat Plugins?
 
-> **Short Answer**: Because combat, skills, magic, and character classes are not *things* in Bannou — they are *behaviors* that emerge from the interaction of existing primitives. Character mastery is Seed (progressive growth). Ability unlocks are License (grid-based progression boards). Active effects are Status (unified entity effects). Content discovery is Collection (cataloging). Combat preferences are Character-Personality. Species instincts are Ethology. Behavioral decisions are Actor + ABML. A dedicated plugin for any of these concepts would duplicate what existing services already compose together.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Seed (L2), License (L4), Status (L4), Collection (L2), Character Personality (L4), Ethology (L4), Actor (L2), Obligation (L4), Divine (L4), Character Lifecycle (L4), Faction (L4), Mapping (L4)
+> **Short Answer**: Because combat, skills, magic, and character classes are not standalone
+> domains in Bannou -- they are behaviors that emerge from the interaction of existing
+> primitives. Character mastery is Seed, ability unlocks are License, active effects are
+> Status, content discovery is Collection, combat preferences are Character Personality,
+> and behavioral decisions are Actor plus ABML. A dedicated plugin for any of these would
+> duplicate what existing services already compose together.
 
 ---
 

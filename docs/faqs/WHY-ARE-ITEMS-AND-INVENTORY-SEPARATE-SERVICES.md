@@ -1,6 +1,12 @@
 # Why Are Items and Inventory Separate Services?
 
-> **Short Answer**: Because "what a thing is" and "where a thing is" are fundamentally different concerns with different consumers, different scaling characteristics, and different mutation patterns. Item manages definitions and instances. Inventory manages containers and placement. Merging them creates a service that does two unrelated jobs and prevents higher-layer services from reusing the primitives independently.
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Item (L2), Inventory (L2), Escrow (L4), License (L4), Collection (L2), Status (L4), Loot (L4), Craft (L4)
+> **Short Answer**: Because "what a thing is" and "where a thing is" are fundamentally different
+> concerns with different consumers, different scaling characteristics, and different mutation
+> patterns. Item manages definitions and instances. Inventory manages containers and placement.
+> Merging them creates a service that does two unrelated jobs and prevents higher-layer services
+> from reusing the primitives independently.
 
 ---
 

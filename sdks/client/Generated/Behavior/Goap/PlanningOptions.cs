@@ -43,6 +43,13 @@ public sealed class PlanningOptions
     public float HeuristicWeight { get; init; } = 1.0f;
 
     /// <summary>
+    /// Maximum total plan cost. Nodes whose accumulated gCost exceeds this
+    /// bound are pruned during A* expansion, avoiding exploration of
+    /// prohibitively expensive plans. Null means no cost limit (default).
+    /// </summary>
+    public float? MaxCostBound { get; init; }
+
+    /// <summary>
     /// Default planning options.
     /// </summary>
     public static PlanningOptions Default { get; } = new();
@@ -84,7 +91,8 @@ public sealed class PlanningOptions
             MaxNodesExpanded = MaxNodesExpanded,
             TimeoutMs = timeoutMs,
             AllowDuplicateActions = AllowDuplicateActions,
-            HeuristicWeight = HeuristicWeight
+            HeuristicWeight = HeuristicWeight,
+            MaxCostBound = MaxCostBound
         };
     }
 
@@ -101,13 +109,33 @@ public sealed class PlanningOptions
             MaxNodesExpanded = MaxNodesExpanded,
             TimeoutMs = TimeoutMs,
             AllowDuplicateActions = AllowDuplicateActions,
-            HeuristicWeight = HeuristicWeight
+            HeuristicWeight = HeuristicWeight,
+            MaxCostBound = MaxCostBound
+        };
+    }
+
+    /// <summary>
+    /// Creates options with a specific max cost bound.
+    /// </summary>
+    /// <param name="maxCostBound">Maximum total plan cost, or null for no limit.</param>
+    /// <returns>New options with the specified cost bound.</returns>
+    public PlanningOptions WithMaxCostBound(float? maxCostBound)
+    {
+        return new PlanningOptions
+        {
+            MaxDepth = MaxDepth,
+            MaxNodesExpanded = MaxNodesExpanded,
+            TimeoutMs = TimeoutMs,
+            AllowDuplicateActions = AllowDuplicateActions,
+            HeuristicWeight = HeuristicWeight,
+            MaxCostBound = maxCostBound
         };
     }
 
     /// <inheritdoc/>
     public override string ToString()
     {
-        return $"PlanningOptions(depth={MaxDepth}, nodes={MaxNodesExpanded}, timeout={TimeoutMs}ms)";
+        var costBound = MaxCostBound.HasValue ? $", maxCost={MaxCostBound.Value}" : "";
+        return $"PlanningOptions(depth={MaxDepth}, nodes={MaxNodesExpanded}, timeout={TimeoutMs}ms{costBound})";
     }
 }

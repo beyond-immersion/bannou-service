@@ -4162,6 +4162,13 @@
             Default: 1.0 (standard A*)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.MaxCostBound">
+            <summary>
+            Maximum total plan cost. Nodes whose accumulated gCost exceeds this
+            bound are pruned during A* expansion, avoiding exploration of
+            prohibitively expensive plans. Null means no cost limit (default).
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.Default">
             <summary>
             Default planning options.
@@ -4192,6 +4199,13 @@
             </summary>
             <param name="maxDepth">Maximum plan depth.</param>
             <returns>New options with the specified max depth.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.WithMaxCostBound(System.Nullable{System.Single})">
+            <summary>
+            Creates options with a specific max cost bound.
+            </summary>
+            <param name="maxCostBound">Maximum total plan cost, or null for no limit.</param>
+            <returns>New options with the specified cost bound.</returns>
         </member>
         <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.ToString">
             <inheritdoc/>

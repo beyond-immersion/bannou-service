@@ -84,7 +84,7 @@
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `item.template.created` | `ItemTemplateCreatedEvent` | Template created |
-| `item.template.updated` | `ItemTemplateUpdatedEvent` | Template fields changed or deprecated (changedFields for deprecation) |
+| `item.template.updated` | `ItemTemplateUpdatedEvent` | Template fields changed (changedFields populated) or deprecated (changedFields for deprecation fields) |
 | `item.instance.created` | `ItemInstanceCreatedEvent` | Instance created from template |
 | `item.instance.modified` | `ItemInstanceModifiedEvent` | Instance durability/stats/name/container/quantity changed, or quantity decremented on use |
 | `item.instance.destroyed` | `ItemInstanceDestroyedEvent` | Instance permanently deleted or consumed (last unit) |
@@ -197,10 +197,10 @@ POST /item/template/update | Roles: [developer]
 ```
 READ template-store:"tpl:{templateId}"                       -> 404 if null
 // Patch mutable fields only (code, gameId, quantityModel, scope are immutable)
-// Each field applied only if non-null in request
+// Each field applied only if non-null in request; track changed field names in changedFields list
 WRITE template-store:"tpl:{templateId}" <- patched ItemTemplateModel
 DELETE template-cache:"tpl:{templateId}"
-PUBLISH item.template.updated { templateId, code, gameId, ... }
+PUBLISH item.template.updated { templateId, code, gameId, ..., changedFields }
 RETURN (200, ItemTemplateResponse)
 ```
 

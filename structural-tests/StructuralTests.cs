@@ -202,6 +202,14 @@ public class StructuralTests
                 // x-permissions: [] means empty (service-only), skip
                 // x-permissions: followed by items means has roles
                 var value = trimmed["x-permissions:".Length..].Trim();
+
+                // Strip inline YAML comments (e.g., "[]  # Internal only...")
+                var commentIdx = value.IndexOf('#');
+                if (commentIdx > 0)
+                {
+                    value = value[..commentIdx].TrimEnd();
+                }
+
                 if (value != "[]")
                 {
                     count++;

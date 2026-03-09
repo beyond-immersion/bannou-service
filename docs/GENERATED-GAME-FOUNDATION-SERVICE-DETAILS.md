@@ -29,7 +29,7 @@ The Collection service (L2 GameFoundation) manages universal content unlock and 
 
 **Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Endpoints**: 33 | **Deep Dive**: [docs/plugins/CURRENCY.md](plugins/CURRENCY.md) | **Map**: [docs/maps/CURRENCY.md](maps/CURRENCY.md)
 
-Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features a background autogain worker for passive income and transaction history with configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
+Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features three background workers: autogain for passive income, currency expiration for removing expired balances, and hold expiration for auto-releasing stale authorization holds. Transaction history has configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
 
 ## Game Service {#game-service}
 

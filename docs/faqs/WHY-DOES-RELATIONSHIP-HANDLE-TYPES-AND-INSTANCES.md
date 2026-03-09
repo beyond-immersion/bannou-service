@@ -1,5 +1,7 @@
 # Why Does the Relationship Service Handle Both Types and Instances?
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Relationship (L2)
 > **Short Answer**: Because relationship types and relationship instances are two sides of the same domain, and separating them created more problems than it solved. Relationship was originally two services (Relationship and Relationship-Type) that were consolidated because the type taxonomy is meaningless without instances to classify, and instances are meaningless without the type taxonomy to give them structure. Splitting them forced every consumer to import two clients for what is conceptually one operation.
 
 ---

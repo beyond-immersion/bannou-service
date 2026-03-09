@@ -666,6 +666,57 @@ When using the triple-field model, `DeprecationReason` is RECOMMENDED but not re
 
 **Instance creation guard**: All services with Category B entities MUST check deprecation status before creating new instances and reject with `BadRequest` if deprecated. This check is the entire purpose of Category B deprecation.
 
+### Category B Reference Pattern (Checklist)
+
+Every Category B entity MUST satisfy ALL of the following. Use `lib-item` (Item Template) and `lib-collection` (Collection Entry Template) as reference implementations. See [Helpers & Common Patterns § Category B Deprecation Template](../HELPERS-AND-COMMON-PATTERNS.md#15-category-b-deprecation-template) for copy-paste schema and implementation snippets.
+
+#### Schema Checklist (`{service}-api.yaml`)
+
+| # | Requirement | Notes |
+|---|-------------|-------|
+| B1 | `POST /{service}/{entity}/deprecate` endpoint | With `role: admin` or `role: developer` permission |
+| B2 | Deprecate request includes entity ID (required) and `reason` (optional, `maxLength: 500`, nullable) | Reason is recommended for audit trail |
+| B3 | Deprecate endpoint returns 200 + entity response (idempotent) and 404 | NO 409 for "already deprecated" — idempotency means returning OK when already deprecated |
+| B4 | Deprecate endpoint description mentions Category B, one-way, idempotent | e.g., "Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate, no delete. Idempotent — returns OK if already deprecated." |
+| B5 | NO undeprecate endpoint | Category B deprecation is one-way and terminal |
+| B6 | NO delete endpoint | Template persists forever (see Future: Safe Deletion above) |
+| B7 | Response model has triple-field: `isDeprecated` (bool), `deprecatedAt` (date-time, nullable), `deprecationReason` (string, nullable, `maxLength: 500`) | Status enum `[Draft, Active, Deprecated]` is acceptable ONLY when the entity has a Draft lifecycle state that triple-field cannot represent |
+| B8 | List endpoint has `includeDeprecated` parameter (boolean, `default: false`) | Deprecated entities excluded by default, accessible when explicitly requested |
+| B9 | Instance creation endpoints reject with `BadRequest` when template is deprecated | Document in endpoint description (e.g., "Rejects with 400 if template is deprecated") |
+
+#### Events Checklist (`{service}-events.yaml`)
+
+| # | Requirement | Notes |
+|---|-------------|-------|
+| B10 | `x-lifecycle` block defines the entity model | Include all event-relevant fields including `isDeprecated`, `deprecatedAt`, `deprecationReason` |
+| B11 | `x-event-publications` lists `{service}.{entity}.created`, `{service}.{entity}.updated`, and `{service}.{entity}.deleted` | Use dot-separated Pattern C topic naming (T16). The `*.deleted` entry is unused infrastructure — note this in the description |
+| B12 | `*.updated` description mentions "including deprecation via changedFields" | Deprecation is a field change on the updated event, not a separate event |
+
+#### Implementation Checklist
+
+| # | Requirement | Notes |
+|---|-------------|-------|
+| B13 | Deprecation is idempotent — return `OK` if already deprecated | Do NOT return Conflict; the caller's intent is satisfied |
+| B14 | Deprecation publishes `*.updated` event with `changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"]` | Do NOT create a dedicated `*.deprecated` event |
+| B15 | Instance creation checks `IsDeprecated` and returns `BadRequest` if true | This is the entire purpose of Category B deprecation |
+| B16 | `*.deleted` publisher method exists (generated) but is never called | Structural test must exclude this; do not remove from schema |
+
+#### Current Category B Entities (Exhaustive)
+
+| Entity | Service | Layer | Reference Quality |
+|--------|---------|-------|-------------------|
+| Item Template | Item | L2 | **Gold standard** (B7 schema has 409 — should be removed per B3) |
+| Collection Entry Template | Collection | L2 | **Gold standard** (correct idempotent 200-only responses) |
+| Quest Definition | Quest | L2 | Needs x-lifecycle (B10–B12) |
+| Chat Room Type | Chat | L1 | Needs includeDeprecated (B8), reason in request (B2) |
+| Gardener Scenario Template | Gardener | L4 | Needs reason in request (B2) |
+| Storyline Scenario Definition | Storyline | L4 | Needs x-lifecycle (B10–B12) |
+| Contract Template | Contract | L1 | Needs full conversion: remove delete, add deprecate (B1–B16) |
+| Currency Definition | Currency | L2 | Needs full deprecation support (B1–B9, B13–B15) |
+| Character-Encounter EncounterType | Character-Encounter | L4 | Needs full conversion: remove delete, add everything (B1–B16) |
+| License Board Template | License | L4 | Needs full conversion: remove delete, add deprecate (B1–B16) |
+| Leaderboard Definition | Leaderboard | L4 | Needs full conversion: remove delete, add deprecate (B1–B16), plus T16 topic fix |
+
 ### What Does NOT Get Deprecation
 
 The following entity types MUST use immediate hard delete (no deprecation):
@@ -674,7 +725,7 @@ The following entity types MUST use immediate hard delete (no deprecation):
 |------|----------|-------------------|
 | **Instance data** | Characters, relationships, encounters, save slots, inventory containers | Concrete instances, not definitions. No entity's *meaning* depends on them existing. lib-resource handles cascade cleanup of dependent data. |
 | **Session/ephemeral data** | Game sessions, matchmaking tickets, voice rooms | Transient by nature. TTL or explicit cleanup. |
-| **Configuration singletons** | Worldstate realm configs, currency definitions, calendar templates | Per-realm settings. You update or remove configuration, you don't "deprecate" it. |
+| **Configuration singletons** | Worldstate realm configs, calendar templates | Per-realm settings. You update or remove configuration, you don't "deprecate" it. |
 | **Sub-entity data** | Character personality, character history, character encounters | Components of a parent entity, not standalone definitions. Cleaned up via lib-resource when parent is deleted. |
 
 Adding deprecation to these entity types is **over-engineering** and a violation of this tenet. If you think an entity needs deprecation but falls into one of these categories, the entity likely belongs in Category A or B and the categorization above needs review — present the case rather than adding deprecation to instance data.

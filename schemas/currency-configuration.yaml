@@ -67,6 +67,52 @@ x-service-configuration:
       default: 7
       description: Maximum duration for authorization holds in days
 
+    # Currency Expiration Task Configuration
+    currencyExpirationTaskStartupDelaySeconds:
+      type: integer
+      minimum: 0
+      maximum: 300
+      env: CURRENCY_EXPIRATION_TASK_STARTUP_DELAY_SECONDS
+      default: 30
+      description: Delay in seconds before first currency expiration task cycle (allows services to start)
+    currencyExpirationTaskIntervalMs:
+      type: integer
+      minimum: 1000
+      maximum: 86400000
+      env: CURRENCY_EXPIRATION_TASK_INTERVAL_MS
+      default: 3600000
+      description: How often to process currency expirations in milliseconds (default 1 hour)
+    currencyExpirationBatchSize:
+      type: integer
+      minimum: 1
+      maximum: 100000
+      env: CURRENCY_EXPIRATION_BATCH_SIZE
+      default: 500
+      description: Number of expired currency records to process per cycle
+
+    # Hold Expiration Task Configuration
+    holdExpirationTaskStartupDelaySeconds:
+      type: integer
+      minimum: 0
+      maximum: 300
+      env: CURRENCY_HOLD_EXPIRATION_TASK_STARTUP_DELAY_SECONDS
+      default: 30
+      description: Delay in seconds before first hold expiration task cycle (allows services to start)
+    holdExpirationTaskIntervalMs:
+      type: integer
+      minimum: 1000
+      maximum: 86400000
+      env: CURRENCY_HOLD_EXPIRATION_TASK_INTERVAL_MS
+      default: 300000
+      description: How often to process hold expirations in milliseconds (default 5 minutes)
+    holdExpirationBatchSize:
+      type: integer
+      minimum: 1
+      maximum: 100000
+      env: CURRENCY_HOLD_EXPIRATION_BATCH_SIZE
+      default: 500
+      description: Number of expired holds to process per cycle
+
     # Variable Provider Cache
     ProviderCacheTtlSeconds:
       type: integer

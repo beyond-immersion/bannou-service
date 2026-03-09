@@ -423,6 +423,87 @@ public partial class MappingService : IMappingService
     }
 
     /// <inheritdoc />
+    public async Task<StatusCodes> DeleteChannelAsync(DeleteChannelRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.DeleteChannelAsync");
+        _logger.LogDebug("Deleting channel {ChannelId}", body.ChannelId);
+
+        var channelKey = BuildChannelKey(body.ChannelId);
+        var channel = await _channelStore
+            .GetAsync(channelKey, cancellationToken);
+
+        if (channel == null)
+        {
+            _logger.LogWarning("Channel {ChannelId} not found for deletion", body.ChannelId);
+            return StatusCodes.NotFound;
+        }
+
+        // Check for active authority — must release first
+        var authorityKey = BuildAuthorityKey(body.ChannelId);
+        var authority = await _authorityStore
+            .GetAsync(authorityKey, cancellationToken);
+
+        if (authority != null && authority.ExpiresAt > DateTimeOffset.UtcNow)
+        {
+            _logger.LogWarning("Channel {ChannelId} has active authority, release before deleting", body.ChannelId);
+            return StatusCodes.Conflict;
+        }
+
+        // Clear all spatial data, indexes, and objects
+        await ClearChannelDataAsync(body.ChannelId, channel.RegionId, channel.Kind, cancellationToken);
+
+        // Delete channel record
+        await _channelStore
+            .DeleteAsync(channelKey, cancellationToken);
+
+        // Delete authority record (may be expired but still stored)
+        if (authority != null)
+        {
+            await _authorityStore
+                .DeleteAsync(authorityKey, cancellationToken);
+        }
+
+        // Delete version counter
+        var versionKey = BuildVersionKey(body.ChannelId);
+        await _versionStore
+            .DeleteAsync(versionKey, cancellationToken);
+
+        // Dispose ingest subscription if still active
+        if (IngestSubscriptions.TryRemove(body.ChannelId, out var subscription))
+        {
+            await subscription.DisposeAsync();
+        }
+
+        // Dispose event aggregation buffer if active
+        if (EventAggregationBuffers.TryRemove(body.ChannelId, out var buffer))
+        {
+            buffer.Dispose();
+        }
+
+        // Publish channel deleted event
+        await _messageBus.PublishMappingChannelDeletedAsync(new MappingChannelDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ChannelId = body.ChannelId,
+            RegionId = channel.RegionId,
+            Kind = channel.Kind,
+            AuthorityAppId = authority?.AuthorityAppId,
+            AuthorityToken = authority?.AuthorityToken,
+            AuthorityExpiresAt = authority?.ExpiresAt,
+            NonAuthorityHandling = channel.NonAuthorityHandling,
+            Version = channel.Version,
+            CreatedAt = channel.CreatedAt,
+            UpdatedAt = channel.UpdatedAt
+        }, cancellationToken);
+
+        _logger.LogInformation("Deleted channel {ChannelId} for region {RegionId}, kind {Kind}",
+            body.ChannelId, channel.RegionId, channel.Kind);
+
+        return StatusCodes.OK;
+    }
+
+    /// <inheritdoc />
     public async Task<StatusCodes> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.ReleaseAuthorityAsync");
@@ -722,8 +803,7 @@ public partial class MappingService : IMappingService
             PayloadSummary = payloadSummary
         };
 
-        var topic = alertConfig?.AlertTopic ?? "map.warnings.unauthorized-publish";
-        await _messageBus.TryPublishAsync(topic, warning, cancellationToken: cancellationToken);
+        await _messageBus.PublishMapUnauthorizedPublishWarningAsync(warning, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -2221,8 +2301,7 @@ public partial class MappingService : IMappingService
             PayloadSummary = alertConfig?.IncludePayloadSummary == true ? payload.ObjectType : null
         };
 
-        var topic = alertConfig?.AlertTopic ?? "map.warnings.unauthorized-publish";
-        await _messageBus.TryPublishAsync(topic, warning, cancellationToken: cancellationToken);
+        await _messageBus.PublishMapUnauthorizedPublishWarningAsync(warning, cancellationToken);
     }
 
     private async Task SubscribeToIngestTopicAsync(Guid channelId, string ingestTopic, CancellationToken cancellationToken)
@@ -2462,8 +2541,7 @@ public partial class MappingService : IMappingService
             PayloadSummary = alertConfig?.IncludePayloadSummary == true ? $"ingest:{evt.Payloads.Count} payloads" : null
         };
 
-        var topic = alertConfig?.AlertTopic ?? "map.warnings.unauthorized-publish";
-        await _messageBus.TryPublishAsync(topic, warning, cancellationToken: cancellationToken);
+        await _messageBus.PublishMapUnauthorizedPublishWarningAsync(warning, cancellationToken);
     }
 
 

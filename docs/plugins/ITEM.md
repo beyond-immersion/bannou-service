@@ -393,8 +393,7 @@ Contract Binding Patterns
 
 3. **Optimistic concurrency doesn't fail requests**: If all retries for list operations (index updates) are exhausted, the operation logs a warning but the main create/destroy still succeeds. The index may be temporarily inconsistent.
 
-4. **Update doesn't track changedFields**: Unlike other services that track which fields changed, `UpdateItemTemplateAsync` applies all provided changes without changedFields list in the event. Consumers can't tell which fields were actually modified. This deviates from the standard `x-lifecycle` pattern where `*UpdatedEvent` includes `changedFields` automatically.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/558 -->
+4. ~~**Update doesn't track changedFields**~~: **FIXED** (2026-03-08) - `UpdateItemTemplateAsync` now tracks which fields changed and populates `ChangedFields` on the `ItemTemplateUpdatedEvent`, matching the standard `x-lifecycle` pattern and consistent with `DeprecateItemTemplateAsync`.
 
 5. ~~**ListItemsByContainer doesn't support pagination**~~: **FIXED** (2026-03-08) - Added `offset` (default 0) and `limit` (default 100) to `ListItemsByContainerRequest` schema. Implementation now applies `.Skip(offset).Take(min(limit, MaxInstancesPerQuery))` with `wasTruncated` reflecting whether more items exist beyond the current page. Matches the pagination pattern already used by `ListItemsByTemplate`.
 
@@ -423,7 +422,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Active
 - **`IItemInstanceDestructionListener` dispatch** (2026-03-04): Architecturally specified in SERVICE-HIERARCHY.md and AFFIX.md but not yet implemented. Added to Stubs section and DI Listener Dispatch section. Tracked via [#490](https://github.com/beyond-immersion/bannou-service/issues/490).
-- **changedFields gap on template updates** (2026-03-04): Quirk #4 deviation from standard `x-lifecycle` pattern. Tracked via [#558](https://github.com/beyond-immersion/bannou-service/issues/558).
+- ~~**changedFields gap on template updates** (2026-03-04)~~: **FIXED** (2026-03-08). [#558](https://github.com/beyond-immersion/bannou-service/issues/558).
 - **Batch item destruction** (2026-03-04): No batch destroy endpoint for high-frequency scenarios. Tracked via [#559](https://github.com/beyond-immersion/bannou-service/issues/559). See Potential Extensions #6.
 
 ### Completed

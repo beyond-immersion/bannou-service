@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Behavior.Cognition;
+using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.Bannou.Behavior.Coordination;
 using BeyondImmersion.Bannou.Behavior.Dialogue;
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
@@ -9,7 +10,9 @@ using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Behavior.Control;
+using BeyondImmersion.BannouService.Behavior.Coordination;
 using BeyondImmersion.BannouService.Behavior.Handlers;
+using BeyondImmersion.BannouService.Behavior.Stack;
 using BeyondImmersion.BannouService.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -41,6 +44,11 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
         // Register ABML behavior compiler as singleton - it's thread-safe and stateless
         services.AddSingleton<BehaviorCompiler>();
 
+        // Register document merger for ABML document composition (merging multiple
+        // behavior documents into a single flat AbmlDocument for bytecode compilation).
+        // Stateless and thread-safe — singleton is appropriate.
+        services.AddSingleton<IDocumentMerger, DocumentMerger>();
+
         // Register behavior model interpreter factory for runtime execution
         services.AddSingleton<IBehaviorModelInterpreterFactory, BehaviorModelInterpreterFactory>();
 
@@ -61,8 +69,25 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
         // Register control gate registry - singleton for per-entity control tracking
         services.AddSingleton<IControlGateRegistry, ControlGateManager>();
 
+        // Register behavior stack subsystem - multi-layer intent composition with
+        // category-based priority merging. Consumed by the Actor runtime (L2) for
+        // per-entity behavior evaluation during NPC execution loops.
+        services.AddSingleton<IIntentStackMerger, IntentStackMerger>();
+        services.AddSingleton<IBehaviorStackRegistry, BehaviorStackRegistry>();
+        services.AddSingleton<ISituationalTriggerManager, SituationalTriggerManager>();
+
         // Register entity resolver for cutscene semantic name resolution
         services.AddSingleton<IEntityResolver, EntityResolver>();
+
+        // Register cutscene coordinator for multi-participant cutscene orchestration.
+        // Uses in-memory session tracking (ConcurrentDictionary). When cinematics
+        // become active in production, the session store must be backed by Redis
+        // via lib-state (tracked in Design Consideration #4).
+        services.AddSingleton<ICutsceneCoordinator>(sp =>
+            new CutsceneCoordinator(
+                behaviorDefaultResolver: null,
+                loggerFactory: sp.GetService<Microsoft.Extensions.Logging.ILoggerFactory>(),
+                telemetryProvider: sp.GetService<BeyondImmersion.BannouService.Services.ITelemetryProvider>()));
 
         // Register cognition pipeline handlers
         // These handle domain actions for the 5-stage cognition pipeline

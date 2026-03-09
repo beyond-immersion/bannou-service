@@ -1,5 +1,7 @@
 # Why Is Layer 3 a Separate Branch From Layer 2 Instead of Stacked On Top?
 
+> **Last Updated**: 2026-03-08
+> **Related Plugins**: Asset (L3), Orchestrator (L3), Documentation (L3), Website (L3), Voice (L3), Puppetmaster (L4), Actor (L2), Behavior (L4), Save Load (L4), Mapping (L4)
 > **Short Answer**: Because App Features and Game Foundation solve problems in different domains. Stacking them would force a false dependency: either operational tools would need game services to function, or game services would need operational tools. Neither makes sense.
 
 ---
@@ -43,11 +45,11 @@ The branching hierarchy enables two meaningful deployment modes that a linear st
 ### Non-Game Deployment (L0 + L1 + L3)
 
 ```bash
-BANNOU_ENABLE_APP_FOUNDATION=true   # L1: account, auth, connect, permission, contract, resource
-BANNOU_ENABLE_APP_FEATURES=true     # L3: asset, orchestrator, documentation, website
+BANNOU_ENABLE_APP_FOUNDATION=true   # L1: account, auth, chat, connect, permission, contract, resource
+BANNOU_ENABLE_APP_FEATURES=true     # L3: asset, orchestrator, documentation, website, voice, broadcast
 ```
 
-This gives you: authentication, accounts, permissions, WebSocket gateway, binding agreements, resource tracking, binary asset storage, deployment orchestration, a knowledge base API, and a public website.
+This gives you: authentication, accounts, real-time chat, permissions, WebSocket gateway, binding agreements, resource tracking, binary asset storage, deployment orchestration, a knowledge base API, voice rooms, broadcast integration, and a public website.
 
 No characters. No realms. No species. No currencies. No items. No inventories.
 
@@ -60,9 +62,9 @@ BANNOU_ENABLE_APP_FOUNDATION=true   # L1
 BANNOU_ENABLE_GAME_FOUNDATION=true  # L2: character, realm, species, location, currency, ...
 ```
 
-This gives you: authentication, accounts, permissions, WebSocket gateway, binding agreements, and resource tracking... plus characters, realms, species, locations, currencies, items, inventories, quests, actors, and game sessions.
+This gives you: authentication, accounts, real-time chat, permissions, WebSocket gateway, binding agreements, and resource tracking... plus characters, realms, species, locations, currencies, items, inventories, quests, actors, and game sessions.
 
-No asset storage. No orchestrator. No documentation service. No website.
+No asset storage. No orchestrator. No documentation service. No voice rooms. No broadcast. No website.
 
 This is a minimal game backend. You are managing your own deployment, storing assets externally, and running documentation through some other system. The game services work without operational tooling because operational tooling is not a prerequisite for game logic.
 

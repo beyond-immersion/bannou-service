@@ -63,6 +63,31 @@ paths:
         '409':
           description: Channel already exists with active authority
 
+  /mapping/delete-channel:
+    post:
+      summary: Delete a map channel and all its data
+      description: |
+        Permanently deletes a channel, its authority record, all map objects,
+        spatial/type/region indexes, version counter, and ingest subscription.
+        Requires the channel to have no active authority (release first).
+      operationId: deleteChannel
+      tags:
+      - Authority
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteChannelRequest'
+      responses:
+        '200':
+          description: Channel deleted successfully
+        '404':
+          description: Channel not found
+        '409':
+          description: Channel has active authority (release first)
+
   /mapping/release-authority:
     post:
       summary: Release authority over a channel
@@ -806,11 +831,6 @@ components:
           type: boolean
           default: true
           description: Whether to emit warning events
-        alertTopic:
-          type: string
-          maxLength: 512
-          description: Custom topic for warnings (default map.warnings.unauthorized-publish)
-          nullable: true
         includePayloadSummary:
           type: boolean
           default: false
@@ -929,6 +949,18 @@ components:
             $ref: '#/components/schemas/MapPayload'
           description: Optional initial data to populate channel
           nullable: true
+
+    DeleteChannelRequest:
+      type: object
+      description: Request to delete a map channel and all its data
+      additionalProperties: false
+      required:
+      - channelId
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: Channel to delete
 
     ReleaseAuthorityRequest:
       type: object
