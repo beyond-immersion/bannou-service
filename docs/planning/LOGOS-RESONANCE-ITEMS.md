@@ -1,7 +1,18 @@
 # Logos Resonance Items: Memory-Forged Equipment with Experiential Prerequisites
 
-> **Status**: Design
+> **Type**: Design
+> **Status**: Aspirational
 > **Created**: 2026-02-27
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #4
+> **Related Plugins**: Affix, Loot, Item, Inventory, Collection, Seed, Actor, Puppetmaster, Character-Encounter, Character-Personality, Character-History, Quest, Music, Divine
+
+## Summary
+
+Designs a gradient activation system for equipment where affixes have experiential prerequisites evaluated against the wielder at runtime, replacing traditional binary soulbinding with a fidelity model. Items are created by god-actors during formative events (boss kills, climactic battles) and carry activation prerequisites tied to the experiences that forged them, so the earner naturally meets most prerequisites while other wielders achieve partial activation. Requires extending the Affix system with an IActivationPrerequisiteProviderFactory DI pattern (following the established Quest prerequisite model) and ABML behavior authoring for god-actors. Both Affix and Loot plugins remain aspirational with no schemas or implementations yet.
+
+---
+
 > **Author**: Lysander (design) + Claude (analysis)
 > **Category**: Cross-cutting mechanic (behavioral + Affix extension)
 > **Related Services**: Affix (L4), Loot (L4), Item (L2), Inventory (L2), Collection (L2), Seed (L2), Actor (L2), Puppetmaster (L4), Character-Encounter (L4), Character-Personality (L4), Character-History (L4), Quest (L2), Music (L4), Divine (L4)
@@ -13,7 +24,7 @@
 
 ---
 
-## Executive Summary
+## Design Overview
 
 Traditional soulbinding is a binary lock: the item works for you, or it doesn't. Logos resonance items replace this with a **gradient of experiential affinity** -- the item is freely tradeable, always functional, but its full capabilities emerge only when the wielder's accumulated experiences resonate with the memories crystallized within it.
 
@@ -499,12 +510,12 @@ evaluate_resonance_item:
 | **Quest (L2)** | New provider | `QuestActivationProvider` implements `IActivationPrerequisiteProviderFactory` |
 | **Character-History (L4)** | New provider | `HistoryActivationProvider` implements `IActivationPrerequisiteProviderFactory` |
 | **Loot (L4)** | No code change | Dynamic table creation already supported; god-actors author the behavior |
-| **Item (L2)** | No code change | `originType: "resonance"` is an opaque string; `customStats` carries embedded memento references |
+| **Item (L2)** | Minor schema change | `originType` is an `ItemOriginType` enum (not an opaque string) -- adding `resonance` requires a new enum value in `item-api.yaml`; `customStats` carries embedded memento references |
 
 ### What Is NOT Changed
 
 - **No new plugins**: Everything composes from existing services
-- **No schema changes to Item**: `originType` is already an opaque string; `customStats` already supports arbitrary data
+- **Minor schema change to Item**: `originType` is an `ItemOriginType` enum -- adding `resonance` requires a new enum value; `customStats` already supports arbitrary data
 - **No schema changes to Loot**: Dynamic tables already supported; `affixContext.influences` already accepts arbitrary strings
 - **No changes to code generation scripts**: All extensions are manual service code and schema additions within existing plugins
 - **No hierarchy violations**: All DI providers follow the established inversion pattern; lower-layer services define interfaces, higher-layer services implement them

@@ -7,6 +7,8 @@
 > **North Stars**: #1, #2, #4
 > **Related Plugins**: Dungeon, Divine, Puppetmaster, Gardener, Workshop, Seed, Collection, Actor, Item, Inventory, Location, Environment, Procedural, Transit, Mapping, Scene
 
+---
+
 ## Summary
 
 Explores dungeon system extensions beyond the core DUNGEON deep dive, including Workshop integration for habitat creature production, the dual memory system (Collection for permanent knowledge plus Inventory for consumable creative resources), floor-based environmental defense strategies, and the three-stage cognitive progression from dormant seed to awakened character brain. Identifies three areas requiring additional design work: the UNDERWORLD system realm with actor rebinding, the dual memory system replacing the custom memory store, and the Workshop adapter for habitat creature production. No schemas or implementation exist yet.
@@ -45,8 +47,8 @@ The god would:
 2. Evaluate the location's characteristics (ley line proximity, existing dungeon density, population)
 3. Decide what kind of dungeon to create based on the formative conditions (from the Nageki framework -- a battlefield saturated with combat pneuma → martial dungeon, a site of mass
 grief → memorial dungeon)
-1. Call /dungeon/create with personality type derived from the formative event
-2. The dungeon core gets provisioned (seed + mana wallet) but starts Dormant -- purely reactive
+4. Call /dungeon/create with personality type derived from the formative event
+5. The dungeon core gets provisioned (seed + mana wallet) but starts Dormant -- purely reactive
 
 No additional service design needed. This is just an ABML behavior document for the spawning god.
 
@@ -154,9 +156,9 @@ matures.
 The master bond communication at this stage becomes exactly what gods do: the dungeon's actor can "whisper" to the bonded master's character actor via perception injection. The dungeon
 has opinions, memories, personality. It genuinely develops a relationship with its master.
 
-Memory System: Inventory vs Collection
+### Memory System: Inventory vs Collection
 
-Your insight here is architecturally sharp. Let me lay out the dual-system:
+The dual-system design:
 
 Collection (permanent record, "knowledge"):
 - First combat victory in the dungeon → Collection entry first_combat_victory
@@ -189,7 +191,7 @@ The seed-collection side is the "permanent" version. The Collection entry for "f
 from inventory, it still KNOWS what a combat victory is. The next combat victory generates a new memory item. The collection tracks what the dungeon has experienced (logos knowledge).
 The inventory tracks what the dungeon has available to manifest (creative fuel).
 
-Floor System: Locations as Environments
+### Floor System: Locations as Environments
 
 Each floor as a Location in the dungeon hierarchy is architecturally clean:
 
@@ -249,9 +251,9 @@ Gating floor creation behind actor existence is clean design:
 - lib-procedural generates the geometry parameterized by environment type
 - This means ALL complex floor management is actor-driven, nothing the dungeon plugin needs to handle autonomously
 
-Aspirations That Need Additional Design
+## Aspirations That Need Additional Design
 
-Here's what I think genuinely requires new design beyond what's already specified:
+The following areas genuinely require new design beyond what is already specified:
 
 1. The Event Brain → Character Brain Transition
 
@@ -313,7 +315,7 @@ When a dungeon is destroyed or goes permanently dormant, its accumulated data sh
 This is already covered by the existing Resource/Character compression patterns. The only design work is ensuring dungeon Character entities participate in the standard compression
 pipeline.
 
-Summary of What's Covered vs What Needs Design
+## Coverage Summary
 
 ┌───────────────────────────────────────────────────────────┬───────────────────────────────────────────────────────────────────────┐
 │                        Aspiration                         │                                Status                                 │
@@ -351,7 +353,7 @@ Summary of What's Covered vs What Needs Design
 │ Content flywheel integration (dungeon archives)           │ Covered -- standard Resource compression pipeline                     │
 └───────────────────────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────┘
 
-The shape you're describing is remarkably well-supported by the existing architecture. The major new design work is:
+The existing architecture covers most aspirations well. The major new design work is:
 1. The UNDERWORLD system realm and actor rebinding pattern
 2. The dual memory system (Collection + Inventory replacing custom store)
 3. Workshop adapter for habitat creature production

@@ -1,9 +1,17 @@
 # Git Registry Plugin - Self-Hosted Git Server for Bannou
 
-> **Status**: Ready for Implementation
-> **Last Updated**: 2025-12-27
-> **Estimated Effort**: 6-8 weeks
-> **Unique Value**: WebSocket-based real-time repository sync (GitHub cannot offer this)
+> **Type**: Implementation Plan
+> **Status**: Aspirational
+> **Created**: 2025-12-27
+> **Last Updated**: 2026-03-09
+> **North Stars**: N/A
+> **Related Plugins**: Connect, Auth, Permission
+
+---
+
+## Summary
+
+Proposes a self-hosted Git server as a Bannou plugin (lib-git) using git.exe process execution for protocol handling, with a POST-only repository management API and WebSocket-based real-time synchronization via the Connect service. The estimated effort is 6-8 weeks covering core protocol, management API, real-time sync, and testing. No implementation exists yet; neither schemas nor plugin code have been created.
 
 ---
 

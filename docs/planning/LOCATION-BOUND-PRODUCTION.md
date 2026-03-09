@@ -1,17 +1,21 @@
 # Location-Bound Production: From Farming to Factorio
 
-> **Status**: Design
+> **Type**: Design
+> **Status**: Aspirational
 > **Created**: 2026-02-18
-> **Author**: Lysander (design) + Claude (analysis)
-> **Category**: Cross-cutting pattern (behavioral + Workshop orchestration)
-> **Related Services**: Workshop (L4), Inventory (L2), Item (L2), Location (L2), Transit (L2), Utility (L4), Environment (L4), Worldstate (L2), Craft (L4), Trade (L4)
-> **Related Plans**: [MEMENTO-INVENTORIES.md](MEMENTO-INVENTORIES.md), [DEATH-AND-PLOT-ARMOR.md](DEATH-AND-PLOT-ARMOR.md)
-> **Related Docs**: [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md), [VISION.md](../reference/VISION.md)
-> **Related Deep Dives**: [WORKSHOP.md](../plugins/WORKSHOP.md), [UTILITY.md](../plugins/UTILITY.md), [TRANSIT.md](../plugins/TRANSIT.md)
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #3, #4, #5
+> **Related Plugins**: Workshop, Inventory, Item, Location, Transit, Utility, Environment, Worldstate, Craft, Trade
 
 ---
 
-## Executive Summary
+## Summary
+
+Describes a general pattern for location-bound production (farming, construction, fermentation, mining, factory automation) that composes entirely from existing service primitives with zero new plugins. Sub-locations hold stage-based inventories, Workshop blueprints drive time-based transformation between stages, and the game clock progresses production even when nobody is watching. The pattern scales from simple farming to full Factorio-style factory automation chains when combined with Transit for transport and a reactive production trigger design addition to Workshop.
+
+---
+
+## Extended Summary
 
 A location is a container. A container holds items. Items transform over time. Workshop already models time-based transformation with lazy evaluation against Worldstate's game clock, source/destination inventories, worker scaling, and environment-modified rates. Location already supports hierarchical sub-locations. Inventory already supports containers associated with any entity.
 
@@ -430,12 +434,12 @@ What must exist for factory automation gameplay:
 
 1. **Workshop (L4)** -- implemented with blueprint/task/worker/materialization system *(planned, not yet built)*
 2. **Reactive production trigger** -- Workshop subscribes to inventory events for `reactiveTrigger: true` blueprints *(design addition to Workshop)*
-3. **Transit (L2)** -- implemented with connection/journey/mode system *(planned, not yet built)*
+3. **Transit (L2)** -- implemented with connection/journey/mode system *(implemented)*
 4. **Automated transport** -- ABML behaviors for NPC/automated cargo movement between locations *(behavior authoring)*
 5. **Utility (L4)** -- implemented for continuous resource flow *(planned, not yet built)*
 6. **Client rendering** -- Visual representation of factories, belts, items in transit *(game client work)*
 
-Items 1, 3, and 5 are already planned. Item 2 is a design addition. Item 4 is ABML authoring. Item 6 is client-side. No new services needed.
+Item 3 (Transit) is implemented. Items 1 and 5 are planned. Item 2 is a design addition. Item 4 is ABML authoring. Item 6 is client-side. No new services needed.
 
 ---
 
@@ -574,7 +578,7 @@ Location-bound production generates mementos. A masterwork sword forged at a leg
 | Lazy evaluation | Workshop (L4) | Planned (not built) | Core algorithm already designed |
 | **Reactive trigger** | **Workshop (L4)** | **New design addition** | **Subscribe to source inventory events for `reactiveTrigger` blueprints** |
 | Location hierarchy | Location (L2) | Exists | Sub-locations for farms/factories |
-| Transport between stations | Transit (L2) | Planned (not built) | Journey system with cargo modes |
+| Transport between stations | Transit (L2) | Implemented | Journey system with cargo modes |
 | Continuous flow | Utility (L4) | Planned (not built) | Network flow calculation already designed |
 | Environmental modifiers | Environment (L4) | Planned (not built) | Rate modifier integration with Workshop |
 | NPC production behavior | ABML behaviors | Authoring work | Farmer, miner, smith, merchant behaviors |
