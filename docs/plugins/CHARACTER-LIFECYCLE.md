@@ -6,6 +6,7 @@
 > **State Store**: character-lifecycle-profiles (MySQL), character-lifecycle-heritage (MySQL), character-lifecycle-bloodlines (MySQL), character-lifecycle-cache (Redis), character-lifecycle-lock (Redis) — all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Short**: Generational cycle orchestration (aging, marriage, procreation, death, genetic inheritance)
 
 ## Overview
 

@@ -6,6 +6,7 @@
 > **State Store**: workshop-blueprint (MySQL), workshop-task (MySQL), workshop-worker (MySQL), workshop-rate-segment (MySQL), workshop-cache (Redis), workshop-lock (Redis) — all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Short**: Time-based automated production with lazy evaluation and background materialization
 
 ---
 
@@ -314,16 +315,16 @@ Both paths call `MaterializeProduction` and use the same distributed lock to pre
 | lib-item (`IItemClient`) | Creating output items during materialization. Reading item template metadata for output quality defaults. (L2) |
 | lib-inventory (`IInventoryClient`) | Consuming materials from source containers, placing outputs in destination containers, checking container capacity. (L2) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence for blueprint scoping. (L2) |
+| lib-seed (`ISeedClient`) | Reading worker proficiency seed growth for proficiency multiplier calculation. Feature is data-gated: proficiency multiplier defaults to 1.0 when no proficiency domain is configured on the blueprint. (L2) |
+| lib-location (`ILocationClient`) | Validating location constraint on blueprints that require `requiresLocationId`. Feature is data-gated: location constraints are skipped when `requiresLocationId` is null on the blueprint. (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
 | lib-craft (`ICraftClient`) | Resolving recipe inputs/outputs when blueprint references a `recipeCode`. Looking up recipe proficiency domain for worker proficiency. (L4) | Recipe-referenced blueprints cannot be created. Custom blueprints with explicit inputs/outputs work normally. |
-| lib-seed (`ISeedClient`) | Reading worker proficiency seed growth for proficiency multiplier calculation. (L2) | Worker proficiency multiplier defaults to 1.0 when no proficiency domain is configured. |
-| lib-location (`ILocationClient`) | Validating location constraint on blueprints that require `requiresLocationId`. (L2) | Location constraints are skipped when `requiresLocationId` is null on the blueprint. |
 
-**Hierarchy note**: lib-seed and lib-location are L2 services. Per SERVICE-HIERARCHY.md, L4 services should use constructor injection for L2 dependencies (they are guaranteed available). The original specification listed these as soft because the features they support (proficiency, location constraints) are optional. However, service availability and feature optionality are different concerns. When implementing, use constructor injection for `ISeedClient` and `ILocationClient`, and gate optional features at the data level instead. See Design Consideration #8.
+**Hierarchy note**: lib-seed and lib-location are L2 services, constructor-injected per SERVICE-HIERARCHY.md (L4 services must hard-depend on L0/L1/L2). The features they support (proficiency, location constraints) are optional at the *data level* (blueprint has no proficiency domain configured, or `requiresLocationId` is null), but the *services* are always available and injected at startup.
 
 ---
 

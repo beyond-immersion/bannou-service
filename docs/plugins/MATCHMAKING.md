@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Store**: matchmaking-statestore (Redis, prefix: `mm`)
+> **Short**: Ticket-based matchmaking with skill windows, party support, accept/decline, and auto-requeue
 
 ---
 

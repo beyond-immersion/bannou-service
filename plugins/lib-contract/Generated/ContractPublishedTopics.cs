@@ -20,10 +20,10 @@ public static class ContractPublishedTopics
     /// <summary>Published when a new contract template is created.</summary>
     public const string ContractTemplateCreated = "contract.template.created";
 
-    /// <summary>Published when a contract template is updated.</summary>
+    /// <summary>Published when a contract template is updated (including deprecation via changedFields).</summary>
     public const string ContractTemplateUpdated = "contract.template.updated";
 
-    /// <summary>Published when a contract template is soft-deleted.</summary>
+    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
     public const string ContractTemplateDeleted = "contract.template.deleted";
 
     /// <summary>Published when a new contract instance is created (draft status).</summary>

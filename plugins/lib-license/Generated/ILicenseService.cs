@@ -50,9 +50,9 @@ public partial interface ILicenseService : IBannouService
         Task<(StatusCodes, BoardTemplateResponse?)> UpdateBoardTemplateAsync(UpdateBoardTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// DeleteBoardTemplate operation
+        /// DeprecateBoardTemplate operation
         /// </summary>
-        Task<(StatusCodes, BoardTemplateResponse?)> DeleteBoardTemplateAsync(DeleteBoardTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, BoardTemplateResponse?)> DeprecateBoardTemplateAsync(DeprecateBoardTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// AddLicenseDefinition operation

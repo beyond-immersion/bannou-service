@@ -6,6 +6,7 @@
 > **Layer**: GameFeatures
 > **State Stores**: obligation-cache (Redis), obligation-action-mappings (MySQL), obligation-violations (MySQL), obligation-idempotency (Redis), obligation-lock (Redis)
 > **Guide**: [Morality System](../guides/MORALITY-SYSTEM.md) (cross-service integration with lib-obligation and lib-faction)
+> **Short**: Contract-aware GOAP action cost modifiers for NPC "second thoughts" before violating obligations
 
 ---
 

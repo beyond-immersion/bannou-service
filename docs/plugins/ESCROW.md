@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: escrow-agreements (MySQL), escrow-handler-registry (MySQL), escrow-tokens (Redis), escrow-idempotency (Redis), escrow-status-index (Redis), escrow-party-pending (Redis), escrow-active-validation (Redis)
+> **Short**: Full-custody multi-party asset exchange with 13-state FSM (currency/items/contracts)
 
 ---
 

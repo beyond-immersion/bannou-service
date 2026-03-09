@@ -520,7 +520,10 @@ paths:
   /gardener/template/deprecate:
     post:
       summary: Deprecate scenario template
-      description: Sets the template status to Deprecated, preventing new instances.
+      description: |
+        Sets the template status to Deprecated, preventing new instances.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       operationId: deprecateTemplate
       tags:
       - Template Management
@@ -535,7 +538,7 @@ paths:
               $ref: '#/components/schemas/DeprecateTemplateRequest'
       responses:
         '200':
-          description: Template deprecated
+          description: Template deprecated successfully (or already deprecated)
           content:
             application/json:
               schema:
@@ -1257,13 +1260,18 @@ components:
 
     DeprecateTemplateRequest:
       type: object
-      description: Request to deprecate a template
+      description: Request to deprecate a scenario template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated.
       required: [scenarioTemplateId]
       properties:
         scenarioTemplateId:
           type: string
           format: uuid
           description: Template ID to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended for audit trail)
 
     GetPhaseConfigRequest:
       type: object

@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: character-statestore (MySQL)
 > **Implementation Map**: [docs/maps/CHARACTER.md](../maps/CHARACTER.md)
+> **Short**: Game world character management with realm partitioning and system realm support
 
 ---
 

@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: AppFeatures
 > **State Store**: None (no state stores defined)
+> **Short**: Public-facing browser CMS (news, profiles, downloads) using REST patterns — currently stubbed
 
 ---
 

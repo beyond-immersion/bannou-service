@@ -7,6 +7,7 @@
 > **Layer**: L3 AppFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Implementation Map**: [docs/maps/BROADCAST.md](../maps/BROADCAST.md)
+> **Short**: Streaming platform integration for live content broadcasting
 
 ## Overview
 

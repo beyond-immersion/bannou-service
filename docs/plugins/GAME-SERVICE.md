@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: game-service-statestore (MySQL), game-service-lock (Redis)
 > **Implementation Map**: [docs/maps/GAME-SERVICE.md](../maps/GAME-SERVICE.md)
+> **Short**: Registry of available games/applications with stub-name lookup
 
 ---
 

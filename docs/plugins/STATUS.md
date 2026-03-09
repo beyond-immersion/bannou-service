@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: status-templates (MySQL), status-instances (MySQL), status-containers (MySQL), status-active-cache (Redis), status-seed-effects-cache (Redis), status-lock (Redis)
+> **Short**: Unified entity effects query layer aggregating contract statuses and seed capabilities
 
 ---
 
@@ -138,14 +139,12 @@ Status uses the shared `EntityType` enum from `common-api.yaml` because effects 
 | `status.template.created` | `StatusTemplateCreatedEvent` | New status template created via `CreateStatusTemplateAsync` |
 | `status.template.updated` | `StatusTemplateUpdatedEvent` | Status template fields updated; includes `ChangedFields` list |
 | `status.template.deleted` | `StatusTemplateDeletedEvent` | Status template deleted via `DeleteStatusTemplateAsync` (requires prior deprecation) |
-| `status.granted` | `StatusGrantedEvent` | Status effect applied to an entity; includes `GrantResult` (granted, stacked, refreshed, replaced) |
-| `status.removed` | `StatusRemovedEvent` | Status effect removed from an entity; includes `StatusRemoveReason` |
-| `status.expired` | `StatusExpiredEvent` | Status effect expired via TTL (item decay) or contract timeout |
-| `status.stacked` | `StatusStackedEvent` | Status stack count changed; includes `OldStackCount` and `NewStackCount` |
-| `status.grant-failed` | `StatusGrantFailedEvent` | Grant attempt rejected; includes `GrantFailureReason` |
-| `status.cleansed` | `StatusCleansedEvent` | Bulk category cleanse; includes category and count removed |
-
-<!-- AUDIT:NEEDS_DESIGN:2026-03-07:Service event topic naming uses Pattern A (status.granted) rather than Pattern C (status.instance.granted). Status is a multi-entity service (templates + instances), so T16 Pattern C may apply. Decision: keep Pattern A since "status" in topic context already implies instance-level operations, or migrate to Pattern C for consistency with multi-entity services. -->
+| `status.instance.granted` | `StatusGrantedEvent` | Status effect applied to an entity; includes `GrantResult` (granted, stacked, refreshed, replaced) |
+| `status.instance.removed` | `StatusRemovedEvent` | Status effect removed from an entity; includes `StatusRemoveReason` |
+| `status.instance.expired` | `StatusExpiredEvent` | Status effect expired via TTL (item decay) or contract timeout |
+| `status.instance.stacked` | `StatusStackedEvent` | Status stack count changed; includes `OldStackCount` and `NewStackCount` |
+| `status.instance.grant-failed` | `StatusGrantFailedEvent` | Grant attempt rejected; includes `GrantFailureReason` |
+| `status.instance.cleansed` | `StatusCleansedEvent` | Bulk category cleanse; includes category and count removed |
 
 ### Consumed Events
 
@@ -452,6 +451,12 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 - **Item template per status template**: Each status template requires an `itemTemplateId` reference. This means game designers must create item templates for every status type before creating status templates. The relationship between item template properties and status behavior needs documentation.
 
 - ~~**Hardcoded `EntityType.Character` in contract creation/termination**~~: **FIXED** (2026-03-07) - Both contract creation and termination now use the entity's actual `EntityType` from the request/instance model instead of hardcoded `EntityType.Character`.
+
+- ~~**ISeedClient injection pattern: constructor vs runtime resolution**~~: **FIXED** (2026-03-09) - All ISeedClient usage now uses constructor injection per FOUNDATION TENETS. Seed is L2, Status is L4 — hard dependency, no graceful degradation.
+
+- **AUDIT:NEEDS_DESIGN — Dead config #412: implement inactive check or remove config property**: `InactiveCheckIntervalSeconds` exists in the configuration schema but is not wired to any functionality. Decision needed: implement the inactive status check feature using this config, or remove the config property from the schema?
+
+- ~~**T8 echoed fields in query responses**~~: **FIXED** (2026-03-09) - Removed `entityId` and `entityType` from `GetEffectsResponse` and `SeedEffectsResponse`. Caller already knows what they requested per IMPLEMENTATION TENETS.
 
 ---
 

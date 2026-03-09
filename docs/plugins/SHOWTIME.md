@@ -7,6 +7,7 @@
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: N/A
+> **Short**: In-game streaming metagame (simulated audiences, hype trains, streamer career progression)
 
 ## Overview
 

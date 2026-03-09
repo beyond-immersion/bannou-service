@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Store**: realm-history-statestore (MySQL)
+> **Short**: Realm historical events and lore management with archival text summarization
 
 ---
 

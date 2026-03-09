@@ -7,6 +7,7 @@
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [STORY-SYSTEM.md](../guides/STORY-SYSTEM.md), [MORALITY-SYSTEM.md](../guides/MORALITY-SYSTEM.md), [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md)
+> **Short**: Emotional synthesis — per-character feelings about entities and long-term aspirational drives
 
 ## Overview
 

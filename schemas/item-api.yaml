@@ -164,6 +164,8 @@ paths:
         Marks an item template as deprecated. Deprecated templates cannot be used
         to create new instances but existing instances remain valid. Optionally
         specify a migration target template.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       requestBody:
         required: true
         content:
@@ -172,15 +174,13 @@ paths:
               $ref: '#/components/schemas/DeprecateItemTemplateRequest'
       responses:
         '200':
-          description: Item template deprecated successfully
+          description: Item template deprecated successfully (or already deprecated)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ItemTemplateResponse'
         '404':
           description: Item template not found
-        '409':
-          description: Template already deprecated
       x-permissions:
       - role: admin
 

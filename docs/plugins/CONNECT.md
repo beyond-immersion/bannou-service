@@ -6,6 +6,7 @@
 > **Layer**: AppFoundation
 > **State Store**: connect-statestore (Redis)
 > **Implementation Map**: [docs/maps/CONNECT.md](../maps/CONNECT.md)
+> **Short**: WebSocket edge gateway with zero-copy binary routing, client-salted GUIDs, and multi-node relay
 
 ---
 

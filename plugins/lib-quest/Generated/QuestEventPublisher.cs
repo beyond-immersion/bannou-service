@@ -20,6 +20,27 @@ namespace BeyondImmersion.BannouService.Quest;
 /// </remarks>
 public static class QuestEventPublisher
 {
+    /// <summary>Published when a new quest definition is created.</summary>
+    public static Task<bool> PublishQuestDefinitionCreatedAsync(
+        this IMessageBus messageBus,
+        QuestDefinitionCreatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(QuestPublishedTopics.QuestDefinitionCreated, eventData, cancellationToken);
+
+    /// <summary>Published when a quest definition is updated (including deprecation via changedFields).</summary>
+    public static Task<bool> PublishQuestDefinitionUpdatedAsync(
+        this IMessageBus messageBus,
+        QuestDefinitionUpdatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(QuestPublishedTopics.QuestDefinitionUpdated, eventData, cancellationToken);
+
+    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
+    public static Task<bool> PublishQuestDefinitionDeletedAsync(
+        this IMessageBus messageBus,
+        QuestDefinitionDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(QuestPublishedTopics.QuestDefinitionDeleted, eventData, cancellationToken);
+
     /// <summary>Published when a character accepts a quest.</summary>
     public static Task<bool> PublishQuestAcceptedAsync(
         this IMessageBus messageBus,

@@ -10,6 +10,53 @@ This document defines the authoritative service dependency hierarchy for Bannou.
 
 ---
 
+## Overview
+
+> **Extraction notice**: This section is extracted into `GENERATED-COMPOSITION-REFERENCE.md` by the doc generation pipeline. Keep it self-contained — it must make sense without the surrounding document.
+
+**The Golden Rule**: A service may ONLY depend on services in its own layer or lower layers. "Depend on" means injecting a client (`ICharacterClient`), calling via lib-mesh, or requiring the service to be running. Publishing events consumed by higher layers is NOT a dependency — that's the consumer's dependency.
+
+### Dependency Rules
+
+| Layer | Can Depend On | Cannot Depend On | If Missing |
+|-------|---------------|------------------|------------|
+| L0 Infrastructure | — | Everything | Crash (telemetry: graceful) |
+| L1 App Foundation | L0, L1 | L2, L3, L4, L5 | Crash |
+| L2 Game Foundation | L0, L1, L2 | L3, L4, L5 | Crash (when L4 enabled) |
+| L3 App Features | L0, L1, L3* | L2, L4, L5 | Graceful degradation |
+| L4 Game Features | L0, L1, L2, L3*, L4* | L5 | Graceful degradation |
+| L5 Extensions | L0, L1, L2*, L3*, L4* | — | Graceful degradation |
+
+\* Must handle absence gracefully.
+
+### Hard vs Soft Dependencies
+
+**L0/L1/L2 dependencies are hard** — use constructor injection. DI fails at startup if missing, catching deployment errors immediately. Silent `GetService<T>()` + null check for guaranteed dependencies is **forbidden** — it hides deployment bugs.
+
+**L3/L4 dependencies are soft** — use `_serviceProvider.GetService<T>()` + null check. These services are truly optional and may not be enabled. Graceful degradation (reduced functionality, not crash) is expected.
+
+### Cross-Layer Communication (DI Inversion)
+
+When a lower-layer service needs data from higher layers (hierarchy violation if done via client injection), use **DI interface inversion**. The interface lives in `bannou-service/Providers/`, lower-layer discovers implementations via `IEnumerable<T>` injection.
+
+**Two forms with different distributed safety**:
+
+| Mechanism | Direction | Distributed? | Safety |
+|-----------|-----------|--------------|--------|
+| **DI Provider** (pull) | L4 data → L2 consumer | Always safe | Consumer initiates; reads distributed state |
+| **DI Listener** (push) | L2 notification → L4 | Local-only | Safe only if reaction writes to distributed state (Redis/MySQL) |
+| **Events** (IMessageBus) | Broadcast | Always safe | RabbitMQ delivers to all nodes |
+
+**The safety test**: "If this listener fires on Node A but never on Node B, is the system consistent?" YES (writes distributed state) = safe. NO (updates local memory) = broken — use events instead.
+
+**Current DI patterns**: `IVariableProviderFactory` (L4→L2 pull, Actor runtime), `IPrerequisiteProviderFactory` (L4→L2 pull, Quest), `IBehaviorDocumentProvider` (L4→L2 pull), `ISeededResourceProvider` (L2/L3/L4→L1 pull), `ITransitCostModifierProvider` (L4→L2 pull), `ISeedEvolutionListener` (L2→L4 push), `ICollectionUnlockListener` (L2→L4 push), `ISessionActivityListener` (L1→L1 push), `IItemInstanceDestructionListener` (L2→L4 push).
+
+**Listener rules**: (1) Listeners are optimizations, not replacements for events — publish events first, dispatch listeners after. (2) Listener reactions MUST write to distributed state. (3) Per-node cache invalidation requires event subscription, not just listeners. (4) Document safety envelope in interface XML docs.
+
+For full details including code examples, deployment modes, and the Variable Provider Factory 3-step pattern: [SERVICE-HIERARCHY.md](docs/reference/SERVICE-HIERARCHY.md).
+
+---
+
 ## Why This Matters
 
 Bannou's plugin architecture allows any service to technically call any other service via lib-mesh. This flexibility is powerful but dangerous - without discipline, services become tangled in circular dependencies that:

@@ -145,6 +145,35 @@ paths:
       x-permissions:
       - role: developer
 
+  /currency/definition/deprecate:
+    post:
+      operationId: deprecateCurrencyDefinition
+      tags:
+      - Currency Definition
+      summary: Deprecate a currency definition (Category B — one-way, no delete)
+      description: |
+        Deprecates a currency definition. Existing wallets continue to function
+        but no new wallets can be created for this currency.
+        Category B entity: deprecation is one-way (no undeprecate), no delete endpoint.
+        Idempotent: returns OK if already deprecated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateCurrencyDefinitionRequest'
+      responses:
+        '200':
+          description: Currency definition deprecated successfully (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyDefinitionResponse'
+        '404':
+          description: Currency definition not found
+      x-permissions:
+      - role: developer
+
   # ===========================================================================
   # Wallet (6 endpoints)
   # ===========================================================================
@@ -1267,6 +1296,10 @@ components:
           type: boolean
           default: false
           description: Include inactive definitions
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated definitions (default false)
         isBaseCurrency:
           type: boolean
           nullable: true
@@ -1372,6 +1405,23 @@ components:
           nullable: true
           description: Active status
 
+    DeprecateCurrencyDefinitionRequest:
+      type: object
+      description: Request to deprecate a currency definition (Category B — one-way, no delete)
+      additionalProperties: false
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition ID to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (audit context for Category B entities)
+
     CurrencyDefinitionResponse:
       type: object
       description: Currency definition details
@@ -1389,6 +1439,7 @@ components:
       - linkedToItem
       - isBaseCurrency
       - isActive
+      - isDeprecated
       - createdAt
       properties:
         definitionId:
@@ -1535,6 +1586,18 @@ components:
         isActive:
           type: boolean
           description: Whether definition is active
+        isDeprecated:
+          type: boolean
+          description: Whether definition is deprecated (Category B — one-way)
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the definition was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time

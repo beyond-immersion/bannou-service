@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: actor-templates (Redis), actor-state (Redis), actor-pool-nodes (Redis), actor-assignments (Redis)
 > **Implementation Map**: [docs/maps/ACTOR.md](../maps/ACTOR.md)
+> **Short**: NPC behavior execution runtime (ABML, GOAP, perception queues, variable providers, dynamic character binding)
 
 ---
 

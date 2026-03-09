@@ -7,6 +7,7 @@
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: *(Originally referenced MORALITY-SYSTEM-NEXT-STEPS.md; superseded by this deep dive and #410)*
+> **Short**: Dispute resolution orchestration composing Contract/Faction primitives for jurisdictional rulings
 
 ## Overview
 

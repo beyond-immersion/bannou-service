@@ -50,9 +50,9 @@ public partial interface ICharacterEncounterService : IBannouService
         Task<(StatusCodes, EncounterTypeResponse?)> UpdateEncounterTypeAsync(UpdateEncounterTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// DeleteEncounterType operation
+        /// DeprecateEncounterType operation
         /// </summary>
-        Task<StatusCodes> DeleteEncounterTypeAsync(DeleteEncounterTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, EncounterTypeResponse?)> DeprecateEncounterTypeAsync(DeprecateEncounterTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// SeedEncounterTypes operation

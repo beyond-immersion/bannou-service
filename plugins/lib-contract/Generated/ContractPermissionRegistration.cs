@@ -107,9 +107,9 @@ public static class ContractPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/contract/template/delete",
+            Path = "/contract/template/deprecate",
             Method = ServiceEndpointMethod.Post,
-            Description = "deleteContractTemplate",
+            Description = "deprecateContractTemplate",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

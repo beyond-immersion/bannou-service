@@ -9,14 +9,14 @@ info:
 
     **Event Categories**:
     - Status template lifecycle: created, updated, deleted (auto-generated)
-    - Status events: granted, removed, expired, stacked, grant-failed, cleansed
+    - Status instance events: instance.granted, instance.removed, instance.expired, instance.stacked, instance.grant-failed, instance.cleansed
 
     **Consumed Events**:
     - account.deleted: Cleanup account-owned statuses (Account exempt from lib-resource per FOUNDATION TENETS)
     - seed.capability.updated: Invalidate seed effects cache for affected entity
     - item.expired: Clean up expired status instance records (blocked on #407)
 
-    **Topic Naming**: Uses dot-separated format (status.granted).
+    **Topic Naming**: Uses Pattern C dot-separated format (status.instance.granted).
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -48,23 +48,23 @@ info:
       event: StatusTemplateDeletedEvent
       description: Published when a status template is deleted
 
-    # Custom events
-    - topic: status.granted
+    # Custom instance events (Pattern C: service.entity.action)
+    - topic: status.instance.granted
       event: StatusGrantedEvent
       description: Published when a status effect is successfully applied to an entity
-    - topic: status.removed
+    - topic: status.instance.removed
       event: StatusRemovedEvent
       description: Published when a status effect is removed from an entity (any reason)
-    - topic: status.expired
+    - topic: status.instance.expired
       event: StatusExpiredEvent
       description: Published when a status effect expires via TTL or contract timeout
-    - topic: status.stacked
+    - topic: status.instance.stacked
       event: StatusStackedEvent
       description: Published when a status effect is stacked (count changed)
-    - topic: status.grant-failed
+    - topic: status.instance.grant-failed
       event: StatusGrantFailedEvent
       description: Published when a grant attempt is rejected
-    - topic: status.cleansed
+    - topic: status.instance.cleansed
       event: StatusCleansedEvent
       description: Published when statuses are removed by category cleanse
 
@@ -76,15 +76,15 @@ x-lifecycle:
     model:
       statusTemplateId: { type: string, format: uuid, primary: true, required: true, description: "Unique status template identifier" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this template is scoped to" }
-      code: { type: string, required: true, description: "Unique status code within this game service" }
-      displayName: { type: string, required: true, description: "Human-readable display name" }
+      code: { type: string, maxLength: 128, required: true, description: "Unique status code within this game service" }
+      displayName: { type: string, maxLength: 256, required: true, description: "Human-readable display name" }
       category: { $ref: 'status-api.yaml#/components/schemas/StatusCategory', required: true, description: "Classification of this status effect" }
       stackable: { type: boolean, required: true, description: "Whether this status can stack" }
       maxStacks: { type: integer, required: true, description: "Maximum number of stacks" }
       stackBehavior: { $ref: 'status-api.yaml#/components/schemas/StackBehavior', required: true, description: "How multiple applications interact" }
       isDeprecated: { type: boolean, required: true, description: "Whether this template is deprecated" }
       deprecatedAt: { type: string, format: date-time, nullable: true, description: "When this template was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Why this template was deprecated" }
+      deprecationReason: { type: string, maxLength: 500, nullable: true, description: "Why this template was deprecated" }
     sensitive:
     - contractTemplateId
 
@@ -119,8 +119,8 @@ components:
       properties:
         eventName:
           type: string
-          default: status.granted
-          description: 'Event type identifier: status.granted'
+          default: status.instance.granted
+          description: 'Event type identifier: status.instance.granted'
         entityId:
           type: string
           format: uuid
@@ -141,6 +141,7 @@ components:
           description: Classification of the granted status
         stackCount:
           type: integer
+          minimum: 0
           description: Current stack count after grant
         sourceId:
           type: string
@@ -174,8 +175,8 @@ components:
       properties:
         eventName:
           type: string
-          default: status.removed
-          description: 'Event type identifier: status.removed'
+          default: status.instance.removed
+          description: 'Event type identifier: status.instance.removed'
         entityId:
           type: string
           format: uuid
@@ -212,8 +213,8 @@ components:
       properties:
         eventName:
           type: string
-          default: status.expired
-          description: 'Event type identifier: status.expired'
+          default: status.instance.expired
+          description: 'Event type identifier: status.instance.expired'
         entityId:
           type: string
           format: uuid
@@ -249,8 +250,8 @@ components:
       properties:
         eventName:
           type: string
-          default: status.stacked
-          description: 'Event type identifier: status.stacked'
+          default: status.instance.stacked
+          description: 'Event type identifier: status.instance.stacked'
         entityId:
           type: string
           format: uuid
@@ -268,9 +269,11 @@ components:
           description: Status instance that was stacked
         oldStackCount:
           type: integer
+          minimum: 0
           description: Stack count before this application
         newStackCount:
           type: integer
+          minimum: 0
           description: Stack count after this application
 
     StatusGrantFailedEvent:
@@ -290,8 +293,8 @@ components:
       properties:
         eventName:
           type: string
-          default: status.grant-failed
-          description: 'Event type identifier: status.grant-failed'
+          default: status.instance.grant-failed
+          description: 'Event type identifier: status.instance.grant-failed'
         entityId:
           type: string
           format: uuid
@@ -330,8 +333,8 @@ components:
       properties:
         eventName:
           type: string
-          default: status.cleansed
-          description: 'Event type identifier: status.cleansed'
+          default: status.instance.cleansed
+          description: 'Event type identifier: status.instance.cleansed'
         entityId:
           type: string
           format: uuid
@@ -344,6 +347,7 @@ components:
           description: Category of statuses that were removed
         statusesRemoved:
           type: integer
+          minimum: 0
           description: Number of statuses removed by the cleanse
         reason:
           $ref: 'status-api.yaml#/components/schemas/StatusRemoveReason'

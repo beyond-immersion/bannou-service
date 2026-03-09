@@ -27,20 +27,20 @@ public static class StatusPublishedTopics
     public const string StatusTemplateDeleted = "status.template.deleted";
 
     /// <summary>Published when a status effect is successfully applied to an entity.</summary>
-    public const string StatusGranted = "status.granted";
+    public const string StatusGranted = "status.instance.granted";
 
     /// <summary>Published when a status effect is removed from an entity (any reason).</summary>
-    public const string StatusRemoved = "status.removed";
+    public const string StatusRemoved = "status.instance.removed";
 
     /// <summary>Published when a status effect expires via TTL or contract timeout.</summary>
-    public const string StatusExpired = "status.expired";
+    public const string StatusExpired = "status.instance.expired";
 
     /// <summary>Published when a status effect is stacked (count changed).</summary>
-    public const string StatusStacked = "status.stacked";
+    public const string StatusStacked = "status.instance.stacked";
 
     /// <summary>Published when a grant attempt is rejected.</summary>
-    public const string StatusGrantFailed = "status.grant-failed";
+    public const string StatusGrantFailed = "status.instance.grant-failed";
 
     /// <summary>Published when statuses are removed by category cleanse.</summary>
-    public const string StatusCleansed = "status.cleansed";
+    public const string StatusCleansed = "status.instance.cleansed";
 }

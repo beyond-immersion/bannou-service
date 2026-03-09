@@ -6,6 +6,7 @@
 > **Layer**: AppFoundation
 > **State Store**: resource-refcounts (Redis), resource-cleanup (Redis), resource-grace (Redis), resource-compress (Redis), resource-archives (MySQL), resource-snapshots (Redis)
 > **Implementation Map**: [docs/maps/RESOURCE.md](../maps/RESOURCE.md)
+> **Short**: Cross-layer reference tracking, cleanup coordination (CASCADE/RESTRICT/DETACH), and hierarchical compression
 
 ---
 

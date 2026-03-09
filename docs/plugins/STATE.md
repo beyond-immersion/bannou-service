@@ -6,6 +6,7 @@
 > **Layer**: Infrastructure
 > **State Store**: Self (manages all state stores for the platform)
 > **Implementation Map**: [docs/maps/STATE.md](../maps/STATE.md)
+> **Short**: Unified state persistence (Redis/MySQL/SQLite/InMemory) with optimistic concurrency and specialized interfaces
 
 ---
 

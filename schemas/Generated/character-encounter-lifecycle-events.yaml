@@ -1,0 +1,170 @@
+openapi: 3.0.4
+info:
+  title: Character Encounter Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for character-encounter service.\nDO NOT EDIT - This file is completely
+    overwritten by generate-lifecycle-events.py.\nSource of truth: character-encounter-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    EncounterTypeCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-encounter.encounter-type.created when a encountertype is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - typeId
+      - code
+      - name
+      - isBuiltIn
+      - sortOrder
+      - isActive
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: character-encounter.encounter-type.created
+          description: 'Event type identifier: character-encounter.encounter-type.created'
+        typeId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the encounter type"
+        code: &id002
+          type: string
+          description: "Unique type code"
+        name: &id003
+          type: string
+          description: "Display name"
+        description: &id004
+          type: string
+          nullable: true
+          description: "Description"
+        isBuiltIn: &id005
+          type: boolean
+          description: "Whether this is a built-in type"
+        sortOrder: &id006
+          type: integer
+          description: "Display ordering"
+        isActive: &id007
+          type: boolean
+          description: "Whether the type is active"
+        isDeprecated: &id008
+          type: boolean
+          description: "Whether the type is deprecated"
+        deprecatedAt: &id009
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the type was deprecated"
+        deprecationReason: &id010
+          type: string
+          nullable: true
+          description: "Reason for deprecation"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter type was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter type was last updated (set to createdAt on creation)
+    EncounterTypeUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-encounter.encounter-type.updated when a encountertype is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - typeId
+      - code
+      - name
+      - isBuiltIn
+      - sortOrder
+      - isActive
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: character-encounter.encounter-type.updated
+          description: 'Event type identifier: character-encounter.encounter-type.updated'
+        typeId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        isBuiltIn: *id005
+        sortOrder: *id006
+        isActive: *id007
+        isDeprecated: *id008
+        deprecatedAt: *id009
+        deprecationReason: *id010
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter type was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter type was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    EncounterTypeDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-encounter.encounter-type.deleted when a encountertype is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - typeId
+      - code
+      - name
+      - isBuiltIn
+      - sortOrder
+      - isActive
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: character-encounter.encounter-type.deleted
+          description: 'Event type identifier: character-encounter.encounter-type.deleted'
+        typeId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        isBuiltIn: *id005
+        sortOrder: *id006
+        isActive: *id007
+        isDeprecated: *id008
+        deprecatedAt: *id009
+        deprecationReason: *id010
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter type was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter type was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

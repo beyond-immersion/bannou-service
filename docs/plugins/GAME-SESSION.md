@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: game-session-statestore (MySQL)
 > **Implementation Map**: [docs/maps/GAME-SESSION.md](../maps/GAME-SESSION.md)
+> **Short**: Multiplayer session containers (lobby/matchmade) with reservation tokens and shortcut publishing
 
 ---
 

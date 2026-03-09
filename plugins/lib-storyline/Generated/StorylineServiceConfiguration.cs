@@ -52,203 +52,182 @@ public class StorylineServiceConfiguration : BaseServiceConfiguration
 {
 
     /// <summary>
-    /// TTL in seconds for cached composed plans.
-    /// Default: 3600 (1 hour)
+    /// TTL in seconds for cached composed plans (default 3600 = 1 hour)
     /// Environment variable: STORYLINE_PLAN_CACHE_TTL_SECONDS
     /// </summary>
     [ConfigRange(Minimum = 60, Maximum = 86400)]
     public int PlanCacheTtlSeconds { get; set; } = 3600;
 
     /// <summary>
-    /// Default urgency tier for GOAP planning.
-    /// low = more iterations (1000/20)
-    /// medium = balanced (500/15)
-    /// high = fewer iterations (200/10)
+    /// Default urgency tier for GOAP planning (Low=1000/20, Medium=500/15, High=200/10)
     /// Environment variable: STORYLINE_DEFAULT_PLANNING_URGENCY
     /// </summary>
     public PlanningUrgency DefaultPlanningUrgency { get; set; } = PlanningUrgency.Medium;
 
     /// <summary>
-    /// Whether to cache deterministic plans (those with explicit seed).
-    /// Disable for testing or when cache overhead is undesirable.
+    /// Whether to cache deterministic plans (those with explicit seed)
     /// Environment variable: STORYLINE_PLAN_CACHE_ENABLED
     /// </summary>
     public bool PlanCacheEnabled { get; set; } = true;
 
     /// <summary>
-    /// Default genre when not specified and cannot be inferred.
+    /// Default genre when not specified and cannot be inferred
     /// Environment variable: STORYLINE_DEFAULT_GENRE
     /// </summary>
     public string DefaultGenre { get; set; } = "drama";
 
     /// <summary>
-    /// Maximum number of seed sources per compose request.
+    /// Maximum number of seed sources per compose request
     /// Environment variable: STORYLINE_MAX_SEED_SOURCES
     /// </summary>
     [ConfigRange(Minimum = 1, Maximum = 20)]
     public int MaxSeedSources { get; set; } = 10;
 
     /// <summary>
-    /// Base confidence score before any bonuses are applied.
+    /// Base confidence score before any bonuses are applied
     /// Environment variable: STORYLINE_CONFIDENCE_BASE_SCORE
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 1)]
     public double ConfidenceBaseScore { get; set; } = 0.5;
 
     /// <summary>
-    /// Minimum number of phases to receive a phase count bonus.
+    /// Minimum number of phases to receive a phase count bonus
     /// Environment variable: STORYLINE_CONFIDENCE_PHASE_THRESHOLD
     /// </summary>
     [ConfigRange(Minimum = 1, Maximum = 10)]
     public int ConfidencePhaseThreshold { get; set; } = 3;
 
     /// <summary>
-    /// Confidence bonus when phase threshold is met.
+    /// Confidence bonus when phase threshold is met
     /// Environment variable: STORYLINE_CONFIDENCE_PHASE_BONUS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 0.5)]
     public double ConfidencePhaseBonus { get; set; } = 0.2;
 
     /// <summary>
-    /// Confidence bonus when plan contains core events.
+    /// Confidence bonus when plan contains core events
     /// Environment variable: STORYLINE_CONFIDENCE_CORE_EVENT_BONUS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 0.5)]
     public double ConfidenceCoreEventBonus { get; set; } = 0.15;
 
     /// <summary>
-    /// Confidence bonus when action count is within acceptable range.
+    /// Confidence bonus when action count is within acceptable range
     /// Environment variable: STORYLINE_CONFIDENCE_ACTION_COUNT_BONUS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 0.5)]
     public double ConfidenceActionCountBonus { get; set; } = 0.15;
 
     /// <summary>
-    /// Minimum action count for action count bonus.
+    /// Minimum action count for action count bonus
     /// Environment variable: STORYLINE_CONFIDENCE_MIN_ACTION_COUNT
     /// </summary>
     [ConfigRange(Minimum = 1, Maximum = 50)]
     public int ConfidenceMinActionCount { get; set; } = 5;
 
     /// <summary>
-    /// Maximum action count for action count bonus.
+    /// Maximum action count for action count bonus
     /// Environment variable: STORYLINE_CONFIDENCE_MAX_ACTION_COUNT
     /// </summary>
     [ConfigRange(Minimum = 5, Maximum = 100)]
     public int ConfidenceMaxActionCount { get; set; } = 20;
 
     /// <summary>
-    /// Minimum action count before "thin_content" risk is flagged.
+    /// Minimum action count before thin_content risk is flagged
     /// Environment variable: STORYLINE_RISK_MIN_ACTION_THRESHOLD
     /// </summary>
     [ConfigRange(Minimum = 1, Maximum = 20)]
     public int RiskMinActionThreshold { get; set; } = 3;
 
     /// <summary>
-    /// Minimum phase count before "flat_arc" risk is flagged.
+    /// Minimum phase count before flat_arc risk is flagged
     /// Environment variable: STORYLINE_RISK_MIN_PHASE_THRESHOLD
     /// </summary>
     [ConfigRange(Minimum = 1, Maximum = 10)]
     public int RiskMinPhaseThreshold { get; set; } = 2;
 
     /// <summary>
-    /// TTL in seconds for cached scenario definitions (Redis read-through cache).
-    /// Default: 300 (5 minutes)
+    /// TTL in seconds for cached scenario definitions via Redis read-through cache (default 300 = 5 minutes)
     /// Environment variable: STORYLINE_SCENARIO_DEFINITION_CACHE_TTL_SECONDS
     /// </summary>
     [ConfigRange(Minimum = 60, Maximum = 3600)]
     public int ScenarioDefinitionCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
-    /// Default cooldown in seconds before a scenario can trigger again for the same character.
-    /// Can be overridden per-scenario in the definition. 0 = no cooldown.
-    /// Default: 86400 (24 hours)
+    /// Default cooldown in seconds before a scenario can re-trigger for the same character; 0 = no cooldown (default 86400 = 24 hours)
     /// Environment variable: STORYLINE_SCENARIO_COOLDOWN_DEFAULT_SECONDS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 604800)]
     public int ScenarioCooldownDefaultSeconds { get; set; } = 86400;
 
     /// <summary>
-    /// TTL in seconds for idempotency keys to prevent duplicate triggers.
-    /// Default: 3600 (1 hour)
+    /// TTL in seconds for idempotency keys to prevent duplicate triggers (default 3600 = 1 hour)
     /// Environment variable: STORYLINE_SCENARIO_IDEMPOTENCY_TTL_SECONDS
     /// </summary>
     [ConfigRange(Minimum = 60, Maximum = 86400)]
     public int ScenarioIdempotencyTtlSeconds { get; set; } = 3600;
 
     /// <summary>
-    /// Maximum number of active (in-progress) scenarios per character.
-    /// Additional triggers are rejected until existing scenarios complete.
+    /// Maximum number of active (in-progress) scenarios per character; additional triggers are rejected
     /// Environment variable: STORYLINE_SCENARIO_MAX_ACTIVE_PER_CHARACTER
     /// </summary>
     [ConfigRange(Minimum = 1, Maximum = 10)]
     public int ScenarioMaxActivePerCharacter { get; set; } = 3;
 
     /// <summary>
-    /// Timeout in seconds for the distributed lock during scenario trigger.
-    /// Prevents double-trigger race conditions.
+    /// Timeout in seconds for the distributed lock during scenario trigger to prevent double-trigger race conditions
     /// Environment variable: STORYLINE_SCENARIO_TRIGGER_LOCK_TIMEOUT_SECONDS
     /// </summary>
     [ConfigRange(Minimum = 5, Maximum = 120)]
     public int ScenarioTriggerLockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
-    /// Base weight for scenario fit score calculation.
-    /// Applied when any required condition is met.
+    /// Base weight for scenario fit score calculation, applied when any required condition is met
     /// Environment variable: STORYLINE_SCENARIO_FIT_SCORE_BASE_WEIGHT
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 1)]
     public double ScenarioFitScoreBaseWeight { get; set; } = 0.5;
 
     /// <summary>
-    /// Bonus added to fit score for each matching trait condition.
+    /// Bonus added to fit score for each matching trait condition
     /// Environment variable: STORYLINE_SCENARIO_TRAIT_MATCH_BONUS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 0.5)]
     public double ScenarioTraitMatchBonus { get; set; } = 0.15;
 
     /// <summary>
-    /// Bonus added to fit score for each matching backstory condition.
+    /// Bonus added to fit score for each matching backstory condition
     /// Environment variable: STORYLINE_SCENARIO_BACKSTORY_MATCH_BONUS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 0.5)]
     public double ScenarioBackstoryMatchBonus { get; set; } = 0.1;
 
     /// <summary>
-    /// Bonus added to fit score for each matching relationship condition.
+    /// Bonus added to fit score for each matching relationship condition
     /// Environment variable: STORYLINE_SCENARIO_RELATIONSHIP_MATCH_BONUS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 0.5)]
     public double ScenarioRelationshipMatchBonus { get; set; } = 0.12;
 
     /// <summary>
-    /// Bonus added to fit score for matching location condition.
+    /// Bonus added to fit score for matching location condition
     /// Environment variable: STORYLINE_SCENARIO_LOCATION_MATCH_BONUS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 0.5)]
     public double ScenarioLocationMatchBonus { get; set; } = 0.08;
 
     /// <summary>
-    /// Bonus added to fit score for matching world state conditions.
+    /// Bonus added to fit score for matching world state conditions
     /// Environment variable: STORYLINE_SCENARIO_WORLD_STATE_MATCH_BONUS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 0.5)]
     public double ScenarioWorldStateMatchBonus { get; set; } = 0.05;
 
     /// <summary>
-    /// Minimum fit score required for a scenario to be considered available.
-    /// Scenarios below this threshold are excluded from find-available results.
+    /// Minimum fit score required for a scenario to be considered available in find-available results
     /// Environment variable: STORYLINE_SCENARIO_FIT_SCORE_MINIMUM_THRESHOLD
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 1)]
     public double ScenarioFitScoreMinimumThreshold { get; set; } = 0.3;
-
-    /// <summary>
-    /// Fit score threshold above which immediate trigger is recommended.
-    /// Used in ScenarioAvailableEvent.triggerRecommended field.
-    /// Environment variable: STORYLINE_SCENARIO_FIT_SCORE_RECOMMEND_THRESHOLD
-    /// </summary>
-    [ConfigRange(Minimum = 0, Maximum = 1)]
-    public double ScenarioFitScoreRecommendThreshold { get; set; } = 0.7;
 
 }

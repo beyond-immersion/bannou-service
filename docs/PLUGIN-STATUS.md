@@ -101,8 +101,8 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Realm History](#realm-history-status) | L4 | 95% | 0 | **Hardened.** Feature-complete. PascalCase enums, T8-compliant responses, NRT-clean. Participations, lore, summarization, compression. |
 | [Save-Load](#save-load-status) | L4 | 92% | 0 | **Hardened (3x)**. Two-tier storage, delta saves, migration all working. T26 sentinel elimination, T21 config-first (lock timeouts, URL expiry, migration steps), T6 typed key builders, T4 L3 soft deps in all helpers. Binary deltas stubbed, quota enforcement gap. |
 | [Scene](#scene-status) | L4 | 97% | 0 | **Hardened (2x).** All 19 endpoints done. Schema NRT-clean, T8/T14/T26-compliant. Opaque string types (SceneType, AffordanceType, MarkerType). Build*Key() pattern. 97 unit tests. |
-| [Status](#status-status) | L4 | 93% | 0 | **Hardened.** All 19 endpoints (incl. T31 deprecation). Cache key bug fixed, metadata type safety, client event naming. Blocked on #407. |
-| [Storyline](#storyline-status) | L4 | 55% | 0 | SDK wrapper works for MVP. 3/15 endpoints done. No iterative composition or event integration. |
+| [Status](#status-status) | L4 | 97% | 0 | **Hardened (4x).** All 19 endpoints. T4 ISeedClient constructor injection, T8 echoed fields removed, T7 lazy expiration bug, T16 Pattern C topics, T25 enum safety, 12 unit tests. 1 design decision deferred (#412 dead config). Blocked on #407. |
+| [Storyline](#storyline-status) | L4 | 85% | 0 | **Hardened.** All 15 endpoints implemented. T6 Build*Key pattern, T5 topic constants + typed event publishers, T7 narrowed try-catch, T8 filler removal, T25 enum type safety with A2 boundary mapping, T16 topic rename, T21 dead config removed, T31 Category B lifecycle. Iterative composition and content flywheel integration not yet wired. |
 | [Affix](#affix-status) | L4 | 0% | 0 | Pre-implementation. Spec L4-audited: Pattern C topics, Category B deprecation, T31 instance guard, typed spawnTagModifiers, hard IInventoryClient, orphan reconciliation worker, x-permissions on all groups. No schema, no code. |
 | [Arbitration](#arbitration-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-05): 6 critical spec violations found and fixed in-document, schema creation guidance added, work tracking with 6 related GH issues, 4 resource cleanup targets. 8 design considerations remain. 2 unmet prerequisites (Faction sovereignty, Obligation multi-channel). No schema, no code. |
 | [Craft](#craft-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): Pattern C topics, T29 typed models (requiredStates, affixOperationConfig), Category C affixOperation enum, T31 Category B with deprecation guard, isActive removed, local proficiency fallback removed, x-permissions all groups, location cleanup target. 7 design considerations remain. No schema, no code. |
@@ -2181,11 +2181,15 @@ gh issue list --search "Status:" --state open
 
 ## Storyline {#storyline-status}
 
-**Layer**: L4 GameFeatures | **Deep Dive**: [STORYLINE.md](plugins/STORYLINE.md)
+**Layer**: L4 GameFeatures | **Deep Dive**: [STORYLINE.md](plugins/STORYLINE.md) | **Map**: [STORYLINE.md](maps/STORYLINE.md)
 
-### Production Readiness: 55%
+### Production Readiness: 85%
 
-The core composition endpoint works -- it fetches archives, builds actant assignments, calls the SDK's GOAP planner, calculates confidence/risk scores, caches plans, and publishes events. However, this is a thin wrapper around two SDKs with only 3 of 15 total service endpoints implemented (compose, get plan, list plans), four meaningful stubs (ContinuePhase not exposed, entitiesToSpawn always null, links always null, no event subscriptions), no consumers of its events yet, and several design considerations. The service is functional for MVP composition but lacks the iterative generation, entity spawning, and event integration needed for the content flywheel.
+**Hardened (2026-03-09).** All 15 endpoints implemented across composition (compose, get plan, list plans, delete plan), scenario definitions (CRUD, deprecate, list with filtering), scenario discovery (find available, test trigger, evaluate fit), and scenario execution (trigger with mutations/quest hooks, get active, get history, get compress data). Wraps `storyline-theory` and `storyline-storyteller` SDKs for seeded narrative generation from compressed archives.
+
+**Audit fixes applied**: T6 Build*Key() pattern for all state store keys (plan, scenario definition, execution, cooldown, active, lock, plan index). T5 all inline topic strings replaced with `StorylinePublishedTopics` constants; lifecycle event names fixed (no service prefix). T7 try-catch narrowed to SDK call sites + ApiException for inter-service calls. T8 `Found` filler boolean removed from GetPlanResponse and GetScenarioDefinitionResponse. T25 enum `.ToString()` removed from event publishing (goal, arcType, primarySpectrum now use `$ref` types); ScenarioMutation `experienceType` and `backstoryElementType` changed from `type: string` to Storyline-owned enums (`StorylineExperienceType`, `StorylineBackstoryElementType`) with A2 boundary `MapByName` mapping to CharacterPersonality/CharacterHistory enums — EnumMappingValidator subset tests added. T16 topic rename `storyline.composed` → `storyline.plan.composed` (Pattern C multi-entity naming). T21 dead config property `ScenarioFitScoreRecommendThreshold` removed. T31 Category B deprecation lifecycle for ScenarioDefinition. x-permissions on /storyline/get-compress-data corrected to `[]`. ServiceConstructorValidator test added. 62 unit tests passing.
+
+**Remaining gaps**: Iterative composition (ContinuePhase) not exposed via HTTP. EntitiesToSpawn always null. No event subscriptions for content flywheel integration (resource.compressed).
 
 ### Bug Count: 0
 

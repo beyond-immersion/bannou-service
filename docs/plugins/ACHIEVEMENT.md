@@ -6,6 +6,7 @@
 > **Layer**: GameFeatures
 > **State Store**: achievement-definition (Redis), achievement-progress (Redis), achievement-sync (Redis)
 > **Implementation Map**: [docs/maps/ACHIEVEMENT.md](../maps/ACHIEVEMENT.md)
+> **Short**: Achievement/trophy system with progressive/binary types, rarity calculation, and platform sync
 
 ## Overview
 

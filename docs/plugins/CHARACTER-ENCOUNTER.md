@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: character-encounter-statestore (MySQL)
+> **Short**: NPC encounter memory with per-participant perspectives, time-decay, and sentiment aggregation
 
 ---
 

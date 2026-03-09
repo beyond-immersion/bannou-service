@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: currency-definitions (MySQL), currency-wallets (MySQL), currency-balances (MySQL), currency-transactions (MySQL), currency-holds (MySQL), currency-balance-cache (Redis), currency-holds-cache (Redis), currency-idempotency (Redis)
 > **Implementation Map**: [docs/maps/CURRENCY.md](../maps/CURRENCY.md)
+> **Short**: Multi-currency economy (wallets, transfers, exchange rates, holds, escrow integration)
 
 ---
 

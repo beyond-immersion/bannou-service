@@ -6,6 +6,7 @@
 > **Layer**: AppFoundation
 > **State Store**: contract-statestore (Redis)
 > **Implementation Map**: [docs/maps/CONTRACT.md](../maps/CONTRACT.md)
+> **Short**: Binding agreements with milestone progression, consent flows, and prebound API execution
 
 ---
 

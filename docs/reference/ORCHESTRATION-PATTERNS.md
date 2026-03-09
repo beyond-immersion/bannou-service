@@ -7,6 +7,26 @@
 
 ---
 
+## Overview
+
+> This section is extracted by the doc generation pipeline for GENERATED-COMPOSITION-REFERENCE.md. It captures the essential orchestration concepts needed in every conversation.
+
+Bannou's 45+ services have no central "gameplay loop" plugin. Instead, **god-actors** — long-running ABML behavior documents executed by the Actor runtime — orchestrate services into emergent gameplay. Orchestration is authored content (YAML), not compiled code.
+
+**Three patterns every developer should know:**
+
+1. **Actor-Bound Entity Pattern** (Dormant → Event Brain → Character Brain): Any entity that progressively awakens (NPCs, dungeons, weapons, spirits) follows three cognitive stages. Dormant entities are just seeds with zero runtime cost. At a growth threshold, Puppetmaster spawns an event brain actor running simplified ABML. At a higher threshold, a Character is created in a system realm (PANTHEON, DUNGEON_CORES, SENTIENT_ARMS, NEXIUS, UNDERWORLD) and the actor binds to it, gaining full personality, memory, and relationships. No actor relaunch needed — the same ABML behavior progressively activates as variable providers return real data instead of null.
+
+2. **Content Flywheel**: Character death → archive compressed (Resource) → god perceives archive → GOAP evaluates → storyline composed (Storyline) → quest spawned (Quest) → ghost NPC created (Actor) → new player experiences → more deaths → loop. Each step is a god-actor calling a service API. Different gods produce different narratives from the same archive. The loop requires no developer intervention after initial behavior authoring.
+
+3. **Interaction Patterns**: God→Content (perceive archives, compose narratives, spawn quests), God→Economy (monitor velocity, spawn interventions), God→NPC (inject perceptions, amplify behaviors), Dungeon→Combat (spawn monsters, activate traps from ABML), Seed Phase→Cognitive Transition (ISeedEvolutionListener triggers actor spawn or character binding).
+
+**When designing L4 services**: ask "does a god-actor need to consume my events?" Design event schemas with god-actor consumption in mind. **When designing new entity types**: ask "does this follow the actor-bound entity pattern?" If something should progressively awaken, it uses seeds, system realms, and ABML — potentially with zero new plugins (living weapons validate this). The gameplay loop lives in ABML behaviors, not in service code.
+
+For full specifications: [DIVINE.md](../plugins/DIVINE.md), [DUNGEON.md](../plugins/DUNGEON.md), [BEHAVIORAL-BOOTSTRAP.md](../guides/BEHAVIORAL-BOOTSTRAP.md), [ACTOR-BOUND-ENTITIES.md](../planning/ACTOR-BOUND-ENTITIES.md)
+
+---
+
 ## The Core Problem
 
 Bannou has 45+ orthogonal services (Storyline composes narratives, Quest tracks objectives, Currency manages economies, etc.) but no service owns the cross-cutting gameplay loop: "character dies -> archive compressed -> god evaluates -> storyline composed -> quests spawned -> new player experiences -> more deaths -> loop." This is the **content flywheel** from VISION.md. It has no `Main()`.

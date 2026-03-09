@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Store**: character-personality-statestore (MySQL)
+> **Short**: Personality traits (bipolar axes) and combat preferences with probabilistic evolution
 
 ---
 

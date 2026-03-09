@@ -6,6 +6,7 @@
 > **State Store**: utility-networks (MySQL), utility-coverage (Redis), utility-sources (MySQL), utility-maintenance (MySQL), utility-locks (Redis) — all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Short**: Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids)
 
 ---
 

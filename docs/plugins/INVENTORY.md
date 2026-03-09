@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: inventory-container-store (MySQL), inventory-container-cache (Redis), inventory-lock (Redis)
 > **Implementation Map**: [docs/maps/INVENTORY.md](../maps/INVENTORY.md)
+> **Short**: Container and item placement with constraint models (slot/weight/grid/volumetric/unlimited)
 
 ---
 

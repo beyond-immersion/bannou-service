@@ -20,6 +20,27 @@ namespace BeyondImmersion.BannouService.CharacterEncounter;
 /// </remarks>
 public static class CharacterEncounterEventPublisher
 {
+    /// <summary>Published when a new encounter type is created.</summary>
+    public static Task<bool> PublishEncounterTypeCreatedAsync(
+        this IMessageBus messageBus,
+        EncounterTypeCreatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(CharacterEncounterPublishedTopics.EncounterTypeCreated, eventData, cancellationToken);
+
+    /// <summary>Published when an encounter type is updated (including deprecation via changedFields).</summary>
+    public static Task<bool> PublishEncounterTypeUpdatedAsync(
+        this IMessageBus messageBus,
+        EncounterTypeUpdatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(CharacterEncounterPublishedTopics.EncounterTypeUpdated, eventData, cancellationToken);
+
+    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
+    public static Task<bool> PublishEncounterTypeDeletedAsync(
+        this IMessageBus messageBus,
+        EncounterTypeDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(CharacterEncounterPublishedTopics.EncounterTypeDeleted, eventData, cancellationToken);
+
     /// <summary>Published when a new encounter is recorded.</summary>
     public static Task<bool> PublishEncounterRecordedAsync(
         this IMessageBus messageBus,

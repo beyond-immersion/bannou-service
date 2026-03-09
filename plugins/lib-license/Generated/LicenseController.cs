@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.License;
 
@@ -95,19 +110,20 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
 
 
     /// <summary>
-    /// Delete a board template
+    /// Deprecate a board template
     /// </summary>
 
     /// <remarks>
-    /// Delete a board template. Blocked if active board instances exist
-    /// <br/>that reference this template.
+    /// Deprecate a board template (Category B — one-way, no undeprecate, no delete).
+    /// <br/>Existing board instances continue to function; new board creation from this
+    /// <br/>template is rejected. Idempotent: returns OK if already deprecated.
     /// </remarks>
 
 
 
-    /// <returns>Board template deleted successfully</returns>
+    /// <returns>Board template deprecated successfully (or already deprecated)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> DeleteBoardTemplate(DeleteBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> DeprecateBoardTemplate(DeprecateBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -609,47 +625,48 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Delete a board template
+    /// Deprecate a board template
     /// </summary>
     /// <remarks>
-    /// Delete a board template. Blocked if active board instances exist
-    /// <br/>that reference this template.
+    /// Deprecate a board template (Category B — one-way, no undeprecate, no delete).
+    /// <br/>Existing board instances continue to function; new board creation from this
+    /// <br/>template is rejected. Idempotent: returns OK if already deprecated.
     /// </remarks>
-    /// <returns>Board template deleted successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("license/board-template/delete")]
+    /// <returns>Board template deprecated successfully (or already deprecated)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("license/board-template/deprecate")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> DeleteBoardTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> DeprecateBoardTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
             "bannou.license",
-            "LicenseController.DeleteBoardTemplate",
+            "LicenseController.DeprecateBoardTemplate",
             System.Diagnostics.ActivityKind.Server);
-        activity_?.SetTag("http.route", "license/board-template/delete");
+        activity_?.SetTag("http.route", "license/board-template/deprecate");
         try
         {
 
-            var (statusCode, result) = await _implementation.DeleteBoardTemplateAsync(body, cancellationToken);
+            var (statusCode, result) = await _implementation.DeprecateBoardTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board-template/delete");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board-template/deprecate");
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board-template/delete");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board-template/deprecate");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "license",
-                "DeleteBoardTemplate",
+                "DeprecateBoardTemplate",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:license/board-template/delete",
+                endpoint: "post:license/board-template/deprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

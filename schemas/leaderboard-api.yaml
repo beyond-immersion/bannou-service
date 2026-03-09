@@ -128,13 +128,14 @@ paths:
         '404':
           description: Leaderboard not found
 
-  /leaderboard/definition/delete:
+  /leaderboard/definition/deprecate:
     post:
-      summary: Delete leaderboard definition
+      summary: Deprecate leaderboard definition
       description: |
-        Delete a leaderboard and all its scores.
-        Developer-only endpoint. This action is irreversible.
-      operationId: deleteLeaderboardDefinition
+        Deprecate a leaderboard definition (Category B — one-way, no undeprecate, no delete).
+        Existing scores remain queryable; new score submissions to deprecated leaderboards
+        are rejected. Idempotent: returns OK if already deprecated.
+      operationId: deprecateLeaderboardDefinition
       tags:
       - Definitions
       x-permissions:
@@ -145,10 +146,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteLeaderboardDefinitionRequest'
+              $ref: '#/components/schemas/DeprecateLeaderboardDefinitionRequest'
       responses:
         '200':
-          description: Leaderboard deleted successfully
+          description: Leaderboard deprecated successfully (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardDefinitionResponse'
         '404':
           description: Leaderboard not found
 
@@ -464,7 +469,11 @@ components:
         includeArchived:
           type: boolean
           default: false
-          description: Include archived/deleted leaderboards
+          description: Include archived leaderboards
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated leaderboard definitions in results (default false)
 
     ListLeaderboardDefinitionsResponse:
       type: object
@@ -519,9 +528,9 @@ components:
           maxLength: 128
           description: New analytics rating type mapping
 
-    DeleteLeaderboardDefinitionRequest:
+    DeprecateLeaderboardDefinitionRequest:
       type: object
-      description: Request to delete a leaderboard
+      description: Request to deprecate a leaderboard definition (Category B — one-way)
       additionalProperties: false
       required:
       - gameServiceId
@@ -533,7 +542,12 @@ components:
           description: ID of the game service
         leaderboardId:
           type: string
-          description: ID of the leaderboard to delete
+          description: ID of the leaderboard to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (audit context for Category B entities)
 
     LeaderboardDefinitionResponse:
       type: object
@@ -547,6 +561,7 @@ components:
       - updateMode
       - isSeasonal
       - isPublic
+      - isDeprecated
       - createdAt
       - entryCount
       properties:
@@ -582,6 +597,18 @@ components:
         isPublic:
           type: boolean
           description: Whether the leaderboard is publicly visible
+        isDeprecated:
+          type: boolean
+          description: Whether this definition has been deprecated (Category B — one-way)
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the definition was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (audit context)
         currentSeason:
           type: integer
           nullable: true

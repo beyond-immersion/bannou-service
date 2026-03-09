@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: relationship-statestore (MySQL), relationship-type-statestore (MySQL), relationship-lock (Redis)
 > **Implementation Map**: [docs/maps/RELATIONSHIP.md](../maps/RELATIONSHIP.md)
+> **Short**: Entity-to-entity relationships with type taxonomy, bidirectional uniqueness, and ABML variable provider
 
 ---
 

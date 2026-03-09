@@ -6,6 +6,7 @@
 > **Layer**: Infrastructure
 > **State Store**: None (stateless service)
 > **Implementation Map**: [docs/maps/TELEMETRY.md](../maps/TELEMETRY.md)
+> **Short**: OpenTelemetry distributed tracing and metrics via ITelemetryProvider (optional, NullTelemetryProvider fallback)
 
 ---
 

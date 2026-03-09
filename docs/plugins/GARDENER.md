@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: gardener-garden-instances (Redis), gardener-pois (Redis), gardener-scenario-templates (MySQL), gardener-scenario-instances (Redis), gardener-scenario-history (MySQL), gardener-phase-config (MySQL), gardener-lock (Redis)
+> **Short**: Player experience orchestration (garden lifecycle, void/discovery, divine actor integration)
 
 ## Overview
 

@@ -6,6 +6,7 @@
 > **Layer**: AppFeatures
 > **State Store**: documentation-statestore (Redis)
 > **Implementation Map**: [docs/maps/DOCUMENTATION.md](../maps/DOCUMENTATION.md)
+> **Short**: Knowledge base API for AI agents with full-text search and git-sync namespaces
 
 ---
 

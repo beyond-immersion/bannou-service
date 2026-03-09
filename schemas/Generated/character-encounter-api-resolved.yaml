@@ -165,15 +165,17 @@ paths:
         '400':
           description: Invalid update data
 
-  /character-encounter/type/delete:
+  /character-encounter/type/deprecate:
     post:
-      summary: Delete encounter type
-      operationId: deleteEncounterType
+      summary: Deprecate encounter type
+      operationId: deprecateEncounterType
       tags:
       - Encounter Type Management
       description: |
-        Delete a custom encounter type. Built-in types cannot be deleted.
-        Types with existing encounters cannot be deleted.
+        Marks an encounter type as deprecated. Deprecated types remain readable
+        forever but new encounters cannot reference them.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       x-permissions:
       - role: developer
       requestBody:
@@ -181,16 +183,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteEncounterTypeRequest'
+              $ref: '#/components/schemas/DeprecateEncounterTypeRequest'
       responses:
         '200':
-          description: Encounter type deleted successfully
+          description: Encounter type deprecated successfully (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterTypeResponse'
         '404':
           description: Encounter type not found
-        '400':
-          description: Cannot delete built-in type
-        '409':
-          description: Cannot delete - type is in use by encounters
 
   /character-encounter/type/seed:
     post:
@@ -886,10 +888,10 @@ components:
       description: Request to list encounter types with optional filtering
       additionalProperties: false
       properties:
-        includeInactive:
+        includeDeprecated:
           type: boolean
           default: false
-          description: Include soft-deleted types
+          description: Include deprecated types in results
         builtInOnly:
           type: boolean
           default: false
@@ -929,16 +931,22 @@ components:
           nullable: true
           description: New display ordering
 
-    DeleteEncounterTypeRequest:
+    DeprecateEncounterTypeRequest:
       type: object
-      description: Request to delete an encounter type
+      description: Request to deprecate an encounter type (Category B — one-way, no delete). Idempotent — returns OK if 
+        already deprecated.
       additionalProperties: false
       required:
       - code
       properties:
         code:
           type: string
-          description: Code of the type to delete
+          description: Code of the type to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended for audit trail)
 
     SeedEncounterTypesRequest:
       type: object
@@ -1406,6 +1414,18 @@ components:
         isActive:
           type: boolean
           description: Whether the type is active
+        isDeprecated:
+          type: boolean
+          description: Whether this type has been deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the type was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Why the type was deprecated
         createdAt:
           type: string
           format: date-time

@@ -135,7 +135,7 @@ Recipe-based crafting orchestration service (L4 GameFeatures) for production wor
 
 ## Currency {#currency}
 
-**Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Endpoints**: 33 | **Deep Dive**: [docs/plugins/CURRENCY.md](plugins/CURRENCY.md) | **Map**: [docs/maps/CURRENCY.md](maps/CURRENCY.md)
+**Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Endpoints**: 34 | **Deep Dive**: [docs/plugins/CURRENCY.md](plugins/CURRENCY.md) | **Map**: [docs/maps/CURRENCY.md](maps/CURRENCY.md)
 
 Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features three background workers: autogain for passive income, currency expiration for removing expired balances, and hold expiration for auto-releasing stale authorization holds. Transaction history has configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
 
@@ -427,9 +427,9 @@ Unified entity effects query layer (L4 GameFeatures) aggregating temporary contr
 
 ## Storyline {#storyline}
 
-**Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Endpoints**: 15 | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Endpoints**: 15 | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md) | **Map**: [docs/maps/STORYLINE.md](maps/STORYLINE.md)
 
-The Storyline service (L4 GameFeatures) wraps the `storyline-theory` and `storyline-storyteller` SDKs to provide HTTP endpoints for seeded narrative generation from compressed archives. Plans describe narrative arcs with phases, actions, and entity requirements -- callers (gods/regional watchers) decide whether to instantiate them. Internal-only, requires the `developer` role for all endpoints.
+The Storyline service (L4 GameFeatures) wraps the `storyline-theory` and `storyline-storyteller` SDKs to provide HTTP endpoints for seeded narrative generation from compressed archives. Plans describe narrative arcs with phases, actions, and entity requirements -- callers (gods/regional watchers) decide whether to instantiate them. Also manages scenario definitions (reusable narrative templates with trigger conditions, mutations, and quest hooks) with a full CRUD lifecycle, condition-based discovery, fit scoring, and execution with distributed locking and cooldown enforcement. Provides character compression data for archival via `x-compression-callback`. Internal-only, requires the `developer` role for all endpoints.
 
 ## Subscription {#subscription}
 
@@ -490,7 +490,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 76
-- **Total endpoints**: 902
+- **Total endpoints**: 903
 
 ---
 

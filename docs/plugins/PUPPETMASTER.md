@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Store**: None (in-memory only)
+> **Short**: Dynamic behavior orchestration, regional watchers, and IBehaviorDocumentProvider hierarchy bypass
 
 ---
 

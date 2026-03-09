@@ -47,7 +47,7 @@ public partial class StatusService
     /// Delegates to the existing CleanupByOwnerAsync endpoint logic.
     /// Per FOUNDATION TENETS: Account deletion is always CASCADE — data has no owner and must be removed.
     /// </summary>
-    internal async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
+    public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.HandleAccountDeleted");
         _logger.LogInformation("Handling account.deleted for account {AccountId}", evt.AccountId);
@@ -91,21 +91,14 @@ public partial class StatusService
         }
 
         // SeedCapabilityUpdatedEvent carries seedId, not ownerId;
-        // look up the seed to find the owner for cache invalidation
-        var seedClient = _serviceProvider.GetService<ISeedClient>();
-        if (seedClient == null)
-        {
-            _logger.LogDebug("ISeedClient not available for seed effects cache invalidation via event");
-            return;
-        }
-
+        // look up the seed to find the owner for cache invalidation (L2 — hard dependency per FOUNDATION TENETS)
         try
         {
-            var seed = await seedClient.GetSeedAsync(
+            var seed = await _seedClient.GetSeedAsync(
                 new GetSeedRequest { SeedId = evt.SeedId },
                 CancellationToken.None);
 
-            var cacheKey = SeedEffectsCacheKey(seed.OwnerId, seed.OwnerType);
+            var cacheKey = BuildSeedEffectsCacheKey(seed.OwnerId, seed.OwnerType);
             await _seedEffectsCacheStore.DeleteAsync(cacheKey);
             _logger.LogDebug(
                 "Invalidated seed effects cache for {OwnerType} {OwnerId} via event (seed {SeedId})",

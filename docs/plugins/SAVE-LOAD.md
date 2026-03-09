@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: save-load-slots (MySQL), save-load-versions (MySQL), save-load-schemas (MySQL), save-load-cache (Redis), save-load-pending (Redis)
+> **Short**: Versioned save system with delta saves, schema migration, two-tier storage (Redis then MinIO), cloud sync
 
 ---
 

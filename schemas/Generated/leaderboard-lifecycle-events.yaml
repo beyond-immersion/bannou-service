@@ -24,6 +24,7 @@ components:
       - updateMode
       - isSeasonal
       - isPublic
+      - isDeprecated
       - createdAt
       - updatedAt
       properties:
@@ -53,6 +54,18 @@ components:
         isPublic: &id007
           type: boolean
           description: "Whether the leaderboard is publicly visible"
+        isDeprecated: &id008
+          type: boolean
+          description: "Whether this definition has been deprecated"
+        deprecatedAt: &id009
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the definition was deprecated"
+        deprecationReason: &id010
+          type: string
+          nullable: true
+          description: "Reason for deprecation"
         createdAt:
           type: string
           format: date-time
@@ -78,6 +91,7 @@ components:
       - updateMode
       - isSeasonal
       - isPublic
+      - isDeprecated
       - createdAt
       - updatedAt
       - changedFields
@@ -93,6 +107,9 @@ components:
         updateMode: *id005
         isSeasonal: *id006
         isPublic: *id007
+        isDeprecated: *id008
+        deprecatedAt: *id009
+        deprecationReason: *id010
         createdAt:
           type: string
           format: date-time
@@ -123,6 +140,7 @@ components:
       - updateMode
       - isSeasonal
       - isPublic
+      - isDeprecated
       - createdAt
       - updatedAt
       properties:
@@ -137,6 +155,9 @@ components:
         updateMode: *id005
         isSeasonal: *id006
         isPublic: *id007
+        isDeprecated: *id008
+        deprecatedAt: *id009
+        deprecationReason: *id010
         createdAt:
           type: string
           format: date-time

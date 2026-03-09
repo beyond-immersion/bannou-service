@@ -77,9 +77,9 @@ public static class LeaderboardPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/leaderboard/definition/delete",
+            Path = "/leaderboard/definition/deprecate",
             Method = ServiceEndpointMethod.Post,
-            Description = "deleteLeaderboardDefinition",
+            Description = "deprecateLeaderboardDefinition",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: mapping-statestore (Redis)
+> **Short**: Spatial data management with authority-based channels, 3D indexing, and design-time authoring
 
 ---
 

@@ -376,6 +376,11 @@ public partial class ContractService : IContractService
         // Apply filters
         var filtered = templates.AsEnumerable();
 
+        if (!body.IncludeDeprecated)
+        {
+            filtered = filtered.Where(t => !t.IsDeprecated);
+        }
+
         if (body.RealmId.HasValue)
         {
             filtered = filtered.Where(t => t.RealmId == body.RealmId.Value || t.RealmId == null);
@@ -466,11 +471,11 @@ public partial class ContractService : IContractService
     }
 
     /// <inheritdoc/>
-    public async Task<StatusCodes> DeleteContractTemplateAsync(
-        DeleteContractTemplateRequest body,
+    public async Task<(StatusCodes, ContractTemplateResponse?)> DeprecateContractTemplateAsync(
+        DeprecateContractTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Deleting contract template: {TemplateId}", body.TemplateId);
+        _logger.LogInformation("Deprecating contract template: {TemplateId}", body.TemplateId);
 
         var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
         var model = await _templateStore
@@ -479,39 +484,31 @@ public partial class ContractService : IContractService
         if (model == null)
         {
             _logger.LogWarning("Template not found: {TemplateId}", body.TemplateId);
-            return StatusCodes.NotFound;
+            return (StatusCodes.NotFound, null);
         }
 
-        // Check for active instances
-        var templateIndexKey = $"{TEMPLATE_INDEX_PREFIX}{body.TemplateId}";
-        var instanceIds = await _listStore
-            .GetAsync(templateIndexKey, cancellationToken) ?? new List<string>();
-
-        if (instanceIds.Count > 0)
+        // Idempotent: already deprecated is a success (per IMPLEMENTATION TENETS)
+        if (model.IsDeprecated)
         {
-            // Check if any are active
-            var instanceKeys = instanceIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
-            var instances = await _instanceStore
-                .GetBulkAsync(instanceKeys, cancellationToken);
-
-            var activeStatuses = new[] { ContractStatus.Draft, ContractStatus.Proposed, ContractStatus.Pending, ContractStatus.Active };
-            if (instances.Any(i => i.Value != null && activeStatuses.Contains(i.Value.Status)))
-            {
-                _logger.LogWarning("Cannot delete template with active instances: {TemplateId}", body.TemplateId);
-                return StatusCodes.Conflict;
-            }
+            return (StatusCodes.OK, MapTemplateToResponse(model));
         }
 
-        // Soft delete - mark as inactive
-        model.IsActive = false;
-        model.UpdatedAt = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
+        model.IsDeprecated = true;
+        model.DeprecatedAt = now;
+        model.DeprecationReason = body.Reason;
+        model.UpdatedAt = now;
         await _templateStore
             .SaveAsync(templateKey, model, cancellationToken: cancellationToken);
 
-        await PublishTemplateDeletedEventAsync(model, cancellationToken);
+        // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
+        await PublishTemplateUpdatedEventAsync(
+            model,
+            new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" },
+            cancellationToken);
 
-        _logger.LogInformation("Deleted (soft) contract template: {TemplateId}", body.TemplateId);
-        return StatusCodes.OK;
+        _logger.LogInformation("Deprecated contract template: {TemplateId}", body.TemplateId);
+        return (StatusCodes.OK, MapTemplateToResponse(model));
     }
 
     #endregion
@@ -2620,6 +2617,9 @@ public partial class ContractService : IContractService
             Transferable = model.Transferable,
             GameMetadata = model.GameMetadata,
             IsActive = model.IsActive,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
         };
@@ -2758,6 +2758,9 @@ public partial class ContractService : IContractService
             DefaultEnforcementMode = model.DefaultEnforcementMode,
             Transferable = model.Transferable,
             IsActive = model.IsActive,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = model.CreatedAt
         });
     }
@@ -2779,31 +2782,12 @@ public partial class ContractService : IContractService
             DefaultEnforcementMode = model.DefaultEnforcementMode,
             Transferable = model.Transferable,
             IsActive = model.IsActive,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
             ChangedFields = changedFields
-        });
-    }
-
-    private async Task PublishTemplateDeletedEventAsync(ContractTemplateModel model, CancellationToken ct)
-    {
-        await _messageBus.PublishContractTemplateDeletedAsync(new ContractTemplateDeletedEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            TemplateId = model.TemplateId,
-            Code = model.Code,
-            Name = model.Name,
-            Description = model.Description,
-            RealmId = model.RealmId,
-            MinParties = model.MinParties,
-            MaxParties = model.MaxParties,
-            DefaultEnforcementMode = model.DefaultEnforcementMode,
-            Transferable = model.Transferable,
-            IsActive = model.IsActive,
-            CreatedAt = model.CreatedAt,
-            UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
-            DeletedReason = "Soft deleted"
         });
     }
 

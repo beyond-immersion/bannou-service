@@ -6,6 +6,7 @@
 > **Layer**: GameFeatures
 > **State Store**: analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history-data (MySQL)
 > **Implementation Map**: [docs/maps/ANALYTICS.md](../maps/ANALYTICS.md)
+> **Short**: Event aggregation, Glicko-2 skill ratings, and milestone detection (event-only observer)
 
 ## Overview
 

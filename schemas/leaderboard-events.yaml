@@ -24,15 +24,15 @@ info:
       handler: HandleRatingUpdated
   x-event-publications:
     # Lifecycle events (auto-generated from x-lifecycle)
-    - topic: leaderboard-definition.created
+    - topic: leaderboard.definition.created
       event: LeaderboardDefinitionCreatedEvent
       description: Published when a new leaderboard definition is created
-    - topic: leaderboard-definition.updated
+    - topic: leaderboard.definition.updated
       event: LeaderboardDefinitionUpdatedEvent
-      description: Published when a leaderboard definition is updated
-    - topic: leaderboard-definition.deleted
+      description: Published when a leaderboard definition is updated (including deprecation via changedFields)
+    - topic: leaderboard.definition.deleted
       event: LeaderboardDefinitionDeletedEvent
-      description: Published when a leaderboard definition is deleted
+      description: Unused Category B infrastructure (leaderboard definitions are never deleted)
     # Published when an entity's rank changes
     - topic: leaderboard.rank.changed
       event: LeaderboardRankChangedEvent
@@ -57,9 +57,11 @@ x-lifecycle:
       updateMode: { type: string, required: true, description: "Score update mode" }
       isSeasonal: { type: boolean, required: true, description: "Whether the leaderboard is seasonal" }
       isPublic: { type: boolean, required: true, description: "Whether the leaderboard is publicly visible" }
-    created: true
-    updated: true
-    deleted: true
+      isDeprecated: { type: boolean, required: true, description: "Whether this definition has been deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the definition was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the definition was created" }
+    sensitive: []
 
 paths: {}  # Events don't have HTTP paths
 

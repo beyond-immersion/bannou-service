@@ -50,9 +50,9 @@ public partial interface ILeaderboardService : IBannouService
         Task<(StatusCodes, LeaderboardDefinitionResponse?)> UpdateLeaderboardDefinitionAsync(UpdateLeaderboardDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// DeleteLeaderboardDefinition operation
+        /// DeprecateLeaderboardDefinition operation
         /// </summary>
-        Task<StatusCodes> DeleteLeaderboardDefinitionAsync(DeleteLeaderboardDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, LeaderboardDefinitionResponse?)> DeprecateLeaderboardDefinitionAsync(DeprecateLeaderboardDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// SubmitScore operation

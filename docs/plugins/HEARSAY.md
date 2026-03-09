@@ -7,6 +7,7 @@
 > **State Stores**: hearsay-beliefs (MySQL), hearsay-propagation (MySQL), hearsay-cache (Redis), hearsay-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
 > **Planning**: [MORALITY-SYSTEM.md](../guides/MORALITY-SYSTEM.md), [STORY-SYSTEM.md](../guides/STORY-SYSTEM.md), [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md)
+> **Short**: Social information propagation and NPC belief formation (what NPCs think they know vs. reality)
 
 ## Overview
 

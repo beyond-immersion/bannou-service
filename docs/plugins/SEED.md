@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: seed-statestore (MySQL), seed-growth-statestore (MySQL), seed-type-definitions-statestore (MySQL), seed-bonds-statestore (MySQL), seed-capabilities-cache (Redis), seed-lock (Redis)
 > **Implementation Map**: [docs/maps/SEED.md](../maps/SEED.md)
+> **Short**: Generic progressive growth primitive with polymorphic ownership and phase-gated capabilities
 
 ---
 

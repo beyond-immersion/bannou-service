@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: license-board-templates (MySQL), license-definitions (MySQL), license-boards (MySQL), license-board-cache (Redis), license-lock (Redis)
+> **Short**: Grid-based progression boards (skill trees) orchestrating Inventory, Items, and Contracts
 
 ---
 

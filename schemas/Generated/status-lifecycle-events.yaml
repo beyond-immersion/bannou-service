@@ -43,9 +43,11 @@ components:
           description: "Game service this template is scoped to"
         code: &id003
           type: string
+          maxLength: 128
           description: "Unique status code within this game service"
         displayName: &id004
           type: string
+          maxLength: 256
           description: "Human-readable display name"
         category: &id005
           $ref: ../status-api.yaml#/components/schemas/StatusCategory
@@ -69,6 +71,7 @@ components:
           description: "When this template was deprecated"
         deprecationReason: &id011
           type: string
+          maxLength: 500
           nullable: true
           description: "Why this template was deprecated"
         createdAt:

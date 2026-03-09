@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Storyline;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -49,16 +50,16 @@ using System = global::System;
 /// Event published when a storyline plan is generated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class StorylineComposedEvent : BaseServiceEvent
+public partial class StorylinePlanComposedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: storyline.composed
+    /// Event type identifier: storyline.plan.composed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "storyline.composed";
+    public override string EventName { get; set; } = "storyline.plan.composed";
 
     /// <summary>
     /// Unique identifier for the composed plan
@@ -75,12 +76,13 @@ public partial class StorylineComposedEvent : BaseServiceEvent
     public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
-    /// Storyline goal type (revenge, resurrection, etc.)
+    /// Storyline goal type used for arc selection
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("goal")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Goal { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public StorylineGoal Goal { get; set; } = default!;
 
     /// <summary>
     /// Emotional arc type used
@@ -88,13 +90,15 @@ public partial class StorylineComposedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("arcType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ArcType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ArcType ArcType { get; set; } = default!;
 
     /// <summary>
     /// Primary Life Value spectrum
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("primarySpectrum")]
-    public string? PrimarySpectrum { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SpectrumType? PrimarySpectrum { get; set; } = default!;
 
     /// <summary>
     /// Plan viability score

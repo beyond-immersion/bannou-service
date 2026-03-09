@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: scene-statestore (MySQL)
+> **Short**: Hierarchical scene documents as node trees with checkout/commit workflow and version history
 
 ---
 

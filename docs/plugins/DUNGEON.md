@@ -6,6 +6,7 @@
 > **Layer**: GameFeatures
 > **State Stores**: dungeon-cores (MySQL), dungeon-bonds (MySQL), dungeon-inhabitants (Redis), dungeon-memories (MySQL), dungeon-cache (Redis), dungeon-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
+> **Short**: Living dungeon-as-actor lifecycle with personality, memory, and spatial manifestation
 
 ## Overview
 

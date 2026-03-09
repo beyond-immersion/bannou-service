@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: realm-statestore (MySQL), realm-lock (Redis)
 > **Implementation Map**: [docs/maps/REALM.md](../maps/REALM.md)
+> **Short**: Top-level persistent world management with deprecation lifecycle and seed-from-configuration
 
 ---
 

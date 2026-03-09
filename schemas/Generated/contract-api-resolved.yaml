@@ -150,28 +150,32 @@ paths:
       - role: admin
         states: {}
 
-  /contract/template/delete:
+  /contract/template/deprecate:
     post:
-      operationId: deleteContractTemplate
+      operationId: deprecateContractTemplate
       tags:
       - Templates
-      summary: Soft-delete template
+      summary: Deprecate template (Category B — one-way, no delete)
       description: |
-        Soft-deletes a contract template. Existing instances continue to function
+        Deprecates a contract template. Existing instances continue to function
         but no new instances can be created from this template.
+        Category B entity: deprecation is one-way (no undeprecate), no delete endpoint.
+        Idempotent: returns OK if already deprecated.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteContractTemplateRequest'
+              $ref: '#/components/schemas/DeprecateContractTemplateRequest'
       responses:
         '200':
-          description: Template deleted successfully
+          description: Template deprecated successfully (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractTemplateResponse'
         '404':
           description: Template not found
-        '409':
-          description: Template has active instances and cannot be deleted
       x-permissions:
       - role: admin
         states: {}
@@ -1225,6 +1229,10 @@ components:
           type: boolean
           nullable: true
           description: Filter by active status.
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated templates (default false).
         searchTerm:
           type: string
           nullable: true
@@ -1271,9 +1279,9 @@ components:
           nullable: true
           description: "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
 
-    DeleteContractTemplateRequest:
+    DeprecateContractTemplateRequest:
       type: object
-      description: Request to delete a contract template
+      description: Request to deprecate a contract template (Category B — one-way, no delete)
       additionalProperties: false
       required:
       - templateId
@@ -1281,7 +1289,12 @@ components:
         templateId:
           type: string
           format: uuid
-          description: Template ID to delete
+          description: Template ID to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (audit context for Category B entities)
 
     ContractTemplateResponse:
       type: object
@@ -1297,6 +1310,7 @@ components:
       - defaultEnforcementMode
       - transferable
       - isActive
+      - isDeprecated
       - createdAt
       properties:
         templateId:
@@ -1353,6 +1367,18 @@ components:
         isActive:
           type: boolean
           description: Whether template is active
+        isDeprecated:
+          type: boolean
+          description: Whether template is deprecated (Category B — one-way)
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time

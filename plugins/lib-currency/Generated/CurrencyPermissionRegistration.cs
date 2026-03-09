@@ -77,6 +77,21 @@ public static class CurrencyPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/currency/definition/deprecate",
+            Method = ServiceEndpointMethod.Post,
+            Description = "deprecateCurrencyDefinition",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/currency/wallet/freeze",
             Method = ServiceEndpointMethod.Post,
             Description = "freezeWallet",

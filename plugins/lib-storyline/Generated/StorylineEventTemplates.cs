@@ -19,16 +19,16 @@ namespace BeyondImmersion.BannouService.Storyline;
 public static class StorylineEventTemplates
 {
     /// <summary>Event published when a storyline plan is generated.</summary>
-    public static readonly EventTemplate StorylineComposed = new(
-        Name: "storyline_composed",
-        Topic: "storyline.composed",
-        EventType: typeof(StorylineComposedEvent),
+    public static readonly EventTemplate StorylinePlanComposed = new(
+        Name: "storyline_plan_composed",
+        Topic: "storyline.plan.composed",
+        EventType: typeof(StorylinePlanComposedEvent),
         PayloadTemplate: @"{
     ""eventName"": ""{{eventName}}"",
     ""planId"": ""{{planId}}"",
     ""realmId"": {{realmId}},
-    ""goal"": ""{{goal}}"",
-    ""arcType"": ""{{arcType}}"",
+    ""goal"": {{goal}},
+    ""arcType"": {{arcType}},
     ""primarySpectrum"": {{primarySpectrum}},
     ""confidence"": {{confidence}},
     ""genre"": {{genre}},
@@ -50,6 +50,6 @@ public static class StorylineEventTemplates
     /// <param name="registry">The event template registry.</param>
     public static void RegisterAll(IEventTemplateRegistry registry)
     {
-        registry.Register(StorylineComposed);
+        registry.Register(StorylinePlanComposed);
     }
 }

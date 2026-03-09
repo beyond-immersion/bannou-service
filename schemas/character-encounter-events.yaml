@@ -13,6 +13,18 @@ info:
   version: 1.0.0
   x-event-subscriptions: []  # Character Encounter self-subscribes for cache invalidation only; no external event subscriptions
   x-event-publications:
+    # Encounter type lifecycle events (auto-generated from x-lifecycle)
+    - topic: character-encounter.encounter-type.created
+      event: EncounterTypeCreatedEvent
+      description: Published when a new encounter type is created
+    - topic: character-encounter.encounter-type.updated
+      event: EncounterTypeUpdatedEvent
+      description: Published when an encounter type is updated (including deprecation via changedFields)
+    - topic: character-encounter.encounter-type.deleted
+      event: EncounterTypeDeletedEvent
+      description: Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.
+
+    # Encounter instance events
     - topic: encounter.recorded
       event: EncounterRecordedEvent
       description: Published when a new encounter is recorded
@@ -28,6 +40,26 @@ info:
     - topic: encounter.deleted
       event: EncounterDeletedEvent
       description: Published when an encounter is deleted
+
+# Lifecycle events auto-generated from this definition.
+# EncounterType is Category B: deprecation published via "updated" with changedFields (per IMPLEMENTATION TENETS).
+# The auto-generated *.deleted variant exists in Generated/ but is never published (Category B infrastructure).
+x-lifecycle:
+  topic_prefix: character-encounter
+  EncounterType:
+    model:
+      typeId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the encounter type" }
+      code: { type: string, required: true, description: "Unique type code" }
+      name: { type: string, required: true, description: "Display name" }
+      description: { type: string, nullable: true, description: "Description" }
+      isBuiltIn: { type: boolean, required: true, description: "Whether this is a built-in type" }
+      sortOrder: { type: integer, required: true, description: "Display ordering" }
+      isActive: { type: boolean, required: true, description: "Whether the type is active" }
+      isDeprecated: { type: boolean, required: true, description: "Whether the type is deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the type was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the type was created" }
+    sensitive: []
 
 paths: {}  # Events don't have HTTP paths
 

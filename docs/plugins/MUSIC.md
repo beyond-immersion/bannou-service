@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: music-styles (MySQL, unused), music-compositions (Redis)
+> **Short**: Pure-computation music generation using formal theory (MusicTheory + MusicStoryteller SDKs)
 
 ---
 

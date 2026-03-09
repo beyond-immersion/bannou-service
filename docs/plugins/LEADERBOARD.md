@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: leaderboard-definition (Redis), leaderboard-ranking (Redis, Sorted Sets)
+> **Short**: Redis Sorted Set leaderboards with seasonal rotation, polymorphic entities, and Analytics ingestion
 
 ---
 

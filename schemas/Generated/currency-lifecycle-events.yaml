@@ -23,6 +23,7 @@ components:
       - scope
       - precision
       - isActive
+      - isDeprecated
       - createdAt
       - updatedAt
       properties:
@@ -49,7 +50,19 @@ components:
         isActive: &id006
           type: boolean
           description: "Whether the definition is active"
-        modifiedAt: &id007
+        isDeprecated: &id007
+          type: boolean
+          description: "Whether the definition is deprecated"
+        deprecatedAt: &id008
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the definition was deprecated"
+        deprecationReason: &id009
+          type: string
+          nullable: true
+          description: "Reason for deprecation"
+        modifiedAt: &id010
           type: string
           format: date-time
           nullable: true
@@ -78,6 +91,7 @@ components:
       - scope
       - precision
       - isActive
+      - isDeprecated
       - createdAt
       - updatedAt
       - changedFields
@@ -92,7 +106,10 @@ components:
         scope: *id004
         precision: *id005
         isActive: *id006
-        modifiedAt: *id007
+        isDeprecated: *id007
+        deprecatedAt: *id008
+        deprecationReason: *id009
+        modifiedAt: *id010
         createdAt:
           type: string
           format: date-time
@@ -122,6 +139,7 @@ components:
       - scope
       - precision
       - isActive
+      - isDeprecated
       - createdAt
       - updatedAt
       properties:
@@ -135,7 +153,10 @@ components:
         scope: *id004
         precision: *id005
         isActive: *id006
-        modifiedAt: *id007
+        isDeprecated: *id007
+        deprecatedAt: *id008
+        deprecationReason: *id009
+        modifiedAt: *id010
         createdAt:
           type: string
           format: date-time
@@ -169,23 +190,23 @@ components:
           type: string
           default: currency.wallet.created
           description: 'Event type identifier: currency.wallet.created'
-        walletId: &id008
+        walletId: &id011
           type: string
           format: uuid
           description: "Unique wallet identifier"
-        ownerId: &id009
+        ownerId: &id012
           type: string
           format: uuid
           description: "Owner entity ID"
-        ownerType: &id010
+        ownerType: &id013
           $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Owner entity type"
-        realmId: &id011
+        realmId: &id014
           type: string
           format: uuid
           nullable: true
           description: "Realm ID for realm-scoped wallets"
-        status: &id012
+        status: &id015
           $ref: ../currency-api.yaml#/components/schemas/WalletStatus
           description: "Wallet status"
         createdAt:
@@ -218,11 +239,11 @@ components:
           type: string
           default: currency.wallet.updated
           description: 'Event type identifier: currency.wallet.updated'
-        walletId: *id008
-        ownerId: *id009
-        ownerType: *id010
-        realmId: *id011
-        status: *id012
+        walletId: *id011
+        ownerId: *id012
+        ownerType: *id013
+        realmId: *id014
+        status: *id015
         createdAt:
           type: string
           format: date-time
@@ -257,11 +278,11 @@ components:
           type: string
           default: currency.wallet.deleted
           description: 'Event type identifier: currency.wallet.deleted'
-        walletId: *id008
-        ownerId: *id009
-        ownerType: *id010
-        realmId: *id011
-        status: *id012
+        walletId: *id011
+        ownerId: *id012
+        ownerType: *id013
+        realmId: *id014
+        status: *id015
         createdAt:
           type: string
           format: date-time

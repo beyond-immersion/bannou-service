@@ -65,6 +65,15 @@ internal class BoardTemplateModel
     /// <summary>Whether this template is available for new board creation.</summary>
     public bool IsActive { get; set; } = true;
 
+    /// <summary>Whether this template has been deprecated (Category B — one-way).</summary>
+    public bool IsDeprecated { get; set; }
+
+    /// <summary>When this template was deprecated.</summary>
+    public DateTimeOffset? DeprecatedAt { get; set; }
+
+    /// <summary>Reason for deprecation (audit context).</summary>
+    public string? DeprecationReason { get; set; }
+
     /// <summary>When this template was created.</summary>
     public DateTimeOffset CreatedAt { get; set; }
 

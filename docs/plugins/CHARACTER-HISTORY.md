@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Store**: character-history-statestore (MySQL)
+> **Short**: Historical event participation and machine-readable backstory for behavior system consumption
 
 ---
 

@@ -17,6 +17,15 @@ namespace BeyondImmersion.BannouService.CharacterEncounter;
 /// </remarks>
 public static class CharacterEncounterPublishedTopics
 {
+    /// <summary>Published when a new encounter type is created.</summary>
+    public const string EncounterTypeCreated = "character-encounter.encounter-type.created";
+
+    /// <summary>Published when an encounter type is updated (including deprecation via changedFields).</summary>
+    public const string EncounterTypeUpdated = "character-encounter.encounter-type.updated";
+
+    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
+    public const string EncounterTypeDeleted = "character-encounter.encounter-type.deleted";
+
     /// <summary>Published when a new encounter is recorded.</summary>
     public const string EncounterRecorded = "encounter.recorded";
 

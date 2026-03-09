@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Stores**: species (MySQL), species-lock (Redis)
 > **Implementation Map**: [docs/maps/SPECIES.md](../maps/SPECIES.md)
+> **Short**: Realm-scoped species definitions with trait modifiers and deprecation lifecycle
 
 ---
 

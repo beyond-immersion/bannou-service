@@ -159,15 +159,16 @@ paths:
                 $ref: '#/components/schemas/BoardTemplateResponse'
         '404':
           description: Board template not found
-  /license/board-template/delete:
+  /license/board-template/deprecate:
     post:
-      operationId: deleteBoardTemplate
+      operationId: deprecateBoardTemplate
       tags:
       - BoardTemplate
-      summary: Delete a board template
+      summary: Deprecate a board template
       description: |
-        Delete a board template. Blocked if active board instances exist
-        that reference this template.
+        Deprecate a board template (Category B — one-way, no undeprecate, no delete).
+        Existing board instances continue to function; new board creation from this
+        template is rejected. Idempotent: returns OK if already deprecated.
       x-permissions:
       - role: developer
         states: {}
@@ -176,18 +177,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteBoardTemplateRequest'
+              $ref: '#/components/schemas/DeprecateBoardTemplateRequest'
       responses:
         '200':
-          description: Board template deleted successfully
+          description: Board template deprecated successfully (or already deprecated)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BoardTemplateResponse'
         '404':
           description: Board template not found
-        '409':
-          description: Active board instances exist for this template
   # ===========================================================================
   # License Definition Management (5 endpoints)
   # ===========================================================================
@@ -861,9 +860,9 @@ components:
           minItems: 1
           description: Updated allowed owner types. Narrowing checks for existing boards with removed types.
 
-    DeleteBoardTemplateRequest:
+    DeprecateBoardTemplateRequest:
       type: object
-      description: Request to delete a board template
+      description: Request to deprecate a board template (Category B — one-way)
       additionalProperties: false
       required:
       - boardTemplateId
@@ -871,7 +870,12 @@ components:
         boardTemplateId:
           type: string
           format: uuid
-          description: Board template to delete
+          description: Board template to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (audit context for Category B entities)
 
     ListBoardTemplatesRequest:
       type: object
@@ -884,6 +888,10 @@ components:
           type: string
           format: uuid
           description: Filter by game service
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated templates in results (default false)
         cursor:
           type: string
           nullable: true
@@ -910,6 +918,7 @@ components:
       - adjacencyMode
       - allowedOwnerTypes
       - isActive
+      - isDeprecated
       - createdAt
       properties:
         boardTemplateId:
@@ -953,6 +962,18 @@ components:
         isActive:
           type: boolean
           description: Whether the template is active (can create new board instances)
+        isDeprecated:
+          type: boolean
+          description: Whether this template has been deprecated (Category B — one-way)
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (audit context)
         createdAt:
           type: string
           format: date-time

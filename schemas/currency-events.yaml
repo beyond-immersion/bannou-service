@@ -65,7 +65,10 @@ info:
       description: Published when a new currency definition is created
     - topic: currency.definition.updated
       event: CurrencyDefinitionUpdatedEvent
-      description: Published when a currency definition is updated
+      description: Published when a currency definition is updated (including deprecation via changedFields)
+    - topic: currency.definition.deleted
+      event: CurrencyDefinitionDeletedEvent
+      description: Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.
 
     - topic: currency.wallet.created
       event: CurrencyWalletCreatedEvent
@@ -105,7 +108,12 @@ x-lifecycle:
       scope: { $ref: 'currency-api.yaml#/components/schemas/CurrencyScope', required: true, description: "Currency scope" }
       precision: { $ref: 'currency-api.yaml#/components/schemas/CurrencyPrecision', required: true, description: "Currency precision type" }
       isActive: { type: boolean, required: true, description: "Whether the definition is active" }
+      isDeprecated: { type: boolean, required: true, description: "Whether the definition is deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the definition was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the definition was created" }
       modifiedAt: { type: string, format: date-time, nullable: true, description: "When the definition was last modified" }
+    sensitive: []
 
   CurrencyWallet:
     model:

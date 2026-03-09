@@ -81,6 +81,20 @@ public partial class StorylineService : IStorylineService
     // SDK - direct instantiation (pure computation, not DI)
     private readonly StorylineComposer _composer;
 
+    // State store key prefixes and builders per IMPLEMENTATION TENETS
+    private const string PLAN_INDEX_KEY_PREFIX = "realm";
+    private const string COOLDOWN_KEY_PREFIX = "cooldown";
+    private const string ACTIVE_KEY_PREFIX = "active";
+    private const string LOCK_KEY_PREFIX = "lock";
+
+    internal static string BuildPlanKey(Guid planId) => planId.ToString();
+    internal static string BuildPlanIndexKey(Guid realmId) => $"{PLAN_INDEX_KEY_PREFIX}:{realmId}";
+    internal static string BuildScenarioDefinitionKey(Guid scenarioId) => scenarioId.ToString();
+    internal static string BuildExecutionKey(Guid executionId) => executionId.ToString();
+    internal static string BuildCooldownKey(Guid characterId, Guid scenarioId) => $"{COOLDOWN_KEY_PREFIX}:{characterId}:{scenarioId}";
+    internal static string BuildActiveKey(Guid characterId) => $"{ACTIVE_KEY_PREFIX}:{characterId}";
+    internal static string BuildLockResource(Guid characterId, Guid scenarioId) => $"{LOCK_KEY_PREFIX}:{characterId}:{scenarioId}";
+
     /// <summary>
     /// Creates a new StorylineService instance.
     /// </summary>
@@ -183,7 +197,18 @@ public partial class StorylineService : IStorylineService
 
             // Determine arc type and template
             var arcType = ResolveArcType(body.ArcType, body.Goal);
-            var template = TemplateRegistry.Get(SdkTypeMapper.ToSdk(arcType));
+
+            StoryTemplate template;
+            StorylinePlan sdkPlan;
+            try
+            {
+                template = TemplateRegistry.Get(SdkTypeMapper.ToSdk(arcType));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                _logger.LogWarning(ex, "SDK template not found for arc type {ArcType}", arcType);
+                return (StatusCodes.BadRequest, null);
+            }
 
             // Determine genre
             var genre = body.Genre ?? _configuration.DefaultGenre;
@@ -212,8 +237,21 @@ public partial class StorylineService : IStorylineService
             // Resolve planning urgency: request override → config default
             var urgency = ResolveUrgency(body.Urgency);
 
-            // Call SDK to compose storyline
-            var sdkPlan = _composer.Compose(context, archiveBundle, SdkTypeMapper.ToSdk(urgency));
+            // Call SDK to compose storyline — IMPLEMENTATION TENETS: narrowed SDK exception handling
+            try
+            {
+                sdkPlan = _composer.Compose(context, archiveBundle, SdkTypeMapper.ToSdk(urgency));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                _logger.LogWarning(ex, "SDK resource not found during composition");
+                return (StatusCodes.BadRequest, null);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Invalid operation during composition");
+                return (StatusCodes.BadRequest, null);
+            }
 
             stopwatch.Stop();
             var generationTimeMs = (int)stopwatch.ElapsedMilliseconds;
@@ -253,7 +291,7 @@ public partial class StorylineService : IStorylineService
                 ExpiresAt = DateTimeOffset.UtcNow.Add(ttl)
             };
 
-            var planKey = planId.ToString();
+            var planKey = BuildPlanKey(planId);
             await _planStore.SaveAsync(planKey, cachedPlan, new StateOptions { Ttl = (int)ttl.TotalSeconds }, cancellationToken);
 
             // Update plan index for realm-based queries
@@ -277,21 +315,9 @@ public partial class StorylineService : IStorylineService
 
             return (StatusCodes.OK, response);
         }
-        catch (KeyNotFoundException ex)
-        {
-            // Template or action not found in SDK
-            _logger.LogWarning(ex, "SDK resource not found during composition");
-            return (StatusCodes.BadRequest, null);
-        }
-        catch (InvalidOperationException ex)
-        {
-            // SDK operation error
-            _logger.LogWarning(ex, "Invalid operation during composition");
-            return (StatusCodes.BadRequest, null);
-        }
         catch (ApiException ex)
         {
-            // Expected API error from inter-service call (e.g., resource not found)
+            // Expected API error from inter-service call (e.g., resource not found) — IMPLEMENTATION TENETS
             _logger.LogWarning(ex, "Resource service call failed with status {Status}", ex.StatusCode);
             return ((StatusCodes)ex.StatusCode, null);
         }
@@ -304,21 +330,16 @@ public partial class StorylineService : IStorylineService
     {
         _logger.LogDebug("Retrieving plan {PlanId}", body.PlanId);
 
-        var planKey = body.PlanId.ToString();
+        var planKey = BuildPlanKey(body.PlanId);
         var cached = await _planStore.GetAsync(planKey, cancellationToken);
 
         if (cached == null)
         {
-            return (StatusCodes.OK, new GetPlanResponse
-            {
-                Found = false,
-                Plan = null
-            });
+            return (StatusCodes.NotFound, null);
         }
 
         var response = new GetPlanResponse
         {
-            Found = true,
             Plan = BuildResponseFromCachedPlan(cached, isCached: true, generationTimeMs: cached.GenerationTimeMs)
         };
 
@@ -339,7 +360,7 @@ public partial class StorylineService : IStorylineService
         if (body.RealmId.HasValue)
         {
             // Query plans by realm from index using sorted set
-            var indexKey = $"realm:{body.RealmId.Value}";
+            var indexKey = BuildPlanIndexKey(body.RealmId.Value);
 
             // Get total count
             totalCount = (int)await _planIndexStore.SortedSetCountAsync(indexKey, cancellationToken);
@@ -445,12 +466,12 @@ public partial class StorylineService : IStorylineService
         };
 
         // Save to MySQL (durable store)
-        await _scenarioDefinitionStore.SaveAsync(scenarioId.ToString(), model, null, cancellationToken);
+        await _scenarioDefinitionStore.SaveAsync(BuildScenarioDefinitionKey(scenarioId), model, null, cancellationToken);
 
         // Cache in Redis
         var cacheTtl = _configuration.ScenarioDefinitionCacheTtlSeconds;
         await _scenarioCacheStore.SaveAsync(
-            scenarioId.ToString(),
+            BuildScenarioDefinitionKey(scenarioId),
             model,
             new StateOptions { Ttl = cacheTtl },
             cancellationToken);
@@ -490,12 +511,11 @@ public partial class StorylineService : IStorylineService
 
         if (model is null)
         {
-            return (StatusCodes.OK, new GetScenarioDefinitionResponse { Found = false, Scenario = null });
+            return (StatusCodes.NotFound, null);
         }
 
         var response = new GetScenarioDefinitionResponse
         {
-            Found = true,
             Scenario = BuildScenarioDefinitionResponse(model)
         };
 
@@ -624,12 +644,13 @@ public partial class StorylineService : IStorylineService
         existing.Etag = Guid.NewGuid().ToString("N");
 
         // Save to MySQL
-        await _scenarioDefinitionStore.SaveAsync(body.ScenarioId.ToString(), existing, null, cancellationToken);
+        var scenarioKey = BuildScenarioDefinitionKey(body.ScenarioId);
+        await _scenarioDefinitionStore.SaveAsync(scenarioKey, existing, null, cancellationToken);
 
         // Invalidate and update cache
-        await _scenarioCacheStore.DeleteAsync(body.ScenarioId.ToString(), cancellationToken);
+        await _scenarioCacheStore.DeleteAsync(scenarioKey, cancellationToken);
         await _scenarioCacheStore.SaveAsync(
-            body.ScenarioId.ToString(),
+            scenarioKey,
             existing,
             new StateOptions { Ttl = _configuration.ScenarioDefinitionCacheTtlSeconds },
             cancellationToken);
@@ -661,8 +682,9 @@ public partial class StorylineService : IStorylineService
         existing.UpdatedAt = DateTimeOffset.UtcNow;
         existing.Etag = Guid.NewGuid().ToString("N");
 
-        await _scenarioDefinitionStore.SaveAsync(body.ScenarioId.ToString(), existing, null, cancellationToken);
-        await _scenarioCacheStore.DeleteAsync(body.ScenarioId.ToString(), cancellationToken);
+        var scenarioKey = BuildScenarioDefinitionKey(body.ScenarioId);
+        await _scenarioDefinitionStore.SaveAsync(scenarioKey, existing, null, cancellationToken);
+        await _scenarioCacheStore.DeleteAsync(scenarioKey, cancellationToken);
 
         _logger.LogInformation("Deprecated scenario definition {ScenarioId}", body.ScenarioId);
         return StatusCodes.OK;
@@ -721,7 +743,7 @@ public partial class StorylineService : IStorylineService
                 }
 
                 // Check cooldown
-                var cooldownKey = $"{body.CharacterId}:{definition.ScenarioId}";
+                var cooldownKey = BuildCooldownKey(body.CharacterId, definition.ScenarioId);
                 var cooldownMarker = await _scenarioCooldownStore.GetAsync(cooldownKey, cancellationToken);
                 var onCooldown = cooldownMarker is not null;
 
@@ -810,7 +832,7 @@ public partial class StorylineService : IStorylineService
         else
         {
             // Check cooldown
-            var cooldownKey = $"{body.CharacterId}:{body.ScenarioId}";
+            var cooldownKey = BuildCooldownKey(body.CharacterId, body.ScenarioId);
             var cooldownMarker = await _scenarioCooldownStore.GetAsync(cooldownKey, cancellationToken);
             if (cooldownMarker is not null)
             {
@@ -819,7 +841,7 @@ public partial class StorylineService : IStorylineService
             else
             {
                 // Check active scenario limit
-                var activeKey = body.CharacterId.ToString();
+                var activeKey = BuildActiveKey(body.CharacterId);
                 var activeCount = await _scenarioActiveStore.SetCountAsync(activeKey, cancellationToken);
                 if (activeCount >= _configuration.ScenarioMaxActivePerCharacter)
                 {
@@ -911,7 +933,7 @@ public partial class StorylineService : IStorylineService
                 _logger.LogDebug("Returning idempotent result for key {Key}", body.IdempotencyKey);
                 // Return the existing execution - retrieve it from history
                 var existingExecution = await _scenarioExecutionStore.GetAsync(
-                    existingIdempotency.ExecutionId.ToString(), cancellationToken);
+                    BuildExecutionKey(existingIdempotency.ExecutionId), cancellationToken);
                 if (existingExecution is not null)
                 {
                     return (StatusCodes.OK, BuildTriggerResponse(existingExecution));
@@ -920,7 +942,7 @@ public partial class StorylineService : IStorylineService
         }
 
         // Acquire distributed lock to prevent double-trigger
-        var lockResource = $"{body.CharacterId}:{body.ScenarioId}";
+        var lockResource = BuildLockResource(body.CharacterId, body.ScenarioId);
         var lockOwner = $"scenario-trigger-{executionId:N}";
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.StorylineLock,
@@ -964,7 +986,7 @@ public partial class StorylineService : IStorylineService
         }
 
         // Check cooldown
-        var cooldownKey = $"{body.CharacterId}:{body.ScenarioId}";
+        var cooldownKey = BuildCooldownKey(body.CharacterId, body.ScenarioId);
         var cooldownMarker = await _scenarioCooldownStore.GetAsync(cooldownKey, cancellationToken);
         if (cooldownMarker is not null)
         {
@@ -974,7 +996,7 @@ public partial class StorylineService : IStorylineService
         }
 
         // Check active scenario limit
-        var activeKey = body.CharacterId.ToString();
+        var activeKey = BuildActiveKey(body.CharacterId);
         var activeCount = await _scenarioActiveStore.SetCountAsync(activeKey, cancellationToken);
         if (activeCount >= _configuration.ScenarioMaxActivePerCharacter)
         {
@@ -1013,7 +1035,7 @@ public partial class StorylineService : IStorylineService
         };
 
         // Save execution record
-        await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, null, cancellationToken);
+        await _scenarioExecutionStore.SaveAsync(BuildExecutionKey(executionId), execution, null, cancellationToken);
 
         // Add to active set
         var activeEntry = new ActiveScenarioEntry
@@ -1035,7 +1057,7 @@ public partial class StorylineService : IStorylineService
         }
 
         // Publish triggered event
-        await _messageBus.TryPublishAsync("storyline.scenario.triggered", new ScenarioTriggeredEvent
+        await _messageBus.TryPublishAsync(StorylinePublishedTopics.ScenarioTriggered, new ScenarioTriggeredEvent
         {
             ExecutionId = executionId,
             ScenarioId = body.ScenarioId,
@@ -1087,7 +1109,7 @@ public partial class StorylineService : IStorylineService
         execution.CompletedAt = DateTimeOffset.UtcNow;
         execution.MutationsAppliedJson = BannouJson.Serialize(appliedMutations);
         execution.QuestsSpawnedJson = BannouJson.Serialize(spawnedQuests);
-        await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, null, cancellationToken);
+        await _scenarioExecutionStore.SaveAsync(BuildExecutionKey(executionId), execution, null, cancellationToken);
 
         // Remove from active set
         await _scenarioActiveStore.RemoveFromSetAsync(activeKey, activeEntry, cancellationToken);
@@ -1106,7 +1128,7 @@ public partial class StorylineService : IStorylineService
         stopwatch.Stop();
 
         // Publish completed event
-        await _messageBus.TryPublishAsync("storyline.scenario.completed", new ScenarioCompletedEvent
+        await _messageBus.TryPublishAsync(StorylinePublishedTopics.ScenarioCompleted, new ScenarioCompletedEvent
         {
             ExecutionId = executionId,
             ScenarioId = body.ScenarioId,
@@ -1150,13 +1172,13 @@ public partial class StorylineService : IStorylineService
         _logger.LogDebug("Getting active scenarios for character {CharacterId}", body.CharacterId);
 
         {
-            var activeKey = body.CharacterId.ToString();
+            var activeKey = BuildActiveKey(body.CharacterId);
             var activeMembers = await _scenarioActiveStore.GetSetAsync<ActiveScenarioEntry>(activeKey, cancellationToken);
 
             var executions = new List<ScenarioExecution>();
             foreach (var entry in activeMembers)
             {
-                var execution = await _scenarioExecutionStore.GetAsync(entry.ExecutionId.ToString(), cancellationToken);
+                var execution = await _scenarioExecutionStore.GetAsync(BuildExecutionKey(entry.ExecutionId), cancellationToken);
                 if (execution is not null)
                 {
                     executions.Add(new ScenarioExecution
@@ -1704,12 +1726,12 @@ public partial class StorylineService : IStorylineService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.UpdatePlanIndexAsync");
-        var indexKey = $"realm:{realmId}";
+        var indexKey = BuildPlanIndexKey(realmId);
         var score = plan.CreatedAt.ToUnixTimeSeconds();
 
         await _planIndexStore.SortedSetAddAsync(
             indexKey,
-            planId.ToString(),
+            BuildPlanKey(planId),
             score,
             cancellationToken: cancellationToken);
     }
@@ -1727,13 +1749,13 @@ public partial class StorylineService : IStorylineService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.PublishComposedEventAsync");
-        var composedEvent = new StorylineComposedEvent
+        var composedEvent = new StorylinePlanComposedEvent
         {
             PlanId = planId,
             RealmId = request.Constraints?.RealmId,
-            Goal = request.Goal.ToString(),
-            ArcType = response.ArcType.ToString(),
-            PrimarySpectrum = response.PrimarySpectrum.ToString(),
+            Goal = request.Goal,
+            ArcType = response.ArcType,
+            PrimarySpectrum = response.PrimarySpectrum,
             Confidence = response.Confidence,
             Genre = response.Genre,
             ArchiveIds = archiveIds,
@@ -1747,7 +1769,7 @@ public partial class StorylineService : IStorylineService
         };
 
         await _messageBus.TryPublishAsync(
-            "storyline.composed",
+            StorylinePublishedTopics.StorylinePlanComposed,
             composedEvent,
             cancellationToken: cancellationToken);
     }
@@ -1764,7 +1786,7 @@ public partial class StorylineService : IStorylineService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.GetScenarioDefinitionWithCacheAsync");
-        var key = scenarioId.ToString();
+        var key = BuildScenarioDefinitionKey(scenarioId);
 
         // Try cache first
         var cached = await _scenarioCacheStore.GetAsync(key, cancellationToken);
@@ -2089,16 +2111,14 @@ public partial class StorylineService : IStorylineService
                             return (false, "Character personality service unavailable");
                         }
 
-                        if (string.IsNullOrEmpty(mutation.ExperienceType))
+                        if (!mutation.ExperienceType.HasValue)
                         {
                             return (false, "Missing experience type for personality mutation");
                         }
 
-                        // Parse experience type string to enum (schema design limitation - should use enum type)
-                        if (!Enum.TryParse<CharacterPersonality.ExperienceType>(mutation.ExperienceType, ignoreCase: true, out var experienceType))
-                        {
-                            return (false, $"Unknown experience type: {mutation.ExperienceType}");
-                        }
+                        // Map Storyline enum to CharacterPersonality enum at service boundary
+                        var experienceType = mutation.ExperienceType.Value
+                            .MapByName<StorylineExperienceType, CharacterPersonality.ExperienceType>();
 
                         try
                         {
@@ -2129,16 +2149,14 @@ public partial class StorylineService : IStorylineService
                             return (false, "Character history service unavailable");
                         }
 
-                        if (string.IsNullOrEmpty(mutation.BackstoryElementType) || string.IsNullOrEmpty(mutation.BackstoryKey))
+                        if (!mutation.BackstoryElementType.HasValue || string.IsNullOrEmpty(mutation.BackstoryKey))
                         {
                             return (false, "Missing backstory element type or key");
                         }
 
-                        // Parse backstory element type string to enum (schema design limitation - should use enum type)
-                        if (!Enum.TryParse<CharacterHistory.BackstoryElementType>(mutation.BackstoryElementType, ignoreCase: true, out var elementType))
-                        {
-                            return (false, $"Unknown backstory element type: {mutation.BackstoryElementType}");
-                        }
+                        // Map Storyline enum to CharacterHistory enum at service boundary
+                        var elementType = mutation.BackstoryElementType.Value
+                            .MapByName<StorylineBackstoryElementType, CharacterHistory.BackstoryElementType>();
 
                         try
                         {
@@ -2352,9 +2370,9 @@ public partial class StorylineService : IStorylineService
         return mutation.MutationType switch
         {
             MutationType.PersonalityEvolve =>
-                $"Apply {mutation.ExperienceType} experience (intensity: {mutation.ExperienceIntensity ?? 0.5f:F2})",
+                $"Apply {mutation.ExperienceType?.ToString() ?? "unknown"} experience (intensity: {mutation.ExperienceIntensity ?? 0.5f:F2})",
             MutationType.BackstoryAdd =>
-                $"Add backstory: {mutation.BackstoryElementType}/{mutation.BackstoryKey}",
+                $"Add backstory: {mutation.BackstoryElementType?.ToString() ?? "unknown"}/{mutation.BackstoryKey}",
             MutationType.RelationshipCreate =>
                 $"Create relationship: {mutation.RelationshipTypeCode} with {mutation.OtherParticipantRole}",
             MutationType.RelationshipEnd =>
@@ -2412,7 +2430,7 @@ public partial class StorylineService : IStorylineService
                 .ToList();
 
             // Get active scenarios from Redis set
-            var activeKey = body.CharacterId.ToString();
+            var activeKey = BuildActiveKey(body.CharacterId);
             var activeMembers = await _scenarioActiveStore.GetSetAsync<ActiveScenarioEntry>(activeKey, cancellationToken);
             var activeScenarioCodes = activeMembers.Select(a => a.ScenarioCode).ToHashSet();
 

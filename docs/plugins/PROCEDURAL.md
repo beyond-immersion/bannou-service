@@ -6,6 +6,7 @@
 > **Layer**: GameFeatures
 > **State Stores**: procedural-templates (MySQL), procedural-jobs (MySQL), procedural-cache (Redis), procedural-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
+> **Short**: Procedural 3D asset generation via headless Houdini Digital Assets with deterministic output
 
 ---
 

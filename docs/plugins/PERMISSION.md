@@ -6,6 +6,7 @@
 > **Layer**: AppFoundation
 > **State Store**: permission-statestore (Redis)
 > **Implementation Map**: [docs/maps/PERMISSION.md](../maps/PERMISSION.md)
+> **Short**: RBAC capability manifest compilation from service x state x role permission matrices
 
 ---
 

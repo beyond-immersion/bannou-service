@@ -7,6 +7,7 @@
 > **Layer**: GameFeatures
 > **Status**: Aspirational -- no schema, no generated code, no service implementation exists.
 > **Planning**: N/A
+> **Short**: Human-in-the-loop event coordination (Observe/Steer/Drive tiers) for live content management
 
 ## Overview
 

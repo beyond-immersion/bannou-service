@@ -6,6 +6,7 @@
 > **Layer**: GameFeatures
 > **State Stores**: environment-climate (MySQL), environment-weather (Redis), environment-conditions (Redis), environment-overrides (MySQL), environment-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
+> **Short**: Weather simulation, temperature modeling, and ecological resources consuming Worldstate temporal data
 
 ---
 

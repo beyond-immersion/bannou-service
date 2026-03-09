@@ -6,6 +6,7 @@
 > **Layer**: AppFoundation
 > **State Store**: auth-statestore (Redis), edge-revocation-statestore (Redis)
 > **Implementation Map**: [docs/maps/AUTH.md](../maps/AUTH.md)
+> **Short**: Internet-facing authentication (email, OAuth, Steam, JWT, MFA, session management)
 
 ---
 

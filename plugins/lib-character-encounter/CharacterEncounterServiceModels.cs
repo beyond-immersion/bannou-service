@@ -47,6 +47,9 @@ internal class EncounterTypeData
     public EmotionalImpact? DefaultEmotionalImpact { get; set; }
     public int SortOrder { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsDeprecated { get; set; }
+    public DateTimeOffset? DeprecatedAt { get; set; }
+    public string? DeprecationReason { get; set; }
     public long CreatedAtUnix { get; set; }
 }
 

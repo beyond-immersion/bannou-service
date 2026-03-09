@@ -5,7 +5,7 @@
 
 ## Summary
 
-Claude Code integration configuration for Bannou development, covering PreToolUse safety hooks that block destructive operations, enforce commit format, and nudge proper task creation patterns, plus custom slash commands for plugin documentation maintenance, code auditing, implementation workflows, and GitHub issue investigation. Required reading before creating new hooks, commands, or agent workflows, and for understanding how Claude Code is constrained in this project.
+Claude Code integration configuration for Bannou development, covering PreToolUse safety hooks that block destructive operations, enforce commit format, and nudge proper task creation patterns, a permission canary fail-fast gate that verifies Edit permissions before skills waste context tokens, plus custom slash commands for plugin documentation maintenance, code auditing, implementation workflows, and GitHub issue investigation. Required reading before creating new hooks, commands, or agent workflows, and for understanding how Claude Code is constrained in this project.
 
 ---
 
@@ -75,6 +75,7 @@ This isn't about AI safety or alignment. It's about the mundane reality that LLM
 .claude/
 ├── settings.json              # Hook configuration (checked into repo)
 ├── settings.local.json        # Local permissions (gitignored)
+├── permission-canary.txt      # Permission gate canary file (see below)
 ├── skills-guide.txt           # Skill discovery reference
 ├── hooks/
 │   ├── validate-senryu-commit.sh
@@ -290,6 +291,83 @@ Every task for TENET violations, SCHEMA-RULES issues, or code quality fixes must
 **Why TodoWrite is hooked**: `TodoWrite` is the most likely tool Claude reaches for instead of `TaskCreate`. It's lightweight but can't hold the required detail for violation task lists. The reminder nudges toward `TaskCreate` which supports rich descriptions.
 
 **This hook does NOT block** — it prints the reminder and allows the tool call to proceed. The agent sees the format requirements and can adjust accordingly.
+
+---
+
+## Permission Canary (Fail-Fast Permission Gate)
+
+Every skill file begins with a **Permission Canary** block — a zero-consequence Edit operation that verifies the agent has write permissions before doing any work.
+
+### How It Works
+
+```
+Skill invoked
+    │
+    ▼
+Edit .claude/permission-canary.txt
+(toggle trailing space: "canary" ↔ "canary ")
+    │
+    ├── Edit succeeds → proceed with workflow
+    │
+    └── Edit denied → HARD STOP
+        Output: "PERMISSION DENIED: Edit tool is not permitted..."
+        No files read. No analysis. No report. Zero work performed.
+```
+
+**The canary file**: `.claude/permission-canary.txt` contains the word `canary`. The check toggles a trailing space — a change with zero functional consequence that exercises the Edit tool's permission path.
+
+### Why This Exists
+
+Skills like `/audit-plugin`, `/implement-plugin`, and `/maintain-plugin` require Edit permissions to function. Without the canary check, an agent launched without Edit permissions would:
+
+1. Read dozens of files (consuming context tokens)
+2. Analyze code and documentation (consuming more tokens)
+3. Attempt its first Edit — **denied**
+4. Either produce a useless "report" as a substitute for the actual work, or fail 10+ minutes into the workflow
+
+The canary catches this in the first 2 seconds. If Edit is denied, the skill fails immediately with a clear message — no context wasted, no false productivity.
+
+### The Canary Block
+
+Every skill file includes this block immediately after the YAML frontmatter:
+
+```markdown
+## ⛔ PERMISSION CANARY (MANDATORY FIRST STEP) ⛔
+
+**Before doing ANY work, you MUST perform this permission check.**
+Edit the file `.claude/permission-canary.txt` — change its content from
+`canary` to `canary ` (add a trailing space), or vice versa
+(remove a trailing space). This is a zero-consequence edit that
+verifies you have Edit permissions.
+
+**If the Edit is denied: HARD STOP.**
+Output exactly: `PERMISSION DENIED: Edit tool is not permitted in this
+session. Cannot proceed. No work was performed.` — then stop.
+Do NOT read files, do NOT analyze anything, do NOT produce a report.
+Zero work. The entire point is to fail before wasting any time.
+
+**If the Edit succeeds:** Proceed with the workflow below.
+```
+
+### Design Principles
+
+| Principle | How the Canary Implements It |
+|-----------|------------------------------|
+| **Fail fast** | First action in every skill; fails before any real work |
+| **Zero consequence** | Toggling a trailing space changes nothing functional |
+| **No workarounds** | Explicitly forbids reading files, generating reports, or creating issues as "fallback" |
+| **Clear error** | Prescribes exact output message so the user knows precisely what happened |
+| **Honest failure** | "If you cannot edit, you cannot audit. Fail honestly." |
+
+### Affected Files
+
+The canary block is present in all 16 skill files in `.claude/commands/`:
+
+`audit-plugin.md`, `audit-plugins.md`, `check-plugin.md`, `implement-feature.md`, `implement-plugin.md`, `investigate-issue.md`, `maintain-faq.md`, `maintain-guide.md`, `maintain-issues.md`, `maintain-operations-doc.md`, `maintain-planning-doc.md`, `maintain-plugin.md`, `map-plugin.md`, `orchestrate-skill.md`, `test-plugin.md`, `update-permissions.md`
+
+### Adding the Canary to New Skills
+
+When creating a new skill file, paste the canary block immediately after the YAML frontmatter (`---` closing line) and before any workflow content. No other setup is required — the canary file already exists and is checked into the repository.
 
 ---
 

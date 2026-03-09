@@ -6,6 +6,7 @@
 > **Layer**: AppFeatures
 > **State Store**: voice-statestore (Redis), voice-lock (Redis)
 > **Implementation Map**: [docs/maps/VOICE.md](../maps/VOICE.md)
+> **Short**: Voice room coordination with P2P mesh, Kamailio SFU, and automatic tier upgrade
 
 ---
 

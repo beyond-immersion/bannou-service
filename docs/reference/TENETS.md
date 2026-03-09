@@ -125,30 +125,9 @@ Schema-first applies to **HTTP APIs and service contracts**. Some components are
 
 ## Tenet 2: Service Hierarchy (INVIOLABLE)
 
-**Services are organized into layers. Dependencies may only flow downward.**
-
-Before adding ANY service client dependency, you MUST read [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md). This is not optional.
-
-### The Hierarchy Layers
-
-```
-Layer 5: Extensions (third-party plugins, meta-services)
-Layer 4: Game Features (behavior, matchmaking, analytics, achievement, escrow, etc.) - OPTIONAL
-Layer 3: App Features (asset, orchestrator, documentation, website, voice, broadcast) - OPTIONAL
-Layer 2: Game Foundation (realm, character, species, location, currency, item, inventory, etc.)
-Layer 1: App Foundation (account, auth, chat, connect, permission, contract, resource)
-Layer 0: Infrastructure (state, messaging, mesh, telemetry) - ALWAYS ON
-```
-
-### The Cardinal Rule
+**Services are organized into layers (L0-L5). Dependencies may only flow downward.** The Service Registry in `GENERATED-COMPOSITION-REFERENCE.md` shows every service's layer. Before adding ANY service client dependency, read [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md).
 
 > **A service may ONLY depend on services in its own layer or lower layers. Dependencies on higher layers are FORBIDDEN.**
-
-### Why This Matters
-
-- **Layer 2 services are foundations** - they don't know about their consumers
-- **Layer 1 services are optional** - nothing breaks if they're disabled
-- **Higher layers extend lower layers** - not the other way around
 
 ### Common Violation Pattern
 

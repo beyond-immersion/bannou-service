@@ -6,6 +6,7 @@
 > **Layer**: AppFoundation
 > **State Store**: account-statestore (MySQL), account-lock (Redis)
 > **Implementation Map**: [docs/maps/ACCOUNT.md](../maps/ACCOUNT.md)
+> **Short**: Internal user account CRUD (never internet-facing; external access via Auth only)
 
 ---
 

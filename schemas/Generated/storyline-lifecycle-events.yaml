@@ -1,0 +1,176 @@
+openapi: 3.0.4
+info:
+  title: Storyline Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for storyline service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: storyline-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ScenarioDefinitionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-definition.created when a scenariodefinition is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioId
+      - code
+      - name
+      - priority
+      - enabled
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-definition.created
+          description: 'Event type identifier: storyline.scenario-definition.created'
+        scenarioId: &id001
+          type: string
+          format: uuid
+          description: "Unique scenario definition identifier"
+        code: &id002
+          type: string
+          description: "Human-readable scenario code"
+        name: &id003
+          type: string
+          description: "Display name for the scenario"
+        description: &id004
+          type: string
+          nullable: true
+          description: "Detailed scenario description"
+        priority: &id005
+          type: integer
+          description: "Higher priority scenarios are checked first"
+        enabled: &id006
+          type: boolean
+          description: "Whether scenario can be triggered"
+        realmId: &id007
+          type: string
+          format: uuid
+          nullable: true
+          description: "Realm scope (null means all realms)"
+        gameServiceId: &id008
+          type: string
+          format: uuid
+          nullable: true
+          description: "Game service scope (null means all games)"
+        isDeprecated: &id009
+          type: boolean
+          description: "Whether scenario definition is deprecated"
+        deprecatedAt: &id010
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the scenario definition was deprecated"
+        deprecationReason: &id011
+          type: string
+          nullable: true
+          description: "Reason for deprecation"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was last updated (set to createdAt on creation)
+    ScenarioDefinitionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-definition.updated when a scenariodefinition is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioId
+      - code
+      - name
+      - priority
+      - enabled
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-definition.updated
+          description: 'Event type identifier: storyline.scenario-definition.updated'
+        scenarioId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        priority: *id005
+        enabled: *id006
+        realmId: *id007
+        gameServiceId: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ScenarioDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-definition.deleted when a scenariodefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioId
+      - code
+      - name
+      - priority
+      - enabled
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-definition.deleted
+          description: 'Event type identifier: storyline.scenario-definition.deleted'
+        scenarioId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        priority: *id005
+        enabled: *id006
+        realmId: *id007
+        gameServiceId: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

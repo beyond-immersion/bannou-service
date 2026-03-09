@@ -236,7 +236,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (data == null) continue;
 
             // Apply filters
-            if (!body.IncludeInactive && !data.IsActive) continue;
+            if (!body.IncludeDeprecated && data.IsDeprecated) continue;
             if (body.BuiltInOnly && !data.IsBuiltIn) continue;
             if (body.CustomOnly && data.IsBuiltIn) continue;
 
@@ -292,44 +292,55 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     }
 
     /// <summary>
-    /// Deletes a custom encounter type.
+    /// Deprecates an encounter type (Category B — one-way, no delete).
+    /// Idempotent: returns OK if already deprecated.
     /// </summary>
-    public async Task<StatusCodes> DeleteEncounterTypeAsync(DeleteEncounterTypeRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, EncounterTypeResponse?)> DeprecateEncounterTypeAsync(DeprecateEncounterTypeRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting encounter type {Code}", body.Code);
+        _logger.LogInformation("Deprecating encounter type {Code}", body.Code);
 
-        var store = _encounterTypeStore;
         var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
-        var data = await store.GetAsync(key, cancellationToken);
+        var data = await _encounterTypeStore.GetAsync(key, cancellationToken);
 
         if (data == null)
         {
-            return StatusCodes.NotFound;
+            return (StatusCodes.NotFound, null);
         }
 
-        if (data.IsBuiltIn)
+        // Idempotent: already deprecated is a success (per IMPLEMENTATION TENETS)
+        if (data.IsDeprecated)
         {
-            _logger.LogWarning("Cannot delete built-in type {Code}", body.Code);
-            return StatusCodes.BadRequest;
+            return (StatusCodes.OK, MapToEncounterTypeResponse(data));
         }
 
-        // Check if type is in use by any encounters
-        var encounterCount = await GetTypeEncounterCountAsync(body.Code.ToUpperInvariant(), cancellationToken);
-        if (encounterCount > 0)
+        var now = DateTimeOffset.UtcNow;
+        data.IsDeprecated = true;
+        data.DeprecatedAt = now;
+        data.DeprecationReason = body.Reason;
+        await _encounterTypeStore.SaveAsync(key, data, cancellationToken: cancellationToken);
+
+        // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
+        await _messageBus.PublishEncounterTypeUpdatedAsync(new EncounterTypeUpdatedEvent
         {
-            _logger.LogWarning("Cannot delete encounter type {Code}: {Count} encounters using it", body.Code, encounterCount);
-            return StatusCodes.Conflict;
-        }
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            TypeId = data.TypeId,
+            Code = data.Code,
+            Name = data.Name,
+            Description = data.Description,
+            IsBuiltIn = data.IsBuiltIn,
+            SortOrder = data.SortOrder,
+            IsActive = data.IsActive,
+            IsDeprecated = data.IsDeprecated,
+            DeprecatedAt = data.DeprecatedAt,
+            DeprecationReason = data.DeprecationReason,
+            CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix),
+            UpdatedAt = now,
+            ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
+        }, cancellationToken);
 
-        // Soft-delete by marking inactive
-        data.IsActive = false;
-        await store.SaveAsync(key, data, cancellationToken: cancellationToken);
-
-        // Remove from custom type index
-        await RemoveFromCustomTypeIndexAsync(body.Code.ToUpperInvariant(), cancellationToken);
-
-        _logger.LogInformation("Deleted (deactivated) encounter type {Code}", body.Code);
-        return StatusCodes.OK;
+        _logger.LogInformation("Deprecated encounter type {Code}", body.Code);
+        return (StatusCodes.OK, MapToEncounterTypeResponse(data));
     }
 
     /// <summary>
@@ -2827,6 +2838,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             DefaultEmotionalImpact = data.DefaultEmotionalImpact,
             SortOrder = data.SortOrder,
             IsActive = data.IsActive,
+            IsDeprecated = data.IsDeprecated,
+            DeprecatedAt = data.DeprecatedAt,
+            DeprecationReason = data.DeprecationReason,
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix)
         };
     }

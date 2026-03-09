@@ -45,6 +45,9 @@ internal class LeaderboardDefinitionData
     public UpdateMode UpdateMode { get; set; }
     public bool IsSeasonal { get; set; }
     public bool IsPublic { get; set; }
+    public bool IsDeprecated { get; set; }
+    public DateTimeOffset? DeprecatedAt { get; set; }
+    public string? DeprecationReason { get; set; }
     public int? CurrentSeason { get; set; }
     public string? ScoreType { get; set; }
     public string? RatingType { get; set; }

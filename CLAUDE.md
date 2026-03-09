@@ -328,21 +328,15 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 
 **Implementation Maps**: Every service has an implementation map at `docs/maps/{SERVICE}.md` containing the detailed method-by-method pseudocode, state store key patterns, dependency tables, event inventories, DI service lists, and complete endpoint indexes with routes, roles, mutations, and published events. Deep dives (`docs/plugins/{SERVICE}.md`) provide high-level context (overview, design considerations, quirks, work tracking); implementation maps provide the detailed "what does each method do" specification. **When investigating a specific plugin's behavior, always read its implementation map** — the deep dive alone does not contain endpoint details, dependency tables, or method logic.
 
-@docs/reference/SERVICE-HIERARCHY.md
-
-@docs/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md
-
-@docs/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md
-
-@docs/GENERATED-APP-FEATURES-SERVICE-DETAILS.md
-
-@docs/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md
-
-@docs/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md
+@docs/GENERATED-COMPOSITION-REFERENCE.md
 
 @docs/reference/TENETS.md
 
-@docs/reference/ORCHESTRATION-PATTERNS.md
+**On-demand references** (read when needed, not auto-included):
+- `docs/reference/SERVICE-HIERARCHY.md` — Full hierarchy rules, Variable Provider Factory, DI Provider vs Listener safety, deployment modes (read when designing cross-layer communication)
+- `docs/GENERATED-*-SERVICE-DETAILS.md` — Full per-service details by layer (read when investigating a specific layer's services)
+- `docs/reference/ORCHESTRATION-PATTERNS.md` — Full orchestration specifications (bootstrap sequence, divine economy, dungeon patterns, living weapons)
+- `docs/BANNOU-ASPIRATIONS.md` § Platform Vision — Genre case studies, developer time savings, competitive positioning
 
 ---
 
@@ -373,6 +367,13 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 - **Plugin Development**: `docs/guides/PLUGIN-DEVELOPMENT.md` - How to add and extend services
 - **WebSocket Protocol**: `docs/WEBSOCKET-PROTOCOL.md` - Protocol details
 - **Deployment**: `docs/operations/DEPLOYMENT.md` - Deployment patterns
+- **Claude Skills Operations**: `docs/operations/CLAUDE-SKILLS.md` - Hook and skill documentation
+
+**Claude Code Configuration Locations**:
+- **Skills (slash commands)**: `.claude/commands/*.md` — project-level skill files invoked via `/skill-name`
+- **PreToolUse hooks**: `.claude/hooks/*.sh` — project-level hook scripts (blocking and reminder)
+- **Hook/permission config**: `.claude/settings.json` (project, checked in) and `~/.claude/settings.json` (user-level, global)
+- **Permission canary**: `.claude/permission-canary.txt` — fail-fast Edit permission gate used by all skills
 
 **"Big Brain Mode"**: When the user says **"Big Brain Mode"**, you MUST read both vision documents in full before proceeding:
 - `docs/reference/VISION.md` - The "what and why" of Bannou and Arcadia at the highest level: the five north stars, the content flywheel thesis, system interdependencies, and non-negotiable design principles.

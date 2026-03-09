@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: item-template-store (MySQL), item-template-cache (Redis), item-instance-store (MySQL), item-instance-cache (Redis), item-lock (Redis)
 > **Implementation Map**: [docs/maps/ITEM.md](../maps/ITEM.md)
+> **Short**: Dual-model items -- templates (definitions) and instances (occurrences) with quantity models and binding
 
 ---
 

@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: location-statestore (MySQL)
 > **Implementation Map**: [docs/maps/LOCATION.md](../maps/LOCATION.md)
+> **Short**: Hierarchical location tree within realms (cities, regions, buildings, rooms) with depth tracking
 
 ---
 

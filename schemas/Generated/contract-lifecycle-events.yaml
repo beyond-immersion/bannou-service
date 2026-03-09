@@ -25,6 +25,7 @@ components:
       - defaultEnforcementMode
       - transferable
       - isActive
+      - isDeprecated
       - createdAt
       - updatedAt
       properties:
@@ -66,6 +67,18 @@ components:
         isActive: &id010
           type: boolean
           description: "Whether template is active"
+        isDeprecated: &id011
+          type: boolean
+          description: "Whether template is deprecated"
+        deprecatedAt: &id012
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the template was deprecated"
+        deprecationReason: &id013
+          type: string
+          nullable: true
+          description: "Reason for deprecation"
         createdAt:
           type: string
           format: date-time
@@ -92,6 +105,7 @@ components:
       - defaultEnforcementMode
       - transferable
       - isActive
+      - isDeprecated
       - createdAt
       - updatedAt
       - changedFields
@@ -110,6 +124,9 @@ components:
         defaultEnforcementMode: *id008
         transferable: *id009
         isActive: *id010
+        isDeprecated: *id011
+        deprecatedAt: *id012
+        deprecationReason: *id013
         createdAt:
           type: string
           format: date-time
@@ -141,6 +158,7 @@ components:
       - defaultEnforcementMode
       - transferable
       - isActive
+      - isDeprecated
       - createdAt
       - updatedAt
       properties:
@@ -158,6 +176,9 @@ components:
         defaultEnforcementMode: *id008
         transferable: *id009
         isActive: *id010
+        isDeprecated: *id011
+        deprecatedAt: *id012
+        deprecationReason: *id013
         createdAt:
           type: string
           format: date-time
@@ -191,41 +212,41 @@ components:
           type: string
           default: contract.instance.created
           description: 'Event type identifier: contract.instance.created'
-        contractId: &id011
+        contractId: &id014
           type: string
           format: uuid
           description: "Unique identifier for the contract instance"
-        templateId: &id012
+        templateId: &id015
           type: string
           format: uuid
           description: "Reference to the source template"
-        templateCode: &id013
+        templateCode: &id016
           type: string
           description: "Template code for reference"
-        status: &id014
+        status: &id017
           $ref: ../contract-api.yaml#/components/schemas/ContractStatus
           description: "Current contract status"
-        proposedAt: &id015
+        proposedAt: &id018
           type: string
           format: date-time
           nullable: true
           description: "When contract was proposed to parties"
-        acceptedAt: &id016
+        acceptedAt: &id019
           type: string
           format: date-time
           nullable: true
           description: "When all parties consented"
-        effectiveFrom: &id017
+        effectiveFrom: &id020
           type: string
           format: date-time
           nullable: true
           description: "When contract became active"
-        effectiveUntil: &id018
+        effectiveUntil: &id021
           type: string
           format: date-time
           nullable: true
           description: "When contract expires"
-        terminatedAt: &id019
+        terminatedAt: &id022
           type: string
           format: date-time
           nullable: true
@@ -260,15 +281,15 @@ components:
           type: string
           default: contract.instance.updated
           description: 'Event type identifier: contract.instance.updated'
-        contractId: *id011
-        templateId: *id012
-        templateCode: *id013
-        status: *id014
-        proposedAt: *id015
-        acceptedAt: *id016
-        effectiveFrom: *id017
-        effectiveUntil: *id018
-        terminatedAt: *id019
+        contractId: *id014
+        templateId: *id015
+        templateCode: *id016
+        status: *id017
+        proposedAt: *id018
+        acceptedAt: *id019
+        effectiveFrom: *id020
+        effectiveUntil: *id021
+        terminatedAt: *id022
         createdAt:
           type: string
           format: date-time
@@ -303,15 +324,15 @@ components:
           type: string
           default: contract.instance.deleted
           description: 'Event type identifier: contract.instance.deleted'
-        contractId: *id011
-        templateId: *id012
-        templateCode: *id013
-        status: *id014
-        proposedAt: *id015
-        acceptedAt: *id016
-        effectiveFrom: *id017
-        effectiveUntil: *id018
-        terminatedAt: *id019
+        contractId: *id014
+        templateId: *id015
+        templateCode: *id016
+        status: *id017
+        proposedAt: *id018
+        acceptedAt: *id019
+        effectiveFrom: *id020
+        effectiveUntil: *id021
+        terminatedAt: *id022
         createdAt:
           type: string
           format: date-time

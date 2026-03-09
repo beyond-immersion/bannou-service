@@ -6,6 +6,7 @@
 > **Layer**: AppFeatures
 > **State Store**: orchestrator-heartbeats (Redis), orchestrator-routings (Redis), orchestrator-config (Redis), orchestrator-statestore (Redis)
 > **Implementation Map**: [docs/maps/ORCHESTRATOR.md](../maps/ORCHESTRATOR.md)
+> **Short**: Deployment orchestration (Docker/Swarm/Portainer/K8s) with processing pools and routing broadcasts
 
 ---
 

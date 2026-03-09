@@ -6,6 +6,7 @@
 > **Layer**: Infrastructure
 > **State Store**: messaging-external-subs (Redis, app-id keyed with TTL)
 > **Implementation Map**: [docs/maps/MESSAGING.md](../maps/MESSAGING.md)
+> **Short**: RabbitMQ pub/sub infrastructure (IMessageBus/IMessageSubscriber) with in-memory testing mode
 
 ---
 

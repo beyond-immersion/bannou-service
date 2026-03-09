@@ -53,6 +53,7 @@ For plugins that have a schema and generated code (whether fully implemented, pa
 > **Version**: {version from schema}
 > **Layer**: {Infrastructure / AppFoundation / GameFoundation / AppFeatures / GameFeatures}
 > **State Store**: {store name} ({backend})
+> **Short**: {one-line description of compositional role, ~120 chars max}
 ```
 
 Optional additional fields (add after State Store, in this order):
@@ -60,6 +61,9 @@ Optional additional fields (add after State Store, in this order):
 - `> **Status**: Pre-implementation (architectural specification)` — for plugins with schemas but no service logic yet
 - `> **Planning**: [{doc}]({path})` — link to a planning/design document if one exists
 - `> **Guide**: [{doc}]({path})` — link to a cross-service integration guide if one exists
+
+**Mandatory final field** (must be the last line of the header blockquote in both formats):
+- `> **Short**: {one-line description of what the service does and its compositional role}` — extracted by the doc generation pipeline for the service registry. Max ~120 characters. Should capture the service's purpose and key integration points (e.g., "Multi-currency economy: wallets, transfers, exchange rates, holds, escrow integration"). No markdown formatting.
 
 #### Aspirational Plugin Header
 
@@ -74,9 +78,12 @@ For plugins with NO schema and NO code (pure design specifications):
 > **State Store**: {planned stores} — all planned
 > **Layer**: {Infrastructure / AppFoundation / GameFoundation / AppFeatures / GameFeatures}
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Short**: {one-line description of compositional role, ~120 chars max}
 ```
 
 The `Layer` field is mandatory in both header formats. It provides at-a-glance layer identification and is used by the doc generation pipeline to split services into per-layer reference documents.
+
+The `Short` field is mandatory in both header formats. It must be the **last line** of the header blockquote. It provides a one-line compositional summary extracted by the doc generation pipeline for the service registry in `GENERATED-COMPOSITION-REFERENCE.md`. Write it as a bare description (no "The X service..." prefix), focusing on what the service does and what it composes with.
 
 **Common header mistakes to avoid:**
 - `# {Name} Service (lib-{name})` — use `# {Name} Plugin Deep Dive`

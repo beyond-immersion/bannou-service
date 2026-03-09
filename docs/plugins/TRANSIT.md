@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis), transit-lock (Redis)
 > **Implementation Map**: [docs/maps/TRANSIT.md](../maps/TRANSIT.md)
+> **Short**: Geographic connectivity graph, transit modes, and game-time journey tracking
 
 ---
 

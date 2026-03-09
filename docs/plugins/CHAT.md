@@ -6,6 +6,7 @@
 > **Layer**: AppFoundation
 > **State Store**: chat-rooms (MySQL), chat-rooms-cache (Redis), chat-messages (MySQL), chat-messages-ephemeral (Redis), chat-participants (Redis), chat-room-types (MySQL), chat-bans (MySQL), chat-lock (Redis)
 > **Implementation Map**: [docs/maps/CHAT.md](../maps/CHAT.md)
+> **Short**: Universal typed message channel primitives with ephemeral and persistent storage
 
 ---
 

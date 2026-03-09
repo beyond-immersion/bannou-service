@@ -6,6 +6,7 @@
 > **Layer**: Infrastructure
 > **State Store**: mesh-endpoints, mesh-appid-index, mesh-global-index, mesh-circuit-breaker (all Redis)
 > **Implementation Map**: [docs/maps/MESH.md](../maps/MESH.md)
+> **Short**: Service-to-service invocation via YARP with circuit breaking and Redis-backed discovery
 
 ---
 

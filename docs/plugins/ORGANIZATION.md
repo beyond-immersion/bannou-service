@@ -7,6 +7,7 @@
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Schema Requirements**: `x-service-layer: GameFeatures` at root of `organization-api.yaml`. State stores in `schemas/state-stores.yaml`. Variable provider (`${organization.*}`) in `schemas/variable-providers.yaml`.
+> **Short**: Legal entity management (shops, guilds, households as first-class economic and social actors)
 
 ## Overview
 

@@ -27,14 +27,14 @@ public static class ContractEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(ContractPublishedTopics.ContractTemplateCreated, eventData, cancellationToken);
 
-    /// <summary>Published when a contract template is updated.</summary>
+    /// <summary>Published when a contract template is updated (including deprecation via changedFields).</summary>
     public static Task<bool> PublishContractTemplateUpdatedAsync(
         this IMessageBus messageBus,
         ContractTemplateUpdatedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(ContractPublishedTopics.ContractTemplateUpdated, eventData, cancellationToken);
 
-    /// <summary>Published when a contract template is soft-deleted.</summary>
+    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
     public static Task<bool> PublishContractTemplateDeletedAsync(
         this IMessageBus messageBus,
         ContractTemplateDeletedEvent eventData,

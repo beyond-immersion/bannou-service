@@ -6,6 +6,7 @@
 > **State Store**: loot-tables (MySQL), loot-table-cache (Redis), loot-contexts (Redis), loot-pity-counters (Redis), loot-history (MySQL), loot-lock (Redis) — all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Short**: Loot table management with weighted drops, contextual modifiers, and pity thresholds
 
 ---
 

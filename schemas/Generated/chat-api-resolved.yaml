@@ -116,8 +116,11 @@ paths:
     post:
       operationId: DeprecateRoomType
       summary: Soft-deprecate a room type
-      description: Sets the room type status to Deprecated. Existing rooms continue to work but no new rooms can be 
-        created with this type.
+      description: |
+        Sets the room type status to Deprecated. Existing rooms continue to work
+        but no new rooms can be created with this type.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       x-permissions:
       - role: developer
       requestBody:
@@ -128,7 +131,7 @@ paths:
               $ref: '#/components/schemas/DeprecateRoomTypeRequest'
       responses:
         '200':
-          description: Room type deprecated
+          description: Room type deprecated successfully (or already deprecated)
           content:
             application/json:
               schema:
@@ -987,6 +990,10 @@ components:
           - $ref: '#/components/schemas/RoomTypeStatus'
           nullable: true
           description: Filter by status
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated room types in results (excluded by default)
         page:
           type: integer
           default: 0
@@ -1056,7 +1063,8 @@ components:
     DeprecateRoomTypeRequest:
       type: object
       additionalProperties: false
-      description: Request to deprecate a room type (prevents new room creation)
+      description: Request to deprecate a room type (Category B — one-way, no delete). Idempotent — returns OK if 
+        already deprecated.
       required:
       - code
       properties:
@@ -1068,6 +1076,11 @@ components:
           format: uuid
           nullable: true
           description: Game service scope for the type
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended for audit trail)
 
     RoomTypeResponse:
       type: object

@@ -52,6 +52,9 @@ internal class ContractTemplateModel
     public bool Transferable { get; set; }
     public object? GameMetadata { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsDeprecated { get; set; }
+    public DateTimeOffset? DeprecatedAt { get; set; }
+    public string? DeprecationReason { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }

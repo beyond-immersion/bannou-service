@@ -7,6 +7,7 @@
 > **State Stores**: market-definitions (MySQL), market-listings (MySQL), market-bids (Redis), market-vendors (MySQL), market-vendor-stock (Redis), market-price-history (MySQL), market-settlement-queue (Redis), market-idempotency (Redis), market-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
 > **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
+> **Short**: Marketplace orchestration (auctions, NPC vendors, price discovery) composing Escrow/Currency/Item
 
 ## Overview
 

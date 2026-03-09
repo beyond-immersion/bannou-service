@@ -6,17 +6,15 @@
 
 ---
 
-## The Platform in One Paragraph
+## Composition Reference
 
-Bannou is a monoservice game backend platform comprising 76 planned service plugins (892+ endpoints across 184 maintained YAML schemas) that provides everything a multiplayer game needs -- authentication, real-time WebSocket communication, economies, inventories, quests, matchmaking, voice chat, spatial data, save/load, procedural content generation, and an autonomous NPC intelligence stack capable of running 100,000+ concurrent AI-driven characters. It compiles into a single binary that deploys as anything from an in-process library embedded directly in a game client (no server required) to a fully distributed microservices architecture spanning thousands of nodes. The same game code, the same SDK calls, the same ABML behavior documents work identically across all deployment modes. The game is the data; Bannou runs the simulation.
+> This section is extracted by the doc generation pipeline for GENERATED-COMPOSITION-REFERENCE.md. It describes the composable architecture, SDK ecosystem, and development patterns.
 
----
-
-## I. The Three Deployment Modes
+### The Three Deployment Modes
 
 Bannou is not "a server you connect to." It is a runtime that can host your game's logic anywhere.
 
-### Cloud Deployment (Traditional)
+#### Cloud Deployment (Traditional)
 
 The familiar model: Bannou runs as a containerized service (Docker Compose, Kubernetes, Portainer, Docker Swarm -- all supported via the Orchestrator's pluggable backend architecture). Game clients connect via WebSocket through the Connect gateway. Services scale horizontally via environment variables -- enable or disable any of the 76 plugins per node without code changes.
 
@@ -25,7 +23,7 @@ Game Client ──WebSocket──▶ Connect Gateway ──mesh──▶ 76 Serv
                                                       (distributed across nodes)
 ```
 
-### Self-Hosted / Sidecar Deployment
+#### Self-Hosted / Sidecar Deployment
 
 The Satisfactory/Valheim model: Bannou ships as a sidecar binary alongside the game client or dedicated server. Infrastructure backends swap to local alternatives (SQLite instead of MySQL, InMemory message bus instead of RabbitMQ, local mesh routing instead of YARP). A factory game can run on ~15 of the 76 plugins, with Workshop's lazy evaluation computing production retroactively from elapsed game-time on next query -- the server does not need to stay running between play sessions.
 
@@ -36,7 +34,7 @@ Game Client + Bannou Sidecar (same machine, localhost:5012)
   └── any number of plugins loaded
 ```
 
-### Embedded / In-Process Deployment
+#### Embedded / In-Process Deployment
 
 The most radical mode: Bannou runs inside the game process itself. No separate server, no Docker, no network. The same `IServiceClient` interfaces that call HTTP in cloud mode resolve to direct DI method calls in embedded mode. The plugin architecture, background workers, state stores, and event system all function identically -- the only difference is that service invocations skip serialization and loopback networking.
 
@@ -52,11 +50,11 @@ Game Process
 
 ---
 
-## II. The 76-Plugin Composition Model
+### The 76-Plugin Composition Model
 
 Bannou's services are not a monolithic "game server framework." They are **composable primitives** -- small, orthogonal services that combine to create emergent game systems. No single service "is" the economy, or "is" combat, or "is" crafting. These are behaviors that emerge from primitives interacting.
 
-### The Six Layers
+#### The Six Layers
 
 ```
 L0: Infrastructure (4 plugins)     State, Messaging, Mesh, Telemetry
@@ -69,7 +67,7 @@ L4: Game Features (41 plugins)     Behavior, Puppetmaster, Matchmaking, Escrow, 
 L5: Extensions (developer-created) Game-specific vocabulary, simplified APIs, genre kits
 ```
 
-### Why Composition, Not Modules
+#### Why Composition, Not Modules
 
 Traditional game backends offer "modules" -- self-contained features like "the inventory system" or "the matchmaking system." Bannou offers **primitives that compose**:
 
@@ -83,7 +81,7 @@ Traditional game backends offer "modules" -- self-contained features like "the i
 
 **The absence of a housing plugin validates the architecture.** If a feature as visible and complex as player housing requires no new service, the primitive set is genuinely composable rather than theoretically so. The same validation applies to combat, skills, magic, classes, and guilds -- all are compositions of existing primitives, not discrete services.
 
-### The Extension Pattern
+#### The Extension Pattern
 
 When a studio finds itself repeatedly composing the same primitives in their game server code, they create an **L5 Extension** -- a thin facade that provides game-specific vocabulary over generic primitives. Six extension patterns are supported:
 
@@ -98,7 +96,7 @@ Extensions follow the same schema-first development, plugin architecture, and te
 
 ---
 
-## III. The Creative SDK Ecosystem
+### The Creative SDK Ecosystem
 
 Bannou's most distinctive contribution is a family of **pure-computation SDKs** that generate creative content procedurally using formal academic theories -- not AI/LLM inference. Every SDK follows the same three-layer pattern:
 
@@ -112,7 +110,7 @@ Composer Layer   Hand-authored content tools (interactive editors, command-based
 
 All three layers produce the **same output format**, making hand-authored and procedurally generated content indistinguishable at runtime.
 
-### Music Generation
+#### Music Generation
 
 | Layer | SDK | What It Does |
 |---|---|---|
@@ -124,7 +122,7 @@ All three layers produce the **same output format**, making hand-authored and pr
 
 **What this eliminates**: Hand-authored adaptive music state machines (FMOD/Wwise), pre-recorded emotional variants of every track, and the need for a full-time composer for dynamic game music.
 
-### Narrative Generation
+#### Narrative Generation
 
 | Layer | SDK | What It Does |
 |---|---|---|
@@ -136,7 +134,7 @@ All three layers produce the **same output format**, making hand-authored and pr
 
 **What this eliminates**: Hand-scripted quest trigger systems, static branching dialogue trees, and the combinatorial explosion of pre-authoring every world-state/character-history/NPC-context condition that could fire a story event.
 
-### Scene Composition
+#### Scene Composition
 
 | Layer | SDK | What It Does |
 |---|---|---|
@@ -148,7 +146,7 @@ Scenes are authored, stored, and consumed in the same format everywhere -- no ba
 
 **What this eliminates**: Per-engine scene export pipelines, format conversion tools, and editor-to-runtime data transformations.
 
-### Behavior Authoring (ABML)
+#### Behavior Authoring (ABML)
 
 | Layer | SDK | What It Does |
 |---|---|---|
@@ -160,7 +158,7 @@ ABML (Arcadia Behavior Markup Language) is a YAML-based DSL where developers def
 
 **What this eliminates**: Hand-authored behavior trees, scripted NPC response tables, and the exponential complexity of manually specifying every possible NPC decision path.
 
-### Cinematic Choreography (Planned)
+#### Cinematic Choreography (Planned)
 
 | Layer | SDK | What It Does |
 |---|---|---|
@@ -171,7 +169,7 @@ ABML (Arcadia Behavior Markup Language) is a YAML-based DSL where developers def
 
 The runtime infrastructure already exists. The missing piece is the compositional tier that evaluates spatial affordances, character capabilities, and dramatic pacing to produce choreographic sequences. Player agency (the guardian spirit's combat fidelity float) determines how many continuation points become interactive vs. auto-resolving.
 
-### Procedural 3D Generation
+#### Procedural 3D Generation
 
 | Component | What It Does |
 |---|---|
@@ -183,7 +181,7 @@ Artists author Houdini Digital Assets (self-contained parametric templates). The
 
 ---
 
-## IV. The Universal Planner
+### The Universal Planner
 
 GOAP (Goal-Oriented Action Planning) is not just an NPC behavior technique in Bannou. It is the **universal planning algorithm** used across every creative domain:
 
@@ -200,9 +198,134 @@ One planning paradigm powers all systems. Improvements to the GOAP planner benef
 
 ---
 
-## V. What Bannou Replaces: A Genre-by-Genre Analysis
+### What the Developer Actually Does
 
-### The Common Backend
+Bannou eliminates systems development, networking, and application infrastructure. What remains is the creative work that makes each game unique.
+
+#### 1. Author ABML Behavior Documents
+
+The primary creative act in a Bannou game. ABML is a YAML-based DSL where developers define:
+- **NPC goals**: What characters want (eat, trade, guard, explore, craft)
+- **Actions**: What characters can do (move, talk, buy, attack, build)
+- **Conditions**: When actions are available (`${personality.aggression} > 0.7 AND ${world.time_of_day} == "night"`)
+- **God behaviors**: How regional watchers curate the game world
+- **Boss encounters**: Multi-phase combat behaviors with cinematic triggers
+
+The GOAP planner handles the *how*. The developer specifies the *what* and the *when*.
+
+#### 2. Compose Seed Data
+
+The game world is defined by configuration, not code:
+- **Item templates**: What items exist, their properties, rarity, quantity models
+- **Crafting recipes**: Workshop blueprints with source/destination inventories
+- **Species definitions**: Playable and NPC races with trait modifiers
+- **Location hierarchies**: World structure (regions, cities, buildings, rooms)
+- **Currency definitions**: Economy currencies with scope and exchange rules
+- **Quest templates**: Objectives, rewards, and prerequisite chains
+- **License boards**: Skill tree grid layouts with adjacency and costs
+- **Loot tables**: Weighted drop determination with contextual modifiers
+- **Seed types**: Growth systems for any progressive mechanic
+- **Transit modes**: How things move (walk, ride, teleport, sail)
+- **Collection types**: What can be cataloged (bestiary, music, recipes)
+- **Faction definitions**: Political entities with governance and norms
+
+All seed data is loaded via API calls at startup or through bulk seeding endpoints. No code changes, no recompilation, no redeployment.
+
+#### 3. Build the Visual Layer
+
+Everything the player sees and hears:
+- 3D models, textures, animations, VFX
+- UI/UX design and implementation
+- Audio rendering of MIDI-JSON from the Music SDK
+- Client-side interpretation of cinematic sequences
+- World rendering from Scene/Mapping data
+- Input handling and camera systems
+
+#### 4. Write Game-Specific Extensions (If Needed)
+
+For repeated composition patterns, create L5 Extension plugins:
+- **Semantic facades** that translate domain language to primitive calls
+- **View aggregators** that assemble cross-service data for specific UI screens
+- **Variable providers** that expose game-specific computed state to NPC behaviors
+
+Extensions follow the same schema-first pipeline: write an OpenAPI schema, run `make generate`, implement the thin service layer.
+
+#### 5. Configure Deployment
+
+Choose the deployment mode that fits the game:
+- **Embedded**: Mobile/console single-player, no server
+- **Self-hosted sidecar**: LAN/co-op, runs alongside the game
+- **Cloud**: Persistent multiplayer, scales to any player count
+- **Hybrid**: Single-player with optional cloud sync
+
+All modes use the same SDK. Switching modes is configuration, not code.
+
+---
+
+### The Actor-Bound Entity Pattern: Living Things From Existing Services
+
+Any entity that should progressively awaken -- a dungeon, a weapon, a ship, a haunted building -- follows the same three-stage pattern using only existing services:
+
+```
+Stage 1: DORMANT (No Actor, zero runtime cost)
+  Entity = seed + physical form. Growth accumulates passively.
+  Thousands can exist per world simultaneously.
+
+Stage 2: STIRRING (Event Brain Actor, simplified cognition)
+  Seed reaches threshold → Puppetmaster spawns actor.
+  ABML behavior runs with null personality providers → instinct defaults.
+
+Stage 3: AWAKENED (Full Character Brain)
+  Seed reaches higher threshold → Character created in system realm.
+  Actor binds to character. Full personality, memory, relationships activate.
+  Entity is now a living thing with opinions and history.
+```
+
+**Living weapons require zero new plugins.** Every operation maps to a single existing API call (Item for physical form, Seed for growth, Collection for knowledge, Actor for behavior, Character for identity in the SENTIENT_ARMS system realm, Relationship for wielder bonds, Status for wielder effects). This is the strongest validation of Bannou's composability thesis.
+
+**Dungeons require one plugin** (lib-dungeon) because they need multi-service atomic orchestration (spawn monster + activate trap + shift layout + manifest memory). The orchestration plugin is thin; the services it composes are the existing primitives.
+
+---
+
+### Engine Integration
+
+Bannou generates typed client artifacts for major game engines:
+
+#### .NET (Unity, Stride, Godot-C#)
+- `BeyondImmersion.Bannou.Client` NuGet package
+- Compile-time-safe typed proxies (`client.Auth.LoginAsync()`)
+- Disposable typed event subscriptions
+- `IBannouClient` interface for DI/mocking
+
+#### Unreal Engine (C++)
+- Five auto-generated headers: `BannouProtocol.h`, `BannouTypes.h` (814 USTRUCTs), `BannouEnums.h`, `BannouEndpoints.h` (309 endpoints), `BannouEvents.h`
+- Binary protocol implementation with RFC 4122 GUID handling
+- Regeneration via `make generate-unreal-sdk` synchronized with schema changes
+
+#### TypeScript (Web, Electron)
+- `@beyondimmersion/bannou-client` package
+- Full typed client with promise-based API
+
+#### Any Language
+- The WebSocket binary protocol is documented and engine-agnostic
+- 31-byte request headers, 16-byte response headers
+- JSON payloads -- any language with WebSocket and JSON support can integrate
+
+---
+
+## Platform Vision
+
+> This section provides aspirational context about what Bannou means for game developers and studios. Not auto-included in agent context — read on demand for strategic planning.
+
+### The Platform in One Paragraph
+
+Bannou is a monoservice game backend platform comprising 76 planned service plugins (892+ endpoints across 184 maintained YAML schemas) that provides everything a multiplayer game needs -- authentication, real-time WebSocket communication, economies, inventories, quests, matchmaking, voice chat, spatial data, save/load, procedural content generation, and an autonomous NPC intelligence stack capable of running 100,000+ concurrent AI-driven characters. It compiles into a single binary that deploys as anything from an in-process library embedded directly in a game client (no server required) to a fully distributed microservices architecture spanning thousands of nodes. The same game code, the same SDK calls, the same ABML behavior documents work identically across all deployment modes. The game is the data; Bannou runs the simulation.
+
+---
+
+### What Bannou Replaces: Genre-by-Genre Analysis
+
+#### The Common Backend
 
 Every multiplayer game needs the same foundational infrastructure. Bannou provides all of it out of the box:
 
@@ -226,7 +349,7 @@ Every multiplayer game needs the same foundational infrastructure. Bannou provid
 
 **Subtotal for common infrastructure**: 36-73 weeks of traditional development time, provided by Bannou's L0-L3 layers with zero game-specific code.
 
-### Case Study: A Zelda-Like (Single-Player Action RPG)
+#### Case Study: A Zelda-Like (Single-Player Action RPG)
 
 A game like *Breath of the Wild* or *Tears of the Kingdom* -- open world, real-time combat, item crafting, cooking, equipment, puzzles, quests, and a save system.
 
@@ -258,7 +381,7 @@ A game like *Breath of the Wild* or *Tears of the Kingdom* -- open world, real-t
 - Game-specific combat feel (animation timing, hitboxes, camera work)
 - Client-side rendering of Bannou's cinematic/behavior outputs
 
-### Case Study: A Final Fantasy-Like (Party-Based RPG with Economy)
+#### Case Study: A Final Fantasy-Like (Party-Based RPG with Economy)
 
 A game like *Final Fantasy XII* or *XIV* -- party-based combat, deep progression systems, living economy, matchmaking, guilds, housing, and extensive narrative.
 
@@ -295,7 +418,7 @@ A game like *Final Fantasy XII* or *XIV* -- party-based combat, deep progression
 - Game-specific combat choreography (cinematic templates, QTE designs)
 - The client-side game engine (rendering, input, audio playback)
 
-### The Pattern Across Genres
+#### The Pattern Across Genres
 
 | Genre | Bannou Coverage | Estimated Savings | Key Remaining Work |
 |---|---|---|---|
@@ -311,71 +434,7 @@ A game like *Final Fantasy XII* or *XIV* -- party-based combat, deep progression
 
 ---
 
-## VI. What the Developer Actually Does
-
-Bannou eliminates systems development, networking, and application infrastructure. What remains is the creative work that makes each game unique.
-
-### 1. Author ABML Behavior Documents
-
-The primary creative act in a Bannou game. ABML is a YAML-based DSL where developers define:
-- **NPC goals**: What characters want (eat, trade, guard, explore, craft)
-- **Actions**: What characters can do (move, talk, buy, attack, build)
-- **Conditions**: When actions are available (`${personality.aggression} > 0.7 AND ${world.time_of_day} == "night"`)
-- **God behaviors**: How regional watchers curate the game world
-- **Boss encounters**: Multi-phase combat behaviors with cinematic triggers
-
-The GOAP planner handles the *how*. The developer specifies the *what* and the *when*.
-
-### 2. Compose Seed Data
-
-The game world is defined by configuration, not code:
-- **Item templates**: What items exist, their properties, rarity, quantity models
-- **Crafting recipes**: Workshop blueprints with source/destination inventories
-- **Species definitions**: Playable and NPC races with trait modifiers
-- **Location hierarchies**: World structure (regions, cities, buildings, rooms)
-- **Currency definitions**: Economy currencies with scope and exchange rules
-- **Quest templates**: Objectives, rewards, and prerequisite chains
-- **License boards**: Skill tree grid layouts with adjacency and costs
-- **Loot tables**: Weighted drop determination with contextual modifiers
-- **Seed types**: Growth systems for any progressive mechanic
-- **Transit modes**: How things move (walk, ride, teleport, sail)
-- **Collection types**: What can be cataloged (bestiary, music, recipes)
-- **Faction definitions**: Political entities with governance and norms
-
-All seed data is loaded via API calls at startup or through bulk seeding endpoints. No code changes, no recompilation, no redeployment.
-
-### 3. Build the Visual Layer
-
-Everything the player sees and hears:
-- 3D models, textures, animations, VFX
-- UI/UX design and implementation
-- Audio rendering of MIDI-JSON from the Music SDK
-- Client-side interpretation of cinematic sequences
-- World rendering from Scene/Mapping data
-- Input handling and camera systems
-
-### 4. Write Game-Specific Extensions (If Needed)
-
-For repeated composition patterns, create L5 Extension plugins:
-- **Semantic facades** that translate domain language to primitive calls
-- **View aggregators** that assemble cross-service data for specific UI screens
-- **Variable providers** that expose game-specific computed state to NPC behaviors
-
-Extensions follow the same schema-first pipeline: write an OpenAPI schema, run `make generate`, implement the thin service layer.
-
-### 5. Configure Deployment
-
-Choose the deployment mode that fits the game:
-- **Embedded**: Mobile/console single-player, no server
-- **Self-hosted sidecar**: LAN/co-op, runs alongside the game
-- **Cloud**: Persistent multiplayer, scales to any player count
-- **Hybrid**: Single-player with optional cloud sync
-
-All modes use the same SDK. Switching modes is configuration, not code.
-
----
-
-## VII. The Content Flywheel: Games That Improve With Age
+### The Content Flywheel: Games That Improve With Age
 
 The most transformative aspect of building on Bannou is access to the **content flywheel** -- a data network effect where more play produces more content, which produces more play.
 
@@ -416,58 +475,7 @@ This is not theoretical. The infrastructure is built:
 
 ---
 
-## VIII. The Actor-Bound Entity Pattern: Living Things From Existing Services
-
-Any entity that should progressively awaken -- a dungeon, a weapon, a ship, a haunted building -- follows the same three-stage pattern using only existing services:
-
-```
-Stage 1: DORMANT (No Actor, zero runtime cost)
-  Entity = seed + physical form. Growth accumulates passively.
-  Thousands can exist per world simultaneously.
-
-Stage 2: STIRRING (Event Brain Actor, simplified cognition)
-  Seed reaches threshold → Puppetmaster spawns actor.
-  ABML behavior runs with null personality providers → instinct defaults.
-
-Stage 3: AWAKENED (Full Character Brain)
-  Seed reaches higher threshold → Character created in system realm.
-  Actor binds to character. Full personality, memory, relationships activate.
-  Entity is now a living thing with opinions and history.
-```
-
-**Living weapons require zero new plugins.** Every operation maps to a single existing API call (Item for physical form, Seed for growth, Collection for knowledge, Actor for behavior, Character for identity in the SENTIENT_ARMS system realm, Relationship for wielder bonds, Status for wielder effects). This is the strongest validation of Bannou's composability thesis.
-
-**Dungeons require one plugin** (lib-dungeon) because they need multi-service atomic orchestration (spawn monster + activate trap + shift layout + manifest memory). The orchestration plugin is thin; the services it composes are the existing primitives.
-
----
-
-## IX. Engine Integration
-
-Bannou generates typed client artifacts for major game engines:
-
-### .NET (Unity, Stride, Godot-C#)
-- `BeyondImmersion.Bannou.Client` NuGet package
-- Compile-time-safe typed proxies (`client.Auth.LoginAsync()`)
-- Disposable typed event subscriptions
-- `IBannouClient` interface for DI/mocking
-
-### Unreal Engine (C++)
-- Five auto-generated headers: `BannouProtocol.h`, `BannouTypes.h` (814 USTRUCTs), `BannouEnums.h`, `BannouEndpoints.h` (309 endpoints), `BannouEvents.h`
-- Binary protocol implementation with RFC 4122 GUID handling
-- Regeneration via `make generate-unreal-sdk` synchronized with schema changes
-
-### TypeScript (Web, Electron)
-- `@beyondimmersion/bannou-client` package
-- Full typed client with promise-based API
-
-### Any Language
-- The WebSocket binary protocol is documented and engine-agnostic
-- 31-byte request headers, 16-byte response headers
-- JSON payloads -- any language with WebSocket and JSON support can integrate
-
----
-
-## X. What Makes Bannou Different From Alternatives
+### What Makes Bannou Different From Alternatives
 
 | Aspect | PlayFab / GameSparks / Nakama | Bannou |
 |---|---|---|
@@ -484,7 +492,7 @@ Bannou generates typed client artifacts for major game engines:
 
 ---
 
-## Summary: The Developer's Time Budget
+### The Developer's Time Budget
 
 For a typical multiplayer game, here is where a Bannou developer's time goes:
 

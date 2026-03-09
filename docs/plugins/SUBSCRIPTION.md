@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: subscription-statestore (MySQL), subscription-lock (Redis)
 > **Implementation Map**: [docs/maps/SUBSCRIPTION.md](../maps/SUBSCRIPTION.md)
+> **Short**: Account-to-game access mapping with time-limited subscriptions and expiration worker
 
 ---
 

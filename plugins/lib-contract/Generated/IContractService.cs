@@ -50,9 +50,9 @@ public partial interface IContractService : IBannouService
         Task<(StatusCodes, ContractTemplateResponse?)> UpdateContractTemplateAsync(UpdateContractTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// DeleteContractTemplate operation
+        /// DeprecateContractTemplate operation
         /// </summary>
-        Task<StatusCodes> DeleteContractTemplateAsync(DeleteContractTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, ContractTemplateResponse?)> DeprecateContractTemplateAsync(DeprecateContractTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// CreateContractInstance operation

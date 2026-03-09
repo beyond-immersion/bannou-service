@@ -204,6 +204,9 @@ public partial class LicenseService : ILicenseService
             AdjacencyMode = model.AdjacencyMode,
             AllowedOwnerTypes = model.AllowedOwnerTypes,
             IsActive = model.IsActive,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
         };
@@ -410,6 +413,9 @@ public partial class LicenseService : ILicenseService
                 BoardContractTemplateId = template.BoardContractTemplateId,
                 AdjacencyMode = template.AdjacencyMode,
                 IsActive = template.IsActive,
+                IsDeprecated = template.IsDeprecated,
+                DeprecatedAt = template.DeprecatedAt,
+                DeprecationReason = template.DeprecationReason,
                 CreatedAt = template.CreatedAt,
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt
             },
@@ -443,7 +449,8 @@ public partial class LicenseService : ILicenseService
         var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
 
         var results = await _boardTemplateStore.QueryAsync(
-            t => t.GameServiceId == body.GameServiceId,
+            t => t.GameServiceId == body.GameServiceId
+                 && (body.IncludeDeprecated || !t.IsDeprecated),
             cancellationToken: cancellationToken);
 
         // Simple cursor-based pagination using index offset
@@ -531,6 +538,9 @@ public partial class LicenseService : ILicenseService
                 BoardContractTemplateId = template.BoardContractTemplateId,
                 AdjacencyMode = template.AdjacencyMode,
                 IsActive = template.IsActive,
+                IsDeprecated = template.IsDeprecated,
+                DeprecatedAt = template.DeprecatedAt,
+                DeprecationReason = template.DeprecationReason,
                 CreatedAt = template.CreatedAt,
                 UpdatedAt = template.UpdatedAt ?? template.CreatedAt,
                 ChangedFields = changedFields
@@ -541,22 +551,11 @@ public partial class LicenseService : ILicenseService
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, BoardTemplateResponse?)> DeleteBoardTemplateAsync(
-        DeleteBoardTemplateRequest body,
+    public async Task<(StatusCodes, BoardTemplateResponse?)> DeprecateBoardTemplateAsync(
+        DeprecateBoardTemplateRequest body,
         CancellationToken cancellationToken)
     {
-        await using var lockHandle = await _lockProvider.LockAsync(
-            StateStoreDefinitions.LicenseLock,
-            BuildTemplateLockKey(body.BoardTemplateId),
-            Guid.NewGuid().ToString(),
-            _configuration.LockTimeoutSeconds,
-            cancellationToken);
-
-        if (!lockHandle.Success)
-        {
-            _logger.LogWarning("Failed to acquire lock for board template {BoardTemplateId}", body.BoardTemplateId);
-            return (StatusCodes.Conflict, null);
-        }
+        using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.DeprecateBoardTemplateAsync");
 
         var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(body.BoardTemplateId),
@@ -567,27 +566,26 @@ public partial class LicenseService : ILicenseService
             return (StatusCodes.NotFound, null);
         }
 
-        // Check for active board instances
-        var activeBoards = await _boardStore.QueryAsync(
-            b => b.BoardTemplateId == body.BoardTemplateId,
-            cancellationToken: cancellationToken);
-
-        if (activeBoards.Count > 0)
+        // Per IMPLEMENTATION TENETS: idempotent deprecation — return OK when already deprecated
+        if (template.IsDeprecated)
         {
-            _logger.LogWarning(
-                "Cannot delete board template {BoardTemplateId} with {ActiveCount} active board instances",
-                body.BoardTemplateId, activeBoards.Count);
-            return (StatusCodes.Conflict, null);
+            return (StatusCodes.OK, MapTemplateToResponse(template));
         }
 
-        await _boardTemplateStore.DeleteAsync(
-            BuildTemplateKey(body.BoardTemplateId),
-            cancellationToken);
+        var now = DateTimeOffset.UtcNow;
+        template.IsDeprecated = true;
+        template.DeprecatedAt = now;
+        template.DeprecationReason = body.Reason;
+        template.UpdatedAt = now;
 
-        _logger.LogInformation("Deleted board template {BoardTemplateId}", body.BoardTemplateId);
+        await _boardTemplateStore.SaveAsync(
+            BuildTemplateKey(template.BoardTemplateId),
+            template,
+            cancellationToken: cancellationToken);
 
-        await _messageBus.PublishLicenseBoardTemplateDeletedAsync(
-            new LicenseBoardTemplateDeletedEvent
+        // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
+        await _messageBus.PublishLicenseBoardTemplateUpdatedAsync(
+            new LicenseBoardTemplateUpdatedEvent
             {
                 BoardTemplateId = template.BoardTemplateId,
                 GameServiceId = template.GameServiceId,
@@ -597,11 +595,16 @@ public partial class LicenseService : ILicenseService
                 BoardContractTemplateId = template.BoardContractTemplateId,
                 AdjacencyMode = template.AdjacencyMode,
                 IsActive = template.IsActive,
+                IsDeprecated = template.IsDeprecated,
+                DeprecatedAt = template.DeprecatedAt,
+                DeprecationReason = template.DeprecationReason,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt ?? template.CreatedAt
+                UpdatedAt = now,
+                ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
             },
             cancellationToken);
 
+        _logger.LogInformation("Deprecated board template {BoardTemplateId}", body.BoardTemplateId);
         return (StatusCodes.OK, MapTemplateToResponse(template));
     }
 

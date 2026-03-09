@@ -51,6 +51,7 @@ public partial class StatusService : IStatusService
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IResourceClient _resourceClient;
+    private readonly ISeedClient _seedClient;
     private readonly IServiceProvider _serviceProvider;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -85,15 +86,22 @@ public partial class StatusService : IStatusService
 
     #region Key Building
 
-    private static string TemplateIdKey(Guid templateId) => $"tpl:{templateId}";
-    private static string TemplateCodeKey(Guid gameServiceId, string code) => $"tpl:{gameServiceId}:{code}";
-    private static string InstanceIdKey(Guid instanceId) => $"inst:{instanceId}";
-    private static string ContainerIdKey(Guid containerId) => $"ctr:{containerId}";
-    private static string ContainerEntityKey(Guid entityId, EntityType entityType, Guid gameServiceId) =>
-        $"ctr:{entityId}:{entityType}:{gameServiceId}";
-    private static string ActiveCacheKey(Guid entityId, EntityType entityType) => $"active:{entityId}:{entityType}";
-    private static string SeedEffectsCacheKey(Guid entityId, EntityType entityType) => $"seed:{entityId}:{entityType}";
-    private static string EntityLockKey(EntityType entityType, Guid entityId) => $"entity:{entityType}:{entityId}";
+    private const string TEMPLATE_KEY_PREFIX = "tpl";
+    private const string INSTANCE_KEY_PREFIX = "inst";
+    private const string CONTAINER_KEY_PREFIX = "ctr";
+    private const string ACTIVE_CACHE_KEY_PREFIX = "active";
+    private const string SEED_EFFECTS_CACHE_KEY_PREFIX = "seed";
+    private const string ENTITY_LOCK_KEY_PREFIX = "entity";
+
+    internal static string BuildTemplateIdKey(Guid templateId) => $"{TEMPLATE_KEY_PREFIX}:{templateId}";
+    internal static string BuildTemplateCodeKey(Guid gameServiceId, string code) => $"{TEMPLATE_KEY_PREFIX}:{gameServiceId}:{code}";
+    internal static string BuildInstanceIdKey(Guid instanceId) => $"{INSTANCE_KEY_PREFIX}:{instanceId}";
+    internal static string BuildContainerIdKey(Guid containerId) => $"{CONTAINER_KEY_PREFIX}:{containerId}";
+    internal static string BuildContainerEntityKey(Guid entityId, EntityType entityType, Guid gameServiceId) =>
+        $"{CONTAINER_KEY_PREFIX}:{entityId}:{entityType}:{gameServiceId}";
+    internal static string BuildActiveCacheKey(Guid entityId, EntityType entityType) => $"{ACTIVE_CACHE_KEY_PREFIX}:{entityId}:{entityType}";
+    internal static string BuildSeedEffectsCacheKey(Guid entityId, EntityType entityType) => $"{SEED_EFFECTS_CACHE_KEY_PREFIX}:{entityId}:{entityType}";
+    internal static string BuildEntityLockKey(EntityType entityType, Guid entityId) => $"{ENTITY_LOCK_KEY_PREFIX}:{entityType}:{entityId}";
 
     /// <summary>
     /// Maps an EntityType to ContainerOwnerType for inventory operations.
@@ -120,6 +128,7 @@ public partial class StatusService : IStatusService
         IGameServiceClient gameServiceClient,
         IDistributedLockProvider lockProvider,
         IResourceClient resourceClient,
+        ISeedClient seedClient,
         IServiceProvider serviceProvider,
         IEntitySessionRegistry entitySessionRegistry,
         ITelemetryProvider telemetryProvider)
@@ -133,6 +142,7 @@ public partial class StatusService : IStatusService
         _gameServiceClient = gameServiceClient;
         _lockProvider = lockProvider;
         _resourceClient = resourceClient;
+        _seedClient = seedClient;
         _serviceProvider = serviceProvider;
         _entitySessionRegistry = entitySessionRegistry;
         _telemetryProvider = telemetryProvider;
@@ -191,7 +201,7 @@ public partial class StatusService : IStatusService
         }
 
         // Check code uniqueness
-        var codeKey = TemplateCodeKey(body.GameServiceId, body.Code);
+        var codeKey = BuildTemplateCodeKey(body.GameServiceId, body.Code);
         var existingByCode = await _templateStore.GetAsync(codeKey, cancellationToken);
         if (existingByCode != null)
         {
@@ -239,7 +249,7 @@ public partial class StatusService : IStatusService
         };
 
         // Save with dual keys
-        await _templateStore.SaveAsync(TemplateIdKey(templateId), model, cancellationToken: cancellationToken);
+        await _templateStore.SaveAsync(BuildTemplateIdKey(templateId), model, cancellationToken: cancellationToken);
         await _templateStore.SaveAsync(codeKey, model, cancellationToken: cancellationToken);
 
         // Publish lifecycle event
@@ -273,7 +283,7 @@ public partial class StatusService : IStatusService
         GetStatusTemplateRequest body, CancellationToken cancellationToken)
     {
         var template = await _templateStore.GetAsync(
-            TemplateIdKey(body.StatusTemplateId), cancellationToken);
+            BuildTemplateIdKey(body.StatusTemplateId), cancellationToken);
 
         if (template == null)
         {
@@ -290,7 +300,7 @@ public partial class StatusService : IStatusService
         GetStatusTemplateByCodeRequest body, CancellationToken cancellationToken)
     {
         var template = await _templateStore.GetAsync(
-            TemplateCodeKey(body.GameServiceId, body.Code), cancellationToken);
+            BuildTemplateCodeKey(body.GameServiceId, body.Code), cancellationToken);
 
         if (template == null)
         {
@@ -318,11 +328,11 @@ public partial class StatusService : IStatusService
             {
                 Path = "$.Category",
                 Operator = QueryOperator.Equals,
-                Value = body.Category.Value.ToString()
+                Value = body.Category.Value
             });
         }
 
-        // Filter out deprecated templates by default per IMPLEMENTATION TENETS (T31)
+        // Filter out deprecated templates by default per IMPLEMENTATION TENETS
         if (!body.IncludeDeprecated)
         {
             conditions.Add(new QueryCondition
@@ -365,7 +375,7 @@ public partial class StatusService : IStatusService
 
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.StatusLock,
-            $"tpl:{body.StatusTemplateId}",
+            BuildTemplateIdKey(body.StatusTemplateId),
             Guid.NewGuid().ToString(),
             _configuration.LockTimeoutSeconds,
             lockCts.Token);
@@ -377,7 +387,7 @@ public partial class StatusService : IStatusService
         }
 
         var template = await _templateStore.GetAsync(
-            TemplateIdKey(body.StatusTemplateId), cancellationToken);
+            BuildTemplateIdKey(body.StatusTemplateId), cancellationToken);
 
         if (template == null)
         {
@@ -435,9 +445,9 @@ public partial class StatusService : IStatusService
         template.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Save with dual keys
-        await _templateStore.SaveAsync(TemplateIdKey(template.StatusTemplateId), template, cancellationToken: cancellationToken);
+        await _templateStore.SaveAsync(BuildTemplateIdKey(template.StatusTemplateId), template, cancellationToken: cancellationToken);
         await _templateStore.SaveAsync(
-            TemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
+            BuildTemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
 
         // Publish lifecycle event
         await _messageBus.PublishStatusTemplateUpdatedAsync(
@@ -474,14 +484,12 @@ public partial class StatusService : IStatusService
     public async Task<(StatusCodes, StatusTemplateResponse?)> DeprecateStatusTemplateAsync(
         DeprecateStatusTemplateRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.DeprecateStatusTemplateAsync");
-
         using var lockCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         lockCts.CancelAfter(TimeSpan.FromSeconds(_configuration.LockAcquisitionTimeoutSeconds));
 
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.StatusLock,
-            $"tpl:{body.StatusTemplateId}",
+            BuildTemplateIdKey(body.StatusTemplateId),
             Guid.NewGuid().ToString(),
             _configuration.LockTimeoutSeconds,
             lockCts.Token);
@@ -493,7 +501,7 @@ public partial class StatusService : IStatusService
         }
 
         var template = await _templateStore.GetAsync(
-            TemplateIdKey(body.StatusTemplateId), cancellationToken);
+            BuildTemplateIdKey(body.StatusTemplateId), cancellationToken);
 
         if (template == null)
         {
@@ -511,9 +519,9 @@ public partial class StatusService : IStatusService
         template.DeprecationReason = body.Reason;
         template.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _templateStore.SaveAsync(TemplateIdKey(template.StatusTemplateId), template, cancellationToken: cancellationToken);
+        await _templateStore.SaveAsync(BuildTemplateIdKey(template.StatusTemplateId), template, cancellationToken: cancellationToken);
         await _templateStore.SaveAsync(
-            TemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
+            BuildTemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
 
         await _messageBus.PublishStatusTemplateUpdatedAsync(
             new StatusTemplateUpdatedEvent
@@ -549,14 +557,12 @@ public partial class StatusService : IStatusService
     public async Task<(StatusCodes, StatusTemplateResponse?)> UndeprecateStatusTemplateAsync(
         UndeprecateStatusTemplateRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.UndeprecateStatusTemplateAsync");
-
         using var lockCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         lockCts.CancelAfter(TimeSpan.FromSeconds(_configuration.LockAcquisitionTimeoutSeconds));
 
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.StatusLock,
-            $"tpl:{body.StatusTemplateId}",
+            BuildTemplateIdKey(body.StatusTemplateId),
             Guid.NewGuid().ToString(),
             _configuration.LockTimeoutSeconds,
             lockCts.Token);
@@ -568,7 +574,7 @@ public partial class StatusService : IStatusService
         }
 
         var template = await _templateStore.GetAsync(
-            TemplateIdKey(body.StatusTemplateId), cancellationToken);
+            BuildTemplateIdKey(body.StatusTemplateId), cancellationToken);
 
         if (template == null)
         {
@@ -586,9 +592,9 @@ public partial class StatusService : IStatusService
         template.DeprecationReason = null;
         template.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _templateStore.SaveAsync(TemplateIdKey(template.StatusTemplateId), template, cancellationToken: cancellationToken);
+        await _templateStore.SaveAsync(BuildTemplateIdKey(template.StatusTemplateId), template, cancellationToken: cancellationToken);
         await _templateStore.SaveAsync(
-            TemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
+            BuildTemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
 
         await _messageBus.PublishStatusTemplateUpdatedAsync(
             new StatusTemplateUpdatedEvent
@@ -616,20 +622,18 @@ public partial class StatusService : IStatusService
     }
 
     /// <summary>
-    /// Deletes a status template. Requires prior deprecation per IMPLEMENTATION TENETS (T31 Category A).
+    /// Deletes a status template. Requires prior deprecation per IMPLEMENTATION TENETS.
     /// Coordinates cleanup of dependent data via lib-resource.
     /// </summary>
     public async Task<StatusCodes> DeleteStatusTemplateAsync(
         DeleteStatusTemplateRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.DeleteStatusTemplateAsync");
-
         using var lockCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         lockCts.CancelAfter(TimeSpan.FromSeconds(_configuration.LockAcquisitionTimeoutSeconds));
 
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.StatusLock,
-            $"tpl:{body.StatusTemplateId}",
+            BuildTemplateIdKey(body.StatusTemplateId),
             Guid.NewGuid().ToString(),
             _configuration.LockTimeoutSeconds,
             lockCts.Token);
@@ -641,14 +645,14 @@ public partial class StatusService : IStatusService
         }
 
         var template = await _templateStore.GetAsync(
-            TemplateIdKey(body.StatusTemplateId), cancellationToken);
+            BuildTemplateIdKey(body.StatusTemplateId), cancellationToken);
 
         if (template == null)
         {
             return StatusCodes.NotFound;
         }
 
-        // Must be deprecated before deletion per IMPLEMENTATION TENETS (T31 Category A)
+        // Must be deprecated before deletion per IMPLEMENTATION TENETS
         if (!template.IsDeprecated)
         {
             _logger.LogWarning(
@@ -658,9 +662,9 @@ public partial class StatusService : IStatusService
         }
 
         // Delete both keys
-        await _templateStore.DeleteAsync(TemplateIdKey(template.StatusTemplateId), cancellationToken);
+        await _templateStore.DeleteAsync(BuildTemplateIdKey(template.StatusTemplateId), cancellationToken);
         await _templateStore.DeleteAsync(
-            TemplateCodeKey(template.GameServiceId, template.Code), cancellationToken);
+            BuildTemplateCodeKey(template.GameServiceId, template.Code), cancellationToken);
 
         // Publish lifecycle event
         await _messageBus.PublishStatusTemplateDeletedAsync(
@@ -713,75 +717,85 @@ public partial class StatusService : IStatusService
 
         foreach (var templateReq in body.Templates)
         {
-            var codeKey = TemplateCodeKey(body.GameServiceId, templateReq.Code);
-            var existingByCode = await _templateStore.GetAsync(codeKey, cancellationToken);
-
-            if (existingByCode != null)
-            {
-                skipped++;
-                continue;
-            }
-
-            // Validate item template exists (matches CreateStatusTemplateAsync validation)
             try
             {
-                await _itemClient.GetItemTemplateAsync(
-                    new GetItemTemplateRequest { TemplateId = templateReq.ItemTemplateId },
-                    cancellationToken);
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                _logger.LogWarning(
-                    "Skipping status template {Code}: item template {ItemTemplateId} not found",
-                    templateReq.Code, templateReq.ItemTemplateId);
-                skipped++;
-                continue;
-            }
+                var codeKey = BuildTemplateCodeKey(body.GameServiceId, templateReq.Code);
+                var existingByCode = await _templateStore.GetAsync(codeKey, cancellationToken);
 
-            var effectiveMaxStacks = Math.Min(
-                templateReq.MaxStacks,
-                _configuration.MaxStacksPerStatus);
+                if (existingByCode != null)
+                {
+                    skipped++;
+                    continue;
+                }
 
-            var now = DateTimeOffset.UtcNow;
-            var templateId = Guid.NewGuid();
-            var model = new StatusTemplateModel
-            {
-                StatusTemplateId = templateId,
-                GameServiceId = body.GameServiceId,
-                Code = templateReq.Code,
-                DisplayName = templateReq.DisplayName,
-                Description = templateReq.Description,
-                Category = templateReq.Category,
-                Stackable = templateReq.Stackable,
-                MaxStacks = effectiveMaxStacks,
-                StackBehavior = templateReq.StackBehavior,
-                ContractTemplateId = templateReq.ContractTemplateId,
-                ItemTemplateId = templateReq.ItemTemplateId,
-                DefaultDurationSeconds = templateReq.DefaultDurationSeconds,
-                IconAssetId = templateReq.IconAssetId,
-                CreatedAt = now
-            };
+                // Validate item template exists (matches CreateStatusTemplateAsync validation)
+                try
+                {
+                    await _itemClient.GetItemTemplateAsync(
+                        new GetItemTemplateRequest { TemplateId = templateReq.ItemTemplateId },
+                        cancellationToken);
+                }
+                catch (ApiException ex) when (ex.StatusCode == 404)
+                {
+                    _logger.LogWarning(
+                        "Skipping status template {Code}: item template {ItemTemplateId} not found",
+                        templateReq.Code, templateReq.ItemTemplateId);
+                    skipped++;
+                    continue;
+                }
 
-            await _templateStore.SaveAsync(TemplateIdKey(templateId), model, cancellationToken: cancellationToken);
-            await _templateStore.SaveAsync(codeKey, model, cancellationToken: cancellationToken);
+                var effectiveMaxStacks = Math.Min(
+                    templateReq.MaxStacks,
+                    _configuration.MaxStacksPerStatus);
 
-            await _messageBus.PublishStatusTemplateCreatedAsync(
-                new StatusTemplateCreatedEvent
+                var now = DateTimeOffset.UtcNow;
+                var templateId = Guid.NewGuid();
+                var model = new StatusTemplateModel
                 {
                     StatusTemplateId = templateId,
                     GameServiceId = body.GameServiceId,
                     Code = templateReq.Code,
                     DisplayName = templateReq.DisplayName,
+                    Description = templateReq.Description,
                     Category = templateReq.Category,
                     Stackable = templateReq.Stackable,
                     MaxStacks = effectiveMaxStacks,
                     StackBehavior = templateReq.StackBehavior,
-                    IsDeprecated = false,
+                    ContractTemplateId = templateReq.ContractTemplateId,
+                    ItemTemplateId = templateReq.ItemTemplateId,
+                    DefaultDurationSeconds = templateReq.DefaultDurationSeconds,
+                    IconAssetId = templateReq.IconAssetId,
                     CreatedAt = now
-                },
-                cancellationToken);
+                };
 
-            created++;
+                await _templateStore.SaveAsync(BuildTemplateIdKey(templateId), model, cancellationToken: cancellationToken);
+                await _templateStore.SaveAsync(codeKey, model, cancellationToken: cancellationToken);
+
+                await _messageBus.PublishStatusTemplateCreatedAsync(
+                    new StatusTemplateCreatedEvent
+                    {
+                        StatusTemplateId = templateId,
+                        GameServiceId = body.GameServiceId,
+                        Code = templateReq.Code,
+                        DisplayName = templateReq.DisplayName,
+                        Category = templateReq.Category,
+                        Stackable = templateReq.Stackable,
+                        MaxStacks = effectiveMaxStacks,
+                        StackBehavior = templateReq.StackBehavior,
+                        IsDeprecated = false,
+                        CreatedAt = now
+                    },
+                    cancellationToken);
+
+                created++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to seed status template {Code} for game service {GameServiceId}",
+                    templateReq.Code, body.GameServiceId);
+                skipped++;
+            }
         }
 
         _logger.LogInformation(
@@ -809,7 +823,7 @@ public partial class StatusService : IStatusService
     {
         // Look up template by game service + code
         var template = await _templateStore.GetAsync(
-            TemplateCodeKey(body.GameServiceId, body.StatusTemplateCode), cancellationToken);
+            BuildTemplateCodeKey(body.GameServiceId, body.StatusTemplateCode), cancellationToken);
 
         if (template == null)
         {
@@ -817,7 +831,7 @@ public partial class StatusService : IStatusService
             return (StatusCodes.NotFound, null);
         }
 
-        // Reject grants for deprecated templates per IMPLEMENTATION TENETS (T31 Category A)
+        // Reject grants for deprecated templates per IMPLEMENTATION TENETS
         if (template.IsDeprecated)
         {
             _logger.LogWarning(
@@ -833,7 +847,7 @@ public partial class StatusService : IStatusService
 
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.StatusLock,
-            EntityLockKey(body.EntityType, body.EntityId),
+            BuildEntityLockKey(body.EntityType, body.EntityId),
             Guid.NewGuid().ToString(),
             _configuration.LockTimeoutSeconds,
             lockCts.Token);
@@ -895,7 +909,7 @@ public partial class StatusService : IStatusService
         RemoveStatusRequest body, CancellationToken cancellationToken)
     {
         var instance = await _instanceStore.GetAsync(
-            InstanceIdKey(body.StatusInstanceId), cancellationToken);
+            BuildInstanceIdKey(body.StatusInstanceId), cancellationToken);
 
         if (instance == null)
         {
@@ -908,7 +922,7 @@ public partial class StatusService : IStatusService
 
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.StatusLock,
-            EntityLockKey(instance.EntityType, instance.EntityId),
+            BuildEntityLockKey(instance.EntityType, instance.EntityId),
             Guid.NewGuid().ToString(),
             _configuration.LockTimeoutSeconds,
             lockCts.Token);
@@ -934,7 +948,7 @@ public partial class StatusService : IStatusService
 
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.StatusLock,
-            EntityLockKey(body.EntityType, body.EntityId),
+            BuildEntityLockKey(body.EntityType, body.EntityId),
             Guid.NewGuid().ToString(),
             _configuration.LockTimeoutSeconds,
             lockCts.Token);
@@ -958,8 +972,17 @@ public partial class StatusService : IStatusService
         var removed = 0;
         foreach (var entry in result.Items)
         {
-            await RemoveInstanceInternalAsync(entry.Value, StatusRemoveReason.SourceRemoved, cancellationToken);
-            removed++;
+            try
+            {
+                await RemoveInstanceInternalAsync(entry.Value, StatusRemoveReason.SourceRemoved, cancellationToken);
+                removed++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to remove status instance {StatusInstanceId} during source removal",
+                    entry.Value.StatusInstanceId);
+            }
         }
 
         return (StatusCodes.OK, new RemoveStatusesResponse { StatusesRemoved = removed });
@@ -976,7 +999,7 @@ public partial class StatusService : IStatusService
 
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.StatusLock,
-            EntityLockKey(body.EntityType, body.EntityId),
+            BuildEntityLockKey(body.EntityType, body.EntityId),
             Guid.NewGuid().ToString(),
             _configuration.LockTimeoutSeconds,
             lockCts.Token);
@@ -991,7 +1014,7 @@ public partial class StatusService : IStatusService
             new QueryCondition { Path = "$.StatusInstanceId", Operator = QueryOperator.Exists, Value = true },
             new QueryCondition { Path = "$.EntityId", Operator = QueryOperator.Equals, Value = body.EntityId },
             new QueryCondition { Path = "$.EntityType", Operator = QueryOperator.Equals, Value = body.EntityType },
-            new QueryCondition { Path = "$.Category", Operator = QueryOperator.Equals, Value = body.Category.ToString() }
+            new QueryCondition { Path = "$.Category", Operator = QueryOperator.Equals, Value = body.Category }
         };
 
         var result = await _instanceQueryStore.JsonQueryPagedAsync(
@@ -1000,8 +1023,17 @@ public partial class StatusService : IStatusService
         var removed = 0;
         foreach (var entry in result.Items)
         {
-            await RemoveInstanceInternalAsync(entry.Value, body.Reason, cancellationToken);
-            removed++;
+            try
+            {
+                await RemoveInstanceInternalAsync(entry.Value, body.Reason, cancellationToken);
+                removed++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to remove status instance {StatusInstanceId} during category cleanse",
+                    entry.Value.StatusInstanceId);
+            }
         }
 
         // Publish cleansed event for the batch operation
@@ -1122,7 +1154,7 @@ public partial class StatusService : IStatusService
         GetStatusRequest body, CancellationToken cancellationToken)
     {
         var instance = await _instanceStore.GetAsync(
-            InstanceIdKey(body.StatusInstanceId), cancellationToken);
+            BuildInstanceIdKey(body.StatusInstanceId), cancellationToken);
 
         if (instance == null)
         {
@@ -1186,8 +1218,6 @@ public partial class StatusService : IStatusService
 
         return (StatusCodes.OK, new GetEffectsResponse
         {
-            EntityId = body.EntityId,
-            EntityType = body.EntityType,
             ItemBasedCount = activeStatuses.Count,
             SeedDerivedCount = seedDerivedCount,
             Effects = effects
@@ -1204,8 +1234,6 @@ public partial class StatusService : IStatusService
         {
             return (StatusCodes.OK, new SeedEffectsResponse
             {
-                EntityId = body.EntityId,
-                EntityType = body.EntityType,
                 Effects = new List<SeedEffectEntry>()
             });
         }
@@ -1224,8 +1252,6 @@ public partial class StatusService : IStatusService
 
         return (StatusCodes.OK, new SeedEffectsResponse
         {
-            EntityId = body.EntityId,
-            EntityType = body.EntityType,
             Effects = effects
         });
     }
@@ -1289,10 +1315,10 @@ public partial class StatusService : IStatusService
 
                 // Delete instance record
                 await _instanceStore.DeleteAsync(
-                    InstanceIdKey(instance.StatusInstanceId), cancellationToken);
+                    BuildInstanceIdKey(instance.StatusInstanceId), cancellationToken);
                 statusesRemoved++;
 
-                // Publish status.removed lifecycle event per FOUNDATION TENETS (T28 requirement #4)
+                // Publish status.removed lifecycle event per FOUNDATION TENETS
                 try
                 {
                     await _messageBus.PublishStatusRemovedAsync(
@@ -1332,9 +1358,9 @@ public partial class StatusService : IStatusService
 
             // Delete container records (dual keys)
             await _containerStore.DeleteAsync(
-                ContainerIdKey(container.ContainerId), cancellationToken);
+                BuildContainerIdKey(container.ContainerId), cancellationToken);
             await _containerStore.DeleteAsync(
-                ContainerEntityKey(container.EntityId, container.EntityType, container.GameServiceId),
+                BuildContainerEntityKey(container.EntityId, container.EntityType, container.GameServiceId),
                 cancellationToken);
             containersDeleted++;
         }
@@ -1390,7 +1416,7 @@ public partial class StatusService : IStatusService
                 // Update expiration on existing
                 existing.ExpiresAt = CalculateExpiry(body, template);
                 await _instanceStore.SaveAsync(
-                    InstanceIdKey(existing.StatusInstanceId), existing, cancellationToken: cancellationToken);
+                    BuildInstanceIdKey(existing.StatusInstanceId), existing, cancellationToken: cancellationToken);
                 await InvalidateActiveCacheAsync(body.EntityId, body.EntityType, cancellationToken);
 
                 await _messageBus.PublishStatusStackedAsync(
@@ -1411,7 +1437,6 @@ public partial class StatusService : IStatusService
                 await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
                     new StatusEffectChangedClientEvent
                     {
-                        EventName = "status.effect.changed",
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         ChangeType = StatusChangeType.Stacked,
@@ -1452,7 +1477,7 @@ public partial class StatusService : IStatusService
                     existing.ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(body.DurationOverrideSeconds.Value);
                 }
                 await _instanceStore.SaveAsync(
-                    InstanceIdKey(existing.StatusInstanceId), existing, cancellationToken: cancellationToken);
+                    BuildInstanceIdKey(existing.StatusInstanceId), existing, cancellationToken: cancellationToken);
                 await InvalidateActiveCacheAsync(body.EntityId, body.EntityType, cancellationToken);
 
                 await _messageBus.PublishStatusStackedAsync(
@@ -1473,7 +1498,6 @@ public partial class StatusService : IStatusService
                 await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
                     new StatusEffectChangedClientEvent
                     {
-                        EventName = "status.effect.changed",
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         ChangeType = StatusChangeType.Stacked,
@@ -1627,7 +1651,7 @@ public partial class StatusService : IStatusService
         };
 
         // Save instance
-        await _instanceStore.SaveAsync(InstanceIdKey(instanceId), instance, cancellationToken: cancellationToken);
+        await _instanceStore.SaveAsync(BuildInstanceIdKey(instanceId), instance, cancellationToken: cancellationToken);
 
         // Invalidate active cache
         await InvalidateActiveCacheAsync(body.EntityId, body.EntityType, cancellationToken);
@@ -1654,7 +1678,6 @@ public partial class StatusService : IStatusService
         await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
             new StatusEffectChangedClientEvent
             {
-                EventName = "status.effect.changed",
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 ChangeType = StatusChangeType.Granted,
@@ -1692,7 +1715,7 @@ public partial class StatusService : IStatusService
         Guid entityId, EntityType entityType, Guid gameServiceId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrCreateContainerAsync");
-        var entityKey = ContainerEntityKey(entityId, entityType, gameServiceId);
+        var entityKey = BuildContainerEntityKey(entityId, entityType, gameServiceId);
         var existing = await _containerStore.GetAsync(entityKey, cancellationToken);
         if (existing != null)
         {
@@ -1735,7 +1758,7 @@ public partial class StatusService : IStatusService
         };
 
         // Save with dual keys
-        await _containerStore.SaveAsync(ContainerIdKey(container.ContainerId), container, cancellationToken: cancellationToken);
+        await _containerStore.SaveAsync(BuildContainerIdKey(container.ContainerId), container, cancellationToken: cancellationToken);
         await _containerStore.SaveAsync(entityKey, container, cancellationToken: cancellationToken);
 
         return container;
@@ -1786,7 +1809,7 @@ public partial class StatusService : IStatusService
         }
 
         // Delete instance record
-        await _instanceStore.DeleteAsync(InstanceIdKey(instance.StatusInstanceId), cancellationToken);
+        await _instanceStore.DeleteAsync(BuildInstanceIdKey(instance.StatusInstanceId), cancellationToken);
 
         // Invalidate active cache
         await InvalidateActiveCacheAsync(instance.EntityId, instance.EntityType, cancellationToken);
@@ -1809,7 +1832,6 @@ public partial class StatusService : IStatusService
         await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
             new StatusEffectChangedClientEvent
             {
-                EventName = "status.effect.changed",
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 ChangeType = reason == StatusRemoveReason.Cleansed
@@ -1873,7 +1895,7 @@ public partial class StatusService : IStatusService
         Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrBuildActiveCacheAsync");
-        var cacheKey = ActiveCacheKey(entityId, entityType);
+        var cacheKey = BuildActiveCacheKey(entityId, entityType);
         var cached = await _activeCacheStore.GetAsync(cacheKey, cancellationToken);
         if (cached != null)
         {
@@ -1895,53 +1917,98 @@ public partial class StatusService : IStatusService
 
         foreach (var entry in result.Items)
         {
-            var instance = entry.Value;
-
-            // Lazy expiration: clean up expired statuses found during rebuild
-            if (instance.ExpiresAt.HasValue && instance.ExpiresAt.Value <= now)
+            try
             {
-                await _messageBus.PublishStatusExpiredAsync(
-                    new StatusExpiredEvent
-                    {
-                        EventId = Guid.NewGuid(),
-                        Timestamp = now,
-                        EntityId = instance.EntityId,
-                        EntityType = instance.EntityType,
-                        StatusTemplateCode = instance.StatusTemplateCode,
-                        StatusInstanceId = instance.StatusInstanceId
-                    },
-                    cancellationToken);
+                var instance = entry.Value;
 
-                // Push client event for expiration
-                await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
-                    new StatusEffectChangedClientEvent
-                    {
-                        EventName = "status.effect.changed",
-                        EventId = Guid.NewGuid(),
-                        Timestamp = now,
-                        ChangeType = StatusChangeType.Expired,
-                        EntityId = instance.EntityId,
-                        EntityType = instance.EntityType,
-                        StatusTemplateCode = instance.StatusTemplateCode,
-                        StatusInstanceId = instance.StatusInstanceId,
-                        Category = instance.Category
-                    }, cancellationToken);
+                // Lazy expiration: clean up expired statuses found during rebuild
+                if (instance.ExpiresAt.HasValue && instance.ExpiresAt.Value <= now)
+                {
+                    await _messageBus.PublishStatusExpiredAsync(
+                        new StatusExpiredEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = now,
+                            EntityId = instance.EntityId,
+                            EntityType = instance.EntityType,
+                            StatusTemplateCode = instance.StatusTemplateCode,
+                            StatusInstanceId = instance.StatusInstanceId
+                        },
+                        cancellationToken);
 
-                // Remove expired instance (fire-and-forget the item deletion)
-                await _instanceStore.DeleteAsync(
-                    InstanceIdKey(instance.StatusInstanceId), cancellationToken);
-                continue;
+                    // Push client event for expiration
+                    await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
+                        new StatusEffectChangedClientEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = now,
+                            ChangeType = StatusChangeType.Expired,
+                            EntityId = instance.EntityId,
+                            EntityType = instance.EntityType,
+                            StatusTemplateCode = instance.StatusTemplateCode,
+                            StatusInstanceId = instance.StatusInstanceId,
+                            Category = instance.Category
+                        }, cancellationToken);
+
+                    // Destroy backing item instance (match RemoveInstanceInternalAsync compensation)
+                    try
+                    {
+                        await _itemClient.DestroyItemInstanceAsync(
+                            new DestroyItemInstanceRequest { InstanceId = instance.ItemInstanceId, Reason = DestroyReason.Destroyed },
+                            cancellationToken);
+                    }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex,
+                            "Failed to destroy item instance {ItemInstanceId} during lazy expiration of status {StatusInstanceId}",
+                            instance.ItemInstanceId, instance.StatusInstanceId);
+                    }
+
+                    // Cancel contract if contract-managed
+                    if (instance.ContractInstanceId.HasValue)
+                    {
+                        try
+                        {
+                            await _contractClient.TerminateContractInstanceAsync(
+                                new TerminateContractInstanceRequest
+                                {
+                                    ContractId = instance.ContractInstanceId.Value,
+                                    RequestingEntityId = instance.EntityId,
+                                    RequestingEntityType = instance.EntityType,
+                                    Reason = "status-expired"
+                                },
+                                cancellationToken);
+                        }
+                        catch (ApiException ex)
+                        {
+                            _logger.LogWarning(ex,
+                                "Failed to terminate contract {ContractInstanceId} during lazy expiration of status {StatusInstanceId}",
+                                instance.ContractInstanceId.Value, instance.StatusInstanceId);
+                        }
+                    }
+
+                    // Remove expired instance record
+                    await _instanceStore.DeleteAsync(
+                        BuildInstanceIdKey(instance.StatusInstanceId), cancellationToken);
+                    continue;
+                }
+
+                activeStatuses.Add(new CachedStatusEntry
+                {
+                    StatusInstanceId = instance.StatusInstanceId,
+                    StatusTemplateCode = instance.StatusTemplateCode,
+                    Category = instance.Category,
+                    StackCount = instance.StackCount,
+                    SourceId = instance.SourceId,
+                    ExpiresAt = instance.ExpiresAt
+                });
             }
-
-            activeStatuses.Add(new CachedStatusEntry
+            catch (Exception ex)
             {
-                StatusInstanceId = instance.StatusInstanceId,
-                StatusTemplateCode = instance.StatusTemplateCode,
-                Category = instance.Category,
-                StackCount = instance.StackCount,
-                SourceId = instance.SourceId,
-                ExpiresAt = instance.ExpiresAt
-            });
+                _logger.LogWarning(ex,
+                    "Failed to process status instance {StatusInstanceId} during active cache rebuild",
+                    entry.Value.StatusInstanceId);
+            }
         }
 
         var cache = new ActiveStatusCacheModel
@@ -1967,54 +2034,50 @@ public partial class StatusService : IStatusService
         Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrBuildSeedEffectsCacheAsync");
-        var cacheKey = SeedEffectsCacheKey(entityId, entityType);
+        var cacheKey = BuildSeedEffectsCacheKey(entityId, entityType);
         var cached = await _seedEffectsCacheStore.GetAsync(cacheKey, cancellationToken);
         if (cached != null)
         {
             return cached;
         }
 
-        // Build from Seed service
+        // Build from Seed service (L2 — hard dependency, constructor-injected per FOUNDATION TENETS)
         var effects = new List<CachedSeedEffect>();
-        var seedClient = _serviceProvider.GetService<ISeedClient>();
 
-        if (seedClient != null)
+        try
         {
-            try
+            var seedsResponse = await _seedClient.GetSeedsByOwnerAsync(
+                new GetSeedsByOwnerRequest
+                {
+                    OwnerId = entityId,
+                    OwnerType = entityType
+                },
+                cancellationToken);
+
+            foreach (var seed in seedsResponse.Seeds)
             {
-                var seedsResponse = await seedClient.GetSeedsByOwnerAsync(
-                    new GetSeedsByOwnerRequest
-                    {
-                        OwnerId = entityId,
-                        OwnerType = entityType
-                    },
+                var capsResponse = await _seedClient.GetCapabilityManifestAsync(
+                    new GetCapabilityManifestRequest { SeedId = seed.SeedId },
                     cancellationToken);
 
-                foreach (var seed in seedsResponse.Seeds)
+                foreach (var cap in capsResponse.Capabilities)
                 {
-                    var capsResponse = await seedClient.GetCapabilityManifestAsync(
-                        new GetCapabilityManifestRequest { SeedId = seed.SeedId },
-                        cancellationToken);
-
-                    foreach (var cap in capsResponse.Capabilities)
+                    effects.Add(new CachedSeedEffect
                     {
-                        effects.Add(new CachedSeedEffect
-                        {
-                            CapabilityCode = cap.CapabilityCode,
-                            Domain = cap.Domain,
-                            Fidelity = cap.Fidelity,
-                            SeedId = seed.SeedId,
-                            SeedTypeCode = seed.SeedTypeCode
-                        });
-                    }
+                        CapabilityCode = cap.CapabilityCode,
+                        Domain = cap.Domain,
+                        Fidelity = cap.Fidelity,
+                        SeedId = seed.SeedId,
+                        SeedTypeCode = seed.SeedTypeCode
+                    });
                 }
             }
-            catch (ApiException ex)
-            {
-                _logger.LogWarning(ex,
-                    "Failed to fetch seed capabilities for {EntityType} {EntityId}",
-                    entityType, entityId);
-            }
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex,
+                "Failed to fetch seed capabilities for {EntityType} {EntityId}",
+                entityType, entityId);
         }
 
         var cache = new SeedEffectsCacheModel
@@ -2043,7 +2106,7 @@ public partial class StatusService : IStatusService
         try
         {
             await _activeCacheStore.DeleteAsync(
-                ActiveCacheKey(entityId, entityType), cancellationToken);
+                BuildActiveCacheKey(entityId, entityType), cancellationToken);
         }
         catch (Exception ex)
         {
@@ -2070,7 +2133,7 @@ public partial class StatusService : IStatusService
         try
         {
             await _seedEffectsCacheStore.DeleteAsync(
-                SeedEffectsCacheKey(entityId, entityType), cancellationToken);
+                BuildSeedEffectsCacheKey(entityId, entityType), cancellationToken);
         }
         catch (Exception ex)
         {

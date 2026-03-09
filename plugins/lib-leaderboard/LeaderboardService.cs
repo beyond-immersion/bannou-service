@@ -185,7 +185,11 @@ public partial class LeaderboardService : ILeaderboardService
             SortOrder = definition.SortOrder.ToString(),
             UpdateMode = definition.UpdateMode.ToString(),
             IsSeasonal = definition.IsSeasonal,
-            IsPublic = definition.IsPublic
+            IsPublic = definition.IsPublic,
+            IsDeprecated = definition.IsDeprecated,
+            DeprecatedAt = definition.DeprecatedAt,
+            DeprecationReason = definition.DeprecationReason,
+            CreatedAt = definition.CreatedAt
         }, cancellationToken);
 
         return (StatusCodes.OK, MapToResponse(definition, 0));
@@ -250,6 +254,10 @@ public partial class LeaderboardService : ILeaderboardService
             var defKey = BuildDefinitionKey(body.GameServiceId, leaderboardId);
             var definition = await _definitionStore.GetAsync(defKey, cancellationToken);
             if (definition == null)
+            {
+                continue;
+            }
+            if (!body.IncludeDeprecated && definition.IsDeprecated)
             {
                 continue;
             }
@@ -332,6 +340,10 @@ public partial class LeaderboardService : ILeaderboardService
             UpdateMode = definition.UpdateMode.ToString(),
             IsSeasonal = definition.IsSeasonal,
             IsPublic = definition.IsPublic,
+            IsDeprecated = definition.IsDeprecated,
+            DeprecatedAt = definition.DeprecatedAt,
+            DeprecationReason = definition.DeprecationReason,
+            CreatedAt = definition.CreatedAt,
             ChangedFields = changedFields
         }, cancellationToken);
 
@@ -343,57 +355,38 @@ public partial class LeaderboardService : ILeaderboardService
     }
 
     /// <summary>
-    /// Implementation of DeleteLeaderboardDefinition operation.
-    /// Deletes a leaderboard definition and its data.
+    /// Implementation of DeprecateLeaderboardDefinition operation.
+    /// Deprecates a leaderboard definition (Category B — one-way, no undeprecate, no delete).
     /// </summary>
-    public async Task<StatusCodes> DeleteLeaderboardDefinitionAsync(DeleteLeaderboardDefinitionRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, LeaderboardDefinitionResponse?)> DeprecateLeaderboardDefinitionAsync(DeprecateLeaderboardDefinitionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Deleting leaderboard {LeaderboardId}", body.LeaderboardId);
-
+        using var activity = _telemetryProvider.StartActivity("bannou.leaderboard", "LeaderboardService.DeprecateLeaderboardDefinitionAsync");
 
         var key = BuildDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
         var definition = await _definitionStore.GetAsync(key, cancellationToken);
         if (definition == null)
         {
-            return StatusCodes.NotFound;
+            return (StatusCodes.NotFound, null);
         }
 
-        // Delete the definition
-        await _definitionStore.DeleteAsync(key, cancellationToken);
-
-
-
-        if (definition.IsSeasonal)
-        {
-            var seasonIndexKey = BuildSeasonIndexKey(body.GameServiceId, body.LeaderboardId);
-            var seasons = await _definitionStore.GetSetAsync<int>(seasonIndexKey, cancellationToken);
-
-            if (seasons.Count == 0 && definition.CurrentSeason.HasValue)
-            {
-                seasons = new List<int> { definition.CurrentSeason.Value };
-            }
-
-            foreach (var season in seasons)
-            {
-                var rankingKey = BuildRankingKey(body.GameServiceId, body.LeaderboardId, season);
-                await _rankingStore.SortedSetDeleteAsync(rankingKey, cancellationToken);
-            }
-
-            await _definitionStore.DeleteSetAsync(seasonIndexKey, cancellationToken);
-        }
-        else
+        // Per IMPLEMENTATION TENETS: idempotent deprecation — return OK when already deprecated
+        if (definition.IsDeprecated)
         {
             var rankingKey = BuildRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
-            await _rankingStore.SortedSetDeleteAsync(rankingKey, cancellationToken);
+            var count = await _rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+            return (StatusCodes.OK, MapToResponse(definition, count));
         }
 
-        await _definitionStore.RemoveFromSetAsync(
-            BuildDefinitionIndexKey(body.GameServiceId),
-            body.LeaderboardId,
-            cancellationToken);
+        var now = DateTimeOffset.UtcNow;
+        definition.IsDeprecated = true;
+        definition.DeprecatedAt = now;
+        definition.DeprecationReason = body.Reason;
 
-        await _messageBus.PublishLeaderboardDefinitionDeletedAsync(new LeaderboardDefinitionDeletedEvent
+        await _definitionStore.SaveAsync(key, definition, cancellationToken: cancellationToken);
+
+        // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
+        await _messageBus.PublishLeaderboardDefinitionUpdatedAsync(new LeaderboardDefinitionUpdatedEvent
         {
             GameServiceId = definition.GameServiceId,
             LeaderboardId = definition.LeaderboardId,
@@ -401,10 +394,19 @@ public partial class LeaderboardService : ILeaderboardService
             SortOrder = definition.SortOrder.ToString(),
             UpdateMode = definition.UpdateMode.ToString(),
             IsSeasonal = definition.IsSeasonal,
-            IsPublic = definition.IsPublic
+            IsPublic = definition.IsPublic,
+            IsDeprecated = definition.IsDeprecated,
+            DeprecatedAt = definition.DeprecatedAt,
+            DeprecationReason = definition.DeprecationReason,
+            CreatedAt = definition.CreatedAt,
+            ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
         }, cancellationToken);
 
-        return StatusCodes.OK;
+        _logger.LogInformation("Deprecated leaderboard {LeaderboardId}", body.LeaderboardId);
+
+        var entryRankingKey = BuildRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+        var entryCount = await _rankingStore.SortedSetCountAsync(entryRankingKey, cancellationToken);
+        return (StatusCodes.OK, MapToResponse(definition, entryCount));
     }
 
     /// <summary>
@@ -923,6 +925,9 @@ public partial class LeaderboardService : ILeaderboardService
             UpdateMode = definition.UpdateMode,
             IsSeasonal = definition.IsSeasonal,
             IsPublic = definition.IsPublic,
+            IsDeprecated = definition.IsDeprecated,
+            DeprecatedAt = definition.DeprecatedAt,
+            DeprecationReason = definition.DeprecationReason,
             ScoreType = definition.ScoreType,
             RatingType = definition.RatingType,
             CurrentSeason = definition.CurrentSeason,

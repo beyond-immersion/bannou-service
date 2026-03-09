@@ -7,6 +7,7 @@
 > **Layer**: L4 GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists. L4-audited (2026-03-03).
 > **Implementation Map**: [docs/maps/AGENCY.md](../maps/AGENCY.md)
+> **Short**: Guardian spirit progressive agency and UX manifest engine for player capability unlocking
 
 ---
 

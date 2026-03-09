@@ -50,6 +50,11 @@ public partial interface ICurrencyService : IBannouService
         Task<(StatusCodes, CurrencyDefinitionResponse?)> UpdateCurrencyDefinitionAsync(UpdateCurrencyDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DeprecateCurrencyDefinition operation
+        /// </summary>
+        Task<(StatusCodes, CurrencyDefinitionResponse?)> DeprecateCurrencyDefinitionAsync(DeprecateCurrencyDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// CreateWallet operation
         /// </summary>
         Task<(StatusCodes, WalletResponse?)> CreateWalletAsync(CreateWalletRequest body, CancellationToken cancellationToken = default(CancellationToken));

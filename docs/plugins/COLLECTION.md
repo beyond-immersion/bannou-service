@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: collection-entry-templates (MySQL), collection-instances (MySQL), collection-area-content-configs (MySQL), collection-cache (Redis), collection-lock (Redis)
 > **Implementation Map**: [docs/maps/COLLECTION.md](../maps/COLLECTION.md)
+> **Short**: Universal content unlock and archive system with DI-dispatched unlock listeners
 
 ---
 

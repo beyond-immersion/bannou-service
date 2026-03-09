@@ -23,10 +23,10 @@ info:
       description: Published when a new contract template is created
     - topic: contract.template.updated
       event: ContractTemplateUpdatedEvent
-      description: Published when a contract template is updated
+      description: Published when a contract template is updated (including deprecation via changedFields)
     - topic: contract.template.deleted
       event: ContractTemplateDeletedEvent
-      description: Published when a contract template is soft-deleted
+      description: Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.
 
     - topic: contract.instance.created
       event: ContractInstanceCreatedEvent
@@ -123,6 +123,11 @@ x-lifecycle:
       defaultEnforcementMode: { $ref: 'contract-api.yaml#/components/schemas/EnforcementMode', required: true, description: "Default enforcement mode for instances" }
       transferable: { type: boolean, required: true, description: "Whether contracts can be transferred" }
       isActive: { type: boolean, required: true, description: "Whether template is active" }
+      isDeprecated: { type: boolean, required: true, description: "Whether template is deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the template was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
+    sensitive: []
 
   ContractInstance:
     model:

@@ -443,8 +443,7 @@ paths:
       description: |
         Called by Resource service during character compression.
         Returns scenario participations, active arcs, and completion counts for archival.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -587,6 +586,34 @@ components:
         RelationshipCreate: Create relationship between entities
         RelationshipEnd: End existing relationship
         Custom: Custom mutation (not executed server-side)
+
+    StorylineExperienceType:
+      type: string
+      enum:
+      - Trauma
+      - Betrayal
+      - Loss
+      - Victory
+      - Friendship
+      - Redemption
+      - Corruption
+      - Enlightenment
+      - Sacrifice
+      description: Storyline-owned subset of character-personality ExperienceType for scenario mutations
+
+    StorylineBackstoryElementType:
+      type: string
+      enum:
+      - Origin
+      - Occupation
+      - Training
+      - Trauma
+      - Achievement
+      - Secret
+      - Goal
+      - Fear
+      - Belief
+      description: Storyline-owned subset of character-history BackstoryElementType for scenario mutations
 
     # =========================================================================
     # Request Models
@@ -804,16 +831,11 @@ components:
       type: object
       additionalProperties: false
       description: Retrieved plan
-      required:
-      - found
       properties:
-        found:
-          type: boolean
-          description: Whether the plan was found
         plan:
           $ref: '#/components/schemas/ComposeResponse'
           nullable: true
-          description: The plan (null if not found)
+          description: The composed plan
 
     ListPlansResponse:
       type: object
@@ -1347,9 +1369,9 @@ components:
           $ref: '#/components/schemas/MutationType'
           description: Type of mutation to apply
         experienceType:
-          type: string
+          $ref: '#/components/schemas/StorylineExperienceType'
           nullable: true
-          description: Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)
+          description: Experience type for PersonalityEvolve mutations
         experienceIntensity:
           type: number
           format: float
@@ -1358,9 +1380,9 @@ components:
           nullable: true
           description: Experience intensity for PersonalityEvolve (0.0-1.0)
         backstoryElementType:
-          type: string
+          $ref: '#/components/schemas/StorylineBackstoryElementType'
           nullable: true
-          description: Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)
+          description: Backstory element type for BackstoryAdd mutations
         backstoryKey:
           type: string
           nullable: true
@@ -1513,16 +1535,11 @@ components:
       type: object
       additionalProperties: false
       description: Response with scenario definition
-      required:
-      - found
       properties:
-        found:
-          type: boolean
-          description: Whether the scenario was found
         scenario:
           $ref: '#/components/schemas/ScenarioDefinition'
           nullable: true
-          description: The scenario definition (null if not found)
+          description: The scenario definition
 
     ListScenarioDefinitionsRequest:
       type: object

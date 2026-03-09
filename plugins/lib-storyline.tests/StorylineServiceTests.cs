@@ -10,6 +10,8 @@ using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Storyline;
+using CharacterHistory = BeyondImmersion.BannouService.CharacterHistory;
+using CharacterPersonality = BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
@@ -20,6 +22,12 @@ namespace BeyondImmersion.BannouService.Storyline.Tests;
 public class StorylineServiceTests
 {
     #region Constructor Validation
+
+    [Fact]
+    public void StorylineService_HasValidConstructorPattern()
+    {
+        ServiceConstructorValidator.ValidateServiceConstructor<StorylineService>();
+    }
 
     #endregion
 
@@ -205,6 +213,26 @@ public class StorylineServiceTests
     [Fact]
     public void EffectCardinality_SchemaAndSdk_HaveFullCoverage() =>
         EnumMappingValidator.AssertFullCoverage<Storyline.EffectCardinality, EffectCardinality>();
+
+    /// <summary>
+    /// Validates that the Storyline-owned ExperienceType enum is a subset of the
+    /// CharacterPersonality ExperienceType enum (A2 boundary mapping via MapByName).
+    /// </summary>
+    [Fact]
+    public void StorylineExperienceType_IsSubsetOf_CharacterPersonalityExperienceType() =>
+        EnumMappingValidator.AssertSourceCoveredByTarget<
+            Storyline.StorylineExperienceType,
+            CharacterPersonality.ExperienceType>();
+
+    /// <summary>
+    /// Validates that the Storyline-owned BackstoryElementType enum is a subset of the
+    /// CharacterHistory BackstoryElementType enum (A2 boundary mapping via MapByName).
+    /// </summary>
+    [Fact]
+    public void StorylineBackstoryElementType_IsSubsetOf_CharacterHistoryBackstoryElementType() =>
+        EnumMappingValidator.AssertSourceCoveredByTarget<
+            Storyline.StorylineBackstoryElementType,
+            CharacterHistory.BackstoryElementType>();
 
     /// <summary>
     /// Validates that MapByName round-trips correctly for all ArcType values.
@@ -636,24 +664,21 @@ public class GetPlanTests
     }
 
     [Fact]
-    public void GetPlanResponse_IndicatesNotFound()
+    public void GetPlanResponse_WithNullPlan()
     {
         var response = new GetPlanResponse
         {
-            Found = false,
             Plan = null
         };
 
-        Assert.False(response.Found);
         Assert.Null(response.Plan);
     }
 
     [Fact]
-    public void GetPlanResponse_IndicatesFound()
+    public void GetPlanResponse_WithPlan()
     {
         var response = new GetPlanResponse
         {
-            Found = true,
             Plan = new ComposeResponse
             {
                 PlanId = Guid.NewGuid(),
@@ -667,7 +692,6 @@ public class GetPlanTests
             }
         };
 
-        Assert.True(response.Found);
         Assert.NotNull(response.Plan);
         Assert.True(response.Plan.Cached);
     }

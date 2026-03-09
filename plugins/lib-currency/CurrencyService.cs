@@ -205,6 +205,9 @@ public partial class CurrencyService : ICurrencyService
             Scope = model.Scope,
             Precision = model.Precision,
             IsActive = model.IsActive,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = now
         }, cancellationToken);
 
@@ -242,6 +245,7 @@ public partial class CurrencyService : ICurrencyService
             var model = await _definitionStore.GetAsync($"{DEF_PREFIX}{id}", cancellationToken);
             if (model is null) continue;
             if (!body.IncludeInactive && !model.IsActive) continue;
+            if (!body.IncludeDeprecated && model.IsDeprecated) continue;
             if (body.Scope is not null && model.Scope != body.Scope) continue;
             if (body.IsBaseCurrency is not null && model.IsBaseCurrency != body.IsBaseCurrency) continue;
             if (body.RealmId is not null)
@@ -307,10 +311,65 @@ public partial class CurrencyService : ICurrencyService
             Scope = model.Scope,
             Precision = model.Precision,
             IsActive = model.IsActive,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = model.CreatedAt,
             ModifiedAt = model.ModifiedAt
         }, cancellationToken);
 
+        return (StatusCodes.OK, MapDefinitionToResponse(model));
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, CurrencyDefinitionResponse?)> DeprecateCurrencyDefinitionAsync(
+        DeprecateCurrencyDefinitionRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.DeprecateCurrencyDefinitionAsync");
+
+        var key = $"{DEF_PREFIX}{body.DefinitionId}";
+        var model = await _definitionStore.GetAsync(key, cancellationToken);
+
+        if (model is null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Per IMPLEMENTATION TENETS: idempotent deprecation — return OK when already deprecated
+        if (model.IsDeprecated)
+        {
+            return (StatusCodes.OK, MapDefinitionToResponse(model));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        model.IsDeprecated = true;
+        model.DeprecatedAt = now;
+        model.DeprecationReason = body.Reason;
+        model.ModifiedAt = now;
+
+        await _definitionStore.SaveAsync(key, model, cancellationToken: cancellationToken);
+
+        // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
+        await _messageBus.PublishCurrencyDefinitionUpdatedAsync(new CurrencyDefinitionUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            DefinitionId = model.DefinitionId,
+            Code = model.Code,
+            Name = model.Name,
+            Scope = model.Scope,
+            Precision = model.Precision,
+            IsActive = model.IsActive,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            CreatedAt = model.CreatedAt,
+            ModifiedAt = model.ModifiedAt,
+            ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
+        }, cancellationToken);
+
+        _logger.LogInformation("Deprecated currency definition: {DefinitionId}", body.DefinitionId);
         return (StatusCodes.OK, MapDefinitionToResponse(model));
     }
 
@@ -2622,6 +2681,9 @@ public partial class CurrencyService : ICurrencyService
             IconAssetId = m.IconAssetId,
             DisplayFormat = m.DisplayFormat,
             IsActive = m.IsActive,
+            IsDeprecated = m.IsDeprecated,
+            DeprecatedAt = m.DeprecatedAt,
+            DeprecationReason = m.DeprecationReason,
             CreatedAt = m.CreatedAt,
             ModifiedAt = m.ModifiedAt
         };

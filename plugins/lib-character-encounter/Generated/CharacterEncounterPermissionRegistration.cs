@@ -77,9 +77,9 @@ public static class CharacterEncounterPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/character-encounter/type/delete",
+            Path = "/character-encounter/type/deprecate",
             Method = ServiceEndpointMethod.Post,
-            Description = "deleteEncounterType",
+            Description = "deprecateEncounterType",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

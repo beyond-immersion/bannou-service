@@ -23,7 +23,14 @@ the matching *-api.yaml schema (if one exists) for version and endpoint counts.
 Services without deep dives are excluded. Services without schemas are included
 with no version or endpoint information.
 
-Output: docs/GENERATED-SERVICE-DETAILS.md
+Also generates GENERATED-COMPOSITION-REFERENCE.md by combining:
+- The ## Composition Reference section from docs/BANNOU-ASPIRATIONS.md
+- The ## Overview section from docs/reference/ORCHESTRATION-PATTERNS.md
+- The ## Overview section from docs/reference/SERVICE-HIERARCHY.md
+- A service registry table built from > **Short**: fields in deep dive headers
+
+Output: docs/GENERATED-SERVICE-DETAILS.md, docs/GENERATED-*-SERVICE-DETAILS.md,
+        docs/GENERATED-COMPOSITION-REFERENCE.md
 
 Usage:
     python3 scripts/generate-service-details-docs.py
@@ -67,6 +74,21 @@ def to_title_case(name: str) -> str:
     return ' '.join(p.capitalize() for p in parts)
 
 
+"""Map layer display variations to canonical layer names."""
+LAYER_ALIASES = {
+    'Infrastructure': 'Infrastructure',
+    'L0 Infrastructure': 'Infrastructure',
+    'AppFoundation': 'AppFoundation',
+    'L1 AppFoundation': 'AppFoundation',
+    'GameFoundation': 'GameFoundation',
+    'L2 GameFoundation': 'GameFoundation',
+    'AppFeatures': 'AppFeatures',
+    'L3 AppFeatures': 'AppFeatures',
+    'GameFeatures': 'GameFeatures',
+    'L4 GameFeatures': 'GameFeatures',
+}
+
+
 def extract_layer(deep_dive_file: Path) -> str:
     """Extract the > **Layer**: value from a deep dive document header."""
     try:
@@ -76,7 +98,8 @@ def extract_layer(deep_dive_file: Path) -> str:
 
     for line in content.split('\n')[:15]:  # Layer is always in the header
         if line.startswith('> **Layer**:'):
-            return line.split(':', 1)[1].strip()
+            raw = line.split(':', 1)[1].strip()
+            return LAYER_ALIASES.get(raw, raw)
     return ''
 
 
@@ -110,6 +133,53 @@ def extract_deep_dive_overview(deep_dive_file: Path) -> str:
     return '\n'.join(overview_lines)
 
 
+def extract_short(deep_dive_file: Path) -> str:
+    """Extract the > **Short**: value from a deep dive document header."""
+    try:
+        content = deep_dive_file.read_text()
+    except Exception:
+        return ''
+
+    for line in content.split('\n')[:25]:  # Short is in the header blockquote
+        if line.startswith('> **Short**:'):
+            return line.split(':', 1)[1].strip()
+    return ''
+
+
+def extract_section(file_path: Path, section_heading: str) -> str:
+    """Extract a ## section from a markdown file (content between heading and next ## or EOF)."""
+    try:
+        content = file_path.read_text()
+    except Exception:
+        return ''
+
+    lines = content.split('\n')
+    in_section = False
+    section_lines = []
+
+    for line in lines:
+        if line.strip() == section_heading:
+            in_section = True
+            continue
+        if in_section:
+            # Stop at next ## heading or end-of-file marker
+            if line.startswith('## '):
+                break
+            section_lines.append(line)
+
+    # Strip leading/trailing blank lines and trailing --- separators
+    while section_lines and not section_lines[0].strip():
+        section_lines.pop(0)
+    while section_lines and not section_lines[-1].strip():
+        section_lines.pop()
+    while section_lines and section_lines[-1].strip() == '---':
+        section_lines.pop()
+        while section_lines and not section_lines[-1].strip():
+            section_lines.pop()
+
+    return '\n'.join(section_lines)
+
+
 def scan_deep_dives(plugins_dir: Path) -> dict:
     """Scan all deep dive documents and extract service keys and overviews."""
     services = {}
@@ -129,10 +199,15 @@ def scan_deep_dives(plugins_dir: Path) -> dict:
         if not layer:
             print(f"Warning: No > **Layer**: line in {md_file.name}")
 
+        short = extract_short(md_file)
+        if not short:
+            print(f"Warning: No > **Short**: line in {md_file.name}")
+
         services[service_key] = {
             'display_name': to_title_case(service_key),
             'overview': overview,
             'layer': layer,
+            'short': short,
         }
 
     return services
@@ -308,6 +383,124 @@ def generate_layer_markdown(layer: str, services: dict, schemas: dict, maps_dir:
     return '\n'.join(lines)
 
 
+"""Layer short codes for the service registry table."""
+LAYER_SHORT = {
+    'Infrastructure': 'L0',
+    'AppFoundation': 'L1',
+    'GameFoundation': 'L2',
+    'AppFeatures': 'L3',
+    'GameFeatures': 'L4',
+}
+
+"""Layer sort order for the service registry table."""
+LAYER_ORDER = {
+    'Infrastructure': 0,
+    'AppFoundation': 1,
+    'GameFoundation': 2,
+    'AppFeatures': 3,
+    'GameFeatures': 4,
+}
+
+
+def generate_composition_reference(
+    services: dict,
+    schemas: dict,
+    repo_root: Path,
+) -> str:
+    """Generate the composition reference document from three sources."""
+    lines = [
+        "# Bannou Composition Reference",
+        "",
+        "> **Sources**: `docs/BANNOU-ASPIRATIONS.md`, `docs/reference/ORCHESTRATION-PATTERNS.md`, `docs/plugins/*.md`",
+        "> **Do not edit manually** - regenerate with `make generate-docs`",
+        "",
+    ]
+
+    # 1. Extract ## Composition Reference from BANNOU-ASPIRATIONS.md
+    aspirations_file = repo_root / 'docs' / 'BANNOU-ASPIRATIONS.md'
+    composition_content = extract_section(aspirations_file, '## Composition Reference')
+    if composition_content:
+        lines.append("## Composition Model")
+        lines.append("")
+        # Skip the extraction notice blockquote if present
+        content_lines = composition_content.split('\n')
+        skip = True
+        for cl in content_lines:
+            if skip and cl.startswith('>'):
+                continue
+            if skip and not cl.strip():
+                skip = False
+                continue
+            skip = False
+            lines.append(cl)
+        lines.append("")
+    else:
+        print("Warning: No ## Composition Reference section found in BANNOU-ASPIRATIONS.md")
+
+    # 2. Extract ## Overview from ORCHESTRATION-PATTERNS.md
+    orchestration_file = repo_root / 'docs' / 'reference' / 'ORCHESTRATION-PATTERNS.md'
+    orchestration_content = extract_section(orchestration_file, '## Overview')
+    if orchestration_content:
+        lines.append("---")
+        lines.append("")
+        lines.append("## Orchestration Patterns")
+        lines.append("")
+        # Skip the extraction notice blockquote if present
+        content_lines = orchestration_content.split('\n')
+        skip = True
+        for cl in content_lines:
+            if skip and cl.startswith('>'):
+                continue
+            if skip and not cl.strip():
+                skip = False
+                continue
+            skip = False
+            lines.append(cl)
+        lines.append("")
+    else:
+        print("Warning: No ## Overview section found in ORCHESTRATION-PATTERNS.md")
+
+    # 3. Build service registry table from Short fields
+    lines.append("---")
+    lines.append("")
+    lines.append("## Service Registry")
+    lines.append("")
+
+    total_endpoints = 0
+    service_count = 0
+
+    lines.append("| Service | Layer | Role | EP |")
+    lines.append("|---------|-------|------|----|")
+
+    # Sort by layer order, then alphabetically within layer
+    sorted_services = sorted(
+        services.items(),
+        key=lambda x: (LAYER_ORDER.get(x[1].get('layer', ''), 99), x[0])
+    )
+
+    for service_key, svc in sorted_services:
+        service_count += 1
+        layer = LAYER_SHORT.get(svc.get('layer', ''), '?')
+        short = svc.get('short', svc['display_name'])
+        schema = schemas.get(service_key)
+        ep = str(schema['endpoint_count']) if schema else '—'
+        if schema:
+            total_endpoints += schema['endpoint_count']
+        lines.append(f"| {svc['display_name']} | {layer} | {short} | {ep} |")
+
+    lines.append("")
+    lines.append(f"**{service_count} services, {total_endpoints} endpoints**")
+    lines.append("")
+    lines.append(f"For full per-service details: `docs/GENERATED-*-SERVICE-DETAILS.md`")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+    lines.append("*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*")
+    lines.append("")
+
+    return '\n'.join(lines)
+
+
 def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
@@ -353,6 +546,13 @@ def main():
             if k in schemas and schemas[k].get('endpoint_count')
         )
         print(f"Generated {layer_file} with {len(layer_services)} services and {layer_endpoints} endpoints")
+
+    # Generate composition reference (combines ASPIRATIONS + ORCHESTRATION-PATTERNS + service registry)
+    comp_markdown = generate_composition_reference(services, schemas, repo_root)
+    comp_file = repo_root / 'docs' / 'GENERATED-COMPOSITION-REFERENCE.md'
+    with open(comp_file, 'w') as f:
+        f.write(comp_markdown)
+    print(f"Generated {comp_file} with {len(services)} services in registry")
 
 
 if __name__ == '__main__':

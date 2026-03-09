@@ -93,6 +93,9 @@ internal class CurrencyDefinitionModel
     public Guid? IconAssetId { get; set; }
     public string? DisplayFormat { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsDeprecated { get; set; }
+    public DateTimeOffset? DeprecatedAt { get; set; }
+    public string? DeprecationReason { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? ModifiedAt { get; set; }
 }

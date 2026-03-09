@@ -6,6 +6,7 @@
 > **Layer**: AppFeatures
 > **State Store**: asset-statestore (Redis), asset-processor-pool (Redis)
 > **Implementation Map**: [docs/maps/ASSET.md](../maps/ASSET.md)
+> **Short**: Binary asset storage (MinIO/S3) with bundles, pre-signed URLs, and transcoding pool
 
 ---
 

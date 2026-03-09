@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Leaderboard;
 
@@ -94,19 +109,20 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
 
 
     /// <summary>
-    /// Delete leaderboard definition
+    /// Deprecate leaderboard definition
     /// </summary>
 
     /// <remarks>
-    /// Delete a leaderboard and all its scores.
-    /// <br/>Developer-only endpoint. This action is irreversible.
+    /// Deprecate a leaderboard definition (Category B — one-way, no undeprecate, no delete).
+    /// <br/>Existing scores remain queryable; new score submissions to deprecated leaderboards
+    /// <br/>are rejected. Idempotent: returns OK if already deprecated.
     /// </remarks>
 
 
 
-    /// <returns>Leaderboard deleted successfully</returns>
+    /// <returns>Leaderboard deprecated successfully (or already deprecated)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteLeaderboardDefinition(DeleteLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardDefinitionResponse>> DeprecateLeaderboardDefinition(DeprecateLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -468,47 +484,48 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
     }
 
     /// <summary>
-    /// Delete leaderboard definition
+    /// Deprecate leaderboard definition
     /// </summary>
     /// <remarks>
-    /// Delete a leaderboard and all its scores.
-    /// <br/>Developer-only endpoint. This action is irreversible.
+    /// Deprecate a leaderboard definition (Category B — one-way, no undeprecate, no delete).
+    /// <br/>Existing scores remain queryable; new score submissions to deprecated leaderboards
+    /// <br/>are rejected. Idempotent: returns OK if already deprecated.
     /// </remarks>
-    /// <returns>Leaderboard deleted successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("leaderboard/definition/delete")]
+    /// <returns>Leaderboard deprecated successfully (or already deprecated)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("leaderboard/definition/deprecate")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteLeaderboardDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaderboardDefinitionResponse>> DeprecateLeaderboardDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateLeaderboardDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
             "bannou.leaderboard",
-            "LeaderboardController.DeleteLeaderboardDefinition",
+            "LeaderboardController.DeprecateLeaderboardDefinition",
             System.Diagnostics.ActivityKind.Server);
-        activity_?.SetTag("http.route", "leaderboard/definition/delete");
+        activity_?.SetTag("http.route", "leaderboard/definition/deprecate");
         try
         {
 
-            var statusCode = await _implementation.DeleteLeaderboardDefinitionAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode);
+            var (statusCode, result) = await _implementation.DeprecateLeaderboardDefinitionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/definition/delete");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/definition/deprecate");
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:leaderboard/definition/delete");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:leaderboard/definition/deprecate");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "leaderboard",
-                "DeleteLeaderboardDefinition",
+                "DeprecateLeaderboardDefinition",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:leaderboard/definition/delete",
+                endpoint: "post:leaderboard/definition/deprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

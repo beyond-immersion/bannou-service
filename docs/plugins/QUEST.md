@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: quest-definition-statestore (MySQL), quest-instance-statestore (MySQL), quest-objective-progress (Redis), quest-definition-cache (Redis), quest-character-index (Redis), quest-cooldown (Redis)
 > **Implementation Map**: [docs/maps/QUEST.md](../maps/QUEST.md)
+> **Short**: Objective-based progression as thin orchestration over Contract with prerequisite provider extensibility
 
 ---
 

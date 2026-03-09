@@ -107,9 +107,9 @@ public static class LicensePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/license/board-template/delete",
+            Path = "/license/board-template/deprecate",
             Method = ServiceEndpointMethod.Post,
-            Description = "deleteBoardTemplate",
+            Description = "deprecateBoardTemplate",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

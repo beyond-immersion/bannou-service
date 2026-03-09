@@ -54,12 +54,12 @@ public partial class StatusGrantedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: status.granted
+    /// Event type identifier: status.instance.granted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "status.granted";
+    public override string EventName { get; set; } = "status.instance.granted";
 
     /// <summary>
     /// Entity that received the status effect
@@ -108,6 +108,7 @@ public partial class StatusGrantedEvent : BaseServiceEvent
     /// Current stack count after grant
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stackCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int StackCount { get; set; } = default!;
 
     /// <summary>
@@ -141,12 +142,12 @@ public partial class StatusRemovedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: status.removed
+    /// Event type identifier: status.instance.removed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "status.removed";
+    public override string EventName { get; set; } = "status.instance.removed";
 
     /// <summary>
     /// Entity that lost the status effect
@@ -201,12 +202,12 @@ public partial class StatusExpiredEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: status.expired
+    /// Event type identifier: status.instance.expired
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "status.expired";
+    public override string EventName { get; set; } = "status.instance.expired";
 
     /// <summary>
     /// Entity whose status expired
@@ -252,12 +253,12 @@ public partial class StatusStackedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: status.stacked
+    /// Event type identifier: status.instance.stacked
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "status.stacked";
+    public override string EventName { get; set; } = "status.instance.stacked";
 
     /// <summary>
     /// Entity whose status was stacked
@@ -297,12 +298,14 @@ public partial class StatusStackedEvent : BaseServiceEvent
     /// Stack count before this application
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("oldStackCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int OldStackCount { get; set; } = default!;
 
     /// <summary>
     /// Stack count after this application
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newStackCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int NewStackCount { get; set; } = default!;
 
 }
@@ -315,12 +318,12 @@ public partial class StatusGrantFailedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: status.grant-failed
+    /// Event type identifier: status.instance.grant-failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "status.grant-failed";
+    public override string EventName { get; set; } = "status.instance.grant-failed";
 
     /// <summary>
     /// Entity that was targeted
@@ -373,12 +376,12 @@ public partial class StatusCleansedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: status.cleansed
+    /// Event type identifier: status.instance.cleansed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "status.cleansed";
+    public override string EventName { get; set; } = "status.instance.cleansed";
 
     /// <summary>
     /// Entity that was cleansed
@@ -410,6 +413,7 @@ public partial class StatusCleansedEvent : BaseServiceEvent
     /// Number of statuses removed by the cleanse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("statusesRemoved")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int StatusesRemoved { get; set; } = default!;
 
     /// <summary>

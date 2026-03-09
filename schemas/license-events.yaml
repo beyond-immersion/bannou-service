@@ -31,10 +31,10 @@ info:
       description: Published when a new board template is created
     - topic: license.board-template.updated
       event: LicenseBoardTemplateUpdatedEvent
-      description: Published when a board template is updated
+      description: Published when a board template is updated (including deprecation via changedFields)
     - topic: license.board-template.deleted
       event: LicenseBoardTemplateDeletedEvent
-      description: Published when a board template is deleted
+      description: Unused Category B infrastructure (board templates are never deleted)
 
     # Board instance lifecycle events (auto-generated from x-lifecycle)
     # Note: license.board.updated is intentionally omitted — boards are immutable after creation.
@@ -73,6 +73,10 @@ x-lifecycle:
       boardContractTemplateId: { type: string, format: uuid, required: true, description: "Contract template that controls unlock behavior" }
       adjacencyMode: { $ref: 'license-api.yaml#/components/schemas/AdjacencyMode', required: true, description: "Grid traversal mode for this template" }
       isActive: { type: boolean, required: true, description: "Whether the template is active" }
+      isDeprecated: { type: boolean, required: true, description: "Whether this template has been deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the template was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
     sensitive: []
 
   LicenseBoard:
