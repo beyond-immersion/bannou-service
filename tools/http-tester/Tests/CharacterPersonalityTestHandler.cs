@@ -37,14 +37,14 @@ public class CharacterPersonalityTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 Traits = new List<TraitValue>
                 {
-                    new TraitValue { Axis = TraitAxis.OPENNESS, Value = 0.5f },
-                    new TraitValue { Axis = TraitAxis.CONSCIENTIOUSNESS, Value = 0.3f },
-                    new TraitValue { Axis = TraitAxis.EXTRAVERSION, Value = -0.2f },
-                    new TraitValue { Axis = TraitAxis.AGREEABLENESS, Value = 0.7f },
-                    new TraitValue { Axis = TraitAxis.NEUROTICISM, Value = -0.4f },
-                    new TraitValue { Axis = TraitAxis.HONESTY, Value = 0.8f },
-                    new TraitValue { Axis = TraitAxis.AGGRESSION, Value = -0.5f },
-                    new TraitValue { Axis = TraitAxis.LOYALTY, Value = 0.6f }
+                    new TraitValue { Axis = TraitAxis.Openness, Value = 0.5f },
+                    new TraitValue { Axis = TraitAxis.Conscientiousness, Value = 0.3f },
+                    new TraitValue { Axis = TraitAxis.Extraversion, Value = -0.2f },
+                    new TraitValue { Axis = TraitAxis.Agreeableness, Value = 0.7f },
+                    new TraitValue { Axis = TraitAxis.Neuroticism, Value = -0.4f },
+                    new TraitValue { Axis = TraitAxis.Honesty, Value = 0.8f },
+                    new TraitValue { Axis = TraitAxis.Aggression, Value = -0.5f },
+                    new TraitValue { Axis = TraitAxis.Loyalty, Value = 0.6f }
                 }
             });
 
@@ -66,7 +66,7 @@ public class CharacterPersonalityTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 Traits = new List<TraitValue>
                 {
-                    new TraitValue { Axis = TraitAxis.OPENNESS, Value = 0.5f }
+                    new TraitValue { Axis = TraitAxis.Openness, Value = 0.5f }
                 }
             });
 
@@ -94,7 +94,7 @@ public class CharacterPersonalityTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 Traits = new List<TraitValue>
                 {
-                    new TraitValue { Axis = TraitAxis.AGREEABLENESS, Value = 0.5f }
+                    new TraitValue { Axis = TraitAxis.Agreeableness, Value = 0.5f }
                 }
             });
 
@@ -102,7 +102,7 @@ public class CharacterPersonalityTestHandler : BaseHttpTestHandler
             var response = await personalityClient.RecordExperienceAsync(new RecordExperienceRequest
             {
                 CharacterId = characterId,
-                ExperienceType = ExperienceType.TRAUMA,
+                ExperienceType = ExperienceType.Trauma,
                 Intensity = 0.7f
             });
 
@@ -120,12 +120,12 @@ public class CharacterPersonalityTestHandler : BaseHttpTestHandler
             await personalityClient.SetPersonalityAsync(new SetPersonalityRequest
             {
                 CharacterId = char1,
-                Traits = new List<TraitValue> { new TraitValue { Axis = TraitAxis.OPENNESS, Value = 0.5f } }
+                Traits = new List<TraitValue> { new TraitValue { Axis = TraitAxis.Openness, Value = 0.5f } }
             });
             await personalityClient.SetPersonalityAsync(new SetPersonalityRequest
             {
                 CharacterId = char2,
-                Traits = new List<TraitValue> { new TraitValue { Axis = TraitAxis.OPENNESS, Value = -0.5f } }
+                Traits = new List<TraitValue> { new TraitValue { Axis = TraitAxis.Openness, Value = -0.5f } }
             });
 
             // Batch get
@@ -150,7 +150,7 @@ public class CharacterPersonalityTestHandler : BaseHttpTestHandler
             await personalityClient.SetPersonalityAsync(new SetPersonalityRequest
             {
                 CharacterId = characterId,
-                Traits = new List<TraitValue> { new TraitValue { Axis = TraitAxis.OPENNESS, Value = 0.5f } }
+                Traits = new List<TraitValue> { new TraitValue { Axis = TraitAxis.Openness, Value = 0.5f } }
             });
 
             // Delete (void return)
@@ -185,9 +185,9 @@ public class CharacterPersonalityTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 Preferences = new CombatPreferences
                 {
-                    Style = CombatStyle.TACTICAL,
-                    PreferredRange = PreferredRange.MEDIUM,
-                    GroupRole = GroupRole.SUPPORT
+                    Style = CombatStyle.Tactical,
+                    PreferredRange = PreferredRange.Medium,
+                    GroupRole = GroupRole.Support
                 }
             });
 
@@ -209,9 +209,9 @@ public class CharacterPersonalityTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 Preferences = new CombatPreferences
                 {
-                    Style = CombatStyle.AGGRESSIVE,
-                    PreferredRange = PreferredRange.MELEE,
-                    GroupRole = GroupRole.FRONTLINE
+                    Style = CombatStyle.Aggressive,
+                    PreferredRange = PreferredRange.Melee,
+                    GroupRole = GroupRole.Frontline
                 }
             });
 
@@ -239,9 +239,9 @@ public class CharacterPersonalityTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 Preferences = new CombatPreferences
                 {
-                    Style = CombatStyle.BALANCED,
-                    PreferredRange = PreferredRange.MEDIUM,
-                    GroupRole = GroupRole.SUPPORT
+                    Style = CombatStyle.Balanced,
+                    PreferredRange = PreferredRange.Medium,
+                    GroupRole = GroupRole.Support
                 }
             });
 
@@ -249,7 +249,7 @@ public class CharacterPersonalityTestHandler : BaseHttpTestHandler
             var response = await personalityClient.EvolveCombatPreferencesAsync(new EvolveCombatRequest
             {
                 CharacterId = characterId,
-                ExperienceType = CombatExperienceType.DECISIVE_VICTORY,
+                ExperienceType = CombatExperienceType.DecisiveVictory,
                 Intensity = 0.8f
             });
 
@@ -268,9 +268,9 @@ public class CharacterPersonalityTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 Preferences = new CombatPreferences
                 {
-                    Style = CombatStyle.DEFENSIVE,
-                    PreferredRange = PreferredRange.RANGED,
-                    GroupRole = GroupRole.SUPPORT
+                    Style = CombatStyle.Defensive,
+                    PreferredRange = PreferredRange.Ranged,
+                    GroupRole = GroupRole.Support
                 }
             });
 

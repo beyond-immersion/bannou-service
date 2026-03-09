@@ -181,7 +181,7 @@ public class CharacterEncounterTestHandler : BaseHttpTestHandler
                 Timestamp = DateTimeOffset.UtcNow,
                 RealmId = realmId,
                 EncounterTypeCode = "FRIENDLY",
-                Outcome = EncounterOutcome.POSITIVE,
+                Outcome = EncounterOutcome.Positive,
                 ParticipantIds = new List<Guid> { characterA, characterB }
             });
 
@@ -303,7 +303,7 @@ public class CharacterEncounterTestHandler : BaseHttpTestHandler
                 Timestamp = DateTimeOffset.UtcNow,
                 RealmId = realmId,
                 EncounterTypeCode = "FRIENDLY",
-                Outcome = EncounterOutcome.POSITIVE,
+                Outcome = EncounterOutcome.Positive,
                 ParticipantIds = new List<Guid> { characterA, characterB }
             });
 
@@ -331,7 +331,7 @@ public class CharacterEncounterTestHandler : BaseHttpTestHandler
                 Timestamp = DateTimeOffset.UtcNow,
                 RealmId = realmId,
                 EncounterTypeCode = "FRIENDLY",
-                Outcome = EncounterOutcome.POSITIVE,
+                Outcome = EncounterOutcome.Positive,
                 ParticipantIds = new List<Guid> { characterA, characterB }
             });
 
@@ -361,7 +361,7 @@ public class CharacterEncounterTestHandler : BaseHttpTestHandler
                 Timestamp = DateTimeOffset.UtcNow,
                 RealmId = realmId,
                 EncounterTypeCode = "FRIENDLY",
-                Outcome = EncounterOutcome.POSITIVE,
+                Outcome = EncounterOutcome.Positive,
                 ParticipantIds = new List<Guid> { characterA, characterB }
             });
 
@@ -390,7 +390,7 @@ public class CharacterEncounterTestHandler : BaseHttpTestHandler
                 Timestamp = DateTimeOffset.UtcNow,
                 RealmId = realmId,
                 EncounterTypeCode = "FRIENDLY",
-                Outcome = EncounterOutcome.POSITIVE,
+                Outcome = EncounterOutcome.Positive,
                 ParticipantIds = new List<Guid> { characterA, characterB }
             });
 

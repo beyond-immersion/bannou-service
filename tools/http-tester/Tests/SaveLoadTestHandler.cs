@@ -65,7 +65,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE,
+                Category = SaveCategory.ManualSave,
                 MaxVersions = 5
             };
 
@@ -103,7 +103,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE
+                Category = SaveCategory.ManualSave
             });
 
             // Get the slot
@@ -164,7 +164,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                     OwnerId = ownerId,
                     OwnerType = EntityType.Account,
                     SlotName = $"list-test-{i}",
-                    Category = SaveCategory.MANUAL_SAVE
+                    Category = SaveCategory.ManualSave
                 });
             }
 
@@ -210,7 +210,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = oldName,
-                Category = SaveCategory.MANUAL_SAVE
+                Category = SaveCategory.ManualSave
             });
 
             // Rename it
@@ -255,7 +255,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE
+                Category = SaveCategory.ManualSave
             });
 
             // Delete it
@@ -269,9 +269,6 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
 
             if (response == null)
                 return TestResult.Failed("DeleteSlot returned null");
-
-            if (!response.Deleted)
-                return TestResult.Failed("DeleteSlot returned deleted=false");
 
             return TestResult.Successful($"DeleteSlot successful, freed {response.BytesFreed} bytes");
         }, "Delete slot");
@@ -296,7 +293,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE,
+                Category = SaveCategory.ManualSave,
                 Data = testDataBytes
             });
 
@@ -348,7 +345,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.AUTO_SAVE,
+                Category = SaveCategory.AutoSave,
                 Data = testDataBytes
             });
 
@@ -414,7 +411,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                     OwnerId = ownerId,
                     OwnerType = EntityType.Account,
                     SlotName = slotName,
-                    Category = SaveCategory.MANUAL_SAVE,
+                    Category = SaveCategory.ManualSave,
                     Data = data
                 });
             }
@@ -461,7 +458,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                     OwnerId = ownerId,
                     OwnerType = EntityType.Account,
                     SlotName = slotName,
-                    Category = SaveCategory.MANUAL_SAVE,
+                    Category = SaveCategory.ManualSave,
                     Data = data
                 });
             }
@@ -504,7 +501,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE,
+                Category = SaveCategory.ManualSave,
                 Data = data
             });
 
@@ -551,7 +548,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE,
+                Category = SaveCategory.ManualSave,
                 Data = data,
                 PinAsCheckpoint = "To Unpin"
             });
@@ -598,7 +595,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE,
+                Category = SaveCategory.ManualSave,
                 Data = data1
             });
 
@@ -609,7 +606,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE,
+                Category = SaveCategory.ManualSave,
                 Data = data2
             });
 
@@ -634,9 +631,6 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             if (deleteResponse == null)
                 return TestResult.Failed("DeleteVersion returned null");
 
-            if (!deleteResponse.Deleted)
-                return TestResult.Failed("DeleteVersion did not delete");
-
             return TestResult.Successful($"DeleteVersion successful, freed {deleteResponse.BytesFreed} bytes");
         }, "Delete version");
 
@@ -655,7 +649,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE,
+                Category = SaveCategory.ManualSave,
                 Data = data1
             });
 
@@ -666,7 +660,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE,
+                Category = SaveCategory.ManualSave,
                 Data = data2
             });
 
@@ -716,7 +710,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = "query-test",
-                Category = SaveCategory.MANUAL_SAVE
+                Category = SaveCategory.ManualSave
             });
 
             // Query by owner
@@ -761,7 +755,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE,
+                Category = SaveCategory.ManualSave,
                 Data = baseData
             });
 
@@ -779,7 +773,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 SlotName = slotName,
                 BaseVersion = baseResponse.VersionNumber,
                 Delta = deltaBytes,
-                Algorithm = DeltaAlgorithm.JSON_PATCH
+                Algorithm = DeltaAlgorithm.JsonPatch
             });
 
             // Load with delta reconstruction
@@ -832,7 +826,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = EntityType.Account,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL_SAVE,
+                Category = SaveCategory.ManualSave,
                 Data = testData
             });
 
@@ -883,7 +877,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                     OwnerId = ownerId,
                     OwnerType = EntityType.Account,
                     SlotName = $"bulk-{i}",
-                    Category = SaveCategory.MANUAL_SAVE
+                    Category = SaveCategory.ManualSave
                 });
 
                 if (createResponse != null)

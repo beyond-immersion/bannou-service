@@ -47,8 +47,8 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 EventId = eventId,
                 EventName = "The Great Battle of Dawn",
-                EventCategory = EventCategory.WAR,
-                Role = ParticipationRole.COMBATANT,
+                EventCategory = EventCategory.War,
+                Role = ParticipationRole.Combatant,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-100),
                 Significance = 0.8f
             };
@@ -79,8 +79,8 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 EventId = Guid.NewGuid(),
                 EventName = "Birth of a Hero",
-                EventCategory = EventCategory.PERSONAL,
-                Role = ParticipationRole.HERO,
+                EventCategory = EventCategory.Personal,
+                Role = ParticipationRole.Hero,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-365),
                 Significance = 0.9f
             };
@@ -118,8 +118,8 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 CharacterId = character1,
                 EventId = eventId,
                 EventName = "The Coronation Ceremony",
-                EventCategory = EventCategory.POLITICAL,
-                Role = ParticipationRole.LEADER,
+                EventCategory = EventCategory.Political,
+                Role = ParticipationRole.Leader,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-50),
                 Significance = 1.0f
             });
@@ -129,8 +129,8 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 CharacterId = character2,
                 EventId = eventId,
                 EventName = "The Coronation Ceremony",
-                EventCategory = EventCategory.POLITICAL,
-                Role = ParticipationRole.WITNESS,
+                EventCategory = EventCategory.Political,
+                Role = ParticipationRole.Witness,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-50),
                 Significance = 0.5f
             });
@@ -164,14 +164,14 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 {
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.ORIGIN,
+                        ElementType = BackstoryElementType.Origin,
                         Key = "birthplace",
                         Value = "Born in the northern mountains",
                         Strength = 0.9f
                     },
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.OCCUPATION,
+                        ElementType = BackstoryElementType.Occupation,
                         Key = "profession",
                         Value = "Blacksmith apprentice",
                         Strength = 0.7f
@@ -202,7 +202,7 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 {
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.TRAINING,
+                        ElementType = BackstoryElementType.Training,
                         Key = "skill",
                         Value = "Sword fighting",
                         Strength = 0.85f
@@ -239,7 +239,7 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 {
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.TRAUMA,
+                        ElementType = BackstoryElementType.Trauma,
                         Key = "loss",
                         Value = "Lost family in fire",
                         Strength = 0.9f
@@ -254,7 +254,7 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 Element = new BackstoryElement
                 {
-                    ElementType = BackstoryElementType.GOAL,
+                    ElementType = BackstoryElementType.Goal,
                     Key = "ambition",
                     Value = "Seek revenge",
                     Strength = 0.95f
@@ -282,8 +282,8 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 EventId = eventId,
                 EventName = "Test Event to Delete",
-                EventCategory = EventCategory.CULTURAL,
-                Role = ParticipationRole.WITNESS,
+                EventCategory = EventCategory.Cultural,
+                Role = ParticipationRole.Witness,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-10),
                 Significance = 0.5f
             });
@@ -313,7 +313,7 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 {
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.SECRET,
+                        ElementType = BackstoryElementType.Secret,
                         Key = "hidden_identity",
                         Value = "Royal heir in hiding",
                         Strength = 1.0f
@@ -345,8 +345,8 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 EventId = Guid.NewGuid(),
                 EventName = "Test Event for Deletion",
-                EventCategory = EventCategory.ECONOMIC,
-                Role = ParticipationRole.BENEFICIARY,
+                EventCategory = EventCategory.Economic,
+                Role = ParticipationRole.Beneficiary,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-30),
                 Significance = 0.6f
             });
@@ -358,7 +358,7 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 {
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.ACHIEVEMENT,
+                        ElementType = BackstoryElementType.Achievement,
                         Key = "medal",
                         Value = "Decorated war hero",
                         Strength = 0.85f
@@ -390,8 +390,8 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 EventId = Guid.NewGuid(),
                 EventName = "The First Victory",
-                EventCategory = EventCategory.WAR,
-                Role = ParticipationRole.HERO,
+                EventCategory = EventCategory.War,
+                Role = ParticipationRole.Hero,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-1000),
                 Significance = 1.0f
             });
@@ -403,7 +403,7 @@ public class CharacterHistoryTestHandler : BaseHttpTestHandler
                 {
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.BELIEF,
+                        ElementType = BackstoryElementType.Belief,
                         Key = "creed",
                         Value = "Honor above all",
                         Strength = 0.9f

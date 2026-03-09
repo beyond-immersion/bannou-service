@@ -280,6 +280,25 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 
 ---
 
+## ⛔ MAXIMUM 3 CONCURRENT AGENTS (MANDATORY) ⛔
+
+**You may NEVER launch more than 3 agents in a single message. This is a hard limit with zero exceptions.**
+
+**Rules:**
+1. **Maximum 3 Agent tool calls per message.** If you need more work done, launch 3, wait for them to complete, then launch the next batch.
+2. **This applies to ALL agent launches** — foreground, background, any `subagent_type`, any purpose.
+3. **If a task requires more than 3 agents**, break it into sequential batches of 3. Present the batching plan to the user before starting.
+4. **Do not try to "optimize" by launching more.** The rate limit applies to the account, not per-agent. Excess agents hit the limit simultaneously, return nothing, and waste the entire budget.
+
+**Why this rule exists**: Claude launched 13 agents in a single message to fix test compilation errors. Every agent beyond the first few hit the API rate limit and returned zero useful output — literally "You've hit your limit." The entire day's usage budget was burned in one message with nothing to show for it. The user got no work done and lost an entire session. This is the equivalent of burning money.
+
+**The math is simple**: 13 agents × full context window each = 13× the token cost of doing the work sequentially in batches. When rate-limited, 100% of that cost is waste. Three agents at a time stays well within rate limits and actually completes work.
+
+**Incident log**:
+1. 2026-03-09: 13 agents launched to fix test compilation errors across tools/. All but 2-3 hit rate limits. Entire day's usage destroyed with zero deliverables.
+
+---
+
 ## ⛔ VIOLATION TASK LISTS (MANDATORY) ⛔
 
 **When creating a task list to fix TENET violations, SCHEMA-RULES issues, or other code quality/consistency problems, every task description MUST be fully self-contained. An implementer who has never seen the codebase or the tenets must be able to execute the task from the description alone, with zero additional file reads required.**

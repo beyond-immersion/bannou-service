@@ -81,7 +81,7 @@ public class LocationWebSocketTestHandler : BaseWebSocketTestHandler
                 Code = locationCode,
                 Name = $"Test Location {locationCode}",
                 Description = "Created via WebSocket edge test",
-                LocationType = LocationType.CITY
+                LocationType = LocationType.City
             });
 
             if (!createResponse.IsSuccess || createResponse.Result == null)
@@ -136,7 +136,7 @@ public class LocationWebSocketTestHandler : BaseWebSocketTestHandler
                 Code = locationCode,
                 Name = $"Lifecycle Test {locationCode}",
                 Description = "Lifecycle test location",
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             if (!createResponse.IsSuccess || createResponse.Result == null)
@@ -237,7 +237,7 @@ public class LocationWebSocketTestHandler : BaseWebSocketTestHandler
                 Code = $"REGION{uniqueCode}",
                 Name = $"Test Region {uniqueCode}",
                 Description = "Parent location for hierarchy test",
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             if (!parentResponse.IsSuccess || parentResponse.Result == null)
@@ -257,7 +257,7 @@ public class LocationWebSocketTestHandler : BaseWebSocketTestHandler
                 Code = $"CITY{uniqueCode}",
                 Name = $"Test City {uniqueCode}",
                 Description = "Child location for hierarchy test",
-                LocationType = LocationType.CITY,
+                LocationType = LocationType.City,
                 ParentLocationId = parent.LocationId
             });
 

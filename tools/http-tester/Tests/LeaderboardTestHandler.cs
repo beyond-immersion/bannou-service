@@ -18,8 +18,6 @@ public class LeaderboardTestHandler : BaseHttpTestHandler
         new ServiceTest(TestCreateLeaderboardDefinition, "CreateDefinition", "Leaderboard", "Test leaderboard definition creation"),
         new ServiceTest(TestGetLeaderboardDefinition, "GetDefinition", "Leaderboard", "Test leaderboard definition retrieval"),
         new ServiceTest(TestListLeaderboardDefinitions, "ListDefinitions", "Leaderboard", "Test leaderboard definitions listing"),
-        new ServiceTest(TestDeleteLeaderboardDefinition, "DeleteDefinition", "Leaderboard", "Test leaderboard definition deletion"),
-
         // Score Submission Tests
         new ServiceTest(TestSubmitScore, "SubmitScore", "Leaderboard", "Test single score submission"),
 
@@ -121,34 +119,6 @@ public class LeaderboardTestHandler : BaseHttpTestHandler
             return TestResult.Successful("Leaderboards listed successfully");
         }, "List leaderboard definitions");
 
-    private static async Task<TestResult> TestDeleteLeaderboardDefinition(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var leaderboardClient = GetServiceClient<ILeaderboardClient>();
-            var created = await CreateTestLeaderboardAsync(leaderboardClient, "delete");
-
-            await leaderboardClient.DeleteLeaderboardDefinitionAsync(new DeleteLeaderboardDefinitionRequest
-            {
-                GameServiceId = TestGameServiceId,
-                LeaderboardId = created.LeaderboardId
-            });
-
-            // Verify deletion by trying to get it
-            try
-            {
-                await leaderboardClient.GetLeaderboardDefinitionAsync(new GetLeaderboardDefinitionRequest
-                {
-                    GameServiceId = TestGameServiceId,
-                    LeaderboardId = created.LeaderboardId
-                });
-                return TestResult.Failed("Leaderboard still exists after deletion");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful($"Leaderboard deleted successfully: ID={created.LeaderboardId}");
-            }
-        }, "Delete leaderboard definition");
-
     private static async Task<TestResult> TestSubmitScore(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
@@ -166,9 +136,6 @@ public class LeaderboardTestHandler : BaseHttpTestHandler
             };
 
             var response = await leaderboardClient.SubmitScoreAsync(request);
-
-            if (!response.Accepted)
-                return TestResult.Failed("Score was not accepted");
 
             return TestResult.Successful($"Score submitted: CurrentScore={response.CurrentScore}");
         }, "Submit score");

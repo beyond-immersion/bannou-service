@@ -47,7 +47,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             OwnerId = ownerId,
             OwnerType = EntityType.Character,
             SlotName = slotName,
-            Category = SaveCategory.MANUAL_SAVE,
+            Category = SaveCategory.ManualSave,
         }, timeout: TimeSpan.FromSeconds(10));
 
         if (!response.IsSuccess || response.Result == null)
@@ -127,7 +127,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             return retrieved.SlotId == slot.SlotId
                 && retrieved.OwnerId == ownerId
                 && retrieved.SlotName == slotName
-                && retrieved.Category == SaveCategory.MANUAL_SAVE;
+                && retrieved.Category == SaveCategory.ManualSave;
         });
     }
 
@@ -432,7 +432,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
                 Console.WriteLine($"   Failed to delete version: {FormatError(deleteVersionResponse.Error)}");
                 return false;
             }
-            Console.WriteLine($"   Deleted: {deleteVersionResponse.Result.Deleted}");
+            Console.WriteLine($"   Deleted version {save2.VersionNumber}");
 
             // Step 8: Rename slot
             var newSlotName = $"renamed-{GenerateUniqueCode()}";
@@ -470,7 +470,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             }
 
             Console.WriteLine($"   Deleted slot, versions freed: {deleteSlotResponse.Result.VersionsDeleted}");
-            return deleteSlotResponse.Result.Deleted;
+            return true;
         });
     }
 

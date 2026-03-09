@@ -141,7 +141,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = "account",
                 TargetEndpoint = "/account",
-                Method = HttpMethodType.GET,
+                Method = HttpMethodType.Get,
                 Headers = new Dictionary<string, string>
                 {
                     { "Content-Type", "application/json" }
@@ -182,7 +182,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = $"nonexistent-service-{Guid.NewGuid():N}",
                 TargetEndpoint = "/any/endpoint",
-                Method = HttpMethodType.GET
+                Method = HttpMethodType.Get
             };
 
             try
@@ -220,7 +220,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = Guid.Empty, // Empty session ID
                 TargetService = "account",
                 TargetEndpoint = "/account",
-                Method = HttpMethodType.GET
+                Method = HttpMethodType.Get
             };
 
             try
@@ -256,10 +256,10 @@ public class ConnectTestHandler : BaseHttpTestHandler
 
             var methods = new[]
             {
-                HttpMethodType.GET,
-                HttpMethodType.POST,
-                HttpMethodType.PUT,
-                HttpMethodType.DELETE
+                HttpMethodType.Get,
+                HttpMethodType.Post,
+                HttpMethodType.Put,
+                HttpMethodType.Delete
             };
 
             var successCount = 0;
@@ -278,7 +278,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                     };
 
                     // Add body for methods that support it
-                    if (method == HttpMethodType.POST || method == HttpMethodType.PUT)
+                    if (method == HttpMethodType.Post || method == HttpMethodType.Put)
                     {
                         proxyRequest.Body = new { test = "data" };
                     }
@@ -326,7 +326,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = "account",
                 TargetEndpoint = "/account",
-                Method = HttpMethodType.POST,
+                Method = HttpMethodType.Post,
                 Body = new
                 {
                     email = $"test-{Guid.NewGuid():N}@example.com",
@@ -364,7 +364,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = "account",
                 TargetEndpoint = "/account",
-                Method = HttpMethodType.GET,
+                Method = HttpMethodType.Get,
                 Headers = new Dictionary<string, string>
                 {
                     { "X-Custom-Header", "test-value" },
@@ -402,7 +402,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = "account",
                 TargetEndpoint = "", // Empty endpoint
-                Method = HttpMethodType.GET
+                Method = HttpMethodType.Get
             };
 
             try
@@ -441,7 +441,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = "account",
                 TargetEndpoint = "/account",
-                Method = HttpMethodType.GET,
+                Method = HttpMethodType.Get,
                 QueryParameters = new Dictionary<string, string>
                 {
                     { "page", "1" },

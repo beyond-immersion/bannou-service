@@ -47,8 +47,8 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 RealmId = realmId,
                 EventId = eventId,
                 EventName = "The Great War of the North",
-                EventCategory = RealmEventCategory.WAR,
-                Role = RealmEventRole.DEFENDER,
+                EventCategory = RealmEventCategory.War,
+                Role = RealmEventRole.Defender,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-100),
                 Impact = 0.8f
             };
@@ -79,8 +79,8 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 RealmId = realmId,
                 EventId = Guid.NewGuid(),
                 EventName = "Founding of the Eastern Kingdom",
-                EventCategory = RealmEventCategory.FOUNDING,
-                Role = RealmEventRole.ORIGIN,
+                EventCategory = RealmEventCategory.Founding,
+                Role = RealmEventRole.Origin,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-365),
                 Impact = 0.9f
             };
@@ -118,8 +118,8 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 RealmId = realm1,
                 EventId = eventId,
                 EventName = "The Treaty of Nations",
-                EventCategory = RealmEventCategory.TREATY,
-                Role = RealmEventRole.MEDIATOR,
+                EventCategory = RealmEventCategory.Treaty,
+                Role = RealmEventRole.Mediator,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-50),
                 Impact = 0.7f
             });
@@ -129,8 +129,8 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 RealmId = realm2,
                 EventId = eventId,
                 EventName = "The Treaty of Nations",
-                EventCategory = RealmEventCategory.TREATY,
-                Role = RealmEventRole.BENEFICIARY,
+                EventCategory = RealmEventCategory.Treaty,
+                Role = RealmEventRole.Beneficiary,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-50),
                 Impact = 0.6f
             });
@@ -164,14 +164,14 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 {
                     new RealmLoreElement
                     {
-                        ElementType = RealmLoreElementType.ORIGIN_MYTH,
+                        ElementType = RealmLoreElementType.OriginMyth,
                         Key = "creation_story",
                         Value = "Born from the ashes of the old world",
                         Strength = 0.9f
                     },
                     new RealmLoreElement
                     {
-                        ElementType = RealmLoreElementType.POLITICAL_SYSTEM,
+                        ElementType = RealmLoreElementType.PoliticalSystem,
                         Key = "government",
                         Value = "Feudal monarchy with elected council",
                         Strength = 0.8f
@@ -202,7 +202,7 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 {
                     new RealmLoreElement
                     {
-                        ElementType = RealmLoreElementType.ECONOMIC_BASE,
+                        ElementType = RealmLoreElementType.EconomicBase,
                         Key = "primary_trade",
                         Value = "Mining and metalwork",
                         Strength = 0.85f
@@ -239,7 +239,7 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 {
                     new RealmLoreElement
                     {
-                        ElementType = RealmLoreElementType.CULTURAL_PRACTICE,
+                        ElementType = RealmLoreElementType.CulturalPractice,
                         Key = "festival",
                         Value = "Annual harvest celebration",
                         Strength = 0.7f
@@ -254,7 +254,7 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 RealmId = realmId,
                 Element = new RealmLoreElement
                 {
-                    ElementType = RealmLoreElementType.RELIGIOUS_TRADITION,
+                    ElementType = RealmLoreElementType.ReligiousTradition,
                     Key = "deity",
                     Value = "Sun worship",
                     Strength = 0.8f
@@ -282,8 +282,8 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 RealmId = realmId,
                 EventId = eventId,
                 EventName = "Test Event to Delete",
-                EventCategory = RealmEventCategory.DISCOVERY,
-                Role = RealmEventRole.INSTIGATOR,
+                EventCategory = RealmEventCategory.Discovery,
+                Role = RealmEventRole.Instigator,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-10),
                 Impact = 0.5f
             });
@@ -313,7 +313,7 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 {
                     new RealmLoreElement
                     {
-                        ElementType = RealmLoreElementType.GEOGRAPHIC_FEATURE,
+                        ElementType = RealmLoreElementType.GeographicFeature,
                         Key = "terrain",
                         Value = "Mountain range",
                         Strength = 0.9f
@@ -345,8 +345,8 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 RealmId = realmId,
                 EventId = Guid.NewGuid(),
                 EventName = "Test Event for Deletion",
-                EventCategory = RealmEventCategory.MIGRATION,
-                Role = RealmEventRole.AFFECTED,
+                EventCategory = RealmEventCategory.Migration,
+                Role = RealmEventRole.Affected,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-30),
                 Impact = 0.6f
             });
@@ -358,7 +358,7 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 {
                     new RealmLoreElement
                     {
-                        ElementType = RealmLoreElementType.FAMOUS_FIGURE,
+                        ElementType = RealmLoreElementType.FamousFigure,
                         Key = "hero",
                         Value = "Legendary founder",
                         Strength = 0.85f
@@ -390,8 +390,8 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 RealmId = realmId,
                 EventId = Guid.NewGuid(),
                 EventName = "The Foundation",
-                EventCategory = RealmEventCategory.FOUNDING,
-                Role = RealmEventRole.ORIGIN,
+                EventCategory = RealmEventCategory.Founding,
+                Role = RealmEventRole.Origin,
                 EventDate = DateTimeOffset.UtcNow.AddDays(-1000),
                 Impact = 1.0f
             });
@@ -403,7 +403,7 @@ public class RealmHistoryTestHandler : BaseHttpTestHandler
                 {
                     new RealmLoreElement
                     {
-                        ElementType = RealmLoreElementType.TECHNOLOGICAL_LEVEL,
+                        ElementType = RealmLoreElementType.TechnologicalLevel,
                         Key = "tech_era",
                         Value = "Iron Age",
                         Strength = 0.8f

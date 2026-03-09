@@ -537,8 +537,8 @@ public class CharacterTestHandler : BaseHttpTestHandler
                 CharacterId = characterId,
                 Traits = new List<TraitValue>
                 {
-                    new TraitValue { Axis = TraitAxis.OPENNESS, Value = 0.5f },
-                    new TraitValue { Axis = TraitAxis.CONSCIENTIOUSNESS, Value = 0.3f }
+                    new TraitValue { Axis = TraitAxis.Openness, Value = 0.5f },
+                    new TraitValue { Axis = TraitAxis.Conscientiousness, Value = 0.3f }
                 }
             });
 

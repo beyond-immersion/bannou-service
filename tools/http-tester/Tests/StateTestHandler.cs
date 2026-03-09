@@ -381,7 +381,7 @@ public class StateTestHandler : BaseHttpTestHandler
                 StoreName = MYSQL_STORE,
                 Key = testKey,
                 Value = new { version = 2 },
-                Options = new StateOptions { Etag = etag }
+                Etag = etag
             };
 
             var updateResponse = await stateClient.SaveStateAsync(updateRequest);
@@ -399,7 +399,7 @@ public class StateTestHandler : BaseHttpTestHandler
                 StoreName = MYSQL_STORE,
                 Key = testKey,
                 Value = new { version = 3 },
-                Options = new StateOptions { Etag = etag } // Using old etag
+                Etag = etag // Using old etag
             };
 
             try
@@ -1203,7 +1203,7 @@ public class StateTestHandler : BaseHttpTestHandler
                 StoreName = MYSQL_STORE,
                 Key = testKey,
                 Value = new { version = 2 },
-                Options = new StateOptions { Etag = originalEtag }
+                Etag = originalEtag
             });
 
             if (updateSave == null || string.IsNullOrEmpty(updateSave.Etag))
@@ -1220,7 +1220,7 @@ public class StateTestHandler : BaseHttpTestHandler
                     StoreName = MYSQL_STORE,
                     Key = testKey,
                     Value = new { version = 3 },
-                    Options = new StateOptions { Etag = originalEtag } // Stale ETag
+                    Etag = originalEtag // Stale ETag
                 });
 
                 // If we get here, the save unexpectedly succeeded

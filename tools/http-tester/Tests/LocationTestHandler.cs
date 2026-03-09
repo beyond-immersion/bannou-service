@@ -72,7 +72,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Name = "Test Location",
                 Description = "A test location for HTTP testing",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.CITY
+                LocationType = LocationType.City
             };
 
             var response = await locationClient.CreateLocationAsync(createRequest);
@@ -102,7 +102,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"GET_LOC_{DateTime.Now.Ticks}",
                 Name = "Get Test Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             };
             var created = await locationClient.CreateLocationAsync(createRequest);
 
@@ -133,7 +133,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = code,
                 Name = "Code Lookup Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.BUILDING
+                LocationType = LocationType.Building
             };
             var created = await locationClient.CreateLocationAsync(createRequest);
 
@@ -165,7 +165,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Name = "Original Location Name",
                 Description = "Original description",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.CITY
+                LocationType = LocationType.City
             };
             var created = await locationClient.CreateLocationAsync(createRequest);
 
@@ -200,7 +200,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"DELETE_LOC_{DateTime.Now.Ticks}",
                 Name = "Delete Test Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.BUILDING
+                LocationType = LocationType.Building
             };
             var created = await locationClient.CreateLocationAsync(createRequest);
 
@@ -249,7 +249,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                     Code = $"LIST_LOC_{DateTime.Now.Ticks}_{i}",
                     Name = $"List Test Location {i}",
                     RealmId = realm.RealmId,
-                    LocationType = LocationType.CITY
+                    LocationType = LocationType.City
                 });
             }
 
@@ -280,7 +280,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                     Code = $"REALM_LIST_LOC_{DateTime.Now.Ticks}_{i}",
                     Name = $"Realm List Location {i}",
                     RealmId = realm.RealmId,
-                    LocationType = LocationType.REGION
+                    LocationType = LocationType.Region
                 });
             }
 
@@ -311,7 +311,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                     Code = $"ROOT_LOC_{DateTime.Now.Ticks}_{i}",
                     Name = $"Root Location {i}",
                     RealmId = realm.RealmId,
-                    LocationType = LocationType.CONTINENT
+                    LocationType = LocationType.Continent
                 });
             }
 
@@ -344,7 +344,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"PARENT_LOC_{DateTime.Now.Ticks}",
                 Name = "Parent Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             // Create child location (initially no parent)
@@ -353,7 +353,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"CHILD_LOC_{DateTime.Now.Ticks}",
                 Name = "Child Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.CITY
+                LocationType = LocationType.City
             });
 
             // Set parent
@@ -385,7 +385,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"RP_PARENT_{DateTime.Now.Ticks}",
                 Name = "Parent Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             // Create child with parent
@@ -394,7 +394,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"RP_CHILD_{DateTime.Now.Ticks}",
                 Name = "Child Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.CITY,
+                LocationType = LocationType.City,
                 ParentLocationId = parent.LocationId
             });
 
@@ -429,7 +429,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"LBP_PARENT_{DateTime.Now.Ticks}",
                 Name = "Parent Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             // Create child locations
@@ -440,7 +440,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                     Code = $"LBP_CHILD_{DateTime.Now.Ticks}_{i}",
                     Name = $"Child Location {i}",
                     RealmId = realm.RealmId,
-                    LocationType = LocationType.CITY,
+                    LocationType = LocationType.City,
                     ParentLocationId = parent.LocationId
                 });
             }
@@ -470,7 +470,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"ANC_REGION_{DateTime.Now.Ticks}",
                 Name = "Region",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             var city = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -478,7 +478,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"ANC_CITY_{DateTime.Now.Ticks}",
                 Name = "City",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.CITY,
+                LocationType = LocationType.City,
                 ParentLocationId = region.LocationId
             });
 
@@ -487,7 +487,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"ANC_DISTRICT_{DateTime.Now.Ticks}",
                 Name = "District",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.DISTRICT,
+                LocationType = LocationType.District,
                 ParentLocationId = city.LocationId
             });
 
@@ -523,7 +523,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"DESC_REGION_{DateTime.Now.Ticks}",
                 Name = "Region",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             for (var i = 0; i < 2; i++)
@@ -533,7 +533,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                     Code = $"DESC_CITY_{DateTime.Now.Ticks}_{i}",
                     Name = $"City {i}",
                     RealmId = realm.RealmId,
-                    LocationType = LocationType.CITY,
+                    LocationType = LocationType.City,
                     ParentLocationId = region.LocationId
                 });
 
@@ -544,7 +544,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                         Code = $"DESC_DISTRICT_{DateTime.Now.Ticks}_{i}_{j}",
                         Name = $"District {i}-{j}",
                         RealmId = realm.RealmId,
-                        LocationType = LocationType.DISTRICT,
+                        LocationType = LocationType.District,
                         ParentLocationId = city.LocationId
                     });
                 }
@@ -576,7 +576,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"DEP_LOC_{DateTime.Now.Ticks}",
                 Name = "Deprecate Test Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.BUILDING
+                LocationType = LocationType.Building
             });
 
             // Deprecate it
@@ -608,7 +608,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"UNDEP_LOC_{DateTime.Now.Ticks}",
                 Name = "Undeprecate Test Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.ROOM
+                LocationType = LocationType.Room
             });
 
             await locationClient.DeprecateLocationAsync(new DeprecateLocationRequest
@@ -641,7 +641,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"EXISTS_LOC_{DateTime.Now.Ticks}",
                 Name = "Exists Test Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.LANDMARK
+                LocationType = LocationType.Landmark
             });
 
             // Check existence
@@ -681,7 +681,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"TERR_ZONE_{DateTime.Now.Ticks}",
                 Name = "Territory Zone",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             var outsideLocation = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -689,7 +689,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"OUTSIDE_LOC_{DateTime.Now.Ticks}",
                 Name = "Outside Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.CITY
+                LocationType = LocationType.City
                 // No parent - not related to territory
             });
 
@@ -720,7 +720,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"TERR_PARENT_{DateTime.Now.Ticks}",
                 Name = "Territory Parent",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             // Create child location inside the territory
@@ -729,7 +729,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"INSIDE_LOC_{DateTime.Now.Ticks}",
                 Name = "Inside Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.CITY,
+                LocationType = LocationType.City,
                 ParentLocationId = territoryLocation.LocationId
             });
 
@@ -763,7 +763,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"TERR_INCL_{DateTime.Now.Ticks}",
                 Name = "Inclusive Territory",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             // Create child location inside the territory
@@ -772,7 +772,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"INCL_LOC_{DateTime.Now.Ticks}",
                 Name = "Inside Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.CITY,
+                LocationType = LocationType.City,
                 ParentLocationId = territoryLocation.LocationId
             });
 
@@ -806,7 +806,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"TERR_OTHER_{DateTime.Now.Ticks}",
                 Name = "Territory Zone",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             var outsideLocation = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -814,7 +814,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"OUTSIDE_INCL_{DateTime.Now.Ticks}",
                 Name = "Outside Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.CITY
+                LocationType = LocationType.City
                 // No parent - not related to territory
             });
 
@@ -875,7 +875,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = code,
                 Name = "First Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.CITY
+                LocationType = LocationType.City
             });
 
             // Try to create second with same code in same realm - expect 409
@@ -887,7 +887,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                         Code = code,
                         Name = "Second Location",
                         RealmId = realm.RealmId,
-                        LocationType = LocationType.CITY
+                        LocationType = LocationType.City
                     });
                 },
                 409,
@@ -918,7 +918,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                         Name = "Test Region",
                         Description = "A seeded region",
                         RealmCode = realmCode,
-                        LocationType = LocationType.REGION
+                        LocationType = LocationType.Region
                     },
                     new SeedLocation
                     {
@@ -926,7 +926,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                         Name = "Test City",
                         Description = "A seeded city",
                         RealmCode = realmCode,
-                        LocationType = LocationType.CITY
+                        LocationType = LocationType.City
                     }
                 ],
                 UpdateExisting = false
@@ -962,7 +962,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"LIFECYCLE_PARENT_{testId}",
                 Name = "Parent Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.REGION
+                LocationType = LocationType.Region
             });
 
             // Step 3: Create child location
@@ -972,7 +972,7 @@ public class LocationTestHandler : BaseHttpTestHandler
                 Code = $"LIFECYCLE_CHILD_{testId}",
                 Name = "Child Location",
                 RealmId = realm.RealmId,
-                LocationType = LocationType.CITY,
+                LocationType = LocationType.City,
                 ParentLocationId = parent.LocationId
             });
 

@@ -120,7 +120,6 @@ public class AssetTestHandler : BaseHttpTestHandler
             Filename = $"test-{testName}-{DateTime.Now.Ticks}.json",
             Size = testBytes.Length,
             ContentType = "application/json",
-            Owner = "http-tester",
             Metadata = new AssetMetadataInput
             {
                 AssetType = assetType,
@@ -160,8 +159,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Filename = $"test-request-{DateTime.Now.Ticks}.json",
                 Size = 1024,
                 ContentType = "application/json",
-                Owner = "http-tester",
-                Metadata = new AssetMetadataInput
+                    Metadata = new AssetMetadataInput
                 {
                     AssetType = AssetType.Behavior,
                     Realm = "test-realm",
@@ -311,8 +309,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             // Create bundle from the assets
             var createRequest = new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = $"test-bundle-{DateTime.Now.Ticks}",
+                    BundleId = $"test-bundle-{DateTime.Now.Ticks}",
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
                 Compression = CompressionType.Lz4,
@@ -346,8 +343,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundleId = $"get-bundle-test-{DateTime.Now.Ticks}";
             var createRequest = new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = bundleId,
+                    BundleId = bundleId,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
                 Compression = CompressionType.None
@@ -385,8 +381,7 @@ public class AssetTestHandler : BaseHttpTestHandler
 
             var request = new BundleUploadRequest
             {
-                Owner = "http-tester",
-                Filename = $"test-bundle-upload-{DateTime.Now.Ticks}.bannou",
+                    Filename = $"test-bundle-upload-{DateTime.Now.Ticks}.bannou",
                 Size = 10240,
                 ManifestPreview = new BundleManifestPreview
                 {
@@ -429,8 +424,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Filename = $"test-audio-{DateTime.Now.Ticks}.wav",
                 Size = wavBytes.Length,
                 ContentType = "audio/wav",
-                Owner = "http-tester",
-                Metadata = new AssetMetadataInput
+                    Metadata = new AssetMetadataInput
                 {
                     AssetType = AssetType.Audio,
                     Realm = "test-realm",
@@ -634,8 +628,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundleId = $"lifecycle-bundle-{DateTime.Now.Ticks}";
             var bundle = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = bundleId,
+                    BundleId = bundleId,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId, asset3.AssetId },
                 Compression = CompressionType.Lz4
@@ -674,8 +667,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundle1Id = $"source-bundle-1-{DateTime.Now.Ticks}";
             var bundle1 = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = bundle1Id,
+                    BundleId = bundle1Id,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset1.AssetId },
                 Compression = CompressionType.None
@@ -686,8 +678,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundle2Id = $"source-bundle-2-{DateTime.Now.Ticks}";
             var bundle2 = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = bundle2Id,
+                    BundleId = bundle2Id,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset2.AssetId },
                 Compression = CompressionType.None
@@ -704,8 +695,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             {
                 MetabundleId = metabundleId,
                 SourceBundleIds = new List<string> { bundle1Id, bundle2Id },
-                Owner = "http-tester",
-                Version = "1.0.0",
+                    Version = "1.0.0",
                 Realm = "test-realm"
             });
 
@@ -759,8 +749,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             {
                 MetabundleId = metabundleId,
                 StandaloneAssetIds = new List<string> { standaloneAsset1.AssetId, standaloneAsset2.AssetId },
-                Owner = "http-tester",
-                Version = "1.0.0",
+                    Version = "1.0.0",
                 Realm = "test-realm"
             });
 
@@ -800,8 +789,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var sourceBundleId = $"3d-assets-bundle-{DateTime.Now.Ticks}";
             var sourceBundle = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = sourceBundleId,
+                    BundleId = sourceBundleId,
                 Version = "1.0.0",
                 AssetIds = new List<string> { bundledAsset.AssetId },
                 Compression = CompressionType.None
@@ -827,8 +815,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 MetabundleId = metabundleId,
                 SourceBundleIds = new List<string> { sourceBundleId },
                 StandaloneAssetIds = new List<string> { behaviorAsset.AssetId },
-                Owner = "http-tester",
-                Version = "1.0.0",
+                    Version = "1.0.0",
                 Realm = "test-realm"
             });
 
@@ -862,8 +849,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 {
                     MetabundleId = $"metabundle-nonexistent-{DateTime.Now.Ticks}",
                     SourceBundleIds = new List<string> { $"nonexistent-bundle-{Guid.NewGuid()}" },
-                    Owner = "http-tester",
-                    Version = "1.0.0",
+                            Version = "1.0.0",
                     Realm = "test-realm"
                 });
             },
@@ -899,8 +885,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundleAId = $"resolve-bundle-a-{DateTime.Now.Ticks}";
             var bundleA = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = bundleAId,
+                    BundleId = bundleAId,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
                 Compression = CompressionType.None,
@@ -912,8 +897,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundleBId = $"resolve-bundle-b-{DateTime.Now.Ticks}";
             var bundleB = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = bundleBId,
+                    BundleId = bundleBId,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset2.AssetId, asset3.AssetId },
                 Compression = CompressionType.None,
@@ -974,8 +958,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var regularBundleId = $"metapref-regular-{DateTime.Now.Ticks}";
             var regularBundle = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = regularBundleId,
+                    BundleId = regularBundleId,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
                 Compression = CompressionType.None
@@ -990,8 +973,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             {
                 MetabundleId = metabundleId,
                 SourceBundleIds = new List<string> { regularBundleId },
-                Owner = "http-tester",
-                Version = "1.0.0",
+                    Version = "1.0.0",
                 Realm = "test-realm"
             });
             if (metabundle.Status == BundleStatus.Failed)
@@ -1049,8 +1031,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundle1Id = $"query-bundle-1-{DateTime.Now.Ticks}";
             var bundle1 = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = bundle1Id,
+                    BundleId = bundle1Id,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset.AssetId },
                 Compression = CompressionType.None,
@@ -1062,8 +1043,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundle2Id = $"query-bundle-2-{DateTime.Now.Ticks}";
             var bundle2 = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = bundle2Id,
+                    BundleId = bundle2Id,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset.AssetId },
                 Compression = CompressionType.None,
@@ -1228,8 +1208,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundleId = $"job-status-bundle-{DateTime.Now.Ticks}";
             var bundle = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
-                Owner = "http-tester",
-                BundleId = bundleId,
+                    BundleId = bundleId,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset.AssetId },
                 Compression = CompressionType.None
@@ -1246,8 +1225,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             {
                 MetabundleId = metabundleId,
                 SourceBundleIds = new List<string> { bundleId },
-                Owner = "http-tester",
-                Version = "1.0.0",
+                    Version = "1.0.0",
                 Realm = "test-realm"
             });
 

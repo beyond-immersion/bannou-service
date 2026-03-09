@@ -797,7 +797,6 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine($"   Binding repository to namespace: {testNamespace}...");
             var response = await adminClient.Documentation.BindRepositoryAsync(new BindRepositoryRequest
             {
-                Owner = "ws-edge-tester",
                 Namespace = testNamespace,
                 RepositoryUrl = "https://github.com/test/docs.git",
                 Branch = "main"
@@ -834,7 +833,6 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
 
             var bindResponse = await adminClient.Documentation.BindRepositoryAsync(new BindRepositoryRequest
             {
-                Owner = "ws-edge-tester",
                 Namespace = testNamespace,
                 RepositoryUrl = "https://github.com/test/docs.git",
                 Branch = "main"
@@ -899,7 +897,6 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
 
             var bindResponse = await adminClient.Documentation.BindRepositoryAsync(new BindRepositoryRequest
             {
-                Owner = "ws-edge-tester",
                 Namespace = testNamespace,
                 RepositoryUrl = "https://github.com/test/docs.git",
                 Branch = "main"
@@ -947,7 +944,6 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
 
             var bindResponse = await adminClient.Documentation.BindRepositoryAsync(new BindRepositoryRequest
             {
-                Owner = "ws-edge-tester",
                 Namespace = testNamespace,
                 RepositoryUrl = "https://github.com/test/docs.git",
                 Branch = "main"
@@ -996,7 +992,6 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
             var response = await adminClient.Documentation.CreateDocumentationArchiveAsync(new CreateArchiveRequest
             {
                 Namespace = TEST_NAMESPACE,
-                Owner = "ws-edge-tester",
                 Description = $"Archive created via WebSocket test at {DateTime.Now.Ticks}"
             }, timeout: TimeSpan.FromSeconds(10));
 
@@ -1051,7 +1046,6 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
             var createResponse = await adminClient.Documentation.CreateDocumentationArchiveAsync(new CreateArchiveRequest
             {
                 Namespace = TEST_NAMESPACE,
-                Owner = "ws-edge-tester",
                 Description = $"Archive to be deleted - {DateTime.Now.Ticks}"
             }, timeout: TimeSpan.FromSeconds(10));
 

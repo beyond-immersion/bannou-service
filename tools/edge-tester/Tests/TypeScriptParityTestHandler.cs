@@ -445,10 +445,10 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             var realm = await CreateTestRealmAsync(adminClient, "LOC_PARITY", "Location Parity", uniqueCode);
             if (realm == null) return false;
 
-            var parentLocation = await CreateTestLocationAsync(adminClient, "PARENT", uniqueCode, realm.RealmId, LocationType.REGION);
+            var parentLocation = await CreateTestLocationAsync(adminClient, "PARENT", uniqueCode, realm.RealmId, LocationType.Region);
             if (parentLocation == null) return false;
 
-            var childLocation = await CreateTestLocationAsync(adminClient, "CHILD", uniqueCode, realm.RealmId, LocationType.CITY, parentLocation.LocationId);
+            var childLocation = await CreateTestLocationAsync(adminClient, "CHILD", uniqueCode, realm.RealmId, LocationType.City, parentLocation.LocationId);
             if (childLocation == null) return false;
 
             // Query children via C# SDK using typed proxy
@@ -971,7 +971,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
                     Name = $"Parity Location {uniqueCode}",
                     Description = "Location parity test",
                     RealmId = realm.RealmId,
-                    LocationType = LocationType.REGION
+                    LocationType = LocationType.Region
                 },
                 timeout: TimeSpan.FromSeconds(10));
 

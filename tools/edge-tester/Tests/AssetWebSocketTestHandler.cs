@@ -91,7 +91,6 @@ public class AssetWebSocketTestHandler : BaseWebSocketTestHandler
             {
                 BundleId = bundleId,
                 Version = "1.0.0",
-                Owner = "edge-tester",
                 AssetIds = new List<string> { uploadedAssetId },
                 Compression = CompressionType.None
             }, timeout: TimeSpan.FromSeconds(10));
@@ -146,7 +145,6 @@ public class AssetWebSocketTestHandler : BaseWebSocketTestHandler
                 Filename = $"ws-test-{DateTime.Now.Ticks}.json",
                 Size = testBytes.Length,
                 ContentType = "application/json",
-                Owner = "edge-tester",
                 Metadata = new AssetMetadataInput
                 {
                     AssetType = AssetType.Behavior,
@@ -237,7 +235,6 @@ public class AssetWebSocketTestHandler : BaseWebSocketTestHandler
             {
                 MetabundleId = metabundleId,
                 StandaloneAssetIds = new List<string> { standaloneAsset1, standaloneAsset2 },
-                Owner = "edge-tester",
                 Version = "1.0.0",
                 Realm = "test-realm"
             }, timeout: TimeSpan.FromSeconds(10));
@@ -273,7 +270,6 @@ public class AssetWebSocketTestHandler : BaseWebSocketTestHandler
                 Filename = $"{testName}-{DateTime.Now.Ticks}.json",
                 Size = testBytes.Length,
                 ContentType = "application/json",
-                Owner = "edge-tester",
                 Metadata = new AssetMetadataInput
                 {
                     AssetType = AssetType.Behavior,
