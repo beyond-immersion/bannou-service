@@ -49,7 +49,7 @@ public class SceneTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Helper to create a minimal test scene.
     /// </summary>
-    private static SceneModel CreateMinimalScene(string name, SceneType sceneType = SceneType.Room)
+    private static SceneModel CreateMinimalScene(string name, string sceneType = "Room")
     {
         return new SceneModel
         {

@@ -1,23 +1,17 @@
 # Self-Hosted Deployment: Single-Player and Local Server Experiences
 
-> **Status**: Design
+> **Type**: Design
+> **Status**: Active
 > **Created**: 2026-02-18
-> **Author**: Lysander (design) + Claude (analysis)
-> **Category**: Cross-cutting architecture (deployment, infrastructure)
-> **Related Services**: State (L0), Messaging (L0), Mesh (L0), Workshop (L4), all consumer services
-> **Related Plans**: [LOCATION-BOUND-PRODUCTION.md](LOCATION-BOUND-PRODUCTION.md), [MEMENTO-INVENTORIES.md](MEMENTO-INVENTORIES.md)
-> **Related Docs**: [BANNOU-DESIGN.md](../BANNOU-DESIGN.md), [VISION.md](../reference/VISION.md), [PLAYER-VISION.md](../reference/PLAYER-VISION.md)
-> **Related Issues**: [#442](https://github.com/beyond-immersion/bannou-service/issues/442) (SQLite state store backend), [#409](https://github.com/beyond-immersion/bannou-service/issues/409) (Game Engine Actor transport)
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #4, #5
+> **Related Plugins**: State, Messaging, Mesh, Workshop, Inventory, Item, Location, Transit, Worldstate, Actor, Seed
 
 ---
 
-## Executive Summary
+## Summary
 
-Bannou's architecture -- schema-first code generation, plugin loading, in-memory infrastructure backends, environment-driven service selection, and lazy evaluation -- already supports self-hosted deployment with zero code changes. A game built on Bannou can ship as a local dedicated server alongside the game client (the Satisfactory model), giving players a single-player or LAN multiplayer experience powered by the full service stack.
-
-The production chain composability documented in [LOCATION-BOUND-PRODUCTION.md](LOCATION-BOUND-PRODUCTION.md) demonstrates this concretely: a Factorio-style factory game is entirely described by Workshop blueprints (seed data), Inventory containers, Location hierarchies, Transit connections, and ABML behaviors for NPC workers -- no game-specific server code. The game engine provides rendering and input. Bannou provides everything between "player clicks" and "world state changes." Different games are different seed data sets on identical infrastructure.
-
-Three investments unlock this as a shipping product: a SQLite state store backend for local persistence ([#442](https://github.com/beyond-immersion/bannou-service/issues/442)), SDK convenience for local-server connection defaults, and documentation. An optional fourth investment -- lib-mesh in-process routing -- eliminates HTTP overhead entirely for .NET engines.
+Designs how Bannou ships as a local dedicated server alongside a game client for single-player or LAN multiplayer experiences. The existing architecture (plugin loading, in-memory infrastructure backends, environment-driven service selection, lazy evaluation) already supports this deployment mode with zero code changes. The SQLite state store backend has been implemented, removing the primary infrastructure gap. Remaining investments are SDK convenience layers, in-process mesh routing for embedded .NET engines, and documentation.
 
 ---
 
@@ -95,7 +89,7 @@ All three L0 infrastructure dependencies are eliminable:
 
 | Infrastructure | Cloud Mode | Self-Hosted Mode | Status |
 |---------------|-----------|-----------------|--------|
-| **State (L0)** | Redis + MySQL | `STATE_USE_INMEMORY=true` or `STATE_USE_SQLITE=true` ([#442](https://github.com/beyond-immersion/bannou-service/issues/442)) | InMemory: exists. SQLite: planned. |
+| **State (L0)** | Redis + MySQL | `STATE_USE_INMEMORY=true` or `STATE_USE_SQLITE=true` | InMemory: exists. SQLite: implemented. |
 | **Messaging (L0)** | RabbitMQ | `InMemoryMessageBus` (local pub/sub) | Exists |
 | **Mesh (L0)** | YARP + Redis service discovery | Default "bannou" omnipotent routing (all services co-located) | Exists |
 
@@ -123,7 +117,7 @@ WORKSHOP_SERVICE_ENABLED=true
 VOICE_SERVICE_ENABLED=false
 ```
 
-A Factorio-style game might need ~15 plugins out of 45+, reducing memory footprint significantly.
+A Factorio-style game might need ~15 plugins out of 76, reducing memory footprint significantly.
 
 ### Lazy Evaluation
 
@@ -186,7 +180,7 @@ The generated `I{Service}Client` types use lib-mesh underneath. In self-hosted m
 
 ## Persistence: The SQLite Backend
 
-The only missing infrastructure for a shipping self-hosted product. See [#442](https://github.com/beyond-immersion/bannou-service/issues/442) for the full design.
+The SQLite state store backend has been implemented (see [#442](https://github.com/beyond-immersion/bannou-service/issues/442)). lib-state now supports SQLite via EF Core alongside Redis, MySQL, and InMemory backends.
 
 ### Why SQLite Over InMemory + Save-Load
 
@@ -439,7 +433,7 @@ Starting a local HTTP server on Windows triggers Windows Defender Firewall promp
 
 | Task | Effort | Dependency |
 |------|--------|------------|
-| **SQLite state store backend** ([#442](https://github.com/beyond-immersion/bannou-service/issues/442)) | Medium | None |
+| ~~**SQLite state store backend**~~ ([#442](https://github.com/beyond-immersion/bannou-service/issues/442)) | ~~Medium~~ | ✅ Implemented |
 | **Self-hosted server.env template** | Trivial | None |
 | **SDK local connection mode** | Trivial | None |
 
@@ -452,7 +446,7 @@ After Phase 1, a developer can build a Factorio-style game on Bannou with local 
 | **SDK server lifecycle management** (start/stop/wait) | Small | Phase 1 |
 | **SDK game-specific build profiles** | Small | None |
 | **Seed data loading from local directory** | Small | None |
-| **Graceful shutdown with state flush** | Small | #442 |
+| **Graceful shutdown with state flush** | Small | SQLite (done) |
 | **Self-hosted deployment guide** (documentation) | Small | Phase 1 |
 
 After Phase 2, a game studio can ship a self-hosted game on Bannou with professional-quality developer experience.
@@ -484,10 +478,10 @@ Phase 3 is optional polish. The Satisfactory model ships without any of it.
 
 ## Conclusion
 
-The Bannou architecture is already a self-hosted game backend. The in-memory infrastructure, selective plugin loading, lazy evaluation, and environment-driven configuration mean that a Satisfactory-style deployment works today with zero code changes. The SQLite backend (#442) provides the missing persistence layer. SDK conveniences improve developer experience. In-process mesh routing is an optional optimization.
+The Bannou architecture is already a self-hosted game backend. The in-memory infrastructure, selective plugin loading, lazy evaluation, and environment-driven configuration mean that a Satisfactory-style deployment works today with zero code changes. The SQLite backend is implemented, providing the durable persistence layer. Remaining investments are SDK conveniences for developer experience and in-process mesh routing as an optional optimization.
 
 The most significant implication: **Bannou becomes a game engine backend-as-a-library.** A studio building a Factorio-style game doesn't write backend code. They author Workshop blueprints, Item templates, ABML behaviors, and environment configurations. They build a rendering engine. Bannou handles everything between player input and world state. The game IS the seed data.
 
 ---
 
-*This document describes the design for self-hosted Bannou deployment. For production chain mechanics, see [LOCATION-BOUND-PRODUCTION.md](LOCATION-BOUND-PRODUCTION.md). For memento systems, see [MEMENTO-INVENTORIES.md](MEMENTO-INVENTORIES.md). For the SQLite backend, see [#442](https://github.com/beyond-immersion/bannou-service/issues/442). For vision context, see [VISION.md](../reference/VISION.md).*
+*This document describes the design for self-hosted Bannou deployment. For production chain mechanics, see [LOCATION-BOUND-PRODUCTION.md](LOCATION-BOUND-PRODUCTION.md). For memento systems, see [MEMENTO-INVENTORIES.md](MEMENTO-INVENTORIES.md). For vision context, see [VISION.md](../reference/VISION.md).*

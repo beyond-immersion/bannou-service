@@ -1,8 +1,15 @@
 # Plugin Lifecycle Pipeline: From Idea to Production-Ready
 
-> **Purpose**: Formalizes the end-to-end development lifecycle for Bannou plugins, from initial concept through production-ready implementation. Defines readiness levels, the skill commands that drive progression, and the ordering constraints that prevent architectural rework.
->
-> **Origin**: Analysis session (2026-03-05) examining TDD viability, schema-first constraints, and the role of deep dives + implementation maps as pre-implementation design verification.
+> **Type**: Design
+> **Status**: Implemented
+> **Created**: 2026-03-05
+> **Last Updated**: 2026-03-09
+> **North Stars**: #4
+> **Related Plugins**: N/A
+
+## Summary
+
+Formalizes the end-to-end development lifecycle for Bannou plugins across seven stages, from deep dive concept through production-ready implementation. Defines readiness levels (L0-L7), the skill commands that drive progression, and ordering constraints that prevent architectural rework. All seven stages now have corresponding skill commands or established manual processes.
 
 ---
 
@@ -144,7 +151,7 @@ Each stage has a clear input, output, and quality gate. Existing skills handle s
 - Event capture tests (verifying published events match map expectations)
 - Error path tests (verifying status codes for each failure condition in the map)
 
-**No existing skill**: Needs `/test-plugin` skill. This is the key new skill that bridges the implementation map (specification) with unit tests (verification). The skill should:
+**Existing skill**: `/test-plugin` -- bridges the implementation map (specification) with unit tests (verification). The skill:
 1. Read the implementation map
 2. Read the generated interface (method signatures, models)
 3. Read TESTING-PATTERNS.md for required patterns (Capture Pattern, ServiceConstructorValidator)
@@ -170,7 +177,7 @@ Each stage has a clear input, output, and quality gate. Existing skills handle s
 - Event handler implementations (ServiceEvents.cs) if consuming events
 - Helper services (Services/*.cs) for complex decomposition
 
-**No existing skill**: Needs `/implement-plugin` skill. This skill should:
+**Existing skill**: `/implement-plugin` -- implements service logic from the map and failing tests. The skill:
 1. Read the implementation map (the specification)
 2. Read failing tests (the acceptance criteria)
 3. Read generated interfaces and models
@@ -197,11 +204,11 @@ Each stage has a clear input, output, and quality gate. Existing skills handle s
 | 3. Implementation Map | `/map-plugin` | EXISTS |
 | 4. Schema Creation | (manual, guided by SCHEMA-RULES.md) | Manual |
 | 5. Code Generation | (make/script commands) | Manual |
-| 6. Test Writing | `/test-plugin` | NEEDS CREATION |
-| 7. Implementation | `/implement-plugin` | NEEDS CREATION |
-| **Orchestrator** | `/check-plugin` | NEEDS CREATION |
+| 6. Test Writing | `/test-plugin` | EXISTS |
+| 7. Implementation | `/implement-plugin` | EXISTS |
+| **Orchestrator** | `/check-plugin` | EXISTS |
 
-### `/check-plugin` (New -- Orchestrator Skill)
+### `/check-plugin` (Orchestrator Skill)
 
 **Purpose**: Determines the current readiness level of a plugin and recommends the next action.
 
@@ -346,13 +353,8 @@ Categories 3 and 4 are embraced and documented. Categories 1 and 2 indicate insu
 
 ## Next Steps
 
-1. Read the skills guide (`~/.claude/skills-guide.txt`) to understand skill authoring format
-2. Review existing skill definitions for `/maintain-plugin`, `/audit-plugin`, `/map-plugin`
-3. Create `/check-plugin` skill (the orchestrator)
-4. Create `/test-plugin` skill (TDD test generation from maps)
-5. Create `/implement-plugin` skill (implementation from maps + tests)
-6. Update `/map-plugin` if needed to handle the "new plugin from deep dive" case (currently creates maps FROM existing code)
+All skill commands referenced in this pipeline have been created. Remaining work:
 
----
-
-*This document captures the full context of the pipeline analysis. After context compaction, re-read this document + the skills guide to resume work on skill creation.*
+1. Validate the pipeline end-to-end on a new plugin (Agency is the best candidate -- deep dive exists, no schemas yet)
+2. Evaluate whether `/map-plugin` handles the "new plugin from deep dive" case well enough, or if it needs enhancement for pre-schema mapping
+3. Gather feedback from pipeline usage to identify friction points between stages

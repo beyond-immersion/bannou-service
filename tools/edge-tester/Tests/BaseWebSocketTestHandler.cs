@@ -236,7 +236,7 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
         string codePrefix,
         string uniqueCode,
         Guid realmId,
-        LocationType locationType = LocationType.CITY,
+        LocationType locationType = LocationType.City,
         Guid? parentLocationId = null)
     {
         try

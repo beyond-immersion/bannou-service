@@ -1,14 +1,19 @@
 # Player-Driven World Changes: Divine Orchestration Through Narrative Agency
 
-> **Status**: Vision Document (design analysis, no implementation)
-> **Priority**: Critical (Living Game Worlds -- North Star #1, Emergent Over Authored -- North Star #5, Content Flywheel -- North Star #2)
-> **Related**: `docs/planning/CULTURAL-EMERGENCE.md`, `docs/planning/COMPRESSION-GAMEPLAY-PATTERNS.md`, `docs/planning/DEATH-AND-PLOT-ARMOR.md`, `docs/planning/LOCATION-BOUND-PRODUCTION.md`, `docs/planning/SANCTUARIES-AND-SPIRIT-DENS.md`, `docs/reference/ORCHESTRATION-PATTERNS.md`
-> **Services**: Divine, Storyline, Quest, Contract, Gardener, Puppetmaster, Actor, Faction, Hearsay, Obligation, Disposition, Collection, Item, Inventory, Currency, Worldstate, Seed, Agency
-> **Depends On**: Cultural Emergence patterns (CULTURAL-EMERGENCE.md), Orchestration Patterns (ORCHESTRATION-PATTERNS.md), Storyline system (docs/guides/STORY-SYSTEM.md), Quest-over-Contract architecture (docs/plugins/QUEST.md)
+> **Type**: Vision Document
+> **Status**: Aspirational
+> **Created**: 2025-12-01
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #5
+> **Related Plugins**: Divine, Storyline, Quest, Contract, Gardener, Puppetmaster, Actor, Faction, Hearsay, Obligation, Disposition, Collection, Item, Inventory, Currency, Worldstate, Seed, Agency
+
+## Summary
+
+Describes the divine orchestration pattern where gods create conditions for permanent world changes and let characters carry them through via the Storyline, Quest, and Contract pipeline, rather than issuing direct decrees. Players and NPCs participate equally in quest chains whose Contract prebound callbacks enact lasting world state changes such as founding traditions, establishing trade routes, and creating organizations. Requires zero new services or code changes, relying entirely on authored ABML behaviors over existing service composition. The pattern is aspirational, pending full implementation of the Divine, Storyline, and Gardener services.
 
 ---
 
-## Executive Summary
+## Background
 
 CULTURAL-EMERGENCE.md describes how divine actors observe emergent conditions and crystallize them into cultural norms. That document presents the **divine decree** model: god observes, god acts, world changes. This document describes the inverse and complementary pattern: **divine orchestration**, where gods create the *conditions for change* and let characters -- NPCs and players alike -- be the ones who carry it through.
 
@@ -20,7 +25,7 @@ This produces three things the decree model cannot:
 2. **Narrative memory**: The quest chain generates Character History entries, Character Encounter records, and Hearsay propagation that become content flywheel input -- the story of *how* the festival was founded is itself a story that future characters can reference
 3. **Emergent variation**: When multiple competing approaches are launched simultaneously, the outcome is genuinely unpredictable -- the divine actor sets the goal but does not control which path wins
 
-**Zero new services, zero code changes to Bannou.** The entire pattern is a behavioral difference in how divine actors use the existing Storyline → Quest → Contract pipeline.
+**Zero new services, zero code changes to Bannou.** The entire pattern is a behavioral difference in how divine actors use the existing Storyline, Quest, and Contract pipeline.
 
 ---
 
@@ -448,7 +453,7 @@ The player's agency advantage is not mechanical power. It is **the ability to ca
 
 ---
 
-## Summary
+## Conclusion
 
 Divine actors are not diminished by orchestrating through narrative rather than decreeing directly. They are elevated -- from administrators to storytellers. The god that commissions a Storyline scenario and watches characters struggle, compete, fail, and ultimately succeed in transforming their world is doing something more interesting than the god that simply inserts a database row.
 

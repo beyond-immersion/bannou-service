@@ -25,6 +25,12 @@ Explores gameplay patterns that emerge from treating compressed character archiv
 
 Describes how divine actors observe emergent material conditions at settlements (dominant production, geography, governance, trade significance) and crystallize them into cultural identity and customs via Hearsay beliefs and Faction norms, requiring zero new services. Customs such as coming-of-age ceremonies, harvest festivals, mourning rites, and trade protocols emerge organically because the divine GOAP planner selects culturally appropriate practices and artifacts from what is actually available and valued in each community. Several key dependencies remain unimplemented, including the Hearsay, Disposition, Agency, Workshop, Trade, and Environment plugins.
 
+### Player-Driven World Changes: Divine Orchestration Through Narrative Agency {#player-driven-world-changes}
+
+**Type**: Vision Document | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #5 | [Full Document](planning/PLAYER-DRIVEN-WORLD-CHANGES.md)
+
+Describes the divine orchestration pattern where gods create conditions for permanent world changes and let characters carry them through via the Storyline, Quest, and Contract pipeline, rather than issuing direct decrees. Players and NPCs participate equally in quest chains whose Contract prebound callbacks enact lasting world state changes such as founding traditions, establishing trade routes, and creating organizations. Requires zero new services or code changes, relying entirely on authored ABML behaviors over existing service composition. The pattern is aspirational, pending full implementation of the Divine, Storyline, and Gardener services.
+
 ## Design
 
 ### Actor-Bound Entities: Living Things That Grow Into Autonomous Agents {#actor-bound-entities}
@@ -65,6 +71,60 @@ Proposes a MusicComposer SDK providing structural template workbench tooling for
 
 Designs a distributed knowledge puzzle system where NPC characters autonomously discover world secrets by accumulating clues from multiple sources (mementos, item affixes, rumors, documents) and generating hypotheses when their Lexicon discovery tiers cross association visibility thresholds. Composes entirely from existing services (Lexicon, Hearsay, Collection, Seed, Disposition, Actor) with three small extensions: a Hearsay inference channel, skill-gated Lexicon tier offsets, and Discovery Templates as seeded configuration. No prerequisite services are implemented yet; Lexicon, Hearsay, and Disposition are all aspirational.
 
+### Death & Plot Armor System {#death-and-plot-armor}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #5 | [Full Document](planning/DEATH-AND-PLOT-ARMOR.md)
+
+Designs the death and plot armor system as a behavioral constraint enforced by god-actors through ABML, not by any service or SDK. Plot armor is a continuous float tracked via the Status service that prevents character death while above zero; god-actors deplete it based on danger intensity, god personality, and narrative position. When plot armor reaches zero, deaths become possible and trigger a multi-phase post-death gameplay sequence (Last Stand, divine judgment, underworld entry) that feeds the content flywheel. No new services are required -- the system composes entirely from existing primitives (Status, Actor, Divine, Cinematic, Character-Encounter, Contract).
+
+### Dungeon Extensions Design Notes {#dungeon-extensions-notes}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #4 | [Full Document](planning/DUNGEON-EXTENSIONS-NOTES.md)
+
+Explores dungeon system extensions beyond the core DUNGEON deep dive, including Workshop integration for habitat creature production, the dual memory system (Collection for permanent knowledge plus Inventory for consumable creative resources), floor-based environmental defense strategies, and the three-stage cognitive progression from dormant seed to awakened character brain. Identifies three areas requiring additional design work: the UNDERWORLD system realm with actor rebinding, the dual memory system replacing the custom memory store, and the Workshop adapter for habitat creature production. No schemas or implementation exist yet.
+
+### Dungeon Mana Absorption: Cost of Entry {#dungeon-mana-absorption}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #4 | [Full Document](planning/DUNGEON-MANA-ABSORPTION.md)
+
+Designs a mana absorption mechanic where dungeons continuously sap mana from intruders who cross their domain boundary, creating a natural time limit on exploration, an economic cost for dungeon diving, and a non-lethal income stream that fuels the dungeon's own mana economy. The mechanic scales with dungeon cognitive stage (Dormant through Ancient) and composes entirely from existing Bannou primitives (Currency, Status, Seed, Actor, Environment) with no new services required. Inspired by Solo Leveling gate mechanics and Dungeon Core LitRPG, with formal grounding in Arcadia's pneuma thermodynamics.
+
+### Location-Bound Production: From Farming to Factorio {#location-bound-production}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #3, #4, #5 | [Full Document](planning/LOCATION-BOUND-PRODUCTION.md)
+
+Describes a general pattern for location-bound production (farming, construction, fermentation, mining, factory automation) that composes entirely from existing service primitives with zero new plugins. Sub-locations hold stage-based inventories, Workshop blueprints drive time-based transformation between stages, and the game clock progresses production even when nobody is watching. The pattern scales from simple farming to full Factorio-style factory automation chains when combined with Transit for transport and a reactive production trigger design addition to Workshop.
+
+### Logos Resonance Items: Memory-Forged Equipment with Experiential Prerequisites {#logos-resonance-items}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #4 | [Full Document](planning/LOGOS-RESONANCE-ITEMS.md)
+
+Designs a gradient activation system for equipment where affixes have experiential prerequisites evaluated against the wielder at runtime, replacing traditional binary soulbinding with a fidelity model. Items are created by god-actors during formative events (boss kills, climactic battles) and carry activation prerequisites tied to the experiences that forged them, so the earner naturally meets most prerequisites while other wielders achieve partial activation. Requires extending the Affix system with an IActivationPrerequisiteProviderFactory DI pattern (following the established Quest prerequisite model) and ABML behavior authoring for god-actors. Both Affix and Loot plugins remain aspirational with no schemas or implementations yet.
+
+### Memento Inventories: Location-Based Spiritual Ecology {#memento-inventories}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #3, #5 | [Full Document](planning/MEMENTO-INVENTORIES.md)
+
+Generalizes the dungeon core memory inventory pattern to all locations in the game world, where each location accumulates memento items generated from real gameplay events such as deaths, battles, emotional moments, and masterwork creations. Characters with spiritual perception abilities (necromancers, mediums, historians, detectives, bards, craftsmen) interact with these mementos to summon spirit echoes, extract forensic evidence, compose performances, or imbue crafted items with historical significance. Requires zero new services or plugins, composing entirely from Item, Inventory, Location, Actor, and ABML behavior documents. No implementation exists yet; this is the design specification for the spiritual ecology layer of the content flywheel.
+
+### Plugin Lifecycle Pipeline: From Idea to Production-Ready {#plugin-lifecycle-pipeline}
+
+**Type**: Design | **Status**: Implemented | **Last Updated**: 2026-03-09 | **North Stars**: #4 | [Full Document](planning/PLUGIN-LIFECYCLE-PIPELINE.md)
+
+Formalizes the end-to-end development lifecycle for Bannou plugins across seven stages, from deep dive concept through production-ready implementation. Defines readiness levels (L0-L7), the skill commands that drive progression, and ordering constraints that prevent architectural rework. All seven stages now have corresponding skill commands or established manual processes.
+
+### Sanctuaries and Spirit Dens: Sacred Geography of the Living World {#sanctuaries-and-spirit-dens}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #5 | [Full Document](planning/SANCTUARIES-AND-SPIRIT-DENS.md)
+
+Designs two complementary sacred geography systems composed from existing Bannou primitives: Sanctuaries (divine non-aggression zones where supernatural peace overrides predator ecology via GOAP action cost modification) and Spirit Dens (leyline convergence points where accumulated species-logos crystallizes into supernatural exemplar animals following the Actor-Bound Entity pattern). Both use Workshop lazy evaluation for scalable spiritual production-vs-decay dynamics, enabling hundreds of sacred sites with zero server ticks. No implementation exists; key dependencies (Environment, Ethology, Workshop, Agency) remain unimplemented.
+
+### Self-Hosted Deployment: Single-Player and Local Server Experiences {#self-hosted-deployment}
+
+**Type**: Design | **Status**: Active | **Last Updated**: 2026-03-09 | **North Stars**: #1, #4, #5 | [Full Document](planning/SELF-HOSTED-DEPLOYMENT.md)
+
+Designs how Bannou ships as a local dedicated server alongside a game client for single-player or LAN multiplayer experiences. The existing architecture (plugin loading, in-memory infrastructure backends, environment-driven service selection, lazy evaluation) already supports this deployment mode with zero code changes. The SQLite state store backend has been implemented, removing the primary infrastructure gap. Remaining investments are SDK convenience layers, in-process mesh routing for embedded .NET engines, and documentation.
+
 ## Research
 
 ### Situationally Triggered Cinematics: Precedent Research {#cinematic-precedent-research}
@@ -85,79 +145,29 @@ Analyzes nine detailed academic research cards covering cinematic theory, camera
 
 Compiles formal academic research across three domains -- computational cinematography, fight choreography, and dramatic grammar -- that provide the theoretical foundations for a planned CinematicTheory SDK. Maps specific models (Laban movement analysis, Cohn visual narrative grammar, toric camera space, SAFD stage combat patterns) to a five-layer architecture for procedural combat choreography and camera direction. No implementation exists yet; this is a research compilation informing future SDK design.
 
-## Other
+### Predator Ecology Patterns: Behavioral Modeling for Living Worlds {#predator-ecology-patterns}
 
-### Death & Plot Armor System {#death-and-plot-armor}
+**Type**: Research | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #5 | [Full Document](planning/PREDATOR-ECOLOGY-PATTERNS.md)
 
-**Status**: Design | [Full Document](planning/DEATH-AND-PLOT-ARMOR.md)
+Compiles established wildlife ecology research on predator coexistence, niche partitioning, intraguild predation, mesopredator release, and territorial behavior into a specification for the Ethology service behavioral archetype system. Defines 30+ behavioral float axes across six domains (hunting, temporal, spatial, competition, metabolic, sensory) with concrete species profile examples and seven interaction rules that produce emergent predator ecosystems from parameter interactions. No implementation exists yet; the related plugins (Ethology, Environment, Disposition) remain aspirational with no schemas or generated code.
 
-Plot armor is a **hard numerical value** tracked per character that determines whether that character can die as a result of scenario outcomes, cinematic exchanges, or combat encounters. While the value is above zero, the character **cannot be killed** -- dangerous outcomes are deflected by divine intervention, luck, autonomous reflexes, or other narrative mechanisms. When the value reaches zero, cinematic deaths become possible.
-
-### Dungeon Mana Absorption: Cost of Entry {#dungeon-mana-absorption}
-
-**Status**: Design | [Full Document](planning/DUNGEON-MANA-ABSORPTION.md)
-
-Dungeons continuously sap mana from intruders who cross their domain boundary. An initial burst absorbs a significant portion of the entrant's mana reserves on crossing the threshold (~20%), followed by a slower continuous drain (~1% per game-minute). This creates a natural time limit on dungeon exploration (~80 minutes before depletion), makes dungeon-diving an economically costly activity, and -- critically -- **fuels the dungeon's own mana economy from attempts, not just from deaths**.
+## Implementation Plans
 
 ### Git Registry Plugin - Self-Hosted Git Server for Bannou {#git-registry-plugin}
 
-**Status**: Ready for Implementation | **Last Updated**: 2025-12-27 | [Full Document](planning/GIT-REGISTRY-PLUGIN.md)
+**Type**: Implementation Plan | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: N/A | [Full Document](planning/GIT-REGISTRY-PLUGIN.md)
 
-Implement a self-hosted Git server as a Bannou plugin using `git.exe` process execution for protocol handling, with a comprehensive repository management API and WebSocket-based real-time synchronization.
+Proposes a self-hosted Git server as a Bannou plugin (lib-git) using git.exe process execution for protocol handling, with a POST-only repository management API and WebSocket-based real-time synchronization via the Connect service. The estimated effort is 6-8 weeks covering core protocol, management API, real-time sync, and testing. No implementation exists yet; neither schemas nor plugin code have been created.
 
-### Location-Bound Production: From Farming to Factorio {#location-bound-production}
+## Architectural Analysis
 
-**Status**: Design | [Full Document](planning/LOCATION-BOUND-PRODUCTION.md)
+### Compositional Cinematics: The Anime Production Paradigm for Real-Time 3D {#compositional-cinematics}
 
-A location is a container. A container holds items. Items transform over time. Workshop already models time-based transformation with lazy evaluation against Worldstate's game clock, source/destination inventories, worker scaling, and environment-modified rates. Location already supports hierarchical sub-locations. Inventory already supports containers associated with any entity.
+**Type**: Architectural Analysis | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #5 | [Full Document](planning/COMPOSITIONAL-CINEMATICS.md)
 
-### Logos Resonance Items: Memory-Forged Equipment with Experiential Prerequisites {#logos-resonance-items}
+Analyzes how the anime production paradigm of decomposing complex scenes into independently-produced layers with shared spatial constraints maps onto Bannou's cinematic architecture. Fingerprinted behavior components serve as character cels, continuation points as composition seams, and CutsceneSession sync barriers as same-layer synchronization moments. Extends the paradigm to distributed scene sourcing where multiple servers simultaneously simulate different scene versions for instantaneous flashbacks, perspective splits, and temporal montage. No new systems are proposed; this is a unifying architectural lens on planned and existing systems including lib-cinematic, lib-behavior, lib-actor, and the Video Director.
 
-**Status**: Design | [Full Document](planning/LOGOS-RESONANCE-ITEMS.md)
-
-Traditional soulbinding is a binary lock: the item works for you, or it doesn't. Logos resonance items replace this with a **gradient of experiential affinity** -- the item is freely tradeable, always functional, but its full capabilities emerge only when the wielder's accumulated experiences resonate with the memories crystallized within it.
-
-### Memento Inventories: Location-Based Spiritual Ecology {#memento-inventories}
-
-**Status**: Design | [Full Document](planning/MEMENTO-INVENTORIES.md)
-
-Every death leaves a mark. Every battle scars the earth. Every act of love, betrayal, creation, or destruction imprints itself on the place where it happened. Memento inventories generalize the dungeon's memory inventory pattern -- already designed as a dual Collection/Inventory system for dungeon cores -- to **all locations in the game world**. Each location accumulates memento items generated from real gameplay events: deaths, battles, emotional moments, masterwork creations. These mementos contain compressed real data from real characters and real events, not authored content.
-
-### Player-Driven World Changes: Divine Orchestration Through Narrative Agency {#player-driven-world-changes}
-
-**Status**: Vision Document (design analysis, no implementation) | [Full Document](planning/PLAYER-DRIVEN-WORLD-CHANGES.md)
-
-Divine actors are not diminished by orchestrating through narrative rather than decreeing directly. They are elevated -- from administrators to storytellers. The god that commissions a Storyline scenario and watches characters struggle, compete, fail, and ultimately succeed in transforming their world is doing something more interesting than the god that simply inserts a database row.
-
-Players are not diminished by operating within divinely-orchestrated scenarios. They are elevated -- from quest consumers to world shapers. The player who helps Lily establish the Flower Tide Festival has permanently changed the game world, and the world will remember that they did.
-
-The services do not know the difference. Contract fires callbacks. Faction creates norms. Hearsay propagates beliefs. Character History records events. The content flywheel spins. Whether the catalyst was a divine decree, an NPC's ambition, or a player's choice -- the world changes, and the change generates more world.
-
-No new plugins. No code changes. Just a different question in the divine actor's ABML behavior: not "should this change happen?" but "who should carry this change into being?"
-
-### Plugin Lifecycle Pipeline: From Idea to Production-Ready {#plugin-lifecycle-pipeline}
-
-[Full Document](planning/PLUGIN-LIFECYCLE-PIPELINE.md)
-
-Bannou's existing documentation and skill infrastructure already covers most of the plugin development lifecycle, but the stages aren't formalized into a pipeline with clear readiness gates. This document defines that pipeline.
-
-### Predator Ecology Patterns: Behavioral Modeling for Living Worlds {#predator-ecology-patterns}
-
-**Status**: Research Document (ecological analysis for behavioral modeling) | [Full Document](planning/PREDATOR-ECOLOGY-PATTERNS.md)
-
-Real-world predator ecosystems are governed by discoverable rules that produce emergent complexity from simple parameters. Multiple carnivorous predator species **routinely coexist** in the same geographic area -- this is the norm in healthy ecosystems, not the exception. The African savanna supports 7+ large predator species; North American temperate forests support 6+. Coexistence is not about tolerance; it is about **niche partitioning along multiple axes simultaneously** (temporal, spatial, prey size, hunting style). These rules translate directly into Ethology service behavioral axes and ABML behavior expressions, producing realistic predator ecosystems from parameter interactions rather than scripted encounters.
-
-### Sanctuaries and Spirit Dens: Sacred Geography of the Living World {#sanctuaries-and-spirit-dens}
-
-**Status**: Vision Document (design analysis, no implementation) | [Full Document](planning/SANCTUARIES-AND-SPIRIT-DENS.md)
-
-Two complementary concepts create sacred geography in the Arcadia game world: **Sanctuaries** (divine non-aggression zones where supernatural peace overrides predator ecology) and **Spirit Dens** (leyline convergence points where accumulated species-logos crystallizes into supernatural exemplar animals surrounded by their kin). Both emerge from the interaction of existing systems -- the predator ecology rules, the memento inventory system, the divine economy, and the leyline/pneuma framework -- requiring zero new services.
-
-### Self-Hosted Deployment: Single-Player and Local Server Experiences {#self-hosted-deployment}
-
-**Status**: Design | [Full Document](planning/SELF-HOSTED-DEPLOYMENT.md)
-
-Bannou's architecture -- schema-first code generation, plugin loading, in-memory infrastructure backends, environment-driven service selection, and lazy evaluation -- already supports self-hosted deployment with zero code changes. A game built on Bannou can ship as a local dedicated server alongside the game client (the Satisfactory model), giving players a single-player or LAN multiplayer experience powered by the full service stack.
+## Other
 
 ### Video Director: Dynamic Cinematic Generation from Game Data {#video-director}
 
@@ -177,7 +187,7 @@ This document records the results of a full cross-service audit comparing the vi
 
 ## Summary
 
-- **Documents in catalog**: 25
+- **Documents in catalog**: 27
 
 ---
 

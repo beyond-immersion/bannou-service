@@ -1,10 +1,15 @@
 # Predator Ecology Patterns: Behavioral Modeling for Living Worlds
 
-> **Status**: Research Document (ecological analysis for behavioral modeling)
-> **Priority**: High (Living Game Worlds -- North Star #1, Emergent Over Authored -- North Star #5)
-> **Related**: `docs/plugins/ETHOLOGY.md`, `docs/plugins/ACTOR.md`, `docs/plugins/ENVIRONMENT.md`, `docs/plugins/DISPOSITION.md`, `docs/reference/ORCHESTRATION-PATTERNS.md`
-> **Domain**: Species-level predator behavior, interspecific competition, spatial ecology, niche partitioning
-> **Sources**: Established wildlife ecology literature (Mech & Boitani 2003, Sunquist & Sunquist 2002, Carbone et al. 1999/2007, Palomares & Caro 1999, Creel & Creel 1996/2002, Durant 1998/2000, Ripple & Beschta 2004/2012, Ritchie & Johnson 2009, Swanson et al. 2014/2016, Gaynor et al. 2018)
+> **Type**: Research
+> **Status**: Aspirational
+> **Created**: 2026-02-23
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #5
+> **Related Plugins**: Ethology, Actor, Environment, Disposition
+
+## Summary
+
+Compiles established wildlife ecology research on predator coexistence, niche partitioning, intraguild predation, mesopredator release, and territorial behavior into a specification for the Ethology service behavioral archetype system. Defines 30+ behavioral float axes across six domains (hunting, temporal, spatial, competition, metabolic, sensory) with concrete species profile examples and seven interaction rules that produce emergent predator ecosystems from parameter interactions. No implementation exists yet; the related plugins (Ethology, Environment, Disposition) remain aspirational with no schemas or generated code.
 
 ---
 

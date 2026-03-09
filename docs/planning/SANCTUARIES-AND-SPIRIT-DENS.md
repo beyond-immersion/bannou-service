@@ -1,20 +1,28 @@
 # Sanctuaries and Spirit Dens: Sacred Geography of the Living World
 
-> **Status**: Vision Document (design analysis, no implementation)
-> **Priority**: High (Living Game Worlds -- North Star #1, Emergent Over Authored -- North Star #5, Content Flywheel -- North Star #2)
-> **Related**: `docs/planning/PREDATOR-ECOLOGY-PATTERNS.md`, `docs/planning/MEMENTO-INVENTORIES.md`, `docs/planning/LOCATION-BOUND-PRODUCTION.md`, `docs/planning/DEATH-AND-PLOT-ARMOR.md`, `docs/planning/ACTOR-BOUND-ENTITIES.md`
-> **Services**: Environment, Location, Divine, Seed, Actor, Character, Status, Item, Inventory, Collection, Ethology, Worldstate, Transit, Workshop
-> **Metaphysics**: Logos/Pneuma framework (VISION.md), Memento system (MEMENTO-INVENTORIES.md), Actor-Bound Entity pattern (ACTOR-BOUND-ENTITIES.md)
+> **Type**: Design
+> **Status**: Aspirational
+> **Created**: 2026-03-01
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #5
+> **Related Plugins**: Environment, Location, Divine, Seed, Actor, Character, Status, Item, Inventory, Collection, Ethology, Worldstate, Transit, Workshop, Agency
+
+## Summary
+
+Designs two complementary sacred geography systems composed from existing Bannou primitives: Sanctuaries (divine non-aggression zones where supernatural peace overrides predator ecology via GOAP action cost modification) and Spirit Dens (leyline convergence points where accumulated species-logos crystallizes into supernatural exemplar animals following the Actor-Bound Entity pattern). Both use Workshop lazy evaluation for scalable spiritual production-vs-decay dynamics, enabling hundreds of sacred sites with zero server ticks. No implementation exists; key dependencies (Environment, Ethology, Workshop, Agency) remain unimplemented.
 
 ---
 
-## Executive Summary
+### Extended Context
 
 Two complementary concepts create sacred geography in the Arcadia game world: **Sanctuaries** (divine non-aggression zones where supernatural peace overrides predator ecology) and **Spirit Dens** (leyline convergence points where accumulated species-logos crystallizes into supernatural exemplar animals surrounded by their kin). Both emerge from the interaction of existing systems -- the predator ecology rules, the memento inventory system, the divine economy, and the leyline/pneuma framework -- requiring zero new services.
 
 Sanctuaries and spirit dens are mechanistically distinct but complementary. Sanctuaries are about **peace** (divine origin, aggression suppression, multi-species coexistence). Spirit dens are about **essence** (natural origin, species concentration, logos crystallization). Where they converge -- a divine sanctuary at a leyline point -- the rarest and most awe-inspiring locations in the game world emerge.
 
 The critical design insight: **these locations gain their power from the contrast with the surrounding world**. The predator ecology research (PREDATOR-ECOLOGY-PATTERNS.md) establishes that the world is governed by intraguild predation, dominance hierarchies, kleptoparasitism, territorial aggression, and the landscape of fear. Sanctuaries and spirit dens are the exceptions that prove the rule. Their rarity and the danger of reaching them is what makes them meaningful.
+
+**Related planning documents**: `docs/planning/PREDATOR-ECOLOGY-PATTERNS.md`, `docs/planning/MEMENTO-INVENTORIES.md`, `docs/planning/LOCATION-BOUND-PRODUCTION.md`, `docs/planning/DEATH-AND-PLOT-ARMOR.md`, `docs/planning/ACTOR-BOUND-ENTITIES.md`
+**Metaphysics**: Logos/Pneuma framework (VISION.md), Memento system (MEMENTO-INVENTORIES.md), Actor-Bound Entity pattern (ACTOR-BOUND-ENTITIES.md)
 
 ---
 

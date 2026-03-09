@@ -1,10 +1,15 @@
 # Compositional Cinematics: The Anime Production Paradigm for Real-Time 3D
 
-> **Type**: Architectural planning document
+> **Type**: Architectural Analysis
+> **Status**: Aspirational
 > **Created**: 2026-03-09
-> **Priority**: High (unifying vision across cinematic, behavior composition, and distributed architecture)
-> **Related**: [BEHAVIOR-COMPOSITION.md](BEHAVIOR-COMPOSITION.md) (fingerprinted components, plan cache), [VIDEO-DIRECTOR.md](VIDEO-DIRECTOR.md) (music-driven cinematic generation), [CINEMATIC-SYSTEM.md](CINEMATIC-SYSTEM.md) (runtime, continuation points, CutsceneSession), [BANNOU-EMBEDDED.md](BANNOU-EMBEDDED.md) (standalone production tool)
-> **Services**: lib-cinematic (L4), lib-behavior (L4), lib-actor (L2), lib-puppetmaster (L4), lib-video-director (L4, planned), lib-agency (L4), lib-save-load (L4), lib-scene (L4)
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #5
+> **Related Plugins**: Cinematic, Behavior, Actor, Puppetmaster, Agency, Save-Load, Scene, Mapping
+
+## Summary
+
+Analyzes how the anime production paradigm of decomposing complex scenes into independently-produced layers with shared spatial constraints maps onto Bannou's cinematic architecture. Fingerprinted behavior components serve as character cels, continuation points as composition seams, and CutsceneSession sync barriers as same-layer synchronization moments. Extends the paradigm to distributed scene sourcing where multiple servers simultaneously simulate different scene versions for instantaneous flashbacks, perspective splits, and temporal montage. No new systems are proposed; this is a unifying architectural lens on planned and existing systems including lib-cinematic, lib-behavior, lib-actor, and the Video Director.
 
 ---
 
@@ -431,7 +436,7 @@ The processing pool model already handles this for Actor NPC brains -- the same 
 
 ---
 
-## Summary
+## Conclusion
 
 The anime industry's production philosophy -- **decompose complex scenes into independently-produced layers that share spatial constraints, then composite them** -- maps precisely onto Bannou's cinematic architecture. Fingerprinted behavior components are cels. Continuation points are composition seams. CutsceneSession sync barriers are "same layer" moments. The GOAP planner is the animation director allocating quality budget. The Video Director is the photography department compositing everything together.
 

@@ -1,14 +1,23 @@
 # Memento Inventories: Location-Based Spiritual Ecology
 
-> **Status**: Design
+> **Type**: Design
+> **Status**: Aspirational
 > **Created**: 2026-02-18
-> **Author**: Lysander (design) + Claude (analysis)
-> **Category**: Cross-cutting mechanic (behavioral, not plugin)
-> **Related Services**: Item (L2), Inventory (L2), Location (L2), Actor (L2), Character-History (L4), Character-Encounter (L4), Character-Personality (L4), Agency (L4), Collection (L2), Seed (L2)
-> **Related Plans**: [DEATH-AND-PLOT-ARMOR.md](DEATH-AND-PLOT-ARMOR.md), [CINEMATIC-SYSTEM.md](../plans/CINEMATIC-SYSTEM.md), [LOGOS-RESONANCE-ITEMS.md](LOGOS-RESONANCE-ITEMS.md)
-> **Related Docs**: [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md), [VISION.md](../reference/VISION.md)
-> **Related Issues**: [#164](https://github.com/beyond-immersion/bannou-service/issues/164) (Item Removal/Drop Behavior), [#274](https://github.com/beyond-immersion/bannou-service/issues/274) (Location ground containers)
-> **Related arcadia-kb**: Underworld and Soul Currency System, Dungeon System
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #3, #5
+> **Related Plugins**: Item, Inventory, Location, Actor, Character-History, Character-Encounter, Character-Personality, Agency, Collection, Seed
+
+## Summary
+
+Generalizes the dungeon core memory inventory pattern to all locations in the game world, where each location accumulates memento items generated from real gameplay events such as deaths, battles, emotional moments, and masterwork creations. Characters with spiritual perception abilities (necromancers, mediums, historians, detectives, bards, craftsmen) interact with these mementos to summon spirit echoes, extract forensic evidence, compose performances, or imbue crafted items with historical significance. Requires zero new services or plugins, composing entirely from Item, Inventory, Location, Actor, and ABML behavior documents. No implementation exists yet; this is the design specification for the spiritual ecology layer of the content flywheel.
+
+---
+
+**Original authors**: Lysander (design) + Claude (analysis)
+**Related plans**: [DEATH-AND-PLOT-ARMOR.md](DEATH-AND-PLOT-ARMOR.md), [CINEMATIC-SYSTEM.md](../plans/CINEMATIC-SYSTEM.md), [LOGOS-RESONANCE-ITEMS.md](LOGOS-RESONANCE-ITEMS.md)
+**Related docs**: [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md), [VISION.md](../reference/VISION.md)
+**Related issues**: [#164](https://github.com/beyond-immersion/bannou-service/issues/164) (Item Removal/Drop Behavior), [#274](https://github.com/beyond-immersion/bannou-service/issues/274) (Location ground containers)
+**Related arcadia-kb**: Underworld and Soul Currency System, Dungeon System
 
 ---
 
