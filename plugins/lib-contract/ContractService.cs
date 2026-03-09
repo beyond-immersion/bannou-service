@@ -539,6 +539,13 @@ public partial class ContractService : IContractService
             return (StatusCodes.BadRequest, null);
         }
 
+        // Per IMPLEMENTATION TENETS: Category B instance creation guard
+        if (template.IsDeprecated)
+        {
+            _logger.LogWarning("Cannot create instance from deprecated template: {TemplateId}", body.TemplateId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         // Validate party count against template bounds
         if (body.Parties.Count < template.MinParties || body.Parties.Count > template.MaxParties)
         {

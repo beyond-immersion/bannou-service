@@ -895,6 +895,13 @@ public partial class LicenseService : ILicenseService
             return (StatusCodes.BadRequest, null);
         }
 
+        // Per IMPLEMENTATION TENETS: Category B instance creation guard
+        if (template.IsDeprecated)
+        {
+            _logger.LogWarning("Cannot create board from deprecated template: {BoardTemplateId}", body.BoardTemplateId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         // Validate ownerType is in template's allowedOwnerTypes
         if (!template.AllowedOwnerTypes.Contains(body.OwnerType))
         {

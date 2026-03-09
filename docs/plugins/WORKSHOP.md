@@ -474,7 +474,9 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 | `IItemClient` | Creating output items during materialization (L2 hard) |
 | `IInventoryClient` | Material consumption and output placement (L2 hard) |
 | `IGameServiceClient` | Game service existence validation (L2 hard) |
-| `IServiceProvider` | Runtime resolution of soft dependencies (lib-craft, lib-seed, lib-location) |
+| `ISeedClient` | Worker proficiency seed growth queries (L2 hard) |
+| `ILocationClient` | Location constraint validation (L2 hard) |
+| `IServiceProvider` | Runtime resolution of soft dependencies (lib-craft) |
 | `WorkshopMaterializationWorkerService` | Background `HostedService` that periodically processes pending production tasks with fair per-owner scheduling |
 | `WorkshopProviderFactory` | Implements `IVariableProviderFactory` to provide `${workshop.*}` variables to Actor's behavior system |
 | `IProductionCalculator` / `ProductionCalculator` | Internal helper for rate segment integration, material availability checks, and materialization logic |
@@ -549,7 +551,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ## Visual Aid
 
-Blueprints are owned here. Item creation and destruction are lib-item (L2). Container operations are lib-inventory (L2). Game time is lib-worldstate (L2). Recipe definitions, when referenced, are lib-craft (L4, soft). Worker proficiency, when relevant, is lib-seed (L2) or lib-craft (L4, soft). Workshop orchestrates these into a continuous production loop.
+Blueprints are owned here. Item creation and destruction are lib-item (L2). Container operations are lib-inventory (L2). Game time is lib-worldstate (L2). Recipe definitions, when referenced, are lib-craft (L4, soft). Worker proficiency, when relevant, uses lib-seed (L2, hard) for seed growth queries or lib-craft (L4, soft) for recipe proficiency domains. Workshop orchestrates these into a continuous production loop.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
@@ -811,7 +813,7 @@ flows:
 
 7. **Rate segment compaction**: Over long-running tasks with frequent worker changes, the rate segment list grows. `RateSegmentRetentionCount` enables compaction, but the compaction algorithm (merging adjacent segments with weighted averaging) must be designed to preserve accuracy for `MaterializeProduction` calculations that span compacted ranges.
 
-8. **L2 soft dependencies should be hard per SERVICE-HIERARCHY.md**: The Dependencies section lists lib-seed (L2) and lib-location (L2) as soft dependencies with runtime resolution via `IServiceProvider`. Per the service hierarchy, L4 services MUST use constructor injection for L2 dependencies (they are guaranteed available). The rationale that "proficiency is optional" and "location constraint is optional" conflates feature optionality with service availability. The services are always running; the optional features should be handled at the data level (check if a proficiency domain is configured, check if `requiresLocationId` is set) rather than the service availability level. When implementing, use constructor injection for `ISeedClient` and `ILocationClient`, with the optional behavior gated by configuration/data checks, not null-service checks.
+8. ~~**L2 soft dependencies should be hard per SERVICE-HIERARCHY.md**~~: **FIXED** (2026-03-09) — Moved lib-seed (L2) and lib-location (L2) from soft dependencies to hard dependencies (constructor injection) per SERVICE-HIERARCHY.md. Optional features (proficiency, location constraints) are gated at the data level (blueprint has no proficiency domain configured, `requiresLocationId` is null), not at the service availability level.
 
 ---
 

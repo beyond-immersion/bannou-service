@@ -703,19 +703,21 @@ Every Category B entity MUST satisfy ALL of the following. Use `lib-item` (Item 
 
 #### Current Category B Entities (Exhaustive)
 
+All Category B entities are B1–B16 compliant as of 2026-03-09. See GitHub Issue #611 for the standardization audit trail.
+
 | Entity | Service | Layer | Reference Quality |
 |--------|---------|-------|-------------------|
-| Item Template | Item | L2 | **Gold standard** (B7 schema has 409 — should be removed per B3) |
-| Collection Entry Template | Collection | L2 | **Gold standard** (correct idempotent 200-only responses) |
-| Quest Definition | Quest | L2 | Needs x-lifecycle (B10–B12) |
-| Chat Room Type | Chat | L1 | Needs includeDeprecated (B8), reason in request (B2) |
-| Gardener Scenario Template | Gardener | L4 | Needs reason in request (B2) |
-| Storyline Scenario Definition | Storyline | L4 | Needs x-lifecycle (B10–B12) |
-| Contract Template | Contract | L1 | Needs full conversion: remove delete, add deprecate (B1–B16) |
-| Currency Definition | Currency | L2 | Needs full deprecation support (B1–B9, B13–B15) |
-| Character-Encounter EncounterType | Character-Encounter | L4 | Needs full conversion: remove delete, add everything (B1–B16) |
-| License Board Template | License | L4 | Needs full conversion: remove delete, add deprecate (B1–B16) |
-| Leaderboard Definition | Leaderboard | L4 | Needs full conversion: remove delete, add deprecate (B1–B16), plus T16 topic fix |
+| Item Template | Item | L2 | **Gold standard** — reference implementation |
+| Collection Entry Template | Collection | L2 | **Gold standard** — reference implementation |
+| Quest Definition | Quest | L2 | Compliant (B1–B16) |
+| Chat Room Type | Chat | L1 | Compliant (B1–B16) |
+| Gardener Scenario Template | Gardener | L4 | Compliant (B1–B16) |
+| Storyline Scenario Definition | Storyline | L4 | Compliant (B1–B16) |
+| Contract Template | Contract | L1 | Compliant (B1–B16) |
+| Currency Definition | Currency | L2 | Compliant (B1–B16) |
+| Character-Encounter EncounterType | Character-Encounter | L4 | Compliant (B1–B16) |
+| License Board Template | License | L4 | Compliant (B1–B16) |
+| Leaderboard Definition | Leaderboard | L4 | Compliant (B1–B16) |
 
 ### What Does NOT Get Deprecation
 

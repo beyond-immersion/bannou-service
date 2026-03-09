@@ -252,9 +252,36 @@ public class StructuralTests
     }
 
     /// <summary>
+    /// Publisher methods that are intentionally never called. Category B entities
+    /// (per IMPLEMENTATION TENETS T31) are never deleted — their x-lifecycle generates
+    /// a *.deleted publisher but it is unused infrastructure. Immutable entities
+    /// (e.g., license boards) similarly have unused *.updated publishers.
+    /// </summary>
+    private static readonly HashSet<string> IntentionallyUncalledPublishers = new(StringComparer.Ordinal)
+    {
+        // Category B template entities — never deleted, deprecation-only
+        "PublishItemTemplateDeletedAsync",
+        "PublishCollectionEntryTemplateDeletedAsync",
+        "PublishQuestDefinitionDeletedAsync",
+        "PublishContractTemplateDeletedAsync",
+        "PublishCurrencyDefinitionDeletedAsync",
+        "PublishLicenseBoardTemplateDeletedAsync",
+        "PublishLeaderboardDefinitionDeletedAsync",
+        "PublishChatRoomTypeDeletedAsync",
+        "PublishEncounterTypeDeletedAsync",
+        "PublishScenarioTemplateDeletedAsync",       // lib-gardener
+        "PublishScenarioDefinitionDeletedAsync",     // lib-storyline
+
+        // Immutable instance entities — never updated after creation
+        "PublishLicenseBoardUpdatedAsync",
+    };
+
+    /// <summary>
     /// Validates that every generated Publish*Async extension method on the service's
     /// *EventPublisher class is called from somewhere in the plugin assembly.
     /// An uncalled method means a declared event topic is never published.
+    /// Methods in <see cref="IntentionallyUncalledPublishers"/> are excluded
+    /// (Category B unused *.deleted infrastructure, immutable entity *.updated).
     /// </summary>
     [Theory]
     [MemberData(nameof(AllServiceTypes))]
@@ -275,6 +302,7 @@ public class StructuralTests
 
         var uncalledMethods = publisherInfo.MethodNames
             .Where(m => !referencedMethods.Contains(m))
+            .Where(m => !IntentionallyUncalledPublishers.Contains(m))
             .ToArray();
 
         Assert.True(

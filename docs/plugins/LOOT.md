@@ -332,6 +332,8 @@ NPC GOAP decisions:                  |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1) |
 | lib-currency (`ICurrencyClient`) | Currency entry drops: credit wallets for gold/material currency drops (L2) |
 | lib-character (`ICharacterClient`) | Claimant validation for pity counter scoping and distribution eligibility (L2) |
+| lib-seed (`ISeedClient`) | Context evaluation for situational modifiers: seed growth phase and capability levels influence weight modifiers and drop context (L2) |
+| lib-contract (`IContractClient`) | Distribution orchestration for need/greed/auction flows: contract-based coordination for multi-party loot claiming (L1) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
@@ -500,6 +502,8 @@ Every polymorphic "type" or "kind" field in the Loot domain falls into one of th
 | `IResourceClient` | Reference tracking, cleanup callbacks (L1 hard) |
 | `ICurrencyClient` | Currency entry credit operations (L2 hard) |
 | `ICharacterClient` | Claimant validation for distribution eligibility (L2 hard) |
+| `ISeedClient` | Context evaluation for situational modifiers (L2 hard) |
+| `IContractClient` | Distribution orchestration for need/greed/auction flows (L1 hard) |
 | `ITelemetryProvider` | Telemetry span creation for all async methods (L0) |
 | `IEventConsumer` | Event handler registration for consumed events (L0) |
 | `IServiceProvider` | Runtime resolution of soft L4 dependencies (Affix, Analytics) |
@@ -686,7 +690,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ## Visual Aid
 
-Loot table definitions and generation rules are owned here. Item creation is lib-item (L2). Container placement is lib-inventory (L2). Currency rewards are lib-currency (L2). Modifier generation is lib-affix (L4, soft). Context evaluation queries lib-character, lib-seed, and lib-environment for situational modifiers. Distribution orchestration coordinates with lib-contract (L1) for need/greed/auction flows. Divine intervention in loot outcomes is lib-divine (L4, soft) — a god might modify drop weights for followers, but lib-loot doesn't know or care that the context modifier came from a deity.
+Loot table definitions and generation rules are owned here. Item creation is lib-item (L2). Container placement is lib-inventory (L2). Currency rewards are lib-currency (L2). Context evaluation queries lib-character (L2, hard) and lib-seed (L2, hard) for situational modifiers. Distribution orchestration coordinates with lib-contract (L1, hard) for need/greed/auction flows. Modifier generation is lib-affix (L4, soft). Environmental context is lib-environment (L4, soft). Divine intervention in loot outcomes is lib-divine (L4, soft) — a god might modify drop weights for followers, but lib-loot doesn't know or care that the context modifier came from a deity.
 
 ```
 +-----------------------------------------------------------------------+
@@ -713,6 +717,8 @@ Loot table definitions and generation rules are owned here. Item creation is lib
 |  |                  shared loot container for free-for-all)       |     |
 |  |  Currency ------ crediting wallets for currency drops          |     |
 |  |  Character ----- claimant validation for distribution          |     |
+|  |  Seed ---------- context evaluation, situational modifiers     |     |
+|  |  Contract ------ need/greed/auction distribution flows         |     |
 |  |  Resource ------ cleanup coordination on entity deletion       |     |
 |  +-------------------------------------------------------------+     |
 |           |                                                            |

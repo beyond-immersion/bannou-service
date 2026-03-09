@@ -411,7 +411,7 @@ def generate_composition_reference(
     lines = [
         "# Bannou Composition Reference",
         "",
-        "> **Sources**: `docs/BANNOU-ASPIRATIONS.md`, `docs/reference/ORCHESTRATION-PATTERNS.md`, `docs/plugins/*.md`",
+        "> **Sources**: `docs/BANNOU-ASPIRATIONS.md`, `docs/reference/ORCHESTRATION-PATTERNS.md`, `docs/reference/SERVICE-HIERARCHY.md`, `docs/plugins/*.md`",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",
     ]
@@ -460,7 +460,30 @@ def generate_composition_reference(
     else:
         print("Warning: No ## Overview section found in ORCHESTRATION-PATTERNS.md")
 
-    # 3. Build service registry table from Short fields
+    # 3. Extract ## Overview from SERVICE-HIERARCHY.md
+    hierarchy_file = repo_root / 'docs' / 'reference' / 'SERVICE-HIERARCHY.md'
+    hierarchy_content = extract_section(hierarchy_file, '## Overview')
+    if hierarchy_content:
+        lines.append("---")
+        lines.append("")
+        lines.append("## Service Hierarchy")
+        lines.append("")
+        # Skip the extraction notice blockquote if present
+        content_lines = hierarchy_content.split('\n')
+        skip = True
+        for cl in content_lines:
+            if skip and cl.startswith('>'):
+                continue
+            if skip and not cl.strip():
+                skip = False
+                continue
+            skip = False
+            lines.append(cl)
+        lines.append("")
+    else:
+        print("Warning: No ## Overview section found in SERVICE-HIERARCHY.md")
+
+    # 4. Build service registry table from Short fields
     lines.append("---")
     lines.append("")
     lines.append("## Service Registry")

@@ -445,6 +445,13 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return (StatusCodes.BadRequest, null);
         }
 
+        // Per IMPLEMENTATION TENETS: Category B instance creation guard
+        if (typeData.IsDeprecated)
+        {
+            _logger.LogWarning("Cannot record encounter with deprecated type: {Type}", body.EncounterTypeCode);
+            return (StatusCodes.BadRequest, null);
+        }
+
         var participantIds = body.ParticipantIds.Distinct().ToList();
 
         // Check for duplicate encounter (same participants, type, timestamp within tolerance)

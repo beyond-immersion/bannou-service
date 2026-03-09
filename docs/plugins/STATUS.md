@@ -54,7 +54,7 @@ Status uses the shared `EntityType` enum from `common-api.yaml` because effects 
 | lib-game-service (`IGameServiceClient`) | Validates game service existence for template and container scoping (L2 hard dependency) |
 | lib-resource (`IResourceClient`) | Cleanup callback registration for character deletion (L1 hard dependency -- resolved in `StatusServicePlugin.OnRunningAsync`, not constructor) |
 | lib-contract (`IContractClient`) | Contract lifecycle for statuses with `contractTemplateId` (L1 hard dependency -- constructor-injected) |
-| lib-seed (`ISeedClient`) | Seed capability queries for unified effects layer (L2 **soft** dependency -- resolved at runtime via `IServiceProvider`; gated by `SeedEffectsEnabled`) |
+| lib-seed (`ISeedClient`) | Seed capability queries for unified effects layer (L2 **hard** dependency -- constructor-injected; feature gated by `SeedEffectsEnabled` config) |
 | lib-connect (`IEntitySessionRegistry`) | Entity-to-session resolution for pushing client events to WebSocket sessions observing affected entities (L1 hard dependency) |
 | lib-telemetry (`ITelemetryProvider`) | Span instrumentation for async methods per IMPLEMENTATION TENETS (L0 hard dependency) |
 | `ISeedEvolutionListener` (DI listener) | `StatusSeedEvolutionListener` registered as singleton; receives seed capability change notifications for cache invalidation |
@@ -212,7 +212,10 @@ Server-to-client push events delivered via WebSocket through the Entity Session 
 | `IItemClient` | Status item instance CRUD and template validation (L2 hard) |
 | `IContractClient` | Contract instance creation and termination for contract-backed statuses (L1 hard) |
 | `IGameServiceClient` | Game service existence validation (L2 hard) |
-| `IServiceProvider` | Runtime resolution of soft dependency (`ISeedClient`) |
+| `ISeedClient` | Seed capability queries for unified effects cache (L2 hard) |
+| `IResourceClient` | Cleanup callback registration (L1 hard -- resolved in `OnRunningAsync`) |
+| `IEntitySessionRegistry` | Entity-to-session resolution for client event publishing (L1 hard) |
+| `ITelemetryProvider` | Span instrumentation for async methods (L0 hard) |
 
 ---
 
@@ -284,7 +287,7 @@ The `GrantStatusAsync` flow is the most complex operation:
 8. **Create item instance** (saga-ordered -- easily reversible):
    - `IItemClient.CreateItemInstanceAsync(templateId, containerId, realmId=gameServiceId, quantity=1)`
    - Note: `RealmId` is set to `GameServiceId` as a partition key (per Collection pattern), not as an actual realm reference
-9. **Contract lifecycle** (if template has `contractTemplateId` -- soft, skip if `IContractClient` unavailable):
+9. **Contract lifecycle** (if template has `contractTemplateId` -- data-gated, skipped when template has no contract):
    - Create contract instance with saga compensation (destroy item if contract fails)
    - Set template values from grant request metadata
    - Auto-propose + consent (single-party)
@@ -325,9 +328,9 @@ The `GrantStatusAsync` flow is the most complex operation:
 │              └────────────┬────────────┘    (with expiresAt for TTL)    │
 │                           │                                             │
 │              ┌────────────▼────────────┐                                │
-│              │ Create Contract (soft)  │──> IContractClient (optional)  │
-│              │ (compensate item on     │    (saga: destroy item on      │
-│              │  failure)               │     contract failure)           │
+│              │ Create Contract         │──> IContractClient (data-gated │
+│              │ (compensate item on     │    by contractTemplateId; saga: │
+│              │  failure)               │     destroy item on failure)    │
 │              └────────────┬────────────┘                                │
 │                           │                                             │
 │              ┌────────────▼────────────┐   ┌──────────────────────────┐│
@@ -437,8 +440,7 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 - **Active cache invalidation is full-entity, not surgical**: Any status change (grant, remove, stack, cleanse) invalidates the entire entity's active cache entry. The cache is rebuilt from MySQL instances on next read. Cache TTL is short (60s default) to minimize staleness. This is simpler and safer than surgical updates.
 
-- **Seed effects gated by config**: The `SeedEffectsEnabled` configuration flag completely disables seed-derived effects in unified queries. When false, `ISeedClient` is never resolved, `ISeedEvolutionListener` callbacks are no-ops, and `GetEffects`/`ListStatuses` return only item-based effects. This allows deployments without lib-seed.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-07:ISeedClient is an L2 dependency resolved at runtime via IServiceProvider gated by SeedEffectsEnabled config. Per strict T4, L2 dependencies should be constructor-injected (hard). Current pattern provides graceful degradation when Seed is not deployed. Decision: keep config-gated soft dependency for deployment flexibility, or make it hard per T4 hierarchy rules. -->
+- **Seed effects gated by config**: The `SeedEffectsEnabled` configuration flag completely disables seed-derived effects in unified queries. When false, `ISeedClient` is still constructor-injected (L2 hard dependency per SERVICE-HIERARCHY.md) but never called — `ISeedEvolutionListener` callbacks are no-ops, and `GetEffects`/`ListStatuses` return only item-based effects. This is data-level feature gating, not service-level availability gating.
 
 - **Contract integration is hard but usage is conditional**: `IContractClient` is constructor-injected (L1 hard dependency, always available). Contract creation only occurs when the template has a `contractTemplateId`. If contract creation fails during grant, the saga pattern compensates by destroying the already-created item instance, and the grant returns a failure response with `GrantFailureReason.ContractFailed`.
 
@@ -475,9 +477,9 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 | lib-resource (L1) | `RegisterCleanupCallbackAsync` | On startup (register for character + account deletion) |
 | lib-contract (L1) | `CreateContractInstanceAsync` | Grant with `contractTemplateId` |
 | lib-contract (L1) | `TerminateContractInstanceAsync` | Remove contract-backed status |
-| lib-seed (L2, soft) | `GetSeedsByOwnerAsync` | Rebuild seed effects cache (list seeds for entity) |
-| lib-seed (L2, soft) | `GetCapabilityManifestAsync` | Rebuild seed effects cache (get capabilities per seed) |
-| lib-seed (L2, soft) | `GetSeedAsync` | Seed effects cache invalidation via event (look up seed owner) |
+| lib-seed (L2, hard) | `GetSeedsByOwnerAsync` | Rebuild seed effects cache (list seeds for entity) |
+| lib-seed (L2, hard) | `GetCapabilityManifestAsync` | Rebuild seed effects cache (get capabilities per seed) |
+| lib-seed (L2, hard) | `GetSeedAsync` | Seed effects cache invalidation via event (look up seed owner) |
 
 ### Inbound (Others call Status)
 

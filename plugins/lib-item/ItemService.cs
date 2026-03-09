@@ -418,6 +418,12 @@ public partial class ItemService : IItemService
             return (StatusCodes.NotFound, null);
         }
 
+        // Per IMPLEMENTATION TENETS: idempotent deprecation — return OK when already deprecated
+        if (model.IsDeprecated)
+        {
+            return (StatusCodes.OK, MapTemplateToResponse(model));
+        }
+
         var now = DateTimeOffset.UtcNow;
         model.IsDeprecated = true;
         model.DeprecatedAt = now;
