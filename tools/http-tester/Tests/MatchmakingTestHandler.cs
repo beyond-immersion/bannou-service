@@ -219,7 +219,6 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             var joinRequest = new JoinMatchmakingRequest
             {
                 QueueId = queueId,
-                AccountId = accountId,
                 WebSocketSessionId = sessionId
             };
 
@@ -228,18 +227,14 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             if (response.TicketId == Guid.Empty)
                 return TestResult.Failed("JoinMatchmaking returned empty ticket ID");
 
-            if (response.QueueId != queueId)
-                return TestResult.Failed($"Queue ID mismatch: expected '{queueId}', got '{response.QueueId}'");
-
             // Cleanup: leave matchmaking and delete queue
             await matchmakingClient.LeaveMatchmakingAsync(new LeaveMatchmakingRequest
             {
-                TicketId = response.TicketId,
-                AccountId = accountId
+                TicketId = response.TicketId
             });
             await matchmakingClient.DeleteQueueAsync(new DeleteQueueRequest { QueueId = queueId });
 
-            return TestResult.Successful($"Joined matchmaking successfully: TicketID={response.TicketId}, QueueID={response.QueueId}");
+            return TestResult.Successful($"Joined matchmaking successfully: TicketID={response.TicketId}");
         }, "Join matchmaking");
 
     private static async Task<TestResult> TestLeaveMatchmaking(ITestClient client, string[] args) =>
@@ -266,7 +261,6 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             var joinRequest = new JoinMatchmakingRequest
             {
                 QueueId = queueId,
-                AccountId = accountId,
                 WebSocketSessionId = sessionId
             };
 
@@ -276,7 +270,6 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             var leaveRequest = new LeaveMatchmakingRequest
             {
                 TicketId = joinResponse.TicketId,
-                AccountId = accountId
             };
 
             await matchmakingClient.LeaveMatchmakingAsync(leaveRequest);
@@ -311,7 +304,6 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             var joinRequest = new JoinMatchmakingRequest
             {
                 QueueId = queueId,
-                AccountId = accountId,
                 WebSocketSessionId = sessionId
             };
 
@@ -321,7 +313,6 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             var statusRequest = new GetMatchmakingStatusRequest
             {
                 TicketId = joinResponse.TicketId,
-                AccountId = accountId
             };
 
             var response = await matchmakingClient.GetMatchmakingStatusAsync(statusRequest);
@@ -336,7 +327,6 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             await matchmakingClient.LeaveMatchmakingAsync(new LeaveMatchmakingRequest
             {
                 TicketId = joinResponse.TicketId,
-                AccountId = accountId
             });
             await matchmakingClient.DeleteQueueAsync(new DeleteQueueRequest { QueueId = queueId });
 
@@ -379,7 +369,6 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
                 await matchmakingClient.AcceptMatchAsync(new AcceptMatchRequest
                 {
                     WebSocketSessionId = Guid.NewGuid(),
-                    AccountId = Guid.NewGuid(),
                     MatchId = Guid.NewGuid() // Non-existent match
                 });
             },
@@ -394,7 +383,6 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
                 await matchmakingClient.DeclineMatchAsync(new DeclineMatchRequest
                 {
                     WebSocketSessionId = Guid.NewGuid(),
-                    AccountId = Guid.NewGuid(),
                     MatchId = Guid.NewGuid() // Non-existent match
                 });
             },
@@ -428,7 +416,6 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             var joinRequest = new JoinMatchmakingRequest
             {
                 QueueId = queueId,
-                AccountId = accountId,
                 WebSocketSessionId = sessionId
             };
 
@@ -439,7 +426,6 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             var statusRequest = new GetMatchmakingStatusRequest
             {
                 TicketId = joinResponse.TicketId,
-                AccountId = accountId
             };
 
             var statusResponse = await matchmakingClient.GetMatchmakingStatusAsync(statusRequest);
@@ -449,7 +435,6 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             await matchmakingClient.LeaveMatchmakingAsync(new LeaveMatchmakingRequest
             {
                 TicketId = joinResponse.TicketId,
-                AccountId = accountId
             });
             Console.WriteLine($"  Step 4: Left matchmaking");
 

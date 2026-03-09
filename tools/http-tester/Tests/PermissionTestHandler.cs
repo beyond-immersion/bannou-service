@@ -525,7 +525,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
 
             var response = await permissionsClient.UpdateSessionStateAsync(stateUpdate);
 
-            return TestResult.Successful($"Session state updated to 'in_lobby' for session {testSessionId}, permissionsChanged={response.PermissionsChanged}");
+            return TestResult.Successful($"Session state updated to 'in_lobby' for session {testSessionId}");
         }, "Update session state");
 
     /// <summary>
@@ -632,7 +632,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
 
             var response = await permissionsClient.UpdateSessionRoleAsync(roleUpdate);
 
-            return TestResult.Successful($"Session role updated to 'admin' for session {testSessionId}, permissionsChanged={response.PermissionsChanged}");
+            return TestResult.Successful($"Session role updated to 'admin' for session {testSessionId}");
         }, "Update session role");
 
     /// <summary>
@@ -847,11 +847,6 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 States = new List<string> { "in_lobby", "in_game" } // "in_lobby" matches
             });
 
-            if (!clearResponse.PermissionsChanged)
-            {
-                return TestResult.Failed("Permissions should have changed when state was cleared");
-            }
-
             // Verify state was cleared
             var updatedInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
             {
@@ -898,11 +893,6 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 States = new List<string> { "in_lobby", "in_game" } // "active" doesn't match
             });
 
-            if (clearResponse.PermissionsChanged)
-            {
-                return TestResult.Failed("Permissions should NOT have changed when filter didn't match");
-            }
-
             // Verify state was NOT cleared
             var updatedInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
             {
@@ -946,11 +936,6 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 ServiceId = testServiceId
             });
-
-            if (clearResponse.PermissionsChanged)
-            {
-                return TestResult.Failed("Permissions should NOT have changed when no state existed");
-            }
 
             return TestResult.Successful("Clearing non-existent state handled gracefully");
         }, "Clear non-existent state");
@@ -1035,10 +1020,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 // ServiceId is null - should clear all states
             });
 
-            if (!clearResponse.PermissionsChanged)
-            {
-                return TestResult.Failed("Permissions should have changed when clearing states");
-            }
+            // PermissionsChanged filler removed - 200 OK confirms success
 
             // Verify all states were cleared
             // After clearing ALL states, GetSessionInfo returns 404 (no session data exists)

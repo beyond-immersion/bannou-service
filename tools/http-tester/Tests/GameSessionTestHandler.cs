@@ -155,8 +155,6 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var testAccountId = Guid.NewGuid();
             var joinRequest = new JoinGameSessionRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game"
             };
 
@@ -199,8 +197,6 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var testAccountId = Guid.NewGuid();
             var joinRequest = new JoinGameSessionRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game"
             };
 
@@ -211,8 +207,6 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             // Now test leaving the session (required: sessionId, accountId, gameType)
             var leaveRequest = new LeaveGameSessionRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game"
             };
             await gameSessionClient.LeaveGameSessionAsync(leaveRequest);
@@ -244,8 +238,6 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var testAccountId = Guid.NewGuid();
             var joinRequest = new JoinGameSessionRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game"
             };
 
@@ -265,7 +257,6 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             // Now test kicking the player
             var kickRequest = new KickPlayerRequest
             {
-                SessionId = sessionIdGuid,
                 TargetAccountId = playerToKick,
                 Reason = "Test kick"
             };
@@ -300,16 +291,12 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             await SetupSubscriberSessionAsync(testAccountId, sessionIdGuid);
             await gameSessionClient.JoinGameSessionAsync(new JoinGameSessionRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game"
             });
 
             // Send a chat message (sender identity comes from JWT context)
             var chatRequest = new ChatMessageRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game",
                 Message = "Hello, World!",
                 MessageType = ChatMessageType.Public
@@ -344,8 +331,6 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var testAccountId = Guid.NewGuid();
             var joinRequest = new JoinGameSessionRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game"
             };
 
@@ -356,8 +341,6 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             // Perform a game action (player identity comes from JWT context)
             var actionRequest = new GameActionRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game",
                 ActionType = "move",
                 ActionData = new { x = 10, y = 20 }
@@ -412,8 +395,6 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             await SetupSubscriberSessionAsync(testAccountId, sessionIdGuid);
             await gameSessionClient.JoinGameSessionAsync(new JoinGameSessionRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game"
             });
             Console.WriteLine($"  Step 2: Player joined");
@@ -421,8 +402,6 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             // Step 3: Perform game action
             var actionResponse = await gameSessionClient.PerformGameActionAsync(new GameActionRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game",
                 ActionType = "move",
                 ActionData = new { testData = "lifecycle_test" }
@@ -432,8 +411,6 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             // Step 4: Send chat message
             await gameSessionClient.SendChatMessageAsync(new ChatMessageRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game",
                 Message = "Lifecycle test message",
                 MessageType = ChatMessageType.Public
@@ -443,8 +420,6 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             // Step 5: Leave session
             await gameSessionClient.LeaveGameSessionAsync(new LeaveGameSessionRequest
             {
-                SessionId = sessionIdGuid,
-                AccountId = testAccountId,
                 GameType = "test-game"
             });
             Console.WriteLine($"  Step 5: Player left session");

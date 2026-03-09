@@ -401,7 +401,6 @@ public class MatchmakingWebSocketTestHandler : BaseWebSocketTestHandler
                     var joinResponse = await userClient.Matchmaking.JoinMatchmakingAsync(new JoinMatchmakingRequest
                     {
                         QueueId = queueId,
-                        AccountId = authResult.Value.accountId,
                         WebSocketSessionId = sessionGuid
                     }, timeout: TimeSpan.FromSeconds(5));
 

@@ -17,7 +17,6 @@ public class CharacterEncounterTestHandler : BaseHttpTestHandler
         new ServiceTest(TestGetEncounterType, "GetEncounterType", "CharacterEncounter", "Test encounter type retrieval"),
         new ServiceTest(TestListEncounterTypes, "ListEncounterTypes", "CharacterEncounter", "Test listing encounter types"),
         new ServiceTest(TestUpdateEncounterType, "UpdateEncounterType", "CharacterEncounter", "Test encounter type update"),
-        new ServiceTest(TestDeleteEncounterType, "DeleteEncounterType", "CharacterEncounter", "Test encounter type deletion"),
         new ServiceTest(TestSeedEncounterTypes, "SeedEncounterTypes", "CharacterEncounter", "Test seeding encounter types"),
 
         // Encounter Recording Tests
@@ -120,39 +119,7 @@ public class CharacterEncounterTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Encounter type updated: code={response.Code}");
         }, "Update encounter type");
 
-    private static async Task<TestResult> TestDeleteEncounterType(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var encounterClient = GetServiceClient<ICharacterEncounterClient>();
-            var typeCode = $"TEST_DELETE_{DateTime.Now.Ticks}";
-
-            // Create first
-            await encounterClient.CreateEncounterTypeAsync(new CreateEncounterTypeRequest
-            {
-                Code = typeCode,
-                Name = "To Be Deleted"
-            });
-
-            // Delete
-            await encounterClient.DeleteEncounterTypeAsync(new DeleteEncounterTypeRequest
-            {
-                Code = typeCode
-            });
-
-            // Verify deletion
-            try
-            {
-                await encounterClient.GetEncounterTypeAsync(new GetEncounterTypeRequest
-                {
-                    Code = typeCode
-                });
-                return TestResult.Failed("Encounter type still exists after deletion");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful($"Encounter type deleted: code={typeCode}");
-            }
-        }, "Delete encounter type");
+    // Delete endpoint removed - encounter types use deprecation lifecycle (Category B)
 
     private static async Task<TestResult> TestSeedEncounterTypes(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
@@ -399,9 +366,6 @@ public class CharacterEncounterTestHandler : BaseHttpTestHandler
             {
                 EncounterId = encounter.Encounter.EncounterId
             });
-
-            if (response.EncounterId != encounter.Encounter.EncounterId)
-                return TestResult.Failed("Encounter ID mismatch in delete response");
 
             return TestResult.Successful($"Encounter deleted: perspectivesDeleted={response.PerspectivesDeleted}");
         }, "Delete encounter");

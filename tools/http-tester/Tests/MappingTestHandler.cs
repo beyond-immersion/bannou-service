@@ -123,10 +123,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                 ChannelId = createResponse.ChannelId,
                 AuthorityToken = createResponse.AuthorityToken
             };
-            var releaseResponse = await mappingClient.ReleaseAuthorityAsync(releaseRequest);
-
-            if (!releaseResponse.Released)
-                return TestResult.Failed("Authority release returned false");
+            await mappingClient.ReleaseAuthorityAsync(releaseRequest);
 
             return TestResult.Successful($"Authority released for channel: {createResponse.ChannelId}");
         }, "Authority release");
@@ -157,9 +154,6 @@ public class MappingTestHandler : BaseHttpTestHandler
                 AuthorityToken = createResponse.AuthorityToken
             };
             var heartbeatResponse = await mappingClient.AuthorityHeartbeatAsync(heartbeatRequest);
-
-            if (!heartbeatResponse.Valid)
-                return TestResult.Failed("Heartbeat returned invalid status");
 
             if (heartbeatResponse.ExpiresAt <= originalExpiration)
                 return TestResult.Failed("Heartbeat did not extend authority expiration");
@@ -194,7 +188,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                 Payload = new MapPayload
                 {
                     ObjectType = "tree",
-                    Position = new Mapping.Position3D { X = 100.5, Y = 0, Z = 200.3 },
+                    Position = new Position3D { X = 100.5f, Y = 0, Z = 200.3f },
                     Data = new Dictionary<string, object>
                     {
                         { "health", 100 },
@@ -204,9 +198,6 @@ public class MappingTestHandler : BaseHttpTestHandler
                 DeltaType = DeltaType.Delta
             };
             var publishResponse = await mappingClient.PublishMapUpdateAsync(publishRequest);
-
-            if (!publishResponse.Accepted)
-                return TestResult.Failed("Map update was not accepted");
 
             if (publishResponse.Version <= 0)
                 return TestResult.Failed("Version not incremented");
@@ -241,7 +232,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                         ObjectId = Guid.NewGuid(),
                         Action = ObjectAction.Created,
                         ObjectType = "landmark",
-                        Position = new Mapping.Position3D { X = 50, Y = 0, Z = 50 },
+                        Position = new Position3D { X = 50, Y = 0, Z = 50 },
                         Data = new Dictionary<string, object> { { "name", "Ancient Tree" } }
                     },
                     new ObjectChange
@@ -249,14 +240,11 @@ public class MappingTestHandler : BaseHttpTestHandler
                         ObjectId = Guid.NewGuid(),
                         Action = ObjectAction.Created,
                         ObjectType = "quest_marker",
-                        Position = new Mapping.Position3D { X = 75, Y = 0, Z = 75 }
+                        Position = new Position3D { X = 75, Y = 0, Z = 75 }
                     }
                 }
             };
             var publishResponse = await mappingClient.PublishObjectChangesAsync(publishRequest);
-
-            if (!publishResponse.Accepted)
-                return TestResult.Failed("Object changes were not accepted");
 
             if (publishResponse.AcceptedCount != 2)
                 return TestResult.Failed($"Expected 2 accepted, got {publishResponse.AcceptedCount}");
@@ -305,7 +293,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                     Payload = new MapPayload
                     {
                         ObjectType = "spawn_point",
-                        Position = new Mapping.Position3D { X = i * 10, Y = 0, Z = i * 10 }
+                        Position = new Position3D { X = i * 10, Y = 0, Z = i * 10 }
                     },
                     DeltaType = DeltaType.Delta
                 });
@@ -322,7 +310,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             if (snapshotResponse.Objects == null)
                 return TestResult.Failed("Snapshot objects is null");
 
-            return TestResult.Successful($"Snapshot retrieved: RegionId={snapshotResponse.RegionId}, Objects={snapshotResponse.Objects.Count}");
+            return TestResult.Successful($"Snapshot retrieved: Objects={snapshotResponse.Objects.Count}");
         }, "Snapshot request");
 
     #endregion
@@ -344,7 +332,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             };
             var createResponse = await mappingClient.CreateChannelAsync(createRequest);
 
-            var testPosition = new Mapping.Position3D { X = 100, Y = 0, Z = 100 };
+            var testPosition = new Position3D { X = 100, Y = 0, Z = 100 };
             await mappingClient.PublishMapUpdateAsync(new PublishMapUpdateRequest
             {
                 ChannelId = createResponse.ChannelId,
@@ -370,7 +358,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             if (queryResponse.Objects == null)
                 return TestResult.Failed("Query returned null objects list");
 
-            return TestResult.Successful($"Point query completed: Found {queryResponse.Objects.Count} objects at ({queryResponse.Position.X}, {queryResponse.Position.Z})");
+            return TestResult.Successful($"Point query completed: Found {queryResponse.Objects.Count} objects");
         }, "Point query");
 
     private static async Task<TestResult> TestQueryBounds(ITestClient client, string[] args) =>
@@ -385,8 +373,8 @@ public class MappingTestHandler : BaseHttpTestHandler
                 RegionId = regionId,
                 Bounds = new Bounds
                 {
-                    Min = new Mapping.Position3D { X = 0, Y = 0, Z = 0 },
-                    Max = new Mapping.Position3D { X = 1000, Y = 100, Z = 1000 }
+                    Min = new Position3D { X = 0, Y = 0, Z = 0 },
+                    Max = new Position3D { X = 1000, Y = 100, Z = 1000 }
                 },
                 MaxObjects = 100
             };
@@ -394,9 +382,6 @@ public class MappingTestHandler : BaseHttpTestHandler
 
             if (queryResponse.Objects == null)
                 return TestResult.Failed("Query returned null objects list");
-
-            if (queryResponse.Bounds == null)
-                return TestResult.Failed("Query did not echo bounds");
 
             return TestResult.Successful($"Bounds query completed: Found {queryResponse.Objects.Count} objects, Truncated={queryResponse.Truncated}");
         }, "Bounds query");
@@ -426,7 +411,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                     Payload = new MapPayload
                     {
                         ObjectType = "gold_vein",
-                        Position = new Mapping.Position3D { X = i * 20, Y = -10, Z = i * 20 }
+                        Position = new Position3D { X = i * 20, Y = -10, Z = i * 20 }
                     },
                     DeltaType = DeltaType.Delta
                 });
@@ -440,9 +425,6 @@ public class MappingTestHandler : BaseHttpTestHandler
                 MaxObjects = 50
             };
             var queryResponse = await mappingClient.QueryObjectsByTypeAsync(queryRequest);
-
-            if (queryResponse.ObjectType != "gold_vein")
-                return TestResult.Failed($"Wrong object type in response: {queryResponse.ObjectType}");
 
             return TestResult.Successful($"Type query completed: Found {queryResponse.Objects?.Count ?? 0} gold_vein objects");
         }, "Object type query");
@@ -463,8 +445,8 @@ public class MappingTestHandler : BaseHttpTestHandler
                 AffordanceType = AffordanceType.Shelter,
                 Bounds = new Bounds
                 {
-                    Min = new Mapping.Position3D { X = 0, Y = 0, Z = 0 },
-                    Max = new Mapping.Position3D { X = 500, Y = 100, Z = 500 }
+                    Min = new Position3D { X = 0, Y = 0, Z = 0 },
+                    Max = new Position3D { X = 500, Y = 100, Z = 500 }
                 },
                 MaxResults = 10,
                 MinScore = 0.1,
@@ -475,10 +457,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             if (queryResponse.Locations == null)
                 return TestResult.Failed("Affordance query returned null locations");
 
-            if (queryResponse.QueryMetadata == null)
-                return TestResult.Failed("Affordance query did not return metadata");
-
-            return TestResult.Successful($"Affordance query completed: Found {queryResponse.Locations.Count} shelter locations, CacheHit={queryResponse.QueryMetadata.CacheHit}");
+            return TestResult.Successful($"Affordance query completed: Found {queryResponse.Locations.Count} shelter locations");
         }, "Affordance query");
 
     private static async Task<TestResult> TestQueryAffordanceWithActorCapabilities(ITestClient client, string[] args) =>
@@ -493,8 +472,8 @@ public class MappingTestHandler : BaseHttpTestHandler
                 AffordanceType = AffordanceType.Ambush,
                 Bounds = new Bounds
                 {
-                    Min = new Mapping.Position3D { X = 0, Y = 0, Z = 0 },
-                    Max = new Mapping.Position3D { X = 500, Y = 100, Z = 500 }
+                    Min = new Position3D { X = 0, Y = 0, Z = 0 },
+                    Max = new Position3D { X = 500, Y = 100, Z = 500 }
                 },
                 MaxResults = 5,
                 MinScore = 0.2,
@@ -646,10 +625,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                 Kind = MapKind.PointsOfInterest,
                 AuthorityToken = checkoutResponse.AuthorityToken
             };
-            var releaseResponse = await mappingClient.ReleaseAuthoringAsync(releaseRequest);
-
-            if (!releaseResponse.Released)
-                return TestResult.Failed("Release was not successful");
+            await mappingClient.ReleaseAuthoringAsync(releaseRequest);
 
             return TestResult.Successful("Authoring release successful (changes discarded)");
         }, "Authoring release");

@@ -18,8 +18,6 @@ public class AchievementTestHandler : BaseHttpTestHandler
         new ServiceTest(TestCreateAchievementDefinition, "CreateDefinition", "Achievement", "Test achievement definition creation"),
         new ServiceTest(TestGetAchievementDefinition, "GetDefinition", "Achievement", "Test achievement definition retrieval"),
         new ServiceTest(TestListAchievementDefinitions, "ListDefinitions", "Achievement", "Test achievement definitions listing"),
-        new ServiceTest(TestDeleteAchievementDefinition, "DeleteDefinition", "Achievement", "Test achievement definition deletion"),
-
         // Progress Tests
         new ServiceTest(TestGetAchievementProgress, "GetProgress", "Achievement", "Test achievement progress retrieval"),
         new ServiceTest(TestUpdateAchievementProgress, "UpdateProgress", "Achievement", "Test achievement progress update"),
@@ -125,33 +123,7 @@ public class AchievementTestHandler : BaseHttpTestHandler
             return TestResult.Successful("Achievements listed successfully");
         }, "List achievement definitions");
 
-    private static async Task<TestResult> TestDeleteAchievementDefinition(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var achievementClient = GetServiceClient<IAchievementClient>();
-            var created = await CreateTestAchievementAsync(achievementClient, "delete");
-
-            await achievementClient.DeleteAchievementDefinitionAsync(new DeleteAchievementDefinitionRequest
-            {
-                GameServiceId = TestGameServiceId,
-                AchievementId = created.AchievementId
-            });
-
-            // Verify deletion by trying to get it
-            try
-            {
-                await achievementClient.GetAchievementDefinitionAsync(new GetAchievementDefinitionRequest
-                {
-                    GameServiceId = TestGameServiceId,
-                    AchievementId = created.AchievementId
-                });
-                return TestResult.Failed("Achievement still exists after deletion");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful($"Achievement deleted successfully: ID={created.AchievementId}");
-            }
-        }, "Delete achievement definition");
+    // Delete endpoint removed - achievement definitions use deprecation lifecycle (Category B)
 
     private static async Task<TestResult> TestGetAchievementProgress(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
@@ -209,9 +181,6 @@ public class AchievementTestHandler : BaseHttpTestHandler
             };
 
             var response = await achievementClient.UnlockAchievementAsync(request);
-
-            if (!response.Unlocked)
-                return TestResult.Failed("Achievement was not unlocked");
 
             return TestResult.Successful($"Achievement unlocked: ID={created.AchievementId}");
         }, "Unlock achievement");

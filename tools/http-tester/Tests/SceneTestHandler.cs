@@ -162,13 +162,10 @@ public class SceneTestHandler : BaseHttpTestHandler
             });
 
             // Delete
-            var response = await sceneClient.DeleteSceneAsync(new DeleteSceneRequest
+            await sceneClient.DeleteSceneAsync(new DeleteSceneRequest
             {
                 SceneId = created.Scene.SceneId
             });
-
-            if (!response.Deleted)
-                return TestResult.Failed("Scene was not deleted");
 
             return TestResult.Successful($"Scene deleted: id={created.Scene.SceneId}");
         }, "Delete scene");
@@ -196,10 +193,10 @@ public class SceneTestHandler : BaseHttpTestHandler
         {
             var sceneClient = GetServiceClient<ISceneClient>();
 
-            var response = await sceneClient.RegisterValidationRulesAsync(new RegisterValidationRulesRequest
+            await sceneClient.RegisterValidationRulesAsync(new RegisterValidationRulesRequest
             {
                 GameId = "test-game",
-                SceneType = SceneType.Room,
+                SceneType = "Room",
                 Rules = new List<ValidationRule>
                 {
                     new ValidationRule
@@ -216,7 +213,7 @@ public class SceneTestHandler : BaseHttpTestHandler
                 }
             });
 
-            return TestResult.Successful($"Registered {response.RuleCount} validation rules");
+            return TestResult.Successful("Registered validation rules");
         }, "Register validation rules");
 
     private static async Task<TestResult> TestGetValidationRules(ITestClient client, string[] args) =>
@@ -227,10 +224,10 @@ public class SceneTestHandler : BaseHttpTestHandler
             var response = await sceneClient.GetValidationRulesAsync(new GetValidationRulesRequest
             {
                 GameId = "test-game",
-                SceneType = SceneType.Room
+                SceneType = "Room"
             });
 
-            return TestResult.Successful($"Retrieved {response.Rules.Count} validation rules");
+            return TestResult.Successful($"Retrieved {response.Rules?.Count ?? 0} validation rules");
         }, "Get validation rules");
 
     private static async Task<TestResult> TestCheckoutScene(ITestClient client, string[] args) =>
@@ -293,9 +290,6 @@ public class SceneTestHandler : BaseHttpTestHandler
                 Scene = checkout.Scene
             });
 
-            if (!response.Committed)
-                return TestResult.Failed("Commit failed");
-
             return TestResult.Successful($"Scene committed: newVersion={response.NewVersion}");
         }, "Commit scene");
 
@@ -317,14 +311,11 @@ public class SceneTestHandler : BaseHttpTestHandler
             });
 
             // Discard
-            var response = await sceneClient.DiscardCheckoutAsync(new DiscardRequest
+            await sceneClient.DiscardCheckoutAsync(new DiscardRequest
             {
                 SceneId = created.Scene.SceneId,
                 CheckoutToken = checkout.CheckoutToken
             });
-
-            if (!response.Discarded)
-                return TestResult.Failed("Discard failed");
 
             return TestResult.Successful("Checkout discarded");
         }, "Discard checkout");
@@ -353,9 +344,6 @@ public class SceneTestHandler : BaseHttpTestHandler
                 CheckoutToken = checkout.CheckoutToken
             });
 
-            if (!response.Extended)
-                return TestResult.Failed("Heartbeat extension failed");
-
             // Clean up
             await sceneClient.DiscardCheckoutAsync(new DiscardRequest
             {
@@ -380,16 +368,13 @@ public class SceneTestHandler : BaseHttpTestHandler
 
             // Instantiate
             var instanceId = Guid.NewGuid();
-            var response = await sceneClient.InstantiateSceneAsync(new InstantiateSceneRequest
+            await sceneClient.InstantiateSceneAsync(new InstantiateSceneRequest
             {
                 SceneAssetId = created.Scene.SceneId,
                 InstanceId = instanceId
             });
 
-            if (response.InstanceId != instanceId)
-                return TestResult.Failed("Instance ID mismatch");
-
-            return TestResult.Successful($"Scene instantiated: instanceId={response.InstanceId}");
+            return TestResult.Successful($"Scene instantiated: instanceId={instanceId}");
         }, "Instantiate scene");
 
     private static async Task<TestResult> TestDestroyInstance(ITestClient client, string[] args) =>
@@ -412,14 +397,11 @@ public class SceneTestHandler : BaseHttpTestHandler
             });
 
             // Destroy
-            var response = await sceneClient.DestroyInstanceAsync(new DestroyInstanceRequest
+            await sceneClient.DestroyInstanceAsync(new DestroyInstanceRequest
             {
                 InstanceId = instanceId,
                 SceneAssetId = created.Scene.SceneId
             });
-
-            if (!response.Destroyed)
-                return TestResult.Failed("Instance was not destroyed");
 
             return TestResult.Successful($"Instance destroyed: instanceId={instanceId}");
         }, "Destroy instance");

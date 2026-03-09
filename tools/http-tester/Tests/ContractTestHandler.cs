@@ -73,8 +73,6 @@ public class ContractTestHandler : BaseHttpTestHandler
             "Test listing contract templates"),
         new ServiceTest(TestUpdateContractTemplate, "UpdateTemplate", "Contract",
             "Test updating a contract template"),
-        new ServiceTest(TestDeleteContractTemplate, "DeleteTemplate", "Contract",
-            "Test deleting a contract template"),
         new ServiceTest(TestQueryContractInstances, "QueryInstances", "Contract",
             "Test querying contract instances by party or status"),
         new ServiceTest(TestGetContractInstanceStatus, "GetInstanceStatus", "Contract",
@@ -1457,35 +1455,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                 $"Template updated: {template.TemplateId}, name={updated.Name}");
         }, "Update contract template");
 
-    private static async Task<TestResult> TestDeleteContractTemplate(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var contractClient = GetServiceClient<IContractClient>();
-
-            var template = await CreateEmploymentTemplateAsync(contractClient, "delete_template");
-
-            await contractClient.DeleteContractTemplateAsync(new DeleteContractTemplateRequest
-            {
-                TemplateId = template.TemplateId
-            });
-
-            // Verify it's gone
-            try
-            {
-                await contractClient.GetContractTemplateAsync(new GetContractTemplateRequest
-                {
-                    TemplateId = template.TemplateId
-                });
-                return TestResult.Failed("Template still retrievable after delete");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                // Expected
-            }
-
-            return TestResult.Successful(
-                $"Template deleted: {template.TemplateId}");
-        }, "Delete contract template");
+    // Delete endpoint removed - contract templates use deprecation lifecycle (Category B)
 
     private static async Task<TestResult> TestQueryContractInstances(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>

@@ -137,11 +137,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             if (response.CompilationTimeMs < 0)
                 return TestResult.Failed("Invalid compilation time");
 
-            var warningInfo = response.Warnings != null && response.Warnings.Any()
-                ? $", Warnings: {string.Join(", ", response.Warnings)}"
-                : "";
             return TestResult.Successful(
-                $"Compiled successfully: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms{warningInfo}");
+                $"Compiled successfully: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms");
         }, "Compile valid ABML");
 
     private static async Task<TestResult> TestCompileInvalidAbml(ITestClient client, string[] args) =>
@@ -274,15 +271,12 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             if (response.BehaviorName != "test-bundle-behavior")
                 return TestResult.Failed($"Expected behavior_name 'test-bundle-behavior', got '{response.BehaviorName}'");
 
-            if (response.BundleId != "test-bundle-group")
-                return TestResult.Failed($"Expected bundle_id 'test-bundle-group', got '{response.BundleId}'");
-
             // Asset ID should be set when caching is enabled
             if (string.IsNullOrEmpty(response.AssetId))
                 return TestResult.Failed("Asset ID should be set when caching is enabled");
 
             return TestResult.Successful(
-                $"Compiled with bundle: ID={response.BehaviorId}, Bundle={response.BundleId}, Asset={response.AssetId}");
+                $"Compiled with bundle: ID={response.BehaviorId}, Asset={response.AssetId}");
         }, "Compile with bundle ID");
 
     private static async Task<TestResult> TestCompileWithNameAndCategory(ITestClient client, string[] args) =>
@@ -294,7 +288,7 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             {
                 AbmlContent = ValidAbmlYaml,
                 BehaviorName = "blacksmith-daily-routine",
-                BehaviorCategory = CompileBehaviorRequestBehaviorCategory.Professional,
+                BehaviorCategory = BehaviorCategory.Professional,
                 CompilationOptions = new CompilationOptions
                 {
                     EnableOptimizations = true,
@@ -363,7 +357,7 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             // Now generate a GOAP plan using the cached behavior
             var planRequest = new GoapPlanRequest
             {
-                AgentId = "test-agent-1",
+                AgentId = Guid.Parse("00000000-0000-0000-0000-000000000001"),
                 BehaviorId = behaviorId,
                 Goal = new GoapGoal
                 {
@@ -412,7 +406,7 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var request = new GoapPlanRequest
             {
-                AgentId = "test-agent-1",
+                AgentId = Guid.Parse("00000000-0000-0000-0000-000000000001"),
                 BehaviorId = "nonexistent-goap-behavior-xyz",
                 Goal = new GoapGoal
                 {

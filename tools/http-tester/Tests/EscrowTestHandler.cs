@@ -347,9 +347,6 @@ public class EscrowTestHandler : BaseHttpTestHandler
                 ConsentType = EscrowConsentType.Release
             });
 
-            if (!response.ConsentRecorded)
-                return TestResult.Failed("Consent was not recorded");
-
             return TestResult.Successful($"Consent recorded: triggered={response.Triggered}");
         }, "Record consent");
 
@@ -451,9 +448,6 @@ public class EscrowTestHandler : BaseHttpTestHandler
                 RefundEndpoint = "/test/refund",
                 ValidateEndpoint = "/test/validate"
             });
-
-            if (!response.Registered)
-                return TestResult.Failed("Handler was not registered");
 
             return TestResult.Successful($"Handler registered: assetType={assetType}");
         }, "Register handler");
@@ -816,9 +810,6 @@ public class EscrowTestHandler : BaseHttpTestHandler
             {
                 AssetType = assetType
             });
-
-            if (!response.Deregistered)
-                return TestResult.Failed("Handler was not deregistered");
 
             return TestResult.Successful($"Handler deregistered: assetType={assetType}");
         }, "Deregister handler");

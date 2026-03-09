@@ -641,7 +641,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     return false;
                 }
 
-                Console.WriteLine($"✅ State update succeeded: permissionsChanged={response.Result.PermissionsChanged}");
+                Console.WriteLine($"✅ State update succeeded: state update confirmed");
             }
             catch (Exception ex)
             {
