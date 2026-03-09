@@ -104,8 +104,8 @@ public class ArchiveExtractorTests
                     CharacterId = characterId,
                     EventId = eventId,
                     EventName = "Battle of Stormgate",
-                    EventCategory = EventCategory.WAR,
-                    Role = ParticipationRole.HERO,
+                    EventCategory = EventCategory.War,
+                    Role = ParticipationRole.Hero,
                     EventDate = eventDate,
                     Significance = 0.9f,
                     CreatedAt = DateTimeOffset.UtcNow
@@ -151,24 +151,23 @@ public class ArchiveExtractorTests
             HasBackstory = true,
             Backstory = new BackstoryResponse
             {
-                CharacterId = characterId,
                 Elements =
                 [
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.ORIGIN,
+                        ElementType = BackstoryElementType.Origin,
                         Key = "homeland",
                         Value = "Northlands",
                         Strength = 0.7f
                     },
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.TRAINING,
+                        ElementType = BackstoryElementType.Training,
                         Key = "mentor",
                         Value = "Knights Guild",
                         Strength = 0.8f,
                         RelatedEntityId = relatedEntityId,
-                        RelatedEntityType = "organization"
+                        RelatedEntityType = EntityType.Organization
                     }
                 ]
             }
@@ -259,7 +258,7 @@ public class ArchiveExtractorTests
                         RealmId = Guid.NewGuid(),
                         LocationId = locationId,
                         EncounterTypeCode = "COMBAT",
-                        Outcome = EncounterOutcome.MEMORABLE,
+                        Outcome = EncounterOutcome.Memorable,
                         ParticipantIds = [characterId, Guid.NewGuid()],
                         CreatedAt = DateTimeOffset.UtcNow
                     },
@@ -270,7 +269,7 @@ public class ArchiveExtractorTests
                             PerspectiveId = Guid.NewGuid(),
                             EncounterId = encounterId,
                             CharacterId = characterId,
-                            EmotionalImpact = EmotionalImpact.PRIDE,
+                            EmotionalImpact = EmotionalImpact.Pride,
                             SentimentShift = 0.2f,
                             MemoryStrength = 0.8f, // Above 0.5 threshold
                             RememberedAs = "The day I proved myself",
@@ -326,7 +325,7 @@ public class ArchiveExtractorTests
                         Timestamp = DateTimeOffset.UtcNow.AddDays(-30),
                         RealmId = Guid.NewGuid(),
                         EncounterTypeCode = "TRADE",
-                        Outcome = EncounterOutcome.NEUTRAL,
+                        Outcome = EncounterOutcome.Neutral,
                         ParticipantIds = [characterId, Guid.NewGuid()],
                         CreatedAt = DateTimeOffset.UtcNow
                     },
@@ -337,7 +336,7 @@ public class ArchiveExtractorTests
                             PerspectiveId = Guid.NewGuid(),
                             EncounterId = encounterId,
                             CharacterId = characterId,
-                            EmotionalImpact = EmotionalImpact.INDIFFERENCE,
+                            EmotionalImpact = EmotionalImpact.Indifference,
                             SentimentShift = 0.0f,
                             MemoryStrength = 0.3f, // Below 0.5 threshold
                             CreatedAt = DateTimeOffset.UtcNow
@@ -378,9 +377,9 @@ public class ArchiveExtractorTests
                 CharacterId = characterId,
                 Traits =
                 [
-                    new TraitValue { Axis = TraitAxis.AGGRESSION, Value = 0.6f },
-                    new TraitValue { Axis = TraitAxis.LOYALTY, Value = 0.9f },
-                    new TraitValue { Axis = TraitAxis.HONESTY, Value = -0.3f }
+                    new TraitValue { Axis = TraitAxis.Aggression, Value = 0.6f },
+                    new TraitValue { Axis = TraitAxis.Loyalty, Value = 0.9f },
+                    new TraitValue { Axis = TraitAxis.Honesty, Value = -0.3f }
                 ],
                 Version = 2,
                 ArchetypeHint = "warrior",
@@ -426,9 +425,9 @@ public class ArchiveExtractorTests
                 CharacterId = characterId,
                 Preferences = new CombatPreferences
                 {
-                    Style = CombatStyle.AGGRESSIVE,
-                    PreferredRange = PreferredRange.MELEE,
-                    GroupRole = GroupRole.FRONTLINE,
+                    Style = CombatStyle.Aggressive,
+                    PreferredRange = PreferredRange.Melee,
+                    GroupRole = GroupRole.Frontline,
                     RiskTolerance = 0.8f,
                     RetreatThreshold = 0.2f,
                     ProtectAllies = true
@@ -490,7 +489,7 @@ public class ArchiveExtractorTests
             Personality = new PersonalityResponse
             {
                 CharacterId = characterId,
-                Traits = [new TraitValue { Axis = TraitAxis.AGGRESSION, Value = 0.5f }],
+                Traits = [new TraitValue { Axis = TraitAxis.Aggression, Value = 0.5f }],
                 Version = 1,
                 CreatedAt = DateTimeOffset.UtcNow
             },

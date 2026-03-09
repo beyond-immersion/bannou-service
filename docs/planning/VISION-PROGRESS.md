@@ -1,9 +1,17 @@
 # Vision Progress: Cross-Service Architectural Audit
 
-> **Version**: 1.2
-> **Last Updated**: 2026-03-02
-> **Scope**: High-level alignment between VISION.md, PLAYER-VISION.md, BEHAVIORAL-BOOTSTRAP.md, and the 75-service plugin architecture
-> **Purpose**: Capture disconnects, resolved patterns, and open questions before proceeding to aspirational plugin specification
+> **Type**: Architectural Analysis
+> **Status**: Active
+> **Created**: 2026-02-28
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #5
+> **Related Plugins**: Divine, Puppetmaster, Gardener, Actor, Behavior, Agency, Affix, Environment, Organization, Loot, Transit, Location
+
+## Summary
+
+Records the results of a full cross-service architectural audit comparing VISION.md, PLAYER-VISION.md, and BEHAVIORAL-BOOTSTRAP.md against the 76-service plugin architecture. Categorizes findings as resolved (11 issues with architectural rationale), open (8 issues with priority and impact), or design recommendations requiring human judgment. The behavioral bootstrap critical path analysis identifies Puppetmaster watcher-actor spawning as the first-order blocker and Divine implementation as the second-order blocker for the content flywheel.
+
+---
 
 This document records the results of a full cross-service audit comparing the vision documents against the generated service details and deep dive documentation. Issues are categorized as resolved (with architectural rationale), open (with priority and impact), or questions (requiring human judgment).
 
@@ -319,7 +327,7 @@ The Vision describes NPCs that "buy/sell/craft/trade based on needs, aspirations
 
 **Priority**: P3 -- performance concern, not a correctness issue
 
-**Details**: The NPC cognition pipeline has 19 confirmed variable provider namespaces, of which **11 are fully implemented** (verified 2026-03-02 via codebase audit of `IVariableProviderFactory` implementations):
+**Details**: The NPC cognition pipeline has 22 confirmed variable provider namespaces, of which **14 are fully implemented** (verified 2026-03-09 via codebase audit of `IVariableProviderFactory` implementations and generated `VariableProviderDefinitions.cs`):
 
 | Namespace | Service | Status |
 |---|---|---|
@@ -334,6 +342,9 @@ The Vision describes NPCs that "buy/sell/craft/trade based on needs, aspirations
 | `${faction.*}` | Faction (L4) | Implemented — FactionProviderFactory, backed by Redis/MySQL stores |
 | `${transit.*}` | Transit (L2) | Implemented — TransitVariableProviderFactory, backed by Redis + MySQL stores |
 | `${location.*}` | Location (L2) | Implemented — LocationContextProviderFactory, backed by ILocationDataCache |
+| `${currency.*}` | Currency (L2) | Implemented (new 2026-03-09) — CurrencyProviderFactory, backed by ICurrencyDataCache |
+| `${inventory.*}` | Inventory (L2) | Implemented (new 2026-03-09) — InventoryProviderFactory, backed by IInventoryDataCache |
+| `${relationship.*}` | Relationship (L2) | Implemented (new 2026-03-09) — RelationshipProviderFactory, backed by IRelationshipDataCache |
 | `${disposition.*}` | Disposition (L4) | Pre-implementation (service at 0%) |
 | `${nature.*}` | Ethology (L4) | Pre-implementation (service at 0%) |
 | `${hearsay.*}` | Hearsay (L4) | Pre-implementation (service at 0%) |
@@ -343,7 +354,9 @@ The Vision describes NPCs that "buy/sell/craft/trade based on needs, aspirations
 | `${craft.*}` | Craft (L4) | Pre-implementation (service at 0%) |
 | `${market.*}` | Market (L4) | Pre-implementation (service at 0%) |
 
-At 100,000 concurrent NPCs with 100-500ms cognitive cycles, loading 19 provider data sources per tick is significant. Each provider caches data per-character, but the cache invalidation story (pub/sub events per provider per character state change across 100K characters) needs explicit capacity planning.
+The three new providers (`${currency.*}`, `${inventory.*}`, `${relationship.*}`) give NPCs economic awareness (wallet balances, item possession) and social bond awareness (relationship types, strength, bidirectional bonds). These complete the L2 provider coverage — every implemented L2 service that holds per-character state now has a variable provider.
+
+At 100,000 concurrent NPCs with 100-500ms cognitive cycles, loading 22 provider data sources per tick is significant. Each provider caches data per-character, but the cache invalidation story (pub/sub events per provider per character state change across 100K characters) needs explicit capacity planning.
 
 **Mitigating factors**: Not all NPCs need all providers. A blacksmith NPC needs `${craft.*}` and `${market.*}` but probably not `${hearsay.*}`. Behavior documents only reference the providers they use, so the Actor runtime can lazy-load only the required providers per actor. This is an optimization concern, not an architectural problem.
 
@@ -369,7 +382,7 @@ At 100,000 concurrent NPCs with 100-500ms cognitive cycles, loading 19 provider 
 | `${social.ambient_mood}` | float | Aggregate sentiment of recent social messages |
 | `${social.unanswered_questions}` | int | QUESTION-intent messages without ANSWER follow-ups |
 
-**Implementation path**: The provider would be registered by whichever service owns the Lexicon room type integration (likely lib-lexicon L4 or a dedicated social bridge service). It reads from Chat (L1) state stores using the character's joined Lexicon rooms, with a configurable TTL cache window (30-60s per CHARACTER-COMMUNICATION.md). The provider infrastructure (`IVariableProviderFactory`) is fully operational with 11 existing implementations -- this is a domain-specific implementation gap, not an architectural one.
+**Implementation path**: The provider would be registered by whichever service owns the Lexicon room type integration (likely lib-lexicon L4 or a dedicated social bridge service). It reads from Chat (L1) state stores using the character's joined Lexicon rooms, with a configurable TTL cache window (30-60s per CHARACTER-COMMUNICATION.md). The provider infrastructure (`IVariableProviderFactory`) is fully operational with 14 existing implementations -- this is a domain-specific implementation gap, not an architectural one.
 
 **Dependencies**: Requires Lexicon (L4, 0%) for concept ontology and the Lexicon room type registration with Chat (L1). Chat itself is production-ready (97%) and already supports custom room types.
 
@@ -460,7 +473,7 @@ This distinction matters: Puppetmaster's gap is arguably smaller (integrate `IAc
 
 Despite the orchestration layer being blocked, the **execution infrastructure** is complete:
 
-- **11 variable providers** registered and functional — NPCs have personality, memory, world awareness, progress tracking, and social structures wired (see O6 table above)
+- **14 variable providers** registered and functional — NPCs have personality, memory, world awareness, progress tracking, social structures, economic awareness, and relationship bonds wired (see O6 table above)
 - **3-tier behavior document chain** — `DynamicBehaviorProvider` (Asset/L3, priority 100) → `SeededBehaviorProvider` (embedded, priority 50) → `FallbackBehaviorProvider` (graceful degradation, priority 0)
 - **Actor runtime** — two-phase tick, dynamic character binding, pool deployment modes, bounded perception queues, GOAP integration, ~80 telemetry spans
 - **DI inversion framework** — `ICollectionUnlockListener` (2 implementations: Seed, Faction), `ISeedEvolutionListener` (3 implementations: Gardener, Faction, Status), all writing to distributed state
@@ -501,7 +514,7 @@ These are patterns that the audit identified as strong candidates for formal com
 
 **Why this pattern should be formalized**:
 
-1. **Infrastructure cost is near-zero.** With 11 functional variable providers, the system realm pattern proven by DIVINE.md, and the unified 3-stage progression documented in [ACTOR-BOUND-ENTITIES.md](ACTOR-BOUND-ENTITIES.md), adding a guardian spirit Actor requires no new architectural patterns or DI inversion interfaces. The guardian spirit is a Character in the Nexius realm; Actor binds to that character; all existing variable providers activate automatically.
+1. **Infrastructure cost is near-zero.** With 14 functional variable providers, the system realm pattern proven by DIVINE.md, and the unified 3-stage progression documented in [ACTOR-BOUND-ENTITIES.md](ACTOR-BOUND-ENTITIES.md), adding a guardian spirit Actor requires no new architectural patterns or DI inversion interfaces. The guardian spirit is a Character in the Nexius realm; Actor binds to that character; all existing variable providers activate automatically.
 
 2. **Mechanically implements progressive agency resistance.** PLAYER-VISION.md describes a core design principle: "The character is ALWAYS autonomous. The player does not 'control' a character -- the player gradually learns to *collaborate with* that character's autonomy." With a spirit Actor, the spirit itself has `${personality.*}` — its own traits, preferences, and accumulated tendencies. Spirit "resistance" to player commands that violate the spirit's nature becomes a numerical comparison (spirit personality alignment vs. requested action), not a hand-authored threshold. The spirit develops genuine preferences over generations of play.
 
@@ -588,9 +601,60 @@ A second cross-cutting pattern emerged from resolving the Combat Dream (R9): ABM
 
 ---
 
+## Recent Developments (2026-03-09)
+
+### Cinematic Runtime Advancement
+
+R9 documented the CinematicInterpreter in the behavior-compiler SDK as the existing runtime for choreographic streaming. Since then, **lib-behavior itself** has gained a complete cinematic execution layer:
+
+| Component | Location | Purpose |
+|---|---|---|
+| **CutsceneCoordinator** | `plugins/lib-behavior/Coordination/` | Session lifecycle management, entity control acquisition/release |
+| **CutsceneSession** | `plugins/lib-behavior/Coordination/` | Multi-entity sync points, input windows (QTE), configurable timeouts |
+| **ControlGateManager** | `plugins/lib-behavior/Control/` | Entity control state management during cinematic sequences |
+| **CinematicRunner** | `plugins/lib-behavior/Runtime/` | Cinematic execution orchestration |
+| **IClientCutsceneHandler** | `bannou-service/Behavior/` | Client integration surface (action execution, camera direction, sync notification) |
+
+These are tested via dedicated integration tests (`CutsceneCoordinationIntegrationTests`, `ControlGateIntegrationTests`, `StateSyncIntegrationTests`). The runtime half of the cinematic system is now substantially more complete than R9 described — what remains missing is the **composition layer** (CinematicTheory/CinematicStoryteller SDKs and lib-cinematic plugin).
+
+Two new planning documents expand R9's architectural analysis:
+- **[COMPOSITIONAL-CINEMATICS.md](COMPOSITIONAL-CINEMATICS.md)** (2026-03-09): Reframes cinematics through an anime production paradigm — independence is default, synchronization earned through dramatic necessity. Extends beyond combat to **distributed scene sourcing** (flashbacks, perspective splits, temporal montage via Connect relay infrastructure).
+- **[CINEMATIC-SYSTEM.md](CINEMATIC-SYSTEM.md)** (2026-03-09): Specifies the three missing components following the Theory/Storyteller/Plugin pattern, with output format as ABML documents with DomainAction nodes (same format the runtime already consumes).
+
+### Storyline Service Hardened
+
+Storyline (L4, 85%) has completed a comprehensive tenet compliance pass:
+- T8 compliance (return pattern corrections)
+- T13 compliance (x-permissions for service-only endpoints)
+- T25/T1 compliance (enum type safety, A2 SDK boundary mapping with EnumMappingValidator tests)
+- T16 compliance (lifecycle event naming Pattern C, topic naming)
+- T31 compliance (Category B deprecation lifecycle)
+
+The content flywheel's **narrative generation stage** is now production-ready. Iterative composition (multi-phase streaming execution) and direct content flywheel wiring (Puppetmaster → Storyline integration) remain as Phase 2/3 enhancements.
+
+### Variable Provider Expansion
+
+Three new L2 variable providers were implemented since v1.2, completing L2 per-character state coverage:
+- `${currency.*}` — CurrencyProviderFactory (wallet balances, hold amounts)
+- `${inventory.*}` — InventoryProviderFactory (container contents, item counts)
+- `${relationship.*}` — RelationshipProviderFactory (bond types, strength, bidirectional relationships)
+
+These give NPCs **economic and social awareness** — an NPC can now reason about "do I have enough gold?" (`${currency.balance.gold}`), "what am I carrying?" (`${inventory.item_count}`), and "how does this person relate to me?" (`${relationship.type.ally}`). Provider definitions are generated from `schemas/variable-providers.yaml` into `VariableProviderDefinitions.cs`, ensuring compile-time consistency.
+
+### Behavioral Bootstrap: Blockers Verified Unchanged
+
+The critical path identified in v1.2 has been **verified as still blocked** at the same points:
+- Puppetmaster watcher-actor integration (#388): `ActorId` still null on `WatcherInfo`, `StartWatcherAsync` still creates in-memory entries only
+- Divine: All 22 endpoints still return `NotImplemented`
+- Phases 2-5 of the behavioral bootstrap remain gated
+
+No regression, no progress on the orchestration blockers. The execution infrastructure continues to strengthen (more providers, hardened services) while the conductor remains missing.
+
+---
+
 ## Overall Assessment
 
-The 75-service architecture is remarkably coherent. The audit has resolved 11 of the original concerns:
+The 76-service architecture is remarkably coherent. The audit has resolved 11 of the original concerns:
 
 - **System realm pattern** (R1-R3): Collapses guardian spirit growth, twin spirits, and Agency data source into existing L2 infrastructure
 - **NPC cognition differentiation** (R4): All 15+ variable provider namespaces are clearly orthogonal
@@ -605,7 +669,7 @@ The remaining open issues are:
 - **Three moderate gaps** (O3: Environment variable provider; O4: Organization economic GOAP; O7: Social variable provider not yet designed -- NPCs can't perceive or react to social communication)
 - **Three minor items** (O5: Loot hierarchy fix; O6: Variable provider scaling plan; O8: ITransitCostModifierProvider has zero implementations -- NPC route decisions ignore dynamic conditions)
 
-None of the open issues represent architectural contradictions. They are design gaps -- places where pieces fit together logically but haven't been specified yet. The NPC cognition infrastructure is far more complete than previously documented: 11 of 15+ planned variable providers are fully implemented and wired, covering personality, memory, world awareness, progress, and social structures. The remaining pre-implementation providers (disposition, hearsay, lexicon, social, and others) await their owning L4 services. The two new items (O7, O8) represent cross-cutting integration hooks -- `${social.*}` bridges Chat/Lexicon into Actor cognition, while `ITransitCostModifierProvider` bridges Environment/Faction/Hearsay into spatial reasoning -- that should be incorporated into the respective L4 service designs when those services are specified.
+None of the open issues represent architectural contradictions. They are design gaps -- places where pieces fit together logically but haven't been specified yet. The NPC cognition infrastructure is far more complete than previously documented: 14 of 22 planned variable providers are fully implemented and wired, covering personality, memory, world awareness, progress, social structures, economic awareness (currency, inventory), and relationship bonds. All implemented L2 services that hold per-character state now have corresponding variable providers. The remaining pre-implementation providers (disposition, hearsay, lexicon, social, and others) await their owning L4 services. The two new items (O7, O8) represent cross-cutting integration hooks -- `${social.*}` bridges Chat/Lexicon into Actor cognition, while `ITransitCostModifierProvider` bridges Environment/Faction/Hearsay into spatial reasoning -- that should be incorporated into the respective L4 service designs when those services are specified.
 
 The single most impactful action sequence is: (1) Puppetmaster watcher-actor integration (unblocking the behavioral bootstrap's Phase 2), then (2) Divine implementation (Phase 3), which together prove out the system realm pattern and enable the content flywheel's orchestration layer.
 

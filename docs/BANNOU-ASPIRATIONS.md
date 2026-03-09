@@ -319,7 +319,7 @@ Bannou generates typed client artifacts for major game engines:
 
 ### The Platform in One Paragraph
 
-Bannou is a monoservice game backend platform comprising 76 planned service plugins (892+ endpoints across 184 maintained YAML schemas) that provides everything a multiplayer game needs -- authentication, real-time WebSocket communication, economies, inventories, quests, matchmaking, voice chat, spatial data, save/load, procedural content generation, and an autonomous NPC intelligence stack capable of running 100,000+ concurrent AI-driven characters. It compiles into a single binary that deploys as anything from an in-process library embedded directly in a game client (no server required) to a fully distributed microservices architecture spanning thousands of nodes. The same game code, the same SDK calls, the same ABML behavior documents work identically across all deployment modes. The game is the data; Bannou runs the simulation.
+Bannou is a monoservice game backend platform comprising 76 planned service plugins (903 endpoints across 184 maintained YAML schemas) that provides everything a multiplayer game needs -- authentication, real-time WebSocket communication, economies, inventories, quests, matchmaking, voice chat, spatial data, save/load, procedural content generation, and an autonomous NPC intelligence stack capable of running 100,000+ concurrent AI-driven characters. It compiles into a single binary that deploys as anything from an in-process library embedded directly in a game client (no server required) to a fully distributed microservices architecture spanning thousands of nodes. The same game code, the same SDK calls, the same ABML behavior documents work identically across all deployment modes. The game is the data; Bannou runs the simulation.
 
 ---
 
@@ -487,7 +487,7 @@ This is not theoretical. The infrastructure is built:
 | **Deployment** | Cloud-only, vendor-locked | Self-hosted, embedded, cloud, hybrid -- zero vendor lock-in |
 | **Customization** | Dashboard configuration | Full source code, schema-first extensibility, L5 extension plugins |
 | **Progressive Systems** | Level/XP numbers | Seed (generic growth), License (grid boards), Collection (discovery), Agency (UX-as-progression) |
-| **Services** | 10-15 features | 76 composable primitives (892+ endpoints) |
+| **Services** | 10-15 features | 76 composable primitives (903 endpoints) |
 | **AI/LLM Dependency** | Some use LLM for NPCs | Zero LLM dependency -- formal theory, deterministic, cacheable, cost-predictable |
 
 ---

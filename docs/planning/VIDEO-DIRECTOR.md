@@ -1,8 +1,15 @@
 # Video Director: Dynamic Cinematic Generation from Game Data
 
-> **Status**: Aspirational planning
-> **Scope**: Using Bannou's existing service infrastructure to generate entertainment cinematics (music videos, adventure trailers, promotional content) from game world data
-> **Not to be confused with**: The Director plugin (L4), which provides human-in-the-loop orchestration for live game world events. However, see [Convergence with Director Plugin](#convergence-with-director-plugin) for how these concepts may unify.
+> **Type**: Design
+> **Status**: Aspirational
+> **Created**: 2026-03-07
+> **Last Updated**: 2026-03-09
+> **North Stars**: #5
+> **Related Plugins**: Director, Music, Storyline, Actor, Cinematic, Broadcast, Showtime
+
+## Summary
+
+Designs a composition layer that maps musical structure onto Bannou's existing narrative, choreographic, and cinematic infrastructure to generate real-time entertainment cinematics (music videos, adventure trailers, promotional content) from game world data. The system takes a musical template, thematic intent, character selection criteria, and scene preferences, then orchestrates Storyline, CinematicStoryteller, MusicStoryteller, and the Actor runtime to produce deterministic, seed-reproducible cinematics rendered in the game engine. Not to be confused with the Director plugin (L4) which provides human-in-the-loop orchestration, though the two concepts may converge. No implementation exists yet.
 
 ---
 
@@ -721,12 +728,3 @@ lib-video-director (L4 Plugin, Thin API Wrapper)
 
 6. **Music licensing for analyzed templates**: The Counterpoint Composer SDK's legal analysis is thorough (templates contain only uncopyrightable structural parameters), but community perception of "we analyzed your song to make a game video" needs careful messaging.
 
----
-
-## Summary
-
-Video Director is not a new system -- it is a **composition layer** that maps musical structure onto the narrative, choreographic, and cinematic infrastructure Bannou already provides. The core insight is that every component of a music video (narrative arc, character selection, action choreography, camera direction, temporal montage, beat synchronization) already has a Bannou system designed to handle it. What's missing is the conductor that reads a musical score and tells each system when to play.
-
-The convergence with the Director plugin is particularly compelling: the same event coordination infrastructure that lets developers orchestrate live game events can orchestrate music videos, with the music providing the timing that a human director would otherwise provide manually. The result is a system where a developer can trigger a dynamic music video in a live, streaming game world -- characters performing choreographed action timed to music while the world continues around them -- and every run produces a unique cinematic from the same inputs because the characters, their histories, and their personalities are all real, simulated data.
-
-This is the Content Flywheel applied to entertainment content: the richer the game world's history, the richer the cinematics it can produce.

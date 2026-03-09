@@ -263,7 +263,6 @@ public sealed class BundleClient
 
         var request = new QueryBundlesRequest
         {
-            Owner = query.Owner,
             Tags = query.Tags,
             TagExists = query.TagExists?.ToList(),
             TagNotExists = query.TagNotExists?.ToList(),
@@ -332,7 +331,6 @@ public sealed class BundleClient
             MetadataVersion = info.MetadataVersion,
             Name = info.Name,
             Description = info.Description,
-            Owner = info.Owner,
             Realm = info.Realm?.ToString(),
             Tags = info.Tags,
             Status = info.Status.ToString(),

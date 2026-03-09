@@ -148,7 +148,6 @@ public sealed class BannouUploader : IAssetUploader, IAsyncDisposable
         {
             Filename = fileInfo.Name,
             Size = fileInfo.Length,
-            Owner = _options.Owner,
             ManifestPreview = manifestPreview
         };
 

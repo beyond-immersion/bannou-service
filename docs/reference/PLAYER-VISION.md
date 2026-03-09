@@ -276,7 +276,7 @@ Every boundary in Arcadia is a gradient, not a wall:
 | One seed vs. another | Accumulated experience cross-pollinates |
 | Online vs. offline | The world continues; returning reveals organic change, not frozen state |
 
-This gradient philosophy is the player-facing expression of the architectural principle: the same systems, configured differently, producing different experiences. The server has 45+ service plugins loaded based on configuration. The client has UX modules loaded based on spirit capability. The world has scenarios loaded based on deployment phase. All gradients. No walls.
+This gradient philosophy is the player-facing expression of the architectural principle: the same systems, configured differently, producing different experiences. The server has 76 service plugins loaded based on configuration. The client has UX modules loaded based on spirit capability. The world has scenarios loaded based on deployment phase. All gradients. No walls.
 
 ---
 

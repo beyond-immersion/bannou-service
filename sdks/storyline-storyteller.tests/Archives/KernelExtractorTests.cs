@@ -122,8 +122,8 @@ public class KernelExtractorTests
                     CharacterId = characterId,
                     EventId = eventId,
                     EventName = "Battle of Stormgate",
-                    EventCategory = EventCategory.WAR,
-                    Role = ParticipationRole.HERO,
+                    EventCategory = EventCategory.War,
+                    Role = ParticipationRole.Hero,
                     EventDate = DateTimeOffset.UtcNow.AddYears(-5),
                     Significance = 0.9f,
                     CreatedAt = DateTimeOffset.UtcNow
@@ -168,8 +168,8 @@ public class KernelExtractorTests
                     CharacterId = characterId,
                     EventId = Guid.NewGuid(),
                     EventName = "Minor Skirmish",
-                    EventCategory = EventCategory.WAR,
-                    Role = ParticipationRole.WITNESS,
+                    EventCategory = EventCategory.War,
+                    Role = ParticipationRole.Witness,
                     EventDate = DateTimeOffset.UtcNow.AddYears(-5),
                     Significance = 0.3f, // Below 0.7 threshold
                     CreatedAt = DateTimeOffset.UtcNow
@@ -205,12 +205,11 @@ public class KernelExtractorTests
             HasBackstory = true,
             Backstory = new BackstoryResponse
             {
-                CharacterId = characterId,
                 Elements =
                 [
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.TRAUMA,
+                        ElementType = BackstoryElementType.Trauma,
                         Key = "betrayal",
                         Value = "Betrayed by trusted mentor",
                         Strength = 0.8f
@@ -253,19 +252,18 @@ public class KernelExtractorTests
             HasBackstory = true,
             Backstory = new BackstoryResponse
             {
-                CharacterId = characterId,
                 Elements =
                 [
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.GOAL,
+                        ElementType = BackstoryElementType.Goal,
                         Key = "revenge",
                         Value = "Avenge fallen comrades",
                         Strength = 0.9f
                     },
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.GOAL,
+                        ElementType = BackstoryElementType.Goal,
                         Key = "wealth",
                         Value = "Restore family fortune",
                         Strength = 0.6f
@@ -318,7 +316,7 @@ public class KernelExtractorTests
                         Timestamp = DateTimeOffset.UtcNow.AddDays(-30),
                         RealmId = Guid.NewGuid(),
                         EncounterTypeCode = "COMBAT",
-                        Outcome = EncounterOutcome.NEGATIVE,
+                        Outcome = EncounterOutcome.Negative,
                         ParticipantIds = [characterId, otherId],
                         CreatedAt = DateTimeOffset.UtcNow
                     },
@@ -329,7 +327,7 @@ public class KernelExtractorTests
                             PerspectiveId = Guid.NewGuid(),
                             EncounterId = encounterId,
                             CharacterId = characterId,
-                            EmotionalImpact = EmotionalImpact.ANGER,
+                            EmotionalImpact = EmotionalImpact.Anger,
                             SentimentShift = -0.8f, // Below -0.5 threshold
                             ImpactIntensity = 0.9f, // Above 0.7 threshold
                             MemoryStrength = 0.5f,
@@ -379,7 +377,7 @@ public class KernelExtractorTests
                     Timestamp = DateTimeOffset.UtcNow.AddDays(-i * 10),
                     RealmId = Guid.NewGuid(),
                     EncounterTypeCode = "TRADE",
-                    Outcome = EncounterOutcome.POSITIVE,
+                    Outcome = EncounterOutcome.Positive,
                     ParticipantIds = [characterId, otherId],
                     CreatedAt = DateTimeOffset.UtcNow
                 },
@@ -390,7 +388,7 @@ public class KernelExtractorTests
                         PerspectiveId = Guid.NewGuid(),
                         EncounterId = encId,
                         CharacterId = characterId,
-                        EmotionalImpact = EmotionalImpact.GRATITUDE,
+                        EmotionalImpact = EmotionalImpact.Gratitude,
                         SentimentShift = 0.3f,
                         MemoryStrength = 0.5f,
                         CreatedAt = DateTimeOffset.UtcNow
@@ -455,7 +453,7 @@ public class KernelExtractorTests
                     Timestamp = DateTimeOffset.UtcNow.AddDays(-i * 10),
                     RealmId = Guid.NewGuid(),
                     EncounterTypeCode = "TRADE",
-                    Outcome = EncounterOutcome.POSITIVE,
+                    Outcome = EncounterOutcome.Positive,
                     ParticipantIds = [characterId, otherId],
                     CreatedAt = DateTimeOffset.UtcNow
                 },
@@ -466,7 +464,7 @@ public class KernelExtractorTests
                         PerspectiveId = Guid.NewGuid(),
                         EncounterId = encId,
                         CharacterId = characterId,
-                        EmotionalImpact = EmotionalImpact.GRATITUDE,
+                        EmotionalImpact = EmotionalImpact.Gratitude,
                         SentimentShift = 0.3f,
                         MemoryStrength = 0.5f,
                         CreatedAt = DateTimeOffset.UtcNow
@@ -536,12 +534,11 @@ public class KernelExtractorTests
             HasBackstory = true,
             Backstory = new BackstoryResponse
             {
-                CharacterId = characterId,
                 Elements =
                 [
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.TRAUMA,
+                        ElementType = BackstoryElementType.Trauma,
                         Key = "loss",
                         Value = "Lost family home",
                         Strength = 0.6f

@@ -125,6 +125,12 @@ Designs two complementary sacred geography systems composed from existing Bannou
 
 Designs how Bannou ships as a local dedicated server alongside a game client for single-player or LAN multiplayer experiences. The existing architecture (plugin loading, in-memory infrastructure backends, environment-driven service selection, lazy evaluation) already supports this deployment mode with zero code changes. The SQLite state store backend has been implemented, removing the primary infrastructure gap. Remaining investments are SDK convenience layers, in-process mesh routing for embedded .NET engines, and documentation.
 
+### Video Director: Dynamic Cinematic Generation from Game Data {#video-director}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #5 | [Full Document](planning/VIDEO-DIRECTOR.md)
+
+Designs a composition layer that maps musical structure onto Bannou's existing narrative, choreographic, and cinematic infrastructure to generate real-time entertainment cinematics (music videos, adventure trailers, promotional content) from game world data. The system takes a musical template, thematic intent, character selection criteria, and scene preferences, then orchestrates Storyline, CinematicStoryteller, MusicStoryteller, and the Actor runtime to produce deterministic, seed-reproducible cinematics rendered in the game engine. Not to be confused with the Director plugin (L4) which provides human-in-the-loop orchestration, though the two concepts may converge. No implementation exists yet.
+
 ## Research
 
 ### Situationally Triggered Cinematics: Precedent Research {#cinematic-precedent-research}
@@ -167,23 +173,11 @@ Proposes a self-hosted Git server as a Bannou plugin (lib-git) using git.exe pro
 
 Analyzes how the anime production paradigm of decomposing complex scenes into independently-produced layers with shared spatial constraints maps onto Bannou's cinematic architecture. Fingerprinted behavior components serve as character cels, continuation points as composition seams, and CutsceneSession sync barriers as same-layer synchronization moments. Extends the paradigm to distributed scene sourcing where multiple servers simultaneously simulate different scene versions for instantaneous flashbacks, perspective splits, and temporal montage. No new systems are proposed; this is a unifying architectural lens on planned and existing systems including lib-cinematic, lib-behavior, lib-actor, and the Video Director.
 
-## Other
-
-### Video Director: Dynamic Cinematic Generation from Game Data {#video-director}
-
-**Status**: Aspirational planning | [Full Document](planning/VIDEO-DIRECTOR.md)
-
-Video Director is not a new system -- it is a **composition layer** that maps musical structure onto the narrative, choreographic, and cinematic infrastructure Bannou already provides. The core insight is that every component of a music video (narrative arc, character selection, action choreography, camera direction, temporal montage, beat synchronization) already has a Bannou system designed to handle it. What's missing is the conductor that reads a musical score and tells each system when to play.
-
-The convergence with the Director plugin is particularly compelling: the same event coordination infrastructure that lets developers orchestrate live game events can orchestrate music videos, with the music providing the timing that a human director would otherwise provide manually. The result is a system where a developer can trigger a dynamic music video in a live, streaming game world -- characters performing choreographed action timed to music while the world continues around them -- and every run produces a unique cinematic from the same inputs because the characters, their histories, and their personalities are all real, simulated data.
-
-This is the Content Flywheel applied to entertainment content: the richer the game world's history, the richer the cinematics it can produce.
-
 ### Vision Progress: Cross-Service Architectural Audit {#vision-progress}
 
-**Last Updated**: 2026-03-02 | [Full Document](planning/VISION-PROGRESS.md)
+**Type**: Architectural Analysis | **Status**: Active | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #5 | [Full Document](planning/VISION-PROGRESS.md)
 
-This document records the results of a full cross-service audit comparing the vision documents against the generated service details and deep dive documentation. Issues are categorized as resolved (with architectural rationale), open (with priority and impact), or questions (requiring human judgment).
+Records the results of a full cross-service architectural audit comparing VISION.md, PLAYER-VISION.md, and BEHAVIORAL-BOOTSTRAP.md against the 76-service plugin architecture. Categorizes findings as resolved (11 issues with architectural rationale), open (8 issues with priority and impact), or design recommendations requiring human judgment. The behavioral bootstrap critical path analysis identifies Puppetmaster watcher-actor spawning as the first-order blocker and Divine implementation as the second-order blocker for the content flywheel.
 
 ## Summary
 

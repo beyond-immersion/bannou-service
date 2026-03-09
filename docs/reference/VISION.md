@@ -12,7 +12,7 @@
 
 ## The One-Paragraph Vision
 
-Bannou is a monoservice game backend platform (75 services, 892+ endpoints) that provides everything a multiplayer game needs -- authentication, economies, inventories, quests, matchmaking, voice, spatial data, save/load -- combined with an autonomous NPC intelligence stack capable of running 100,000+ concurrent AI-driven characters. Its flagship game, Arcadia, uses this platform to create **living worlds where content is generated from accumulated play history, not hand-authored by designers**. NPCs think, remember, evolve, form relationships, run economies, and generate emergent narratives. Dungeons are conscious entities. Gods curate regional flavor. Characters age, marry, have children, and die -- and their compressed life archives seed future content for other players. The longer a world runs, the richer it becomes. This is the fundamental thesis: **more play produces more content, which produces more play**.
+Bannou is a monoservice game backend platform (76 services, 903 endpoints) that provides everything a multiplayer game needs -- authentication, economies, inventories, quests, matchmaking, voice, spatial data, save/load -- combined with an autonomous NPC intelligence stack capable of running 100,000+ concurrent AI-driven characters. Its flagship game, Arcadia, uses this platform to create **living worlds where content is generated from accumulated play history, not hand-authored by designers**. NPCs think, remember, evolve, form relationships, run economies, and generate emergent narratives. Dungeons are conscious entities. Gods curate regional flavor. Characters age, marry, have children, and die -- and their compressed life archives seed future content for other players. The longer a world runs, the richer it becomes. This is the fundamental thesis: **more play produces more content, which produces more play**.
 
 ---
 
@@ -40,7 +40,7 @@ Not a nice-to-have -- a requirement for the living world to work. The architectu
 
 ### 4. Ship Games Fast
 
-Eliminate the 6-18 month backend development phase for game studios. 75 integrated services covering every backend need. Schema-first development means new services go from concept to production in under a day. Auto-generated SDKs for Unity, Unreal, Godot, Stride. Single binary deployment configurable from monolith to fully distributed microservices via environment variables.
+Eliminate the 6-18 month backend development phase for game studios. 76 integrated services covering every backend need. Schema-first development means new services go from concept to production in under a day. Auto-generated SDKs for Unity, Unreal, Godot, Stride. Single binary deployment configurable from monolith to fully distributed microservices via environment variables.
 
 **Systems that serve this**: Schema-first code generation (184 maintained YAML schemas -> 400+ generated files, ~5x line amplification), Plugin architecture, Monoservice deployment, Orchestrator (environment management), auto-generated client SDKs.
 
@@ -132,7 +132,12 @@ Location (L2)               ──provides ${location.*}────────
 Seed (L2)                   ──provides ${seed.*}──────────────────────┤
 Quest (L2)                  ──provides ${quest.*}─────────────────────┤
                                                                       │
+── Economic Awareness ──                                              │
+Currency (L2)               ──provides ${currency.*}─────────────────┤
+Inventory (L2)              ──provides ${inventory.*}────────────────┤
+                                                                      │
 ── Social Structures ──                                               │
+Relationship (L2)           ──provides ${relationship.*}─────────────┤
 Obligation (L4)             ──provides ${obligations.*}───────────────┤
 Faction (L4)                ──provides ${faction.*}───────────────────┤
                                                                       │
@@ -150,7 +155,7 @@ Behavior (L4) ──compiles ABML──▶ Actor (L2) ──executes bytecode─
                             via Asset Service L3)
 ```
 
-**Why this matters**: NPC behavior expressions like `${personality.aggression} > 0.7 AND ${encounters.last_hostile_days} < 3` require data from **11 implemented variable providers** (spanning L2 and L4) flowing into the L2 Actor runtime without hierarchy violations, with 3 additional providers planned. These providers organize into four cognitive domains: **character self-model** (personality, combat preferences, encounter memories, backstory), **world awareness** (game time, transit routes, location context), **progress and growth** (seed capabilities, quest objectives), and **social structures** (contractual obligations, faction norms). The Variable Provider Factory pattern is the architectural keystone that makes autonomous NPCs possible within the service hierarchy -- each provider is independently implemented, registered via DI, and discovered by Actor's `IEnumerable<IVariableProviderFactory>` at runtime. Break this pattern and you break NPC intelligence.
+**Why this matters**: NPC behavior expressions like `${personality.aggression} > 0.7 AND ${encounters.last_hostile_days} < 3` require data from **14 implemented variable providers** (spanning L2 and L4) flowing into the L2 Actor runtime without hierarchy violations, with 8 additional providers planned. These providers organize into six cognitive domains: **character self-model** (personality, combat preferences, encounter memories, backstory), **world awareness** (game time, transit routes, location context), **progress and growth** (seed capabilities, quest objectives), **economic awareness** (currency balances, inventory contents), **social structures** (relationship bonds, contractual obligations, faction norms), and **planned** (disposition, hearsay, lexicon). The Variable Provider Factory pattern is the architectural keystone that makes autonomous NPCs possible within the service hierarchy -- each provider is independently implemented, registered via DI, and discovered by Actor's `IEnumerable<IVariableProviderFactory>` at runtime. Break this pattern and you break NPC intelligence.
 
 ### The Content Flywheel Loop
 
@@ -221,7 +226,9 @@ This follows an established pattern across multiple computational domains:
 
 **Connection to Progressive Agency**: QTE/decision points in cinematics ARE the combat domain of PLAYER-VISION.md's progressive UX expansion. The cinematic plugin reads `${spirit.domain.combat.fidelity}` from Agency to determine interaction density -- same choreography computation, different player interaction windows based on the spirit's earned understanding. A new spirit watches their character fight autonomously (the character was always capable; the spirit simply couldn't perceive or influence combat structure). A master-level spirit directs full martial choreography in real-time. This directly implements the "agency is earned context" gradient.
 
-**Why this matters**: THE DREAM is that combat feels like a choreographed cinematic generated in real-time from actual environment, character capabilities, and player input. The CinematicInterpreter already exists in the behavior-compiler SDK -- it wraps BehaviorModelInterpreter with streaming composition and continuation point support. What's missing is the higher-level composition logic (CinematicComposer: affordance evaluation, capability matching, dramatic pacing, agency-gated QTE insertion) and the thin API wrapper plugin (lib-cinematic). The architectural path is clear and follows proven patterns. Remove any component and combat becomes mechanical rather than cinematic.
+**Why this matters**: THE DREAM is that combat feels like a choreographed cinematic generated in real-time from actual environment, character capabilities, and player input. The cinematic runtime is substantially implemented: the CinematicInterpreter exists in the behavior-compiler SDK (streaming composition with continuation points), and lib-behavior contains CutsceneCoordinator (session lifecycle), CutsceneSession (multi-entity sync, QTE input windows), ControlGateManager (entity control state), and CinematicRunner (execution orchestration). What's missing is the **composition layer** -- CinematicTheory SDK (dramatic grammar, spatial reasoning, capability matching) and CinematicStoryteller SDK (GOAP-planned choreographic sequences) -- plus the thin lib-cinematic plugin API wrapper. The architectural path is clear and follows proven patterns. Remove any component and combat becomes mechanical rather than cinematic.
+
+**Beyond combat**: The cinematic system extends far beyond combat choreography. [COMPOSITIONAL-CINEMATICS.md](../planning/COMPOSITIONAL-CINEMATICS.md) reframes it through an anime production paradigm: independence is the default, synchronization is earned through dramatic necessity. The same infrastructure enables **distributed scene sourcing** -- flashbacks, perspective splits, temporal montage, and prophecy/memory overlays -- using the existing Connect relay infrastructure that handles player seed switching. Combat choreography is one application of a general compositional framework.
 
 ### The Dungeon Ecosystem
 
@@ -395,7 +402,7 @@ The 6-layer service hierarchy (L0 Infrastructure through L5 Extensions) with str
 
 ## The Player Experience in One Page
 
-**First Minutes**: A divine shard falls from the sky, hits an object (a staff, a hammer, a cart wheel), and the player's guardian spirit awakens in the body of a child in a living world. There is no character creation screen. The tutorial is the character's entire first life.
+**First Minutes**: The player enters the Void as a spirit -- a point of light, a divine shard of Nexius -- and drifts through an ambient space where points of interest and scenarios present themselves (see PLAYER-VISION.md). When the spirit commits to its first persistent scenario, a divine shard falls from the sky, hits an object (a staff, a hammer, a cart wheel), and the player's guardian spirit awakens in the body of a child in a living world. There is no character creation screen. The tutorial is the character's entire first life.
 
 **Daily Play**: The player possesses a household member and participates in the world. Characters are always autonomous -- the NPC brain runs at all times, and the player gradually learns to *collaborate with* that autonomy rather than override it. Combat feels collaborative because the character co-pilot has opinions and acts on them. If the player goes idle, the character continues living. Crafting mirrors real processes. Trade emerges from NPC supply and demand.
 
@@ -422,7 +429,7 @@ Every boundary in Arcadia is a gradient, not a wall. Tutorial to gameplay is the
 | Dimension | Target |
 |-----------|--------|
 | Concurrent AI NPCs | 100,000+ |
-| Backend services | 75 (892+ endpoints) |
+| Backend services | 76 (903 endpoints) |
 | State stores | 188+ (118+ Redis + 71+ MySQL) |
 | Event types | 432+ |
 | Crafting processes | 37+ (authentic simulation) |

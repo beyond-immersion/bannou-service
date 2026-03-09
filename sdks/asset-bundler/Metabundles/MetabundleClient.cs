@@ -61,7 +61,6 @@ public sealed class MetabundleClient
             StandaloneAssetIds = request.StandaloneAssetIds?.ToList(),
             AssetFilter = request.AssetFilter?.ToList(),
             Version = request.Version ?? "1.0.0",
-            Owner = request.Owner ?? throw new ArgumentNullException(nameof(request), "Owner is required"),
             Realm = AssetApiHelpers.ParseRealmRequired(request.Realm),
             Description = request.Description
         };
