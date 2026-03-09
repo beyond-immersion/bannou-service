@@ -1,0 +1,451 @@
+openapi: 3.0.4
+info:
+  title: Scene Service Events
+  description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: scene-events.yaml
+
+    Event models for Scene service RabbitMQ pub/sub via MassTransit.
+
+    The Scene service publishes lifecycle events for scene documents and
+    operational events for instantiation and checkout workflows.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+
+  x-event-subscriptions:
+    # Scene service does not currently subscribe to external events
+    []
+
+  x-event-publications:
+    # Lifecycle events (auto-generated from x-lifecycle)
+  - topic: scene.created
+    event: SceneCreatedEvent
+    description: Published when a new scene document is created
+  - topic: scene.updated
+    event: SceneUpdatedEvent
+    description: Published when a scene document is modified
+  - topic: scene.deleted
+    event: SceneDeletedEvent
+    description: Published when a scene document is deleted
+
+    # Instantiation events
+  - topic: scene.instantiated
+    event: SceneInstantiatedEvent
+    description: Published when a scene is instantiated in the game world
+  - topic: scene.destroyed
+    event: SceneDestroyedEvent
+    description: Published when a scene instance is removed from the game world
+
+    # Checkout workflow events
+  - topic: scene.checked-out
+    event: SceneCheckedOutEvent
+    description: Published when a scene is locked for editing
+  - topic: scene.committed
+    event: SceneCommittedEvent
+    description: Published when checkout changes are committed
+  - topic: scene.checkout-discarded
+    event: SceneCheckoutDiscardedEvent
+    description: Published when checkout is discarded without saving
+
+    # Validation events
+  - topic: scene.validation-rules-updated
+    event: SceneValidationRulesUpdatedEvent
+    description: Published when validation rules are registered/updated
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/scene-lifecycle-events.yaml
+x-lifecycle:
+  Scene:
+    model:
+      sceneId: {type: string, format: uuid, primary: true, required: true, description: "Unique scene identifier"}
+      gameId: {type: string, nullable: true, description: "Game service identifier for partitioning (null for unpartitioned)"}
+      sceneType: {$ref: '../scene-api.yaml#/components/schemas/SceneType', required: true, description: "Scene classification
+          code"}
+      name: {type: string, required: true, description: "Human-readable scene name"}
+      description: {type: string, nullable: true, description: "Optional scene description"}
+      version: {type: string, required: true, description: "Semantic version (MAJOR.MINOR.PATCH)"}
+      tags: {type: array, items: {type: string}, nullable: true, description: "Searchable tags"}
+      nodeCount: {type: integer, required: true, description: "Total number of nodes in scene"}
+    sensitive: []
+
+paths: {}
+
+components:
+  schemas:
+
+    # ========== INSTANTIATION EVENTS ==========
+
+    SceneInstantiatedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a scene is instantiated in the game world.
+        Consumers (Mapping, Actor, etc.) react to spawn spatial objects and NPCs.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      - sceneAssetId
+      - sceneVersion
+      - sceneName
+      - sceneType
+      - regionId
+      - worldTransform
+      properties:
+        eventName:
+          type: string
+          default: scene.instantiated
+          description: 'Event type identifier: scene.instantiated'
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique instance identifier (caller-provided)
+        sceneAssetId:
+          type: string
+          format: uuid
+          description: Source scene asset ID
+        sceneVersion:
+          type: string
+          maxLength: 50
+          description: Version that was instantiated
+        sceneName:
+          type: string
+          maxLength: 500
+          description: Scene name (for logging and display)
+        gameId:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Game ID from the scene (null for unpartitioned scenes)
+        sceneType:
+          $ref: '../scene-api.yaml#/components/schemas/SceneType'
+          description: Scene type from the scene
+        regionId:
+          type: string
+          format: uuid
+          description: Region where the scene was placed
+        worldTransform:
+          $ref: '#/components/schemas/Transform'
+          description: World-space transform for scene origin
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Caller-provided metadata passed through from instantiation request.
+            No Bannou plugin reads specific keys from this field by convention.
+        instantiatedBy:
+          type: string
+          nullable: true
+          description: App-id of the instantiator
+
+    SceneDestroyedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a scene instance is removed from the game world
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      properties:
+        eventName:
+          type: string
+          default: scene.destroyed
+          description: 'Event type identifier: scene.destroyed'
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance that was destroyed
+        sceneAssetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source scene asset ID (null if not provided by caller)
+        regionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Region where the instance was located (null if not provided by caller)
+        destroyedBy:
+          type: string
+          nullable: true
+          description: App-id of the destroyer
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Caller-provided metadata passed through from destruction request.
+            No Bannou plugin reads specific keys from this field by convention.
+
+    # ========== CHECKOUT WORKFLOW EVENTS ==========
+
+    SceneCheckedOutEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a scene is locked for editing
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sceneId
+      - checkedOutByType
+      - checkedOutById
+      - expiresAt
+      properties:
+        eventName:
+          type: string
+          default: scene.checked-out
+          description: 'Event type identifier: scene.checked-out'
+        sceneId:
+          type: string
+          format: uuid
+          description: ID of the scene being edited
+        sceneName:
+          type: string
+          nullable: true
+          description: Name of the scene
+        gameId:
+          type: string
+          nullable: true
+          description: Game ID of the scene
+        checkedOutByType:
+          $ref: '../scene-api.yaml#/components/schemas/SceneEditorType'
+          description: Type of editor that checked out the scene
+        checkedOutById:
+          type: string
+          maxLength: 200
+          description: |
+            Editor identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the app-id or service name.
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the checkout lock expires
+
+    SceneCommittedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when checkout changes are committed
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sceneId
+      - version
+      - committedByType
+      - committedById
+      properties:
+        eventName:
+          type: string
+          default: scene.committed
+          description: 'Event type identifier: scene.committed'
+        sceneId:
+          type: string
+          format: uuid
+          description: ID of the committed scene
+        sceneName:
+          type: string
+          nullable: true
+          description: Name of the scene
+        gameId:
+          type: string
+          nullable: true
+          description: Game ID of the scene
+        version:
+          type: string
+          maxLength: 50
+          description: New version after commit
+        previousVersion:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Version before commit
+        committedByType:
+          $ref: '../scene-api.yaml#/components/schemas/SceneEditorType'
+          description: Type of editor that committed the scene
+        committedById:
+          type: string
+          maxLength: 200
+          description: |
+            Editor identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the app-id or service name.
+        changesSummary:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Optional summary of changes
+        nodeCount:
+          type: integer
+          nullable: true
+          description: Node count after commit
+
+    SceneCheckoutDiscardedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a checkout is discarded without saving
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sceneId
+      - discardedByType
+      - discardedById
+      properties:
+        eventName:
+          type: string
+          default: scene.checkout-discarded
+          description: 'Event type identifier: scene.checkout-discarded'
+        sceneId:
+          type: string
+          format: uuid
+          description: ID of the scene
+        sceneName:
+          type: string
+          nullable: true
+          description: Name of the scene
+        gameId:
+          type: string
+          nullable: true
+          description: Game ID of the scene
+        discardedByType:
+          $ref: '../scene-api.yaml#/components/schemas/SceneEditorType'
+          description: Type of editor that discarded the checkout
+        discardedById:
+          type: string
+          maxLength: 200
+          description: |
+            Editor identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the app-id or service name.
+
+    # ========== VALIDATION EVENTS ==========
+
+    SceneValidationRulesUpdatedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when validation rules are registered or updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameId
+      - sceneType
+      - ruleCount
+      properties:
+        eventName:
+          type: string
+          default: scene.validation-rules-updated
+          description: 'Event type identifier: scene.validation-rules-updated'
+        gameId:
+          type: string
+          maxLength: 200
+          description: Game ID for the rules
+        sceneType:
+          $ref: '../scene-api.yaml#/components/schemas/SceneType'
+          description: Scene type for the rules
+        ruleCount:
+          type: integer
+          minimum: 0
+          description: Number of active rules after update
+        updatedBy:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Who updated the rules
+
+    # Spatial types reuse API schema definitions per SCHEMA-RULES.md mandatory $ref reuse.
+    # Transform, Vector3, Quaternion are defined in scene-api.yaml and referenced via $ref.
+    Quaternion:
+      type: object
+      additionalProperties: false
+      description: Rotation represented as a quaternion
+      required:
+      - x
+      - y
+      - z
+      - w
+      properties:
+        x:
+          type: number
+          format: double
+          description: X component
+        y:
+          type: number
+          format: double
+          description: Y component
+        z:
+          type: number
+          format: double
+          description: Z component
+        w:
+          type: number
+          format: double
+          description: W component (scalar)
+
+    Transform:
+      type: object
+      additionalProperties: false
+      description: Position, rotation, and scale in 3D space
+      required:
+      - position
+      - rotation
+      - scale
+      properties:
+        position:
+          $ref: '#/components/schemas/Vector3'
+          description: Position relative to parent
+        rotation:
+          $ref: '#/components/schemas/Quaternion'
+          description: Rotation relative to parent
+        scale:
+          $ref: '#/components/schemas/Vector3'
+          description: Scale relative to parent
+
+    # ========== ASSET REFERENCE ==========
+
+    Vector3:
+      type: object
+      additionalProperties: false
+      description: A point or direction in 3D space
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: double
+          description: X coordinate
+        y:
+          type: number
+          format: double
+          description: Y coordinate
+        z:
+          type: number
+          format: double
+          description: Z coordinate
+
+x-inlined-types:
+- Quaternion
+- Transform
+- Vector3

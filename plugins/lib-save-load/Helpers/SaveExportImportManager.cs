@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.SaveLoad.Processing;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.IO.Compression;
 
@@ -30,7 +31,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
     /// <summary>Cacheable store for pending upload entries (Redis-backed with set operations).</summary>
     private readonly ICacheableStateStore<PendingUploadEntry> _pendingStore;
     private readonly SaveLoadServiceConfiguration _configuration;
-    private readonly IAssetClient _assetClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IVersionDataLoader _versionDataLoader;
     private readonly IMessageBus _messageBus;
@@ -42,7 +43,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for save data access.</param>
     /// <param name="configuration">Save-load service configuration.</param>
-    /// <param name="assetClient">Asset client for archive storage.</param>
+    /// <param name="serviceProvider">Service provider for L3 soft dependency resolution.</param>
     /// <param name="httpClientFactory">HTTP client factory for presigned URL operations.</param>
     /// <param name="versionDataLoader">Version data loader for save data retrieval.</param>
     /// <param name="messageBus">Message bus for error event publishing.</param>
@@ -51,7 +52,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
     public SaveExportImportManager(
         IStateStoreFactory stateStoreFactory,
         SaveLoadServiceConfiguration configuration,
-        IAssetClient assetClient,
+        IServiceProvider serviceProvider,
         IHttpClientFactory httpClientFactory,
         IVersionDataLoader versionDataLoader,
         IMessageBus messageBus,
@@ -65,7 +66,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         _hotCacheStore = stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
         _pendingStore = stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
         _configuration = configuration;
-        _assetClient = assetClient;
+        _serviceProvider = serviceProvider;
         _httpClientFactory = httpClientFactory;
         _versionDataLoader = versionDataLoader;
         _messageBus = messageBus;
@@ -79,12 +80,18 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveExportImportManager.ExportSavesAsync");
+
+        // L3 soft dependency per FOUNDATION TENETS — Asset service may not be enabled
+        var assetClient = _serviceProvider.GetService<IAssetClient>();
+        if (assetClient == null)
+        {
+            _logger.LogDebug("Asset service not available, export requires asset storage");
+            return (StatusCodes.InternalServerError, null);
+        }
+
         _logger.LogDebug(
             "Exporting saves for owner {OwnerId} ({OwnerType}) game {GameId}",
             body.OwnerId, body.OwnerType, body.GameId);
-
-        var ownerIdStr = body.OwnerId.ToString();
-        var ownerTypeStr = body.OwnerType.ToString().ToLowerInvariant();
 
         // Query slots for this owner
         var slots = await _slotQueryStore.QueryAsync(
@@ -125,7 +132,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                     continue;
                 }
 
-                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), slot.LatestVersion.Value);
+                var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), slot.LatestVersion.Value);
                 var version = await _versionStore.GetAsync(versionKey, cancellationToken);
                 if (version == null)
                 {
@@ -184,7 +191,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             Metadata = new AssetMetadataInput { AssetType = AssetType.Other }
         };
 
-        var uploadResponse = await _assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
+        var uploadResponse = await assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
         if (uploadResponse?.UploadUrl == null)
         {
             _logger.LogError("Failed to request upload URL for export archive");
@@ -218,7 +225,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         {
             UploadId = uploadResponse.UploadId
         };
-        var assetMetadata = await _assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
+        var assetMetadata = await assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
 
         if (assetMetadata == null)
         {
@@ -232,7 +239,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         }
 
         // Get download URL
-        var getAssetResponse = await _assetClient.GetAssetAsync(
+        var getAssetResponse = await assetClient.GetAssetAsync(
             new GetAssetRequest { AssetId = assetMetadata.AssetId },
             cancellationToken);
 
@@ -254,7 +261,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         return (StatusCodes.OK, new ExportSavesResponse
         {
             DownloadUrl = getAssetResponse.DownloadUrl.ToString(),
-            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.ExportUrlExpiryMinutes),
             SizeBytes = archiveData.Length
         });
     }
@@ -265,12 +272,21 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveExportImportManager.ImportSavesAsync");
+
+        // L3 soft dependency per FOUNDATION TENETS — Asset service may not be enabled
+        var assetClient = _serviceProvider.GetService<IAssetClient>();
+        if (assetClient == null)
+        {
+            _logger.LogDebug("Asset service not available, import requires asset storage");
+            return (StatusCodes.InternalServerError, null);
+        }
+
         _logger.LogDebug(
             "Importing saves from archive {AssetId} for owner {OwnerId} ({OwnerType})",
             body.ArchiveAssetId, body.TargetOwnerId, body.TargetOwnerType);
 
         // Download the archive
-        var assetResponse = await _assetClient.GetAssetAsync(
+        var assetResponse = await assetClient.GetAssetAsync(
             new GetAssetRequest { AssetId = body.ArchiveAssetId.ToString() },
             cancellationToken);
 
@@ -329,8 +345,6 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             }
         }
 
-        var targetOwnerIdStr = body.TargetOwnerId.ToString();
-        var targetOwnerTypeStr = body.TargetOwnerType.ToString().ToLowerInvariant();
         var importedSlots = 0;
         var importedVersions = 0;
         var skippedSlots = 0;
@@ -344,8 +358,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             }
 
             // Check for existing slot
-            // SaveSlotMetadata.GetStateKey expects strings for ownerType and ownerId
-            var slotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerTypeStr, targetOwnerIdStr, slotEntry.SlotName);
+            var slotKey = SaveSlotMetadata.BuildStateKey(body.TargetGameId, body.TargetOwnerType, body.TargetOwnerId, slotEntry.SlotName);
             var existingSlot = await _slotStore.GetAsync(slotKey, cancellationToken);
 
             if (existingSlot != null)
@@ -363,9 +376,9 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                             .QueryAsync(v => v.SlotId == existingSlot.SlotId, cancellationToken);
                         foreach (var existingVersion in existingVersions)
                         {
-                            await _versionStore.DeleteAsync(existingVersion.GetStateKey(), cancellationToken);
+                            await _versionStore.DeleteAsync(existingVersion.BuildStateKey(), cancellationToken);
                         }
-                        await _slotStore.DeleteAsync(existingSlot.GetStateKey(), cancellationToken);
+                        await _slotStore.DeleteAsync(existingSlot.BuildStateKey(), cancellationToken);
                         break;
 
                     case ConflictResolution.Rename:
@@ -374,7 +387,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                         while (existingSlot != null)
                         {
                             slotEntry.SlotName = $"{baseName}_{counter}";
-                            slotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerTypeStr, targetOwnerIdStr, slotEntry.SlotName);
+                            slotKey = SaveSlotMetadata.BuildStateKey(body.TargetGameId, body.TargetOwnerType, body.TargetOwnerId, slotEntry.SlotName);
                             existingSlot = await _slotStore.GetAsync(slotKey, cancellationToken);
                             counter++;
                         }
@@ -396,7 +409,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
-            await _slotStore.SaveAsync(newSlot.GetStateKey(), newSlot, cancellationToken: cancellationToken);
+            await _slotStore.SaveAsync(newSlot.BuildStateKey(), newSlot, cancellationToken: cancellationToken);
             importedSlots++;
 
             // Create version
@@ -426,7 +439,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.Pending : UploadStatus.Complete,
                 CreatedAt = DateTimeOffset.UtcNow
             };
-            await _versionStore.SaveAsync(newVersion.GetStateKey(), newVersion, cancellationToken: cancellationToken);
+            await _versionStore.SaveAsync(newVersion.BuildStateKey(), newVersion, cancellationToken: cancellationToken);
             importedVersions++;
 
             // Store in hot cache - HotSaveEntry fields are now proper types
@@ -444,7 +457,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             };
             var hotCacheTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
             await _hotCacheStore.SaveAsync(
-                hotEntry.GetStateKey(),
+                hotEntry.BuildStateKey(),
                 hotEntry,
                 new StateOptions { Ttl = hotCacheTtlSeconds },
                 cancellationToken);
@@ -458,6 +471,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 {
                     UploadId = uploadId,
                     SlotId = newSlot.SlotId,
+                    SlotName = slotEntry.SlotName,
                     VersionNumber = 1,
                     GameId = body.TargetGameId,
                     OwnerId = body.TargetOwnerId,
@@ -471,7 +485,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 };
                 var pendingTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
                 await _pendingStore.SaveAsync(
-                    pendingEntry.GetStateKey(),
+                    pendingEntry.BuildStateKey(),
                     pendingEntry,
                     new StateOptions { Ttl = pendingTtlSeconds },
                     cancellationToken);

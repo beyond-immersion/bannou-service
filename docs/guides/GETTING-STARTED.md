@@ -1,6 +1,13 @@
 # Getting Started with Bannou
 
-This guide walks you through setting up Bannou from scratch, understanding its architecture, and integrating with game clients and backend services.
+> **Version**: 1.1
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-auth (L1), lib-connect (L1), lib-account (L1), lib-state (L0), lib-messaging (L0), lib-mesh (L0)
+
+## Summary
+
+Step-by-step onboarding guide covering development environment setup, architecture orientation, configuration, Docker Compose local development, client SDK integration via WebSocket, and service SDK integration via generated mesh clients. Intended for developers new to Bannou who need to go from zero to a running local stack with working client and service communication. After reading, developers will be able to build, run, and extend Bannou services using the schema-first workflow.
 
 ## Table of Contents
 
@@ -24,7 +31,7 @@ Bannou is a **schema-driven monoservice platform** designed for multiplayer game
 - **Monoservice**: Single codebase deploys as monolith or distributed microservices
 - **Schema-First**: OpenAPI specifications generate 65-80% of service code
 - **WebSocket-First**: Binary protocol with zero-copy message routing
-- **Plugin Architecture**: 41 independent service plugins, loadable via environment config
+- **Plugin Architecture**: 55+ independent service plugins across six layers, loadable via environment config
 - **Infrastructure Abstraction**: Portable across Redis, MySQL, RabbitMQ via lib-state, lib-messaging, lib-mesh
 
 ### Why Bannou?
@@ -133,7 +140,7 @@ Expected output: All steps complete with green checkmarks, 3,300+ tests pass.
 
 ### The Monoservice Pattern
 
-Bannou compiles to a single binary that can run all 41 services or a selective subset:
+Bannou compiles to a single binary that can run all 55+ services or a selective subset:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -176,10 +183,12 @@ schemas/auth-api.yaml
 plugins/lib-auth/
 ├── Generated/
 │   ├── AuthController.cs      ← HTTP routing (never edit)
-│   ├── IAuthService.cs        ← Interface (never edit)
-│   ├── AuthModels.cs          ← DTOs (never edit)
-│   └── AuthClient.cs          ← Service client (never edit)
-└── AuthService.cs             ← YOUR CODE (only manual file)
+│   └── IAuthService.cs        ← Interface (never edit)
+└── AuthService.cs             ← YOUR CODE (business logic)
+
+bannou-service/Generated/
+├── Models/AuthModels.cs       ← Request/response DTOs (never edit)
+└── Clients/AuthClient.cs      ← Service client for mesh calls (never edit)
 ```
 
 **The workflow:**
@@ -279,7 +288,7 @@ AUTH_SERVICE_ENABLED=true
 ACCOUNT_SERVICE_ENABLED=true
 CONNECT_SERVICE_ENABLED=true
 BEHAVIOR_SERVICE_ENABLED=true
-# ... (41 services total)
+# ... (55+ services total)
 ```
 
 ---
@@ -294,7 +303,7 @@ make up-compose
 ```
 
 This starts:
-- **bannou**: All 32 services on port 8080
+- **bannou**: All enabled services on port 8080
 - **rabbitmq**: Message broker on port 5672 (management: 15672)
 - **bannou-redis**: Redis on port 6379
 - **bannou-mysql**: MySQL on port 3306
@@ -343,7 +352,7 @@ make test-http
 make test-edge
 
 # Full CI pipeline locally
-make test-ci
+make all
 ```
 
 ---
@@ -501,7 +510,7 @@ await manager.ConnectAsync();
 // Handles reconnection automatically
 ```
 
-See [Client Integration Guide](CLIENT_INTEGRATION.md) for advanced patterns.
+See [Client Integration Guide](CLIENT-INTEGRATION.md) for advanced patterns.
 
 ---
 
@@ -585,13 +594,12 @@ try
 {
     var result = await _someClient.SomeMethodAsync(request, ct);
 }
-catch (MeshInvocationException ex)
+catch (ApiException ex)
 {
     _logger.LogError(
-        "Service call failed: AppId={AppId}, Method={Method}, Status={Status}",
-        ex.AppId,
-        ex.MethodName,
-        ex.StatusCode);
+        "Service call failed: Status={Status}, Response={Response}",
+        ex.StatusCode,
+        ex.Response);
 
     return (StatusCodes.ServiceUnavailable, null);
 }
@@ -736,10 +744,9 @@ make test              # Run unit tests
 
 | Topic | Guide |
 |-------|-------|
-| Quick reference | [Quickstart](QUICKSTART.md) |
 | WebSocket protocol details | [WebSocket Protocol](../WEBSOCKET-PROTOCOL.md) |
-| Create a new service | [Plugin Development](PLUGIN_DEVELOPMENT.md) |
-| Testing patterns | [Testing Guide](TESTING.md) |
-| Production deployment | [Deployment Guide](DEPLOYMENT.md) |
-| Architecture deep-dive | [Bannou Design](../BANNOU_DESIGN.md) |
+| Create a new service | [Plugin Development](PLUGIN-DEVELOPMENT.md) |
+| Testing patterns | [Testing Guide](../operations/TESTING.md) |
+| Production deployment | [Deployment Guide](../operations/DEPLOYMENT.md) |
+| Architecture deep-dive | [Bannou Design](../BANNOU-DESIGN.md) |
 | Development rules | [Tenets](../reference/TENETS.md) |

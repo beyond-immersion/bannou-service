@@ -141,7 +141,7 @@ public sealed class SchemaMigrator
             var fromVersion = migrationPath[i];
             var toVersion = migrationPath[i + 1];
 
-            var schemaKey = SaveSchemaDefinition.GetStateKey(@namespace, toVersion);
+            var schemaKey = SaveSchemaDefinition.BuildStateKey(@namespace, toVersion);
             var schema = await _schemaStore.GetAsync(schemaKey, cancellationToken);
 
             if (schema == null)

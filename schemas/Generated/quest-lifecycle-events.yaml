@@ -1,0 +1,214 @@
+openapi: 3.0.4
+info:
+  title: Quest Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for quest service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: quest-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    QuestDefinitionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to quest.definition.created when a questdefinition is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - contractTemplateId
+      - code
+      - name
+      - category
+      - difficulty
+      - repeatable
+      - maxQuestors
+      - isDeprecated
+      - gameServiceId
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: quest.definition.created
+          description: 'Event type identifier: quest.definition.created'
+        definitionId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the quest definition"
+        contractTemplateId: &id002
+          type: string
+          format: uuid
+          description: "Underlying contract template ID"
+        code: &id003
+          type: string
+          description: "Unique quest code within game"
+        name: &id004
+          type: string
+          description: "Human-readable quest name"
+        description: &id005
+          type: string
+          nullable: true
+          description: "Quest description"
+        category: &id006
+          $ref: ../quest-api.yaml#/components/schemas/QuestCategory
+          description: "Quest category for organization"
+        difficulty: &id007
+          $ref: ../quest-api.yaml#/components/schemas/QuestDifficulty
+          description: "Difficulty rating of the quest"
+        levelRequirement: &id008
+          type: integer
+          nullable: true
+          description: "Minimum level required"
+        repeatable: &id009
+          type: boolean
+          description: "Whether repeatable"
+        cooldownSeconds: &id010
+          type: integer
+          nullable: true
+          description: "Cooldown for repeatable quests"
+        deadlineSeconds: &id011
+          type: integer
+          nullable: true
+          description: "Time limit"
+        maxQuestors: &id012
+          type: integer
+          description: "Max party size"
+        isDeprecated: &id013
+          type: boolean
+          description: "Whether definition is deprecated"
+        deprecatedAt: &id014
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the definition was deprecated"
+        deprecationReason: &id015
+          type: string
+          nullable: true
+          description: "Reason for deprecation"
+        gameServiceId: &id016
+          type: string
+          format: uuid
+          description: "Game service this definition belongs to"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was last updated (set to createdAt on creation)
+    QuestDefinitionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to quest.definition.updated when a questdefinition is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - contractTemplateId
+      - code
+      - name
+      - category
+      - difficulty
+      - repeatable
+      - maxQuestors
+      - isDeprecated
+      - gameServiceId
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: quest.definition.updated
+          description: 'Event type identifier: quest.definition.updated'
+        definitionId: *id001
+        contractTemplateId: *id002
+        code: *id003
+        name: *id004
+        description: *id005
+        category: *id006
+        difficulty: *id007
+        levelRequirement: *id008
+        repeatable: *id009
+        cooldownSeconds: *id010
+        deadlineSeconds: *id011
+        maxQuestors: *id012
+        isDeprecated: *id013
+        deprecatedAt: *id014
+        deprecationReason: *id015
+        gameServiceId: *id016
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    QuestDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to quest.definition.deleted when a questdefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - contractTemplateId
+      - code
+      - name
+      - category
+      - difficulty
+      - repeatable
+      - maxQuestors
+      - isDeprecated
+      - gameServiceId
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: quest.definition.deleted
+          description: 'Event type identifier: quest.definition.deleted'
+        definitionId: *id001
+        contractTemplateId: *id002
+        code: *id003
+        name: *id004
+        description: *id005
+        category: *id006
+        difficulty: *id007
+        levelRequirement: *id008
+        repeatable: *id009
+        cooldownSeconds: *id010
+        deadlineSeconds: *id011
+        maxQuestors: *id012
+        isDeprecated: *id013
+        deprecatedAt: *id014
+        deprecationReason: *id015
+        gameServiceId: *id016
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

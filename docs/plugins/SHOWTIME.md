@@ -99,6 +99,8 @@ High-level hype trains generate events that feed the content flywheel:
 | Level 4 | Feeds into Character History as "memorable performance" |
 | Level 5+ | Feeds into Realm History as "legendary performance event" |
 
+**Mechanism**: Showtime publishes `showtime.milestone.reached` events with hype level context. Character-History and Realm-History subscribe to these events to create history entries as appropriate. Showtime does NOT call their APIs directly — these are L4-to-L4 event subscriptions with graceful degradation (if Character-History or Realm-History are not deployed, the events are simply unconsumed). This follows the broadcast event pattern per FOUNDATION TENETS T27.
+
 ---
 
 ## The Real vs. Simulated Audience Blending
@@ -144,7 +146,6 @@ When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtim
 | lib-collection (`ICollectionClient`) | Streaming milestone unlocks -- first stream, follower milestones, hype achievements (L2) |
 | lib-currency (`ICurrencyClient`) | Virtual tip economy via `stream_tip` currency type (L2) |
 | lib-contract (`IContractClient`) | Sponsorship deals -- NPC sponsors, milestone-based contracts (L1) |
-| lib-relationship (`IRelationshipClient`) | Persistent follower bonds -- streamer-to-audience-member entity pairs (L2) |
 
 > **Note**: lib-seed, lib-collection, lib-currency, lib-contract, and lib-relationship are constructor-injected per SERVICE-HIERARCHY.md (L4 services must hard-depend on L1/L2). Not all streaming operations use all of these -- core session lifecycle works without calling them -- but they are guaranteed available and injected at startup.
 
@@ -220,6 +221,17 @@ When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtim
 | `showtime:lock:audience-tick` | Audience simulation tick singleton lock |
 | `showtime:lock:career-worker` | Career progression worker singleton lock |
 
+### Key Builder Pattern (IMPLEMENTATION TENETS T6)
+
+All key patterns above require `internal static string Build*Key()` methods with `private const string` prefix fields. Key builder methods must be `internal static` (not `private static`) for provider/test accessibility. Example:
+```csharp
+private const string SessionKeyPrefix = "sess:";
+internal static string BuildSessionKey(Guid sessionId) => $"{SessionKeyPrefix}{sessionId}";
+
+private const string AudienceMemberKeyPrefix = "aud:";
+internal static string BuildAudienceMemberKey(Guid sessionId, Guid memberId) => $"{AudienceMemberKeyPrefix}{sessionId}:{memberId}";
+```
+
 ---
 
 ## Events
@@ -249,20 +261,41 @@ When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtim
 | `voice.participant.left` | `HandleVoiceParticipantLeftAsync` | Adjust audience behavior based on voice room size. (Soft -- no-op if lib-voice absent) |
 | `game-session.created` | `HandleGameSessionCreatedAsync` | Create voice room via lib-voice if game session is configured for voice; optionally create streaming session if auto-stream enabled |
 | `game-session.ended` | `HandleGameSessionEndedAsync` | End associated streaming sessions and delete voice rooms via lib-voice. Note: this is a live state reaction (ending ephemeral sessions/voice rooms), NOT dependent data cleanup — compliant with FOUNDATION TENETS. Persistent data cleanup for game-service deletion is handled via lib-resource x-references. |
-| `showtime.session.ended` | `HandleShowtimeSessionEndedAsync` | Trigger career progression: record seed growth, evaluate milestones, grant collection entries, update follower relationships. **AUDIT:NEEDS_DESIGN** — self-subscription adds RabbitMQ overhead; career logic could execute inline in `EndSessionAsync`. See DC#9. |
+| `account.deleted` | `HandleAccountDeletedAsync` | End active sessions where streamer entity is the deleted account. Delete follower records for that account-as-streamer. Clean up audience pool data from Redis. Per FOUNDATION TENETS Account Deletion Cleanup Obligation — mandatory for any service storing account-keyed data. |
 
 ### Resource Cleanup (T28)
 
-| Target Resource | Source Type | On Delete | Cleanup Endpoint |
-|----------------|-------------|-----------|-----------------|
-| character | showtime | CASCADE | `/showtime/cleanup-by-character` |
-| game-service | showtime | CASCADE | `/showtime/cleanup-by-game-service` |
+```yaml
+x-references:
+  - target: character
+    sourceType: showtime
+    field: entityId
+    onDelete: cascade
+    cleanup:
+      endpoint: /showtime/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
+  - target: game-service
+    sourceType: showtime
+    field: gameServiceId
+    onDelete: cascade
+    cleanup:
+      endpoint: /showtime/cleanup-by-game-service
+      payloadTemplate: '{"gameServiceId": "{{resourceId}}"}'
+```
+
+Note: The character cleanup endpoint filters internally by `entityType: Character` AND `entityId` matching the deleted character.
+
+### Account Deletion (T28 Privacy Obligation)
+
+| Event | Handler | Action |
+|-------|---------|--------|
+| `account.deleted` | `HandleAccountDeletedAsync` | End active sessions where streamer entityType=Account and entityId=deleted accountId. Delete all follower records for that account-as-streamer from showtime-audience-followers MySQL store. Clean up audience pool data from showtime-audience-pool Redis store. |
 
 ### DI Listener Patterns
 
 | Pattern | Interface | Action |
 |---------|-----------|--------|
-| Seed evolution | `ISeedEvolutionListener` | Receives streamer seed growth and phase change notifications. Updates cached career phase. Evaluates milestone thresholds for career-related milestones. |
+| Seed evolution | `ISeedEvolutionListener` | Receives streamer seed growth and phase change notifications. Updates cached career phase. Evaluates milestone thresholds for career-related milestones. **Cache strategy**: Career phase cache must use either (a) Redis read-through (no local cache — distributed state is authoritative) or (b) `ConcurrentDictionary` with cross-node invalidation via `showtime.milestone.reached` event subscription per IMPLEMENTATION TENETS (no in-memory authoritative state, T9). |
 | Collection unlock | `ICollectionUnlockListener` | Receives streaming milestone collection unlock confirmations. May trigger hype train bonus or audience morale boost on significant unlocks. |
 
 ---
@@ -271,14 +304,12 @@ When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtim
 
 | Property | Type | Env Var | Default | Constraints | Purpose |
 |----------|------|---------|---------|-------------|---------|
-| `ShowtimeEnabled` | boolean | `SHOWTIME_ENABLED` | `false` | | Master feature flag (AUDIT:NEEDS_DESIGN — see DC#10, may be redundant with SERVICE_ENABLED) |
 | `StreamerSeedTypeCode` | string | `SHOWTIME_STREAMER_SEED_TYPE_CODE` | `streamer` | | Seed type code for streamer career growth |
 | `TipCurrencyCode` | string | `SHOWTIME_TIP_CURRENCY_CODE` | `stream_tip` | | Currency code for virtual tip economy |
 | `MilestoneCollectionType` | string | `SHOWTIME_MILESTONE_COLLECTION_TYPE` | `streaming_milestones` | | Collection type code for streaming milestone unlocks |
 | `HypeCollectionType` | string | `SHOWTIME_HYPE_COLLECTION_TYPE` | `streaming_hype` | | Collection type code for hype achievements |
 | `WorldFirstCollectionType` | string | `SHOWTIME_WORLD_FIRST_COLLECTION_TYPE` | `streaming_world_first` | | Collection type code for world-first stream unlocks |
 | `SponsorshipContractTemplateCode` | string | `SHOWTIME_SPONSORSHIP_CONTRACT_TEMPLATE_CODE` | `stream_sponsorship` | | Contract template code for NPC sponsorship deals |
-| `FollowerRelationshipTypeCode` | string | `SHOWTIME_FOLLOWER_RELATIONSHIP_TYPE_CODE` | `stream_follower` | | Relationship type code for streamer-follower bonds |
 | `DefaultAudiencePoolSize` | integer | `SHOWTIME_DEFAULT_AUDIENCE_POOL_SIZE` | `50` | minimum: 1 | Base audience pool size for new/Unknown phase streamers |
 | `AudiencePoolScalePerPhase` | double | `SHOWTIME_AUDIENCE_POOL_SCALE_PER_PHASE` | `2.0` | minimum: 1.0 | Multiplier applied per career phase (Rising=2x, Popular=4x, etc.) |
 | `AudienceTickIntervalSeconds` | integer | `SHOWTIME_AUDIENCE_TICK_INTERVAL_SECONDS` | `5` | minimum: 1 | How often the audience simulation evaluates engagement and migration |
@@ -292,6 +323,8 @@ When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtim
 | `MaxFollowersPerStreamer` | integer | `SHOWTIME_MAX_FOLLOWERS_PER_STREAMER` | `10000` | minimum: 1 | Maximum followers per streamer entity |
 | `RealDerivedMemberTtlSeconds` | integer | `SHOWTIME_REAL_DERIVED_MEMBER_TTL_SECONDS` | `30` | minimum: 1 | TTL for anonymous real-derived audience members (2x pulse interval) |
 | `CareerWorkerIntervalSeconds` | integer | `SHOWTIME_CAREER_WORKER_INTERVAL_SECONDS` | `60` | minimum: 1 | Career progression worker evaluation frequency |
+| `AudienceTickStartupDelaySeconds` | integer | `SHOWTIME_AUDIENCE_TICK_STARTUP_DELAY_SECONDS` | `5` | minimum: 0 | Startup delay before audience tick worker begins processing |
+| `CareerWorkerStartupDelaySeconds` | integer | `SHOWTIME_CAREER_WORKER_STARTUP_DELAY_SECONDS` | `10` | minimum: 0 | Startup delay before career progression worker begins processing |
 | `AutoStreamOnGameSession` | boolean | `SHOWTIME_AUTO_STREAM_ON_GAME_SESSION` | `false` | | Automatically create streaming sessions when game sessions start |
 | `AutoVoiceOnGameSession` | boolean | `SHOWTIME_AUTO_VOICE_ON_GAME_SESSION` | `true` | | Automatically create voice rooms when game sessions start |
 | `GrowthDebounceIntervalMs` | integer | `SHOWTIME_GROWTH_DEBOUNCE_INTERVAL_MS` | `5000` | minimum: 100 | Debounce interval for seed growth contributions (prevent overwhelming lib-seed) |
@@ -331,18 +364,32 @@ When lib-broadcast (L3) publishes `broadcast.audience.pulse` events, lib-showtim
 
 Both workers acquire distributed locks before processing to ensure multi-instance safety.
 
+**Per-item error isolation (IMPLEMENTATION TENETS T7)**: Both workers MUST implement per-item error isolation. Each session's processing is individually try-caught. Per-item failures are logged at `Warning` level (not `Error` — per-item failures are expected/recoverable). Cycle-level failures (lock acquisition failure, total worker crash) are logged at `Error`. Success/failure counts are tracked per cycle for operational visibility.
+
 ---
 
 ## API Endpoints (Implementation Notes)
 
 **Current status**: Pre-implementation. All endpoints described below are architectural targets.
 
+### Multi-Service Orchestration (T7 Compliance)
+
+**Session Start** orchestrates: game session validation (L2 hard), character validation (L2 hard), MySQL record creation, Redis audience pool allocation, optional platform session (L3 soft), optional voice room (L3 soft).
+- **Soft dependency failures** (voice room, platform session): Session succeeds without them — graceful degradation per FOUNDATION TENETS for L3 dependencies.
+- **Redis audience pool allocation failure**: Session creation fails. MySQL record is rolled back (delete the just-created record). Caller receives error.
+- **Hard dependency validation failures** (game session, character not found): Session creation fails with BadRequest before any state is written.
+
+**Session End** orchestrates: audience pool destruction (Redis), voice room deletion (L3 soft), seed growth recording (L2), collection grants (L2), follower conversions (MySQL).
+- **Soft dependency failures** (voice room deletion): Voice room TTL handles cleanup — self-healing mechanism.
+- **Seed growth or collection grant failures**: CareerProgressionWorker provides eventual consistency — documented self-healing mechanism. Worker periodically evaluates sessions that ended without successful career processing.
+- **Session end always succeeds from caller's perspective**: The session status is set to Ended and the event is published regardless of post-processing failures.
+
 ### Stream Session Management (6 endpoints)
 
 All endpoints require `developer` role.
 
 - **Start** (`/showtime/session/start`): Validates streamer entity and game service exist. Creates `ShowtimeSessionModel` in MySQL. Allocates initial audience pool from template reservoir (size based on career seed phase). Optionally associates with a platform session via lib-broadcast. Optionally creates voice room via lib-voice. Publishes `showtime.session.started`.
-- **End** (`/showtime/session/end`): Lock. Ends audience simulation. Calculates session metrics (total watch-time, peak viewers, average engagement, hype summary). Evaluates follower conversions. Destroys audience pool from Redis. Deletes voice room via lib-voice if created. Records seed growth contributions. Publishes `showtime.session.ended`.
+- **End** (`/showtime/session/end`): Lock. Ends audience simulation. Calculates session metrics (total watch-time, peak viewers, average engagement, hype summary). Evaluates follower conversions. Destroys audience pool from Redis. Deletes voice room via lib-voice if created. Records seed growth contributions. Publishes `showtime.session.ended`. Career progression logic (seed growth recording, milestone evaluation, collection grants, follower conversions) executes inline after session-end processing. `CareerProgressionWorker` provides eventual consistency for any missed processing (self-healing per IMPLEMENTATION TENETS T7).
 - **Pause** (`/showtime/session/pause`): Pauses audience simulation (decay continues but no new engagement). Publishes `showtime.session.paused`.
 - **Resume** (`/showtime/session/resume`): Resumes audience simulation. Publishes `showtime.session.resumed`.
 - **Get** (`/showtime/session/get`): Returns session state including current audience metrics, active hype train, content tags, linked platform session.
@@ -461,9 +508,10 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). All cleanup e
 
 ### Phase 1: Schema & Generation
 - Create showtime-api.yaml schema with all endpoints (19 endpoints across 5 groups), including `ShowtimeSessionStatus` enum (`Active`, `Paused`, `Ended`) and `$ref: EntityType` for streamer identity
-- Create showtime-events.yaml schema with `x-event-publications` listing all 9 published events, `x-event-subscriptions` for consumed events, and flat event structure (eventId + timestamp inline)
+- Create showtime-events.yaml schema with `x-event-publications` listing all 9 published events, `x-event-subscriptions` for consumed events (including `account.deleted`). All custom events use `allOf` composition with `$ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'` per SCHEMA-RULES. Domain fields are flat (not nested) within the event's own properties block. Each event must include `additionalProperties: false`. Each event schema must include an `eventName` property with `type: string` and `default:` value matching the topic (e.g., `default: showtime.session.started` for `ShowtimeSessionStartedEvent`). This is required for message tap integration and generic event processing per SCHEMA-RULES.
 - Create showtime-configuration.yaml schema (25 configuration properties with explicit types and validation constraints)
-- Create showtime-client-events.yaml (AUDIT:NEEDS_DESIGN — client event models, `eventName` values, and `BaseClientEvent` inheritance must be specified before creation; see DC#8)
+- All request, response, and event model definitions must include `additionalProperties: false` per SCHEMA-RULES. No Showtime models require metadata bags.
+- NRT compliance: all non-nullable reference type properties (strings, arrays, objects) must be in the `required` array. Optional reference types must have `nullable: true`. Pay special attention to: `interestTags` (required array), `trackingId` (nullable Guid), `personalityType` (required string), `linkedPlatformSessionId` (nullable), `linkedVoiceRoomId` (nullable).
 - Add 6 state stores to `schemas/state-stores.yaml`
 - Generate service code
 - Verify build succeeds
@@ -578,9 +626,9 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). All cleanup e
 
 ## Composability Map
 
-Stream session identity and audience simulation are owned here. Platform integration is lib-broadcast (L3). Voice rooms are lib-voice (L3). Streamer career growth is Seed (`streamer` seed type). Streaming milestone unlocks are Collection. Virtual tips are Currency (`stream_tip` currency type). Sponsorship deals are Contract. Streamer-follower bonds are Relationship. lib-showtime orchestrates the metagame connecting these primitives.
+Stream session identity and audience simulation are owned here. Platform integration is lib-broadcast (L3). Voice rooms are lib-voice (L3). Streamer career growth is Seed (`streamer` seed type). Streaming milestone unlocks are Collection. Virtual tips are Currency (`stream_tip` currency type). Sponsorship deals are Contract. Follower records are stored locally in Showtime's own `showtime-audience-followers` MySQL store (DC#4 resolved — audience members are not proper Bannou entities). lib-showtime orchestrates the metagame connecting these primitives.
 
-The streaming metagame follows the same structural pattern as lib-divine -- an L4 orchestration layer that composes existing Bannou primitives (Seed, Currency, Collection, Contract, Relationship) to deliver game mechanics. Where lib-divine orchestrates blessings and divinity economy, lib-showtime orchestrates audience dynamics and streamer career. They are parallel orchestration layers composing the same underlying primitives, not the same service. This mirrors how Quest and Escrow both compose Contract but provide different game-flavored APIs.
+The streaming metagame follows the same structural pattern as lib-divine -- an L4 orchestration layer that composes existing Bannou primitives (Seed, Currency, Collection, Contract) to deliver game mechanics. Where lib-divine orchestrates blessings and divinity economy, lib-showtime orchestrates audience dynamics and streamer career. They are parallel orchestration layers composing the same underlying primitives, not the same service. This mirrors how Quest and Escrow both compose Contract but provide different game-flavored APIs.
 
 ### Seed: Streamer Career
 
@@ -613,15 +661,6 @@ The `streamer` seed type (detailed above) provides progressive growth that gates
 | **Parties** | Sponsor (NPC merchant, guild, game entity) + Streamer |
 | **Milestones** | `stream_hours` (stream X hours with sponsor visible), `audience_reach` (total viewers), `hype_generation` (trigger N hype trains) |
 | **Prebound API** | Credit streamer with sponsorship payment (Currency), grant sponsor reputation boost (Seed growth) |
-
-### Relationship: Follower Bonds (AUDIT:NEEDS_DESIGN — see DC#4)
-
-| Property | Value |
-|----------|-------|
-| **Relationship Type** | `stream_follower` |
-| **Direction** | Follower → Streamer (unidirectional) |
-| **Entity Types** | Polymorphic (audience member entity → streamer character/account). **AUDIT:NEEDS_DESIGN** — simulated audience members are not proper Bannou entities and lack a valid `EntityType`. See DC#4 for options. If local follower records are chosen (option a), this section is removed and `IRelationshipClient` is dropped from hard dependencies. |
-| **Lifecycle** | Created when audience member meets follow thresholds; persists across sessions; can unfollow via engagement decay |
 
 ---
 
@@ -688,7 +727,7 @@ This eliminates the hierarchy violation entirely. GameSession publishes events; 
 
 3. **Hype train threshold tuning**: The number of matching sentiments needed to trigger a hype train (`HypeTrainTriggerThreshold = 10`) and the level escalation exponent (`HypeTrainLevelExponent = 1.5`) need gameplay testing. Values that work for a 50-member audience may be wrong for a 5000-member audience.
 
-4. **(AUDIT:NEEDS_DESIGN)** **Cross-service follower entity representation**: When a follower is created via `IRelationshipClient`, what entity type represents the audience member? Simulated audience members don't have character IDs and are not proper Bannou entities — they cannot participate in `Relationship` records without a valid `EntityType`. Options: (a) drop `IRelationshipClient` and store followers purely in Showtime's own `showtime-audience-followers` store (simplest, avoids the entity type problem entirely); (b) add `AudienceMember` to `EntityType` enum (requires common-api.yaml change, but audience members are ephemeral Redis state, not persistent entities); (c) spawn lightweight character records for followers in a system realm (heavy, but gives proper entity identity for `${relationship.*}` ABML access). **This decision affects the Hard Dependencies list** — if option (a) is chosen, `IRelationshipClient` should be removed. Related: GH issues [#437](https://github.com/beyond-immersion/bannou-service/issues/437) (seed owner promotion) and [#366](https://github.com/beyond-immersion/bannou-service/issues/366) (seed archived data cleanup).
+4. **(RESOLVED)** **Cross-service follower entity representation**: Local-only followers. Audience members are ephemeral Redis state (TTL-managed), not persistent Bannou entities — they cannot participate in `Relationship` records without a valid `EntityType`. `IRelationshipClient` removed from Hard Dependencies. Followers stored purely in Showtime's own `showtime-audience-followers` Redis store. This avoids polluting the `EntityType` enum with ephemeral concepts and avoids heavyweight system realm character records for simulated audience members. Related: GH issues [#437](https://github.com/beyond-immersion/bannou-service/issues/437) (seed owner promotion) and [#366](https://github.com/beyond-immersion/bannou-service/issues/366) (seed archived data cleanup).
 
 5. **Sentiment pulse timing alignment**: lib-broadcast publishes pulses every 15 seconds; lib-showtime ticks audiences every 5 seconds. Real-derived audience members created from a pulse will be evaluated by 3 ticks before the next pulse arrives. The TTL for anonymous real-derived members (`RealDerivedMemberTtlSeconds = 30`) covers two pulse intervals, but alignment edge cases may cause brief audience count fluctuations.
 
@@ -696,15 +735,15 @@ This eliminates the hierarchy violation entirely. GameSession publishes events; 
 
 7. **Voice room broadcasting consent UX**: When lib-showtime creates a voice room and a player wants to broadcast it, the consent flow goes through lib-voice. But the UX decision (modal dialog? in-room notification? veto-based?) is a client-side design question that affects how consent is presented and collected. lib-showtime/lib-voice provide the API; the client determines the UX.
 
-8. **(AUDIT:NEEDS_DESIGN)** **Client events specification**: Phase 1 includes creating `showtime-client-events.yaml` but no model names, `eventName` values, or `BaseClientEvent` inheritance structure have been specified. Before schema creation, must define: (a) which client events are needed (hype train progress, milestone notifications, audience changes, follower updates); (b) `eventName` values following Pattern C (`showtime.hype.progress`, `showtime.milestone.reached`, etc.); (c) model names with `ClientEvent` suffix (`ShowtimeHypeProgressClientEvent`, etc.); (d) `IClientEventPublisher` dependency (T17). Alternatively, defer client events entirely to a later phase if streaming UX is not yet designed.
+8. **(RESOLVED)** **Client events specification**: Deferred to a later phase. Client events require streaming UX design decisions (what the player sees, when notifications appear, how hype trains are visualized) that are premature at schema design time. Phase 1 focuses on service events and core API. `showtime-client-events.yaml` removed from Phase 1 scope. When implemented, must follow T17 (`IClientEventPublisher`), Pattern C naming (`showtime.hype.progress`, etc.), and `ClientEvent` suffix convention.
 
-9. **(AUDIT:NEEDS_DESIGN)** **Self-subscription vs inline career progression**: The consumed events table lists `showtime.session.ended` as a self-subscription for career progression (seed growth, milestones, collection grants, follower conversions). While not a tenet violation (T27 addresses cross-service communication, not self-subscription), inline execution after session-end processing is simpler, more reliable (no RabbitMQ round-trip or lost-event risk), and the `CareerProgressionWorker` background service already exists for periodic evaluation. Options: (a) remove self-subscription, execute career logic inline in `EndSessionAsync`; (b) keep self-subscription for separation of concerns. The event is still published for external consumers either way.
+9. **(RESOLVED)** **Self-subscription vs inline career progression**: Inline execution in `EndSessionAsync`. Self-subscription removed from consumed events table. Career logic (seed growth, milestones, collection grants, follower conversions) executes inline after session-end processing — simpler, more reliable (no RabbitMQ round-trip or lost-event risk). The `CareerProgressionWorker` background service provides eventual consistency as a self-healing mechanism for any inline failures. The `showtime.session.ended` event is still published for external consumers.
 
-10. **(AUDIT:NEEDS_DESIGN)** **`ShowtimeEnabled` configuration property purpose**: `ShowtimeEnabled` (default `false`) appears redundant with the infrastructure-level `SHOWTIME_SERVICE_ENABLED` managed by PluginLoader. If it serves a different purpose (e.g., service loads for health/cleanup but streaming metagame features are disabled), its distinct role must be documented and the property renamed to something specific (e.g., `StreamingMetagameEnabled`). If redundant, it should be removed per IMPLEMENTATION TENETS (no dead configuration).
+10. **(RESOLVED)** **`ShowtimeEnabled` configuration property purpose**: Removed. Redundant with infrastructure-level `SHOWTIME_SERVICE_ENABLED` managed by PluginLoader. No distinct purpose identified — service-level enable/disable is already handled by the layer control system. Removed from configuration table per IMPLEMENTATION TENETS T21 (no dead configuration).
 
-11. **(AUDIT:NEEDS_DESIGN)** **Event model naming convention**: Event models currently use `Showtime{Entity}{Action}Event` (e.g., `ShowtimeHypeStartedEvent`). The `Showtime` prefix serves as a service namespace but the deep dive's own model calls the entity `HypeTrain`, not `ShowtimeHype`. Options: (a) keep `Showtime*` prefix for disambiguation (matches Divine's `DivineDeity*` pattern); (b) use entity-only names (`HypeTrainStartedEvent`, `CareerMilestoneReachedEvent`, `AudienceChangedEvent`). Decision affects all 9 event model names.
+11. **(RESOLVED)** **Event model naming convention**: `Showtime` prefix for all event model names. Matches Divine's `DivineDeity*` pattern for disambiguation in the shared `BeyondImmersion.BannouService.Events` namespace (per QUALITY TENETS T16). Final names: `ShowtimeSessionStartedEvent`, `ShowtimeSessionEndedEvent`, `ShowtimeSessionPausedEvent`, `ShowtimeSessionResumedEvent`, `ShowtimeHypeStartedEvent`, `ShowtimeHypeLeveledEvent`, `ShowtimeHypeCompletedEvent`, `ShowtimeMilestoneReachedEvent`, `ShowtimeAudienceChangedEvent`.
 
-12. **(AUDIT:NEEDS_DESIGN)** **x-lifecycle adoption for session events**: Session events (started/ended/paused/resumed) are manually defined. `x-lifecycle` could auto-generate standard `Created`/`Updated`/`Deleted` events, with paused/resumed modeled as status changes via `*.updated` with `changedFields: ["status"]`. However, session events carry domain-specific payloads (ended includes metrics/summary) that don't fit the generic lifecycle pattern. Options: (a) custom events only (current); (b) x-lifecycle + separate domain events for the metric-heavy ended event.
+12. **(RESOLVED)** **x-lifecycle adoption for session events**: Custom events only. Session events carry domain-specific payloads (ended includes metrics/hype summary) that don't fit the generic lifecycle pattern (`Created`/`Updated`/`Deleted`). Session states are `started`/`ended`/`paused`/`resumed`, not CRUD operations. x-lifecycle generates events with suffixes that would conflict with the domain-specific events (`showtime.session.created` vs `showtime.session.started`). Custom events are the correct pattern per SCHEMA-RULES when domain events don't fit CRUD lifecycle semantics.
 
 13. **Voice room creation conflict with Connect companion rooms**: GH issue [#382](https://github.com/beyond-immersion/bannou-service/issues/382) describes a `ICompanionRoomProvider` DI pattern for Connect (L1) to create voice rooms. If both Connect (via DI provider) and Showtime (via `game-session.created` event handler) create voice rooms for the same game session, duplicates would be created. The two approaches must be coordinated or one must defer to the other.
 
@@ -728,12 +767,44 @@ This eliminates the hierarchy violation entirely. GameSession publishes events; 
 - Configuration table: explicit types, validation constraints added
 - GH issue cross-references added (#572, #382, #437, #366)
 
-**7 design decisions identified** (DC#4, DC#8-14 marked AUDIT:NEEDS_DESIGN):
-- DC#4: Follower entity type for IRelationshipClient
-- DC#8: Client event specification
-- DC#9: Self-subscription vs inline career progression
-- DC#10: ShowtimeEnabled purpose/redundancy
-- DC#11: Event model naming convention
-- DC#12: x-lifecycle adoption for session events
+**7 design decisions identified** (DC#4, DC#8-12 RESOLVED; DC#13-14 remain open):
+- DC#4: RESOLVED — Local-only followers, `IRelationshipClient` removed
+- DC#8: RESOLVED — Client events deferred to later phase
+- DC#9: RESOLVED — Inline career progression in `EndSessionAsync`
+- DC#10: RESOLVED — `ShowtimeEnabled` removed (redundant with `SHOWTIME_SERVICE_ENABLED`)
+- DC#11: RESOLVED — `Showtime` prefix for all event model names
+- DC#12: RESOLVED — Custom events only (no x-lifecycle for sessions)
 - DC#13: Voice room creation conflict with Connect companion rooms (#382)
 - DC#14: SentimentCategory extensibility dependency (#572)
+
+### Production Readiness Audit (2026-03-09)
+
+**Full tenet/schema/GH-issues audit completed.** 18 corrections applied:
+
+**Critical fixes (4)**:
+- T28: Added `account.deleted` event handler for account-keyed data cleanup
+- T7: Added multi-service orchestration compensation/self-healing documentation for session Start and End
+- SCHEMA-RULES: Clarified allOf with BaseServiceEvent requirement for all 9 custom events
+- SCHEMA-RULES: Added eventName with default value requirement for all 9 custom events
+
+**Design decisions resolved (6)**:
+- DC#4: Local-only followers chosen — IRelationshipClient removed, followers stored in showtime-audience-followers only
+- DC#8: Client events deferred to later phase — showtime-client-events.yaml not in Phase 1
+- DC#9: Self-subscription removed — career progression executes inline, CareerProgressionWorker provides self-healing
+- DC#10: ShowtimeEnabled removed — redundant with SHOWTIME_SERVICE_ENABLED (T21)
+- DC#11: Showtime prefix committed for all 9 event model names
+- DC#12: Custom events only — no x-lifecycle for session events
+
+**Warning fixes (8)**:
+- T6: Build*Key() pattern documented for all state store keys
+- T7: Per-item error isolation documented for both background workers
+- T9: ISeedEvolutionListener cache invalidation strategy clarified
+- T21: Startup delay config properties added for both workers (25 total config properties)
+- SCHEMA-RULES: x-references fully specified with all required fields
+- SCHEMA-RULES: additionalProperties: false note added to Phase 1
+- SCHEMA-RULES: NRT compliance note added to Phase 1
+- T27: Hype train → Character History / Realm History mechanism clarified as event subscription
+
+**GH issues reviewed (12)**: #382 (open, valid — blocks voice room design), #572 (open, valid — external dependency), #437 (open, valid — career persistence), #366 (open, valid — seed cleanup), #547 (open, tangential), #549, #570, #576, #577, #569 (open, tangential), #154, #238 (closed, resolved).
+
+**3 design decisions remain deferred**: DC#13 (voice room conflict #382), DC#14 (SentimentCategory #572), DC#7 (voice consent UX).

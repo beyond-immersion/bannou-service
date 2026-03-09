@@ -1,11 +1,14 @@
 # Seed System - Progressive Growth for Living Worlds
 
-> **Version**: 1.1
-> **Status**: Seed service and Gardener (first consumer) implemented
-> **Location**: `plugins/lib-seed/`, `plugins/lib-gardener/`, `schemas/seed-*.yaml`, `schemas/gardener-*.yaml`
-> **Related**: [Seed Deep Dive](../plugins/SEED.md), [Gardener Deep Dive](../plugins/GARDENER.md), [Behavior System](./BEHAVIOR-SYSTEM.md), [Service Hierarchy](../reference/SERVICE-HIERARCHY.md)
+> **Version**: 1.3
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-seed (L2), lib-gardener (L4)
+> **Related Guides**: [Behavior System](./BEHAVIOR-SYSTEM.md), [Economy System](./ECONOMY-SYSTEM.md)
 
-The Seed System provides the foundational growth primitive for Arcadia's progressive mastery model. Seeds are entities that start empty and grow by accumulating metadata across named domains, progressively gaining capabilities at configurable thresholds. They power guardian spirits, dungeon cores, combat archetypes, crafting specializations, and any future system that needs "progressive growth in a role."
+## Summary
+
+Explains the Seed progressive growth primitive and its consumer pattern, covering seed types, growth domains, capability manifests, bonds, and the Collection-to-Seed pipeline. Intended for developers building systems that need progressive mastery tracking. After reading, developers will understand how to register seed types, contribute growth, query capabilities, and implement new consumers like Gardener, Faction, and Dungeon.
 
 ---
 
@@ -36,10 +39,10 @@ This is analogous to how Item (L2) is a generic data container -- it doesn't kno
 
 ```
                      Seed (L2)
-                   /     |      \
-                  /      |       \
-          Character  Game Session  Relationship
-          (L2)       (L2)          (L2)
+                   /   |   |   \     \
+                  /    |   |    \     \
+          Account  Actor  Character  Realm  Relationship
+                   (L2)   (L2)       (L2)   (L2)
                                               ┌── Gardener (L4, implemented)
                                               │   Player experience orchestrator
                   Consumers ──────────────────┤── Dungeon plugin (L4, planned)
@@ -130,7 +133,8 @@ lib-seed is designed to be reused by any system that needs progressive growth tr
 | **Combat archetypes** (future) | `warrior`, `mage`, `ranger` | Character | archetype-specific combat domains | Class-specific combat abilities and UX | Future |
 | **Crafting specializations** (future) | `smith`, `alchemist`, `enchanter` | Character | trade-specific technique/material domains | Recipe unlocks, technique mastery | Future |
 | **Governance roles** (future) | `governor`, `guild_leader` | Character or Realm | diplomacy.\*, logistics.\*, taxation.\*, military_command.\* | Political actions and policy capabilities | Future |
-| **Faction system** (future) | `faction` | Realm or character group | military.\*, trade.\*, culture.\* | Faction actions and policies | Future |
+| **Faction** (faction growth) | `faction` | Realm or character group | military.\*, trade.\*, culture.\* | Faction actions and policies | **Implemented** |
+| **Status** (seed-derived effects) | *(varies)* | *(varies)* | *(varies)* | Passive seed-derived capabilities aggregated into status query | **Implemented** |
 | **Apprenticeship** (future) | `apprenticeship` | Relationship | technique.\*, lore.\*, material_science.\* | Craftable items, teachable skills | Future |
 | **Genetic lineage** (future) | `lineage` | Character household | trait.strength, trait.magical_affinity... | Inheritable character traits | Future |
 
@@ -237,15 +241,13 @@ Not until at least three seed consumers demonstrate genuinely shared orchestrati
 
 ---
 
-## 8. Capability Push: L4 Consumer Responsibility
+## 8. Capability Push: Planned Direct Push from Seed
 
-Capabilities are currently pull-only -- consumers call `seed/capability/get-manifest`. Real-time UI updates when capabilities unlock are the **responsibility of L4 consumers**, not Seed.
+Capabilities are currently pull-only -- consumers call `seed/capability/get-manifest`. Real-time UI updates when capabilities unlock are planned as **direct client events from Seed (L2)** using the Entity Session Registry pattern.
 
-The pattern: L4 consumers subscribe to `seed.capability.updated` events, filter for their seed type, interpret the capabilities, and forward to connected sessions via `IClientEventPublisher`. Adding client events directly to Seed (L2) would violate the service hierarchy by introducing session/WebSocket awareness into a foundational service.
+The original design (see [#365](https://github.com/beyond-immersion/bannou-service/issues/365)) framed capability push as an L4 consumer responsibility, arguing that adding session/WebSocket awareness to Seed would violate the service hierarchy. This framing was **superseded** by [#497](https://github.com/beyond-immersion/bannou-service/issues/497), which identified that the Entity Session Registry (hosted by Connect at L1) resolves the concern: Seed only needs `IEntitySessionRegistry` (L1 hard dependency) and `IClientEventPublisher` (L1), not session management knowledge. Gardener registers `seed -> session` bindings; Seed publishes client events directly when growth, phase, capability, bond, or activation changes occur.
 
-For guardian spirits, this means Gardener will subscribe to `seed.capability.updated`, interpret the capabilities as UX modules, and push to clients via the Connect service's per-session RabbitMQ channel -- the same mechanism used for permission capability updates.
-
-See [#365](https://github.com/beyond-immersion/bannou-service/issues/365) for design tracking.
+See [#497](https://github.com/beyond-immersion/bannou-service/issues/497) for design tracking.
 
 ---
 
@@ -253,7 +255,7 @@ See [#365](https://github.com/beyond-immersion/bannou-service/issues/365) for de
 
 ### Seed → Actor (Variable Provider) -- Implemented
 
-Seed exposes `${seed.*}` variables to the Actor service's behavior system via `SeedProviderFactory` (implements `IVariableProviderFactory`). Variables include `${seed.phase}`, `${seed.totalGrowth}`, `${seed.status}`, per-domain growth depths like `${seed.growth.combat}`, and per-capability fidelity like `${seed.capability.combat_awareness}`. Uses `SeedDataCache` (singleton, TTL-based) to avoid per-tick API calls. See [#361](https://github.com/beyond-immersion/bannou-service/issues/361).
+Seed exposes `${seed.*}` variables to the Actor service's behavior system via `SeedProviderFactory` (implements `IVariableProviderFactory`). Variables include `${seed.phase}`, `${seed.totalGrowth}`, `${seed.status}`, per-domain growth depths like `${seed.growth.combat}`, and per-capability fidelity like `${seed.capability.combat_awareness}`. Uses `SeedDataCache` (singleton, TTL-based, configurable via `SeedDataCacheTtlSeconds`) to avoid per-tick API calls.
 
 ### Seed Bonds → Connect (Pair Communication)
 
@@ -287,8 +289,8 @@ The original design specified `IMatchmakingClient` (L4 soft dependency) for subm
 | Seed type merge | Open issue | [#374](https://github.com/beyond-immersion/bannou-service/issues/374) |
 | Archived seed cleanup strategy | Open issue | [#366](https://github.com/beyond-immersion/bannou-service/issues/366) |
 | Bond growth multiplier when partner inactive | Open issue | [#367](https://github.com/beyond-immersion/bannou-service/issues/367) |
-| Variable provider for Actor behavior system | Open issue | [#361](https://github.com/beyond-immersion/bannou-service/issues/361) |
-| Capability push notifications (L4 consumer) | Open issue | [#365](https://github.com/beyond-immersion/bannou-service/issues/365) |
+| Variable provider for Actor behavior system | **Resolved** (implemented) | [#361](https://github.com/beyond-immersion/bannou-service/issues/361) -- `SeedProviderFactory` provides `${seed.*}` variables via `IVariableProviderFactory` |
+| Client events for seed progression | Open issue | [#497](https://github.com/beyond-immersion/bannou-service/issues/497) -- Supersedes #365; uses Entity Session Registry for direct push from Seed (L2) |
 
 ### Gardener-Level
 

@@ -1,6 +1,14 @@
 # Save System Guide
 
-This guide explains how to use Bannou's Save-Load service for game state persistence.
+> **Version**: 1.1
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-save-load (L4)
+> **Related Guides**: [Plugin Development](PLUGIN-DEVELOPMENT.md)
+
+## Summary
+
+Guide to Bannou's Save-Load service for game state persistence, covering slots, versioned saves, delta/incremental saves, schema migration, export/import, and the two-tier storage architecture (Redis hot cache with async MinIO upload). Intended for developers integrating save/load functionality into game services. After reading, developers will understand how to create save slots, manage versions, use delta saves for efficiency, and handle schema migrations when game data formats change.
 
 ## Overview
 
@@ -22,7 +30,7 @@ A **slot** is a named container for save versions. Each slot has:
 |----------|-------------|
 | `gameId` | Namespace isolation (e.g., "my-game", "other-game") |
 | `ownerId` | UUID of the owning entity |
-| `ownerType` | ACCOUNT, CHARACTER, SESSION, or REALM |
+| `ownerType` | Account, Character, Session, or Realm (EntityType enum) |
 | `slotName` | Unique name per owner (e.g., "autosave", "manual-1") |
 | `category` | Determines behavior (see Save Categories) |
 
@@ -30,20 +38,20 @@ A **slot** is a named container for save versions. Each slot has:
 
 | Category | Max Versions | Auto-Cleanup | Use Case |
 |----------|-------------|--------------|----------|
-| `QUICK_SAVE` | 1 | Yes | Fast single-slot saves |
-| `AUTO_SAVE` | 5 | Rolling | System-triggered periodic saves |
-| `MANUAL_SAVE` | 10 | No | User-initiated named saves |
-| `CHECKPOINT` | 20 | Rolling | Progress markers (level complete) |
-| `STATE_SNAPSHOT` | 3 | Rolling | Debug/backup full state captures |
+| `QuickSave` | 1 | Yes | Fast single-slot saves |
+| `AutoSave` | 5 | Rolling | System-triggered periodic saves |
+| `ManualSave` | 10 | No | User-initiated named saves |
+| `Checkpoint` | 20 | Rolling | Progress markers (level complete) |
+| `StateSnapshot` | 3 | Rolling | Debug/backup full state captures |
 
 ### Ownership Types
 
 | Type | Lifetime | Use Case |
 |------|----------|----------|
-| `ACCOUNT` | Permanent | Cross-character progress, settings |
-| `CHARACTER` | Character lifetime | Character-specific saves |
-| `SESSION` | Session + grace period | Temporary/draft states, undo buffers |
-| `REALM` | Realm lifetime | World state, shared progress |
+| `Account` | Permanent | Cross-character progress, settings |
+| `Character` | Character lifetime | Character-specific saves |
+| `Session` | Session + grace period | Temporary/draft states, undo buffers |
+| `Realm` | Realm lifetime | World state, shared progress |
 
 **Note**: SESSION-owned saves are cleaned up after the session ends (default: 5 minute grace period). Other services can copy/promote saves to longer-term storage during this window.
 
@@ -58,9 +66,9 @@ var request = new CreateSlotRequest
 {
     GameId = "my-game",
     OwnerId = accountId,
-    OwnerType = OwnerType.ACCOUNT,
+    OwnerType = EntityType.Account,
     SlotName = "manual-save-1",
-    Category = SaveCategory.MANUAL_SAVE,
+    Category = SaveCategory.ManualSave,
     MaxVersions = 15,  // Override default
     Tags = new List<string> { "chapter-3", "boss-fight" }
 };
@@ -77,9 +85,9 @@ var request = new SaveRequest
 {
     GameId = "my-game",
     OwnerId = characterId,
-    OwnerType = OwnerType.CHARACTER,
+    OwnerType = EntityType.Character,
     SlotName = "autosave",
-    Category = SaveCategory.AUTO_SAVE,
+    Category = SaveCategory.AutoSave,
     Data = saveData,
     SchemaVersion = "1.2.0",
     DisplayName = "Chapter 3 - Before Boss",
@@ -102,7 +110,7 @@ var request = new LoadRequest
 {
     GameId = "my-game",
     OwnerId = characterId,
-    OwnerType = OwnerType.CHARACTER,
+    OwnerType = EntityType.Character,
     SlotName = "autosave"
 };
 
@@ -122,8 +130,8 @@ request.CheckpointName = "before-boss";
 var request = new ListSlotsRequest
 {
     OwnerId = accountId,
-    OwnerType = OwnerType.ACCOUNT,
-    Category = SaveCategory.MANUAL_SAVE  // Optional filter
+    OwnerType = EntityType.Account,
+    Category = SaveCategory.ManualSave  // Optional filter
 };
 
 var (status, response) = await _saveLoadClient.ListSlotsAsync(request);
@@ -144,7 +152,7 @@ var request = new PinVersionRequest
 {
     GameId = "my-game",
     OwnerId = characterId,
-    OwnerType = OwnerType.CHARACTER,
+    OwnerType = EntityType.Character,
     SlotName = "autosave",
     VersionNumber = 5,
     CheckpointName = "before-final-boss"  // Optional name for easy retrieval
@@ -162,7 +170,7 @@ var request = new PromoteVersionRequest
 {
     GameId = "my-game",
     OwnerId = characterId,
-    OwnerType = OwnerType.CHARACTER,
+    OwnerType = EntityType.Character,
     SlotName = "autosave",
     VersionNumber = 3,  // Old version to promote
     DisplayName = "Restored from checkpoint"
@@ -184,11 +192,11 @@ var request = new SaveDeltaRequest
 {
     GameId = "my-game",
     OwnerId = characterId,
-    OwnerType = OwnerType.CHARACTER,
+    OwnerType = EntityType.Character,
     SlotName = "world-state",
     BaseVersion = 5,  // Version this delta is relative to
     Delta = delta,
-    Algorithm = DeltaAlgorithm.JSON_PATCH
+    Algorithm = DeltaAlgorithm.JsonPatch
 };
 
 var (status, response) = await _saveLoadClient.SaveDeltaAsync(request);
@@ -205,7 +213,7 @@ var request = new LoadRequest
 {
     GameId = "my-game",
     OwnerId = characterId,
-    OwnerType = OwnerType.CHARACTER,
+    OwnerType = EntityType.Character,
     SlotName = "world-state"
 };
 
@@ -222,7 +230,7 @@ var request = new CollapseDeltasRequest
 {
     GameId = "my-game",
     OwnerId = characterId,
-    OwnerType = OwnerType.CHARACTER,
+    OwnerType = EntityType.Character,
     SlotName = "world-state",
     DeleteIntermediates = true  // Remove intermediate delta versions
 };
@@ -262,7 +270,7 @@ var request = new MigrateSaveRequest
 {
     GameId = "my-game",
     OwnerId = characterId,
-    OwnerType = OwnerType.CHARACTER,
+    OwnerType = EntityType.Character,
     SlotName = "main-save",
     TargetSchemaVersion = "2.0.0"
 };
@@ -280,7 +288,7 @@ var request = new ExportSavesRequest
 {
     GameId = "my-game",
     OwnerId = accountId,
-    OwnerType = OwnerType.ACCOUNT,
+    OwnerType = EntityType.Account,
     SlotNames = new List<string> { "settings", "achievements" }  // Or null for all
 };
 
@@ -296,8 +304,8 @@ var request = new ImportSavesRequest
     ArchiveAssetId = uploadedArchiveId,
     TargetGameId = "my-game",
     TargetOwnerId = newAccountId,
-    TargetOwnerType = OwnerType.ACCOUNT,
-    ConflictResolution = ConflictResolution.RENAME  // SKIP, OVERWRITE, RENAME, or FAIL
+    TargetOwnerType = EntityType.Account,
+    ConflictResolution = ConflictResolution.Rename  // Skip, Overwrite, Rename, or Fail
 };
 
 var (status, response) = await _saveLoadClient.ImportSavesAsync(request);
@@ -312,8 +320,8 @@ var request = new QuerySavesRequest
 {
     GameId = "my-game",
     OwnerId = accountId,
-    OwnerType = OwnerType.ACCOUNT,
-    Categories = new List<SaveCategory> { SaveCategory.MANUAL_SAVE, SaveCategory.CHECKPOINT },
+    OwnerType = EntityType.Account,
+    Categories = new List<SaveCategory> { SaveCategory.ManualSave, SaveCategory.Checkpoint },
     Tags = new List<string> { "boss-fight" },
     FromDate = DateTimeOffset.UtcNow.AddDays(-30),
     Limit = 20
@@ -331,7 +339,7 @@ var request = new VerifyIntegrityRequest
 {
     GameId = "my-game",
     OwnerId = characterId,
-    OwnerType = OwnerType.CHARACTER,
+    OwnerType = EntityType.Character,
     SlotName = "main-save",
     VersionNumber = 5  // Or null for latest
 };
@@ -351,7 +359,7 @@ Key configuration options (environment variables). For complete configuration re
 |----------|---------|-------------|
 | `SAVE_LOAD_MAX_SAVE_SIZE_BYTES` | 104857600 | Max save size (100MB) |
 | `SAVE_LOAD_AUTO_COMPRESS_THRESHOLD_BYTES` | 1048576 | Auto-compress above 1MB |
-| `SAVE_LOAD_DEFAULT_COMPRESSION_TYPE` | GZIP | NONE, GZIP, or BROTLI |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_TYPE` | `Gzip` | None, Gzip, or Brotli |
 | `SAVE_LOAD_HOT_CACHE_TTL_MINUTES` | 60 | Redis cache TTL |
 | `SAVE_LOAD_MAX_DELTA_CHAIN_LENGTH` | 10 | Max deltas before auto-collapse |
 | `SAVE_LOAD_DELTA_SIZE_THRESHOLD_PERCENT` | 50 | Store full if delta > 50% of full |
@@ -381,7 +389,7 @@ The service publishes events for integration:
 
 ## Best Practices
 
-1. **Use appropriate categories**: Don't use MANUAL_SAVE for autosaves - the cleanup behavior differs
+1. **Use appropriate categories**: Don't use ManualSave for autosaves - the cleanup behavior differs
 
 2. **Pin important versions**: Before major game events, pin a checkpoint so players can restore
 
@@ -393,7 +401,7 @@ The service publishes events for integration:
 
 6. **Use tags for organization**: Tags enable efficient querying across many slots
 
-7. **Handle SESSION cleanup**: If using SESSION ownership for draft states, subscribe to `session.ended` events to promote important saves before the grace period expires
+7. **Handle Session cleanup**: If using Session ownership for draft states, subscribe to `session.ended` events to promote important saves before the grace period expires
 
 8. **Verify integrity periodically**: For critical saves, verify integrity before and after major operations
 

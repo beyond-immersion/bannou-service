@@ -1,13 +1,18 @@
 # Bannou Testing Documentation
 
-Comprehensive testing documentation for Bannou's schema-driven microservices architecture with WebSocket-first edge gateway and CI/CD integration.
+> **Last Updated**: 2026-03-08
+> **Scope**: Test architecture, isolation boundaries, test placement rules, CI/CD pipeline integration, and testing commands for all tiers (unit, HTTP integration, WebSocket edge, infrastructure).
+
+## Summary
+
+Three-tier testing architecture defining plugin isolation boundaries, test placement decision guide, and CI/CD pipeline integration. Required reading before writing, modifying, or debugging any tests. Covers core framework tests (bannou-service.tests), per-plugin unit tests (lib-*.tests), HTTP integration tests (http-tester), WebSocket edge tests (edge-tester), and infrastructure tests (lib-testing) with their respective project reference constraints.
 
 ## 🚨 CRITICAL: Test Architecture Boundaries (READ FIRST)
 
 **BEFORE writing ANY test, you MUST understand these isolation rules**:
 
 ### Plugin Isolation (MANDATORY)
-- **`unit-tests/`**: Can ONLY reference `bannou-service`. CANNOT reference ANY `lib-*` plugins.
+- **`bannou-service.tests/`**: Can ONLY reference `bannou-service`. CANNOT reference ANY `lib-*` plugins.
 - **`lib-*.tests/`**: Can ONLY reference their own `lib-*` plugin + `bannou-service`. CANNOT reference other `lib-*` plugins.
 - **`lib-testing/`**: Can ONLY reference `bannou-service`. CANNOT reference ANY other `lib-*` plugins.
 - **`tools/http-tester/`**: Can reference all services via generated clients.
@@ -16,14 +21,14 @@ Comprehensive testing documentation for Bannou's schema-driven microservices arc
 ### Critical Examples
 - ❌ **WRONG**: Testing `AuthServiceConfiguration` in `lib-testing` (cannot reference `lib-auth`)
 - ✅ **CORRECT**: Testing `AuthServiceConfiguration` in `lib-auth.tests` (own plugin)
-- ❌ **WRONG**: Testing `AuthServiceConfiguration` in `unit-tests` (cannot reference plugins)
+- ❌ **WRONG**: Testing `AuthServiceConfiguration` in `bannou-service.tests` (cannot reference plugins)
 - ✅ **CORRECT**: Testing auth endpoints in `tools/http-tester` (service integration)
 
 ### Quick Decision Guide
 - **Testing specific service logic?** → `plugins/lib-{service}.tests/`
 - **Testing service-to-service calls?** → `tools/http-tester/`
 - **Testing WebSocket protocol?** → `tools/edge-tester/`
-- **Testing core framework?** → `unit-tests/`
+- **Testing core framework?** → `bannou-service.tests/`
 - **Testing infrastructure health?** → `lib-testing/`
 
 ## Overview
@@ -34,21 +39,21 @@ Bannou implements a **progressive CI/CD pipeline** with comprehensive testing co
 - **Service-Specific Testing**: Individual service plugin testing with `make test PLUGIN=service`
 - **Dual-Transport Validation**: HTTP and WebSocket protocol consistency testing
 - **GitHub Actions Integration**: Complete progressive automated pipeline
-- **189+ Automated Tests**: Unit tests, integration tests, and protocol validation
+- **Automated Tests**: Unit tests, integration tests, and protocol validation
 
 ## Quick Start
 
 ```bash
 # Test everything
-make test                      # All 189+ tests across all services
+make test                      # All unit tests across all services
 
 # Test specific services
 make test PLUGIN=account       # Test account service only
 make test PLUGIN=auth          # Test auth service only
 make test PLUGIN=connect       # Test connect service only
 
-# Complete CI pipeline locally
-make test-ci                   # Matches GitHub Actions progressive pipeline
+# Complete test suite locally
+make all                       # Full development cycle: clean, generate, build, test all tiers
 
 # Individual test types
 make test-unit                 # Unit tests only
@@ -71,14 +76,14 @@ Before understanding the specific test types, you must understand the strict iso
 **What this means**:
 - `lib-auth.tests` CANNOT reference `lib-account` or any other `lib-*` plugin
 - `lib-testing` CANNOT reference `lib-auth`, `lib-account`, or any other `lib-*` plugin
-- `unit-tests` CANNOT reference ANY `lib-*` plugin (they are not loaded in unit test context)
+- `bannou-service.tests` CANNOT reference ANY `lib-*` plugin (they are not loaded in unit test context)
 
 **Why**: Plugins are dynamically loaded at runtime. In test contexts, only specific plugins are loaded, so cross-plugin references will fail.
 
 #### 2. Reference Hierarchy
 **What each test type CAN reference**:
 
-- **`unit-tests/`**: Only `bannou-service` project (core framework code)
+- **`bannou-service.tests/`**: Only `bannou-service` project (core framework code)
 - **`lib-*.tests/`**: Only their own `lib-*` plugin + `bannou-service` project + mocks
 - **`lib-testing/`**: Only `bannou-service` project (cannot reference other plugins)
 - **`tools/http-tester/`**: All service plugins via NSwag-generated clients + `bannou-service`
@@ -88,7 +93,7 @@ Before understanding the specific test types, you must understand the strict iso
 **Problem**: You want to test `AuthServiceConfiguration` but it lives in `lib-auth` plugin.
 
 **Solutions by test type**:
-- **Unit test in `unit-tests/`**: ❌ CANNOT - unit-tests cannot reference `lib-auth` plugin
+- **Unit test in `bannou-service.tests/`**: ❌ CANNOT - bannou-service.tests cannot reference `lib-auth` plugin
 - **Unit test in `lib-auth.tests/`**: ✅ CAN - tests its own plugin with mocks
 - **Infrastructure test in `lib-testing/`**: ❌ CANNOT - lib-testing cannot reference `lib-auth` plugin
 - **HTTP integration test**: ✅ CAN - tools/http-tester can call auth service endpoints
@@ -101,7 +106,7 @@ Before understanding the specific test types, you must understand the strict iso
 
 #### 4. When to Use Each Test Type
 
-**Use `unit-tests/`** when:
+**Use `bannou-service.tests/`** when:
 - Testing core framework functionality (configuration binding mechanism, plugin loading, etc.)
 - Testing shared utilities in `bannou-service` project
 - Cannot and should not reference any `lib-*` plugins
@@ -128,9 +133,9 @@ Before understanding the specific test types, you must understand the strict iso
 - Testing Connect service routing and binary protocol
 - Testing real-time features and client-server communication
 
-### 1. Unit Tests (3,100+ Total)
+### 1. Unit Tests
 
-**Service Test Structure**: Each service has comprehensive unit tests in `plugins/plugins/lib-{service}.tests/`:
+**Service Test Structure**: Each service has comprehensive unit tests in `plugins/lib-{service}.tests/`:
 
 ```
 plugins/lib-account.tests/           # Account service tests
@@ -140,7 +145,8 @@ plugins/lib-connect.tests/           # Connect service tests
 plugins/lib-game-session.tests/      # Game session tests
 plugins/lib-permission.tests/        # Permission service tests
 plugins/lib-website.tests/           # Website service tests
-bannou-service.tests/                # Core framework tests
+bannou-service.tests/                # Core framework tests (replaces unit-tests/)
+structural-tests/                    # Cross-cutting structural validation tests
 ```
 
 **Generated Test Structure**: Tests follow xUnit patterns with proper dependency injection:
@@ -267,8 +273,7 @@ Raw `InvokeAsync` is permitted ONLY in these specific categories. If adding a ne
 **CRITICAL ARCHITECTURAL CONSTRAINTS**:
 - **lib-testing CANNOT reference any other service plugins**
 - **Uses minimal configuration with only TESTING service loaded**
-- **Environment**: `.env.ci.infrastructure` with `TESTING_SERVICE_ENABLED=true` only
-- **Docker Compose**: `docker-compose.ci.infrastructure.yml` builds with `BANNOU_SERVICES: "testing"`
+- **Docker Compose**: `docker-compose.test.infrastructure.yml` layered on `docker-compose.test.yml` with minimal dependencies
 
 **What Infrastructure Tests CAN Test**:
 - Basic Docker Compose service health (databases, message queues)
@@ -284,12 +289,7 @@ Raw `InvokeAsync` is permitted ONLY in these specific categories. If adding a ne
 
 **Usage**:
 ```bash
-# Standalone infrastructure testing
-make test-infrastructure
-
-# Full infrastructure with Docker Compose
-make build-compose
-make ci-up-compose
+# Infrastructure testing (builds and runs containers automatically)
 make test-infrastructure
 ```
 
@@ -314,38 +314,28 @@ public class TestConfigurationBinding
 
 The comprehensive CI/CD pipeline (`.github/workflows/ci.integration.yml`) ensures complete validation through progressive testing phases:
 
-#### Generation and Build Phase
-- **🔧 Generate Services (Initial)** - Create controllers/models from OpenAPI schemas
-- **📦 Generate Client SDK (Initial)** - Build client SDK from service definitions
-- **🏗️ Build All Projects** - Compile with Release configuration
+#### Pipeline Phases (`.github/workflows/ci.integration.yml`)
 
-#### Consistency Validation Phase
-- **🔍 Generate Services (Conflict Detection)** - Re-generate to detect conflicts
-- **🔄 Generate Client SDK (Consistency Check)** - Ensure SDK consistency
+The integration pipeline runs on pull requests to master. Unit tests run separately via `ci.unit.yml` on every push.
 
-#### Infrastructure Testing Phase
-- **🧪 Unit Tests** - 189+ tests across all service plugins
-- **🏗️ Infrastructure Tests (Minimal)** - TESTING service only for reduced dependencies
-- **🛑 Container Restart** - Clean separation between infrastructure and integration testing
-
-#### Integration Testing Phase
-- **🚀 Service Startup (Full)** - All services enabled for comprehensive integration testing
-- **🔗 HTTP Integration Tests** - Service-to-service communication validation
-- **📡 WebSocket Backwards Compatibility** - Published NuGet SDK compatibility
-- **🚀 WebSocket Forward Compatibility** - Current generated SDK compatibility
+- **Setup** - Environment setup, Discord notification
+- **Infrastructure Tests** - Minimal TESTING service only, via reusable action
+- **HTTP Integration Tests** - Full service-to-service communication validation
+- **WebSocket Backward Compatibility** - Published NuGet SDK compatibility testing
+- **WebSocket Forward Compatibility** - Current generated SDK compatibility testing
 
 ### Local Pipeline Reproduction
 
 ```bash
-# Complete progressive pipeline locally (matches GitHub Actions exactly)
-make test-ci
+# Complete development cycle locally
+make all                                # Clean, generate, build, test all tiers
 
 # Individual pipeline components
-make generate-services-for-consistency  # Consistency validation
+make generate-services-diff             # Consistency validation (generate + check for diff)
 make test-unit                          # Unit testing
 make test-infrastructure                # Infrastructure testing (minimal deps)
-make test-http-daemon                   # HTTP integration testing
-make test-edge-daemon                   # WebSocket protocol testing
+make test-http                          # HTTP integration testing
+make test-edge                          # WebSocket protocol testing
 ```
 
 ### Service-Specific Development Workflow
@@ -674,10 +664,10 @@ Assert.Equal(httpResponse.Data, wsResponse.Data);
 **Makefile Integration**: All CI commands available via Makefile for local reproduction:
 
 ```bash
-make test-ci                   # Complete pipeline
+make all                       # Complete development cycle
 make test-unit                 # Unit tests only
-make test-http-daemon          # HTTP integration (CI mode)
-make test-edge-daemon          # WebSocket testing (CI mode)
+make test-http                 # HTTP integration testing
+make test-edge                 # WebSocket protocol testing
 make test-infrastructure       # Infrastructure validation
 ```
 
@@ -706,7 +696,7 @@ make test PLUGIN=service       # Service-specific testing
 
 **CI/CD Environment**:
 ```bash
-DAEMON_MODE=true make test-ci  # Non-interactive pipeline
+DAEMON_MODE=true make all  # Non-interactive pipeline
 ```
 
 **Production Validation**:
@@ -724,7 +714,7 @@ DAEMON_MODE=true make test-ci  # Non-interactive pipeline
 3. **Implement**: Write business logic in service implementation class
 4. **Test Locally**: Use `make test PLUGIN=service` for focused testing
 5. **Integration**: Validate with `make test-http` and `make test-edge`
-6. **CI Validation**: Ensure `make test-ci` passes before merge
+6. **CI Validation**: Ensure `make all` passes before merge
 
 ### Test Organization
 
@@ -778,10 +768,10 @@ public Task<TestResult> TestConfigurationBinding()
 
 #### ❌ WRONG: Putting Service-Specific Tests in Wrong Place
 ```csharp
-// In unit-tests/AuthServiceTests.cs - THIS IS WRONG
+// In bannou-service.tests/AuthServiceTests.cs - THIS IS WRONG
 public void TestAuthServiceConfiguration()
 {
-    // ❌ ERROR: unit-tests cannot reference AuthServiceConfiguration
+    // ❌ ERROR: bannou-service.tests cannot reference AuthServiceConfiguration
     var service = new AuthService(...); // This will fail
 }
 ```
@@ -823,12 +813,12 @@ public async Task TestRealAuthEndpoint()
 1. **Am I testing a specific service's functionality?** → Use `plugins/lib-{service}.tests/`
 2. **Am I testing service-to-service communication?** → Use `tools/http-tester/`
 3. **Am I testing WebSocket protocol or Connect service?** → Use `tools/edge-tester/`
-4. **Am I testing core framework functionality?** → Use `unit-tests/`
+4. **Am I testing core framework functionality?** → Use `bannou-service.tests/`
 5. **Am I testing basic infrastructure connectivity?** → Use `lib-testing/`
 
 **RED FLAGS that indicate wrong test placement**:
 - Trying to reference `lib-auth` from `lib-testing` ❌
-- Trying to reference ANY `lib-*` from `unit-tests` ❌
+- Trying to reference ANY `lib-*` from `bannou-service.tests` ❌
 - Trying to test business logic in `lib-testing` ❌
 - Trying to test infrastructure in `lib-*.tests` ❌
 
@@ -852,17 +842,17 @@ make build
 **CI Pipeline Failures**:
 ```bash
 # Reproduce locally
-make test-ci
+make all
 
 # Check individual steps
-make generate-services-for-consistency
+make generate-services-diff
 make test-unit
 make test-infrastructure
 ```
 
 ### Development Guidelines
 
-1. **Always test before commit**: Use `make test-ci` to reproduce CI environment
+1. **Always test before commit**: Use `make all` to reproduce CI environment
 2. **Service-specific development**: Use `PLUGIN=service` parameters for focused work
 3. **Schema validation**: Ensure OpenAPI schemas are valid before generation
 4. **Protocol consistency**: Validate both HTTP and WebSocket behavior

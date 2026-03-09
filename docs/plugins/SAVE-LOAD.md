@@ -21,7 +21,7 @@ Generic save/load system (L4 GameFeatures) for game state persistence with polym
 | lib-state (`IStateStoreFactory`) | MySQL persistence for slots, versions, schemas; Redis for hot cache and pending queue |
 | lib-state (`IDistributedLockProvider`) | Slot-level locks for concurrent version number allocation |
 | lib-messaging (`IMessageBus`) | Publishing save lifecycle events; error event publishing |
-| lib-asset (`IAssetClient` via mesh) | Upload/download save data blobs, thumbnail storage, asset deletion |
+| lib-asset (`IAssetClient` via mesh) | Upload/download save data blobs, thumbnail storage, asset deletion. **L3 soft dependency** — resolved via `IServiceProvider.GetService<IAssetClient>()` with graceful degradation; saves work from hot cache without Asset service |
 | `IHttpClientFactory` | Downloading save data from pre-signed Asset service URLs |
 
 ---
@@ -133,9 +133,15 @@ Generic save/load system (L4 GameFeatures) for game state persistence with polym
 | `MaxTotalSizeBytesPerOwner` | `SAVE_LOAD_MAX_TOTAL_SIZE_BYTES_PER_OWNER` | `1073741824` (1GB) | Max storage per owner |
 | `BrotliCompressionLevel` | `SAVE_LOAD_BROTLI_COMPRESSION_LEVEL` | `6` | Brotli level (0-11) |
 | `GzipCompressionLevel` | `SAVE_LOAD_GZIP_COMPRESSION_LEVEL` | `6` | GZIP level (1-9) |
-| `DefaultCompressionByCategory` | - | (object) | Per-category compression overrides |
+| `DefaultCompressionQuickSave` | `SAVE_LOAD_DEFAULT_COMPRESSION_QUICK_SAVE` | `None` | Compression override for QUICK_SAVE |
+| `DefaultCompressionAutoSave` | `SAVE_LOAD_DEFAULT_COMPRESSION_AUTO_SAVE` | `Gzip` | Compression override for AUTO_SAVE |
+| `DefaultCompressionManualSave` | `SAVE_LOAD_DEFAULT_COMPRESSION_MANUAL_SAVE` | `Gzip` | Compression override for MANUAL_SAVE |
+| `DefaultCompressionCheckpoint` | `SAVE_LOAD_DEFAULT_COMPRESSION_CHECKPOINT` | `Gzip` | Compression override for CHECKPOINT |
+| `DefaultCompressionStateSnapshot` | `SAVE_LOAD_DEFAULT_COMPRESSION_STATE_SNAPSHOT` | `Brotli` | Compression override for STATE_SNAPSHOT |
 | `ThumbnailMaxSizeBytes` | `SAVE_LOAD_THUMBNAIL_MAX_SIZE_BYTES` | `262144` (256KB) | Max thumbnail size |
-| `ThumbnailAllowedFormats` | `SAVE_LOAD_THUMBNAIL_ALLOWED_FORMATS` | `image/jpeg,image/webp,image/png` | Allowed thumbnail MIME types |
+| `ThumbnailAllowJpeg` | `SAVE_LOAD_THUMBNAIL_ALLOW_JPEG` | `true` | Allow JPEG thumbnails |
+| `ThumbnailAllowWebp` | `SAVE_LOAD_THUMBNAIL_ALLOW_WEBP` | `true` | Allow WebP thumbnails |
+| `ThumbnailAllowPng` | `SAVE_LOAD_THUMBNAIL_ALLOW_PNG` | `true` | Allow PNG thumbnails |
 | `DeltaSavesEnabled` | `SAVE_LOAD_DELTA_SAVES_ENABLED` | `true` | Enable delta/incremental saves |
 | `DefaultDeltaAlgorithm` | `SAVE_LOAD_DEFAULT_DELTA_ALGORITHM` | `JSON_PATCH` | Default delta algorithm |
 | `MaxDeltaChainLength` | `SAVE_LOAD_MAX_DELTA_CHAIN_LENGTH` | `10` | Max deltas before forced collapse |
@@ -155,6 +161,10 @@ Generic save/load system (L4 GameFeatures) for game state persistence with polym
 | `StorageCircuitBreakerThreshold` | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_THRESHOLD` | `5` | Consecutive failures to open |
 | `StorageCircuitBreakerResetSeconds` | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_RESET_SECONDS` | `30` | Time before half-open attempt |
 | `StorageCircuitBreakerHalfOpenAttempts` | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_HALF_OPEN_ATTEMPTS` | `2` | Successes needed to close |
+| `SlotMetadataLockTimeoutSeconds` | `SAVE_LOAD_SLOT_METADATA_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout (seconds) for slot metadata ops (rename, update) |
+| `SlotWriteLockTimeoutSeconds` | `SAVE_LOAD_SLOT_WRITE_LOCK_TIMEOUT_SECONDS` | `60` | Distributed lock timeout (seconds) for save write ops (save, delta, copy) |
+| `ExportUrlExpiryMinutes` | `SAVE_LOAD_EXPORT_URL_EXPIRY_MINUTES` | `60` | Expiry time (minutes) for export download URLs |
+| `MaxMigrationSteps` | `SAVE_LOAD_MAX_MIGRATION_STEPS` | `10` | Max sequential migration steps in a single migration path |
 
 ---
 
@@ -167,7 +177,7 @@ Generic save/load system (L4 GameFeatures) for game state persistence with polym
 | `IStateStoreFactory` | Singleton | MySQL+Redis state store access |
 | `IDistributedLockProvider` | Singleton | Slot-level locks for version allocation |
 | `IMessageBus` | Scoped | Event publishing |
-| `IAssetClient` | Scoped | Save data blob upload/download/delete |
+| `IServiceProvider` | Singleton | Runtime resolution for L3 soft dependencies (IAssetClient) |
 | `IHttpClientFactory` | Singleton | HTTP client for pre-signed URL downloads |
 | `IVersionDataLoader` | Scoped | Hot cache access, asset retrieval, delta chain reconstruction |
 | `IVersionCleanupManager` | Scoped | Rolling cleanup, version deletion with asset cleanup |
@@ -461,7 +471,7 @@ Circuit Breaker State Machine
 
 5. **MaxTotalSizeBytesPerOwner quota**: Partially implemented - a per-SLOT check exists but it only checks the current slot's TotalSizeBytes, not the aggregate across all owner slots. Multi-slot owners can exceed the per-owner limit.
 
-6. **Thumbnail upload and storage**: ThumbnailMaxSizeBytes and ThumbnailAllowedFormats are configured, and SaveVersionManifest has ThumbnailAssetId, but no thumbnail validation or upload logic exists in the Save endpoint.
+6. ~~**Thumbnail format validation**~~: **FIXED** (2026-03-09) - Thumbnail format validation now implemented via magic byte detection (JPEG/PNG/WebP) against `ThumbnailAllowJpeg`/`ThumbnailAllowPng`/`ThumbnailAllowWebp` configuration flags. Size validation was already present. Note: thumbnail upload to Asset service and ThumbnailAssetId population remain unimplemented — thumbnails are stored inline as base64 in the version manifest.
 
 7. **Conflict detection flagging**: ConflictDetectionEnabled and ConflictDetectionWindowMinutes are configured, and DeviceId is stored on SaveVersionManifest, but no conflict flag is returned to the client during save or load.
 
@@ -546,15 +556,36 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **Auto-collapse during cleanup** - Implemented in VersionCleanupManager.CollapseExcessiveDeltaChainsAsync; CleanupService now calls this when AutoCollapseEnabled is true. (2026-02-01)
-- **Hardening pass** - Comprehensive tenet compliance audit and fixes (2026-03-07):
+- **Hardening pass (phase 1)** - Comprehensive tenet compliance audit and fixes (2026-03-07):
   - Schema: Flattened events, PascalCase enums, extracted named enum types, additionalProperties:false, NRT nullable compliance, validation keywords, configuration bounds, T8 filler removal
   - Code: StorageCircuitBreaker string→enum, DeltaProcessor string→enum, top-level try-catch removal, Guid.Empty sentinel elimination, UploadStatus PascalCase, DeltaProcessor.GetOperationCount nullable return, telemetry spans on all 26 async methods, Pattern C event topics
   - Event topics fixed to Pattern C format (`save-load.{entity}.{action}`), lifecycle topics to `save-load.save-slot.{action}`
+- **Hardening pass (phase 2)** - Production readiness audit and fixes (2026-03-09):
+  - T28: Added `account.deleted` event handler with full cascade cleanup (slots, versions, hot cache, assets)
+  - T4: Converted IAssetClient to L3 soft dependency in SaveLoadService, CleanupService, and SaveUploadWorker
+  - T30: Removed StartActivity spans from 26 primary interface methods (controller already wraps); re-added to 4 internal helpers
+  - T6: Renamed all key builders to `Build*Key` with `internal static` visibility and `const` prefix; extracted `RateLimitKeys.BuildRateLimitKey`
+  - T21: Replaced comma-delimited `ThumbnailAllowedFormats` with typed boolean config properties; added magic-byte format validation
+  - T29: Added T29-compliant descriptions to all 5 metadata `additionalProperties` fields
+  - Schema: Fixed NRT compliance, added maxItems to array requests, added gameId to version-addressing requests, added additionalProperties:true to JSON Schema objects, added nullable:true to JsonPatchOperation.value
+  - Config: Added per-category compression overrides, validation constraints on AssetBucket
+  - Background workers: Added try-catch around startup delay for clean shutdown
+  - Tests: Updated 100 unit tests for Build*Key rename, all passing
 
 ### Needs Design Review
 
 - **BSDIFF delta algorithm** - Library selection and design decisions needed. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)
 - **XDELTA delta algorithm** - Consolidated with BSDIFF; same library selection and design questions apply. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)
 - **JSON Schema validation** - Method exists but is never called; design decisions needed on where/when to invoke validation. See [#229](https://github.com/beyond-immersion/bannou-service/issues/229). (2026-02-01)
-- **IAssetClient dependency pattern** - Save-load is L4 and Asset is L3; per SERVICE-HIERARCHY.md, L4→L3 dependencies MUST be soft (graceful degradation). Currently uses constructor injection, which would crash at startup if Asset were disabled. Must be changed to runtime resolution via `IServiceProvider.GetService<IAssetClient>()` with graceful degradation to local-only saves (Redis hot cache without MinIO persistence) when Asset is unavailable. (2026-03-07)
-- **SaveUploadWorker store resolution pattern** - SaveUploadWorker resolves stores per-scope via `IStateStoreFactory` in `ProcessPendingUploadsAsync` rather than caching store references. This is a stylistic T6 consideration — BackgroundServices that create scopes should resolve stores once per scope and pass as parameters. Current pattern works but could be tightened. (2026-03-07)
+- ~~**IAssetClient dependency pattern**~~ - **FIXED** (2026-03-09): Converted to L3 soft dependency pattern throughout — `SaveLoadService` constructor, `CleanupService`, `SaveUploadWorker`, and all helper services (`VersionDataLoader`, `VersionCleanupManager`, `SaveExportImportManager`, `SaveMigrationHandler`) all use `IServiceProvider.GetService<IAssetClient>()` with graceful degradation.
+- ~~**SaveUploadWorker store resolution pattern**~~ - **ACCEPTED** (2026-03-09): Pattern is correct for BackgroundService — stores are resolved once per scope in `ProcessPendingUploadsAsync` and passed as parameters to sub-methods. No change needed.
+
+### Phase 3 Hardening (2026-03-09)
+
+- **T26 No Sentinel Values** - Eliminated all sentinel value patterns across SaveLoadService.cs and helpers: `> 0` on nullable int fields → `.HasValue`, `== 0`/`== default` → `!.HasValue`, `?? 0` → explicit null checks. Fixed `FindVersionByCheckpointAsync` return type from `int` (returning 0 as sentinel) to `int?` (returning null). Fixed `MigrateSaveRequest.versionNumber` sentinel pattern in SaveMigrationHandler.
+- **T21 Configuration-First** - Replaced 4 hardcoded tunables with config properties: 2 lock timeouts (`SlotMetadataLockTimeoutSeconds`, `SlotWriteLockTimeoutSeconds`), export URL expiry (`ExportUrlExpiryMinutes`), max migration steps (`MaxMigrationSteps`). All with validation bounds in schema.
+- **T8 Return Pattern** - Removed `dryRun` echoed request field from `AdminCleanupResponse`.
+- **T8 SlotName in upload events** - Added `SlotName` as required property on `PendingUploadEntry`; fixed `SaveUploadWorker` to use actual slot name instead of `SlotId.ToString()` for asset upload `SlotName` field. Fixed 7 total PendingUploadEntry creation sites across SaveLoadService, VersionCleanupManager, and SaveExportImportManager.
+- **T4/SERVICE-HIERARCHY L3 soft dependency** - Converted `IAssetClient` from constructor injection to `IServiceProvider.GetService<IAssetClient>()` with graceful degradation in all 4 helper services (`VersionDataLoader`, `VersionCleanupManager`, `SaveExportImportManager`, `SaveMigrationHandler`).
+- **T6 Typed BuildStateKey overload** - Added typed `BuildStateKey(string gameId, EntityType ownerType, Guid ownerId, string slotName)` overload to `SaveSlotMetadata`. Updated all ~15 call sites across `SaveLoadService.cs`, `SaveExportImportManager.cs`, and `SaveMigrationHandler.cs` to use typed overload, eliminating inline `.ToString().ToLowerInvariant()` conversions.
+- **Tests**: All 100 unit tests updated and passing.

@@ -44,7 +44,6 @@ paths:
       - Scene
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -74,7 +73,6 @@ paths:
       - Scene
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -102,7 +100,6 @@ paths:
       - Scene
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -129,7 +126,6 @@ paths:
       - Scene
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -162,7 +158,6 @@ paths:
       - Scene
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -192,7 +187,6 @@ paths:
       - Scene
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -272,7 +266,6 @@ paths:
       - Versioning
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -302,7 +295,6 @@ paths:
       - Versioning
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -332,7 +324,6 @@ paths:
       - Versioning
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -357,7 +348,6 @@ paths:
       - Versioning
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -387,7 +377,6 @@ paths:
       - Versioning
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -416,7 +405,6 @@ paths:
       - Validation
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -438,7 +426,6 @@ paths:
       - Validation
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -465,7 +452,6 @@ paths:
       - Query
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -491,7 +477,6 @@ paths:
       - Query
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -517,7 +502,6 @@ paths:
       - Query
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -543,7 +527,6 @@ paths:
       - Scene
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -566,25 +549,13 @@ components:
 
     SceneType:
       type: string
+      minLength: 1
+      maxLength: 100
       description: |
-        Scene classification for querying and validation rule lookup.
-        Different types may have different validation requirements per game.
-        DESIGN_DECISION: Whether this should be an opaque string instead of enum
-        (game-content codes vary per deployment). Tracked for future evaluation.
-      enum:
-      - Unknown
-      - Region
-      - City
-      - District
-      - Lot
-      - Building
-      - Room
-      - Dungeon
-      - Arena
-      - Vehicle
-      - Prefab
-      - Cutscene
-      - Other
+        Scene classification code for querying and validation rule lookup.
+        Opaque string per FOUNDATION TENETS (game-configurable content codes
+        vary per deployment). Common values include region, city, building,
+        dungeon, arena, prefab, cutscene — but any game can define its own.
 
     NodeType:
       type: string
@@ -626,37 +597,23 @@ components:
 
     AffordanceType:
       type: string
+      minLength: 1
+      maxLength: 100
       description: |
-        Types of affordances describing what an object can do or how it can be interacted with.
-        Used by AI navigation, character controllers, and procedural content systems.
-        DESIGN_DECISION: Whether this should be an opaque string instead of enum
-        (game-content codes vary per deployment). Tracked for future evaluation.
-      enum:
-      - Walkable
-      - Climbable
-      - Sittable
-      - Interactive
-      - Collectible
-      - Destructible
-      - Container
-      - Door
-      - Teleport
+        Affordance code describing what an object can do or how it can be interacted with.
+        Opaque string per FOUNDATION TENETS (game-configurable content codes
+        vary per deployment). Common values include walkable, climbable, sittable,
+        interactive, collectible — but any game can define its own.
 
     MarkerType:
       type: string
+      minLength: 1
+      maxLength: 100
       description: |
-        Types of marker nodes for spawn points, waypoints, and other positional markers.
-        DESIGN_DECISION: Whether this should be an opaque string instead of enum
-        (game-content codes vary per deployment). Tracked for future evaluation.
-      enum:
-      - Generic
-      - SpawnPoint
-      - NpcSpawn
-      - Waypoint
-      - CameraPoint
-      - LightPoint
-      - AudioPoint
-      - TriggerPoint
+        Marker code for spawn points, waypoints, and other positional markers.
+        Opaque string per FOUNDATION TENETS (game-configurable content codes
+        vary per deployment). Common values include spawn_point, npc_spawn,
+        waypoint, camera_point — but any game can define its own.
 
     AttachmentPoint:
       type: object
@@ -1024,7 +981,6 @@ components:
       description: A complete scene document with hierarchical node structure
       required:
       - sceneId
-      - gameId
       - sceneType
       - name
       - version
@@ -1044,12 +1000,12 @@ components:
           description: Unique scene identifier
         gameId:
           type: string
+          nullable: true
           minLength: 1
           maxLength: 200
           description: |
             Game service identifier for partitioning. Treated as opaque string.
-            Default is the nil UUID for unpartitioned scenes.
-          default: "00000000-0000-0000-0000-000000000000"
+            Null for unpartitioned scenes.
         sceneType:
           $ref: '#/components/schemas/SceneType'
           description: Scene classification for querying and validation
@@ -1179,6 +1135,7 @@ components:
           description: Node ID containing the reference
         refId:
           type: string
+          maxLength: 200
           description: refId of the referencing node
         referencedSceneId:
           type: string
@@ -1187,6 +1144,7 @@ components:
         referencedVersion:
           type: string
           nullable: true
+          maxLength: 50
           description: Version that was resolved
         scene:
           $ref: '#/components/schemas/Scene'
@@ -1212,6 +1170,7 @@ components:
           description: Node ID containing the reference
         refId:
           type: string
+          maxLength: 200
           description: refId of the referencing node
         referencedSceneId:
           type: string
@@ -1302,7 +1261,6 @@ components:
       description: Summary of a scene for list results (excludes full node tree)
       required:
       - sceneId
-      - gameId
       - sceneType
       - name
       - version
@@ -1317,19 +1275,24 @@ components:
           description: Unique scene identifier
         gameId:
           type: string
-          description: Game service identifier
+          nullable: true
+          maxLength: 200
+          description: Game service identifier (null for unpartitioned scenes)
         sceneType:
           $ref: '#/components/schemas/SceneType'
           description: Scene classification
         name:
           type: string
+          maxLength: 500
           description: Scene name
         description:
           type: string
           nullable: true
+          maxLength: 2000
           description: Scene description
         version:
           type: string
+          maxLength: 50
           description: Current version
         tags:
           type: array
@@ -1339,6 +1302,7 @@ components:
           description: Scene tags
         nodeCount:
           type: integer
+          minimum: 0
           description: Total number of nodes in scene
         createdAt:
           type: string
@@ -1534,6 +1498,7 @@ components:
       properties:
         sceneVersion:
           type: string
+          maxLength: 50
           description: Version that was instantiated
 
     DestroyInstanceRequest:
@@ -1608,6 +1573,7 @@ components:
       properties:
         checkoutToken:
           type: string
+          maxLength: 200
           description: Token required for commit/discard/heartbeat
         scene:
           $ref: '#/components/schemas/Scene'
@@ -1652,6 +1618,7 @@ components:
       properties:
         newVersion:
           type: string
+          maxLength: 50
           description: New version after commit
         scene:
           $ref: '#/components/schemas/Scene'
@@ -1742,6 +1709,7 @@ components:
           description: Scene ID
         currentVersion:
           type: string
+          maxLength: 50
           description: Current active version
         versions:
           type: array
@@ -1760,6 +1728,7 @@ components:
       properties:
         version:
           type: string
+          maxLength: 50
           description: Version string
         createdAt:
           type: string
@@ -1777,6 +1746,7 @@ components:
           description: Summary of changes
         nodeCount:
           type: integer
+          minimum: 0
           description: Node count at this version
 
     # ========== VALIDATION RULE MODELS ==========
@@ -1825,23 +1795,14 @@ components:
     GetValidationRulesResponse:
       type: object
       additionalProperties: false
-      description: Response containing validation rules
-      required:
-      - gameId
-      - sceneType
+      description: Response containing validation rules for the requested gameId and sceneType
       properties:
-        gameId:
-          type: string
-          description: Game ID
-        sceneType:
-          $ref: '#/components/schemas/SceneType'
-          description: Scene type
         rules:
           type: array
           nullable: true
           items:
             $ref: '#/components/schemas/ValidationRule'
-          description: Registered rules (null if none)
+          description: Registered rules (null if none registered for the combination)
 
     ValidationRule:
       type: object
@@ -2024,6 +1985,7 @@ components:
           description: Scene containing the reference
         sceneName:
           type: string
+          maxLength: 500
           description: Name of the referencing scene
         nodeId:
           type: string
@@ -2031,9 +1993,11 @@ components:
           description: Node containing the reference
         nodeRefId:
           type: string
+          maxLength: 200
           description: refId of the referencing node
         nodeName:
           type: string
+          maxLength: 500
           description: Name of the referencing node
 
     FindAssetUsageRequest:
@@ -2082,6 +2046,7 @@ components:
           description: Scene using the asset
         sceneName:
           type: string
+          maxLength: 500
           description: Scene name
         nodeId:
           type: string
@@ -2089,9 +2054,11 @@ components:
           description: Node using the asset
         nodeRefId:
           type: string
+          maxLength: 200
           description: refId of the node
         nodeName:
           type: string
+          maxLength: 500
           description: Node name
         nodeType:
           $ref: '#/components/schemas/NodeType'

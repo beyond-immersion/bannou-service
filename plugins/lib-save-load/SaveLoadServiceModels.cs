@@ -34,20 +34,18 @@ public partial class SaveLoadService
 // ============================================================================
 // INTERNAL DATA MODELS
 // ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class SaveLoadStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record SaveLoadCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+
+/// <summary>
+/// Key builders for save-load rate limiting entries in Redis cache.
+/// </summary>
+internal static class RateLimitKeys
+{
+    private const string KeyPrefix = "save-rate";
+
+    /// <summary>
+    /// Builds the state store key for a per-owner rate limit counter.
+    /// Keys include a minute bucket for TTL-based sliding window rate limiting.
+    /// </summary>
+    internal static string BuildRateLimitKey(string gameId, string ownerType, string ownerId, string minuteBucket)
+        => $"{KeyPrefix}:{gameId}:{ownerType}:{ownerId}:{minuteBucket}";
+}

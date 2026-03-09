@@ -2,9 +2,13 @@
 
 > **Version**: 3.0
 > **Status**: Implemented
-> **Related**: [Behavior System Guide](./BEHAVIOR-SYSTEM.md), [Behavior Service Deep-Dive](../plugins/BEHAVIOR.md)
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-behavior (L4), lib-actor (L2)
+> **Related Guides**: [Behavior System Guide](./BEHAVIOR-SYSTEM.md), [Behavior Service Deep-Dive](../plugins/BEHAVIOR.md)
 
-ABML is a YAML-based domain-specific language for authoring event-driven, stateful sequences of actions. It powers NPC behaviors, dialogue systems, cutscenes, and agent cognition in Bannou-powered games.
+## Summary
+
+Comprehensive reference for the Arcadia Behavior Markup Language (ABML), a YAML-based DSL for authoring event-driven, stateful action sequences that power NPC behaviors, dialogue systems, cutscenes, and agent cognition. Covers document structure, the expression language with variable providers, control flow, GOAP integration, channels and parallelism, and the compilation pipeline from YAML to portable stack-based bytecode. Intended for developers writing or modifying ABML behavior documents.
 
 ---
 
@@ -593,6 +597,13 @@ When executing behaviors for characters, the ActorRunner registers variable prov
 | `${combat.*}` | Character Personality (L4) | `style`, `preferredRange`, `groupRole`, `riskTolerance`, `retreatThreshold`, `protectAllies` |
 | `${backstory.*}` | Character History (L4) | `origin`, `fear`, `trauma`, `fear.key`, `fear.strength`, `elements`, `elements.TRAUMA` |
 | `${encounters.*}` | Character Encounter (L4) | `recent`, `count`, `grudges`, `allies`, `has_met.{id}`, `sentiment.{id}`, `encounter_count.{id}` |
+| `${obligations.*}` | Obligation (L4) | Action cost modifiers from active contracts |
+| `${faction.*}` | Faction (L4) | Faction norms, membership, territory data |
+| `${quest.*}` | Quest (L2) | Active quest state, objective progress |
+| `${seed.*}` | Seed (L2) | Seed phase, growth domains, capabilities |
+| `${location.*}` | Location (L2) | Current location context, hierarchy |
+| `${transit.*}` | Transit (L2) | Connection availability, journey state |
+| `${world.*}` | Worldstate (L2) | Game time, season, day period, calendar |
 | `${currency.*}` | Currency (L2) | `balance.{CODE}`, `locked.{CODE}`, `has_wallet`, `wallet_count` |
 | `${inventory.*}` | Inventory (L2) | `has_item.{CODE}`, `count.{CODE}`, `has_space`, `total_containers`, `total_items`, `total_weight`, `used_slots` |
 | `${relationship.*}` | Relationship (L2) | `has.{TYPE_CODE}`, `count.{TYPE_CODE}`, `total` |
@@ -1765,19 +1776,21 @@ channels:
 
 When implementing ABML handlers within the Bannou service architecture, the following constraints from the [Tenets](../reference/TENETS.md) apply:
 
-### A.1 Infrastructure Libs (Tenet 4)
+### A.1 Infrastructure Libs (FOUNDATION TENETS)
 
 All ABML action handlers MUST use infrastructure abstractions:
 
 | Action Type | Required Implementation |
 |-------------|------------------------|
-| `service_call` | Use `IMeshInvocationClient` or generated clients via lib-mesh |
+| Domain actions (e.g., `grant_item`, `start_quest`) | Use purpose-built action handlers with generated clients via lib-mesh |
 | `publish` | Use `IMessageBus.PublishAsync()` via lib-messaging |
 | State access | Use `IStateStore<T>` via lib-state |
 
+> **Note**: Generic service call actions (`service_call`, `api_call`, etc.) are permanently forbidden in ABML — see Section 8.4. All service interactions must use purpose-built domain action handlers.
+
 **Forbidden**: Direct Redis, MySQL, RabbitMQ, or HTTP client usage in handlers.
 
-### A.2 Typed Events (Tenet 5)
+### A.2 Typed Events (FOUNDATION TENETS)
 
 Event publishing handlers MUST use typed event models:
 
@@ -1793,7 +1806,7 @@ await _messageBus.PublishAsync("npc.state_changed", new NpcStateChangedEvent
 await _messageBus.PublishAsync("npc.state_changed", new { npc_id = npcId });
 ```
 
-### A.3 JSON Serialization (Tenet 20)
+### A.3 JSON Serialization (IMPLEMENTATION TENETS)
 
 All serialization within Bannou handlers MUST use `BannouJson`:
 

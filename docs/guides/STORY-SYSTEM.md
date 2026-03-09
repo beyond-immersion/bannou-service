@@ -1,8 +1,16 @@
 # Bannou Story System
 
-This document provides a comprehensive overview of Bannou's narrative generation system, including the theoretical foundations, plugin architecture, and integration patterns for both traditional quest-hub gameplay and emergent AI-driven storytelling.
+> **Version**: 1.1
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-storyline (L4), lib-quest (L2), lib-contract (L1)
+> **Related Guides**: [Behavior System](./BEHAVIOR-SYSTEM.md), [Seed System](./SEED-SYSTEM.md)
 
-> **Implementation Status**: The storyline SDKs are **complete** with 22 passing tests. The `lib-storyline` plugin provides `/compose`, `/plan/get`, and `/plan/list` endpoints. Quest and Scenario capabilities are planned extensions that depend on lib-quest (not yet built). See [Implementation Status](#implementation-status) for details.
+## Summary
+
+Comprehensive guide to Bannou's narrative generation system covering the three-layer narrative stack (storyline-theory SDK, storyline-storyteller SDK, and the Storyline plugin), two execution modes (simple direct trigger and emergent regional watcher discovery), lazy phase evaluation, and compression-driven content recycling. Intended for developers building narrative features or authoring ABML behavior documents for regional watchers. After reading, developers will understand how scenarios compose into storyline arcs, how quests wrap contracts, and how the content flywheel turns character deaths into new narratives.
+
+> **Implementation Status**: The storyline SDKs are **complete** with 22 passing tests. The `lib-storyline` plugin provides `/compose`, `/plan/get`, and `/plan/list` endpoints. lib-quest is implemented. Scenario capabilities are planned extensions. See [Implementation Status](#implementation-status) for details.
 
 ## Overview
 
@@ -1282,8 +1290,8 @@ The SDKs load these schemas as embedded resources at runtime:
 
 ### Related Guides
 
-- [Music System Guide](MUSIC_SYSTEM.md) - Architecture precedent for SDK layering
-- [Plugin Development](PLUGIN_DEVELOPMENT.md) - Creating Bannou plugins
+- [Music System Guide](MUSIC-SYSTEM.md) - Architecture precedent for SDK layering
+- [Plugin Development](PLUGIN-DEVELOPMENT.md) - Creating Bannou plugins
 - [Contract Plugin](../plugins/CONTRACT.md) - FSM and prebound API details
 
 ### SDK Documentation

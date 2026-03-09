@@ -96,12 +96,22 @@ public sealed class SaveSlotMetadata
     /// Generates the state store key for this slot.
     /// Note: Uses ToString().ToLowerInvariant() for EntityType key composition (accepted breaking change from OwnerType migration).
     /// </summary>
-    public string GetStateKey() => $"slot:{GameId}:{OwnerType.ToString().ToLowerInvariant()}:{OwnerId}:{SlotName}";
+    private const string KeyPrefix = "slot";
+
+    /// <summary>Builds the state store key from this instance's properties.</summary>
+    internal string BuildStateKey() => $"{KeyPrefix}:{GameId}:{OwnerType.ToString().ToLowerInvariant()}:{OwnerId}:{SlotName}";
 
     /// <summary>
-    /// Generates the state store key from components.
-    /// Parameters are strings to support both direct string values and enum/guid conversions at call site.
+    /// Builds the state store key from typed components.
+    /// Handles EntityType and Guid conversion internally per FOUNDATION TENETS (T6).
     /// </summary>
-    public static string GetStateKey(string gameId, string ownerType, string ownerId, string slotName)
-        => $"slot:{gameId}:{ownerType}:{ownerId}:{slotName}";
+    internal static string BuildStateKey(string gameId, EntityType ownerType, Guid ownerId, string slotName)
+        => $"{KeyPrefix}:{gameId}:{ownerType.ToString().ToLowerInvariant()}:{ownerId}:{slotName}";
+
+    /// <summary>
+    /// Builds the state store key from string components.
+    /// Use the typed overload when EntityType and Guid are available.
+    /// </summary>
+    internal static string BuildStateKey(string gameId, string ownerType, string ownerId, string slotName)
+        => $"{KeyPrefix}:{gameId}:{ownerType}:{ownerId}:{slotName}";
 }

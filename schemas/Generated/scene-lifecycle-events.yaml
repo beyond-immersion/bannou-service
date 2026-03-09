@@ -18,7 +18,6 @@ components:
       - eventId
       - timestamp
       - sceneId
-      - gameId
       - sceneType
       - name
       - version
@@ -36,10 +35,11 @@ components:
           description: "Unique scene identifier"
         gameId: &id002
           type: string
-          description: "Game service identifier for partitioning"
+          nullable: true
+          description: "Game service identifier for partitioning (null for unpartitioned)"
         sceneType: &id003
           $ref: ../scene-api.yaml#/components/schemas/SceneType
-          description: "Scene classification (region, building, etc.)"
+          description: "Scene classification code"
         name: &id004
           type: string
           description: "Human-readable scene name"
@@ -53,6 +53,7 @@ components:
         tags: &id007
           type: array
           items: {type: string}
+          nullable: true
           description: "Searchable tags"
         nodeCount: &id008
           type: integer
@@ -76,7 +77,6 @@ components:
       - eventId
       - timestamp
       - sceneId
-      - gameId
       - sceneType
       - name
       - version
@@ -121,7 +121,6 @@ components:
       - eventId
       - timestamp
       - sceneId
-      - gameId
       - sceneType
       - name
       - version

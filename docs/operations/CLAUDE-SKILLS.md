@@ -1,9 +1,11 @@
 # Claude Code Integration Guide
 
+> **Last Updated**: 2026-03-08
 > **Scope**: Claude Code configuration, hooks, and custom automation for Bannou development
-> **Location**: `.claude/` directory (hooks, commands, agents)
 
-This guide documents the Claude Code tooling configured for the Bannou project, including safety hooks that prevent destructive operations and custom plugins for documentation maintenance.
+## Summary
+
+Claude Code integration configuration for Bannou development, covering PreToolUse safety hooks that block destructive operations, enforce commit format, and nudge proper task creation patterns, plus custom slash commands for plugin documentation maintenance, code auditing, implementation workflows, and GitHub issue investigation. Required reading before creating new hooks, commands, or agent workflows, and for understanding how Claude Code is constrained in this project.
 
 ---
 
@@ -11,7 +13,7 @@ This guide documents the Claude Code tooling configured for the Bannou project, 
 
 Bannou uses Claude Code with custom configuration to:
 
-1. **Enforce development standards** - Hooks block destructive commands and enforce commit format
+1. **Enforce development standards** - Hooks block destructive commands, enforce commit format, and nudge proper task list formatting
 2. **Automate documentation** - Custom plugins maintain and audit plugin deep dive docs
 3. **Prevent accidents** - Integration tests and production deploys require explicit user action
 
@@ -73,26 +75,48 @@ This isn't about AI safety or alignment. It's about the mundane reality that LLM
 .claude/
 ├── settings.json              # Hook configuration (checked into repo)
 ├── settings.local.json        # Local permissions (gitignored)
+├── skills-guide.txt           # Skill discovery reference
 ├── hooks/
 │   ├── validate-senryu-commit.sh
 │   ├── block-destructive-git.sh
 │   ├── block-production-deploy.sh
-│   └── block-integration-tests.sh
+│   ├── block-integration-tests.sh
+│   ├── block-file-moves.sh
+│   ├── block-symlinks.sh
+│   ├── block-agent-polling.sh
+│   ├── git-history-reminder.sh
+│   └── task-creation-reminder.sh
 ├── commands/                  # Custom slash commands
-│   ├── audit-plugin.md
-│   ├── audit-plugins.md
-│   ├── investigate-issue.md
-│   └── maintain-plugin.md
+│   ├── audit-plugin.md        # Single plugin gap auditing
+│   ├── audit-plugins.md       # Batch plugin auditing
+│   ├── check-plugin.md        # Plugin tenet compliance check
+│   ├── implement-feature.md   # Feature implementation workflow
+│   ├── implement-plugin.md    # Plugin implementation workflow
+│   ├── investigate-issue.md   # GitHub issue investigation
+│   ├── maintain-faq.md        # FAQ document maintenance
+│   ├── maintain-guide.md      # Guide document maintenance
+│   ├── maintain-issues.md     # GitHub issues maintenance
+│   ├── maintain-operations-doc.md  # Operations doc maintenance
+│   ├── maintain-planning-doc.md    # Planning doc maintenance
+│   ├── maintain-plugin.md     # Plugin deep dive maintenance
+│   ├── map-plugin.md          # Plugin implementation map creation
+│   ├── orchestrate-skill.md   # Batch skill orchestration
+│   ├── test-plugin.md         # Plugin test writing
+│   └── update-permissions.md  # Permission schema updates
 └── agents/                    # Custom agents for commands
-    ├── doc-reviewer.md
-    └── gap-investigator.md
+    ├── doc-reviewer.md        # Source code review agent
+    └── gap-investigator.md    # Gap investigation agent
 ```
 
 ---
 
 ## PreToolUse Hooks
 
-These hooks intercept Bash commands before execution and block dangerous operations.
+These hooks intercept tool calls before execution. Most hooks match the `Bash` tool to block dangerous shell commands, but hooks can match any tool name — `Agent` (to block resume polling), `TaskCreate` and `TodoWrite` (to nudge task formatting), or any other tool Claude Code exposes.
+
+**Two hook types**:
+- **Blocking hooks** — Return `"permissionDecision": "deny"` to prevent the tool call entirely (e.g., destructive git commands, production deploys)
+- **Reminder hooks** — Return `"permissionDecision": "allow"` with a `permissionDecisionReason` message that the agent sees before proceeding (e.g., git history reminder, task creation format nudge)
 
 ### 1. Senryu Commit Validator
 
@@ -196,6 +220,76 @@ Claude should return the command for the user to run manually, not execute it.
 **Verification approach**:
 - `dotnet build` is sufficient for verifying code changes
 - Integration tests only when explicitly requested by user
+
+---
+
+### 5. File Move Blocker
+
+**File**: `block-file-moves.sh`
+
+**Purpose**: Prevents Claude from renaming or moving source files instead of fixing build errors.
+
+**Blocked commands**:
+- `mv` commands targeting code file extensions (`.cs`, `.csproj`, `.yaml`, `.json`, `.ts`, `.py`, `.sh`, `.md`, etc.)
+
+**Why**: An agent previously renamed files to `.tmp` instead of fixing build errors, causing data loss. If the build fails, fix the code — do not rename files.
+
+---
+
+### 6. Symlink Blocker
+
+**File**: `block-symlinks.sh`
+
+**Purpose**: Prevents creation of symbolic links, which break containerized builds and cause path resolution issues.
+
+**Blocked commands**:
+- `ln -s` and `ln --symbolic` (all variants)
+
+**Alternative**: Use proper file references, imports, or `$ref` in schemas instead of symlinks.
+
+---
+
+### 7. Agent Polling Blocker
+
+**File**: `block-agent-polling.sh`
+
+**Purpose**: Prevents Claude from resuming background agents. Background agent results arrive automatically via `<task-notification>` — resume attempts are guaranteed to fail and waste context.
+
+**Blocked**: Any Agent tool call with a `resume` parameter set.
+
+---
+
+### 8. Git History Reminder
+
+**File**: `git-history-reminder.sh`
+
+**Purpose**: Non-blocking reminder hook that triggers on `git diff` or `git log` commands. Reminds the agent to re-read CLAUDE.md rules before acting on git history output.
+
+**Why**: An agent used `git diff` to confirm it had successfully reverted user-directed work, violating HARD STOP rules. This hook is a checkpoint, not a blocker.
+
+---
+
+### 9. Task Creation Reminder
+
+**File**: `task-creation-reminder.sh`
+
+**Matchers**: `TaskCreate`, `TodoWrite` (not `Bash` — this hook matches tool names directly)
+
+**Purpose**: Non-blocking reminder that fires whenever an agent creates a task or todo item. Reminds the agent of the required format for violation/hardening task lists (see CLAUDE.md § "Violation Task Lists").
+
+**What it reminds**:
+Every task for TENET violations, SCHEMA-RULES issues, or code quality fixes must include:
+1. **Verbatim tenet text** — the exact rule being violated, quoted from the source document
+2. **Affected files and line numbers** — every location, enumerated
+3. **Before/after code** — exact current code and exact replacement
+4. **What NOT to do** — explicit constraints preventing common mistakes
+5. **Self-contained verification** — how to confirm the fix is correct
+
+**Why**: Claude repeatedly created shallow task descriptions like "Fix T7 in FooService" that forced implementers to re-derive the entire audit finding from scratch. The audit agent already found all the information; the task description must preserve it. See CLAUDE.md for the full rationale and compound waste pattern.
+
+**Why TodoWrite is hooked**: `TodoWrite` is the most likely tool Claude reaches for instead of `TaskCreate`. It's lightweight but can't hold the required detail for violation task lists. The reminder nudges toward `TaskCreate` which supports rich descriptions.
+
+**This hook does NOT block** — it prints the reminder and allows the tool call to proceed. The agent sees the format requirements and can adjust accordingly.
 
 ---
 
@@ -314,6 +408,130 @@ End-to-end GitHub issue investigation and resolution with developer guidance.
 
 ---
 
+#### `/check-plugin [name]`
+
+Read-only diagnostic that determines a plugin's readiness level (L0-L7) in the development pipeline and recommends the next action. Checks deep dive, audit status, implementation map, schemas, generated code, tests, and implementation.
+
+```bash
+/check-plugin divine              # Check specific plugin readiness
+/check-plugin                     # Check next plugin needing work
+```
+
+---
+
+#### `/map-plugin [name]`
+
+Creates or maintains an implementation map for a plugin. Launches structured sub-agents for schema, code, and event analysis, then writes the map document at `docs/maps/{SERVICE}.md`.
+
+```bash
+/map-plugin auth                  # Create/update auth implementation map
+```
+
+---
+
+#### `/test-plugin [name]`
+
+Generates TDD red-phase unit tests from a plugin's implementation map and generated interfaces. Requires schemas to be generated first (L4+ readiness).
+
+```bash
+/test-plugin divine               # Generate tests for divine plugin
+```
+
+---
+
+#### `/implement-plugin [name]`
+
+Implements a plugin's service logic from its implementation map and failing tests. Writes `*Service.cs`, `*ServiceModels.cs`, `*ServiceEvents.cs`, and helper services. Requires failing tests (L5+ readiness).
+
+```bash
+/implement-plugin divine          # Implement divine plugin
+```
+
+---
+
+#### `/implement-feature [description]`
+
+Guided feature development for adding a specific feature to an already-implemented plugin. Orchestrates a 5-phase pipeline (deep dive, implementation map, schema, code, tests) with sequential agents.
+
+```bash
+/implement-feature Add background workers for Expired and HoldExpired in the CURRENCY plugin
+```
+
+---
+
+#### `/maintain-issues [name|random]`
+
+Reviews GitHub issues referenced in a plugin's deep dive document. Verifies if issues should be closed, updated, or are still active based on current codebase state. Read-only — does not make code changes.
+
+```bash
+/maintain-issues account          # Review issues for account plugin
+/maintain-issues random           # Pick random plugin
+```
+
+---
+
+#### `/maintain-guide [name|random]`
+
+Maintains developer guide documents in `docs/guides/`. Ensures structure matches template, content is accurate against plugin deep dives, and Summary section is current.
+
+```bash
+/maintain-guide behavior-system   # Maintain specific guide
+```
+
+---
+
+#### `/maintain-planning-doc [name|random]`
+
+Maintains planning documents in `docs/planning/`. Ensures structure matches template and Status reflects current implementation state.
+
+```bash
+/maintain-planning-doc actor-bound-entities
+```
+
+---
+
+#### `/maintain-faq [name|random]`
+
+Maintains FAQ (architectural rationale) documents in `docs/faqs/`. Ensures Short Answer is still accurate and architectural reasoning hasn't been invalidated.
+
+```bash
+/maintain-faq why-are-items-and-inventory-separate
+```
+
+---
+
+#### `/maintain-operations-doc [name|random]`
+
+Maintains operations documents in `docs/operations/` (including this document). Verifies header format, Summary section, Makefile targets, script paths, and cross-references.
+
+```bash
+/maintain-operations-doc TESTING
+```
+
+---
+
+#### `/update-permissions [plugins...]`
+
+Audits and fixes `x-permissions` on all endpoints for 1-5 plugins, ensuring compliance with `ENDPOINT-PERMISSION-GUIDELINES.md`. Updates schemas, deep dives, and implementation maps.
+
+```bash
+/update-permissions achievement divine gardener
+```
+
+---
+
+#### `/orchestrate-skill <skill-name> for <scope>`
+
+Orchestrates running any single-target skill across multiple targets in parallel batches of 3. Supersedes `/audit-plugins` for batch operations. Compaction-safe task tracking.
+
+```bash
+/orchestrate-skill maintain-plugin for all
+/orchestrate-skill audit-plugin for account,auth,chat
+/orchestrate-skill maintain-faq for 5
+```
+
+---
+
 ### Work Tracking Markers
 
 The plugin auditor uses HTML comment markers to track work status:
@@ -348,19 +566,7 @@ Item with NEEDS_DESIGN+URL   → Skipped until issue resolved
 
 ### Command Files
 
-```
-.claude/
-├── commands/
-│   ├── maintain-plugin.md        # Document maintenance workflow
-│   ├── audit-plugin.md           # Single gap processing
-│   ├── audit-plugins.md          # Parallel gap processing
-│   └── investigate-issue.md      # GitHub issue end-to-end workflow
-└── agents/
-    ├── doc-reviewer.md           # Source code review agent
-    └── gap-investigator.md       # Gap investigation agent
-```
-
-These are project-level standalone commands (not a plugin), so they use short names like `/audit-plugin` rather than namespaced names.
+See the [Configuration Files](#configuration-files) section above for the full directory listing of all commands and agents.
 
 ---
 
@@ -478,10 +684,10 @@ When creating commands that spawn agents:
 - If legitimate need, ask user to run command manually
 - User can approve the action if appropriate
 
-### Plugin commands not available
-- Restart Claude Code after plugin installation
-- Verify plugin is registered in `~/.claude/plugins/installed_plugins.json`
-- Check plugin structure matches expected format
+### Slash commands not available
+- Restart Claude Code session
+- Verify command file exists in `.claude/commands/` with `.md` extension
+- Check command file structure matches expected format
 
 ---
 
@@ -529,6 +735,68 @@ exit 0  # Allow command
 ```
 
 3. Make executable: `chmod +x .claude/hooks/your-hook.sh`
+
+### Matching Non-Bash Tools
+
+Hooks can match any tool name, not just `Bash`. Use this when you need to intercept or nudge behavior on specific tool calls like `Agent`, `TaskCreate`, `TodoWrite`, `Write`, `Edit`, etc.
+
+**Blocking example** (prevents Agent resume):
+```json
+{
+  "matcher": "Agent",
+  "hooks": [{
+    "type": "command",
+    "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-agent-polling.sh\"",
+    "timeout": 5000
+  }]
+}
+```
+
+**Reminder example** (non-blocking nudge on TaskCreate and TodoWrite):
+```json
+{
+  "matcher": "TaskCreate",
+  "hooks": [{
+    "type": "command",
+    "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/task-creation-reminder.sh\"",
+    "timeout": 5000
+  }]
+},
+{
+  "matcher": "TodoWrite",
+  "hooks": [{
+    "type": "command",
+    "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/task-creation-reminder.sh\"",
+    "timeout": 5000
+  }]
+}
+```
+
+**Non-blocking hook script pattern** (returns `allow` with a message instead of `deny`):
+```bash
+#!/bin/bash
+input=$(cat)
+tool_name=$(echo "$input" | jq -r '.tool_name // ""' 2>/dev/null)
+
+if [[ "$tool_name" == "TargetTool" ]]; then
+    jq -n --arg msg "Your reminder message here" '{
+        hookSpecificOutput: {
+            hookEventName: "PreToolUse",
+            permissionDecision: "allow",
+            permissionDecisionReason: $msg
+        }
+    }'
+    exit 0
+fi
+
+exit 0
+```
+
+**Key differences from Bash hooks**:
+- **Matcher**: Use the exact tool name (e.g., `"TaskCreate"`) instead of `"Bash"`
+- **Input parsing**: Use `.tool_name` to identify the tool, not `.tool_input.command`
+- **One matcher per tool**: Each tool name needs its own matcher entry in `settings.json`, but multiple matchers can point to the same hook script
+- **Non-blocking pattern**: Return `"permissionDecision": "allow"` with `"permissionDecisionReason"` to show a message without blocking
 
 ---
 

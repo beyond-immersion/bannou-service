@@ -1,6 +1,14 @@
 # Unreal Engine Integration Guide
 
-This guide covers integrating Bannou services into Unreal Engine 4 and 5 projects using the generated helper artifacts.
+> **Version**: 1.1
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-connect (L1)
+> **Related Guides**: [SDK Overview](SDK-OVERVIEW.md), [Client Integration](CLIENT-INTEGRATION.md)
+
+## Summary
+
+Covers integrating Bannou services into Unreal Engine 4 and 5 projects using generated C++ helper artifacts including type definitions, protocol constants, endpoint registries, and event definitions. Intended for Unreal Engine developers connecting their game to Bannou backend services. After reading, developers will understand how to use the generated headers, implement the binary WebSocket protocol, and handle request/response correlation.
 
 ## Overview
 
@@ -82,11 +90,12 @@ constexpr int32 REQUEST_HEADER_SIZE = 31;
 constexpr int32 RESPONSE_HEADER_SIZE = 16;
 
 // Header layout:
-// [0]     Flags (1 byte)        - Response flags
-// [1]     ResponseCode (1 byte) - Status code (0 = OK)
-// [2-3]   Reserved (2 bytes)    - Reserved for future use
-// [4-7]   PayloadLen (4 bytes)  - JSON payload length (big-endian)
-// [8-15]  MessageId (8 bytes)   - Correlation ID from request (big-endian)
+// [0]     Flags (1 byte)        - Response flags (Response flag 0x40 set)
+// [1-2]   Channel (2 bytes)     - Channel ID (big-endian uint16)
+// [3-6]   Sequence (4 bytes)    - Sequence number (big-endian uint32)
+// [7-14]  MessageId (8 bytes)   - Correlation ID from request (big-endian uint64)
+// [15]    ResponseCode (1 byte) - Protocol response code (0 = OK)
+// [16+]   Payload               - JSON for success, empty for errors
 ```
 
 ### Message Flags
@@ -98,13 +107,13 @@ namespace Bannou
     {
         None        = 0x00,
         Binary      = 0x01,  // Payload is binary (not JSON)
-        Encrypted   = 0x02,  // Payload is encrypted
-        Compressed  = 0x04,  // Payload is compressed
-        HighPriority= 0x08,  // High priority message
-        Event       = 0x10,  // Server-push event
-        Client      = 0x20,  // Client-originated message
-        Response    = 0x40,  // Response to request
-        Meta        = 0x80   // Metadata/control message
+        Reserved1   = 0x02,  // Reserved for future use
+        Compressed  = 0x04,  // Payload is Brotli-compressed
+        Reserved2   = 0x08,  // Reserved for future use
+        Event       = 0x10,  // Fire-and-forget, no response expected
+        Client      = 0x20,  // Route to another WebSocket client (P2P)
+        Response    = 0x40,  // Response to request (uses 16-byte header)
+        Meta        = 0x80   // Request endpoint metadata
     };
 }
 ```
@@ -116,15 +125,29 @@ namespace Bannou
 {
     enum class EResponseCode : uint8
     {
-        OK = 0,                  // Success
-        RequestError = 10,       // Malformed request
-        Unauthorized = 20,       // Authentication required
-        Forbidden = 21,          // Access denied
-        ServiceNotFound = 30,    // Unknown service GUID
-        MethodNotAllowed = 31,   // HTTP method not allowed
-        Timeout = 40,            // Request timed out
-        ServerError = 50,        // Internal server error
-        ServiceUnavailable = 51, // Service temporarily unavailable
+        // Protocol-level codes (0-49)
+        OK = 0,                      // Success
+        RequestError = 10,           // Malformed request
+        RequestTooLarge = 11,        // Payload exceeds max size
+        TooManyRequests = 12,        // Rate limit exceeded
+        InvalidRequestChannel = 13,  // Invalid channel number
+        Unauthorized = 20,           // Authentication required
+        ServiceNotFound = 30,        // Unknown service GUID
+        ClientNotFound = 31,         // Target peer not connected (P2P)
+        MessageNotFound = 32,        // Referenced message ID not found
+        BroadcastNotAllowed = 40,    // Broadcast in External mode
+
+        // Service-level codes (50-69)
+        Service_BadRequest = 50,     // Service returned 400
+        Service_NotFound = 51,       // Service returned 404
+        Service_Unauthorized = 52,   // Service returned 401/403
+        Service_Conflict = 53,       // Service returned 409
+        Service_InternalServerError = 60, // Service returned 500
+
+        // Shortcut-specific codes (70+)
+        ShortcutExpired = 70,        // Shortcut TTL exceeded
+        ShortcutTargetNotFound = 71, // Shortcut target unavailable
+        ShortcutRevoked = 72         // Shortcut was revoked
     };
 }
 ```
@@ -289,20 +312,20 @@ TArray<uint8> FBannouConnectionManager::BuildRequestHeader(const FGuid& ServiceG
     TArray<uint8> Header;
     Header.SetNumZeroed(Bannou::REQUEST_HEADER_SIZE);
 
-    // Flags (Client flag set)
-    Header[0] = static_cast<uint8>(Bannou::EMessageFlags::Client);
+    // Flags (None = standard JSON service request)
+    Header[0] = static_cast<uint8>(Bannou::EMessageFlags::None);
 
     // Channel (big-endian, default 0)
-    Bannou::NetworkByteOrder::WriteUInt16(Header.GetData() + 1, 0);
+    Bannou::NetworkByteOrder::WriteUInt16(Header.GetData(), 1, 0);
 
     // Sequence (big-endian)
-    Bannou::NetworkByteOrder::WriteUInt32(Header.GetData() + 3, CurrentSequence++);
+    Bannou::NetworkByteOrder::WriteUInt32(Header.GetData(), 3, CurrentSequence++);
 
     // GUID (RFC 4122 format)
-    Bannou::NetworkByteOrder::WriteGuid(Header.GetData() + 7, ServiceGuid);
+    Bannou::NetworkByteOrder::WriteGuid(Header.GetData(), 7, ServiceGuid);
 
     // Message ID (big-endian)
-    Bannou::NetworkByteOrder::WriteUInt64(Header.GetData() + 23, MessageId);
+    Bannou::NetworkByteOrder::WriteUInt64(Header.GetData(), 23, MessageId);
 
     return Header;
 }
@@ -316,15 +339,17 @@ void FBannouConnectionManager::OnBinaryMessage(const void* Data, SIZE_T Size, bo
 
     const uint8* Bytes = static_cast<const uint8*>(Data);
 
-    // Parse header
+    // Parse response header (16 bytes)
     uint8 Flags = Bytes[0];
-    uint8 ResponseCode = Bytes[1];
-    uint32 PayloadLen = Bannou::NetworkByteOrder::ReadUInt32(Bytes + 4);
-    uint64 MessageId = Bannou::NetworkByteOrder::ReadUInt64(Bytes + 8);
+    // Bytes[1-2] = Channel (uint16 BE)
+    // Bytes[3-6] = Sequence (uint32 BE)
+    uint64 MessageId = Bannou::NetworkByteOrder::ReadUInt64(Bytes, 7);
+    uint8 ResponseCode = Bytes[15];
 
-    // Extract JSON payload
+    // Extract JSON payload (everything after the 16-byte header)
     FString JsonPayload;
-    if (PayloadLen > 0 && Size >= Bannou::RESPONSE_HEADER_SIZE + PayloadLen)
+    uint32 PayloadLen = Size - Bannou::RESPONSE_HEADER_SIZE;
+    if (PayloadLen > 0)
     {
         FUTF8ToTCHAR Converter(
             reinterpret_cast<const ANSICHAR*>(Bytes + Bannou::RESPONSE_HEADER_SIZE),

@@ -2,10 +2,13 @@
 
 > **Version**: 1.0
 > **Status**: Implemented
-> **Location**: `plugins/lib-mapping/`
-> **Related**: [Behavior System Guide](./BEHAVIOR-SYSTEM.md), [ABML Guide](./ABML.md)
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-mapping (L4)
+> **Related Guides**: [Behavior System Guide](./BEHAVIOR-SYSTEM.md), [ABML Guide](./ABML.md)
 
-The Mapping System (`lib-mapping`) manages spatial data for game worlds. It enables game servers to publish live spatial data, event actors to orchestrate region-wide encounters, NPC actors to receive perception-filtered context, and behaviors to make spatially-aware decisions through affordance queries.
+## Summary
+
+Comprehensive guide to the Mapping service's spatial data management, authority-based channel ownership, affordance query system, and actor integration patterns. Intended for developers building game servers that publish spatial data, writing NPC behaviors that consume spatial context, or creating event actors that orchestrate region-wide encounters. After reading, developers will understand the authority lifecycle, event architecture, affordance scoring pipeline, and how to integrate spatial intelligence into ABML behaviors.
 
 ---
 
@@ -928,7 +931,7 @@ Use affordance queries instead - let lib-mapping do the heavy lifting.
 
 For implementation details and known quirks, see [MAPPING.md](../plugins/MAPPING.md):
 
-- **Event aggregation**: Fire-and-forget with potential silent loss under high load
+- **Event aggregation**: Buffer retries with exponential backoff before discarding; silent loss possible only after max retries exhausted
 - **Spatial index**: Stale entries accumulate indefinitely (no automatic cleanup)
 - **Index operations**: Non-atomic read-modify-write, but mitigated by authority model (single writer per channel); only an issue in `accept_and_alert` mode
 - **Snapshot events**: `MapSnapshotEvent` is defined but not currently published

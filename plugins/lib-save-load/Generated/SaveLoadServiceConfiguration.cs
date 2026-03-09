@@ -79,9 +79,10 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     public int HotCacheTtlMinutes { get; set; } = 60;
 
     /// <summary>
-    /// MinIO bucket for save assets
+    /// MinIO/S3 bucket name for save assets
     /// Environment variable: SAVE_LOAD_ASSET_BUCKET
     /// </summary>
+    [ConfigStringLength(MinLength = 1, MaxLength = 63)]
     public string AssetBucket { get; set; } = "game-saves";
 
     /// <summary>
@@ -160,6 +161,13 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     public int MigrationMaxPatchOperations { get; set; } = 1000;
 
     /// <summary>
+    /// Maximum number of sequential migration steps allowed in a single migration path
+    /// Environment variable: SAVE_LOAD_MAX_MIGRATION_STEPS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
+    public int MaxMigrationSteps { get; set; } = 10;
+
+    /// <summary>
     /// Maximum save slots per owner entity
     /// Environment variable: SAVE_LOAD_MAX_SLOTS_PER_OWNER
     /// </summary>
@@ -179,6 +187,27 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 1048576, Maximum = 10737418240)]
     public long MaxTotalSizeBytesPerOwner { get; set; } = 1073741824L;
+
+    /// <summary>
+    /// Distributed lock timeout in seconds for slot metadata operations (rename, update metadata)
+    /// Environment variable: SAVE_LOAD_SLOT_METADATA_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int SlotMetadataLockTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Distributed lock timeout in seconds for save write operations (save, delta save, copy)
+    /// Environment variable: SAVE_LOAD_SLOT_WRITE_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int SlotWriteLockTimeoutSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Expiry time in minutes for export download URLs
+    /// Environment variable: SAVE_LOAD_EXPORT_URL_EXPIRY_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 1440)]
+    public int ExportUrlExpiryMinutes { get; set; } = 60;
 
     /// <summary>
     /// Brotli compression level (0-11, higher = better compression, slower)
@@ -232,10 +261,22 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     public int ThumbnailMaxSizeBytes { get; set; } = 262144;
 
     /// <summary>
-    /// Comma-separated list of allowed thumbnail MIME types
-    /// Environment variable: SAVE_LOAD_THUMBNAIL_ALLOWED_FORMATS
+    /// Allow image/jpeg format for save thumbnails
+    /// Environment variable: SAVE_LOAD_THUMBNAIL_ALLOW_JPEG
     /// </summary>
-    public string ThumbnailAllowedFormats { get; set; } = "image/jpeg,image/webp,image/png";
+    public bool ThumbnailAllowJpeg { get; set; } = true;
+
+    /// <summary>
+    /// Allow image/webp format for save thumbnails
+    /// Environment variable: SAVE_LOAD_THUMBNAIL_ALLOW_WEBP
+    /// </summary>
+    public bool ThumbnailAllowWebp { get; set; } = true;
+
+    /// <summary>
+    /// Allow image/png format for save thumbnails
+    /// Environment variable: SAVE_LOAD_THUMBNAIL_ALLOW_PNG
+    /// </summary>
+    public bool ThumbnailAllowPng { get; set; } = true;
 
     /// <summary>
     /// Enable delta/incremental save support

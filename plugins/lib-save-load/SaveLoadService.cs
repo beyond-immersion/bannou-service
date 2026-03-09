@@ -13,10 +13,6 @@ using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-save-load.tests")]
-
 namespace BeyondImmersion.BannouService.SaveLoad;
 
 /// <summary>
@@ -58,7 +54,7 @@ public partial class SaveLoadService : ISaveLoadService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<SaveLoadService> _logger;
     private readonly SaveLoadServiceConfiguration _configuration;
-    private readonly IAssetClient _assetClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IVersionDataLoader _versionDataLoader;
     private readonly IVersionCleanupManager _versionCleanupManager;
@@ -72,13 +68,14 @@ public partial class SaveLoadService : ISaveLoadService
         IDistributedLockProvider lockProvider,
         ILogger<SaveLoadService> logger,
         SaveLoadServiceConfiguration configuration,
-        IAssetClient assetClient,
+        IServiceProvider serviceProvider,
         IHttpClientFactory httpClientFactory,
         IVersionDataLoader versionDataLoader,
         IVersionCleanupManager versionCleanupManager,
         ISaveExportImportManager saveExportImportManager,
         ISaveMigrationHandler saveMigrationHandler,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _slotStore = stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
@@ -91,13 +88,15 @@ public partial class SaveLoadService : ISaveLoadService
         _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
-        _assetClient = assetClient;
+        _serviceProvider = serviceProvider;
         _httpClientFactory = httpClientFactory;
         _versionDataLoader = versionDataLoader;
         _versionCleanupManager = versionCleanupManager;
         _saveExportImportManager = saveExportImportManager;
         _saveMigrationHandler = saveMigrationHandler;
         _telemetryProvider = telemetryProvider;
+
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>
@@ -105,16 +104,13 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SlotResponse?)> CreateSlotAsync(CreateSlotRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.CreateSlotAsync");
+
         _logger.LogDebug(
             "Creating save slot for game {GameId}, owner {OwnerType}:{OwnerId}, slot {SlotName}",
             body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
 
-        var ownerType = body.OwnerType.ToString().ToLowerInvariant();
-        var ownerId = body.OwnerId.ToString();
-
         // Check if slot already exists
-        var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerType, ownerId, body.SlotName);
+        var slotKey = SaveSlotMetadata.BuildStateKey(body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
         var existingSlot = await _slotStore.GetAsync(slotKey, cancellationToken);
         if (existingSlot != null)
         {
@@ -136,7 +132,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Get category defaults
         var category = body.Category;
-        var maxVersions = body.MaxVersions > 0 ? body.MaxVersions : GetDefaultMaxVersions(category);
+        var maxVersions = body.MaxVersions.HasValue ? body.MaxVersions.Value : GetDefaultMaxVersions(category);
         var compressionType = GetDefaultCompressionType(category);
 
         // Create the slot
@@ -151,7 +147,7 @@ public partial class SaveLoadService : ISaveLoadService
             SlotName = body.SlotName,
             Category = category,
             MaxVersions = (int)maxVersions,
-            RetentionDays = body.RetentionDays > 0 ? body.RetentionDays : null,
+            RetentionDays = body.RetentionDays,
             CompressionType = compressionType,
             VersionCount = 0,
             LatestVersion = null,
@@ -166,7 +162,7 @@ public partial class SaveLoadService : ISaveLoadService
         await _slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
         await PublishSaveSlotCreatedEventAsync(slot, cancellationToken);
 
-        _logger.LogDebug("Created slot {SlotId} for {OwnerType}:{OwnerId}", slotId, ownerType, ownerId);
+        _logger.LogDebug("Created slot {SlotId} for {OwnerType}:{OwnerId}", slotId, body.OwnerType, body.OwnerId);
 
         return (StatusCodes.OK, ToSlotResponse(slot));
     }
@@ -176,10 +172,8 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SlotResponse?)> GetSlotAsync(GetSlotRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.GetSlotAsync");
-        var slotKey = SaveSlotMetadata.GetStateKey(
-            body.GameId, body.OwnerType.ToString().ToLowerInvariant(),
-            body.OwnerId.ToString(), body.SlotName);
+        var slotKey = SaveSlotMetadata.BuildStateKey(
+            body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
         var slot = await _slotStore.GetAsync(slotKey, cancellationToken);
 
         if (slot == null)
@@ -195,7 +189,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, ListSlotsResponse?)> ListSlotsAsync(ListSlotsRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.ListSlotsAsync");
         var gameId = body.GameId;
         // SaveSlotMetadata.OwnerId/OwnerType/Category are now Guid/enum types - compare properly
         var bodyCategory = body.Category;
@@ -205,7 +198,7 @@ public partial class SaveLoadService : ISaveLoadService
             s => s.GameId == gameId &&
                 s.OwnerId == body.OwnerId &&
                 s.OwnerType == body.OwnerType &&
-                (bodyCategory == default || s.Category == bodyCategory),
+                (!bodyCategory.HasValue || s.Category == bodyCategory.Value),
             cancellationToken);
 
         // Sort by UpdatedAt descending (most recent first)
@@ -225,10 +218,8 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, DeleteSlotResponse?)> DeleteSlotAsync(DeleteSlotRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.DeleteSlotAsync");
-        var slotKey = SaveSlotMetadata.GetStateKey(
-            body.GameId, body.OwnerType.ToString().ToLowerInvariant(),
-            body.OwnerId.ToString(), body.SlotName);
+        var slotKey = SaveSlotMetadata.BuildStateKey(
+            body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
         var slot = await _slotStore.GetAsync(slotKey, cancellationToken);
 
         if (slot == null)
@@ -240,7 +231,7 @@ public partial class SaveLoadService : ISaveLoadService
         var deletedVersions = 0;
         for (var v = 1; v <= (slot.LatestVersion ?? 0); v++)
         {
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), v);
+            var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), v);
             await _versionStore.DeleteAsync(versionKey, cancellationToken);
             deletedVersions++;
         }
@@ -264,11 +255,9 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SlotResponse?)> RenameSlotAsync(RenameSlotRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.RenameSlotAsync");
         // Get old slot key
-        var oldSlotKey = SaveSlotMetadata.GetStateKey(
-            body.GameId, body.OwnerType.ToString().ToLowerInvariant(),
-            body.OwnerId.ToString(), body.SlotName);
+        var oldSlotKey = SaveSlotMetadata.BuildStateKey(
+            body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
         var slot = await _slotStore.GetAsync(oldSlotKey, cancellationToken);
 
         if (slot == null)
@@ -279,7 +268,7 @@ public partial class SaveLoadService : ISaveLoadService
         // Acquire distributed lock to prevent concurrent rename/modification
         // SlotId is Guid - convert to string for lock
         await using var slotLock = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), _configuration.SlotMetadataLockTimeoutSeconds, cancellationToken);
         if (!slotLock.Success)
         {
             _logger.LogDebug("Could not acquire slot lock for {SlotId} during rename", slot.SlotId);
@@ -294,9 +283,8 @@ public partial class SaveLoadService : ISaveLoadService
         }
 
         // Check if new name already exists
-        var newSlotKey = SaveSlotMetadata.GetStateKey(
-            body.GameId, body.OwnerType.ToString().ToLowerInvariant(),
-            body.OwnerId.ToString(), body.NewSlotName);
+        var newSlotKey = SaveSlotMetadata.BuildStateKey(
+            body.GameId, body.OwnerType, body.OwnerId, body.NewSlotName);
         var existingNewSlot = await _slotStore.GetAsync(newSlotKey, cancellationToken);
 
         if (existingNewSlot != null)
@@ -324,7 +312,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, BulkDeleteSlotsResponse?)> BulkDeleteSlotsAsync(BulkDeleteSlotsRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.BulkDeleteSlotsAsync");
         var deletedCount = 0;
         long totalBytesFreed = 0;
 
@@ -348,12 +335,12 @@ public partial class SaveLoadService : ISaveLoadService
                 // Delete all versions for this slot - SlotId is Guid, convert to string for state key
                 for (var v = 1; v <= (slot.LatestVersion ?? 0); v++)
                 {
-                    var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), v);
+                    var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), v);
                     await _versionStore.DeleteAsync(versionKey, cancellationToken);
                 }
 
                 // Delete the slot
-                var slotKey = slot.GetStateKey();
+                var slotKey = slot.BuildStateKey();
                 await _slotStore.DeleteAsync(slotKey, cancellationToken);
 
                 deletedCount++;
@@ -384,7 +371,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SaveResponse?)> SaveAsync(SaveRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.SaveAsync");
         _logger.LogDebug(
             "Saving to slot {SlotName} for {OwnerType}:{OwnerId} in game {GameId}",
             body.SlotName, body.OwnerType, body.OwnerId, body.GameId);
@@ -393,7 +379,7 @@ public partial class SaveLoadService : ISaveLoadService
         if (_configuration.MaxSavesPerMinute > 0)
         {
             var minuteBucket = DateTimeOffset.UtcNow.ToString("yyyyMMddHHmm");
-            var rateKey = $"save-rate:{body.GameId}:{body.OwnerType}:{body.OwnerId}:{minuteBucket}";
+            var rateKey = RateLimitKeys.BuildRateLimitKey(body.GameId, body.OwnerType.ToString(), body.OwnerId.ToString(), minuteBucket);
             var rateStr = await _rateLimitStore.GetAsync(rateKey, cancellationToken);
             var saveCount = int.TryParse(rateStr, out var parsedCount) ? parsedCount : 0;
 
@@ -428,19 +414,23 @@ public partial class SaveLoadService : ISaveLoadService
                     body.Thumbnail.Length, _configuration.ThumbnailMaxSizeBytes);
                 return (StatusCodes.BadRequest, null);
             }
+
+            // Validate thumbnail format via magic bytes against allowed formats
+            if (!IsThumbnailFormatAllowed(body.Thumbnail))
+            {
+                _logger.LogDebug("Thumbnail format not allowed or unrecognized");
+                return (StatusCodes.BadRequest, null);
+            }
         }
 
 
 
-        // Convert request types to strings for state key construction
-        var ownerTypeStr = body.OwnerType.ToString().ToLowerInvariant();
-        var ownerIdStr = body.OwnerId.ToString();
         var now = DateTimeOffset.UtcNow;
 
         // Lock the slot to prevent concurrent version number allocation
-        var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerTypeStr, ownerIdStr, body.SlotName);
+        var slotKey = SaveSlotMetadata.BuildStateKey(body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
         await using var slotLock = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SaveLoadLock, slotKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, slotKey, Guid.NewGuid().ToString(), _configuration.SlotWriteLockTimeoutSeconds, cancellationToken);
         if (!slotLock.Success)
         {
             _logger.LogDebug("Could not acquire slot lock for {SlotKey}", slotKey);
@@ -484,7 +474,7 @@ public partial class SaveLoadService : ISaveLoadService
         {
             _logger.LogDebug(
                 "Owner {OwnerId} would exceed storage quota: current {CurrentBytes} + new {NewBytes} > max {MaxBytes}",
-                ownerIdStr, slot.TotalSizeBytes, body.Data.Length, _configuration.MaxTotalSizeBytesPerOwner);
+                body.OwnerId, slot.TotalSizeBytes, body.Data.Length, _configuration.MaxTotalSizeBytesPerOwner);
             return (StatusCodes.BadRequest, null);
         }
 
@@ -492,7 +482,7 @@ public partial class SaveLoadService : ISaveLoadService
         // SaveSlotMetadata.SlotId is now Guid - convert to string for state key
         if (_configuration.ConflictDetectionEnabled && !string.IsNullOrEmpty(body.DeviceId) && slot.LatestVersion.HasValue)
         {
-            var latestVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), slot.LatestVersion.Value);
+            var latestVersionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), slot.LatestVersion.Value);
             var latestVersion = await _versionStore.GetAsync(latestVersionKey, cancellationToken);
             if (latestVersion != null &&
                 !string.IsNullOrEmpty(latestVersion.DeviceId) &&
@@ -562,7 +552,7 @@ public partial class SaveLoadService : ISaveLoadService
         };
 
         // Store version manifest - SlotId is Guid, convert to string for state key
-        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), nextVersion);
+        var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), nextVersion);
         await _versionStore.SaveAsync(versionKey, manifest, cancellationToken: cancellationToken);
 
         // Store in hot cache for immediate load availability - HotSaveEntry fields are now proper types
@@ -578,11 +568,11 @@ public partial class SaveLoadService : ISaveLoadService
             CachedAt = now,
             IsDelta = false
         };
-        var hotKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), nextVersion);
+        var hotKey = HotSaveEntry.BuildStateKey(slot.SlotId.ToString(), nextVersion);
         await _hotCacheStore.SaveAsync(hotKey, hotEntry, cancellationToken: cancellationToken);
 
         // Also update the "latest" hot cache pointer - SlotId is Guid, convert to string
-        var latestHotKey = HotSaveEntry.GetLatestKey(slot.SlotId.ToString());
+        var latestHotKey = HotSaveEntry.BuildLatestKey(slot.SlotId.ToString());
         await _hotCacheStore.SaveAsync(latestHotKey, hotEntry, cancellationToken: cancellationToken);
 
         var uploadPending = false;
@@ -595,6 +585,7 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 UploadId = uploadId,
                 SlotId = slot.SlotId,
+                SlotName = slot.SlotName,
                 VersionNumber = nextVersion,
                 GameId = body.GameId,
                 OwnerId = body.OwnerId,
@@ -610,7 +601,7 @@ public partial class SaveLoadService : ISaveLoadService
                 QueuedAt = now,
                 Priority = GetUploadPriority(slot.Category)
             };
-            var pendingKey = PendingUploadEntry.GetStateKey(uploadId.ToString());
+            var pendingKey = PendingUploadEntry.BuildStateKey(uploadId.ToString());
             await _pendingStore.SaveAsync(pendingKey, pendingEntry, cancellationToken: cancellationToken);
             // Add to tracking set for Redis-based queue processing
             await _pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
@@ -688,18 +679,13 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, LoadResponse?)> LoadAsync(LoadRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.LoadAsync");
         _logger.LogDebug(
             "Loading from slot {SlotName} for {OwnerType}:{OwnerId} in game {GameId}",
             body.SlotName, body.OwnerType, body.OwnerId, body.GameId);
 
 
-        // Convert request types to strings for state key construction
-        var ownerTypeStr = body.OwnerType.ToString().ToLowerInvariant();
-        var ownerIdStr = body.OwnerId.ToString();
-
         // Get the slot
-        var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerTypeStr, ownerIdStr, body.SlotName);
+        var slotKey = SaveSlotMetadata.BuildStateKey(body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
         var slot = await _slotStore.GetAsync(slotKey, cancellationToken);
 
         if (slot == null)
@@ -714,30 +700,31 @@ public partial class SaveLoadService : ISaveLoadService
         if (!string.IsNullOrEmpty(body.CheckpointName))
         {
             // Find version by checkpoint name
-            targetVersion = await _versionDataLoader.FindVersionByCheckpointAsync(slot, body.CheckpointName, _versionStore, cancellationToken);
-            if (targetVersion == 0)
+            var checkpointVersion = await _versionDataLoader.FindVersionByCheckpointAsync(slot, body.CheckpointName, _versionStore, cancellationToken);
+            if (!checkpointVersion.HasValue)
             {
                 _logger.LogDebug("Checkpoint {CheckpointName} not found in slot {SlotId}", body.CheckpointName, slot.SlotId);
                 return (StatusCodes.NotFound, null);
             }
+            targetVersion = checkpointVersion.Value;
         }
-        else if (body.VersionNumber > 0)
+        else if (body.VersionNumber.HasValue)
         {
-            targetVersion = (int)body.VersionNumber;
+            targetVersion = body.VersionNumber.Value;
         }
         else
         {
             // Default to latest
-            targetVersion = slot.LatestVersion ?? 0;
-            if (targetVersion == 0)
+            if (!slot.LatestVersion.HasValue)
             {
                 _logger.LogDebug("No versions exist in slot {SlotId}", slot.SlotId);
                 return (StatusCodes.NotFound, null);
             }
+            targetVersion = slot.LatestVersion.Value;
         }
 
         // Try hot cache first - SlotId is Guid, convert to string for state key
-        var hotKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), targetVersion);
+        var hotKey = HotSaveEntry.BuildStateKey(slot.SlotId.ToString(), targetVersion);
         var hotEntry = await _hotCacheStore.GetAsync(hotKey, cancellationToken);
 
         byte[] decompressedData;
@@ -761,7 +748,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Get manifest for additional metadata if requested
             if (body.IncludeMetadata)
             {
-                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), targetVersion);
+                var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), targetVersion);
                 manifest = await _versionStore.GetAsync(versionKey, cancellationToken);
             }
         }
@@ -770,7 +757,7 @@ public partial class SaveLoadService : ISaveLoadService
             _logger.LogDebug("Hot cache miss for slot {SlotId} version {Version}, fetching from storage", slot.SlotId, targetVersion);
 
             // Get version manifest - SlotId is Guid, convert to string for state key
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), targetVersion);
+            var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), targetVersion);
             manifest = await _versionStore.GetAsync(versionKey, cancellationToken);
 
             if (manifest == null)
@@ -852,7 +839,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SaveDeltaResponse?)> SaveDeltaAsync(SaveDeltaRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.SaveDeltaAsync");
         _logger.LogDebug(
             "Saving delta for slot {SlotName} based on version {BaseVersion}",
             body.SlotName, body.BaseVersion);
@@ -864,10 +850,8 @@ public partial class SaveLoadService : ISaveLoadService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Find the slot - convert types to strings for state key
-        var ownerTypeStr = body.OwnerType.ToString().ToLowerInvariant();
-        var ownerIdStr = body.OwnerId.ToString();
-        var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerTypeStr, ownerIdStr, body.SlotName);
+        // Find the slot
+        var slotKey = SaveSlotMetadata.BuildStateKey(body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
         var slot = await _slotStore.GetAsync(slotKey, cancellationToken);
 
         if (slot == null)
@@ -879,7 +863,7 @@ public partial class SaveLoadService : ISaveLoadService
         // Lock the slot to prevent concurrent version number allocation
         // SlotId is Guid, convert to string for lock
         await using var slotLock = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), _configuration.SlotWriteLockTimeoutSeconds, cancellationToken);
         if (!slotLock.Success)
         {
             _logger.LogDebug("Could not acquire slot lock for {SlotId}", slot.SlotId);
@@ -890,7 +874,7 @@ public partial class SaveLoadService : ISaveLoadService
         slot = await _slotStore.GetAsync(slotKey, cancellationToken) ?? slot;
 
         // Get the base version - SlotId is Guid, convert to string for state key
-        var baseVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), body.BaseVersion);
+        var baseVersionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), body.BaseVersion);
         var baseVersion = await _versionStore.GetAsync(baseVersionKey, cancellationToken);
 
         if (baseVersion == null)
@@ -916,7 +900,7 @@ public partial class SaveLoadService : ISaveLoadService
         while (currentVersion.IsDelta && currentVersion.BaseVersionNumber.HasValue)
         {
             chainLength++;
-            var prevKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), currentVersion.BaseVersionNumber.Value);
+            var prevKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), currentVersion.BaseVersionNumber.Value);
             currentVersion = await _versionStore.GetAsync(prevKey, cancellationToken);
             if (currentVersion == null)
             {
@@ -990,7 +974,7 @@ public partial class SaveLoadService : ISaveLoadService
         };
         var hotCacheTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
         await _hotCacheStore.SaveAsync(
-            hotEntry.GetStateKey(),
+            hotEntry.BuildStateKey(),
             hotEntry,
             new StateOptions { Ttl = hotCacheTtlSeconds },
             cancellationToken);
@@ -1015,7 +999,7 @@ public partial class SaveLoadService : ISaveLoadService
         };
 
         // Save manifest and update slot
-        await _versionStore.SaveAsync(manifest.GetStateKey(), manifest, cancellationToken: cancellationToken);
+        await _versionStore.SaveAsync(manifest.BuildStateKey(), manifest, cancellationToken: cancellationToken);
         await _slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
 
         // Queue for async upload if enabled - PendingUploadEntry fields are now proper types
@@ -1026,6 +1010,7 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 UploadId = uploadId,
                 SlotId = slot.SlotId,
+                SlotName = slot.SlotName,
                 VersionNumber = newVersionNumber,
                 GameId = slot.GameId,
                 OwnerId = slot.OwnerId,
@@ -1043,7 +1028,7 @@ public partial class SaveLoadService : ISaveLoadService
             };
             var pendingTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
             await _pendingStore.SaveAsync(
-                pendingEntry.GetStateKey(),
+                pendingEntry.BuildStateKey(),
                 pendingEntry,
                 new StateOptions { Ttl = pendingTtlSeconds },
                 cancellationToken);
@@ -1091,12 +1076,9 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, LoadResponse?)> LoadWithDeltasAsync(LoadRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.LoadWithDeltasAsync");
-        // VersionNumber 0 means "load latest"
-        var requestedVersion = body.VersionNumber == 0 ? -1 : body.VersionNumber;
         _logger.LogDebug(
             "Loading with delta reconstruction for slot {SlotName} version {Version}",
-            body.SlotName, requestedVersion);
+            body.SlotName, body.VersionNumber?.ToString() ?? "latest");
 
         // Find the slot
         var slot = await FindSlotByOwnerAndNameAsync(
@@ -1111,17 +1093,23 @@ public partial class SaveLoadService : ISaveLoadService
             return (StatusCodes.NotFound, null);
         }
 
-        // Get the target version (0 or null means latest)
-        var versionNumber = (body.VersionNumber == null || body.VersionNumber == 0)
-            ? (slot.LatestVersion ?? 0)
-            : body.VersionNumber.Value;
-        if (versionNumber == 0)
+        // Get the target version (null means latest)
+        int versionNumber;
+        if (body.VersionNumber.HasValue)
         {
-            _logger.LogDebug("Slot {SlotName} has no versions", body.SlotName);
-            return (StatusCodes.NotFound, null);
+            versionNumber = body.VersionNumber.Value;
+        }
+        else
+        {
+            if (!slot.LatestVersion.HasValue)
+            {
+                _logger.LogDebug("Slot {SlotName} has no versions", body.SlotName);
+                return (StatusCodes.NotFound, null);
+            }
+            versionNumber = slot.LatestVersion.Value;
         }
 
-        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), versionNumber);
+        var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), versionNumber);
         var version = await _versionStore.GetAsync(versionKey, cancellationToken);
 
         if (version == null)
@@ -1192,15 +1180,12 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SaveResponse?)> CollapseDeltasAsync(CollapseDeltasRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.CollapseDeltasAsync");
         _logger.LogDebug(
             "Collapsing deltas for slot {SlotName} to version {Version}",
             body.SlotName, body.VersionNumber ?? -1);
 
         // Find the slot
-        var ownerType = body.OwnerType.ToString().ToLowerInvariant();
-        var ownerId = body.OwnerId.ToString();
-        var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerType, ownerId, body.SlotName);
+        var slotKey = SaveSlotMetadata.BuildStateKey(body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
         var slot = await _slotStore.GetAsync(slotKey, cancellationToken);
 
         if (slot == null)
@@ -1217,7 +1202,7 @@ public partial class SaveLoadService : ISaveLoadService
             return (StatusCodes.NotFound, null);
         }
         // SlotId is Guid - convert to string for state key
-        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), versionToFetch.Value);
+        var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), versionToFetch.Value);
         var (targetVersion, versionEtag) = await _versionStore.GetWithETagAsync(versionKey, cancellationToken);
 
         if (targetVersion == null)
@@ -1261,7 +1246,7 @@ public partial class SaveLoadService : ISaveLoadService
         while (currentVersion.IsDelta && currentVersion.BaseVersionNumber.HasValue)
         {
             intermediateVersions.Add(currentVersion);
-            var prevKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), currentVersion.BaseVersionNumber.Value);
+            var prevKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), currentVersion.BaseVersionNumber.Value);
             currentVersion = await _versionStore.GetAsync(prevKey, cancellationToken);
             if (currentVersion == null)
             {
@@ -1290,7 +1275,7 @@ public partial class SaveLoadService : ISaveLoadService
         targetVersion.UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.Pending : UploadStatus.Complete;
 
         // Save updated manifest with optimistic concurrency
-        var newEtag = await _versionStore.TrySaveAsync(targetVersion.GetStateKey(), targetVersion, versionEtag ?? string.Empty, cancellationToken: cancellationToken);
+        var newEtag = await _versionStore.TrySaveAsync(targetVersion.BuildStateKey(), targetVersion, versionEtag ?? string.Empty, cancellationToken: cancellationToken);
         if (newEtag == null)
         {
             _logger.LogDebug("Concurrent modification detected for version {Version} in slot {SlotId}",
@@ -1313,7 +1298,7 @@ public partial class SaveLoadService : ISaveLoadService
         };
         var hotCacheTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
         await _hotCacheStore.SaveAsync(
-            hotEntry.GetStateKey(),
+            hotEntry.BuildStateKey(),
             hotEntry,
             new StateOptions { Ttl = hotCacheTtlSeconds },
             cancellationToken);
@@ -1326,6 +1311,7 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 UploadId = uploadId,
                 SlotId = slot.SlotId,
+                SlotName = slot.SlotName,
                 VersionNumber = resolvedVersionNumber,
                 GameId = slot.GameId,
                 OwnerId = slot.OwnerId,
@@ -1339,7 +1325,7 @@ public partial class SaveLoadService : ISaveLoadService
             };
             var pendingTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
             await _pendingStore.SaveAsync(
-                pendingEntry.GetStateKey(),
+                pendingEntry.BuildStateKey(),
                 pendingEntry,
                 new StateOptions { Ttl = pendingTtlSeconds },
                 cancellationToken);
@@ -1364,7 +1350,7 @@ public partial class SaveLoadService : ISaveLoadService
                     continue;
                 }
 
-                await _versionStore.DeleteAsync(intermediate.GetStateKey(), cancellationToken);
+                await _versionStore.DeleteAsync(intermediate.BuildStateKey(), cancellationToken);
                 _logger.LogDebug("Deleted intermediate delta version {Version}", intermediate.VersionNumber);
             }
         }
@@ -1389,7 +1375,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, ListVersionsResponse?)> ListVersionsAsync(ListVersionsRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.ListVersionsAsync");
         _logger.LogDebug(
             "Listing versions for slot {SlotName} owner {OwnerId} ({OwnerType})",
             body.SlotName, body.OwnerId, body.OwnerType);
@@ -1442,7 +1427,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, VersionResponse?)> PinVersionAsync(PinVersionRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.PinVersionAsync");
         _logger.LogDebug(
             "Pinning version {Version} in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
@@ -1455,7 +1439,7 @@ public partial class SaveLoadService : ISaveLoadService
         }
 
         // Get the version with ETag for optimistic concurrency
-        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), body.VersionNumber);
+        var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), body.VersionNumber);
         var (version, versionEtag) = await _versionStore.GetWithETagAsync(versionKey, cancellationToken);
 
         if (version == null)
@@ -1499,7 +1483,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, VersionResponse?)> UnpinVersionAsync(UnpinVersionRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.UnpinVersionAsync");
         _logger.LogDebug(
             "Unpinning version {Version} in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
@@ -1512,7 +1495,7 @@ public partial class SaveLoadService : ISaveLoadService
         }
 
         // Get the version with ETag for optimistic concurrency
-        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), body.VersionNumber);
+        var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), body.VersionNumber);
         var (version, versionEtag) = await _versionStore.GetWithETagAsync(versionKey, cancellationToken);
 
         if (version == null)
@@ -1557,7 +1540,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, DeleteVersionResponse?)> DeleteVersionAsync(DeleteVersionRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.DeleteVersionAsync");
         _logger.LogDebug(
             "Deleting version {Version} in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
@@ -1571,7 +1553,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Lock the slot to prevent concurrent metadata modifications
         await using var slotLock = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), _configuration.SlotMetadataLockTimeoutSeconds, cancellationToken);
         if (!slotLock.Success)
         {
             _logger.LogDebug("Could not acquire slot lock for {SlotId}", slot.SlotId);
@@ -1579,7 +1561,7 @@ public partial class SaveLoadService : ISaveLoadService
         }
 
         // Get the version
-        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), body.VersionNumber);
+        var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), body.VersionNumber);
         var version = await _versionStore.GetAsync(versionKey, cancellationToken);
 
         if (version == null)
@@ -1603,7 +1585,10 @@ public partial class SaveLoadService : ISaveLoadService
         {
             try
             {
-                await _assetClient.DeleteAssetAsync(new DeleteAssetRequest { AssetId = version.AssetId.Value.ToString() }, cancellationToken);
+                // L3 soft dependency per FOUNDATION TENETS
+                var deleteAssetClient = _serviceProvider.GetService<IAssetClient>();
+                if (deleteAssetClient != null)
+                    await deleteAssetClient.DeleteAssetAsync(new DeleteAssetRequest { AssetId = version.AssetId.Value.ToString() }, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -1616,11 +1601,11 @@ public partial class SaveLoadService : ISaveLoadService
         await _versionStore.DeleteAsync(versionKey, cancellationToken);
 
         // Delete from hot cache if present
-        var hotCacheKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), body.VersionNumber);
+        var hotCacheKey = HotSaveEntry.BuildStateKey(slot.SlotId.ToString(), body.VersionNumber);
         await _hotCacheStore.DeleteAsync(hotCacheKey, cancellationToken);
 
         // Re-read slot metadata under lock for accurate update
-        slot = await _slotStore.GetAsync(slot.GetStateKey(), cancellationToken) ?? slot;
+        slot = await _slotStore.GetAsync(slot.BuildStateKey(), cancellationToken) ?? slot;
         slot.VersionCount = Math.Max(0, slot.VersionCount - 1);
         slot.TotalSizeBytes = Math.Max(0, slot.TotalSizeBytes - bytesFreed);
         slot.UpdatedAt = DateTimeOffset.UtcNow;
@@ -1634,7 +1619,7 @@ public partial class SaveLoadService : ISaveLoadService
             slot.LatestVersion = remainingVersions.OrderByDescending(v => v.VersionNumber).FirstOrDefault()?.VersionNumber;
         }
 
-        await _slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
+        await _slotStore.SaveAsync(slot.BuildStateKey(), slot, cancellationToken: cancellationToken);
         await PublishSaveSlotUpdatedEventAsync(slot, ["versionCount", "totalSizeBytes", "latestVersion"], cancellationToken);
 
         _logger.LogDebug(
@@ -1663,7 +1648,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, QuerySavesResponse?)> QuerySavesAsync(QuerySavesRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.QuerySavesAsync");
         _logger.LogDebug(
             "Querying saves for owner {OwnerId} ({OwnerType})",
             body.OwnerId, body.OwnerType);
@@ -1798,16 +1782,13 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SaveResponse?)> CopySaveAsync(CopySaveRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.CopySaveAsync");
         _logger.LogDebug(
             "Copying save from {SourceSlot} to {TargetSlot}",
             body.SourceSlotName, body.TargetSlotName);
 
 
         // Find source slot
-        var sourceOwnerType = body.SourceOwnerType.ToString().ToLowerInvariant();
-        var sourceOwnerId = body.SourceOwnerId.ToString();
-        var sourceSlotKey = SaveSlotMetadata.GetStateKey(body.SourceGameId, sourceOwnerType, sourceOwnerId, body.SourceSlotName);
+        var sourceSlotKey = SaveSlotMetadata.BuildStateKey(body.SourceGameId, body.SourceOwnerType, body.SourceOwnerId, body.SourceSlotName);
         var sourceSlot = await _slotStore.GetAsync(sourceSlotKey, cancellationToken);
 
         if (sourceSlot == null)
@@ -1823,7 +1804,7 @@ public partial class SaveLoadService : ISaveLoadService
             _logger.LogDebug("Source slot has no versions");
             return (StatusCodes.NotFound, null);
         }
-        var sourceVersionKey = SaveVersionManifest.GetStateKey(sourceSlot.SlotId.ToString(), sourceVersionNumber.Value);
+        var sourceVersionKey = SaveVersionManifest.BuildStateKey(sourceSlot.SlotId.ToString(), sourceVersionNumber.Value);
         var sourceVersion = await _versionStore.GetAsync(sourceVersionKey, cancellationToken);
 
         if (sourceVersion == null)
@@ -1847,12 +1828,10 @@ public partial class SaveLoadService : ISaveLoadService
         }
 
         // Find or create target slot (lock to prevent concurrent version number allocation)
-        var targetOwnerType = body.TargetOwnerType.ToString().ToLowerInvariant();
-        var targetOwnerId = body.TargetOwnerId.ToString();
-        var targetSlotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerType, targetOwnerId, body.TargetSlotName);
+        var targetSlotKey = SaveSlotMetadata.BuildStateKey(body.TargetGameId, body.TargetOwnerType, body.TargetOwnerId, body.TargetSlotName);
 
         await using var targetSlotLock = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SaveLoadLock, targetSlotKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, targetSlotKey, Guid.NewGuid().ToString(), _configuration.SlotWriteLockTimeoutSeconds, cancellationToken);
         if (!targetSlotLock.Success)
         {
             _logger.LogDebug("Could not acquire target slot lock for {SlotKey}", targetSlotKey);
@@ -1878,7 +1857,7 @@ public partial class SaveLoadService : ISaveLoadService
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
-            await _slotStore.SaveAsync(targetSlot.GetStateKey(), targetSlot, cancellationToken: cancellationToken);
+            await _slotStore.SaveAsync(targetSlot.BuildStateKey(), targetSlot, cancellationToken: cancellationToken);
         }
 
         // Create new version in target slot
@@ -1909,12 +1888,12 @@ public partial class SaveLoadService : ISaveLoadService
             UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.Pending : UploadStatus.Complete,
             CreatedAt = DateTimeOffset.UtcNow
         };
-        await _versionStore.SaveAsync(newVersion.GetStateKey(), newVersion, cancellationToken: cancellationToken);
+        await _versionStore.SaveAsync(newVersion.BuildStateKey(), newVersion, cancellationToken: cancellationToken);
 
         // Update target slot
         targetSlot.LatestVersion = newVersionNumber;
         targetSlot.UpdatedAt = DateTimeOffset.UtcNow;
-        await _slotStore.SaveAsync(targetSlot.GetStateKey(), targetSlot, cancellationToken: cancellationToken);
+        await _slotStore.SaveAsync(targetSlot.BuildStateKey(), targetSlot, cancellationToken: cancellationToken);
 
         // Store in hot cache
         var hotEntry = new HotSaveEntry
@@ -1930,7 +1909,7 @@ public partial class SaveLoadService : ISaveLoadService
         };
         var hotCacheTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
         await _hotCacheStore.SaveAsync(
-            hotEntry.GetStateKey(),
+            hotEntry.BuildStateKey(),
             hotEntry,
             new StateOptions { Ttl = hotCacheTtlSeconds },
             cancellationToken);
@@ -1943,6 +1922,7 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 UploadId = uploadId,
                 SlotId = targetSlot.SlotId,
+                SlotName = targetSlot.SlotName,
                 VersionNumber = newVersionNumber,
                 GameId = body.TargetGameId,
                 OwnerId = body.TargetOwnerId,
@@ -1955,7 +1935,7 @@ public partial class SaveLoadService : ISaveLoadService
             };
             var pendingTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
             await _pendingStore.SaveAsync(
-                pendingEntry.GetStateKey(),
+                pendingEntry.BuildStateKey(),
                 pendingEntry,
                 new StateOptions { Ttl = pendingTtlSeconds },
                 cancellationToken);
@@ -1983,7 +1963,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, ExportSavesResponse?)> ExportSavesAsync(ExportSavesRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.ExportSavesAsync");
         return await _saveExportImportManager.ExportSavesAsync(body, cancellationToken);
     }
 
@@ -1993,7 +1972,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, ImportSavesResponse?)> ImportSavesAsync(ImportSavesRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.ImportSavesAsync");
         return await _saveExportImportManager.ImportSavesAsync(body, cancellationToken);
     }
 
@@ -2003,16 +1981,12 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, VerifyIntegrityResponse?)> VerifyIntegrityAsync(VerifyIntegrityRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.VerifyIntegrityAsync");
         _logger.LogDebug(
             "Verifying integrity for slot {SlotName} owner {OwnerId}",
             body.SlotName, body.OwnerId);
 
-        var ownerIdStr = body.OwnerId.ToString();
-        var ownerTypeStr = body.OwnerType.ToString().ToLowerInvariant();
-
         // Find the slot
-        var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerTypeStr, ownerIdStr, body.SlotName);
+        var slotKey = SaveSlotMetadata.BuildStateKey(body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
         var slot = await _slotStore.GetAsync(slotKey, cancellationToken);
 
         if (slot == null)
@@ -2029,7 +2003,7 @@ public partial class SaveLoadService : ISaveLoadService
             return (StatusCodes.NotFound, null);
         }
 
-        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), versionNumber.Value);
+        var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), versionNumber.Value);
         var version = await _versionStore.GetAsync(versionKey, cancellationToken);
 
         if (version == null)
@@ -2079,13 +2053,12 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SaveResponse?)> PromoteVersionAsync(PromoteVersionRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.PromoteVersionAsync");
         _logger.LogDebug(
             "Promoting version {Version} to latest in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
 
         // Get the slot
-        var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, body.OwnerType.ToString().ToLowerInvariant(), body.OwnerId.ToString(), body.SlotName);
+        var slotKey = SaveSlotMetadata.BuildStateKey(body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
         var slot = await _slotStore.GetAsync(slotKey, cancellationToken);
 
         if (slot == null)
@@ -2095,7 +2068,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Lock the slot to prevent concurrent version number allocation
         await using var slotLock = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), _configuration.SlotWriteLockTimeoutSeconds, cancellationToken);
         if (!slotLock.Success)
         {
             _logger.LogDebug("Could not acquire slot lock for {SlotId}", slot.SlotId);
@@ -2106,7 +2079,7 @@ public partial class SaveLoadService : ISaveLoadService
         slot = await _slotStore.GetAsync(slotKey, cancellationToken) ?? slot;
 
         // Get the source version
-        var sourceVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), body.VersionNumber);
+        var sourceVersionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), body.VersionNumber);
         var sourceVersion = await _versionStore.GetAsync(sourceVersionKey, cancellationToken);
 
         if (sourceVersion == null)
@@ -2117,7 +2090,7 @@ public partial class SaveLoadService : ISaveLoadService
         // Get the data from hot cache or asset service
         byte[] data;
 
-        var hotCacheKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), body.VersionNumber);
+        var hotCacheKey = HotSaveEntry.BuildStateKey(slot.SlotId.ToString(), body.VersionNumber);
         var hotEntry = await _hotCacheStore.GetAsync(hotCacheKey, cancellationToken);
 
         if (hotEntry != null)
@@ -2126,7 +2099,13 @@ public partial class SaveLoadService : ISaveLoadService
         }
         else if (sourceVersion.AssetId.HasValue)
         {
-            var assetResponse = await _assetClient.GetAssetAsync(new GetAssetRequest { AssetId = sourceVersion.AssetId.Value.ToString() }, cancellationToken);
+            var assetClient = _serviceProvider.GetService<IAssetClient>();
+            if (assetClient == null)
+            {
+                _logger.LogWarning("Asset service not available, cannot load save data from cold storage");
+                return (StatusCodes.ServiceUnavailable, null);
+            }
+            var assetResponse = await assetClient.GetAssetAsync(new GetAssetRequest { AssetId = sourceVersion.AssetId.Value.ToString() }, cancellationToken);
             if (assetResponse?.DownloadUrl == null)
             {
                 _logger.LogError("Failed to get download URL for asset {AssetId}", sourceVersion.AssetId);
@@ -2183,7 +2162,7 @@ public partial class SaveLoadService : ISaveLoadService
             ContentHash = sourceVersion.ContentHash,
             CachedAt = DateTimeOffset.UtcNow
         };
-        var newHotCacheKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), newVersionNumber);
+        var newHotCacheKey = HotSaveEntry.BuildStateKey(slot.SlotId.ToString(), newVersionNumber);
         await _hotCacheStore.SaveAsync(newHotCacheKey, newHotEntry, cancellationToken: cancellationToken);
 
         // Queue for async upload
@@ -2194,6 +2173,7 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 UploadId = uploadId,
                 SlotId = slot.SlotId,
+                SlotName = slot.SlotName,
                 VersionNumber = newVersionNumber,
                 GameId = slot.GameId,
                 OwnerId = slot.OwnerId,
@@ -2206,13 +2186,13 @@ public partial class SaveLoadService : ISaveLoadService
                 AttemptCount = 0,
                 QueuedAt = DateTimeOffset.UtcNow
             };
-            await _pendingStore.SaveAsync(pendingEntry.GetStateKey(), pendingEntry, cancellationToken: cancellationToken);
+            await _pendingStore.SaveAsync(pendingEntry.BuildStateKey(), pendingEntry, cancellationToken: cancellationToken);
             // Add to tracking set for Redis-based queue processing
             await _pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
         }
 
         // Save version manifest
-        var newVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), newVersionNumber);
+        var newVersionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), newVersionNumber);
         await _versionStore.SaveAsync(newVersionKey, newVersion, cancellationToken: cancellationToken);
 
         slot.LatestVersion = newVersionNumber;
@@ -2259,7 +2239,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, AdminCleanupResponse?)> AdminCleanupAsync(AdminCleanupRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.AdminCleanupAsync");
         _logger.LogDebug(
             "Executing AdminCleanup: dryRun={DryRun}, olderThanDays={Days}, category={Category}",
             body.DryRun, body.OlderThanDays, body.Category);
@@ -2300,17 +2279,19 @@ public partial class SaveLoadService : ISaveLoadService
 
                 if (!body.DryRun)
                 {
-                    var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), version.VersionNumber);
+                    var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), version.VersionNumber);
                     await _versionQueryStore.DeleteAsync(versionKey, cancellationToken);
 
-                    // Delete asset if exists
+                    // Delete asset if exists (L3 soft dependency per FOUNDATION TENETS)
                     if (version.AssetId.HasValue)
                     {
                         try
                         {
-                            await _assetClient.DeleteAssetAsync(
-                                new DeleteAssetRequest { AssetId = version.AssetId.Value.ToString() },
-                                cancellationToken);
+                            var cleanupAssetClient = _serviceProvider.GetService<IAssetClient>();
+                            if (cleanupAssetClient != null)
+                                await cleanupAssetClient.DeleteAssetAsync(
+                                    new DeleteAssetRequest { AssetId = version.AssetId.Value.ToString() },
+                                    cancellationToken);
                         }
                         catch (Exception ex)
                         {
@@ -2327,7 +2308,7 @@ public partial class SaveLoadService : ISaveLoadService
                 slotsDeleted++;
                 if (!body.DryRun)
                 {
-                    await _slotQueryStore.DeleteAsync(slot.GetStateKey(), cancellationToken);
+                    await _slotQueryStore.DeleteAsync(slot.BuildStateKey(), cancellationToken);
                     await PublishSaveSlotDeletedEventAsync(slot, "Admin cleanup - empty slot", cancellationToken);
                 }
             }
@@ -2336,7 +2317,7 @@ public partial class SaveLoadService : ISaveLoadService
                 slot.VersionCount = remainingVersions;
                 slot.TotalSizeBytes -= slotBytesFreed;
                 slot.UpdatedAt = DateTimeOffset.UtcNow;
-                await _slotQueryStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
+                await _slotQueryStore.SaveAsync(slot.BuildStateKey(), slot, cancellationToken: cancellationToken);
                 await PublishSaveSlotUpdatedEventAsync(slot, ["versionCount", "totalSizeBytes"], cancellationToken);
             }
         }
@@ -2350,8 +2331,7 @@ public partial class SaveLoadService : ISaveLoadService
         {
             VersionsDeleted = versionsDeleted,
             SlotsDeleted = slotsDeleted,
-            BytesFreed = bytesFreed,
-            DryRun = body.DryRun
+            BytesFreed = bytesFreed
         });
     }
 
@@ -2361,7 +2341,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, AdminStatsResponse?)> AdminStatsAsync(AdminStatsRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.AdminStatsAsync");
         _logger.LogDebug("Executing AdminStats with groupBy={GroupBy}", body.GroupBy);
 
         // Get all slots
@@ -2533,7 +2512,6 @@ public partial class SaveLoadService : ISaveLoadService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.FindSlotByOwnerAndNameAsync");
-
         var matchingSlots = await _slotQueryStore.QueryAsync(
             s => s.OwnerId == ownerId &&
                 s.OwnerType == ownerType &&
@@ -2553,7 +2531,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SchemaResponse?)> RegisterSchemaAsync(RegisterSchemaRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.RegisterSchemaAsync");
         return await _saveMigrationHandler.RegisterSchemaAsync(body, cancellationToken);
     }
 
@@ -2563,7 +2540,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, ListSchemasResponse?)> ListSchemasAsync(ListSchemasRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.ListSchemasAsync");
         return await _saveMigrationHandler.ListSchemasAsync(body, cancellationToken);
     }
 
@@ -2574,7 +2550,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, MigrateSaveResponse?)> MigrateSaveAsync(MigrateSaveRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.MigrateSaveAsync");
         return await _saveMigrationHandler.MigrateSaveAsync(body, cancellationToken);
     }
 
@@ -2667,6 +2642,37 @@ public partial class SaveLoadService : ISaveLoadService
 
         await _messageBus.PublishSaveSlotDeletedAsync(eventModel, cancellationToken);
         _logger.LogDebug("Published SaveSlotDeletedEvent for slot: {SlotId}", slot.SlotId);
+    }
+
+    #endregion
+
+    #region Thumbnail Validation
+
+    /// <summary>
+    /// Checks whether a thumbnail's image format (detected via magic bytes) is allowed
+    /// by the current configuration.
+    /// </summary>
+    private bool IsThumbnailFormatAllowed(byte[] thumbnail)
+    {
+        if (thumbnail.Length < 4)
+            return false;
+
+        // JPEG: FF D8 FF
+        if (thumbnail.Length >= 3 && thumbnail[0] == 0xFF && thumbnail[1] == 0xD8 && thumbnail[2] == 0xFF)
+            return _configuration.ThumbnailAllowJpeg;
+
+        // PNG: 89 50 4E 47 (‰PNG)
+        if (thumbnail[0] == 0x89 && thumbnail[1] == 0x50 && thumbnail[2] == 0x4E && thumbnail[3] == 0x47)
+            return _configuration.ThumbnailAllowPng;
+
+        // WebP: RIFF....WEBP (bytes 0-3 = "RIFF", bytes 8-11 = "WEBP")
+        if (thumbnail.Length >= 12
+            && thumbnail[0] == 0x52 && thumbnail[1] == 0x49 && thumbnail[2] == 0x46 && thumbnail[3] == 0x46
+            && thumbnail[8] == 0x57 && thumbnail[9] == 0x45 && thumbnail[10] == 0x42 && thumbnail[11] == 0x50)
+            return _configuration.ThumbnailAllowWebp;
+
+        // Unrecognized format
+        return false;
     }
 
     #endregion

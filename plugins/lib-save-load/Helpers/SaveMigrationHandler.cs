@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.SaveLoad.Compression;
 using BeyondImmersion.BannouService.SaveLoad.Migration;
 using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
@@ -24,7 +25,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
     /// <summary>Store for version manifests (basic CRUD operations).</summary>
     private readonly IStateStore<SaveVersionManifest> _versionStore;
     private readonly SaveLoadServiceConfiguration _configuration;
-    private readonly IAssetClient _assetClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IVersionDataLoader _versionDataLoader;
     private readonly IMessageBus _messageBus;
@@ -37,7 +38,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
     public SaveMigrationHandler(
         IStateStoreFactory stateStoreFactory,
         SaveLoadServiceConfiguration configuration,
-        IAssetClient assetClient,
+        IServiceProvider serviceProvider,
         IHttpClientFactory httpClientFactory,
         IVersionDataLoader versionDataLoader,
         IMessageBus messageBus,
@@ -49,7 +50,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         _slotQueryStore = stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
         _versionStore = stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
         _configuration = configuration;
-        _assetClient = assetClient;
+        _serviceProvider = serviceProvider;
         _httpClientFactory = httpClientFactory;
         _versionDataLoader = versionDataLoader;
         _messageBus = messageBus;
@@ -68,7 +69,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             body.Namespace, body.SchemaVersion);
 
         // Check if schema already exists
-        var schemaKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.SchemaVersion);
+        var schemaKey = SaveSchemaDefinition.BuildStateKey(body.Namespace, body.SchemaVersion);
         var existingSchema = await _schemaStore.GetAsync(schemaKey, cancellationToken);
         if (existingSchema != null)
         {
@@ -81,7 +82,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         // Validate previous version exists if specified
         if (!string.IsNullOrEmpty(body.PreviousVersion))
         {
-            var previousKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.PreviousVersion);
+            var previousKey = SaveSchemaDefinition.BuildStateKey(body.Namespace, body.PreviousVersion);
             var previousSchema = await _schemaStore.GetAsync(previousKey, cancellationToken);
             if (previousSchema == null)
             {
@@ -219,18 +220,26 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             return (StatusCodes.NotFound, null);
         }
 
-        var slotKey = SaveSlotMetadata.GetStateKey(slot.GameId, body.OwnerType.ToString().ToLowerInvariant(), body.OwnerId.ToString(), body.SlotName);
+        var slotKey = SaveSlotMetadata.BuildStateKey(slot.GameId, body.OwnerType, body.OwnerId, body.SlotName);
 
         // Get source version
-        var versionNumber = body.VersionNumber > 0 ? body.VersionNumber : (slot.LatestVersion ?? 0);
-        if (versionNumber == 0)
+        int versionNumber;
+        if (body.VersionNumber.HasValue)
+        {
+            versionNumber = body.VersionNumber.Value;
+        }
+        else if (slot.LatestVersion.HasValue)
+        {
+            versionNumber = slot.LatestVersion.Value;
+        }
+        else
         {
             _logger.LogWarning("No versions found for slot {SlotId}", slot.SlotId);
             return (StatusCodes.NotFound, null);
         }
 
         // SlotId is Guid - convert to string for state key
-        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), versionNumber);
+        var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), versionNumber);
         var version = await _versionStore.GetAsync(versionKey, cancellationToken);
 
         if (version == null)
@@ -257,8 +266,8 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             });
         }
 
-        // Create migrator and find migration path (default max 10 steps)
-        var migrator = new SchemaMigrator(_logger, _schemaQueryStore, _telemetryProvider, maxMigrationSteps: 10);
+        // Create migrator and find migration path
+        var migrator = new SchemaMigrator(_logger, _schemaQueryStore, _telemetryProvider, maxMigrationSteps: _configuration.MaxMigrationSteps);
         var migrationPath = await migrator.FindMigrationPathAsync(
             slot.GameId,
             currentSchemaVersion,
@@ -308,7 +317,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         }
 
         // Save the migrated data as a new version
-        var newVersionNumber = (slot.LatestVersion ?? 0) + 1;
+        var newVersionNumber = (slot.LatestVersion.HasValue ? slot.LatestVersion.Value : 0) + 1;
 
         // Compress data
         var compressionType = slot.CompressionType;
@@ -330,7 +339,15 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             Metadata = new AssetMetadataInput { AssetType = AssetType.Other }
         };
 
-        var uploadResponse = await _assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
+        // L3 soft dependency per FOUNDATION TENETS — Asset service may not be enabled
+        var assetClient = _serviceProvider.GetService<IAssetClient>();
+        if (assetClient == null)
+        {
+            _logger.LogDebug("Asset service not available, migration requires asset storage for new version");
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        var uploadResponse = await assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
         if (uploadResponse?.UploadUrl == null)
         {
             _logger.LogError("Failed to request upload URL for migrated save");
@@ -349,7 +366,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         }
 
         var completeRequest = new CompleteUploadRequest { UploadId = uploadResponse.UploadId };
-        var assetMetadata = await _assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
+        var assetMetadata = await assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
 
         if (assetMetadata == null)
         {
@@ -375,7 +392,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             Metadata = version.Metadata != null ? new Dictionary<string, object>(version.Metadata) : new Dictionary<string, object>()
         };
 
-        var newVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), newVersionNumber);
+        var newVersionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), newVersionNumber);
         await _versionStore.SaveAsync(newVersionKey, newVersion, cancellationToken: cancellationToken);
 
         // Update slot's latest version

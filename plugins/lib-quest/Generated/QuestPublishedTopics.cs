@@ -17,6 +17,15 @@ namespace BeyondImmersion.BannouService.Quest;
 /// </remarks>
 public static class QuestPublishedTopics
 {
+    /// <summary>Published when a new quest definition is created.</summary>
+    public const string QuestDefinitionCreated = "quest.definition.created";
+
+    /// <summary>Published when a quest definition is updated (including deprecation via changedFields).</summary>
+    public const string QuestDefinitionUpdated = "quest.definition.updated";
+
+    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
+    public const string QuestDefinitionDeleted = "quest.definition.deleted";
+
     /// <summary>Published when a character accepts a quest.</summary>
     public const string QuestAccepted = "quest.accepted";
 

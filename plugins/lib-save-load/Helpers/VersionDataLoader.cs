@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.SaveLoad.Compression;
 using BeyondImmersion.BannouService.SaveLoad.Delta;
 using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
@@ -16,7 +17,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
     /// <summary>Hot cache store for fast save data retrieval (Redis-backed with TTL).</summary>
     private readonly IStateStore<HotSaveEntry> _hotCacheStore;
     private readonly SaveLoadServiceConfiguration _configuration;
-    private readonly IAssetClient _assetClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<VersionDataLoader> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -26,21 +27,21 @@ public sealed class VersionDataLoader : IVersionDataLoader
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for hot cache and version data access.</param>
     /// <param name="configuration">Save-load service configuration.</param>
-    /// <param name="assetClient">Asset client for download URL retrieval.</param>
+    /// <param name="serviceProvider">Service provider for L3 soft dependency resolution.</param>
     /// <param name="httpClientFactory">HTTP client factory for presigned URL downloads.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public VersionDataLoader(
         IStateStoreFactory stateStoreFactory,
         SaveLoadServiceConfiguration configuration,
-        IAssetClient assetClient,
+        IServiceProvider serviceProvider,
         IHttpClientFactory httpClientFactory,
         ILogger<VersionDataLoader> logger,
         ITelemetryProvider telemetryProvider)
     {
         _hotCacheStore = stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
         _configuration = configuration;
-        _assetClient = assetClient;
+        _serviceProvider = serviceProvider;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _telemetryProvider = telemetryProvider;
@@ -54,7 +55,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionDataLoader.LoadVersionDataAsync");
         // Try hot cache first
-        var hotKey = HotSaveEntry.GetStateKey(slotId, version.VersionNumber);
+        var hotKey = HotSaveEntry.BuildStateKey(slotId, version.VersionNumber);
         var hotEntry = await _hotCacheStore.GetAsync(hotKey, cancellationToken);
 
         if (hotEntry != null)
@@ -81,7 +82,15 @@ public sealed class VersionDataLoader : IVersionDataLoader
 
         try
         {
-            var assetResponse = await _assetClient.GetAssetAsync(
+            // L3 soft dependency per FOUNDATION TENETS — Asset service may not be enabled
+            var assetClient = _serviceProvider.GetService<IAssetClient>();
+            if (assetClient == null)
+            {
+                _logger.LogDebug("Asset service not available, cannot load version data from storage");
+                return null;
+            }
+
+            var assetResponse = await assetClient.GetAssetAsync(
                 new GetAssetRequest { AssetId = assetGuid.ToString() },
                 cancellationToken);
 
@@ -118,7 +127,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
         while (current.IsDelta && current.BaseVersionNumber.HasValue)
         {
             chain.Add(current);
-            var baseKey = SaveVersionManifest.GetStateKey(slotId, current.BaseVersionNumber.Value);
+            var baseKey = SaveVersionManifest.BuildStateKey(slotId, current.BaseVersionNumber.Value);
             current = await versionStore.GetAsync(baseKey, cancellationToken);
 
             if (current == null)
@@ -180,12 +189,20 @@ public sealed class VersionDataLoader : IVersionDataLoader
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionDataLoader.LoadFromAssetServiceAsync");
         try
         {
+            // L3 soft dependency per FOUNDATION TENETS — Asset service may not be enabled
+            var assetClient = _serviceProvider.GetService<IAssetClient>();
+            if (assetClient == null)
+            {
+                _logger.LogDebug("Asset service not available, cannot load from asset storage");
+                return null;
+            }
+
             var getRequest = new GetAssetRequest
             {
                 AssetId = assetId
             };
 
-            var response = await _assetClient.GetAssetAsync(getRequest, cancellationToken);
+            var response = await assetClient.GetAssetAsync(getRequest, cancellationToken);
 
             if (response?.DownloadUrl == null)
             {
@@ -244,7 +261,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
                 IsDelta = manifest.IsDelta
             };
 
-            var hotKey = HotSaveEntry.GetStateKey(slotId, versionNumber);
+            var hotKey = HotSaveEntry.BuildStateKey(slotId, versionNumber);
             await hotCacheStore.SaveAsync(hotKey, hotEntry, cancellationToken: cancellationToken);
 
             _logger.LogDebug("Cached version {Version} in hot store ({Size} bytes)", versionNumber, dataToStore.Length);
@@ -257,7 +274,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
     }
 
     /// <inheritdoc />
-    public async Task<int> FindVersionByCheckpointAsync(
+    public async Task<int?> FindVersionByCheckpointAsync(
         SaveSlotMetadata slot,
         string checkpointName,
         IStateStore<SaveVersionManifest> versionStore,
@@ -265,10 +282,14 @@ public sealed class VersionDataLoader : IVersionDataLoader
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionDataLoader.FindVersionByCheckpointAsync");
         // Search through versions from newest to oldest
-        // SaveSlotMetadata.SlotId is now Guid - convert to string for state key
-        for (var v = slot.LatestVersion ?? 0; v >= 1; v--)
+        if (!slot.LatestVersion.HasValue)
         {
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), v);
+            return null;
+        }
+
+        for (var v = slot.LatestVersion.Value; v >= 1; v--)
+        {
+            var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), v);
             var manifest = await versionStore.GetAsync(versionKey, cancellationToken);
 
             if (manifest?.CheckpointName == checkpointName)
@@ -279,6 +300,6 @@ public sealed class VersionDataLoader : IVersionDataLoader
         }
 
         _logger.LogDebug("Checkpoint {CheckpointName} not found in slot {SlotId}", checkpointName, slot.SlotId);
-        return 0;
+        return null;
     }
 }

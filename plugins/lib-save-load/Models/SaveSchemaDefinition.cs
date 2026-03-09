@@ -42,10 +42,8 @@ public class SaveSchemaDefinition
     public bool HasMigration => !string.IsNullOrEmpty(MigrationPatchJson);
 
     /// <summary>
-    /// Gets the state store key for this schema.
+    /// Builds the state store key for this schema.
     /// </summary>
-    public static string GetStateKey(string @namespace, string schemaVersion)
-    {
-        return $"{@namespace}:{schemaVersion}";
-    }
+    internal static string BuildStateKey(string @namespace, string schemaVersion)
+        => $"{@namespace}:{schemaVersion}";
 }

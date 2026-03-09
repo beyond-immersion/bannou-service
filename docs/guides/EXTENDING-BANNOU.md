@@ -1,11 +1,17 @@
 # Extending Bannou - Building L5 Extension Plugins
 
 > **Version**: 1.0
-> **Status**: Reference guide
+> **Status**: Aspirational
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-seed (L2), lib-license (L4), lib-collection (L2), lib-status (L4), lib-actor (L2), lib-faction (L4), lib-organization (L4)
 > **Prerequisites**: [Plugin Development Guide](./PLUGIN-DEVELOPMENT.md), [Service Hierarchy](../reference/SERVICE-HIERARCHY.md), [Schema Rules](../reference/SCHEMA-RULES.md)
-> **Related**: [Seed System](./SEED-SYSTEM.md), [Economy System](./ECONOMY-SYSTEM.md), [Behavior System](./BEHAVIOR-SYSTEM.md), [Orchestration Patterns](../reference/ORCHESTRATION-PATTERNS.md)
+> **Related Guides**: [Seed System](./SEED-SYSTEM.md), [Economy System](./ECONOMY-SYSTEM.md), [Behavior System](./BEHAVIOR-SYSTEM.md), [Orchestration Patterns](../reference/ORCHESTRATION-PATTERNS.md)
 
-Bannou provides 48+ services with 690+ endpoints covering everything a multiplayer game backend needs -- authentication, economies, inventories, quests, matchmaking, voice, spatial data, NPC intelligence, and more. These services are deliberately **generic**: there is no "skills plugin," no "magic plugin," no "combat plugin," no "guild plugin." Game concepts like skills, spells, and guilds emerge from the **composition** of lower-level primitives (Seed, License, Status, Collection, Actor, Organization, Faction, Contract, and others).
+## Summary
+
+Guide to building L5 Extension plugins that provide game-specific vocabulary, simplified APIs, and opinionated defaults on top of Bannou's generic L0-L4 primitives. Covers the six extension patterns (Semantic Facade, Composition Orchestrator, Configuration Hardener, View Aggregator, Event Translator, Variable Provider), an extension catalog organized by gameplay domain, genre kit examples, DI integration points, anti-patterns, and a complete step-by-step tutorial building a Reputation extension. Intended for developers building game-specific plugins that compose existing Bannou services into domain-specific APIs.
+
+Bannou provides 70+ services with 900+ endpoints covering everything a multiplayer game backend needs -- authentication, economies, inventories, quests, matchmaking, voice, spatial data, NPC intelligence, and more. These services are deliberately **generic**: there is no "skills plugin," no "magic plugin," no "combat plugin," no "guild plugin." Game concepts like skills, spells, and guilds emerge from the **composition** of lower-level primitives (Seed, License, Status, Collection, Actor, Organization, Faction, Contract, and others).
 
 This design gives Bannou maximum flexibility. But flexibility has a cost: a developer building a fantasy RPG doesn't want to think about "seed domain depths" and "license board adjacency" -- they want to call `SkillsClient.GetLevel("swordsmanship", characterId)` and get an integer back.
 

@@ -1,6 +1,13 @@
 # Plugin Development Guide
 
-This guide walks through creating and extending Bannou service plugins using schema-first development.
+> **Version**: 2.0
+> **Status**: Production
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: All lib-* plugins (L0-L4)
+
+## Summary
+
+Comprehensive guide to creating and extending Bannou service plugins using schema-first development. Covers the full plugin lifecycle from OpenAPI schema definition through code generation, business logic implementation, state management, event publishing, service-to-service calls, permissions, configuration, and testing. Intended for developers building new services or extending existing ones. After reading, developers will understand the plugin structure, generation pipeline, and implementation patterns required for any Bannou service.
 
 ## Overview
 
@@ -9,15 +16,23 @@ Bannou services are implemented as **plugins** - independent .NET assemblies tha
 ```
 plugins/lib-{service}/
 ├── Generated/                       # Auto-generated (never edit)
-│   ├── {Service}Controller.cs
-│   ├── I{Service}Service.cs
-│   ├── {Service}Models.cs
-│   └── {Service}ServiceConfiguration.cs
+│   ├── {Service}Controller.cs       # HTTP routing
+│   ├── {Service}Controller.Meta.cs  # Runtime schema introspection
+│   ├── I{Service}Service.cs         # Service interface
+│   ├── {Service}ServiceConfiguration.cs  # Typed config class
+│   ├── {Service}PermissionRegistration.cs
+│   ├── {Service}PublishedTopics.cs   # Topic constants
+│   └── {Service}EventPublisher.cs   # Typed event publisher extensions
 ├── {Service}Service.cs              # Business logic implementation
 ├── {Service}ServiceModels.cs        # Internal data models (storage, cache, DTOs)
 ├── {Service}ServiceEvents.cs        # Event handlers (partial class)
 ├── {Service}ServicePlugin.cs        # Plugin registration
 └── lib-{service}.csproj
+
+bannou-service/Generated/            # Shared generated code (never edit)
+├── Models/{Service}Models.cs        # Request/response models
+├── Clients/{Service}Client.cs       # Service client for mesh calls
+└── Events/{Service}EventsModels.cs  # Service event models
 ```
 
 > **Manual files**: `{Service}Service.cs`, `{Service}ServiceModels.cs`, and `{Service}ServiceEvents.cs` are the only files you should edit. All files in `Generated/` are auto-generated from schemas.
@@ -32,7 +47,7 @@ Schema-first development means you write **18-35% of the code** for a typical se
 | ~500-2,000 lines of business logic | Validation, routing, serialization, permissions |
 | ~200-800 lines of tests | Test infrastructure and patterns to follow |
 
-**Key stats across 41 services:**
+**Key stats across 55+ services:**
 - **~65%** of service code is auto-generated
 - Schema-to-code amplification: **~5x** (1 maintained YAML line → ~5 generated output lines)
 - Simple CRUD services: 65-85% generated
@@ -96,7 +111,7 @@ components:
           type: string
 ```
 
-**Critical**: Always use `bannou` as the app-id in the `servers` URL. This ensures generated controller routes match what clients send. See [Bannou Design](../BANNOU_DESIGN.md) for the technical explanation.
+**Critical**: Always use `bannou` as the app-id in the `servers` URL. This ensures generated controller routes match what clients send. See [Bannou Design](../BANNOU-DESIGN.md) for the technical explanation.
 
 ### Step 2: Generate the Plugin
 
@@ -124,7 +139,7 @@ Edit the service implementation file:
 namespace BeyondImmersion.Bannou.Example;
 
 [BannouService("example", typeof(IExampleService), lifetime: ServiceLifetime.Scoped)]
-public class ExampleService : IExampleService
+public partial class ExampleService : IExampleService
 {
     private readonly IStateStore<ExampleModel> _stateStore;
     private readonly IMessageBus _messageBus;
@@ -147,25 +162,19 @@ public class ExampleService : IExampleService
         GreetRequest request,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogInformation("Greeting {Name}", request.Name);
+        _logger.LogInformation("Greeting {Name}", request.Name);
 
-            var response = new GreetResponse
-            {
-                Message = $"Hello, {request.Name}!"
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
+        var response = new GreetResponse
         {
-            _logger.LogError(ex, "Failed to greet {Name}", request.Name);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Message = $"Hello, {request.Name}!"
+        };
+
+        return (StatusCodes.OK, response);
     }
 }
 ```
+
+> **Note**: No try-catch needed in service methods. The generated controller provides a catch-all exception boundary with logging and error event publishing (per FOUNDATION TENETS). Only add try-catch for specific recovery logic or inter-service `ApiException` handling.
 
 **Key patterns**:
 - Services return `(StatusCodes, ResponseModel?)` tuples
@@ -510,27 +519,45 @@ See [Endpoint Permission Guidelines](../reference/ENDPOINT-PERMISSION-GUIDELINES
 
 ## Configuration
 
-Add service-specific configuration to the schema:
+Define service-specific configuration in a separate configuration schema file (`schemas/{service}-configuration.yaml`):
 
 ```yaml
+# schemas/example-configuration.yaml
+openapi: 3.0.4
+info:
+  title: Example Service Configuration
+  description: Configuration schema for Example service.
+  version: 1.0.0
+paths: {}
 x-service-configuration:
   properties:
     MaxRetries:
       type: integer
       default: 3
+      description: Maximum retry attempts for failed operations
+      env: EXAMPLE_MAX_RETRIES
     TimeoutSeconds:
       type: integer
       default: 30
+      description: Operation timeout in seconds
+      env: EXAMPLE_TIMEOUT_SECONDS
     EnableCaching:
       type: boolean
       default: true
+      description: Whether to enable response caching
+      env: EXAMPLE_ENABLE_CACHING
 ```
 
-This generates a typed configuration class. Values come from environment variables:
+This generates a typed `ExampleServiceConfiguration` class. Values come from environment variables with the `BANNOU_` prefix:
 
 ```bash
-BANNOU_EXAMPLE_MaxRetries=5
-BANNOU_EXAMPLE_TimeoutSeconds=60
+BANNOU_EXAMPLE_MAX_RETRIES=5
+BANNOU_EXAMPLE_TIMEOUT_SECONDS=60
+```
+
+Generate the configuration class with:
+```bash
+cd scripts && ./generate-config.sh example
 ```
 
 ## Testing Your Plugin
@@ -612,7 +639,7 @@ This fixes line endings and applies code style rules.
 
 - [Testing Guide](../operations/TESTING.md) - Detailed testing documentation (MANDATORY reading for test placement decisions)
 - [Deployment Guide](../operations/DEPLOYMENT.md) - Deploy your service to production
-- [Plugin Deep-Dives](../plugins/) - Comprehensive documentation for all 41 services (see how existing services handle similar patterns)
+- [Schema Rules](../reference/SCHEMA-RULES.md) - Mandatory schema rules (MUST read before creating/modifying schemas)
+- [Plugin Deep-Dives](../plugins/) - Comprehensive documentation for all 55+ services (see how existing services handle similar patterns)
 - [TENETS Reference](../reference/TENETS.md) - Development rules organized by category (Foundation, Implementation, Quality)
-- [Bannou Design](../BANNOU_DESIGN.md) - Understand the architecture
-- [Development Rules](../reference/TENETS.md) - Mandatory development constraints
+- [Bannou Design](../BANNOU-DESIGN.md) - Understand the architecture

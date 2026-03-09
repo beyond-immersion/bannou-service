@@ -60,12 +60,12 @@ x-lifecycle:
   Scene:
     model:
       sceneId: { type: string, format: uuid, primary: true, required: true, description: "Unique scene identifier" }
-      gameId: { type: string, required: true, description: "Game service identifier for partitioning" }
-      sceneType: { $ref: 'scene-api.yaml#/components/schemas/SceneType', required: true, description: "Scene classification (region, building, etc.)" }
+      gameId: { type: string, nullable: true, description: "Game service identifier for partitioning (null for unpartitioned)" }
+      sceneType: { $ref: 'scene-api.yaml#/components/schemas/SceneType', required: true, description: "Scene classification code" }
       name: { type: string, required: true, description: "Human-readable scene name" }
       description: { type: string, nullable: true, description: "Optional scene description" }
       version: { type: string, required: true, description: "Semantic version (MAJOR.MINOR.PATCH)" }
-      tags: { type: array, items: { type: string }, description: "Searchable tags" }
+      tags: { type: array, items: { type: string }, nullable: true, description: "Searchable tags" }
       nodeCount: { type: integer, required: true, description: "Total number of nodes in scene" }
     sensitive: []
 
@@ -92,7 +92,6 @@ components:
         - sceneAssetId
         - sceneVersion
         - sceneName
-        - gameId
         - sceneType
         - regionId
         - worldTransform
@@ -111,13 +110,17 @@ components:
           description: Source scene asset ID
         sceneVersion:
           type: string
+          maxLength: 50
           description: Version that was instantiated
         sceneName:
           type: string
+          maxLength: 500
           description: Scene name (for logging and display)
         gameId:
           type: string
-          description: Game ID from the scene
+          nullable: true
+          maxLength: 200
+          description: Game ID from the scene (null for unpartitioned scenes)
         sceneType:
           $ref: 'scene-api.yaml#/components/schemas/SceneType'
           description: Scene type from the scene
@@ -126,7 +129,7 @@ components:
           format: uuid
           description: Region where the scene was placed
         worldTransform:
-          $ref: '#/components/schemas/EventTransform'
+          $ref: 'scene-api.yaml#/components/schemas/Transform'
           description: World-space transform for scene origin
         metadata:
           type: object
@@ -220,6 +223,7 @@ components:
           description: Type of editor that checked out the scene
         checkedOutById:
           type: string
+          maxLength: 200
           description: |
             Editor identifier. For Session type: the WebSocket session ID (UUID format).
             For Service type: the app-id or service name.
@@ -261,22 +265,26 @@ components:
           description: Game ID of the scene
         version:
           type: string
+          maxLength: 50
           description: New version after commit
         previousVersion:
           type: string
           nullable: true
+          maxLength: 50
           description: Version before commit
         committedByType:
           $ref: 'scene-api.yaml#/components/schemas/SceneEditorType'
           description: Type of editor that committed the scene
         committedById:
           type: string
+          maxLength: 200
           description: |
             Editor identifier. For Session type: the WebSocket session ID (UUID format).
             For Service type: the app-id or service name.
         changesSummary:
           type: string
           nullable: true
+          maxLength: 2000
           description: Optional summary of changes
         nodeCount:
           type: integer
@@ -318,6 +326,7 @@ components:
           description: Type of editor that discarded the checkout
         discardedById:
           type: string
+          maxLength: 200
           description: |
             Editor identifier. For Session type: the WebSocket session ID (UUID format).
             For Service type: the app-id or service name.
@@ -336,6 +345,7 @@ components:
         - timestamp
         - gameId
         - sceneType
+        - ruleCount
       properties:
         eventName:
           type: string
@@ -343,84 +353,20 @@ components:
           description: 'Event type identifier: scene.validation-rules-updated'
         gameId:
           type: string
+          maxLength: 200
           description: Game ID for the rules
         sceneType:
           $ref: 'scene-api.yaml#/components/schemas/SceneType'
           description: Scene type for the rules
         ruleCount:
           type: integer
+          minimum: 0
           description: Number of active rules after update
         updatedBy:
           type: string
           nullable: true
+          maxLength: 200
           description: Who updated the rules
 
-    # ========== SUPPORTING TYPES ==========
-
-    EventTransform:
-      type: object
-      additionalProperties: false
-      description: Transform for event payloads
-      required:
-        - position
-        - rotation
-        - scale
-      properties:
-        position:
-          $ref: '#/components/schemas/EventVector3'
-          description: World position
-        rotation:
-          $ref: '#/components/schemas/EventQuaternion'
-          description: World rotation
-        scale:
-          $ref: '#/components/schemas/EventVector3'
-          description: World scale
-
-    EventVector3:
-      type: object
-      additionalProperties: false
-      description: 3D vector for events
-      required:
-        - x
-        - y
-        - z
-      properties:
-        x:
-          type: number
-          format: double
-          description: X component
-        y:
-          type: number
-          format: double
-          description: Y component
-        z:
-          type: number
-          format: double
-          description: Z component
-
-    EventQuaternion:
-      type: object
-      additionalProperties: false
-      description: Quaternion for events
-      required:
-        - x
-        - y
-        - z
-        - w
-      properties:
-        x:
-          type: number
-          format: double
-          description: X component
-        y:
-          type: number
-          format: double
-          description: Y component
-        z:
-          type: number
-          format: double
-          description: Z component
-        w:
-          type: number
-          format: double
-          description: W component
+    # Spatial types reuse API schema definitions per SCHEMA-RULES.md mandatory $ref reuse.
+    # Transform, Vector3, Quaternion are defined in scene-api.yaml and referenced via $ref.

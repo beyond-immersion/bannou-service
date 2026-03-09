@@ -1,13 +1,21 @@
-# TypeScript SDK Integration Guide
+# TypeScript SDK Integration
 
-This guide covers integrating the Bannou TypeScript SDK into browser and Node.js applications.
+> **Version**: 1.1
+> **Status**: Aspirational
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-connect (L1), lib-auth (L1)
+> **Related Guides**: [SDK Overview](SDK-OVERVIEW.md), [Client Integration](CLIENT-INTEGRATION.md)
+
+## Summary
+
+Covers integrating the Bannou TypeScript SDK into browser and Node.js applications via the bannou-core and bannou-client packages. Intended for frontend and game client developers building real-time applications on the Bannou WebSocket gateway. After reading, developers will understand authentication flows, typed service proxy usage, server-push event subscriptions, and framework integration patterns for React and Vue.
 
 ## Overview
 
 The TypeScript SDK provides:
 - WebSocket client with binary protocol support
-- Typed service proxies for all 309 client-accessible endpoints
-- Event subscriptions for 35 server-push event types
+- Typed service proxies for client-accessible endpoints
+- Event subscriptions for server-push event types
 - Request correlation with timeout handling
 - Automatic capability manifest management
 

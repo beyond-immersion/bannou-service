@@ -1,6 +1,13 @@
 # Meta Endpoints Guide
 
-Meta endpoints are auto-generated companion endpoints that provide runtime schema introspection for every API operation in Bannou. They enable clients and tools to discover what an endpoint accepts, returns, and does -- without reading external documentation.
+> **Version**: 1.0
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-connect (L1)
+
+## Summary
+
+Covers Bannou's auto-generated meta endpoints, which provide runtime JSON Schema introspection for every API operation. Intended for client SDK developers needing self-describing protocols and service developers wanting to understand how meta endpoints are generated, routed via WebSocket and HTTP, and secured through the capability manifest permission model.
 
 ## What Meta Endpoints Are
 

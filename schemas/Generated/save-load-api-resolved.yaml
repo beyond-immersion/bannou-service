@@ -762,11 +762,11 @@ components:
       enum: [QuickSave, AutoSave, ManualSave, Checkpoint, StateSnapshot]
       description: |
         Category of save with predefined behaviors.
-        QUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).
-        AUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).
-        MANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).
-        CHECKPOINT: Progress markers (max 20 versions, rolling).
-        STATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).
+        QuickSave: Single-slot fast save, overwritten frequently (max 1 version).
+        AutoSave: System-triggered periodic saves (max 5 versions, rolling).
+        ManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).
+        Checkpoint: Progress markers (max 20 versions, rolling).
+        StateSnapshot: Full state captures for debugging (max 3 versions, rolling).
 
     CompressionType:
       type: string
@@ -826,7 +826,8 @@ components:
           nullable: true
           description: Source path (for move/copy operations)
         value:
-          description: Value to use (for add/replace/test operations)
+          nullable: true
+          description: Value to use (for add/replace/test operations, null for remove/move/copy)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # SLOT MODELS
@@ -889,7 +890,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom key-value metadata for the slot
+          description: Client-only metadata for the slot. No Bannou plugin reads specific keys from this field by 
+            convention.
 
     GetSlotRequest:
       type: object
@@ -1028,7 +1030,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom key-value metadata (null if none set)
+          description: Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by 
+            convention.
 
     ListSlotsResponse:
       type: object
@@ -1125,7 +1128,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata (e.g., level, playtime, location)
+          description: Client-only metadata (e.g., level, playtime, location). No Bannou plugin reads specific keys from
+            this field by convention.
         pinAsCheckpoint:
           type: string
           nullable: true
@@ -1277,7 +1281,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata (null if none set)
+          description: Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by 
+            convention.
 
     # ═══════════════════════════════════════════════════════════════════════════
     # VERSION MODELS
@@ -1287,8 +1292,14 @@ components:
       type: object
       additionalProperties: false
       description: Request to list all versions within a save slot with pagination
-      required: [ownerId, ownerType, slotName]
+      required: [gameId, ownerId, ownerType, slotName]
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
@@ -1379,14 +1390,21 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata (null if none set)
+          description: Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by 
+            convention.
 
     PinVersionRequest:
       type: object
       additionalProperties: false
       description: Request to pin a save version as a checkpoint to prevent cleanup
-      required: [ownerId, ownerType, slotName, versionNumber]
+      required: [gameId, ownerId, ownerType, slotName, versionNumber]
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
@@ -1411,8 +1429,14 @@ components:
       type: object
       additionalProperties: false
       description: Request to unpin a previously pinned save version
-      required: [ownerId, ownerType, slotName, versionNumber]
+      required: [gameId, ownerId, ownerType, slotName, versionNumber]
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
@@ -1433,8 +1457,14 @@ components:
       type: object
       additionalProperties: false
       description: Request to permanently delete a specific save version
-      required: [ownerId, ownerType, slotName, versionNumber]
+      required: [gameId, ownerId, ownerType, slotName, versionNumber]
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
@@ -1509,7 +1539,7 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Filter by metadata key-value pairs
+          description: Filter by client metadata key-value pairs. Matches against client-owned metadata stored on saves.
         offset:
           type: integer
           default: 0
@@ -1599,7 +1629,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata (null if none set)
+          description: Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by 
+            convention.
 
     # ═══════════════════════════════════════════════════════════════════════════
     # MIGRATION MODELS
@@ -1625,7 +1656,8 @@ components:
           description: Slot name
         versionNumber:
           type: integer
-          description: Specific version to migrate (defaults to latest)
+          nullable: true
+          description: Specific version to migrate (null = latest)
         targetSchemaVersion:
           type: string
           minLength: 1
@@ -1683,6 +1715,7 @@ components:
           description: Schema version identifier
         schema:
           type: object
+          additionalProperties: true
           description: JSON Schema definition for validation
         previousVersion:
           type: string
@@ -1693,6 +1726,7 @@ components:
           nullable: true
           items:
             $ref: '#/components/schemas/JsonPatchOperation'
+          maxItems: 1000
           description: |
             JSON Patch (RFC 6902) operations to migrate from previousVersion.
             Uses JsonPatch.Net library (MIT licensed).
@@ -1711,6 +1745,7 @@ components:
           description: Schema version
         schema:
           type: object
+          additionalProperties: true
           description: JSON Schema definition
         previousVersion:
           type: string
@@ -1779,7 +1814,7 @@ components:
       type: object
       additionalProperties: false
       description: Result of admin cleanup operation with storage reclamation details
-      required: [versionsDeleted, bytesFreed, dryRun]
+      required: [versionsDeleted, bytesFreed]
       properties:
         versionsDeleted:
           type: integer
@@ -1791,9 +1826,6 @@ components:
           type: integer
           format: int64
           description: Storage freed in bytes
-        dryRun:
-          type: boolean
-          description: Whether this was a preview
 
     AdminStatsRequest:
       type: object
@@ -1904,6 +1936,7 @@ components:
           items:
             type: string
             format: uuid
+          maxItems: 100
           description: Slot IDs to delete
 
     BulkDeleteSlotsResponse:
@@ -1995,6 +2028,8 @@ components:
           nullable: true
           items:
             type: string
+            maxLength: 64
+          maxItems: 100
           description: Specific slots to export (null = all slots)
 
     ExportSavesResponse:
@@ -2219,7 +2254,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom key-value metadata for this delta version
+          description: Client-only metadata for this delta version. No Bannou plugin reads specific keys from this field
+            by convention.
 
     SaveDeltaResponse:
       type: object

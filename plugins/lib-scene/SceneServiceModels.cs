@@ -38,11 +38,11 @@ internal class SceneIndexEntry
 {
     public Guid SceneId { get; set; }
     public Guid AssetId { get; set; }
-    public string GameId { get; set; } = string.Empty;
-    public SceneType SceneType { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string? GameId { get; set; }
+    public required string SceneType { get; set; }
+    public required string Name { get; set; }
     public string? Description { get; set; }
-    public string Version { get; set; } = string.Empty;
+    public required string Version { get; set; }
     public List<string> Tags { get; set; } = new();
     public int NodeCount { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
@@ -58,9 +58,9 @@ internal class SceneIndexEntry
 internal class CheckoutState
 {
     public Guid SceneId { get; set; }
-    public string Token { get; set; } = string.Empty;
+    public required string Token { get; set; }
     public SceneEditorType EditorType { get; set; }
-    public string EditorId { get; set; } = string.Empty;
+    public required string EditorId { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
     public int ExtensionCount { get; set; }
 }
@@ -71,8 +71,8 @@ internal class CheckoutState
 internal class SceneContentEntry
 {
     public Guid SceneId { get; set; }
-    public string Version { get; set; } = string.Empty;
-    public string Content { get; set; } = string.Empty;
+    public required string Version { get; set; }
+    public required string Content { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }
 
@@ -81,7 +81,7 @@ internal class SceneContentEntry
 /// </summary>
 internal class VersionHistoryEntry
 {
-    public string Version { get; set; } = string.Empty;
+    public required string Version { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
 }

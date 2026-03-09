@@ -1,6 +1,14 @@
 # Production Quickstart Guide
 
-This guide walks you through deploying Bannou on a fresh server (e.g., DigitalOcean droplet) in monoservice mode with all services enabled.
+> **Version**: 1.0
+> **Status**: Production
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-auth (L1), lib-connect (L1), lib-account (L1), lib-mesh (L0), lib-state (L0), lib-messaging (L0)
+> **Related Guides**: [Deployment Guide](../operations/DEPLOYMENT.md)
+
+## Summary
+
+Step-by-step guide for deploying Bannou on a fresh server in monoservice mode with all services enabled, covering dependency installation, secret generation, environment configuration, Docker image building, SSL/TLS setup, and deployment verification. Intended for operators deploying Bannou to production for the first time. After following this guide, operators will have a running Bannou instance with OpenResty edge proxy, health checks passing, and an admin account registered.
 
 ## Prerequisites
 
@@ -22,9 +30,9 @@ sudo ./scripts/install-dev-tools.sh --docker-only
 
 This installs Docker, Docker Compose, and basic utilities.
 
-For local development with full .NET SDK:
+For local development with full .NET SDK, Python, NSwag, and Node.js:
 ```bash
-sudo ./scripts/install-dev-tools.sh --with-dotnet
+sudo ./scripts/install-dev-tools.sh
 ```
 
 ## Step 2: Get Your Server IP/Domain
@@ -337,4 +345,4 @@ Verify your domain is correctly set in `BANNOU_SERVICE_DOMAIN` and matches what'
 - Configure SSL certificates for HTTPS
 - Set up OAuth providers (Discord, Google, Steam)
 - Configure monitoring and alerting
-- Review [DEPLOYMENT.md](DEPLOYMENT.md) for advanced deployment patterns
+- Review [DEPLOYMENT.md](../operations/DEPLOYMENT.md) for advanced deployment patterns

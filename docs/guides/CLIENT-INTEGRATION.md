@@ -1,6 +1,13 @@
 # Client Integration Guide
 
-This guide covers integrating game clients with Bannou services via the WebSocket protocol.
+> **Version**: 1.0
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-connect (L1), lib-auth (L1), lib-permission (L1)
+
+## Summary
+
+Covers integrating game clients with Bannou services via the WebSocket binary protocol, including authentication flows (email/password, OAuth, Steam), WebSocket connection establishment, the 31-byte binary message format, capability manifest management, session shortcuts, server-pushed events, reconnection, and both the .NET and TypeScript client SDKs. Intended for game engine developers building client-side networking against Bannou backends.
 
 ## Overview
 
@@ -148,7 +155,7 @@ Messages use a 31-byte binary header + JSON payload:
 | 4 | Event | Fire-and-forget, no response expected |
 | 5 | Client | Route to another WebSocket client (P2P) |
 | 6 | Response | Response to a request |
-| 7 | Reserved | Reserved for future use |
+| 7 | Meta | Request metadata about endpoint (Channel encodes MetaType) |
 
 **Channels**: Channels are 16-bit unsigned integers (0-65535) used for message ordering. Channel 0 is the default. Use different channels to ensure independent message sequencing for different types of traffic (e.g., separate channels for gameplay vs. chat).
 
@@ -607,5 +614,5 @@ client.disconnect();
 ## Next Steps
 
 - [WebSocket Protocol](../WEBSOCKET-PROTOCOL.md) - Complete protocol specification
-- [Testing Guide](TESTING.md) - Test client integration
-- [NuGet Setup](../operations/NUGET_SETUP.md) - SDK package details
+- [Testing Guide](../operations/TESTING.md) - Test client integration
+- [NuGet Setup](../operations/NUGET-SETUP.md) - SDK package details

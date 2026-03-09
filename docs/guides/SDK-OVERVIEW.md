@@ -1,5 +1,17 @@
 # Bannou SDKs Overview
 
+> **Version**: 1.1
+> **Status**: Production
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-music (L4), lib-storyline (L4), lib-behavior (L4), lib-scene (L4), lib-actor (L2)
+> **Related Guides**: [Asset SDK](ASSET-SDK.md), [TypeScript SDK](TYPESCRIPT-SDK.md)
+
+## Summary
+
+Comprehensive catalog of Bannou's SDK ecosystem organized by the three-layer creative domain pattern (theory, storyteller, composer) and infrastructure categories (connectivity, asset pipeline, TypeScript, Unreal). Intended for developers selecting which SDKs to integrate into game clients, editor tools, or server-side services. After reading, developers will understand how SDKs relate to plugins, which packages to use for their platform, and the unified scenario pattern that enables mixing hand-authored and procedurally generated content.
+
+---
+
 Bannou's SDK ecosystem follows a consistent three-layer pattern across creative domains: **theory** (formal primitives), **storyteller** (procedural generation), and **composer** (handcrafted authoring). Each layer is independently useful, and each domain doesn't necessarily need all three -- the pattern emerges where the domain's complexity warrants it.
 
 ---
@@ -324,7 +336,7 @@ All SDKs share the same version number and are released together. The version is
 ### Creative Domain SDKs
 - [MusicTheory README](../../sdks/music-theory/README.md) - Pitch, harmony, voice leading
 - [MusicStoryteller README](../../sdks/music-storyteller/README.md) - Emotional composition
-- [Music System Guide](MUSIC_SYSTEM.md) - Complete music system documentation
+- [Music System Guide](MUSIC-SYSTEM.md) - Complete music system documentation
 - [StorylineTheory README](../../sdks/storyline-theory/README.md) - Narrative theory primitives
 - [StorylineStoryteller README](../../sdks/storyline-storyteller/README.md) - GOAP-driven narrative planning
 - [SceneComposer README](../../sdks/scene-composer/README.md) - Scene editing core

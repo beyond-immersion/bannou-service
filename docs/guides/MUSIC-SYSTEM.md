@@ -1,6 +1,13 @@
 # Bannou Music System
 
-This document provides a comprehensive overview of Bannou's procedural music generation system, including the theoretical foundations, SDK architecture, and integration patterns.
+> **Version**: 1.0
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-music (L4)
+
+## Summary
+
+Comprehensive guide to Bannou's procedural music generation system covering the MusicTheory SDK (pitch, harmony, scales, voice leading, MIDI-JSON output) and the MusicStoryteller SDK (narrative-driven composition via GOAP planning and emotional state tracking). Intended for developers integrating music generation into game features or authoring custom styles. After reading, developers will understand the two-layer SDK architecture, the theoretical foundations (Lerdahl, Huron, Juslin, Meyer), and how to use the Music service API for composition generation.
 
 ## Overview
 

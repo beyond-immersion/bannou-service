@@ -64,7 +64,14 @@ public class CleanupService : BackgroundService
         }
 
         // Wait for other services to initialize
-        await Task.Delay(TimeSpan.FromSeconds(_configuration.CleanupStartupDelaySeconds), stoppingToken);
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.CleanupStartupDelaySeconds), stoppingToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
 
         _logger.LogInformation(
             "CleanupService starting with interval of {IntervalMinutes} minutes",
@@ -110,7 +117,8 @@ public class CleanupService : BackgroundService
 
         var stateStoreFactory = serviceProvider.GetRequiredService<IStateStoreFactory>();
         var messageBus = serviceProvider.GetRequiredService<IMessageBus>();
-        var assetClient = serviceProvider.GetRequiredService<IAssetClient>();
+        // L3 soft dependency per FOUNDATION TENETS — Asset service may not be enabled
+        var assetClient = serviceProvider.GetService<IAssetClient>();
 
         var slotStore = stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
         var versionStore = stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
@@ -144,7 +152,7 @@ public class CleanupService : BackgroundService
             // Check if slot should be deleted (all versions removed or expired)
             if (slot.VersionCount == 0 && versionsDeleted > 0)
             {
-                await slotStore.DeleteAsync(slot.GetStateKey(), cancellationToken);
+                await slotStore.DeleteAsync(slot.BuildStateKey(), cancellationToken);
                 await messageBus.PublishSaveSlotDeletedAsync(new SaveSlotDeletedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -195,7 +203,7 @@ public class CleanupService : BackgroundService
     private async Task<(int versionsDeleted, long bytesFreed)> CleanupSlotAsync(
         SaveSlotMetadata slot,
         IQueryableStateStore<SaveVersionManifest> versionStore,
-        IAssetClient assetClient,
+        IAssetClient? assetClient,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "CleanupService.CleanupSlotAsync");
@@ -235,14 +243,14 @@ public class CleanupService : BackgroundService
             try
             {
                 // Delete the version from state store
-                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), version.VersionNumber);
+                var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), version.VersionNumber);
                 await versionStore.DeleteAsync(versionKey, cancellationToken);
 
                 bytesFreed += version.SizeBytes;
                 versionsDeleted++;
 
-                // Delete asset if exists
-                if (version.AssetId.HasValue)
+                // Delete asset if exists (L3 soft dependency per FOUNDATION TENETS)
+                if (version.AssetId.HasValue && assetClient != null)
                 {
                     try
                     {
@@ -256,8 +264,8 @@ public class CleanupService : BackgroundService
                     }
                 }
 
-                // Delete thumbnail if exists
-                if (version.ThumbnailAssetId.HasValue)
+                // Delete thumbnail if exists (L3 soft dependency per FOUNDATION TENETS)
+                if (version.ThumbnailAssetId.HasValue && assetClient != null)
                 {
                     try
                     {
@@ -316,7 +324,7 @@ public class CleanupService : BackgroundService
             var slotStore = scope.ServiceProvider
                 .GetRequiredService<IStateStoreFactory>()
                 .GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
-            await slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
+            await slotStore.SaveAsync(slot.BuildStateKey(), slot, cancellationToken: cancellationToken);
         }
 
         return (versionsDeleted, bytesFreed);

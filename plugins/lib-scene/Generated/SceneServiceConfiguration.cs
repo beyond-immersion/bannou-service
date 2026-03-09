@@ -55,21 +55,21 @@ public class SceneServiceConfiguration : BaseServiceConfiguration
     /// Default lock TTL for checkout operations in minutes
     /// Environment variable: SCENE_DEFAULT_CHECKOUT_TTL_MINUTES
     /// </summary>
-    [ConfigRange(Minimum = 1)]
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
     public int DefaultCheckoutTtlMinutes { get; set; } = 60;
 
     /// <summary>
     /// Buffer time added to checkout TTL for state store expiry (grace period for heartbeat)
     /// Environment variable: SCENE_CHECKOUT_TTL_BUFFER_MINUTES
     /// </summary>
-    [ConfigRange(Minimum = 0)]
+    [ConfigRange(Minimum = 0, Maximum = 60)]
     public int CheckoutTtlBufferMinutes { get; set; } = 5;
 
     /// <summary>
     /// Maximum number of times a checkout can be extended
     /// Environment variable: SCENE_MAX_CHECKOUT_EXTENSIONS
     /// </summary>
-    [ConfigRange(Minimum = 0)]
+    [ConfigRange(Minimum = 0, Maximum = 1000)]
     public int MaxCheckoutExtensions { get; set; } = 10;
 
     /// <summary>
@@ -83,49 +83,49 @@ public class SceneServiceConfiguration : BaseServiceConfiguration
     /// Hard limit on reference depth that cannot be exceeded by requests
     /// Environment variable: SCENE_MAX_REFERENCE_DEPTH_LIMIT
     /// </summary>
-    [ConfigRange(Minimum = 1)]
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int MaxReferenceDepthLimit { get; set; } = 10;
 
     /// <summary>
     /// Maximum versions that can be retained (configurable per game)
     /// Environment variable: SCENE_MAX_VERSION_RETENTION_COUNT
     /// </summary>
-    [ConfigRange(Minimum = 1)]
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MaxVersionRetentionCount { get; set; } = 100;
 
     /// <summary>
     /// Maximum nodes allowed in a single scene
     /// Environment variable: SCENE_MAX_NODE_COUNT
     /// </summary>
-    [ConfigRange(Minimum = 1)]
+    [ConfigRange(Minimum = 1, Maximum = 1000000)]
     public int MaxNodeCount { get; set; } = 10000;
 
     /// <summary>
     /// Maximum tags allowed per scene
     /// Environment variable: SCENE_MAX_TAGS_PER_SCENE
     /// </summary>
-    [ConfigRange(Minimum = 0)]
+    [ConfigRange(Minimum = 0, Maximum = 1000)]
     public int MaxTagsPerScene { get; set; } = 50;
 
     /// <summary>
     /// Maximum tags allowed per node
     /// Environment variable: SCENE_MAX_TAGS_PER_NODE
     /// </summary>
-    [ConfigRange(Minimum = 0)]
+    [ConfigRange(Minimum = 0, Maximum = 200)]
     public int MaxTagsPerNode { get; set; } = 20;
 
     /// <summary>
     /// Maximum results returned in a single list query
     /// Environment variable: SCENE_MAX_LIST_RESULTS
     /// </summary>
-    [ConfigRange(Minimum = 1)]
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MaxListResults { get; set; } = 200;
 
     /// <summary>
     /// Maximum results returned in a single search query
     /// Environment variable: SCENE_MAX_SEARCH_RESULTS
     /// </summary>
-    [ConfigRange(Minimum = 1)]
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MaxSearchResults { get; set; } = 100;
 
 }

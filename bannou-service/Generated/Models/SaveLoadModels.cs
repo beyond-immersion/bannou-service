@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.SaveLoad;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.SaveLoad;
 
@@ -32,11 +47,11 @@ using System = global::System;
 
 /// <summary>
 /// Category of save with predefined behaviors.
-/// <br/>QUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).
-/// <br/>AUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).
-/// <br/>MANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).
-/// <br/>CHECKPOINT: Progress markers (max 20 versions, rolling).
-/// <br/>STATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).
+/// <br/>QuickSave: Single-slot fast save, overwritten frequently (max 1 version).
+/// <br/>AutoSave: System-triggered periodic saves (max 5 versions, rolling).
+/// <br/>ManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).
+/// <br/>Checkpoint: Progress markers (max 20 versions, rolling).
+/// <br/>StateSnapshot: Full state captures for debugging (max 3 versions, rolling).
 /// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -248,10 +263,10 @@ public partial class JsonPatchOperation
     public string? From { get; set; } = default!;
 
     /// <summary>
-    /// Value to use (for add/replace/test operations)
+    /// Value to use (for add/replace/test operations, null for remove/move/copy)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("value")]
-    public object Value { get; set; } = default!;
+    public object? Value { get; set; } = default!;
 
 }
 
@@ -337,7 +352,7 @@ public partial class CreateSlotRequest
     public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
-    /// Custom key-value metadata for the slot
+    /// Client-only metadata for the slot. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
@@ -588,7 +603,7 @@ public partial class SlotResponse
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Custom key-value metadata (null if none set)
+    /// Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
@@ -729,7 +744,7 @@ public partial class SaveRequest
     public string? DeviceId { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata (e.g., level, playtime, location)
+    /// Client-only metadata (e.g., level, playtime, location). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
@@ -984,7 +999,7 @@ public partial class LoadResponse
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata (null if none set)
+    /// Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
@@ -997,6 +1012,16 @@ public partial class LoadResponse
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListVersionsRequest
 {
+
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
+    public string GameId { get; set; } = default!;
 
     /// <summary>
     /// ID of the owning entity
@@ -1140,7 +1165,7 @@ public partial class VersionResponse
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata (null if none set)
+    /// Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
@@ -1153,6 +1178,16 @@ public partial class VersionResponse
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PinVersionRequest
 {
+
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
+    public string GameId { get; set; } = default!;
 
     /// <summary>
     /// ID of the owning entity
@@ -1203,6 +1238,16 @@ public partial class UnpinVersionRequest
 {
 
     /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
+    public string GameId { get; set; } = default!;
+
+    /// <summary>
     /// ID of the owning entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
@@ -1242,6 +1287,16 @@ public partial class UnpinVersionRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteVersionRequest
 {
+
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
+    public string GameId { get; set; } = default!;
 
     /// <summary>
     /// ID of the owning entity
@@ -1344,7 +1399,7 @@ public partial class QuerySavesRequest
     public string? SchemaVersion { get; set; } = default!;
 
     /// <summary>
-    /// Filter by metadata key-value pairs
+    /// Filter by client metadata key-value pairs. Matches against client-owned metadata stored on saves.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadataFilter")]
     public System.Collections.Generic.IDictionary<string, string>? MetadataFilter { get; set; } = default!;
@@ -1495,7 +1550,7 @@ public partial class QueryResultItem
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata (null if none set)
+    /// Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
@@ -1536,10 +1591,10 @@ public partial class MigrateSaveRequest
     public string SlotName { get; set; } = default!;
 
     /// <summary>
-    /// Specific version to migrate (defaults to latest)
+    /// Specific version to migrate (null = latest)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("versionNumber")]
-    public int VersionNumber { get; set; } = default!;
+    public int? VersionNumber { get; set; } = default!;
 
     /// <summary>
     /// Target schema version to migrate to
@@ -1646,6 +1701,7 @@ public partial class RegisterSchemaRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("migrationPatch")]
+    [System.ComponentModel.DataAnnotations.MaxLength(1000)]
     public System.Collections.Generic.ICollection<JsonPatchOperation>? MigrationPatch { get; set; } = default!;
 
 }
@@ -1801,12 +1857,6 @@ public partial class AdminCleanupResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bytesFreed")]
     public long BytesFreed { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this was a preview
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
-    public bool DryRun { get; set; } = default!;
 
 }
 
@@ -1978,6 +2028,7 @@ public partial class BulkDeleteSlotsRequest
     [System.Text.Json.Serialization.JsonPropertyName("slotIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<System.Guid> SlotIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
 }
@@ -2135,6 +2186,7 @@ public partial class ExportSavesRequest
     /// Specific slots to export (null = all slots)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotNames")]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<string>? SlotNames { get; set; } = default!;
 
 }
@@ -2513,7 +2565,7 @@ public partial class SaveDeltaRequest
     public string? DeviceId { get; set; } = default!;
 
     /// <summary>
-    /// Custom key-value metadata for this delta version
+    /// Client-only metadata for this delta version. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;

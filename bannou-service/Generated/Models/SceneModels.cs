@@ -25,64 +25,25 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Scene;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Scene;
 
 using System = global::System;
-
-/// <summary>
-/// Scene classification for querying and validation rule lookup.
-/// <br/>Different types may have different validation requirements per game.
-/// <br/>DESIGN_DECISION: Whether this should be an opaque string instead of enum
-/// <br/>(game-content codes vary per deployment). Tracked for future evaluation.
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SceneType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Unknown")]
-    Unknown = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Region")]
-    Region = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"City")]
-    City = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"District")]
-    District = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Lot")]
-    Lot = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Building")]
-    Building = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Room")]
-    Room = 6,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Dungeon")]
-    Dungeon = 7,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Arena")]
-    Arena = 8,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Vehicle")]
-    Vehicle = 9,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Prefab")]
-    Prefab = 10,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Cutscene")]
-    Cutscene = 11,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Other")]
-    Other = 12,
-
-}
-#pragma warning restore CS1591
 
 /// <summary>
 /// Structural node type. Indicates what kind of data the node contains,
@@ -163,86 +124,6 @@ public enum SceneEditorType
 #pragma warning restore CS1591
 
 /// <summary>
-/// Types of affordances describing what an object can do or how it can be interacted with.
-/// <br/>Used by AI navigation, character controllers, and procedural content systems.
-/// <br/>DESIGN_DECISION: Whether this should be an opaque string instead of enum
-/// <br/>(game-content codes vary per deployment). Tracked for future evaluation.
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AffordanceType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Walkable")]
-    Walkable = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Climbable")]
-    Climbable = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Sittable")]
-    Sittable = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Interactive")]
-    Interactive = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Collectible")]
-    Collectible = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Destructible")]
-    Destructible = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Container")]
-    Container = 6,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Door")]
-    Door = 7,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Teleport")]
-    Teleport = 8,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Types of marker nodes for spawn points, waypoints, and other positional markers.
-/// <br/>DESIGN_DECISION: Whether this should be an opaque string instead of enum
-/// <br/>(game-content codes vary per deployment). Tracked for future evaluation.
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MarkerType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Generic")]
-    Generic = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"SpawnPoint")]
-    SpawnPoint = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"NpcSpawn")]
-    NpcSpawn = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Waypoint")]
-    Waypoint = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"CameraPoint")]
-    CameraPoint = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"LightPoint")]
-    LightPoint = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AudioPoint")]
-    AudioPoint = 6,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"TriggerPoint")]
-    TriggerPoint = 7,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// A predefined location where child objects can be attached.
 /// <br/>Used for decorating furniture, walls, and other objects with accessories.
 /// <br/>Example: A wall may have attachment points for paintings, shelves, or light fixtures.
@@ -309,8 +190,8 @@ public partial class Affordance
     [System.Text.Json.Serialization.JsonPropertyName("type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AffordanceType Type { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string Type { get; set; } = default!;
 
     /// <summary>
     /// Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention.
@@ -724,8 +605,8 @@ public partial class SceneNode
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("markerType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public MarkerType? MarkerType { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string? MarkerType { get; set; } = default!;
 
     /// <summary>
     /// Shape of volume for volume nodes.
@@ -780,14 +661,12 @@ public partial class Scene
 
     /// <summary>
     /// Game service identifier for partitioning. Treated as opaque string.
-    /// <br/>Default is the nil UUID for unpartitioned scenes.
+    /// <br/>Null for unpartitioned scenes.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
-    public string GameId { get; set; } = "00000000-0000-0000-0000-000000000000";
+    public string? GameId { get; set; } = default!;
 
     /// <summary>
     /// Scene classification for querying and validation
@@ -795,8 +674,8 @@ public partial class Scene
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SceneType SceneType { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string SceneType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable scene name
@@ -972,6 +851,7 @@ public partial class ResolvedReference
     [System.Text.Json.Serialization.JsonPropertyName("refId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string RefId { get; set; } = default!;
 
     /// <summary>
@@ -986,6 +866,7 @@ public partial class ResolvedReference
     /// Version that was resolved
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("referencedVersion")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? ReferencedVersion { get; set; } = default!;
 
     /// <summary>
@@ -1026,6 +907,7 @@ public partial class UnresolvedReference
     [System.Text.Json.Serialization.JsonPropertyName("refId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string RefId { get; set; } = default!;
 
     /// <summary>
@@ -1071,15 +953,14 @@ public partial class ListScenesRequest
     /// Filter by single scene type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SceneType? SceneType { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string? SceneType { get; set; } = default!;
 
     /// <summary>
     /// Filter by multiple scene types (OR)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sceneTypes")]
-    // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<SceneType>? SceneTypes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? SceneTypes { get; set; } = default!;
 
     /// <summary>
     /// Filter by tags (scenes must have ALL specified tags)
@@ -1161,12 +1042,11 @@ public partial class SceneSummary
     public System.Guid SceneId { get; set; } = default!;
 
     /// <summary>
-    /// Game service identifier
+    /// Game service identifier (null for unpartitioned scenes)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string GameId { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
+    public string? GameId { get; set; } = default!;
 
     /// <summary>
     /// Scene classification
@@ -1174,8 +1054,8 @@ public partial class SceneSummary
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SceneType SceneType { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string SceneType { get; set; } = default!;
 
     /// <summary>
     /// Scene name
@@ -1183,12 +1063,14 @@ public partial class SceneSummary
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string Name { get; set; } = default!;
 
     /// <summary>
     /// Scene description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(2000)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
@@ -1197,6 +1079,7 @@ public partial class SceneSummary
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string Version { get; set; } = default!;
 
     /// <summary>
@@ -1209,6 +1092,7 @@ public partial class SceneSummary
     /// Total number of nodes in scene
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int NodeCount { get; set; } = default!;
 
     /// <summary>
@@ -1487,6 +1371,7 @@ public partial class InstantiateSceneResponse
     [System.Text.Json.Serialization.JsonPropertyName("sceneVersion")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string SceneVersion { get; set; } = default!;
 
 }
@@ -1580,6 +1465,7 @@ public partial class CheckoutResponse
     [System.Text.Json.Serialization.JsonPropertyName("checkoutToken")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string CheckoutToken { get; set; } = default!;
 
     /// <summary>
@@ -1654,6 +1540,7 @@ public partial class CommitResponse
     [System.Text.Json.Serialization.JsonPropertyName("newVersion")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string NewVersion { get; set; } = default!;
 
     /// <summary>
@@ -1785,6 +1672,7 @@ public partial class HistoryResponse
     [System.Text.Json.Serialization.JsonPropertyName("currentVersion")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string CurrentVersion { get; set; } = default!;
 
     /// <summary>
@@ -1810,6 +1698,7 @@ public partial class VersionInfo
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string Version { get; set; } = default!;
 
     /// <summary>
@@ -1838,6 +1727,7 @@ public partial class VersionInfo
     /// Node count at this version
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int NodeCount { get; set; } = default!;
 
 }
@@ -1864,8 +1754,8 @@ public partial class RegisterValidationRulesRequest
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SceneType SceneType { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string SceneType { get; set; } = default!;
 
     /// <summary>
     /// Validation rules to register
@@ -1900,37 +1790,20 @@ public partial class GetValidationRulesRequest
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SceneType SceneType { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string SceneType { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Response containing validation rules
+/// Response containing validation rules for the requested gameId and sceneType
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetValidationRulesResponse
 {
 
     /// <summary>
-    /// Game ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string GameId { get; set; } = default!;
-
-    /// <summary>
-    /// Scene type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SceneType SceneType { get; set; } = default!;
-
-    /// <summary>
-    /// Registered rules (null if none)
+    /// Registered rules (null if none registered for the combination)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rules")]
     public System.Collections.Generic.ICollection<ValidationRule>? Rules { get; set; } = default!;
@@ -2066,8 +1939,7 @@ public partial class SearchScenesRequest
     /// Filter by scene types
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sceneTypes")]
-    // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<SceneType>? SceneTypes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? SceneTypes { get; set; } = default!;
 
     /// <summary>
     /// Pagination offset
@@ -2196,6 +2068,7 @@ public partial class ReferenceInfo
     [System.Text.Json.Serialization.JsonPropertyName("sceneName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string SceneName { get; set; } = default!;
 
     /// <summary>
@@ -2212,12 +2085,14 @@ public partial class ReferenceInfo
     [System.Text.Json.Serialization.JsonPropertyName("nodeRefId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string NodeRefId { get; set; } = default!;
 
     /// <summary>
     /// Name of the referencing node
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeName")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string NodeName { get; set; } = default!;
 
 }
@@ -2284,6 +2159,7 @@ public partial class AssetUsageInfo
     [System.Text.Json.Serialization.JsonPropertyName("sceneName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string SceneName { get; set; } = default!;
 
     /// <summary>
@@ -2300,12 +2176,14 @@ public partial class AssetUsageInfo
     [System.Text.Json.Serialization.JsonPropertyName("nodeRefId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string NodeRefId { get; set; } = default!;
 
     /// <summary>
     /// Node name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeName")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string NodeName { get; set; } = default!;
 
     /// <summary>
@@ -2352,8 +2230,8 @@ public partial class DuplicateSceneRequest
     /// Optional different scene type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newSceneType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SceneType? NewSceneType { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string? NewSceneType { get; set; } = default!;
 
 }
 

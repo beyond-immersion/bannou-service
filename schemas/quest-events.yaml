@@ -6,7 +6,8 @@ info:
 
     **Data Flow**:
     - Subscribes to: contract.milestone.completed, contract.fulfilled, contract.terminated
-    - Publishes: quest.accepted, quest.objective.progressed, quest.completed, quest.failed, quest.abandoned
+    - Publishes: quest.definition.created, quest.definition.updated, quest.accepted, quest.objective.progressed, quest.completed, quest.failed, quest.abandoned
+    - Lifecycle events: auto-generated from x-lifecycle definition (quest.definition.created/updated/deleted)
   version: 1.0.0
 
   x-event-subscriptions:
@@ -24,6 +25,18 @@ info:
       description: Handle quest failure/abandonment when contract terminates
 
   x-event-publications:
+    # Definition lifecycle events (auto-generated from x-lifecycle)
+    - topic: quest.definition.created
+      event: QuestDefinitionCreatedEvent
+      description: Published when a new quest definition is created
+    - topic: quest.definition.updated
+      event: QuestDefinitionUpdatedEvent
+      description: Published when a quest definition is updated (including deprecation via changedFields)
+    - topic: quest.definition.deleted
+      event: QuestDefinitionDeletedEvent
+      description: Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.
+
+    # Quest instance events
     - topic: quest.accepted
       event: QuestAcceptedEvent
       description: Published when a character accepts a quest
@@ -39,6 +52,32 @@ info:
     - topic: quest.abandoned
       event: QuestAbandonedEvent
       description: Published when quest is voluntarily abandoned
+
+# Lifecycle events auto-generated from this definition.
+# QuestDefinition is Category B: deprecation published via "updated" with changedFields (per IMPLEMENTATION TENETS).
+# The auto-generated *.deleted variant exists in Generated/ but is never published (Category B infrastructure).
+x-lifecycle:
+  topic_prefix: quest
+  QuestDefinition:
+    model:
+      definitionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the quest definition" }
+      contractTemplateId: { type: string, format: uuid, required: true, description: "Underlying contract template ID" }
+      code: { type: string, required: true, description: "Unique quest code within game" }
+      name: { type: string, required: true, description: "Human-readable quest name" }
+      description: { type: string, nullable: true, description: "Quest description" }
+      category: { $ref: 'quest-api.yaml#/components/schemas/QuestCategory', required: true, description: "Quest category for organization" }
+      difficulty: { $ref: 'quest-api.yaml#/components/schemas/QuestDifficulty', required: true, description: "Difficulty rating of the quest" }
+      levelRequirement: { type: integer, nullable: true, description: "Minimum level required" }
+      repeatable: { type: boolean, required: true, description: "Whether repeatable" }
+      cooldownSeconds: { type: integer, nullable: true, description: "Cooldown for repeatable quests" }
+      deadlineSeconds: { type: integer, nullable: true, description: "Time limit" }
+      maxQuestors: { type: integer, required: true, description: "Max party size" }
+      isDeprecated: { type: boolean, required: true, description: "Whether definition is deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the definition was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
+      createdAt: { type: string, format: date-time, required: true, description: "Creation timestamp" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this definition belongs to" }
+    sensitive: []
 
 paths: {}
 

@@ -286,6 +286,40 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 
 ---
 
+## ⛔ VIOLATION TASK LISTS (MANDATORY) ⛔
+
+**When creating a task list to fix TENET violations, SCHEMA-RULES issues, or other code quality/consistency problems, every task description MUST be fully self-contained. An implementer who has never seen the codebase or the tenets must be able to execute the task from the description alone, with zero additional file reads required.**
+
+**Use `TaskCreate` for violation task lists** — not `TodoWrite`, not markdown files, not inline text lists. `TaskCreate` supports rich descriptions that can hold the required detail.
+
+**Required task description format** (all five elements are mandatory):
+
+1. **VERBATIM TENET TEXT**: Quote the exact rule being violated, copied from the tenet document. Do not paraphrase, summarize, or reference by number alone. The implementer must see the actual rule text to understand what compliance looks like.
+
+2. **AFFECTED FILES AND LINE NUMBERS**: List every file path and line number where the violation occurs. Do not say "several files" or "multiple locations" — enumerate them all. Format: `plugins/lib-foo/FooService.cs:142`.
+
+3. **BEFORE/AFTER CODE**: Show the exact current code (the violation) and the exact replacement code (the fix). If the fix requires new code rather than replacement, show where it goes and what surrounds it. If the fix is a schema change + regeneration, show the schema diff and note the regeneration command.
+
+4. **WHAT NOT TO DO**: List explicit constraints that prevent common mistakes. Examples:
+   - "Do NOT add a top-level try-catch — the generated controller already provides the catch-all boundary"
+   - "Do NOT grep other services to see if they also violate this — that's more violations, not justification"
+   - "Do NOT use `?? string.Empty` without a comment explaining why the coalesce can never execute"
+   - "Do NOT move this to a different file — fix it in place"
+
+5. **SELF-CONTAINED VERIFICATION**: State how the implementer verifies the fix is correct. Usually: "Run `dotnet build plugins/lib-foo/lib-foo.csproj --no-restore` — must compile with zero errors and zero new warnings."
+
+**Why this rule exists**: Claude repeatedly created shallow task descriptions like "Fix T7 violation in AccountService" or "Update error handling per IMPLEMENTATION TENETS." These forced every implementer (human or agent) to re-read the tenet documents, re-discover the affected files, re-identify the line numbers, and re-derive the fix from scratch — duplicating hours of audit work that had already been done. The audit agent already found all of this information; the task description must preserve it. A task that requires additional research to execute is not a task — it's a second audit disguised as a task.
+
+**The compound waste pattern**:
+- Audit agent spends 5 minutes finding violation, reading tenet, identifying files and lines, understanding the fix
+- Task is created as "Fix T7 in FooService"
+- Implementing agent spends 5 minutes re-reading T7, re-finding the files, re-understanding the violation
+- That's 10 minutes for a 5-minute task — 50% waste, and the implementing agent may miss context the audit agent had
+
+**Note**: PreToolUse hooks on `TaskCreate` and `TodoWrite` will remind you of this format. The hooks do not block — they are nudges, not gates.
+
+---
+
 ## Core Architecture Reference
 
 @docs/BANNOU-DESIGN.md

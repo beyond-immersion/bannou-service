@@ -1,6 +1,13 @@
 # Asset Service Developer Guide
 
-The Asset Service provides binary asset management for Bannou including storage, versioning, processing, and bundling of textures, 3D models, audio files, and asset bundles.
+> **Version**: 1.1
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-asset (L3)
+
+## Summary
+
+Developer guide for the Asset service covering binary asset management including storage, versioning, processing, and bundling of textures, 3D models, and audio files via MinIO/S3-compatible object storage. Covers the pre-signed URL architecture for direct client uploads and downloads, the custom .bannou bundle format with LZ4 compression, the processing pool pipeline, and metabundle merging. Intended for developers integrating asset workflows into game clients or content tools.
 
 ## Architecture Overview
 
@@ -20,7 +27,7 @@ Key architectural decisions:
 
 ## API Endpoints
 
-All endpoints use POST-only design per Tenet 1 (zero-copy WebSocket routing).
+All endpoints use POST-only design per schema-first development (zero-copy WebSocket routing).
 
 ### Upload Flow
 

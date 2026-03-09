@@ -1,6 +1,11 @@
 # Deployment Guide
 
-This guide covers deploying Bannou from local development to production environments.
+> **Last Updated**: 2026-03-08
+> **Scope**: Deploying Bannou from local development through external testing to production, including Docker Compose, Orchestrator presets, OpenResty edge proxy, and environment configuration.
+
+## Summary
+
+Deployment procedures for Bannou covering local development with Docker Compose, external client testing with OpenResty SSL termination, Orchestrator-managed distributed topologies, and production deployment patterns. Includes environment variable configuration, port allocation, health monitoring, and troubleshooting procedures. Reference when setting up new environments, configuring external access, or debugging deployment issues.
 
 ## Local Development
 
@@ -331,7 +336,7 @@ networks:
     driver: bridge
 ```
 
-See [Networking Strategy](NETWORKING-STRATEGY.md) for details.
+Use the default bridge network for WSL2 Docker deployments.
 
 ### Service Discovery
 

@@ -1,8 +1,14 @@
 # Scene System Guide
 
-> **Status**: PRODUCTION
-> **Version**: 2.0.0
-> **Scope**: Scene service, SceneComposer SDK, Asset integration, content authoring pipeline
+> **Version**: 2.0
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-scene (L4), lib-asset (L3)
+> **Related Guides**: [Asset SDK](ASSET-SDK.md), [SDK Overview](SDK-OVERVIEW.md)
+
+## Summary
+
+Comprehensive guide to the scene composition pipeline covering hierarchical scene document storage in lib-scene, binary asset distribution via lib-asset, and the SceneComposer SDK for engine-agnostic authoring. Intended for developers building scene editing tools, integrating game engines, or working with scene data in higher-layer services. After reading, developers will understand the full content authoring pipeline from scene document creation through checkout/commit workflows to runtime instantiation and consumer event handling.
 
 ---
 
@@ -302,7 +308,7 @@ annotations:
 | `POST /scene/list` | user | List scenes with filtering and pagination |
 | `POST /scene/update` | developer | Update scene (respects checkout locks) |
 | `POST /scene/delete` | developer | Soft-delete scene (blocks if referenced) |
-| `POST /scene/validate` | user | Validate scene structure |
+| `POST /scene/duplicate` | developer | Clone scene with new IDs |
 
 ### Checkout Workflow
 
@@ -374,21 +380,21 @@ Published when scenes are placed/removed from game world:
 
 | Topic | Description |
 |-------|-------------|
-| `scene.checked_out` | Scene locked for editing |
+| `scene.checked-out` | Scene locked for editing |
 | `scene.committed` | Checkout changes saved |
-| `scene.checkout.discarded` | Lock released without saving |
+| `scene.checkout-discarded` | Lock released without saving |
 
-> **Note**: `scene.checkout.expired` is defined in the schema but not currently published. Expired checkouts are detected lazily when another editor attempts to checkout the scene (enabling takeover of expired locks).
+> **Note**: There is no checkout expiry event. Expired checkouts are detected lazily when another editor attempts to checkout the scene (enabling takeover of expired locks). See [#254](https://github.com/beyond-immersion/bannou-service/issues/254) for planned background checkout expiry.
 
 ### Validation Events
 
 | Topic | Description |
 |-------|-------------|
-| `scene.validation_rules.updated` | Game-specific rules registered/updated |
+| `scene.validation-rules-updated` | Game-specific rules registered/updated |
 
 ### Reference Events
 
-> **Note**: `scene.reference.broken` is defined in the schema but not currently published. Reference integrity is checked on load, not actively monitored.
+> **Note**: There is no broken reference event. Reference integrity is checked on load (circular/missing detection during resolution), not actively monitored. Deletion is blocked by 409 Conflict when references exist. See [#257](https://github.com/beyond-immersion/bannou-service/issues/257) for planned reference integrity monitoring.
 
 ---
 
@@ -406,12 +412,12 @@ The checkout system prevents concurrent editing conflicts:
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `DefaultCheckoutTtlMinutes` | 60 | Lock duration |
+| `CheckoutTtlBufferMinutes` | 5 | Buffer time added to TTL for state store expiry |
 | `MaxCheckoutExtensions` | 10 | Max heartbeat extensions (10 x 60min = 10hr max) |
-| `CheckoutHeartbeatIntervalSeconds` | 30 | Recommended heartbeat interval |
 
 ### Expired Lock Handling
 
-- Locks stored with TTL + 5 minute buffer in Redis
+- Locks stored with TTL + 5 minute buffer in state store (MySQL)
 - Expired checkouts can be "taken over" by another editor
 - No active background expiration monitoring (relies on TTL eviction)
 
@@ -605,7 +611,7 @@ root:
 
 ### Game Engine Integration
 
-1. **Load scene** via GET /scene/get
+1. **Load scene** via POST /scene/get
 2. **Instantiate geometry** using asset references and transforms
 3. **Notify Bannou** via POST /scene/instantiate
 4. Other services react to `scene.instantiated` event
@@ -615,7 +621,7 @@ root:
 Map Service subscribes to `scene.instantiated` events:
 
 1. Receive event with sceneId and worldTransform
-2. Fetch scene via Scene Service GET endpoint
+2. Fetch scene via Scene Service POST /scene/get endpoint
 3. Extract spatial objects (markers, volumes, meshes)
 4. Transform to world coordinates (apply worldTransform)
 5. Index in spatial data structure

@@ -1,28 +1,33 @@
 # GitHub Actions CI/CD
 
-This document describes Bannou's CI/CD pipeline implemented with GitHub Actions.
+> **Last Updated**: 2026-03-08
+> **Scope**: GitHub Actions CI/CD workflows, integration pipeline stages, SDK publishing, and reusable actions
+
+## Summary
+
+GitHub Actions CI/CD pipeline configuration covering the integration testing pipeline, unit test and lint workflows, SDK preview and stable release publishing, and reusable composite actions. Reference when investigating CI failures, adding new test stages, configuring SDK releases, or understanding workflow triggers and sequencing.
 
 ## Workflows Overview
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `ci.integration.yml` | Push/PR to master | Main integration pipeline |
-| `ci.lint.yml` | Push/PR | EditorConfig and linting validation |
-| `ci.unit.yml` | Push/PR | Fast unit test feedback |
+| `ci.integration.yml` | PR to master / Manual | Main integration pipeline |
+| `ci.lint.yml` | Push (any branch) | EditorConfig and linting validation |
+| `ci.unit.yml` | Push (any branch) | Fast unit test feedback |
+| `ci.generation-check.yml` | PR to master | Validates generated files match schemas |
 | `ci.sdk-label-check.yml` | PR | Ensures SDK releases have proper labels |
+| `ci.sdk-preview.yml` | Manual | Manual SDK preview publish (bypasses CI) |
+| `ci.sdk-preview-auto.yml` | Push to master | Automatic SDK preview publish on merge |
 | `ci.sdk-release.yml` | Manual | Stable SDK release to NuGet |
+| `ci.release.yml` | Push to master (VERSION change) / Manual | Platform release (git tag + GitHub release) |
 
 ## Integration Pipeline
 
-The main pipeline (`ci.integration.yml`) runs a sequential testing progression:
+The main pipeline (`ci.integration.yml`) runs on PRs to master and manual dispatch. It executes a sequential testing progression. Unit tests are NOT included here -- they run separately via `ci.unit.yml` on every push.
 
 ```
 ┌─────────────────┐
 │ Checkout & Setup│
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│   Unit Tests    │ dotnet test
 └────────┬────────┘
          │
 ┌────────▼────────┐
@@ -39,45 +44,33 @@ The main pipeline (`ci.integration.yml`) runs a sequential testing progression:
          │
 ┌────────▼────────┐
 │ WS Forward      │ New client → old server
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ NuGet Publish   │ Preview packages
 └─────────────────┘
 ```
 
 ### Test Stages
 
-**1. Unit Tests**
-- Runs all unit tests with `dotnet test`
-- Fast feedback on code changes
-- No external dependencies required
-
-**2. Infrastructure Tests**
-- Starts Docker Compose stack
+**1. Infrastructure Tests**
+- Starts Docker Compose stack via `docker-compose.test.infrastructure.yml`
 - Validates container health
 - Tests infrastructure configuration (Redis, RabbitMQ, MySQL)
 - Verifies basic connectivity
 
-**3. HTTP Integration Tests**
-- Tests service-to-service HTTP communication
+**2. HTTP Integration Tests**
+- Tests service-to-service HTTP communication via mesh
+- Uses Docker Compose test stack (`docker-compose.test.http.yml`)
 - Uses generated clients
 - Validates API contracts against schemas
 
-**4. WebSocket Backward Compatibility**
-- Tests existing clients against new server code
+**3. WebSocket Backward Compatibility**
+- Tests published SDK clients against new server code
 - Ensures protocol backward compatibility
-- Uses `.env.ci.edge` configuration
+- Uses Docker Compose test stack (`docker-compose.test.edge.yml`)
+- Skipped if no published SDK exists on NuGet.org yet
 
-**5. WebSocket Forward Compatibility**
+**4. WebSocket Forward Compatibility**
 - Tests new clients against existing server
 - Validates protocol forward compatibility
 - Prevents breaking client updates
-
-**6. NuGet Preview Publishing**
-- Only runs on master branch pushes
-- Packages SDK with preview version suffix
-- Publishes to NuGet.org
 
 ## Reusable Actions
 
@@ -92,38 +85,39 @@ Located in `.github/actions/`:
 | `websocket-forward-test` | Forward compatibility |
 | `discord-notify` | Discord webhook notifications |
 
-## Environment Files
+## CI Environment Configuration
 
-CI uses specific environment configurations:
+CI tests use Docker Compose overlay files for environment configuration rather than `.env` files:
 
-| File | Purpose |
-|------|---------|
-| `.env.ci.http` | HTTP integration test settings |
-| `.env.ci.edge` | WebSocket test settings |
+| Compose Overlay | Purpose |
+|-----------------|---------|
+| `docker-compose.test.yml` | Base test configuration |
+| `docker-compose.test.infrastructure.yml` | Infrastructure test stack (minimal) |
+| `docker-compose.test.http.yml` | HTTP integration test stack |
+| `docker-compose.test.edge.yml` | WebSocket edge test stack |
 
-Key variables:
-```bash
-# CI-specific JWT settings
-BANNOU_JWT_SECRET=ci-test-secret
-BANNOU_JWT_ISSUER=bannou-ci
-BANNOU_JWT_AUDIENCE=bannou-ci-tests
-
-# Mock OAuth for testing
-AUTH_MOCK_PROVIDERS=true
-
-# Admin role for test accounts
-ACCOUNT_ADMIN_EMAIL_DOMAIN=@admin.test.local
-```
+These overlays are located in `provisioning/` and configure service enablement, test containers, and environment variables for each test tier.
 
 ## SDK Release Process
 
 ### Preview Releases (Automatic)
 
-Every successful master build publishes preview packages:
+`ci.sdk-preview-auto.yml` runs on every push to master and publishes preview packages:
 
 ```
-Version pattern: {SDK_VERSION}-preview.{run_number}
-Example: 1.0.0-preview.123
+Version pattern: {SDK_VERSION+patch}-preview.{run_number}
+Example: 1.0.1-preview.123 (when SDK_VERSION is 1.0.0)
+```
+
+Preview versions are always higher than the last stable release by bumping the patch version.
+
+### Preview Releases (Manual)
+
+`ci.sdk-preview.yml` allows manual preview publishing when CI fails for infrastructure reasons but code is known-good. Requires typing "publish" to confirm and a reason for the manual publish.
+
+```bash
+# Trigger manual preview publish
+gh workflow run ci.sdk-preview.yml
 ```
 
 ### Stable Releases (Manual)
@@ -177,18 +171,24 @@ Required secrets for CI:
 
 ## Workflow Triggers
 
-### Push Events
-- All workflows run on push to master
-- Full pipeline validates changes
+### Push Events (Any Branch)
+- `ci.unit.yml` - Unit tests on every push
+- `ci.lint.yml` - EditorConfig validation on every push
 
-### Pull Request Events
-- Lint and unit tests run on PRs
-- Integration tests run on PRs to master
-- SDK label check validates release PRs
+### Push Events (Master Only)
+- `ci.sdk-preview-auto.yml` - Automatic SDK preview publish
+- `ci.release.yml` - Platform release (only when `VERSION` file changes)
+
+### Pull Request Events (To Master)
+- `ci.integration.yml` - Full integration pipeline
+- `ci.generation-check.yml` - Validates generated files match schemas
+- `ci.sdk-label-check.yml` - Validates release PR labels
 
 ### Manual Dispatch
-- Integration pipeline: Re-run tests
-- SDK release: Publish stable packages
+- `ci.integration.yml` - Re-run integration tests
+- `ci.sdk-preview.yml` - Manual SDK preview publish
+- `ci.sdk-release.yml` - Stable SDK release
+- `ci.release.yml` - Platform release (with optional dry-run and force flags)
 
 ## Adding New Test Stages
 
@@ -224,8 +224,8 @@ runs:
 
 1. Check environment differences:
 ```bash
-# Compare local vs CI env
-diff .env .env.ci.http
+# Compare local docker-compose config vs CI test overlays
+diff provisioning/docker-compose.services.yml provisioning/docker-compose.test.http.yml
 ```
 
 2. Verify Docker state is clean:
@@ -255,5 +255,5 @@ await Task.Delay(1000);  # Or use proper health checks
 ## Next Steps
 
 - [Testing Guide](TESTING.md) - Detailed test documentation
-- [NuGet Setup](NUGET_SETUP.md) - SDK package configuration
-- [Deployment Guide](../guides/DEPLOYMENT.md) - Production deployment
+- [NuGet Setup](NUGET-SETUP.md) - SDK package configuration
+- [Deployment Guide](DEPLOYMENT.md) - Production deployment

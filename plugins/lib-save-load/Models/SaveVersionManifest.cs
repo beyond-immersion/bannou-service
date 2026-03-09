@@ -106,11 +106,13 @@ public sealed class SaveVersionManifest
     /// Generates the state store key for this version.
     /// Note: Uses ToString() for SlotId as state store keys are strings.
     /// </summary>
-    public string GetStateKey() => $"version:{SlotId}:{VersionNumber}";
+    internal string BuildStateKey() => $"{KeyPrefix}:{SlotId}:{VersionNumber}";
+
+    private const string KeyPrefix = "version";
 
     /// <summary>
-    /// Generates the state store key from components
+    /// Builds the state store key from components.
     /// </summary>
-    public static string GetStateKey(string slotId, int versionNumber)
-        => $"version:{slotId}:{versionNumber}";
+    internal static string BuildStateKey(string slotId, int versionNumber)
+        => $"{KeyPrefix}:{slotId}:{versionNumber}";
 }

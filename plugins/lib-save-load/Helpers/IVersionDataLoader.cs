@@ -77,8 +77,8 @@ public interface IVersionDataLoader
     /// <param name="checkpointName">The checkpoint name to search for.</param>
     /// <param name="versionStore">The version manifest store.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The version number, or 0 if not found.</returns>
-    Task<int> FindVersionByCheckpointAsync(
+    /// <returns>The version number, or null if not found.</returns>
+    Task<int?> FindVersionByCheckpointAsync(
         SaveSlotMetadata slot,
         string checkpointName,
         IStateStore<SaveVersionManifest> versionStore,

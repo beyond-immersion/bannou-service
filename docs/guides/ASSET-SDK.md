@@ -1,6 +1,13 @@
-# Bannou Asset SDK Guide
+# Bannou Asset SDK
 
-This guide explains how to use the Bannou Asset SDKs for both **consuming** assets in game clients and **producing** bundles with content tools.
+> **Version**: 1.0
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-asset (L3)
+
+## Summary
+
+Explains how to use the Bannou Asset SDKs for consuming assets in game clients via the asset-loader-client and producing bundles with content tools via the asset-bundler. Covers the consumer-side AssetManager for downloading and loading bundles with LZ4 compression, and the producer-side BundleBuilder for creating and uploading asset bundles to the MinIO/S3-backed Asset service.
 
 ## Overview
 

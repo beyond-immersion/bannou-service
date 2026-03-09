@@ -1,11 +1,14 @@
 # Behavioral Bootstrap Pattern
 
-> **Version**: 1.0
-> **Last Updated**: 2026-02-14
-> **Scope**: Cross-cutting architectural pattern for Puppetmaster and Gardener
-> **Referenced By**: [PUPPETMASTER.md](../plugins/PUPPETMASTER.md), [GARDENER.md](../plugins/GARDENER.md), [DIVINE.md](../plugins/DIVINE.md)
+> **Version**: 1.1
+> **Status**: Aspirational
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-actor (L2), lib-puppetmaster (L4), lib-gardener (L4), lib-divine (L4)
+> **Related Guides**: [Morality System](MORALITY-SYSTEM.md)
 
-This document describes how Puppetmaster and Gardener bootstrap autonomous god-actors that serve as the connective tissue between Bannou's disparate services. These god-actors are the "drive belt" of the content flywheel and the player experience orchestration system. They are **not a plugin** -- they are authored ABML behavior documents executed by the Actor runtime.
+## Summary
+
+Cross-cutting architectural pattern describing how Puppetmaster and Gardener bootstrap autonomous god-actors as the connective tissue between Bannou's decomposed services, driving the content flywheel and player experience orchestration. God-actors are long-running ABML behavior documents executed by the Actor runtime, not a plugin. Intended for developers working on divine actors, regional watchers, gardener behaviors, or the content flywheel pipeline. After reading, developers will understand the full bootstrap sequence, god-actor lifecycle, and how orchestration emerges from authored behavior content rather than compiled service code.
 
 ---
 
@@ -434,7 +437,7 @@ God behaviors follow the same ABML structure as NPC behaviors but with different
 | Aspect | NPC Actor | God Actor |
 |--------|-----------|-----------|
 | Perception sources | Local environment, encounters, social | Global events (deaths, archives, world state changes) |
-| Variable providers | `${personality.*}`, `${encounters.*}` | `${divine.*}`, `${spirit.*}`, `${world.*}` |
+| Variable providers | `${personality.*}`, `${encounters.*}` | `${personality.*}`, `${encounters.*}`, `${backstory.*}`, `${quest.*}`, `${world.*}`, `${obligations.*}` (character brain) + `load_snapshot:` for ad-hoc mortal data |
 | Action handlers | Move, attack, speak, craft | Call service APIs, spawn actors, create quests, grant blessings |
 | Planning horizon | Seconds to minutes | Hours to days (game-time) |
 | Cognitive cycle | 100-500ms | 1-10s (gods think slower, act bigger) |

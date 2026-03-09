@@ -26,6 +26,21 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Scene;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -70,6 +85,7 @@ public partial class SceneInstantiatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("sceneVersion")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string SceneVersion { get; set; } = default!;
 
     /// <summary>
@@ -78,15 +94,15 @@ public partial class SceneInstantiatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("sceneName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string SceneName { get; set; } = default!;
 
     /// <summary>
-    /// Game ID from the scene
+    /// Game ID from the scene (null for unpartitioned scenes)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string GameId { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
+    public string? GameId { get; set; } = default!;
 
     /// <summary>
     /// Scene type from the scene
@@ -94,8 +110,8 @@ public partial class SceneInstantiatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SceneType SceneType { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string SceneType { get; set; } = default!;
 
     /// <summary>
     /// Region where the scene was placed
@@ -111,7 +127,7 @@ public partial class SceneInstantiatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("worldTransform")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public EventTransform WorldTransform { get; set; } = new EventTransform();
+    public Transform WorldTransform { get; set; } = new Transform();
 
     /// <summary>
     /// Caller-provided metadata passed through from instantiation request. No Bannou plugin reads specific keys from this field by convention.
@@ -228,6 +244,7 @@ public partial class SceneCheckedOutEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("checkedOutById")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string CheckedOutById { get; set; } = default!;
 
     /// <summary>
@@ -281,12 +298,14 @@ public partial class SceneCommittedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string Version { get; set; } = default!;
 
     /// <summary>
     /// Version before commit
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousVersion")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? PreviousVersion { get; set; } = default!;
 
     /// <summary>
@@ -306,12 +325,14 @@ public partial class SceneCommittedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("committedById")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string CommittedById { get; set; } = default!;
 
     /// <summary>
     /// Optional summary of changes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changesSummary")]
+    [System.ComponentModel.DataAnnotations.StringLength(2000)]
     public string? ChangesSummary { get; set; } = default!;
 
     /// <summary>
@@ -374,6 +395,7 @@ public partial class SceneCheckoutDiscardedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("discardedById")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string DiscardedById { get; set; } = default!;
 
 }
@@ -399,6 +421,7 @@ public partial class SceneValidationRulesUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string GameId { get; set; } = default!;
 
     /// <summary>
@@ -407,113 +430,22 @@ public partial class SceneValidationRulesUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SceneType SceneType { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string SceneType { get; set; } = default!;
 
     /// <summary>
     /// Number of active rules after update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ruleCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int RuleCount { get; set; } = default!;
 
     /// <summary>
     /// Who updated the rules
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedBy")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string? UpdatedBy { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Transform for event payloads
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class EventTransform
-{
-
-    /// <summary>
-    /// World position
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("position")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public EventVector3 Position { get; set; } = new EventVector3();
-
-    /// <summary>
-    /// World rotation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("rotation")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public EventQuaternion Rotation { get; set; } = new EventQuaternion();
-
-    /// <summary>
-    /// World scale
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scale")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public EventVector3 Scale { get; set; } = new EventVector3();
-
-}
-
-/// <summary>
-/// 3D vector for events
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class EventVector3
-{
-
-    /// <summary>
-    /// X component
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("x")]
-    public double X { get; set; } = default!;
-
-    /// <summary>
-    /// Y component
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("y")]
-    public double Y { get; set; } = default!;
-
-    /// <summary>
-    /// Z component
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("z")]
-    public double Z { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Quaternion for events
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class EventQuaternion
-{
-
-    /// <summary>
-    /// X component
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("x")]
-    public double X { get; set; } = default!;
-
-    /// <summary>
-    /// Y component
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("y")]
-    public double Y { get; set; } = default!;
-
-    /// <summary>
-    /// Z component
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("z")]
-    public double Z { get; set; } = default!;
-
-    /// <summary>
-    /// W component
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("w")]
-    public double W { get; set; } = default!;
 
 }
 

@@ -25,7 +25,7 @@ public class ModelTests
         };
 
         // Act
-        var key = slot.GetStateKey();
+        var key = slot.BuildStateKey();
 
         // Assert
         Assert.Equal($"slot:test-game:account:{ownerId}:main-save", key);
@@ -35,7 +35,7 @@ public class ModelTests
     public void SaveSlotMetadata_GetStateKeyStatic_ReturnsCorrectFormat()
     {
         // Arrange & Act
-        var key = SaveSlotMetadata.GetStateKey("game1", "CHARACTER", "char-789", "quick-save");
+        var key = SaveSlotMetadata.BuildStateKey("game1", "CHARACTER", "char-789", "quick-save");
 
         // Assert
         Assert.Equal("slot:game1:CHARACTER:char-789:quick-save", key);
@@ -57,8 +57,8 @@ public class ModelTests
         };
 
         // Act
-        var instanceKey = slot.GetStateKey();
-        var staticKey = SaveSlotMetadata.GetStateKey(
+        var instanceKey = slot.BuildStateKey();
+        var staticKey = SaveSlotMetadata.BuildStateKey(
             slot.GameId, slot.OwnerType.ToString().ToLowerInvariant(), slot.OwnerId.ToString(), slot.SlotName);
 
         // Assert
@@ -109,7 +109,7 @@ public class ModelTests
         };
 
         // Act
-        var key = manifest.GetStateKey();
+        var key = manifest.BuildStateKey();
 
         // Assert
         Assert.Equal($"version:{slotId}:42", key);
@@ -119,7 +119,7 @@ public class ModelTests
     public void SaveVersionManifest_GetStateKeyStatic_ReturnsCorrectFormat()
     {
         // Arrange & Act
-        var key = SaveVersionManifest.GetStateKey("my-slot", 7);
+        var key = SaveVersionManifest.BuildStateKey("my-slot", 7);
 
         // Assert
         Assert.Equal("version:my-slot:7", key);
@@ -138,8 +138,8 @@ public class ModelTests
         };
 
         // Act
-        var instanceKey = manifest.GetStateKey();
-        var staticKey = SaveVersionManifest.GetStateKey(manifest.SlotId.ToString(), manifest.VersionNumber);
+        var instanceKey = manifest.BuildStateKey();
+        var staticKey = SaveVersionManifest.BuildStateKey(manifest.SlotId.ToString(), manifest.VersionNumber);
 
         // Assert
         Assert.Equal(instanceKey, staticKey);
@@ -177,7 +177,7 @@ public class ModelTests
     public void SaveVersionManifest_KeyWithVersionZero_Works()
     {
         // Arrange & Act
-        var key = SaveVersionManifest.GetStateKey("slot", 0);
+        var key = SaveVersionManifest.BuildStateKey("slot", 0);
 
         // Assert
         Assert.Equal("version:slot:0", key);
@@ -201,7 +201,7 @@ public class ModelTests
         };
 
         // Act
-        var key = entry.GetStateKey();
+        var key = entry.BuildStateKey();
 
         // Assert
         Assert.Equal($"hot:{slotId}:5", key);
@@ -211,7 +211,7 @@ public class ModelTests
     public void HotSaveEntry_GetStateKeyStatic_ReturnsCorrectFormat()
     {
         // Arrange & Act
-        var key = HotSaveEntry.GetStateKey("cache-slot", 12);
+        var key = HotSaveEntry.BuildStateKey("cache-slot", 12);
 
         // Assert
         Assert.Equal("hot:cache-slot:12", key);
@@ -221,7 +221,7 @@ public class ModelTests
     public void HotSaveEntry_GetLatestKey_ReturnsCorrectFormat()
     {
         // Arrange & Act
-        var key = HotSaveEntry.GetLatestKey("my-slot");
+        var key = HotSaveEntry.BuildLatestKey("my-slot");
 
         // Assert
         Assert.Equal("hot:my-slot:latest", key);
@@ -241,8 +241,8 @@ public class ModelTests
         };
 
         // Act
-        var instanceKey = entry.GetStateKey();
-        var staticKey = HotSaveEntry.GetStateKey(entry.SlotId.ToString(), entry.VersionNumber);
+        var instanceKey = entry.BuildStateKey();
+        var staticKey = HotSaveEntry.BuildStateKey(entry.SlotId.ToString(), entry.VersionNumber);
 
         // Assert
         Assert.Equal(instanceKey, staticKey);
@@ -280,6 +280,7 @@ public class ModelTests
         {
             UploadId = uploadId,
             SlotId = Guid.NewGuid(),
+            SlotName = "quicksave",
             VersionNumber = 3,
             GameId = "game",
             OwnerId = Guid.NewGuid(),
@@ -289,7 +290,7 @@ public class ModelTests
         };
 
         // Act
-        var key = entry.GetStateKey();
+        var key = entry.BuildStateKey();
 
         // Assert
         Assert.Equal($"pending:{uploadId}", key);
@@ -299,7 +300,7 @@ public class ModelTests
     public void PendingUploadEntry_GetStateKeyStatic_ReturnsCorrectFormat()
     {
         // Arrange & Act
-        var key = PendingUploadEntry.GetStateKey("some-upload-id");
+        var key = PendingUploadEntry.BuildStateKey("some-upload-id");
 
         // Assert
         Assert.Equal("pending:some-upload-id", key);
@@ -314,6 +315,7 @@ public class ModelTests
         {
             UploadId = uploadId,
             SlotId = Guid.NewGuid(),
+            SlotName = "autosave",
             VersionNumber = 1,
             GameId = "game",
             OwnerId = Guid.NewGuid(),
@@ -323,8 +325,8 @@ public class ModelTests
         };
 
         // Act
-        var instanceKey = entry.GetStateKey();
-        var staticKey = PendingUploadEntry.GetStateKey(entry.UploadId.ToString());
+        var instanceKey = entry.BuildStateKey();
+        var staticKey = PendingUploadEntry.BuildStateKey(entry.UploadId.ToString());
 
         // Assert
         Assert.Equal(instanceKey, staticKey);
@@ -338,6 +340,7 @@ public class ModelTests
         {
             UploadId = Guid.NewGuid(),
             SlotId = Guid.NewGuid(),
+            SlotName = "manual-save",
             VersionNumber = 1,
             GameId = "game",
             OwnerId = Guid.NewGuid(),
@@ -368,7 +371,7 @@ public class ModelTests
     public void SaveSchemaDefinition_GetStateKey_ReturnsCorrectFormat()
     {
         // Arrange & Act
-        var key = SaveSchemaDefinition.GetStateKey("test-game", "v1.0.0");
+        var key = SaveSchemaDefinition.BuildStateKey("test-game", "v1.0.0");
 
         // Assert
         Assert.Equal("test-game:v1.0.0", key);
@@ -378,7 +381,7 @@ public class ModelTests
     public void SaveSchemaDefinition_GetStateKey_WithSpecialCharacters()
     {
         // Arrange & Act
-        var key = SaveSchemaDefinition.GetStateKey("my-game", "2025.01.01");
+        var key = SaveSchemaDefinition.BuildStateKey("my-game", "2025.01.01");
 
         // Assert
         Assert.Equal("my-game:2025.01.01", key);
@@ -446,11 +449,11 @@ public class ModelTests
     public void StateKeys_AreUniqueAcrossModels()
     {
         // Arrange - create keys with same base values
-        var slotKey = SaveSlotMetadata.GetStateKey("game", "ACCOUNT", "owner", "slot");
-        var versionKey = SaveVersionManifest.GetStateKey("slot", 1);
-        var hotKey = HotSaveEntry.GetStateKey("slot", 1);
-        var pendingKey = PendingUploadEntry.GetStateKey("upload-id");
-        var schemaKey = SaveSchemaDefinition.GetStateKey("namespace", "version");
+        var slotKey = SaveSlotMetadata.BuildStateKey("game", "ACCOUNT", "owner", "slot");
+        var versionKey = SaveVersionManifest.BuildStateKey("slot", 1);
+        var hotKey = HotSaveEntry.BuildStateKey("slot", 1);
+        var pendingKey = PendingUploadEntry.BuildStateKey("upload-id");
+        var schemaKey = SaveSchemaDefinition.BuildStateKey("namespace", "version");
 
         // Act & Assert - all keys should be different due to prefixes
         var allKeys = new[] { slotKey, versionKey, hotKey, pendingKey, schemaKey };
@@ -461,10 +464,10 @@ public class ModelTests
     public void StateKeys_HaveConsistentPrefixes()
     {
         // Assert prefixes match expected pattern
-        Assert.StartsWith("slot:", SaveSlotMetadata.GetStateKey("g", "t", "o", "n"));
-        Assert.StartsWith("version:", SaveVersionManifest.GetStateKey("s", 1));
-        Assert.StartsWith("hot:", HotSaveEntry.GetStateKey("s", 1));
-        Assert.StartsWith("pending:", PendingUploadEntry.GetStateKey("id"));
+        Assert.StartsWith("slot:", SaveSlotMetadata.BuildStateKey("g", "t", "o", "n"));
+        Assert.StartsWith("version:", SaveVersionManifest.BuildStateKey("s", 1));
+        Assert.StartsWith("hot:", HotSaveEntry.BuildStateKey("s", 1));
+        Assert.StartsWith("pending:", PendingUploadEntry.BuildStateKey("id"));
         // SaveSchemaDefinition uses namespace:version without prefix (by design)
     }
 

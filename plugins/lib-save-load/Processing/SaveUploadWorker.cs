@@ -57,7 +57,14 @@ public class SaveUploadWorker : BackgroundService
         }
 
         // Wait for other services to initialize
-        await Task.Delay(TimeSpan.FromSeconds(_configuration.UploadWorkerStartupDelaySeconds), stoppingToken);
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.UploadWorkerStartupDelaySeconds), stoppingToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
 
         _logger.LogInformation(
             "SaveUploadWorker starting with interval of {IntervalMs}ms, batch size {BatchSize}",
@@ -102,7 +109,13 @@ public class SaveUploadWorker : BackgroundService
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveUploadWorker.ProcessPendingUploadsAsync");
         var stateStoreFactory = serviceProvider.GetRequiredService<IStateStoreFactory>();
         var messageBus = serviceProvider.GetRequiredService<IMessageBus>();
-        var assetClient = serviceProvider.GetRequiredService<IAssetClient>();
+        // L3 soft dependency per FOUNDATION TENETS — Asset service may not be enabled
+        var assetClient = serviceProvider.GetService<IAssetClient>();
+        if (assetClient == null)
+        {
+            _logger.LogDebug("Asset service not available, skipping upload processing");
+            return;
+        }
         var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
 
         var circuitBreaker = new StorageCircuitBreaker(
@@ -131,8 +144,8 @@ public class SaveUploadWorker : BackgroundService
         }
 
         // Fetch all pending entries using bulk get
-        // PendingUploadEntry.GetStateKey takes a string - these IDs are already strings from the set
-        var pendingKeys = pendingUploadIds.Select(id => PendingUploadEntry.GetStateKey(id)).ToList();
+        // PendingUploadEntry.BuildStateKey takes a string - these IDs are already strings from the set
+        var pendingKeys = pendingUploadIds.Select(id => PendingUploadEntry.BuildStateKey(id)).ToList();
         var entriesDict = await pendingStore.GetBulkAsync(pendingKeys, cancellationToken);
 
         // Filter by attempt count, order by priority, and take batch size
@@ -197,7 +210,7 @@ public class SaveUploadWorker : BackgroundService
         // Update attempt count
         entry.AttemptCount++;
         entry.LastAttemptAt = DateTimeOffset.UtcNow;
-        await pendingStore.SaveAsync(entry.GetStateKey(), entry, cancellationToken: cancellationToken);
+        await pendingStore.SaveAsync(entry.BuildStateKey(), entry, cancellationToken: cancellationToken);
 
         // Request upload URL from Asset service
         // PendingUploadEntry.OwnerType is now enum, OwnerId/SlotId are Guid - convert to strings
@@ -240,7 +253,7 @@ public class SaveUploadWorker : BackgroundService
 
         // Update version manifest with asset ID
         // PendingUploadEntry.SlotId is Guid - convert to string for state key
-        var versionKey = SaveVersionManifest.GetStateKey(entry.SlotId.ToString(), entry.VersionNumber);
+        var versionKey = SaveVersionManifest.BuildStateKey(entry.SlotId.ToString(), entry.VersionNumber);
         var manifest = await versionStore.GetAsync(versionKey, cancellationToken);
 
         if (manifest != null)
@@ -253,7 +266,7 @@ public class SaveUploadWorker : BackgroundService
 
         // Delete pending entry and remove from tracking set
         // PendingUploadEntry.UploadId is Guid - convert to string for set
-        await pendingStore.DeleteAsync(entry.GetStateKey(), cancellationToken);
+        await pendingStore.DeleteAsync(entry.BuildStateKey(), cancellationToken);
         await pendingStore.RemoveFromSetAsync(PendingUploadIdsSetKey, entry.UploadId.ToString(), cancellationToken);
 
         // Record success with circuit breaker
@@ -266,7 +279,7 @@ public class SaveUploadWorker : BackgroundService
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             SlotId = entry.SlotId,
-            SlotName = entry.SlotId.ToString(), // We don't have slot name in pending entry
+            SlotName = entry.SlotName,
             VersionNumber = entry.VersionNumber,
             AssetId = Guid.Parse(assetMetadata.AssetId)
         };
@@ -303,7 +316,7 @@ public class SaveUploadWorker : BackgroundService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SlotId = entry.SlotId,
-                SlotName = entry.SlotId.ToString(),
+                SlotName = entry.SlotName,
                 VersionNumber = entry.VersionNumber,
                 OwnerId = entry.OwnerId,
                 OwnerType = entry.OwnerType,
@@ -316,7 +329,7 @@ public class SaveUploadWorker : BackgroundService
 
             // Delete the failed entry after max attempts and remove from tracking set
             // PendingUploadEntry.UploadId is Guid - convert to string for set
-            await pendingStore.DeleteAsync(entry.GetStateKey(), cancellationToken);
+            await pendingStore.DeleteAsync(entry.BuildStateKey(), cancellationToken);
             await pendingStore.RemoveFromSetAsync(PendingUploadIdsSetKey, entry.UploadId.ToString(), cancellationToken);
         }
         else
@@ -326,7 +339,7 @@ public class SaveUploadWorker : BackgroundService
                 entry.AttemptCount, entry.SlotId, entry.VersionNumber, errorMessage);
 
             // Save updated entry for retry
-            await pendingStore.SaveAsync(entry.GetStateKey(), entry, cancellationToken: cancellationToken);
+            await pendingStore.SaveAsync(entry.BuildStateKey(), entry, cancellationToken: cancellationToken);
         }
 
         // Record failure with circuit breaker

@@ -1,6 +1,14 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Scene;
+using BeyondImmersion.BannouService.Scene.Helpers;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Scene.Tests;
@@ -13,6 +21,85 @@ namespace BeyondImmersion.BannouService.Scene.Tests;
 public class SceneServiceTests
 {
     #region Constructor Validation
+
+    [Fact]
+    public void SceneService_HasValidConstructorPattern()
+    {
+        ServiceConstructorValidator.ValidateServiceConstructor<SceneService>();
+    }
+
+    #endregion
+
+    #region Key Builder Tests
+
+    [Fact]
+    public void BuildSceneIndexKey_ProducesCorrectFormat()
+    {
+        var id = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
+        var key = SceneService.BuildSceneIndexKey(id);
+        Assert.Equal("scene:index:01234567-89ab-cdef-0123-456789abcdef", key);
+    }
+
+    [Fact]
+    public void BuildSceneContentKey_ProducesCorrectFormat()
+    {
+        var id = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
+        var key = SceneService.BuildSceneContentKey(id);
+        Assert.Equal("scene:content:01234567-89ab-cdef-0123-456789abcdef", key);
+    }
+
+    [Fact]
+    public void BuildSceneByGameKey_ProducesCorrectFormat()
+    {
+        var key = SceneService.BuildSceneByGameKey("my-game");
+        Assert.Equal("scene:by-game:my-game", key);
+    }
+
+    [Fact]
+    public void BuildSceneByTypeKey_ProducesCorrectFormat()
+    {
+        var key = SceneService.BuildSceneByTypeKey("my-game", "Region");
+        Assert.Equal("scene:by-type:my-game:Region", key);
+    }
+
+    [Fact]
+    public void BuildSceneReferencesKey_ProducesCorrectFormat()
+    {
+        var id = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
+        var key = SceneService.BuildSceneReferencesKey(id);
+        Assert.Equal("scene:references:01234567-89ab-cdef-0123-456789abcdef", key);
+    }
+
+    [Fact]
+    public void BuildSceneAssetsKey_ProducesCorrectFormat()
+    {
+        var id = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
+        var key = SceneService.BuildSceneAssetsKey(id);
+        Assert.Equal("scene:assets:01234567-89ab-cdef-0123-456789abcdef", key);
+    }
+
+    [Fact]
+    public void BuildSceneCheckoutKey_ProducesCorrectFormat()
+    {
+        var id = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
+        var key = SceneService.BuildSceneCheckoutKey(id);
+        Assert.Equal("scene:checkout:01234567-89ab-cdef-0123-456789abcdef", key);
+    }
+
+    [Fact]
+    public void BuildValidationRulesKey_ProducesCorrectFormat()
+    {
+        var key = SceneService.BuildValidationRulesKey("my-game", "Region");
+        Assert.Equal("scene:validation:my-game:Region", key);
+    }
+
+    [Fact]
+    public void BuildSceneVersionHistoryKey_ProducesCorrectFormat()
+    {
+        var id = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
+        var key = SceneService.BuildSceneVersionHistoryKey(id);
+        Assert.Equal("scene:version-history:01234567-89ab-cdef-0123-456789abcdef", key);
+    }
 
     #endregion
 
@@ -283,23 +370,6 @@ public class SceneServiceTests
 
     #endregion
 
-    #region SceneType Enum Tests
-
-    [Fact]
-    public void SceneType_ContainsExpectedValues()
-    {
-        // Verify core scene types exist
-        Assert.True(Enum.IsDefined(typeof(SceneType), SceneType.Unknown));
-        Assert.True(Enum.IsDefined(typeof(SceneType), SceneType.Region));
-        Assert.True(Enum.IsDefined(typeof(SceneType), SceneType.City));
-        Assert.True(Enum.IsDefined(typeof(SceneType), SceneType.District));
-        Assert.True(Enum.IsDefined(typeof(SceneType), SceneType.Lot));
-        Assert.True(Enum.IsDefined(typeof(SceneType), SceneType.Building));
-        Assert.True(Enum.IsDefined(typeof(SceneType), SceneType.Room));
-    }
-
-    #endregion
-
     #region NodeType Enum Tests
 
     [Fact]
@@ -452,8 +522,8 @@ public class SceneServiceTests
     [Fact]
     public void Affordance_CanSetType()
     {
-        var affordance = new Affordance { Type = AffordanceType.Sittable };
-        Assert.Equal(AffordanceType.Sittable, affordance.Type);
+        var affordance = new Affordance { Type = "Sittable" };
+        Assert.Equal("Sittable", affordance.Type);
     }
 
     [Fact]
@@ -461,11 +531,11 @@ public class SceneServiceTests
     {
         var affordance = new Affordance
         {
-            Type = AffordanceType.Door,
+            Type = "Door",
             Parameters = new { openAngle = 90, locked = false }
         };
 
-        Assert.Equal(AffordanceType.Door, affordance.Type);
+        Assert.Equal("Door", affordance.Type);
         Assert.NotNull(affordance.Parameters);
     }
 
@@ -508,41 +578,6 @@ public class SceneServiceTests
 
     #endregion
 
-    #region AffordanceType Enum Tests
-
-    [Fact]
-    public void AffordanceType_ContainsExpectedValues()
-    {
-        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Walkable));
-        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Climbable));
-        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Sittable));
-        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Interactive));
-        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Collectible));
-        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Destructible));
-        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Container));
-        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Door));
-        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Teleport));
-    }
-
-    #endregion
-
-    #region MarkerType Enum Tests
-
-    [Fact]
-    public void MarkerType_ContainsExpectedValues()
-    {
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Generic));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.SpawnPoint));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.NpcSpawn));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Waypoint));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.CameraPoint));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.LightPoint));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.AudioPoint));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.TriggerPoint));
-    }
-
-    #endregion
-
     #region SceneNode Extensions Tests
 
     [Fact]
@@ -567,8 +602,8 @@ public class SceneServiceTests
         {
             Affordances = new List<Affordance>
             {
-                new Affordance { Type = AffordanceType.Walkable },
-                new Affordance { Type = AffordanceType.Sittable }
+                new Affordance { Type = "Walkable" },
+                new Affordance { Type = "Sittable" }
             }
         };
 
@@ -593,10 +628,10 @@ public class SceneServiceTests
         var node = new SceneNode
         {
             NodeType = NodeType.Marker,
-            MarkerType = MarkerType.SpawnPoint
+            MarkerType = "SpawnPoint"
         };
 
-        Assert.Equal(MarkerType.SpawnPoint, node.MarkerType);
+        Assert.Equal("SpawnPoint", node.MarkerType);
     }
 
     #endregion
@@ -628,11 +663,11 @@ public class SceneServiceTests
             Timestamp = DateTimeOffset.UtcNow,
             SceneId = Guid.NewGuid(),
             GameId = "test-game",
-            SceneType = SceneType.Region,
+            SceneType = "Region",
             Name = "Test Scene"
         };
         Assert.Equal("test-game", evt.GameId);
-        Assert.Equal(SceneType.Region, evt.SceneType);
+        Assert.Equal("Region", evt.SceneType);
     }
 
     [Fact]
@@ -681,3 +716,556 @@ public class SceneServiceTests
 
     #endregion
 }
+
+/// <summary>
+/// Business logic unit tests for SceneService with mocked state stores.
+/// Tests service method logic including state interactions, validation flows, and error paths.
+/// </summary>
+#pragma warning disable CS8620 // Argument of type cannot be used for parameter of type due to differences in the nullability
+public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfiguration>
+{
+    private const string STATE_STORE = "scene-statestore";
+
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<SceneIndexEntry>> _mockIndexStore;
+    private readonly Mock<IStateStore<HashSet<Guid>>> _mockGuidSetStore;
+    private readonly Mock<IStateStore<CheckoutState>> _mockCheckoutStore;
+    private readonly Mock<IStateStore<SceneContentEntry>> _mockContentStore;
+    private readonly Mock<IStateStore<List<ValidationRule>>> _mockRulesStore;
+    private readonly Mock<IStateStore<List<VersionHistoryEntry>>> _mockHistoryStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<SceneService>> _mockLogger;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ISceneValidationService> _mockValidationService;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IMeshInstanceIdentifier> _mockMeshInstanceIdentifier;
+
+    public SceneServiceBusinessLogicTests()
+    {
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockIndexStore = new Mock<IStateStore<SceneIndexEntry>>();
+        _mockGuidSetStore = new Mock<IStateStore<HashSet<Guid>>>();
+        _mockCheckoutStore = new Mock<IStateStore<CheckoutState>>();
+        _mockContentStore = new Mock<IStateStore<SceneContentEntry>>();
+        _mockRulesStore = new Mock<IStateStore<List<ValidationRule>>>();
+        _mockHistoryStore = new Mock<IStateStore<List<VersionHistoryEntry>>>();
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<SceneService>>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockValidationService = new Mock<ISceneValidationService>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockMeshInstanceIdentifier = new Mock<IMeshInstanceIdentifier>();
+
+        _mockMeshInstanceIdentifier.Setup(m => m.InstanceId).Returns(Guid.NewGuid());
+
+        // Setup factory to return typed stores
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<SceneIndexEntry>(STATE_STORE))
+            .Returns(_mockIndexStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<HashSet<Guid>>(STATE_STORE))
+            .Returns(_mockGuidSetStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<CheckoutState>(STATE_STORE))
+            .Returns(_mockCheckoutStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<SceneContentEntry>(STATE_STORE))
+            .Returns(_mockContentStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<List<ValidationRule>>(STATE_STORE))
+            .Returns(_mockRulesStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<List<VersionHistoryEntry>>(STATE_STORE))
+            .Returns(_mockHistoryStore.Object);
+
+        // Default bulk operation behavior
+        _mockIndexStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, SceneIndexEntry>());
+    }
+
+    private SceneService CreateService() => new SceneService(
+        _mockMessageBus.Object,
+        _mockStateStoreFactory.Object,
+        _mockLogger.Object,
+        Configuration,
+        _mockLockProvider.Object,
+        _mockEventConsumer.Object,
+        _mockValidationService.Object,
+        _mockTelemetryProvider.Object,
+        _mockMeshInstanceIdentifier.Object);
+
+    #region GetSceneAsync Tests
+
+    [Fact]
+    public async Task GetSceneAsync_SceneNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var sceneId = Guid.NewGuid();
+        _mockIndexStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneIndexKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SceneIndexEntry?)null);
+
+        // Act
+        var (status, response) = await service.GetSceneAsync(new GetSceneRequest { SceneId = sceneId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetSceneAsync_AssetNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var sceneId = Guid.NewGuid();
+        var assetId = Guid.NewGuid();
+
+        _mockIndexStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneIndexKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SceneIndexEntry
+            {
+                SceneId = sceneId,
+                AssetId = assetId,
+                SceneType = "Region",
+                Name = "Test Scene",
+                Version = "1.0.0"
+            });
+
+        // Content store returns null — asset missing
+        _mockContentStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneContentKey(assetId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SceneContentEntry?)null);
+
+        // Act
+        var (status, response) = await service.GetSceneAsync(new GetSceneRequest { SceneId = sceneId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetSceneAsync_SceneExists_ReturnsScene()
+    {
+        // Arrange
+        var service = CreateService();
+        var sceneId = Guid.NewGuid();
+        var assetId = Guid.NewGuid();
+
+        _mockIndexStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneIndexKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SceneIndexEntry
+            {
+                SceneId = sceneId,
+                AssetId = assetId,
+                SceneType = "Region",
+                Name = "Test Scene",
+                Version = "1.0.0"
+            });
+
+        // Content store returns valid YAML
+        _mockContentStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneContentKey(assetId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SceneContentEntry
+            {
+                SceneId = sceneId,
+                Version = "1.0.0",
+                Content = $"sceneId: {sceneId}\nname: Test Scene\nsceneType: Region\nversion: 1.0.0\nschema: bannou://schemas/scene/v1\n",
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.GetSceneAsync(new GetSceneRequest { SceneId = sceneId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(response.Scene);
+        Assert.Equal("Test Scene", response.Scene.Name);
+    }
+
+    #endregion
+
+    #region DeleteSceneAsync Tests
+
+    [Fact]
+    public async Task DeleteSceneAsync_SceneNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var sceneId = Guid.NewGuid();
+        _mockIndexStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneIndexKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SceneIndexEntry?)null);
+
+        // Act
+        var (status, response) = await service.DeleteSceneAsync(new DeleteSceneRequest { SceneId = sceneId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task DeleteSceneAsync_SceneHasReferences_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var sceneId = Guid.NewGuid();
+        var referencingSceneId = Guid.NewGuid();
+
+        _mockIndexStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneIndexKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SceneIndexEntry
+            {
+                SceneId = sceneId,
+                AssetId = Guid.NewGuid(),
+                SceneType = "Region",
+                Name = "Test Scene",
+                Version = "1.0.0"
+            });
+
+        // Reference index shows another scene references this one
+        _mockGuidSetStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneReferencesKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<Guid> { referencingSceneId });
+
+        // Act
+        var (status, response) = await service.DeleteSceneAsync(new DeleteSceneRequest { SceneId = sceneId });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+        // Verify no delete occurred
+        _mockIndexStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteSceneAsync_NoReferences_DeletesSuccessfully()
+    {
+        // Arrange
+        var service = CreateService();
+        var sceneId = Guid.NewGuid();
+        var assetId = Guid.NewGuid();
+
+        _mockIndexStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneIndexKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SceneIndexEntry
+            {
+                SceneId = sceneId,
+                AssetId = assetId,
+                SceneType = "Region",
+                Name = "Test Scene",
+                Version = "1.0.0"
+            });
+
+        // No references
+        _mockGuidSetStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneReferencesKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HashSet<Guid>?)null);
+
+        // Content store for loading scene for event publishing
+        _mockContentStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneContentKey(assetId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SceneContentEntry?)null);
+
+        // ETag operations for index modification
+        _mockGuidSetStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((HashSet<Guid>?)null, (string?)"etag-1"));
+        _mockGuidSetStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<HashSet<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Act
+        var (status, response) = await service.DeleteSceneAsync(new DeleteSceneRequest { SceneId = sceneId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        // Verify index was deleted
+        _mockIndexStore.Verify(s => s.DeleteAsync(SceneService.BuildSceneIndexKey(sceneId), It.IsAny<CancellationToken>()), Times.Once);
+        // Verify content was deleted
+        _mockContentStore.Verify(s => s.DeleteAsync(SceneService.BuildSceneContentKey(sceneId), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region GetValidationRulesAsync Tests
+
+    [Fact]
+    public async Task GetValidationRulesAsync_NoRulesStored_ReturnsEmptyList()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameId = "arcadia";
+        var sceneType = "Region";
+
+        _mockRulesStore
+            .Setup(s => s.GetAsync(SceneService.BuildValidationRulesKey(gameId, sceneType), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<ValidationRule>?)null);
+
+        // Act
+        var (status, response) = await service.GetValidationRulesAsync(new GetValidationRulesRequest
+        {
+            GameId = gameId,
+            SceneType = sceneType
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(response.Rules);
+        Assert.Empty(response.Rules);
+    }
+
+    [Fact]
+    public async Task GetValidationRulesAsync_RulesExist_ReturnsStoredRules()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameId = "arcadia";
+        var sceneType = "Region";
+
+        var storedRules = new List<ValidationRule>
+        {
+            new ValidationRule { RuleId = "rule-1", Description = "Must have root node", Severity = ValidationSeverity.Error, RuleType = ValidationRuleType.RequireTag },
+            new ValidationRule { RuleId = "rule-2", Description = "Recommended description", Severity = ValidationSeverity.Warning, RuleType = ValidationRuleType.RequireTag }
+        };
+
+        _mockRulesStore
+            .Setup(s => s.GetAsync(SceneService.BuildValidationRulesKey(gameId, sceneType), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(storedRules);
+
+        // Act
+        var (status, response) = await service.GetValidationRulesAsync(new GetValidationRulesRequest
+        {
+            GameId = gameId,
+            SceneType = sceneType
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(response.Rules);
+        Assert.Equal(2, response.Rules.Count);
+        var rulesList = response.Rules.ToList();
+        Assert.Equal("rule-1", rulesList[0].RuleId);
+        Assert.Equal("rule-2", rulesList[1].RuleId);
+    }
+
+    #endregion
+
+    #region RegisterValidationRulesAsync Tests
+
+    [Fact]
+    public async Task RegisterValidationRulesAsync_StoresRulesAndPublishesEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameId = "arcadia";
+        var sceneType = "Region";
+
+        var rules = new List<ValidationRule>
+        {
+            new ValidationRule { RuleId = "rule-1", Description = "Test rule", Severity = ValidationSeverity.Error, RuleType = ValidationRuleType.RequireTag }
+        };
+
+        // Setup message bus to accept publish calls
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var status = await service.RegisterValidationRulesAsync(new RegisterValidationRulesRequest
+        {
+            GameId = gameId,
+            SceneType = sceneType,
+            Rules = rules
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify rules were stored at the correct key
+        _mockRulesStore.Verify(s => s.SaveAsync(
+            SceneService.BuildValidationRulesKey(gameId, sceneType),
+            It.Is<List<ValidationRule>>(r => r.Count == 1 && r[0].RuleId == "rule-1"),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region CheckoutSceneAsync Tests
+
+    [Fact]
+    public async Task CheckoutSceneAsync_SceneNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var sceneId = Guid.NewGuid();
+
+        _mockIndexStore
+            .Setup(s => s.GetWithETagAsync(SceneService.BuildSceneIndexKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((SceneIndexEntry?)null, (string?)null));
+
+        // Act
+        var (status, response) = await service.CheckoutSceneAsync(new CheckoutRequest
+        {
+            SceneId = sceneId,
+            EditorType = SceneEditorType.Session
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CheckoutSceneAsync_AlreadyCheckedOut_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var sceneId = Guid.NewGuid();
+
+        _mockIndexStore
+            .Setup(s => s.GetWithETagAsync(SceneService.BuildSceneIndexKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new SceneIndexEntry
+            {
+                SceneId = sceneId,
+                AssetId = Guid.NewGuid(),
+                SceneType = "Region",
+                Name = "Test Scene",
+                Version = "1.0.0",
+                IsCheckedOut = true,
+                CheckedOutByType = SceneEditorType.Session,
+                CheckedOutById = "other-user"
+            }, (string?)"etag-1"));
+
+        // Existing checkout is still valid (not expired)
+        _mockCheckoutStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneCheckoutKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CheckoutState
+            {
+                SceneId = sceneId,
+                Token = "existing-token",
+                EditorType = SceneEditorType.Session,
+                EditorId = "other-user",
+                ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(30)
+            });
+
+        // Act
+        var (status, response) = await service.CheckoutSceneAsync(new CheckoutRequest
+        {
+            SceneId = sceneId,
+            EditorType = SceneEditorType.Session
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CheckoutSceneAsync_NotCheckedOut_CreatesCheckout()
+    {
+        // Arrange
+        var service = CreateService();
+        var sceneId = Guid.NewGuid();
+        var assetId = Guid.NewGuid();
+
+        _mockIndexStore
+            .Setup(s => s.GetWithETagAsync(SceneService.BuildSceneIndexKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new SceneIndexEntry
+            {
+                SceneId = sceneId,
+                AssetId = assetId,
+                SceneType = "Region",
+                Name = "Test Scene",
+                Version = "1.0.0",
+                IsCheckedOut = false
+            }, (string?)"etag-1"));
+
+        // LoadSceneAssetAsync needs content store to return valid content
+        _mockContentStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneContentKey(assetId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SceneContentEntry
+            {
+                SceneId = sceneId,
+                Version = "1.0.0",
+                Content = $"sceneId: {sceneId}\nname: Test Scene\nsceneType: Region\nversion: 1.0.0\nschema: bannou://schemas/scene/v1\n",
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockIndexStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<SceneIndexEntry>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.CheckoutSceneAsync(new CheckoutRequest
+        {
+            SceneId = sceneId,
+            EditorType = SceneEditorType.Session,
+            EditorId = "my-session-id"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(response.CheckoutToken);
+        Assert.True(response.ExpiresAt > DateTimeOffset.UtcNow);
+
+        // Verify checkout state was saved
+        _mockCheckoutStore.Verify(s => s.SaveAsync(
+            SceneService.BuildSceneCheckoutKey(sceneId),
+            It.Is<CheckoutState>(c => c.SceneId == sceneId && c.EditorId == "my-session-id"),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region DiscardCheckoutAsync Tests
+
+    [Fact]
+    public async Task DiscardCheckoutAsync_InvalidToken_ReturnsForbidden()
+    {
+        // Arrange
+        var service = CreateService();
+        var sceneId = Guid.NewGuid();
+
+        _mockCheckoutStore
+            .Setup(s => s.GetAsync(SceneService.BuildSceneCheckoutKey(sceneId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CheckoutState
+            {
+                SceneId = sceneId,
+                Token = "real-token",
+                EditorType = SceneEditorType.Session,
+                EditorId = "user-1",
+                ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(30)
+            });
+
+        // Act
+        var status = await service.DiscardCheckoutAsync(new DiscardRequest
+        {
+            SceneId = sceneId,
+            CheckoutToken = "wrong-token"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Forbidden, status);
+    }
+
+    #endregion
+}
+#pragma warning restore CS8620

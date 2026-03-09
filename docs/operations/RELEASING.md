@@ -1,6 +1,11 @@
 # Release Process Guide
 
-This guide documents the versioning and release process for Bannou.
+> **Last Updated**: 2026-03-08
+> **Scope**: Versioning, changelog management, and release automation for platform and SDK releases
+
+## Summary
+
+Release procedures for the Bannou platform and SDKs covering two independent version tracks: platform releases (triggered by VERSION file changes on master) and SDK releases (triggered by PR labels and manual workflow dispatch). Covers semantic versioning guidelines, changelog maintenance, the prepare-release and release-commit Makefile workflow, TypeScript and Unreal SDK generation, and troubleshooting for common CI release failures.
 
 ## Overview
 

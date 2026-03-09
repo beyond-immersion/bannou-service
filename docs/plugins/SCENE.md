@@ -55,9 +55,6 @@ Hierarchical composition storage (L4 GameFeatures) for game worlds. Stores scene
 | `scene:checkout:{sceneId}` | `CheckoutState` | Active checkout lock (token, editor, expiry, extension count) |
 | `scene:validation:{gameId}:{sceneType}` | `List<ValidationRule>` | Registered validation rules per game+type |
 | `scene:version-history:{sceneId}` | `List<VersionHistoryEntry>` | Version history entries ordered by creation time |
-| `scene:checkout-ext:{sceneId}` | (unused) | Defined constant `SCENE_CHECKOUT_EXT_PREFIX` but never referenced in code |
-| `scene:version-retention:{sceneId}` | (unused) | Defined constant `VERSION_RETENTION_PREFIX` but never referenced in code |
-
 ---
 
 ## Events
@@ -111,6 +108,8 @@ This plugin does not currently consume external events. The `IEventConsumer` is 
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event consumer registration (partial class extension point) |
 | `ISceneValidationService` | Scoped | Scene structure validation and game rule application (extracted helper) |
+| `IMeshInstanceIdentifier` | Singleton | Caller identity for checkout EditorId default (replaces "unknown" sentinel) |
+| `ITelemetryProvider` | Singleton | Span creation for telemetry instrumentation |
 
 Service lifetime is **Scoped** (per-request). No background services.
 
@@ -126,10 +125,10 @@ Extracted from `SceneService` for testability. Handles:
 
 | Model | Purpose |
 |-------|---------|
-| `SceneIndexEntry` | Lightweight index: sceneId, assetId, gameId, sceneType, name, description, version, tags, nodeCount, timestamps, checkout status |
-| `CheckoutState` | Lock state: sceneId, token, editorId, expiresAt, extensionCount |
-| `SceneContentEntry` | YAML content wrapper: sceneId, version, content string, updatedAt (DateTimeOffset) |
-| `VersionHistoryEntry` | Version record: version string, createdAt, createdBy |
+| `SceneIndexEntry` | Lightweight index: sceneId, assetId, gameId (nullable), sceneType (string), name, description, version, tags, nodeCount, timestamps, checkout status. Uses `required` keyword for non-nullable string fields. |
+| `CheckoutState` | Lock state: sceneId, token (`required`), editorId (`required`), expiresAt, extensionCount |
+| `SceneContentEntry` | YAML content wrapper: sceneId, version (`required`), content (`required`), updatedAt (DateTimeOffset) |
+| `VersionHistoryEntry` | Version record: version (`required`), createdAt, createdBy |
 
 ---
 
@@ -436,19 +435,17 @@ No bugs identified.
 
 3. ~~**N+1 in SearchScenes**~~: **FIXED** (2026-01-31) - SearchScenes now uses `GetBulkAsync` for single database round-trip. The global index scan remains, but individual index entry loading is now bulk.
 
-4. **Secondary index race conditions**: Index updates (game, type, reference, asset) are not atomic with the primary index write. A crash between primary save and secondary index update leaves indexes inconsistent. There is no reconciliation mechanism.
+4. ~~**Secondary index race conditions**~~: **PARTIALLY FIXED** (2026-03-09) - Secondary index updates now use ETag-based optimistic concurrency (`GetWithETagAsync` + `TrySaveAsync` with retry) to prevent concurrent modifications from clobbering each other. However, a crash between primary save and secondary index update still leaves indexes inconsistent — no reconciliation mechanism exists.
 
 5. **YAML serialization performance**: Every scene read deserializes YAML, and every write serializes to YAML. For large scenes (10,000 nodes), YamlDotNet serialization may be a latency bottleneck. JSON would be significantly faster.
 
 6. **No content versioning**: Only one version of scene content is stored. The version history tracks metadata (version string, timestamp, editor) but not the actual content at each version. Version-specific retrieval in GetScene is a no-op.
 
-7. **Optimistic concurrency only on checkout**: The ETag-based concurrency check is used for checkout/commit operations on the index entry, but not for other updates. Two concurrent UpdateScene calls (without checkout) can overwrite each other's changes.
+7. ~~**Optimistic concurrency only on checkout**~~: **FIXED** (2026-03-09) - All secondary index read-modify-write operations now use ETag-based optimistic concurrency with retry. `CommitSceneAsync` uses ETag-checked writes with compensation on failure. The checkout/commit workflow is fully concurrency-safe.
 
 8. **Asset/reference index staleness**: If a scene is updated and the YAML deserialization produces different reference/asset sets, the index diff logic handles adds and removes. However, if deserialization fails or produces different results than what was stored, indexes become stale with no self-healing mechanism.
 
 9. **No pagination in FindReferences/FindAssetUsage**: These endpoints return all results without pagination. A heavily-referenced scene or widely-used asset could produce unbounded response sizes. Note: Index entry loading was optimized to use `GetBulkAsync` (2026-01-31), but scene content loading for node traversal remains sequential.
-
-10. **Unused key prefix constants**: The service defines `SCENE_CHECKOUT_EXT_PREFIX` ("scene:checkout-ext:") and `VERSION_RETENTION_PREFIX` ("scene:version-retention:") but never references them. These appear to be dead code from planned features that were never implemented or were refactored away.
 
 ---
 
@@ -457,6 +454,27 @@ No bugs identified.
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Completed
+
+- **2026-03-09**: Production hardening pass (phase 2) — tenet compliance audit fixes:
+  - **Code (T5)**: `UpdateSceneAsync` now populates `changedFields` on `SceneUpdatedEvent` by snapshotting old values before overwrite and comparing. Changed `PublishSceneUpdatedEventAsync` signature to accept `ICollection<string> changedFields`.
+  - **Code (T9)**: All 14 secondary index read-modify-write patterns (`UpdateSceneIndexesAsync`, `RemoveFromIndexesAsync`, `AddToGlobalSceneIndexAsync`, `RemoveFromGlobalSceneIndexAsync`) now use `GetWithETagAsync` + `TrySaveAsync` with retry via new `ModifyGuidSetIndexAsync` helper (max 3 retries, Warning log on exhaustion).
+  - **Code (T7)**: `CommitSceneAsync` reordered for compensation: (1) clear index checkout flag with ETag check, (2) update scene content with compensation on failure (re-marks index as checked out), (3) delete checkout state.
+  - **Code (T7)**: `PublishSceneInstantiatedAsync` and `PublishSceneDestroyedAsync` return values now checked; failures logged at Warning.
+  - **Code (T6)**: All 6 entity-keyed `Build*Key()` methods changed from `string` to `Guid` parameters. `AddVersionHistoryEntryAsync` and `DeleteVersionHistoryAsync` changed from `string sceneId` to `Guid sceneId`. Removed 9 dead `var sceneIdStr = ...ToString()` declarations. Fixed 5 `body.SceneId` references that should have been `scene.SceneId` (for `CreateSceneRequest`/`UpdateSceneRequest` which wrap scene inside `body.Scene`).
+  - **Tests**: Key builder tests updated from string to Guid parameters. Added 13 business logic unit tests with mocked state stores: GetScene (3 tests), DeleteScene (3 tests), GetValidationRules (2 tests), RegisterValidationRules (1 test), CheckoutScene (3 tests), DiscardCheckout (1 test). 110/110 passing.
+
+- **2026-03-09**: Production hardening pass (phase 1) — schema, events, code, models, and test fixes:
+  - **Schema (T14 Category B)**: Converted `SceneType`, `AffordanceType`, `MarkerType` from enums to opaque strings (game-configurable content codes). Added `maxLength` constraints to remaining response string fields.
+  - **Schema (T26)**: Made `gameId` nullable across API schema, lifecycle events, and instantiation event (scenes can be unpartitioned).
+  - **Schema ($ref reuse)**: Removed duplicate `EventTransform`/`EventVector3`/`EventQuaternion` from events schema; events now `$ref` API spatial types.
+  - **Schema (T8)**: Removed echoed `gameId`/`sceneType` from `GetValidationRulesResponse`.
+  - **Code (T6)**: Replaced all ~60 inline state store key interpolations with `Build*Key()` helper methods.
+  - **Code (T26)**: Replaced `"unknown"` EditorId sentinel with `IMeshInstanceIdentifier.InstanceId` caller identity default.
+  - **Code (dead code)**: Removed unused `SCENE_CHECKOUT_EXT_PREFIX`, `VERSION_RETENTION_PREFIX` constants and their `Build*Key()` methods.
+  - **Code (cleanup)**: Removed duplicate `InternalsVisibleTo` attribute from SceneService.cs (already in AssemblyInfo.cs).
+  - **Models (T26)**: Replaced `string.Empty` defaults with `required` keyword on all non-nullable string properties in `SceneIndexEntry`, `CheckoutState`, `SceneContentEntry`, `VersionHistoryEntry`. Made `SceneIndexEntry.GameId` nullable.
+  - **Tests**: Removed obsolete enum tests (SceneType, AffordanceType, MarkerType). Updated string references. Added `ServiceConstructorValidator` test and 9 key builder unit tests. 97/97 passing.
+  - **Issues**: Commented on #254 and #257 with staleness notes (events no longer exist in schema).
 
 - **2026-03-07**: Hardening pass — schema, events, code, and test fixes:
   - **Schema**: `additionalProperties: false` on all objects, NRT fixes (required arrays), validation constraints (minLength/minItems/minimum/maximum), T8 filler removal from 7 responses (success booleans, echoed request fields, action timestamps, observability metrics), nullable fields for optional GUIDs (T26)

@@ -11,7 +11,11 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
 
-  x-event-subscriptions: []  # Save-Load service doesn't subscribe to external events
+  x-event-subscriptions:
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      handler: HandleAccountDeleted
+      description: Delete all save slots, versions, hot cache entries, and associated assets owned by the deleted account (T28 Account Deletion Cleanup Obligation)
   x-event-publications:
     # SaveSlot lifecycle events (auto-generated from x-lifecycle)
     - topic: save.load.save-slot.created
@@ -68,10 +72,10 @@ x-lifecycle:
   SaveSlot:
     model:
       slotId: { type: string, format: uuid, primary: true, required: true, description: "Unique slot identifier" }
-      gameId: { type: string, required: true, description: "Game identifier for namespace isolation" }
+      gameId: { type: string, maxLength: 32, required: true, description: "Game identifier for namespace isolation" }
       ownerId: { type: string, format: uuid, required: true, description: "ID of the owning entity" }
       ownerType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Type of entity that owns this save slot" }
-      slotName: { type: string, required: true, description: "Slot name" }
+      slotName: { type: string, maxLength: 64, required: true, description: "Slot name" }
       category: { $ref: 'save-load-api.yaml#/components/schemas/SaveCategory', required: true, description: "Save category determining retention and cleanup behavior" }
       maxVersions: { type: integer, required: true, description: "Maximum versions to retain" }
       retentionDays: { type: integer, nullable: true, description: "Days to retain versions (null = indefinite)" }
@@ -100,6 +104,7 @@ components:
         - ownerId
         - ownerType
         - sizeBytes
+        - category
       properties:
         eventName:
           type: string
@@ -227,7 +232,9 @@ components:
           nullable: true
           description: Owner entity ID
         ownerType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
           description: Owner entity type
 
     VersionPinnedEvent:
@@ -268,7 +275,9 @@ components:
           nullable: true
           description: Owner entity ID
         ownerType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
           description: Owner entity type
 
     VersionUnpinnedEvent:
@@ -309,7 +318,9 @@ components:
           nullable: true
           description: Owner entity ID
         ownerType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
           description: Owner entity type
 
     VersionDeletedEvent:
@@ -351,7 +362,9 @@ components:
           nullable: true
           description: Owner entity ID
         ownerType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
           description: Owner entity type
 
     CleanupCompletedEvent:
@@ -516,7 +529,9 @@ components:
           nullable: true
           description: Owner entity ID
         ownerType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
           description: Type of entity that owns this save
         errorMessage:
           type: string

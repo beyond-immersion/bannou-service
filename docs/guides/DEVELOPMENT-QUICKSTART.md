@@ -1,6 +1,13 @@
 # Bannou Development Quickstart
 
-> **5-minute setup for experienced developers**
+> **Version**: 1.1
+> **Status**: Production
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-mesh (L0), lib-auth (L1), lib-connect (L1), lib-character (L2)
+
+## Summary
+
+Quickstart guide for getting Bannou running locally in five minutes, connecting a game client via WebSocket, and making service-to-service calls using generated clients. Intended for experienced developers joining the project who need to build, run, and interact with the platform immediately. After reading, developers will have a working local environment and understand the three primary integration surfaces: Docker Compose stack, WebSocket client SDK, and generated mesh clients.
 
 ## Choose Your Path
 
@@ -9,8 +16,8 @@
 | **Run Bannou locally** | 5 min | [Local Development](#local-development) (this page) |
 | **Connect a game client** | 15 min | [Client Integration](#client-integration) |
 | **Make service-to-service calls** | 10 min | [Service SDK](#service-sdk) |
-| **Understand the architecture** | 30 min | [Getting Started](GETTING_STARTED.md) |
-| **Add a new service** | 1 hr | [Plugin Development](PLUGIN_DEVELOPMENT.md) |
+| **Understand the architecture** | 30 min | [Getting Started](GETTING-STARTED.md) |
+| **Add a new service** | 1 hr | [Plugin Development](PLUGIN-DEVELOPMENT.md) |
 
 ---
 
@@ -43,7 +50,7 @@ make up-compose
 curl http://localhost:8080/health
 ```
 
-**That's it.** Bannou is running with all 41 services, Redis, RabbitMQ, and MySQL.
+**That's it.** Bannou is running with all 69 services, Redis, RabbitMQ, and MySQL.
 
 ### What `install-dev-tools.sh` installs
 
@@ -113,7 +120,7 @@ client.OnEvent("game-session.player-joined", json => {
 - **Client-Salted GUIDs**: Each client gets unique GUIDs (security)
 - **Events**: Server pushes events without client request
 
-See [Client Integration Guide](CLIENT_INTEGRATION.md) for full details.
+See [Client Integration Guide](CLIENT-INTEGRATION.md) for full details.
 
 ---
 
@@ -209,12 +216,12 @@ CONNECT_SERVICE_ENABLED=true
 
 | Topic | Guide |
 |-------|-------|
-| Full setup walkthrough | [Getting Started](GETTING_STARTED.md) |
-| Architecture deep-dive | [Bannou Design](../BANNOU_DESIGN.md) |
+| Full setup walkthrough | [Getting Started](GETTING-STARTED.md) |
+| Architecture deep-dive | [Bannou Design](../BANNOU-DESIGN.md) |
 | WebSocket protocol | [WebSocket Protocol](../WEBSOCKET-PROTOCOL.md) |
-| Add a service | [Plugin Development](PLUGIN_DEVELOPMENT.md) |
-| Run tests | [Testing Guide](TESTING.md) |
-| Deploy to production | [Deployment Guide](DEPLOYMENT.md) |
+| Add a service | [Plugin Development](PLUGIN-DEVELOPMENT.md) |
+| Run tests | [Testing Guide](../operations/TESTING.md) |
+| Deploy to production | [Deployment Guide](../operations/DEPLOYMENT.md) |
 
 ---
 
@@ -228,4 +235,4 @@ CONNECT_SERVICE_ENABLED=true
 | Redis connection failed | Ensure `make up-compose` completed successfully |
 | Build errors after schema change | Run `make generate && make format` |
 
-For more help, see [Getting Started Troubleshooting](GETTING_STARTED.md#troubleshooting).
+For more help, see [Getting Started Troubleshooting](GETTING-STARTED.md#troubleshooting).

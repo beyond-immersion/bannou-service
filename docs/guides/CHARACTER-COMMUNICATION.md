@@ -1,12 +1,14 @@
 # Character Communication - Lexicon-Shaped Social Interaction
 
 > **Version**: 1.0
-> **Status**: Aspirational (no implementation yet)
-> **Location**: New `lexicon` Chat room type, `${social.*}` Variable Provider Factory
-> **Related**: [Chat Deep Dive](../plugins/CHAT.md), [Lexicon Deep Dive](../plugins/LEXICON.md), [Hearsay Deep Dive](../plugins/HEARSAY.md), [Disposition Deep Dive](../plugins/DISPOSITION.md), [Collection Deep Dive](../plugins/COLLECTION.md), [Behavior System](./BEHAVIOR-SYSTEM.md), [Story System](./STORY-SYSTEM.md)
-> **Dependencies**: lib-chat (L1, implemented), lib-collection (L2, implemented), lib-lexicon (L4, aspirational), lib-hearsay (L4, aspirational), lib-disposition (L4, aspirational)
+> **Status**: Aspirational
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-chat (L1), lib-collection (L2), lib-actor (L2), lib-worldstate (L2), lib-lexicon (L4), lib-hearsay (L4), lib-disposition (L4), lib-ethology (L4)
+> **Related Guides**: [Behavior System](./BEHAVIOR-SYSTEM.md), [Story System](./STORY-SYSTEM.md), [Morality System](./MORALITY-SYSTEM.md)
 
-Character Communication is the social interaction layer for Arcadia's living world. NPCs communicate using structured Lexicon entry combinations rather than free text, creating a universal protocol that both NPCs and players can understand, that discovery levels gate progressively, and that Hearsay distorts as it propagates through social networks.
+## Summary
+
+Aspirational design for a Lexicon-shaped social interaction layer where NPCs communicate using structured concept combinations rather than free text, enabling machine-parseable social behavior without NLP. Covers the lexicon room type for Chat, the social variable provider for Actor cognition, Hearsay-based belief propagation with concept-level distortion, and Disposition-driven communication motivations. Intended for developers planning NPC social behavior systems or integrating with the Lexicon, Hearsay, or Disposition services.
 
 ---
 
@@ -874,6 +876,7 @@ A peaceful character nudged to send `[THREATEN]` may refuse or soften it to `[WA
 | **Character-Encounter** | L4 | Relationship sentiment, recent interaction data |
 | **Character-Personality** | L4 | Communication style modulation (extraversion, openness) |
 | **Relationship** | L2 | Social graph for propagation paths, friend identification |
+| **Worldstate** | L2 | Time-of-day triggers for daily routine behaviors |
 
 ### Aspirational Services (Pre-Implementation)
 
@@ -884,7 +887,6 @@ A peaceful character nudged to send `[THREATEN]` may refuse or soften it to `[WA
 | **Disposition** | L4 | Drive-motivated communication, feeling-modulated style |
 | **Ethology** | L4 | Species-level communication patterns and preferences |
 | **Agency** | L4 | Progressive social UX manifest for guardian spirit |
-| **Worldstate** | L2 | Time-of-day triggers for daily routine behaviors |
 | **Environment** | L4 | Weather/season context for social behavior |
 
 ### New Components (Required)
@@ -906,11 +908,11 @@ These services must exist before character communication:
 
 | Prerequisite | Status | Notes |
 |--------------|--------|-------|
-| lib-chat | Implemented (90%) | All 28 endpoints, custom room types supported |
-| lib-collection | Implemented (78%) | Discovery advancement, ICollectionUnlockListener |
-| lib-actor | Implemented (65%) | Variable Provider Factory, ABML execution |
+| lib-chat | Implemented | All 32 endpoints, custom room types supported |
+| lib-collection | Implemented | Discovery advancement, ICollectionUnlockListener |
+| lib-actor | Implemented | Variable Provider Factory, ABML execution |
 | lib-lexicon | **Not implemented** | Core ontology needed first |
-| lib-worldstate | **Not implemented** | Time-of-day triggers for daily routines |
+| lib-worldstate | Implemented | Time-of-day triggers for daily routines |
 
 **Lexicon is the critical path.** Without a concept ontology, there is no vocabulary for messages. Lexicon Phase 1 (core ontology) and Phase 2 (traits and strategies) are the minimum for communication.
 

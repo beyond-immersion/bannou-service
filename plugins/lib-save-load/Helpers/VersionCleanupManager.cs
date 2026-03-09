@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.SaveLoad.Processing;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
@@ -27,7 +28,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
     /// <summary>Store for save slot metadata (basic CRUD operations).</summary>
     private readonly IStateStore<SaveSlotMetadata> _slotStore;
     private readonly SaveLoadServiceConfiguration _configuration;
-    private readonly IAssetClient _assetClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IMessageBus _messageBus;
     private readonly IVersionDataLoader _versionDataLoader;
     private readonly ILogger<VersionCleanupManager> _logger;
@@ -39,7 +40,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
     public VersionCleanupManager(
         IStateStoreFactory stateStoreFactory,
         SaveLoadServiceConfiguration configuration,
-        IAssetClient assetClient,
+        IServiceProvider serviceProvider,
         IMessageBus messageBus,
         IVersionDataLoader versionDataLoader,
         ILogger<VersionCleanupManager> logger,
@@ -51,7 +52,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         _pendingStore = stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
         _slotStore = stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
         _configuration = configuration;
-        _assetClient = assetClient;
+        _serviceProvider = serviceProvider;
         _messageBus = messageBus;
         _versionDataLoader = versionDataLoader;
         _logger = logger;
@@ -78,7 +79,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         // SaveSlotMetadata.SlotId is now Guid - convert to string for state key
         for (var v = 1; v <= (slot.LatestVersion ?? 0) && cleanedUp < targetCleanup; v++)
         {
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), v);
+            var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), v);
             var manifest = await versionStore.GetAsync(versionKey, cancellationToken);
 
             if (manifest == null)
@@ -94,20 +95,25 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
 
             // Delete version, hot cache entry, and asset
             await versionStore.DeleteAsync(versionKey, cancellationToken);
-            var hotKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), v);
+            var hotKey = HotSaveEntry.BuildStateKey(slot.SlotId.ToString(), v);
             await hotCacheStore.DeleteAsync(hotKey, cancellationToken);
 
             if (manifest.AssetId.HasValue)
             {
-                try
+                // L3 soft dependency per FOUNDATION TENETS — Asset service may not be enabled
+                var assetClient = _serviceProvider.GetService<IAssetClient>();
+                if (assetClient != null)
                 {
-                    await _assetClient.DeleteAssetAsync(
-                        new DeleteAssetRequest { AssetId = manifest.AssetId.Value.ToString() },
-                        cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to delete asset {AssetId} during rolling cleanup", manifest.AssetId.Value);
+                    try
+                    {
+                        await assetClient.DeleteAssetAsync(
+                            new DeleteAssetRequest { AssetId = manifest.AssetId.Value.ToString() },
+                            cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to delete asset {AssetId} during rolling cleanup", manifest.AssetId.Value);
+                    }
                 }
             }
 
@@ -161,22 +167,27 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                 // Delete asset if exists
                 if (version.AssetId.HasValue)
                 {
-                    try
+                    // L3 soft dependency per FOUNDATION TENETS — Asset service may not be enabled
+                    var assetClient = _serviceProvider.GetService<IAssetClient>();
+                    if (assetClient != null)
                     {
-                        await _assetClient.DeleteAssetAsync(new DeleteAssetRequest { AssetId = version.AssetId.Value.ToString() }, cancellationToken);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to delete asset {AssetId} during cleanup", version.AssetId.Value);
+                        try
+                        {
+                            await assetClient.DeleteAssetAsync(new DeleteAssetRequest { AssetId = version.AssetId.Value.ToString() }, cancellationToken);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to delete asset {AssetId} during cleanup", version.AssetId.Value);
+                        }
                     }
                 }
 
                 // Delete version manifest
-                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), version.VersionNumber);
+                var versionKey = SaveVersionManifest.BuildStateKey(slot.SlotId.ToString(), version.VersionNumber);
                 await _versionStore.DeleteAsync(versionKey, cancellationToken);
 
                 // Delete from hot cache
-                var hotCacheKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), version.VersionNumber);
+                var hotCacheKey = HotSaveEntry.BuildStateKey(slot.SlotId.ToString(), version.VersionNumber);
                 await _hotCacheStore.DeleteAsync(hotCacheKey, cancellationToken);
 
                 bytesFreed += version.CompressedSizeBytes ?? version.SizeBytes;
@@ -192,7 +203,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         slot.VersionCount -= versionsToDelete.Count;
         slot.TotalSizeBytes -= bytesFreed;
         slot.UpdatedAt = DateTimeOffset.UtcNow;
-        await _slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
+        await _slotStore.SaveAsync(slot.BuildStateKey(), slot, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Rolling cleanup deleted {Count} versions from slot {SlotId}, freed {BytesFreed} bytes",
@@ -257,7 +268,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                 }
 
                 // Get the version with ETag for optimistic concurrency
-                var versionKey = SaveVersionManifest.GetStateKey(slotIdString, deltaVersion.VersionNumber);
+                var versionKey = SaveVersionManifest.BuildStateKey(slotIdString, deltaVersion.VersionNumber);
                 var (currentVersion, versionEtag) = await _versionStore.GetWithETagAsync(versionKey, cancellationToken);
 
                 if (currentVersion == null || !currentVersion.IsDelta)
@@ -311,7 +322,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                 };
                 var hotCacheTtl = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
                 await _hotCacheStore.SaveAsync(
-                    hotEntry.GetStateKey(),
+                    hotEntry.BuildStateKey(),
                     hotEntry,
                     new StateOptions { Ttl = hotCacheTtl },
                     cancellationToken);
@@ -324,6 +335,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                     {
                         UploadId = uploadId,
                         SlotId = slot.SlotId,
+                        SlotName = slot.SlotName,
                         VersionNumber = currentVersion.VersionNumber,
                         GameId = slot.GameId,
                         OwnerId = slot.OwnerId,
@@ -336,7 +348,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                         AttemptCount = 0,
                         QueuedAt = DateTimeOffset.UtcNow
                     };
-                    var pendingKey = PendingUploadEntry.GetStateKey(uploadId.ToString());
+                    var pendingKey = PendingUploadEntry.BuildStateKey(uploadId.ToString());
                     var pendingTtl = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
                     await _pendingStore.SaveAsync(pendingKey, pendingEntry, new StateOptions { Ttl = pendingTtl }, cancellationToken);
 
@@ -384,7 +396,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         while (current.IsDelta && current.BaseVersionNumber.HasValue)
         {
             chainLength++;
-            var baseKey = SaveVersionManifest.GetStateKey(slotId, current.BaseVersionNumber.Value);
+            var baseKey = SaveVersionManifest.BuildStateKey(slotId, current.BaseVersionNumber.Value);
             current = await _versionStore.GetAsync(baseKey, cancellationToken);
 
             if (current == null)

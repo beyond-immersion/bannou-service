@@ -1,10 +1,17 @@
 # Behavior System - Bringing Worlds to Life
 
-> **Version**: 3.0
-> **Status**: Production-ready (all core systems implemented)
-> **Key Plugins**: `lib-actor` (L2), `lib-behavior` (L4), `lib-puppetmaster` (L4), `lib-character-personality` (L4), `lib-character-encounter` (L4), `lib-character-history` (L4), `lib-quest` (L2)
-> **Deep Dives**: [Actor](../plugins/ACTOR.md), [Behavior](../plugins/BEHAVIOR.md), [Puppetmaster](../plugins/PUPPETMASTER.md), [Character Personality](../plugins/CHARACTER-PERSONALITY.md), [Character Encounter](../plugins/CHARACTER-ENCOUNTER.md), [Character History](../plugins/CHARACTER-HISTORY.md), [Quest](../plugins/QUEST.md)
+> **Version**: 3.1
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-actor (L2), lib-behavior (L4), lib-puppetmaster (L4), lib-character-personality (L4), lib-character-encounter (L4), lib-character-history (L4), lib-quest (L2)
 > **Related Guides**: [ABML](./ABML.md), [Mapping System](./MAPPING-SYSTEM.md), [Seed System](./SEED-SYSTEM.md)
+> **Deep Dives**: [Actor](../plugins/ACTOR.md), [Behavior](../plugins/BEHAVIOR.md), [Puppetmaster](../plugins/PUPPETMASTER.md), [Character Personality](../plugins/CHARACTER-PERSONALITY.md), [Character Encounter](../plugins/CHARACTER-ENCOUNTER.md), [Character History](../plugins/CHARACTER-HISTORY.md), [Quest](../plugins/QUEST.md)
+
+## Summary
+
+Comprehensive guide to the NPC intelligence stack covering the Actor runtime, ABML compilation, GOAP planning, the 5-stage cognition pipeline, variable providers, behavior document authoring, cutscene orchestration, and scaling architecture. Intended for developers building or modifying NPC behaviors, integrating character data providers, or understanding how autonomous agents operate within the service hierarchy. After reading, developers will understand the full path from ABML YAML to compiled bytecode executing in the Actor runtime, the Variable Provider Factory pattern enabling L4 data flow into L2, and the Event Brain coordination model.
+
+---
 
 The Behavior System is the cognitive layer that makes Arcadia's worlds alive. It gives NPCs personality, memory, and growth. It orchestrates dramatic encounters. It implements the gods who curate regional flavor. It is the engine behind the vision's promise: **living worlds where content emerges from accumulated play history, not hand-authored content**.
 
@@ -116,19 +123,24 @@ All actor types share the same `ActorRunner` infrastructure -- the difference is
 This is the architectural keystone that makes autonomous NPCs possible within the service hierarchy:
 
 ```
-Character Personality (L4) ──provides ${personality.*}──┐
-Character Encounter (L4)   ──provides ${encounters.*}───┤
-Character History (L4)     ──provides ${backstory.*}────┤
-Quest (L2)                 ──provides ${quest.*}─────────┤
-Combat Preferences (L4)    ──provides ${combat.*}────────┤
-Currency (L2)              ──provides ${currency.*}──────┤
-Inventory (L2)             ──provides ${inventory.*}─────┤
-Relationship (L2)          ──provides ${relationship.*}──┤
-                                                         ▼
-                                            Variable Provider Factory
-                                            (DI: IEnumerable<IVariableProviderFactory>)
-                                                         │
-                                                         ▼
+Character Personality (L4) ──provides ${personality.*}, ${combat.*}──┐
+Character Encounter (L4)   ──provides ${encounters.*}────────────────┤
+Character History (L4)     ──provides ${backstory.*}─────────────────┤
+Obligation (L4)            ──provides ${obligations.*}───────────────┤
+Faction (L4)               ──provides ${faction.*}───────────────────┤
+Quest (L2)                 ──provides ${quest.*}─────────────────────┤
+Seed (L2)                  ──provides ${seed.*}──────────────────────┤
+Location (L2)              ──provides ${location.*}──────────────────┤
+Transit (L2)               ──provides ${transit.*}───────────────────┤
+Worldstate (L2)            ──provides ${world.*}─────────────────────┤
+Currency (L2)              ──provides ${currency.*}──────────────────┤
+Inventory (L2)             ──provides ${inventory.*}─────────────────┤
+Relationship (L2)          ──provides ${relationship.*}──────────────┤
+                                                                     ▼
+                                                        Variable Provider Factory
+                                                        (DI: IEnumerable<IVariableProviderFactory>)
+                                                                     │
+                                                                     ▼
 Behavior (L4) ──compiles ABML──▶ Actor (L2) ──executes ABML──▶ NPC Actions
                                      ▲
                                      │
@@ -207,7 +219,7 @@ The separation is clean:
 
 ## 5. Character Data Layer
 
-Eight variable provider factories supply character data to the Actor runtime via the DI-based Variable Provider Factory pattern. Each is implemented by its owning service and registered with DI at startup.
+Fourteen variable provider factories supply character data to the Actor runtime via the DI-based Variable Provider Factory pattern. Each is implemented by its owning service and registered with DI at startup.
 
 ### 5.1 Provider Registry
 
@@ -217,7 +229,13 @@ Eight variable provider factories supply character data to the Actor runtime via
 | **CombatPreferencesProviderFactory** | lib-character-personality (L4) | `${combat.*}` | `${combat.style}`, `${combat.riskTolerance}`, `${combat.protectAllies}` |
 | **BackstoryProviderFactory** | lib-character-history (L4) | `${backstory.*}` | `${backstory.origin}`, `${backstory.fear.value}` |
 | **EncountersProviderFactory** | lib-character-encounter (L4) | `${encounters.*}` | `${encounters.last_hostile_days}`, `${encounters.sentiment}` |
+| **ObligationProviderFactory** | lib-obligation (L4) | `${obligations.*}` | `${obligations.violation_cost.THEFT}` |
+| **FactionProviderFactory** | lib-faction (L4) | `${faction.*}` | `${faction.norms}`, `${faction.territory}` |
 | **QuestProviderFactory** | lib-quest (L2) | `${quest.*}` | `${quest.active}`, `${quest.objectives}` |
+| **SeedProviderFactory** | lib-seed (L2) | `${seed.*}` | `${seed.phase}`, `${seed.capabilities}` |
+| **LocationContextProviderFactory** | lib-location (L2) | `${location.*}` | `${location.type}`, `${location.depth}` |
+| **TransitVariableProviderFactory** | lib-transit (L2) | `${transit.*}` | `${transit.connections}`, `${transit.modes}` |
+| **WorldProviderFactory** | lib-worldstate (L2) | `${world.*}` | `${world.time}`, `${world.season}` |
 | **CurrencyProviderFactory** | lib-currency (L2) | `${currency.*}` | `${currency.balance.GOLD}`, `${currency.has_wallet}`, `${currency.wallet_count}` |
 | **InventoryProviderFactory** | lib-inventory (L2) | `${inventory.*}` | `${inventory.has_item.IRON_SWORD}`, `${inventory.count.HEALTH_POTION}`, `${inventory.has_space}` |
 | **RelationshipProviderFactory** | lib-relationship (L2) | `${relationship.*}` | `${relationship.has.ALLY}`, `${relationship.count.FAMILY}`, `${relationship.total}` |

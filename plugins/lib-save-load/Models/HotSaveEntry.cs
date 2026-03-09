@@ -56,16 +56,18 @@ public sealed class HotSaveEntry
     /// Generates the state store key for this hot cache entry.
     /// Note: Uses ToString() for SlotId as state store keys are strings.
     /// </summary>
-    public string GetStateKey() => $"hot:{SlotId}:{VersionNumber}";
+    internal string BuildStateKey() => $"{KeyPrefix}:{SlotId}:{VersionNumber}";
+
+    private const string KeyPrefix = "hot";
 
     /// <summary>
-    /// Generates the state store key from components
+    /// Builds the state store key from components.
     /// </summary>
-    public static string GetStateKey(string slotId, int versionNumber)
-        => $"hot:{slotId}:{versionNumber}";
+    internal static string BuildStateKey(string slotId, int versionNumber)
+        => $"{KeyPrefix}:{slotId}:{versionNumber}";
 
     /// <summary>
-    /// Generates the key for the latest version of a slot
+    /// Builds the key for the latest version of a slot.
     /// </summary>
-    public static string GetLatestKey(string slotId) => $"hot:{slotId}:latest";
+    internal static string BuildLatestKey(string slotId) => $"{KeyPrefix}:{slotId}:latest";
 }

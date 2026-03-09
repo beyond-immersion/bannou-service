@@ -40,6 +40,7 @@ components:
           description: "Unique slot identifier"
         gameId: &id002
           type: string
+          maxLength: 32
           description: "Game identifier for namespace isolation"
         ownerId: &id003
           type: string
@@ -50,6 +51,7 @@ components:
           description: "Type of entity that owns this save slot"
         slotName: &id005
           type: string
+          maxLength: 64
           description: "Slot name"
         category: &id006
           $ref: ../save-load-api.yaml#/components/schemas/SaveCategory

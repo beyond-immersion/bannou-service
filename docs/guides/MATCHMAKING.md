@@ -1,6 +1,13 @@
 # Matchmaking and Game Sessions Developer Guide
 
-This guide covers the Matchmaking Service (`lib-matchmaking`) and its integration with Game Sessions (`lib-game-session`) for competitive and casual multiplayer game matching.
+> **Version**: 1.1
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-matchmaking (L4), lib-game-session (L2)
+
+## Summary
+
+Developer guide covering ticket-based matchmaking and game session integration for competitive and casual multiplayer matching. Covers queue configuration, skill expansion curves, match accept/decline flows, reservation systems, reconnection handling, and queue configuration presets for common game modes. Intended for developers integrating matchmaking into game clients or configuring queue parameters for new game modes.
 
 ## Architecture Overview
 
@@ -155,8 +162,8 @@ POST /matchmaking/join
 ```json
 {
   "queueId": "ranked-1v1",
-  "accountId": "550e8400-e29b-41d4-a716-446655440000",
-  "sessionId": "websocket-session-id",
+  "accountId": "server-injected-via-shortcut",
+  "sessionId": "server-injected-via-shortcut",
   "partyId": null,
   "properties": {
     "region": "us-west",
@@ -174,6 +181,8 @@ POST /matchmaking/join
   "estimatedWaitSeconds": 15
 }
 ```
+
+The `accountId` and `sessionId` fields are server-injected via the shortcut system -- clients never send these directly (per FOUNDATION TENETS account identity boundary).
 
 After joining, the player receives prebound shortcuts for `/matchmaking/leave` and `/matchmaking/status`.
 
@@ -321,7 +330,6 @@ skillExpansion:
     range: null
 
 partySkillAggregation: highest
-allowConcurrent: true
 exclusiveGroup: ranked
 useSkillRating: true
 ratingCategory: my-game-duel
@@ -354,7 +362,6 @@ skillExpansion:
 
 partySkillAggregation: highest
 partyMaxSize: 5
-allowConcurrent: true
 exclusiveGroup: competitive
 useSkillRating: true
 ratingCategory: my-game-team
@@ -381,7 +388,6 @@ skillExpansion:
 
 partySkillAggregation: average
 partyMaxSize: 4
-allowConcurrent: true
 exclusiveGroup: null
 useSkillRating: false
 ```
@@ -409,12 +415,12 @@ skillExpansion:
 
 partySkillAggregation: highest
 partyMaxSize: 1  # Solo only
-allowConcurrent: false
 exclusiveGroup: null
 useSkillRating: true
 ratingCategory: my-game-br
-startWhenMinimumReached: true
 ```
+
+> **Note**: `startWhenMinimumReached` is an aspirational field -- not currently implemented.
 
 ### Casual Mini-Game (e.g., Mahjong)
 
@@ -437,7 +443,6 @@ skillExpansion:
 
 partySkillAggregation: average
 partyMaxSize: 4
-allowConcurrent: true
 exclusiveGroup: minigames
 useSkillRating: false
 ```
@@ -462,12 +467,11 @@ skillExpansion:
     range: null  # Tournaments use seeding, not live skill
 
 partySkillAggregation: highest
-allowConcurrent: false
 exclusiveGroup: null
 useSkillRating: false
-requiresRegistration: true
-tournamentIdRequired: true
 ```
+
+> **Note**: `tournamentIdRequired` field exists but tournament-specific matching logic is not yet implemented (see deep dive stubs section).
 
 ## Configuration Reference
 
@@ -475,7 +479,6 @@ tournamentIdRequired: true
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MATCHMAKING_ENABLED` | `true` | Enable/disable service |
 | `MATCHMAKING_SERVER_SALT` | (required) | Server salt for GUID generation |
 | `MATCHMAKING_PROCESSING_INTERVAL_SECONDS` | `15` | Default interval between processing cycles |
 | `MATCHMAKING_DEFAULT_MAX_INTERVALS` | `6` | Default max intervals before timeout |
@@ -488,12 +491,13 @@ tournamentIdRequired: true
 | `MATCHMAKING_BACKGROUND_SERVICE_STARTUP_DELAY_SECONDS` | `5` | Delay before processing starts |
 | `MATCHMAKING_DEFAULT_RESERVATION_TTL_SECONDS` | `120` | Reservation TTL for game sessions |
 | `MATCHMAKING_DEFAULT_JOIN_DEADLINE_SECONDS` | `120` | Deadline for players to join session |
+| `MATCHMAKING_MATCH_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout for match processing |
+| `MATCHMAKING_LIST_LOCK_TIMEOUT_SECONDS` | `15` | Distributed lock timeout for list/query operations |
 
 ### Game Session Service
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GAME_SESSION_ENABLED` | `true` | Enable/disable service |
 | `GAME_SESSION_SERVER_SALT` | (required) | Server salt for GUID generation |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | `16` | Max players per session |
 | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | `7200` | Session timeout |
@@ -514,9 +518,11 @@ tournamentIdRequired: true
 | `matchmaking.ticket-cancelled` | `MatchmakingTicketCancelledEvent` | Ticket cancelled (with reason) |
 | `matchmaking.match-formed` | `MatchmakingMatchFormedEvent` | Match successfully formed |
 | `matchmaking.match-accepted` | `MatchmakingMatchAcceptedEvent` | All players accepted |
-| `matchmaking.match-cancelled` | `MatchmakingMatchCancelledEvent` | Match cancelled (decline/timeout) |
+| `matchmaking.match-declined` | `MatchmakingMatchDeclinedEvent` | Match cancelled due to decline |
+| `matchmaking.queue.created` | `MatchmakingQueueCreatedEvent` | New queue created |
+| `matchmaking.queue.updated` | `MatchmakingQueueUpdatedEvent` | Queue configuration changed |
+| `matchmaking.queue.deleted` | `MatchmakingQueueDeletedEvent` | Queue deleted (all tickets cancelled) |
 | `matchmaking.stats` | `MatchmakingStatsEvent` | Queue statistics (basic counts; detailed metrics like avg wait time are placeholder) |
-| `game-session.cancelled` | `GameSessionCancelledEvent` | Session cancelled |
 
 ### Client Events (WebSocket Push)
 
@@ -556,9 +562,8 @@ mahjong-casual:
 poker-casual:
   exclusiveGroup: minigames
 
-# Tournament is exclusive to itself only
+# Tournament has no exclusive group (standalone)
 tournament:
-  allowConcurrent: false
   exclusiveGroup: null
 ```
 
@@ -572,11 +577,7 @@ When parties queue together, their combined skill is calculated based on the que
 | `average` | Mean of all skills | Casual/social play |
 | `weighted` | Custom weights | Advanced balancing |
 
-**Weighted example:**
-```yaml
-partySkillAggregation: weighted
-partySkillWeights: [0.7, 0.2, 0.1]  # 70% highest, 20% second, 10% third
-```
+The `weighted` aggregation mode is defined in the enum but the weighting implementation details are not yet documented.
 
 ## Testing
 
@@ -633,12 +634,12 @@ if (rankedQueue.averageWaitSeconds < 30) {
 ```typescript
 // Subscribe to match events
 ws.on("matchmaking.match_found", (event) => {
-  showMatchFoundUI(event.players, event.timeoutSeconds);
+  showMatchFoundUI(event.matchId, event.acceptTimeoutSeconds);
 });
 
 ws.on("matchmaking.match_confirmed", (event) => {
-  // Join the game session
-  joinGameSession(event.sessionId, event.reservationToken);
+  // Join the game session via the published join shortcut
+  joinGameSession(event.sessionId);
 });
 
 ws.on("matchmaking.match_cancelled", (event) => {

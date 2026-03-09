@@ -1,10 +1,14 @@
 # Morality System - Conscience, Norms, and Second Thoughts
 
-> **Version**: 1.0
-> **Key Plugins**: `lib-faction` (L4), `lib-obligation` (L4)
-> **Deep Dives**: [Faction](../plugins/FACTION.md), [Obligation](../plugins/OBLIGATION.md)
+> **Version**: 1.1
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-faction (L4), lib-obligation (L4)
 > **Related Guides**: [Behavior System](./BEHAVIOR-SYSTEM.md), [Seed System](./SEED-SYSTEM.md), [Story System](./STORY-SYSTEM.md)
-> **Origin**: [GitHub Issue #410 - Second Thoughts: Prospective Consequence Evaluation for NPC Cognition](https://github.com/beyond-immersion/bannou-service/issues/410)
+
+## Summary
+
+Cross-service guide to the morality pipeline that gives NPCs emergent moral reasoning through GOAP action cost modifications. Covers how lib-faction provides the social norm landscape (guild codes, territorial laws, realm-wide cultural norms) and how lib-obligation transforms those norms plus contractual obligations into personality-weighted costs that change NPC behavior. Intended for developers authoring ABML behaviors, designing faction norm structures, or integrating contract behavioral clauses with the obligation system.
 
 The Morality System gives NPCs a conscience. An honest merchant hesitates before swindling a customer. A loyal knight resists betraying their lord even when tactically optimal. A character in lawless territory acts with less restraint than one standing in a temple district. This is not scripted morality -- it is emergent moral reasoning arising from the intersection of social context, personal character, and contractual commitments, expressed as GOAP action cost modifications that change what NPCs choose to do.
 
@@ -123,9 +127,8 @@ Each faction owns a seed (via lib-seed) that grows through member activities. Fa
 | Established | 50 | `norm.define` -- can define enforceable norms |
 | Influential | 200 | `norm.enforce.sanctions`, `territory.claim` |
 | Dominant | 1000 | Complex governance, trade regulation |
-| Sovereign | 5000 | Full governance capabilities |
 
-A nascent thieves' guild literally cannot define "honor among thieves" as an enforceable norm. It hasn't grown enough governance capability yet. A sovereign kingdom faction can define comprehensive legal codes and enforce territorial boundaries. This mirrors real-world governance: authority comes from established legitimacy, not from declaration.
+A nascent thieves' guild literally cannot define "honor among thieves" as an enforceable norm. It hasn't grown enough governance capability yet. A dominant faction can define complex governance rules and enforce territorial boundaries. This mirrors real-world governance: authority comes from established legitimacy, not from declaration.
 
 ### How Factions Grow
 
@@ -211,14 +214,15 @@ The same character in a different location would get a different merged norm map
 
 Obligation answers the question: **"What would it cost this specific character to do something wrong?"**
 
-### Two-Layer Design
+### Three-Layer Design
 
-Obligation is deliberately designed with two independent layers. The base layer works alone; the enrichment layer adds depth when personality data is available:
+Obligation is deliberately designed with three independent layers. Each enrichment layer is independently optional and gracefully degrades:
 
 | Layer | Input | What It Contributes | Without It |
 |-------|-------|--------------------|-----------|
 | **Base** | Contract behavioral clauses + Faction norms | Raw penalty values per violation type | No obligation costs at all |
-| **Enrichment** | Personality traits (honesty, loyalty, etc.) | Trait-weighted multipliers on base penalties | Costs exist but are personality-blind |
+| **Personality Enrichment** | Personality traits (honesty, loyalty, etc.) | Trait-weighted multipliers on base penalties | Costs exist but are personality-blind |
+| **Hearsay Enrichment** (planned) | NPC beliefs about norms via lib-hearsay | Belief-filtered penalties reflecting what the NPC *thinks* social rules are, not ground truth | Norms use perfect knowledge (or configurable uncertainty simulation) |
 
 ### Input Sources
 
@@ -433,7 +437,7 @@ Each morality service contributes a variable namespace to the Actor's ABML behav
 | `${faction.primary_faction}` | string | Code of highest-role faction |
 | `${faction.has_norm.<type>}` | bool | Whether any applicable norm covers this violation type |
 | `${faction.norm_penalty.<type>}` | float | Base penalty for a violation type from merged norms |
-| `${faction.in_controlled_territory}` | bool | Whether character is in territory controlled by any of their factions |
+| `${faction.in_controlled_territory}` | bool | Whether character is in territory controlled by any of their factions (**not yet implemented** -- see Faction deep dive) |
 
 ### `${obligations.*}` -- Cost Landscape
 

@@ -1,14 +1,14 @@
 # Economy System - Architecture & Design
 
-> **Version**: 1.1
-> **Status**: Foundation services production-ready; economy feature services have architectural specifications (deep dives)
-> **Foundation Plugins**: `lib-currency` (L2), `lib-item` (L2), `lib-inventory` (L2), `lib-contract` (L1), `lib-escrow` (L4)
-> **Economy Feature Plugins**: `lib-affix` (L4), `lib-craft` (L4), `lib-loot` (L4), `lib-market` (L4), `lib-trade` (L4), `lib-workshop` (L4)
-> **Integration Plugins**: `lib-quest` (L2), `lib-actor` (L2), `lib-seed` (L2), `lib-collection` (L2), `lib-status` (L4), `lib-behavior` (L4), `lib-analytics` (L4), `lib-divine` (L4)
-> **Deep Dives**: [Currency](../plugins/CURRENCY.md), [Item](../plugins/ITEM.md), [Inventory](../plugins/INVENTORY.md), [Contract](../plugins/CONTRACT.md), [Escrow](../plugins/ESCROW.md), [Quest](../plugins/QUEST.md), [Analytics](../plugins/ANALYTICS.md), [Divine](../plugins/DIVINE.md), [Affix](../plugins/AFFIX.md), [Craft](../plugins/CRAFT.md), [Loot](../plugins/LOOT.md), [Market](../plugins/MARKET.md), [Trade](../plugins/TRADE.md), [Workshop](../plugins/WORKSHOP.md), [Status](../plugins/STATUS.md)
+> **Version**: 1.2
+> **Status**: Implemented
+> **Last Updated**: 2026-03-08
+> **Key Plugins**: lib-currency (L2), lib-item (L2), lib-inventory (L2), lib-contract (L1), lib-escrow (L4), lib-affix (L4), lib-craft (L4), lib-loot (L4), lib-market (L4), lib-trade (L4), lib-workshop (L4)
 > **Related Guides**: [Behavior System](./BEHAVIOR-SYSTEM.md), [Seed System](./SEED-SYSTEM.md), [Morality System](./MORALITY-SYSTEM.md)
 
-Economy is not a single plugin but an **architectural layer** spanning multiple services. This guide documents the cross-cutting design: how foundation services compose into a living economy, how NPCs participate as economic actors, how divine entities maintain economic health through narrative intervention, and what planned services will complete the picture.
+## Summary
+
+Cross-cutting guide to the Bannou economy architecture spanning foundation services (Currency, Item, Inventory, Contract, Escrow) and feature services (Affix, Craft, Loot, Market, Trade, Workshop). Covers faucet/sink discipline, NPC economic participation via GOAP, divine economic intervention, quest-economy integration, exchange rate extensions, and scale strategies for 100K+ NPC economies. Intended for developers building or extending economic game mechanics across the service mesh.
 
 ---
 
@@ -87,10 +87,10 @@ These services provide the primitives that the economy layer builds upon. All ar
 
 | Service | Layer | Endpoints | Role in Economy |
 |---------|-------|-----------|-----------------|
-| **lib-currency** | L2 | 32 | Multi-currency wallets, credit/debit/transfer, authorization holds, escrow integration, exchange rates, conversion, autogain |
+| **lib-currency** | L2 | 33 | Multi-currency wallets, credit/debit/transfer, authorization holds, escrow integration, exchange rates, conversion, autogain |
 | **lib-item** | L2 | 16 | Item templates (category, rarity, quantity models) and instances (binding, durability, origin tracking) |
 | **lib-inventory** | L2 | 16 | Multi-constraint containers (slot/weight/grid/volumetric/unlimited), nested containers, split/merge/transfer |
-| **lib-contract** | L1 | 30 | Template-based agreements, milestone progression, prebound API execution, breach/cure, guardian custody |
+| **lib-contract** | L1 | 31 | Template-based agreements, milestone progression, prebound API execution, breach/cure, guardian custody |
 | **lib-escrow** | L4 | 22 | Full-custody asset exchange orchestration, 13-state FSM, multi-party consent, trust modes, contract-bound releases |
 
 ### 2.1 How They Compose

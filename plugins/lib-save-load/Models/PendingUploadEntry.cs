@@ -38,6 +38,11 @@ public sealed class PendingUploadEntry
     public required EntityType OwnerType { get; set; }
 
     /// <summary>
+    /// Slot name for event publishing
+    /// </summary>
+    public required string SlotName { get; set; }
+
+    /// <summary>
     /// The actual save data (base64 encoded, compressed)
     /// </summary>
     public required string Data { get; set; }
@@ -111,10 +116,12 @@ public sealed class PendingUploadEntry
     /// Generates the state store key for this pending upload.
     /// Note: Uses ToString() for UploadId as state store keys are strings.
     /// </summary>
-    public string GetStateKey() => $"pending:{UploadId}";
+    internal string BuildStateKey() => $"{KeyPrefix}:{UploadId}";
+
+    private const string KeyPrefix = "pending";
 
     /// <summary>
-    /// Generates the state store key from upload ID
+    /// Builds the state store key from upload ID.
     /// </summary>
-    public static string GetStateKey(string uploadId) => $"pending:{uploadId}";
+    internal static string BuildStateKey(string uploadId) => $"{KeyPrefix}:{uploadId}";
 }

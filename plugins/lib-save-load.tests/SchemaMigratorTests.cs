@@ -266,7 +266,7 @@ public class SchemaMigratorTests
         };
 
         _schemaStoreMock.Setup(s => s.GetAsync(
-                SaveSchemaDefinition.GetStateKey("game", "v2.0"),
+                SaveSchemaDefinition.BuildStateKey("game", "v2.0"),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(schema);
 
@@ -321,7 +321,7 @@ public class SchemaMigratorTests
         };
 
         _schemaStoreMock.Setup(s => s.GetAsync(
-                SaveSchemaDefinition.GetStateKey("game", "v2.0"),
+                SaveSchemaDefinition.BuildStateKey("game", "v2.0"),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(schema);
 
