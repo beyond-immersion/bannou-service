@@ -27,14 +27,14 @@ public static class LeaderboardEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(LeaderboardPublishedTopics.LeaderboardDefinitionCreated, eventData, cancellationToken);
 
-    /// <summary>Published when a leaderboard definition is updated.</summary>
+    /// <summary>Published when a leaderboard definition is updated (including deprecation via changedFields).</summary>
     public static Task<bool> PublishLeaderboardDefinitionUpdatedAsync(
         this IMessageBus messageBus,
         LeaderboardDefinitionUpdatedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(LeaderboardPublishedTopics.LeaderboardDefinitionUpdated, eventData, cancellationToken);
 
-    /// <summary>Published when a leaderboard definition is deleted.</summary>
+    /// <summary>Unused Category B infrastructure (leaderboard definitions are never deleted).</summary>
     public static Task<bool> PublishLeaderboardDefinitionDeletedAsync(
         this IMessageBus messageBus,
         LeaderboardDefinitionDeletedEvent eventData,

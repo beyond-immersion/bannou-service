@@ -44,8 +44,11 @@ public static class CurrencyPublishedTopics
     /// <summary>Published when a new currency definition is created.</summary>
     public const string CurrencyDefinitionCreated = "currency.definition.created";
 
-    /// <summary>Published when a currency definition is updated.</summary>
+    /// <summary>Published when a currency definition is updated (including deprecation via changedFields).</summary>
     public const string CurrencyDefinitionUpdated = "currency.definition.updated";
+
+    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
+    public const string CurrencyDefinitionDeleted = "currency.definition.deleted";
 
     /// <summary>Published when a new wallet is created.</summary>
     public const string CurrencyWalletCreated = "currency.wallet.created";

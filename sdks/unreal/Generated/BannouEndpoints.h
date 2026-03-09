@@ -186,8 +186,8 @@ namespace Bannou
         /** Update encounter type */
         constexpr const TCHAR* CharacterEncounterUpdateEncounterType = TEXT("POST:/character-encounter/type/update");
 
-        /** Delete encounter type */
-        constexpr const TCHAR* CharacterEncounterDeleteEncounterType = TEXT("POST:/character-encounter/type/delete");
+        /** Deprecate encounter type */
+        constexpr const TCHAR* CharacterEncounterDeprecateEncounterType = TEXT("POST:/character-encounter/type/deprecate");
 
         // CharacterPersonality Service
         /** Create or update personality for a character */
@@ -432,6 +432,9 @@ namespace Bannou
         // Currency Service
         /** Update mutable fields of a currency definition */
         constexpr const TCHAR* CurrencyUpdateCurrencyDefinition = TEXT("POST:/currency/definition/update");
+
+        /** Deprecate a currency definition (Category B — one-way, no delete) */
+        constexpr const TCHAR* CurrencyDeprecateCurrencyDefinition = TEXT("POST:/currency/definition/deprecate");
 
         /** Get balance for a specific currency in a wallet */
         constexpr const TCHAR* CurrencyGetBalance = TEXT("POST:/currency/balance/get");
@@ -770,8 +773,8 @@ namespace Bannou
         /** Update leaderboard definition */
         constexpr const TCHAR* LeaderboardUpdateLeaderboardDefinition = TEXT("POST:/leaderboard/definition/update");
 
-        /** Delete leaderboard definition */
-        constexpr const TCHAR* LeaderboardDeleteLeaderboardDefinition = TEXT("POST:/leaderboard/definition/delete");
+        /** Deprecate leaderboard definition */
+        constexpr const TCHAR* LeaderboardDeprecateLeaderboardDefinition = TEXT("POST:/leaderboard/definition/deprecate");
 
         /** Get entity's rank */
         constexpr const TCHAR* LeaderboardGetEntityRank = TEXT("POST:/leaderboard/rank/get");
@@ -798,8 +801,8 @@ namespace Bannou
         /** Update a board template */
         constexpr const TCHAR* LicenseUpdateBoardTemplate = TEXT("POST:/license/board-template/update");
 
-        /** Delete a board template */
-        constexpr const TCHAR* LicenseDeleteBoardTemplate = TEXT("POST:/license/board-template/delete");
+        /** Deprecate a board template */
+        constexpr const TCHAR* LicenseDeprecateBoardTemplate = TEXT("POST:/license/board-template/deprecate");
 
         /** Add a license definition to a board template */
         constexpr const TCHAR* LicenseAddLicenseDefinition = TEXT("POST:/license/definition/add");
@@ -1368,9 +1371,6 @@ namespace Bannou
 
         /** Get scenario execution history */
         constexpr const TCHAR* StorylineGetScenarioHistory = TEXT("POST:/storyline/scenario/get-history");
-
-        /** Get storyline data for compression */
-        constexpr const TCHAR* StorylineGetCompressData = TEXT("POST:/storyline/get-compress-data");
 
         // Subscription Service
         /** Cancel a subscription */
@@ -2030,13 +2030,13 @@ namespace Bannou
                 TEXT("FEncounterTypeResponse"),
                 TEXT("Update encounter type")
             });
-            Registry.Add(TEXT("CharacterEncounterDeleteEncounterType"), FEndpointInfo{
+            Registry.Add(TEXT("CharacterEncounterDeprecateEncounterType"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/character-encounter/type/delete"),
+                TEXT("/character-encounter/type/deprecate"),
                 TEXT("character-encounter"),
-                TEXT("FDeleteEncounterTypeRequest"),
-                TEXT(""),
-                TEXT("Delete encounter type")
+                TEXT("FDeprecateEncounterTypeRequest"),
+                TEXT("FEncounterTypeResponse"),
+                TEXT("Deprecate encounter type")
             });
             Registry.Add(TEXT("CharacterPersonalitySetPersonality"), FEndpointInfo{
                 TEXT("POST"),
@@ -2669,6 +2669,14 @@ namespace Bannou
                 TEXT("FUpdateCurrencyDefinitionRequest"),
                 TEXT("FCurrencyDefinitionResponse"),
                 TEXT("Update mutable fields of a currency definition")
+            });
+            Registry.Add(TEXT("CurrencyDeprecateCurrencyDefinition"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/currency/definition/deprecate"),
+                TEXT("currency"),
+                TEXT("FDeprecateCurrencyDefinitionRequest"),
+                TEXT("FCurrencyDefinitionResponse"),
+                TEXT("Deprecate a currency definition (Category B — one-way, no delete)")
             });
             Registry.Add(TEXT("CurrencyGetBalance"), FEndpointInfo{
                 TEXT("POST"),
@@ -3550,13 +3558,13 @@ namespace Bannou
                 TEXT("FLeaderboardDefinitionResponse"),
                 TEXT("Update leaderboard definition")
             });
-            Registry.Add(TEXT("LeaderboardDeleteLeaderboardDefinition"), FEndpointInfo{
+            Registry.Add(TEXT("LeaderboardDeprecateLeaderboardDefinition"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/leaderboard/definition/delete"),
+                TEXT("/leaderboard/definition/deprecate"),
                 TEXT("leaderboard"),
-                TEXT("FDeleteLeaderboardDefinitionRequest"),
-                TEXT(""),
-                TEXT("Delete leaderboard definition")
+                TEXT("FDeprecateLeaderboardDefinitionRequest"),
+                TEXT("FLeaderboardDefinitionResponse"),
+                TEXT("Deprecate leaderboard definition")
             });
             Registry.Add(TEXT("LeaderboardGetEntityRank"), FEndpointInfo{
                 TEXT("POST"),
@@ -3622,13 +3630,13 @@ namespace Bannou
                 TEXT("FBoardTemplateResponse"),
                 TEXT("Update a board template")
             });
-            Registry.Add(TEXT("LicenseDeleteBoardTemplate"), FEndpointInfo{
+            Registry.Add(TEXT("LicenseDeprecateBoardTemplate"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/license/board-template/delete"),
+                TEXT("/license/board-template/deprecate"),
                 TEXT("license"),
-                TEXT("FDeleteBoardTemplateRequest"),
+                TEXT("FDeprecateBoardTemplateRequest"),
                 TEXT("FBoardTemplateResponse"),
-                TEXT("Delete a board template")
+                TEXT("Deprecate a board template")
             });
             Registry.Add(TEXT("LicenseAddLicenseDefinition"), FEndpointInfo{
                 TEXT("POST"),
@@ -5101,14 +5109,6 @@ namespace Bannou
                 TEXT("FGetScenarioHistoryRequest"),
                 TEXT("FGetScenarioHistoryResponse"),
                 TEXT("Get scenario execution history")
-            });
-            Registry.Add(TEXT("StorylineGetCompressData"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/storyline/get-compress-data"),
-                TEXT("storyline"),
-                TEXT("FGetCompressDataRequest"),
-                TEXT("FStorylineArchive"),
-                TEXT("Get storyline data for compression")
             });
             Registry.Add(TEXT("SubscriptionCancelSubscription"), FEndpointInfo{
                 TEXT("POST"),

@@ -1,49 +1,25 @@
-❯ Big Brain Mode! Read DUNGEON and PROCEDURAL deep dives yourself- launch 2 agents to summarize the: PUPPETMASTER, DIVINE, GARDENER deep dives, and the BEHAVIORAL-BOOTSTRAP.md guide.
-Launch ONE agent to summarize the 3 dungeon system design docs in ~/repos/arcadia-kb/04 - Game Systems/ (ensure you launch that one with permissions to actually see into another
-repo-  or do a 1 line read to ensure you trigger the authorization first before launching them). That's your knowledgebase- don't bother with anything more (and no code, for you or
-the agents). Let's discuss dungeon specifics- in particular, what kinds of things we should be aiming to handle for Arcadia's dungeon implementations. Let's dig DEEP. What kinds of
-aspirations do we have later with dungeons? Do any of these aspirations require additional design considerations? Let's assume there's a "god" who is responsible for actually
-spawning dungeons in the world when the conditions are right (the task that turns "large amounts of stagnant mana" into "a manifestation of some other place or reality or state of
-being"), the one who creates the cores, which then later spawn or are bound to masters. What things are covered from the aspirations already? Dungeon cores are essentially seeds,
-they exert influence THROUGH the pair bond at first + mechanical automatic reactions (built-in- "I'm in danger, ALERT! ACTIVATE NEARBY TRAPS!", and spitting out monsters that it can
-generate from the materials it has collected (DNA/logos) / blueprints that it has, like a factory. We could even potentially UTILIZE the factory plugin (perform actions
-automatically over time, more efficient than actors) as a part of this. As the seed grows, maybe one of the things built-into dungeon seeds is that growth hitting a certain point in
-some levels creates a collection item for "has behavior", and then this can launch an actor (no character associated, running a dungeon core "behavior"), and that dungeon core
-behavior would start to use the seed variable provider data itself as the basis for its behaviors (not a character personality the way a person would), as well as the current state
-of dungeon functions and its "bonded partner". If the dungeon's bonded partner is a character, then it can use exactly the same avenues "gods" do for "whispering" to the character's
-actor, querying it, giving it instructions. The dungeon actor would be able to set and activate traps with more precision, choose creatures to spawn more intelligently, and more.
-Once the growth hits a certain point, it could even be possible for the dungeon to spawn a CHARACTER identity (simple API call to create a character) which would then be tied to
-their core/seed all of that retroactively. This would then allow, just like the gods who can have character identities in their own "pantheon" system region, a similar system region
-for just the subset of 'living dungeons', so they won't show up in normal character lists but can still provide the personality data, history, etc which enriches the actor runner.
-Now that it would have a characterId it could attach to, the behavior it runs would be capable of getting and setting all sorts of data- the game server would of course need to
-start publishing perception events for the new character (needs to "spawn" in the game), but as long as we have appropriate service eventing, that's not a problem. What else is
-there? Oh yeah, the dungeon developing new items and momentos and portait drops based on events that occurred in it. I initially had the thought that we might want to add a new
-history plugin just for the dungeon plugin, but now I actually don't think we need something so long-term, more, I think we should consider how the seed is going to "grow" based off
-of some of these same events that later trigger other items and events. In that case, why don't we just itemize the memories and store them in an inventory- notably, NOT a
-collection- the seed uses a collection but collections can't have items removed from them, by design, where as an inventory you get essentially X uses. The seed collection could
-still just be essentially the same types of items, but only storing "first time" instead of generating consumables. Whenever a notable event would happen, it would get stored as a
-"notable" item ("event" item, "historical" item?) or something of that nature, and a copy of that would get set to the seed, if it hasn't been already, and a copy would need to be
-stashed away in the "memory inventory" for the dungeon instance. These could then get consumed when generating loot later, or for manifesting some kind-of phenomena, but the point
-being that they're consumed on use, so the dungeon can only create as many unique items as it actually has unique historical events stored. Does this make sense at all? Let me know
-what you think about the shape that starts taking. Then there's the dungeon aspects with like "floors", where you go down a level and the whole environment changes- I had the idea
-this should essentially be the dungeon trying to create the ideal environment for the types of defenses that it wants- a desert floor where the defense is heat + cold environmental
-extremes + distance to travel (resource exhaustion), or a jungle to support plant-type defense mechanism, or simply as food to support the larger creatures. Monsters created from
-magic are dumb, and limited in number based on magic, but if you create the right environment, you can create a habitat to support ACTUAL creature defenses- while new creatures
-couldn't be "spawned" as easily, having to start as eggs / babies that grow quickly, that would be one path to being more economical over time, and then hiding the entrance to the
-next floor could become a part of the complexity. Each floor would be its own location in the dungeon "system realm", like any dungeon character identities- these are essentially
-"other worlds" in the both figurative AND literal sense. Of course, the growth of a dungeon that hasn't obtained an actor yet, much less its own personality, would be pretty
-limited- we could even say the ability to create a deeper "floor" is an ability unlocked by HAVING an actor, so that we don't need to worry about any of the complex there without
-having an agent driving it (nothing we need to build into the dungeon plugin itself).
+# Dungeon Extensions Design Notes
+
+> **Type**: Design
+> **Status**: Aspirational
+> **Created**: 2025-06-01
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #4
+> **Related Plugins**: Dungeon, Divine, Puppetmaster, Gardener, Workshop, Seed, Collection, Actor, Item, Inventory, Location, Environment, Procedural, Transit, Mapping, Scene
+
+## Summary
+
+Explores dungeon system extensions beyond the core DUNGEON deep dive, including Workshop integration for habitat creature production, the dual memory system (Collection for permanent knowledge plus Inventory for consumable creative resources), floor-based environmental defense strategies, and the three-stage cognitive progression from dormant seed to awakened character brain. Identifies three areas requiring additional design work: the UNDERWORLD system realm with actor rebinding, the dual memory system replacing the custom memory store, and the Workshop adapter for habitat creature production. No schemas or implementation exist yet.
 
 ---
-Dungeon Design Deep Dive
 
-You've laid out a remarkably coherent vision here. Let me work through what the architecture already covers, where your new ideas extend it brilliantly, and where there are genuine
-design considerations to think through.
+## Dungeon Design Deep Dive
 
-What's Already Covered
+This document explores extensions to the dungeon system architecture beyond what the core DUNGEON deep dive specifies, analyzing what existing services already cover and identifying areas requiring additional design work.
 
-The existing deep dives and arcadia-kb docs handle a LOT of the foundational shape:
+### What's Already Covered
+
+The existing deep dives and Arcadia knowledge base documents handle the foundational shape:
 
 - Dungeon cores as seeds: Fully designed (dungeon_core seed with 5 growth domains, 4 phases, 11+ capability rules)
 - Bond patterns: Priest/Paladin/Corrupted with Pattern A (account-level) and Pattern B (character-level)
@@ -53,7 +29,7 @@ The existing deep dives and arcadia-kb docs handle a LOT of the foundational sha
 - Physical construction: Cross-service (Mapping for spatial, Scene for visual, Save-Load for persistence, Procedural for generation)
 - God influence pattern: Same indirect-through-Actor pattern as Divine
 
-The "Dungeon-Spawning God"
+### The Dungeon-Spawning God
 
 This fits perfectly into the existing divine architecture. One of the 18 Old Gods (Typhon/Monsters is the obvious candidate, but you could also frame it as a more neutral force -- a god
 of Transformation or Stagnation-Breaking) would be a regional watcher whose ABML behavior includes:
@@ -78,9 +54,9 @@ The Nageki docs add an important layer here: vault level classification (1-10) b
 Level 1 dungeon from mild mana accumulation vs a Level 8 from a catastrophic battlefield. This could map to the dungeon_core seed's initial growth -- higher-level formations start with
 more initial growth in mana_reserves, giving them earlier access to capabilities.
 
-Workshop as Production Factory -- This Is Great
+### Workshop as Production Factory
 
-This is one of the most elegant ideas in your outline. Workshop already provides:
+Workshop already provides:
 - Time-based automated production with lazy evaluation
 - Worker slot assignment to blueprints
 - Source inventory consumption → output placement
@@ -117,9 +93,9 @@ The only extension Workshop might need: support for non-character "worker" conce
 Either we model mana channels as a special worker type, or we allow Workshop to accept abstract worker counts without entity backing. Worth exploring but not a blocker -- the simplest
 path is mana channels as opaque worker entities.
 
-Seed Growth → Collection → Actor Launch Pipeline
+### Seed Growth to Collection to Actor Launch Pipeline
 
-Your progression model is cleaner than the existing deep dive's "optionally start actor at creation" approach:
+This progression model is cleaner than the deep dive's "optionally start actor at creation" approach:
 
 Phase 1: Dormant Core (No Actor)
 - Dungeon exists as pure seed + mana wallet + mechanical reactions
@@ -136,7 +112,7 @@ Phase 2: Seed Growth → Collection Item → Actor Spawn
 - Now the dungeon has an event brain running the creature_base cognition template
 - Uses ${seed.*} and ${dungeon.*} variable providers for ABML expressions
 
-This is beautiful because:
+Key advantages:
 - No actor overhead for the majority of dungeons (most are small, dormant, Levels 1-3)
 - The transition is a real progression event that the world notices
 - It uses existing infrastructure (Seed → Collection → Listener pipeline) with zero new services
@@ -144,7 +120,7 @@ This is beautiful because:
 
 Phase 3: Character Identity (The System Realm Promotion)
 
-This is where your vision gets really interesting and intersects directly with the Divine pattern.
+This intersects directly with the Divine pattern.
 
 When dungeon_core seed reaches Awakened phase (MinTotalGrowth: 50.0):
 

@@ -688,6 +688,11 @@ public partial class ChatController
                     "nullable": true,
                     "description": "Filter by status"
                 },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include deprecated room types in results (excluded by default)"
+                },
                 "page": {
                     "type": "integer",
                     "default": 0,
@@ -1336,7 +1341,7 @@ public partial class ChatController
         "DeprecateRoomTypeRequest": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Request to deprecate a room type (prevents new room creation)",
+            "description": "Request to deprecate a room type (Category B \u2014 one-way, no delete). Idempotent \u2014 returns OK if already deprecated.",
             "required": [
                 "code"
             ],
@@ -1350,6 +1355,12 @@ public partial class ChatController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Game service scope for the type"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (recommended for audit trail)"
                 }
             }
         }
@@ -1532,7 +1543,7 @@ public partial class ChatController
     private static readonly string _DeprecateRoomType_Info = """
 {
     "summary": "Soft-deprecate a room type",
-    "description": "Sets the room type status to Deprecated. Existing rooms continue to work but no new rooms can be created with this type.",
+    "description": "Sets the room type status to Deprecated. Existing rooms continue to work\nbut no new rooms can be created with this type.\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated.\n",
     "tags": [],
     "deprecated": false,
     "operationId": "DeprecateRoomType"

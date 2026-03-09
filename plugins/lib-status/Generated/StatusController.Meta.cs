@@ -2198,7 +2198,7 @@ public partial class StatusController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Arbitrary key-value data passed to contract template values and stored on the status instance. Opaque to Status -- callers define their own semantics."
+                    "description": "Client-defined metadata. Opaque to Status \u2014 stored and returned verbatim. Not a contract between services. Passed to contract template values and stored on the status instance."
                 }
             }
         }
@@ -3376,22 +3376,11 @@ public partial class StatusController
             "description": "Unified view of all active effects for an entity",
             "additionalProperties": false,
             "required": [
-                "entityId",
-                "entityType",
                 "itemBasedCount",
                 "seedDerivedCount",
                 "effects"
             ],
             "properties": {
-                "entityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Entity these effects belong to"
-                },
-                "entityType": {
-                    "type": "object",
-                    "description": "Entity type discriminator"
-                },
                 "itemBasedCount": {
                     "type": "integer",
                     "description": "Number of item-based status effects"
@@ -3585,20 +3574,9 @@ public partial class StatusController
             "description": "Seed-derived passive effects for an entity",
             "additionalProperties": false,
             "required": [
-                "entityId",
-                "entityType",
                 "effects"
             ],
             "properties": {
-                "entityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Entity these effects belong to"
-                },
-                "entityType": {
-                    "type": "object",
-                    "description": "Entity type discriminator"
-                },
                 "effects": {
                     "type": "array",
                     "maxItems": 500,

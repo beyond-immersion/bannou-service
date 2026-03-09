@@ -317,7 +317,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         }
 
         // Save the migrated data as a new version
-        var newVersionNumber = (slot.LatestVersion.HasValue ? slot.LatestVersion.Value : 0) + 1;
+        var newVersionNumber = (slot.LatestVersion ?? 0) + 1;
 
         // Compress data
         var compressionType = slot.CompressionType;

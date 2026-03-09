@@ -20,10 +20,10 @@ public static class LicensePublishedTopics
     /// <summary>Published when a new board template is created.</summary>
     public const string LicenseBoardTemplateCreated = "license.board-template.created";
 
-    /// <summary>Published when a board template is updated.</summary>
+    /// <summary>Published when a board template is updated (including deprecation via changedFields).</summary>
     public const string LicenseBoardTemplateUpdated = "license.board-template.updated";
 
-    /// <summary>Published when a board template is deleted.</summary>
+    /// <summary>Unused Category B infrastructure (board templates are never deleted).</summary>
     public const string LicenseBoardTemplateDeleted = "license.board-template.deleted";
 
     /// <summary>Published when a board instance is created for an owner.</summary>

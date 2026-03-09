@@ -411,7 +411,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.ListEncounterTypesAsync(
-            new ListEncounterTypesRequest { IncludeInactive = true }, CancellationToken.None);
+            new ListEncounterTypesRequest { IncludeDeprecated = true }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -486,7 +486,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     }
 
     [Fact]
-    public async Task DeleteEncounterTypeAsync_CustomType_ReturnsOK()
+    public async Task DeprecateEncounterTypeAsync_CustomType_ReturnsOK()
     {
         // Arrange
         var service = CreateService();
@@ -501,35 +501,33 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockCustomTypeIndexStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CustomTypeIndexData { TypeCodes = new List<string> { "CUSTOM" } });
-        _mockCustomTypeIndexStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CustomTypeIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
-
         // Act
-        var status = await service.DeleteEncounterTypeAsync(
-            new DeleteEncounterTypeRequest { Code = "CUSTOM" }, CancellationToken.None);
+        var (status, response) = await service.DeprecateEncounterTypeAsync(
+            new DeprecateEncounterTypeRequest { Code = "CUSTOM", Reason = "No longer needed" }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     [Fact]
-    public async Task DeleteEncounterTypeAsync_BuiltInType_ReturnsBadRequest()
+    public async Task DeprecateEncounterTypeAsync_AlreadyDeprecated_ReturnsOK()
     {
         // Arrange
         var service = CreateService();
-        var typeData = CreateTestEncounterType("COMBAT", "Combat", isBuiltIn: true);
-        SetupTypeExists("COMBAT", typeData);
+        var typeData = CreateTestEncounterType("CUSTOM", "Custom Type", isBuiltIn: false);
+        typeData.IsDeprecated = true;
+        typeData.DeprecatedAt = DateTimeOffset.UtcNow;
+        typeData.DeprecationReason = "Previously deprecated";
+        SetupTypeExists("CUSTOM", typeData);
 
-        // Act
-        var status = await service.DeleteEncounterTypeAsync(
-            new DeleteEncounterTypeRequest { Code = "COMBAT" }, CancellationToken.None);
+        // Act — idempotent per IMPLEMENTATION TENETS
+        var (status, response) = await service.DeprecateEncounterTypeAsync(
+            new DeprecateEncounterTypeRequest { Code = "CUSTOM" }, CancellationToken.None);
 
-        // Assert - Cannot delete built-in types
-        Assert.Equal(StatusCodes.BadRequest, status);
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     #endregion
@@ -1624,52 +1622,50 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     #region Gap 2: Type-in-Use Validation Tests
 
     [Fact]
-    public async Task DeleteEncounterTypeAsync_TypeInUse_ReturnsConflict()
+    public async Task DeprecateEncounterTypeAsync_NotFound_ReturnsNotFound()
     {
         // Arrange
         var service = CreateService();
-        var typeData = CreateTestEncounterType("CUSTOM", "Custom Type", isBuiltIn: false);
-        SetupTypeExists("CUSTOM", typeData);
-        SetupTypeHasEncounters("CUSTOM", 5); // Type is in use by 5 encounters
+        // No type setup — type does not exist
 
         // Act
-        var status = await service.DeleteEncounterTypeAsync(
-            new DeleteEncounterTypeRequest { Code = "CUSTOM" }, CancellationToken.None);
+        var (status, response) = await service.DeprecateEncounterTypeAsync(
+            new DeprecateEncounterTypeRequest { Code = "NONEXISTENT" }, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 
     [Fact]
-    public async Task DeleteEncounterTypeAsync_TypeNotInUse_Succeeds()
+    public async Task DeprecateEncounterTypeAsync_SetsDeprecationFields()
     {
         // Arrange
         var service = CreateService();
         var typeData = CreateTestEncounterType("CUSTOM", "Custom Type", isBuiltIn: false);
         SetupTypeExists("CUSTOM", typeData);
-        // Type-encounter index is empty by default (set up in constructor)
 
+        EncounterTypeData? savedType = null;
         _mockTypeStore
             .Setup(s => s.SaveAsync(
                 It.IsAny<string>(),
                 It.IsAny<EncounterTypeData>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
-
-        _mockCustomTypeIndexStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CustomTypeIndexData { TypeCodes = new List<string> { "CUSTOM" } });
-        _mockCustomTypeIndexStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CustomTypeIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, EncounterTypeData, StateOptions?, CancellationToken>((_, data, _, _) => savedType = data)
             .ReturnsAsync("etag-1");
 
         // Act
-        var status = await service.DeleteEncounterTypeAsync(
-            new DeleteEncounterTypeRequest { Code = "CUSTOM" }, CancellationToken.None);
+        var (status, response) = await service.DeprecateEncounterTypeAsync(
+            new DeprecateEncounterTypeRequest { Code = "CUSTOM", Reason = "Obsolete" }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(savedType);
+        Assert.True(savedType.IsDeprecated);
+        Assert.NotNull(savedType.DeprecatedAt);
+        Assert.Equal("Obsolete", savedType.DeprecationReason);
     }
 
     #endregion

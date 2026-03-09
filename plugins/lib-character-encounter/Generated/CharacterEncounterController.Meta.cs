@@ -136,6 +136,21 @@ public partial class CharacterEncounterController
                     "type": "boolean",
                     "description": "Whether the type is active"
                 },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type has been deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why the type was deprecated"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -296,6 +311,21 @@ public partial class CharacterEncounterController
                     "type": "boolean",
                     "description": "Whether the type is active"
                 },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type has been deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why the type was deprecated"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -389,10 +419,10 @@ public partial class CharacterEncounterController
             "description": "Request to list encounter types with optional filtering",
             "additionalProperties": false,
             "properties": {
-                "includeInactive": {
+                "includeDeprecated": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Include soft-deleted types"
+                    "description": "Include deprecated types in results"
                 },
                 "builtInOnly": {
                     "type": "boolean",
@@ -485,6 +515,21 @@ public partial class CharacterEncounterController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether the type is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type has been deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why the type was deprecated"
                 },
                 "createdAt": {
                     "type": "string",
@@ -685,6 +730,21 @@ public partial class CharacterEncounterController
                     "type": "boolean",
                     "description": "Whether the type is active"
                 },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type has been deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why the type was deprecated"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -766,16 +826,16 @@ public partial class CharacterEncounterController
 
     #endregion
 
-    #region Meta Endpoints for DeleteEncounterType
+    #region Meta Endpoints for DeprecateEncounterType
 
-    private static readonly string _DeleteEncounterType_RequestSchema = """
+    private static readonly string _DeprecateEncounterType_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DeleteEncounterTypeRequest",
+    "$ref": "#/$defs/DeprecateEncounterTypeRequest",
     "$defs": {
-        "DeleteEncounterTypeRequest": {
+        "DeprecateEncounterTypeRequest": {
             "type": "object",
-            "description": "Request to delete an encounter type",
+            "description": "Request to deprecate an encounter type (Category B \u2014 one-way, no delete). Idempotent \ u2014 returns OK if already deprecated.",
             "additionalProperties": false,
             "required": [
                 "code"
@@ -783,7 +843,13 @@ public partial class CharacterEncounterController
             "properties": {
                 "code": {
                     "type": "string",
-                    "description": "Code of the type to delete"
+                    "description": "Code of the type to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (recommended for audit trail)"
                 }
             }
         }
@@ -791,61 +857,153 @@ public partial class CharacterEncounterController
 }
 """;
 
-    private static readonly string _DeleteEncounterType_ResponseSchema = """
-{}
+    private static readonly string _DeprecateEncounterType_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/EncounterTypeResponse",
+    "$defs": {
+        "EncounterTypeResponse": {
+            "type": "object",
+            "description": "Response containing an encounter type",
+            "additionalProperties": false,
+            "required": [
+                "typeId",
+                "code",
+                "name",
+                "isBuiltIn",
+                "sortOrder",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "typeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Description"
+                },
+                "isBuiltIn": {
+                    "type": "boolean",
+                    "description": "Whether this is a built-in type"
+                },
+                "defaultEmotionalImpact": {
+                    "$ref": "#/$defs/EmotionalImpact",
+                    "nullable": true,
+                    "description": "Suggested emotional response"
+                },
+                "sortOrder": {
+                    "type": "integer",
+                    "description": "Display ordering"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the type is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type has been deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why the type was deprecated"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the type was created"
+                }
+            }
+        },
+        "EmotionalImpact": {
+            "type": "string",
+            "description": "How the encounter emotionally affected the character",
+            "enum": [
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
+            ]
+        }
+    }
+}
 """;
 
-    private static readonly string _DeleteEncounterType_Info = """
+    private static readonly string _DeprecateEncounterType_Info = """
 {
-    "summary": "Delete encounter type",
-    "description": "Delete a custom encounter type. Built-in types cannot be deleted.\nTypes with existing encounters cannot be deleted.\n",
+    "summary": "Deprecate encounter type",
+    "description": "Marks an encounter type as deprecated. Deprecated types remain readable\nforever but new encounters cannot reference them.\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated.\n",
     "tags": [
         "Encounter Type Management"
     ],
     "deprecated": false,
-    "operationId": "deleteEncounterType"
+    "operationId": "deprecateEncounterType"
 }
 """;
 
-    /// <summary>Returns endpoint information for DeleteEncounterType</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/type/delete/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteEncounterType_MetaInfo()
+    /// <summary>Returns endpoint information for DeprecateEncounterType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/type/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateEncounterType_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "CharacterEncounter",
             "POST",
-            "/character-encounter/type/delete",
-            _DeleteEncounterType_Info));
+            "/character-encounter/type/deprecate",
+            _DeprecateEncounterType_Info));
 
-    /// <summary>Returns request schema for DeleteEncounterType</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/type/delete/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteEncounterType_MetaRequestSchema()
+    /// <summary>Returns request schema for DeprecateEncounterType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/type/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateEncounterType_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "CharacterEncounter",
             "POST",
-            "/character-encounter/type/delete",
+            "/character-encounter/type/deprecate",
             "request-schema",
-            _DeleteEncounterType_RequestSchema));
+            _DeprecateEncounterType_RequestSchema));
 
-    /// <summary>Returns response schema for DeleteEncounterType</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/type/delete/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteEncounterType_MetaResponseSchema()
+    /// <summary>Returns response schema for DeprecateEncounterType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/type/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateEncounterType_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "CharacterEncounter",
             "POST",
-            "/character-encounter/type/delete",
+            "/character-encounter/type/deprecate",
             "response-schema",
-            _DeleteEncounterType_ResponseSchema));
+            _DeprecateEncounterType_ResponseSchema));
 
-    /// <summary>Returns full schema for DeleteEncounterType</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/type/delete/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteEncounterType_MetaFullSchema()
+    /// <summary>Returns full schema for DeprecateEncounterType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/type/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateEncounterType_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "CharacterEncounter",
             "POST",
-            "/character-encounter/type/delete",
-            _DeleteEncounterType_Info,
-            _DeleteEncounterType_RequestSchema,
-            _DeleteEncounterType_ResponseSchema));
+            "/character-encounter/type/deprecate",
+            _DeprecateEncounterType_Info,
+            _DeprecateEncounterType_RequestSchema,
+            _DeprecateEncounterType_ResponseSchema));
 
     #endregion
 

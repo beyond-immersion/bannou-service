@@ -80,6 +80,7 @@
 3. **For multi-chunk reads**, use parallel Read calls with different offsets when the chunks are independent
 4. **Never re-read temp/persisted output files** — always go back to the original source path
 5. **If you don't know a file's size**, start with `limit: 300` from offset 0 and continue as needed
+6. **Before using Edit on any file, call Read on it first** — the Edit tool requires a prior Read call even if you already saw the file contents via Bash, Grep, or other tools. A failed Edit wastes the carefully prepared change and the retry is often lower quality.
 
 ---
 

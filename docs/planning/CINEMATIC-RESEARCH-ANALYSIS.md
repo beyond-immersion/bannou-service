@@ -1,8 +1,15 @@
 # Cinematic Research Analysis: What We Actually Have and What To Build With It
 
-> **Type**: Actionability analysis
-> **Inputs**: [CINEMATIC-SYSTEM.md](CINEMATIC-SYSTEM.md), [CINEMATIC-THEORY-RESEARCH.md](CINEMATIC-THEORY-RESEARCH.md), 9 detailed research cards (cinema-analysis/cards/), both vision documents, existing SDK structures
-> **Purpose**: Determine which research sources map to which SDK, in which domain, in which combination -- with maximum alignment to the Bannou/Arcadia vision
+> **Type**: Research
+> **Status**: Aspirational
+> **Created**: 2025-06-01
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #5
+> **Related Plugins**: Behavior, Actor, Puppetmaster
+
+## Summary
+
+Analyzes nine detailed academic research cards covering cinematic theory, camera systems, and dramatic composition to determine which sources map to which SDK layer for the planned CinematicTheory and CinematicStoryteller SDKs. Establishes key architectural decisions including HFSM for camera direction versus GOAP for choreography, three independent composable layers (Structure, Quality, Presentation), and Facade-style greedy sequencing for interactive combat contexts. No implementation exists yet as neither SDK nor the lib-cinematic plugin have been created.
 
 ---
 
@@ -359,7 +366,7 @@ The cinematic system makes NPC combat encounters feel authored even though they'
 
 The entire system is emergent. The GOAP planner composes from a library of C.R.A. exchanges. The Effort/Shape transformation makes each character's fighting style unique based on personality data. The camera HFSM reacts to the choreography as it unfolds. No fight is scripted. The same two characters fighting in different locations with different emotional states produce different cinematics because the spatial affordances, tension arc context, and dramatic weight all differ.
 
-### North Star 6: GOAP Is The Universal Planner
+### GOAP as Universal Planner (Architectural Principle)
 
 The choreography composition layer uses GOAP, consistent with NPC behavior, narrative generation, music composition. But the camera direction layer uses HFSM, which is the right tool for that specific problem. This is not a contradiction -- GOAP is the universal planner for compositional/strategic decisions; HFSM is a reactive control structure for real-time presentation decisions. The behavior-compiler already uses both (GOAP for planning, BehaviorModelInterpreter for execution).
 

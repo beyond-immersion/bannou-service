@@ -10,12 +10,12 @@ using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Storyline;
-using CharacterHistory = BeyondImmersion.BannouService.CharacterHistory;
-using CharacterPersonality = BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
+using CharacterHistory = BeyondImmersion.BannouService.CharacterHistory;
+using CharacterPersonality = BeyondImmersion.BannouService.CharacterPersonality;
 
 namespace BeyondImmersion.BannouService.Storyline.Tests;
 

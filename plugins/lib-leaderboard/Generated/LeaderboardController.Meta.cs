@@ -143,6 +143,7 @@ public partial class LeaderboardController
                 "updateMode",
                 "isSeasonal",
                 "isPublic",
+                "isDeprecated",
                 "createdAt",
                 "entryCount"
             ],
@@ -188,6 +189,21 @@ public partial class LeaderboardController
                 "isPublic": {
                     "type": "boolean",
                     "description": "Whether the leaderboard is publicly visible"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this definition has been deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (audit context)"
                 },
                 "currentSeason": {
                     "type": "integer",
@@ -346,6 +362,7 @@ public partial class LeaderboardController
                 "updateMode",
                 "isSeasonal",
                 "isPublic",
+                "isDeprecated",
                 "createdAt",
                 "entryCount"
             ],
@@ -391,6 +408,21 @@ public partial class LeaderboardController
                 "isPublic": {
                     "type": "boolean",
                     "description": "Whether the leaderboard is publicly visible"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this definition has been deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (audit context)"
                 },
                 "currentSeason": {
                     "type": "integer",
@@ -524,7 +556,12 @@ public partial class LeaderboardController
                 "includeArchived": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Include archived/deleted leaderboards"
+                    "description": "Include archived leaderboards"
+                },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include deprecated leaderboard definitions in results (default false)"
                 }
             }
         }
@@ -566,6 +603,7 @@ public partial class LeaderboardController
                 "updateMode",
                 "isSeasonal",
                 "isPublic",
+                "isDeprecated",
                 "createdAt",
                 "entryCount"
             ],
@@ -611,6 +649,21 @@ public partial class LeaderboardController
                 "isPublic": {
                     "type": "boolean",
                     "description": "Whether the leaderboard is publicly visible"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this definition has been deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (audit context)"
                 },
                 "currentSeason": {
                     "type": "integer",
@@ -798,6 +851,7 @@ public partial class LeaderboardController
                 "updateMode",
                 "isSeasonal",
                 "isPublic",
+                "isDeprecated",
                 "createdAt",
                 "entryCount"
             ],
@@ -843,6 +897,21 @@ public partial class LeaderboardController
                 "isPublic": {
                     "type": "boolean",
                     "description": "Whether the leaderboard is publicly visible"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this definition has been deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (audit context)"
                 },
                 "currentSeason": {
                     "type": "integer",
@@ -953,16 +1022,16 @@ public partial class LeaderboardController
 
     #endregion
 
-    #region Meta Endpoints for DeleteLeaderboardDefinition
+    #region Meta Endpoints for DeprecateLeaderboardDefinition
 
-    private static readonly string _DeleteLeaderboardDefinition_RequestSchema = """
+    private static readonly string _DeprecateLeaderboardDefinition_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DeleteLeaderboardDefinitionRequest",
+    "$ref": "#/$defs/DeprecateLeaderboardDefinitionRequest",
     "$defs": {
-        "DeleteLeaderboardDefinitionRequest": {
+        "DeprecateLeaderboardDefinitionRequest": {
             "type": "object",
-            "description": "Request to delete a leaderboard",
+            "description": "Request to deprecate a leaderboard definition (Category B \u2014 one-way)",
             "additionalProperties": false,
             "required": [
                 "gameServiceId",
@@ -976,7 +1045,13 @@ public partial class LeaderboardController
                 },
                 "leaderboardId": {
                     "type": "string",
-                    "description": "ID of the leaderboard to delete"
+                    "description": "ID of the leaderboard to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (audit context for Category B entities)"
                 }
             }
         }
@@ -984,61 +1059,191 @@ public partial class LeaderboardController
 }
 """;
 
-    private static readonly string _DeleteLeaderboardDefinition_ResponseSchema = """
-{}
+    private static readonly string _DeprecateLeaderboardDefinition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LeaderboardDefinitionResponse",
+    "$defs": {
+        "LeaderboardDefinitionResponse": {
+            "type": "object",
+            "description": "Leaderboard definition details",
+            "additionalProperties": false,
+            "required": [
+                "gameServiceId",
+                "leaderboardId",
+                "displayName",
+                "sortOrder",
+                "updateMode",
+                "isSeasonal",
+                "isPublic",
+                "isDeprecated",
+                "createdAt",
+                "entryCount"
+            ],
+            "properties": {
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the owning game service"
+                },
+                "leaderboardId": {
+                    "type": "string",
+                    "description": "Unique identifier for this leaderboard"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Description of the leaderboard"
+                },
+                "entityTypes": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "type": "object"
+                    },
+                    "description": "Allowed entity types (null if all types permitted)"
+                },
+                "sortOrder": {
+                    "$ref": "#/$defs/SortOrder",
+                    "description": "Ordering used when ranking scores (descending for high scores, ascending for low)"
+                },
+                "updateMode": {
+                    "$ref": "#/$defs/UpdateMode",
+                    "description": "Rule applied when new scores are submitted (replace/increment/max/min)"
+                },
+                "isSeasonal": {
+                    "type": "boolean",
+                    "description": "Whether the leaderboard is seasonal"
+                },
+                "isPublic": {
+                    "type": "boolean",
+                    "description": "Whether the leaderboard is publicly visible"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this definition has been deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (audit context)"
+                },
+                "currentSeason": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Current season number (if seasonal)"
+                },
+                "entryCount": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Number of entries on the leaderboard"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the leaderboard was created"
+                },
+                "scoreType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Analytics score type mapped to this leaderboard"
+                },
+                "ratingType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Analytics rating type mapped to this leaderboard"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention."
+                }
+            }
+        },
+        "SortOrder": {
+            "type": "string",
+            "description": "How scores are sorted",
+            "enum": [
+                "Descending",
+                "Ascending"
+            ]
+        },
+        "UpdateMode": {
+            "type": "string",
+            "description": "How to handle score updates",
+            "enum": [
+                "Replace",
+                "Increment",
+                "Max",
+                "Min"
+            ]
+        }
+    }
+}
 """;
 
-    private static readonly string _DeleteLeaderboardDefinition_Info = """
+    private static readonly string _DeprecateLeaderboardDefinition_Info = """
 {
-    "summary": "Delete leaderboard definition",
-    "description": "Delete a leaderboard and all its scores.\nDeveloper-only endpoint. This action is irreversible.\n",
+    "summary": "Deprecate leaderboard definition",
+    "description": "Deprecate a leaderboard definition (Category B \u2014 one-way, no undeprecate, no delete).\nExisting scores remain queryable; new score submissions to deprecated leaderboards\nare rejected. Idempotent: returns OK if already deprecated.\n",
     "tags": [
         "Definitions"
     ],
     "deprecated": false,
-    "operationId": "deleteLeaderboardDefinition"
+    "operationId": "deprecateLeaderboardDefinition"
 }
 """;
 
-    /// <summary>Returns endpoint information for DeleteLeaderboardDefinition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/leaderboard/definition/delete/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteLeaderboardDefinition_MetaInfo()
+    /// <summary>Returns endpoint information for DeprecateLeaderboardDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/leaderboard/definition/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateLeaderboardDefinition_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Leaderboard",
             "POST",
-            "/leaderboard/definition/delete",
-            _DeleteLeaderboardDefinition_Info));
+            "/leaderboard/definition/deprecate",
+            _DeprecateLeaderboardDefinition_Info));
 
-    /// <summary>Returns request schema for DeleteLeaderboardDefinition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/leaderboard/definition/delete/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteLeaderboardDefinition_MetaRequestSchema()
+    /// <summary>Returns request schema for DeprecateLeaderboardDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/leaderboard/definition/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateLeaderboardDefinition_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Leaderboard",
             "POST",
-            "/leaderboard/definition/delete",
+            "/leaderboard/definition/deprecate",
             "request-schema",
-            _DeleteLeaderboardDefinition_RequestSchema));
+            _DeprecateLeaderboardDefinition_RequestSchema));
 
-    /// <summary>Returns response schema for DeleteLeaderboardDefinition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/leaderboard/definition/delete/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteLeaderboardDefinition_MetaResponseSchema()
+    /// <summary>Returns response schema for DeprecateLeaderboardDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/leaderboard/definition/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateLeaderboardDefinition_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Leaderboard",
             "POST",
-            "/leaderboard/definition/delete",
+            "/leaderboard/definition/deprecate",
             "response-schema",
-            _DeleteLeaderboardDefinition_ResponseSchema));
+            _DeprecateLeaderboardDefinition_ResponseSchema));
 
-    /// <summary>Returns full schema for DeleteLeaderboardDefinition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/leaderboard/definition/delete/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteLeaderboardDefinition_MetaFullSchema()
+    /// <summary>Returns full schema for DeprecateLeaderboardDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/leaderboard/definition/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateLeaderboardDefinition_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Leaderboard",
             "POST",
-            "/leaderboard/definition/delete",
-            _DeleteLeaderboardDefinition_Info,
-            _DeleteLeaderboardDefinition_RequestSchema,
-            _DeleteLeaderboardDefinition_ResponseSchema));
+            "/leaderboard/definition/deprecate",
+            _DeprecateLeaderboardDefinition_Info,
+            _DeprecateLeaderboardDefinition_RequestSchema,
+            _DeprecateLeaderboardDefinition_ResponseSchema));
 
     #endregion
 

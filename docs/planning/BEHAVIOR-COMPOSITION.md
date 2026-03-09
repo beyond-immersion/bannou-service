@@ -1,11 +1,21 @@
 # Behavior Composition: Fingerprinted Components and the Plan Cache
 
-> **Type**: Architectural planning document
+> **Type**: Design
+> **Status**: Aspirational
 > **Created**: 2026-03-08
-> **Priority**: High (performance-critical for 100K+ agent scale)
-> **Related**: [CINEMATIC-SYSTEM.md](CINEMATIC-SYSTEM.md) (continuation points, streaming composition), [ABML-GOAP-OPPORTUNITIES.md](ABML-GOAP-OPPORTUNITIES.md) (GOAP expansion domains), [BEHAVIOR.md](../plugins/BEHAVIOR.md) (compiler, planner, cache), [ACTOR.md](../plugins/ACTOR.md) (runtime, pool deployment)
-> **Inspiration**: HTN plan caching (Maastricht University research), Fluid HTN's partial planning, the Theory/Storyteller/Plugin pattern
-> **Services**: lib-behavior (L4), lib-actor (L2), lib-puppetmaster (L4), lib-asset (L3)
+> **Last Updated**: 2026-03-09
+> **North Stars**: #3, #5
+> **Related Plugins**: Behavior, Actor, Puppetmaster, Asset
+
+## Summary
+
+Defines the compositional model for fingerprinted, catalogued, reusable ABML behavior components that can be discovered by similarity, strung together via continuation points, and cached as pre-computed GOAP plans to avoid redundant planning across thousands of similar agents. Builds on four existing systems (ABML compiler, continuation points, GOAP planner, Asset service) to connect them into a unified component registry and plan cache targeting 100K+ concurrent agent scale. No implementation exists yet; all described components (IComponentRegistry, PlanCache, CompositeAssembler, PlanFingerprint) are proposed architecture.
+
+---
+
+**Priority**: High (performance-critical for 100K+ agent scale)
+**Related Documents**: [CINEMATIC-SYSTEM.md](CINEMATIC-SYSTEM.md) (continuation points, streaming composition), [ABML-GOAP-OPPORTUNITIES.md](ABML-GOAP-OPPORTUNITIES.md) (GOAP expansion domains), [BEHAVIOR.md](../plugins/BEHAVIOR.md) (compiler, planner, cache), [ACTOR.md](../plugins/ACTOR.md) (runtime, pool deployment)
+**Inspiration**: HTN plan caching (Maastricht University research), Fluid HTN's partial planning, the Theory/Storyteller/Plugin pattern
 
 ---
 
@@ -58,7 +68,7 @@ Current state: continuation points are designed for cinematic interactivity (QTE
 
 `DocumentMerger` in `lib-behavior/Compiler/` provides ABML document composition -- merging multiple behavior documents into one before compilation. This is compile-time composition: the merger produces a single combined AST that the compiler then processes as a unit.
 
-Current state: code exists but is not registered in DI. Not actively used.
+Current state: code exists and is registered in DI as a singleton. Not actively used in production flows.
 
 ### 1.4 BehaviorModelCache (Variant Fallback)
 

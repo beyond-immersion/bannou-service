@@ -4068,13 +4068,12 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.DeprecateItemTemplateAsync(request);
 
-        // Assert - Per IMPLEMENTATION TENETS: idempotent deprecation returns OK
+        // Assert - Per IMPLEMENTATION TENETS: idempotent deprecation returns OK without re-saving
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.True(response.IsDeprecated);
-        // Updated with new values
-        Assert.NotNull(savedModel);
-        Assert.Equal(migrationTargetId, savedModel.MigrationTargetId);
+        // Implementation returns early without saving when already deprecated
+        Assert.Null(savedModel);
     }
 
     [Fact]

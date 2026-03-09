@@ -1,12 +1,21 @@
 # Dungeon Mana Absorption: Cost of Entry
 
-> **Status**: Design
+> **Type**: Design
+> **Status**: Aspirational
 > **Created**: 2026-02-18
-> **Author**: Lysander (design) + Claude (analysis)
-> **Category**: Dungeon mechanic (behavioral + service integration)
-> **Related Services**: Dungeon (L4), Status (L4), Currency (L2), Environment (L4), Worldstate (L2), Actor (L2), Seed (L2), Puppetmaster (L4)
-> **Related Docs**: [DUNGEON.md](../plugins/DUNGEON.md), [ACTOR-BOUND-ENTITIES.md](ACTOR-BOUND-ENTITIES.md), [DUNGEON-EXTENSIONS-NOTES.md](DUNGEON-EXTENSIONS-NOTES.md), [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md)
-> **Inspiration**: Solo Leveling (gates/dungeon ecology), Dungeon Core LitRPG genre, Arcadia pneuma thermodynamics
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #4
+> **Related Plugins**: Dungeon, Status, Currency, Environment, Worldstate, Actor, Seed, Puppetmaster, Ethology, Character-Encounter, Item
+
+## Summary
+
+Designs a mana absorption mechanic where dungeons continuously sap mana from intruders who cross their domain boundary, creating a natural time limit on exploration, an economic cost for dungeon diving, and a non-lethal income stream that fuels the dungeon's own mana economy. The mechanic scales with dungeon cognitive stage (Dormant through Ancient) and composes entirely from existing Bannou primitives (Currency, Status, Seed, Actor, Environment) with no new services required. Inspired by Solo Leveling gate mechanics and Dungeon Core LitRPG, with formal grounding in Arcadia's pneuma thermodynamics.
+
+---
+
+**Author**: Lysander (design) + Claude (analysis)
+**Inspiration**: Solo Leveling (gates/dungeon ecology), Dungeon Core LitRPG genre, Arcadia pneuma thermodynamics
+**Related Docs**: [DUNGEON.md](../plugins/DUNGEON.md), [ACTOR-BOUND-ENTITIES.md](ACTOR-BOUND-ENTITIES.md), [DUNGEON-EXTENSIONS-NOTES.md](DUNGEON-EXTENSIONS-NOTES.md), [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md)
 
 ---
 

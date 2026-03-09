@@ -149,6 +149,7 @@ public partial class LicenseController
                 "adjacencyMode",
                 "allowedOwnerTypes",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -205,6 +206,21 @@ public partial class LicenseController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether the template is active (can create new board instances)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template has been deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (audit context)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -352,6 +368,7 @@ public partial class LicenseController
                 "adjacencyMode",
                 "allowedOwnerTypes",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -408,6 +425,21 @@ public partial class LicenseController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether the template is active (can create new board instances)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template has been deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (audit context)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -529,6 +561,11 @@ public partial class LicenseController
                     "format": "uuid",
                     "description": "Filter by game service"
                 },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include deprecated templates in results (default false)"
+                },
                 "cursor": {
                     "type": "string",
                     "nullable": true,
@@ -594,6 +631,7 @@ public partial class LicenseController
                 "adjacencyMode",
                 "allowedOwnerTypes",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -651,6 +689,21 @@ public partial class LicenseController
                     "type": "boolean",
                     "description": "Whether the template is active (can create new board instances)"
                 },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template has been deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (audit context)"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -687,7 +740,7 @@ public partial class LicenseController
         },
         "AdjacencyMode": {
             "type": "string",
-            "description": "Grid traversal adjacency mode for a board template.\ n- FourWay: Orthogonal only (up, down, left, right)\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\n",
+            "description": "Grid traversal adjacency mode for a board template.\n- FourWay: Orthogonal only (up, down, left, right)\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
                 "FourWay",
                 "EightWay"
@@ -821,6 +874,7 @@ public partial class LicenseController
                 "adjacencyMode",
                 "allowedOwnerTypes",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -877,6 +931,21 @@ public partial class LicenseController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether the template is active (can create new board instances)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template has been deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (audit context)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -978,16 +1047,16 @@ public partial class LicenseController
 
     #endregion
 
-    #region Meta Endpoints for DeleteBoardTemplate
+    #region Meta Endpoints for DeprecateBoardTemplate
 
-    private static readonly string _DeleteBoardTemplate_RequestSchema = """
+    private static readonly string _DeprecateBoardTemplate_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DeleteBoardTemplateRequest",
+    "$ref": "#/$defs/DeprecateBoardTemplateRequest",
     "$defs": {
-        "DeleteBoardTemplateRequest": {
+        "DeprecateBoardTemplateRequest": {
             "type": "object",
-            "description": "Request to delete a board template",
+            "description": "Request to deprecate a board template (Category B \u2014 one-way)",
             "additionalProperties": false,
             "required": [
                 "boardTemplateId"
@@ -996,7 +1065,13 @@ public partial class LicenseController
                 "boardTemplateId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Board template to delete"
+                    "description": "Board template to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (audit context for Category B entities)"
                 }
             }
         }
@@ -1004,7 +1079,7 @@ public partial class LicenseController
 }
 """;
 
-    private static readonly string _DeleteBoardTemplate_ResponseSchema = """
+    private static readonly string _DeprecateBoardTemplate_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$ref": "#/$defs/BoardTemplateResponse",
@@ -1024,6 +1099,7 @@ public partial class LicenseController
                 "adjacencyMode",
                 "allowedOwnerTypes",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -1081,6 +1157,21 @@ public partial class LicenseController
                     "type": "boolean",
                     "description": "Whether the template is active (can create new board instances)"
                 },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template has been deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (audit context)"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -1127,57 +1218,57 @@ public partial class LicenseController
 }
 """;
 
-    private static readonly string _DeleteBoardTemplate_Info = """
+    private static readonly string _DeprecateBoardTemplate_Info = """
 {
-    "summary": "Delete a board template",
-    "description": "Delete a board template. Blocked if active board instances exist\nthat reference this template.\n",
+    "summary": "Deprecate a board template",
+    "description": "Deprecate a board template (Category B \u2014 one-way, no undeprecate, no delete).\nExisting board instances continue to function; new board creation from this\ntemplate is rejected. Idempotent: returns OK if already deprecated.\n",
     "tags": [
         "BoardTemplate"
     ],
     "deprecated": false,
-    "operationId": "deleteBoardTemplate"
+    "operationId": "deprecateBoardTemplate"
 }
 """;
 
-    /// <summary>Returns endpoint information for DeleteBoardTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board-template/delete/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteBoardTemplate_MetaInfo()
+    /// <summary>Returns endpoint information for DeprecateBoardTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board-template/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateBoardTemplate_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "License",
             "POST",
-            "/license/board-template/delete",
-            _DeleteBoardTemplate_Info));
+            "/license/board-template/deprecate",
+            _DeprecateBoardTemplate_Info));
 
-    /// <summary>Returns request schema for DeleteBoardTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board-template/delete/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteBoardTemplate_MetaRequestSchema()
+    /// <summary>Returns request schema for DeprecateBoardTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board-template/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateBoardTemplate_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "License",
             "POST",
-            "/license/board-template/delete",
+            "/license/board-template/deprecate",
             "request-schema",
-            _DeleteBoardTemplate_RequestSchema));
+            _DeprecateBoardTemplate_RequestSchema));
 
-    /// <summary>Returns response schema for DeleteBoardTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board-template/delete/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteBoardTemplate_MetaResponseSchema()
+    /// <summary>Returns response schema for DeprecateBoardTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board-template/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateBoardTemplate_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "License",
             "POST",
-            "/license/board-template/delete",
+            "/license/board-template/deprecate",
             "response-schema",
-            _DeleteBoardTemplate_ResponseSchema));
+            _DeprecateBoardTemplate_ResponseSchema));
 
-    /// <summary>Returns full schema for DeleteBoardTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board-template/delete/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteBoardTemplate_MetaFullSchema()
+    /// <summary>Returns full schema for DeprecateBoardTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board-template/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateBoardTemplate_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "License",
             "POST",
-            "/license/board-template/delete",
-            _DeleteBoardTemplate_Info,
-            _DeleteBoardTemplate_RequestSchema,
-            _DeleteBoardTemplate_ResponseSchema));
+            "/license/board-template/deprecate",
+            _DeprecateBoardTemplate_Info,
+            _DeprecateBoardTemplate_RequestSchema,
+            _DeprecateBoardTemplate_ResponseSchema));
 
     #endregion
 

@@ -884,6 +884,8 @@ paths:
         Marks an item template as deprecated. Deprecated templates cannot be used
         to create new instances but existing instances remain valid. Optionally
         specify a migration target template.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       requestBody:
         required: true
         content:
@@ -892,15 +894,13 @@ paths:
               $ref: '#/components/schemas/DeprecateItemTemplateRequest'
       responses:
         '200':
-          description: Item template deprecated successfully
+          description: Item template deprecated successfully (or already deprecated)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ItemTemplateResponse'
         '404':
           description: Item template not found
-        '409':
-          description: Template already deprecated
       x-permissions:
       - role: admin
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateItemTemplateRequest\"\
@@ -1034,8 +1034,9 @@ paths:
         ,\n                \"WarnAndProceed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate an item template\",\n    \"description\": \"Marks an item template
         as deprecated. Deprecated templates cannot be used\\nto create new instances but existing instances remain valid.
-        Optionally\\nspecify a migration target template.\\n\",\n    \"tags\": [\n        \"Item Template\"\n    ],\n    \"\
-        deprecated\": false,\n    \"operationId\": \"deprecateItemTemplate\"\n}"
+        Optionally\\nspecify a migration target template.\\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no
+        undeprecate,\\nno delete. Idempotent \\u2014 returns OK if already deprecated.\\n\",\n    \"tags\": [\n        \"\
+        Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deprecateItemTemplate\"\n}"
   /item/instance/create:
     post:
       operationId: createItemInstance

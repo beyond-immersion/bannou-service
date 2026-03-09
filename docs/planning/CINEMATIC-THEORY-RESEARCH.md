@@ -1,8 +1,15 @@
 # Cinematic Theory Research: Formal Foundations for CinematicTheory SDK
 
-> **Type**: Research compilation
-> **Purpose**: Formal theory and computational models that CinematicTheory can borrow from
-> **Related**: [CINEMATIC-SYSTEM.md](CINEMATIC-SYSTEM.md)
+> **Type**: Research
+> **Status**: Aspirational
+> **Created**: 2025-12-01
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2
+> **Related Plugins**: Behavior, Actor
+
+## Summary
+
+Compiles formal academic research across three domains -- computational cinematography, fight choreography, and dramatic grammar -- that provide the theoretical foundations for a planned CinematicTheory SDK. Maps specific models (Laban movement analysis, Cohn visual narrative grammar, toric camera space, SAFD stage combat patterns) to a five-layer architecture for procedural combat choreography and camera direction. No implementation exists yet; this is a research compilation informing future SDK design.
 
 ---
 

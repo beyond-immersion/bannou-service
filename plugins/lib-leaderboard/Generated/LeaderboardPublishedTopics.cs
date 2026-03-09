@@ -18,13 +18,13 @@ namespace BeyondImmersion.BannouService.Leaderboard;
 public static class LeaderboardPublishedTopics
 {
     /// <summary>Published when a new leaderboard definition is created.</summary>
-    public const string LeaderboardDefinitionCreated = "leaderboard-definition.created";
+    public const string LeaderboardDefinitionCreated = "leaderboard.definition.created";
 
-    /// <summary>Published when a leaderboard definition is updated.</summary>
-    public const string LeaderboardDefinitionUpdated = "leaderboard-definition.updated";
+    /// <summary>Published when a leaderboard definition is updated (including deprecation via changedFields).</summary>
+    public const string LeaderboardDefinitionUpdated = "leaderboard.definition.updated";
 
-    /// <summary>Published when a leaderboard definition is deleted.</summary>
-    public const string LeaderboardDefinitionDeleted = "leaderboard-definition.deleted";
+    /// <summary>Unused Category B infrastructure (leaderboard definitions are never deleted).</summary>
+    public const string LeaderboardDefinitionDeleted = "leaderboard.definition.deleted";
 
     /// <summary>Published when an entity's rank changes on a leaderboard.</summary>
     public const string LeaderboardRankChanged = "leaderboard.rank.changed";

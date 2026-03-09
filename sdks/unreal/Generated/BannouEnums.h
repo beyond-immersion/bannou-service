@@ -1088,23 +1088,6 @@ enum class EMapKind : uint8
     VisualEffects UMETA(DisplayName = "VisualEffects"),
 };
 
-/** Types of marker nodes for spawn points, waypoints, and other positional markers.
-DESIGN_DECISION: Whether this should be an opaque string instead of enum
-(game-content codes vary per deployment). Tracked for future evaluation.
- */
-UENUM(BlueprintType)
-enum class EMarkerType : uint8
-{
-    Generic UMETA(DisplayName = "Generic"),
-    SpawnPoint UMETA(DisplayName = "SpawnPoint"),
-    NpcSpawn UMETA(DisplayName = "NpcSpawn"),
-    Waypoint UMETA(DisplayName = "Waypoint"),
-    CameraPoint UMETA(DisplayName = "CameraPoint"),
-    LightPoint UMETA(DisplayName = "LightPoint"),
-    AudioPoint UMETA(DisplayName = "AudioPoint"),
-    TriggerPoint UMETA(DisplayName = "TriggerPoint"),
-};
-
 /** Determines what kind of content a room accepts */
 UENUM(BlueprintType)
 enum class EMessageFormat : uint8
@@ -1592,11 +1575,11 @@ enum class ERouteSortBy : uint8
 };
 
 /** Category of save with predefined behaviors.
-QUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).
-AUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).
-MANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).
-CHECKPOINT: Progress markers (max 20 versions, rolling).
-STATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).
+QuickSave: Single-slot fast save, overwritten frequently (max 1 version).
+AutoSave: System-triggered periodic saves (max 5 versions, rolling).
+ManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).
+Checkpoint: Progress markers (max 20 versions, rolling).
+StateSnapshot: Full state captures for debugging (max 3 versions, rolling).
  */
 UENUM(BlueprintType)
 enum class ESaveCategory : uint8
@@ -1653,29 +1636,6 @@ enum class ESceneEditorType : uint8
 {
     Session UMETA(DisplayName = "Session"),
     Service UMETA(DisplayName = "Service"),
-};
-
-/** Scene classification for querying and validation rule lookup.
-Different types may have different validation requirements per game.
-DESIGN_DECISION: Whether this should be an opaque string instead of enum
-(game-content codes vary per deployment). Tracked for future evaluation.
- */
-UENUM(BlueprintType)
-enum class ESceneType : uint8
-{
-    Unknown UMETA(DisplayName = "Unknown"),
-    Region UMETA(DisplayName = "Region"),
-    City UMETA(DisplayName = "City"),
-    District UMETA(DisplayName = "District"),
-    Lot UMETA(DisplayName = "Lot"),
-    Building UMETA(DisplayName = "Building"),
-    Room UMETA(DisplayName = "Room"),
-    Dungeon UMETA(DisplayName = "Dungeon"),
-    Arena UMETA(DisplayName = "Arena"),
-    Vehicle UMETA(DisplayName = "Vehicle"),
-    Prefab UMETA(DisplayName = "Prefab"),
-    Cutscene UMETA(DisplayName = "Cutscene"),
-    Other UMETA(DisplayName = "Other"),
 };
 
 /** Where the search match was found */
@@ -1837,6 +1797,36 @@ enum class EStorageMode : uint8
     Durable UMETA(DisplayName = "Durable"),
     Cached UMETA(DisplayName = "Cached"),
     Ephemeral UMETA(DisplayName = "Ephemeral"),
+};
+
+/** Storyline-owned subset of character-history BackstoryElementType for scenario mutations */
+UENUM(BlueprintType)
+enum class EStorylineBackstoryElementType : uint8
+{
+    Origin UMETA(DisplayName = "Origin"),
+    Occupation UMETA(DisplayName = "Occupation"),
+    Training UMETA(DisplayName = "Training"),
+    Trauma UMETA(DisplayName = "Trauma"),
+    Achievement UMETA(DisplayName = "Achievement"),
+    Secret UMETA(DisplayName = "Secret"),
+    Goal UMETA(DisplayName = "Goal"),
+    Fear UMETA(DisplayName = "Fear"),
+    Belief UMETA(DisplayName = "Belief"),
+};
+
+/** Storyline-owned subset of character-personality ExperienceType for scenario mutations */
+UENUM(BlueprintType)
+enum class EStorylineExperienceType : uint8
+{
+    Trauma UMETA(DisplayName = "Trauma"),
+    Betrayal UMETA(DisplayName = "Betrayal"),
+    Loss UMETA(DisplayName = "Loss"),
+    Victory UMETA(DisplayName = "Victory"),
+    Friendship UMETA(DisplayName = "Friendship"),
+    Redemption UMETA(DisplayName = "Redemption"),
+    Corruption UMETA(DisplayName = "Corruption"),
+    Enlightenment UMETA(DisplayName = "Enlightenment"),
+    Sacrifice UMETA(DisplayName = "Sacrifice"),
 };
 
 /** High-level story goal that drives arc selection.

@@ -1729,7 +1729,10 @@ paths:
   /gardener/template/deprecate:
     post:
       summary: Deprecate scenario template
-      description: Sets the template status to Deprecated, preventing new instances.
+      description: |
+        Sets the template status to Deprecated, preventing new instances.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       operationId: deprecateTemplate
       tags:
       - Template Management
@@ -1744,7 +1747,7 @@ paths:
               $ref: '#/components/schemas/DeprecateTemplateRequest'
       responses:
         '200':
-          description: Template deprecated
+          description: Template deprecated successfully (or already deprecated)
           content:
             application/json:
               schema:
@@ -1753,10 +1756,13 @@ paths:
           description: Template not found
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateTemplateRequest\"\
         ,\n    \"$defs\": {\n        \"DeprecateTemplateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to deprecate a template\",\n            \"required\": [\n                \"scenarioTemplateId\"\n    \
-        \        ],\n            \"properties\": {\n                \"scenarioTemplateId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Template ID to deprecate\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : \"Request to deprecate a scenario template (Category B \\u2014 one-way, no delete). Idempotent \\u2014 returns OK
+        if already deprecated.\",\n            \"required\": [\n                \"scenarioTemplateId\"\n            ],\n \
+        \           \"properties\": {\n                \"scenarioTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Template ID to deprecate\"\n\
+        \                },\n                \"reason\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for
+        deprecation (recommended for audit trail)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Full scenario template with all fields\",\n            \"required\": [\n                \"scenarioTemplateId\"\
@@ -1863,8 +1869,9 @@ paths:
         \            ],\n            \"description\": \"Current lifecycle status of a scenario template\"\n        }\n   \
         \ }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate scenario template\",\n    \"description\": \"Sets the template
-        status to Deprecated, preventing new instances.\",\n    \"tags\": [\n        \"Template Management\"\n    ],\n   \
-        \ \"deprecated\": false,\n    \"operationId\": \"deprecateTemplate\"\n}"
+        status to Deprecated, preventing new instances.\\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no
+        undeprecate,\\nno delete. Idempotent \\u2014 returns OK if already deprecated.\\n\",\n    \"tags\": [\n        \"\
+        Template Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deprecateTemplate\"\n}"
   /gardener/phase/get:
     post:
       summary: Get deployment phase configuration
@@ -2790,7 +2797,8 @@ components:
           description: Updated content references
     DeprecateTemplateRequest:
       type: object
-      description: Request to deprecate a template
+      description: Request to deprecate a scenario template (Category B — one-way, no delete). Idempotent — returns OK 
+        if already deprecated.
       required:
       - scenarioTemplateId
       properties:
@@ -2798,6 +2806,11 @@ components:
           type: string
           format: uuid
           description: Template ID to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended for audit trail)
     GetPhaseConfigRequest:
       type: object
       description: Request to get deployment phase configuration

@@ -592,9 +592,6 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `EventQuaternion` | Custom | `event-quaternion` | Quaternion for events |
-| `EventTransform` | Custom | `event-transform` | Transform for event payloads |
-| `EventVector3` | Custom | `event-vector3` | 3D vector for events |
 | `SceneCheckedOutEvent` | Custom | `scene-checked-out` | Published when a scene is locked for editing |
 | `SceneCheckoutDiscardedEvent` | Custom | `scene-checkout-discarded` | Published when a checkout is discarded without sav... |
 | `SceneCommittedEvent` | Custom | `scene-committed` | Published when checkout changes are committed |
@@ -645,7 +642,7 @@ This document lists all events defined in Bannou's event schemas.
 | `ScenarioFailedEvent` | Custom | `scenario-failed` | Event published when a scenario fails during execu... |
 | `ScenarioPhaseCompletedEvent` | Custom | `scenario-phase-completed` | Event published when a phase within a multi-phase ... |
 | `ScenarioTriggeredEvent` | Custom | `scenario-triggered` | Event published when a scenario starts executing f... |
-| `StorylineComposedEvent` | Custom | `storyline-composed` | Event published when a storyline plan is generated |
+| `StorylinePlanComposedEvent` | Custom | `storyline-plan-composed` | Event published when a storyline plan is generated |
 
 ### Subscription
 

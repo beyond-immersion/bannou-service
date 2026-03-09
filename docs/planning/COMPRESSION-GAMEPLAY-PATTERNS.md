@@ -1,10 +1,18 @@
 # Compression Gameplay Patterns: Emergent Gameplay from Archived Entities
 
-> **Status**: Vision Document (foundation implemented, gameplay patterns pending)
-> **Priority**: High (Content Flywheel -- North Star #2)
-> **Related**: `docs/plugins/RESOURCE.md`, `docs/plugins/CHARACTER.md`, `docs/plugins/STORYLINE.md`, `docs/planning/DUNGEON_AS_ACTOR.md`
-> **Services**: lib-resource, lib-character, lib-character-personality, lib-character-history, lib-character-encounter, lib-storyline, lib-scene, lib-realm
+> **Type**: Vision Document
+> **Status**: Aspirational
+> **Created**: 2025-12-01
+> **Last Updated**: 2026-03-09
+> **North Stars**: #2
+> **Related Plugins**: Resource, Character, Character-Personality, Character-History, Character-Encounter, Storyline, Scene, Realm
 > **External Inspiration**: *Shangri-La Frontier* (Setsuna of Faraway Days, Wezaemon the Tombguard)
+
+## Summary
+
+Explores gameplay patterns that emerge from treating compressed character archives as generative inputs rather than terminal states. Covers resurrection variants (ghosts, zombies, revenants, clones), procedural quest generation from unfinished business, NPC memory seeding from the dead, legacy mechanics for descendants, live snapshots for AI consumption, and cross-entity compression for scenes, realms, and items. The compression infrastructure in lib-resource and storyline consumption are implemented; the gameplay patterns described here are aspirational designs that would consume that infrastructure.
+
+---
 
 ## Executive Summary
 

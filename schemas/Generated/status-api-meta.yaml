@@ -1003,8 +1003,9 @@ paths:
         \                  \"nullable\": true,\n                    \"description\": \"Override the template's default duration
         in seconds\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n   \
         \                 \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"\
-        description\": \"Arbitrary key-value data passed to contract template values and stored on the status instance. Opaque
-        to Status -- callers define their own semantics.\"\n                }\n            }\n        }\n    }\n}"
+        description\": \"Client-defined metadata. Opaque to Status \\u2014 stored and returned verbatim. Not a contract between
+        services. Passed to contract template values and stored on the status instance.\"\n                }\n           \
+        \ }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GrantStatusResponse\"\
         ,\n    \"$defs\": {\n        \"GrantStatusResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of a successful status grant operation\",\n            \"additionalProperties\": false,\n            \"\
@@ -1485,42 +1486,38 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEffectsResponse\"\
         ,\n    \"$defs\": {\n        \"GetEffectsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Unified view of all active effects for an entity\",\n            \"additionalProperties\": false,\n          \
-        \  \"required\": [\n                \"entityId\",\n                \"entityType\",\n                \"itemBasedCount\"\
-        ,\n                \"seedDerivedCount\",\n                \"effects\"\n            ],\n            \"properties\"\
-        : {\n                \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Entity these effects belong to\"\n                },\n           \
-        \     \"entityType\": {\n                    \"type\": \"object\",\n                    \"description\": \"Entity
-        type discriminator\"\n                },\n                \"itemBasedCount\": {\n                    \"type\": \"\
-        integer\",\n                    \"description\": \"Number of item-based status effects\"\n                },\n   \
-        \             \"seedDerivedCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Number of seed-derived passive effects\"\n                },\n                \"effects\": {\n               \
-        \     \"type\": \"array\",\n                    \"maxItems\": 500,\n                    \"items\": {\n           \
-        \             \"$ref\": \"#/$defs/StatusEffectSummary\"\n                    },\n                    \"description\"\
-        : \"All active effects with source attribution\"\n                }\n            }\n        },\n        \"StatusEffectSummary\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Unified summary of an active effect from any
-        source (item-based or seed-derived)\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"statusCode\",\n                \"category\",\n                \"effectSource\"\n            ],\n\
-        \            \"properties\": {\n                \"statusCode\": {\n                    \"type\": \"string\",\n   \
-        \                 \"maxLength\": 128,\n                    \"description\": \"Status template code (item-based) or
-        capability code (seed-derived)\"\n                },\n                \"category\": {\n                    \"$ref\"\
-        : \"#/$defs/StatusCategory\",\n                    \"description\": \"Status category for filtering\"\n          \
-        \      },\n                \"effectSource\": {\n                    \"$ref\": \"#/$defs/EffectSource\",\n        \
-        \            \"description\": \"Whether this effect is item-based or seed-derived\"\n                },\n        \
-        \        \"stackCount\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Current stack count (null for seed-derived effects)\"\n                },\n\
-        \                \"expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When this effect expires (null
-        for permanent or seed-derived)\"\n                },\n                \"fidelity\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n               \
-        \     \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Seed capability
-        fidelity value (null for item-based effects)\"\n                },\n                \"seedId\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Seed providing this effect (null for item-based effects)\"\n             \
-        \   },\n                \"sourceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"What granted this status
-        (null for seed-derived effects)\"\n                }\n            }\n        },\n        \"StatusCategory\": {\n \
-        \           \"type\": \"string\",\n            \"description\": \"Classification of status effects for filtering and
-        cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
+        \  \"required\": [\n                \"itemBasedCount\",\n                \"seedDerivedCount\",\n                \"\
+        effects\"\n            ],\n            \"properties\": {\n                \"itemBasedCount\": {\n                \
+        \    \"type\": \"integer\",\n                    \"description\": \"Number of item-based status effects\"\n      \
+        \          },\n                \"seedDerivedCount\": {\n                    \"type\": \"integer\",\n             \
+        \       \"description\": \"Number of seed-derived passive effects\"\n                },\n                \"effects\"\
+        : {\n                    \"type\": \"array\",\n                    \"maxItems\": 500,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/StatusEffectSummary\"\n                    },\n                 \
+        \   \"description\": \"All active effects with source attribution\"\n                }\n            }\n        },\n\
+        \        \"StatusEffectSummary\": {\n            \"type\": \"object\",\n            \"description\": \"Unified summary
+        of an active effect from any source (item-based or seed-derived)\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"statusCode\",\n                \"category\",\n                \"effectSource\"\
+        \n            ],\n            \"properties\": {\n                \"statusCode\": {\n                    \"type\":
+        \"string\",\n                    \"maxLength\": 128,\n                    \"description\": \"Status template code
+        (item-based) or capability code (seed-derived)\"\n                },\n                \"category\": {\n          \
+        \          \"$ref\": \"#/$defs/StatusCategory\",\n                    \"description\": \"Status category for filtering\"\
+        \n                },\n                \"effectSource\": {\n                    \"$ref\": \"#/$defs/EffectSource\"\
+        ,\n                    \"description\": \"Whether this effect is item-based or seed-derived\"\n                },\n\
+        \                \"stackCount\": {\n                    \"type\": \"integer\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Current stack count (null for seed-derived effects)\"\n            \
+        \    },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this effect
+        expires (null for permanent or seed-derived)\"\n                },\n                \"fidelity\": {\n            \
+        \        \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Seed capability fidelity value (null for item-based effects)\"\n                },\n                \"seedId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Seed providing this effect (null for item-based effects)\"\
+        \n                },\n                \"sourceId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"What
+        granted this status (null for seed-derived effects)\"\n                }\n            }\n        },\n        \"StatusCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Classification of status effects for filtering
+        and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
         effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
         (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
@@ -1571,13 +1568,9 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedEffectsResponse\"\
         ,\n    \"$defs\": {\n        \"SeedEffectsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Seed-derived passive effects for an entity\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"entityId\",\n                \"entityType\",\n                \"effects\"\n            ],\n\
-        \            \"properties\": {\n                \"entityId\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"uuid\",\n                    \"description\": \"Entity these effects belong to\"\n \
-        \               },\n                \"entityType\": {\n                    \"type\": \"object\",\n               \
-        \     \"description\": \"Entity type discriminator\"\n                },\n                \"effects\": {\n       \
-        \             \"type\": \"array\",\n                    \"maxItems\": 500,\n                    \"items\": {\n   \
-        \                     \"$ref\": \"#/$defs/SeedEffectEntry\"\n                    },\n                    \"description\"\
+        : [\n                \"effects\"\n            ],\n            \"properties\": {\n                \"effects\": {\n\
+        \                    \"type\": \"array\",\n                    \"maxItems\": 500,\n                    \"items\":
+        {\n                        \"$ref\": \"#/$defs/SeedEffectEntry\"\n                    },\n                    \"description\"\
         : \"Seed-derived passive effects\"\n                }\n            }\n        },\n        \"SeedEffectEntry\": {\n\
         \            \"type\": \"object\",\n            \"description\": \"A single seed-derived passive effect entry\",\n\
         \            \"additionalProperties\": false,\n            \"required\": [\n                \"capabilityCode\",\n\
@@ -2233,8 +2226,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: "Arbitrary key-value data passed to contract template values and stored on the status instance. Opaque
-            to Status -- callers define their own semantics."
+          description: "Client-defined metadata. Opaque to Status — stored and returned verbatim. Not a contract between services.
+            Passed to contract template values and stored on the status instance."
     RemoveStatusRequest:
       type: object
       description: Request to remove a specific status instance
@@ -2578,19 +2571,10 @@ components:
       description: Unified view of all active effects for an entity
       additionalProperties: false
       required:
-      - entityId
-      - entityType
       - itemBasedCount
       - seedDerivedCount
       - effects
       properties:
-        entityId:
-          type: string
-          format: uuid
-          description: Entity these effects belong to
-        entityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Entity type discriminator
         itemBasedCount:
           type: integer
           description: Number of item-based status effects
@@ -2608,17 +2592,8 @@ components:
       description: Seed-derived passive effects for an entity
       additionalProperties: false
       required:
-      - entityId
-      - entityType
       - effects
       properties:
-        entityId:
-          type: string
-          format: uuid
-          description: Entity these effects belong to
-        entityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Entity type discriminator
         effects:
           type: array
           maxItems: 500

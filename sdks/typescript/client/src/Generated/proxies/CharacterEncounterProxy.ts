@@ -61,19 +61,20 @@ export class CharacterEncounterProxy {
   }
 
   /**
-   * Delete encounter type
+   * Deprecate encounter type
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
-   * @returns Promise that completes when the event is sent.
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
    */
-  async characterEncounterDeleteEncounterTypeEventAsync(
-    request: Schemas['DeleteEncounterTypeRequest'],
-    channel: number = 0
-  ): Promise<void> {
-    return this.client.sendEventAsync<Schemas['DeleteEncounterTypeRequest']>(
-      '/character-encounter/type/delete',
-      request,
-      channel
-    );
+  async characterEncounterDeprecateEncounterTypeAsync(
+    request: Schemas['DeprecateEncounterTypeRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['EncounterTypeResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeprecateEncounterTypeRequest'],
+      Schemas['EncounterTypeResponse']
+    >('/character-encounter/type/deprecate', request, channel, timeout);
   }
 }

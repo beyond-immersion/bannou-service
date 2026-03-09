@@ -4557,7 +4557,7 @@ public partial class GardenerController
     "$defs": {
         "DeprecateTemplateRequest": {
             "type": "object",
-            "description": "Request to deprecate a template",
+            "description": "Request to deprecate a scenario template (Category B \u2014 one-way, no delete). Idempotent \u2014 returns OK if already deprecated.",
             "required": [
                 "scenarioTemplateId"
             ],
@@ -4566,6 +4566,12 @@ public partial class GardenerController
                     "type": "string",
                     "format": "uuid",
                     "description": "Template ID to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (recommended for audit trail)"
                 }
             }
         }
@@ -4875,7 +4881,7 @@ public partial class GardenerController
     private static readonly string _DeprecateTemplate_Info = """
 {
     "summary": "Deprecate scenario template",
-    "description": "Sets the template status to Deprecated, preventing new instances.",
+    "description": "Sets the template status to Deprecated, preventing new instances.\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated.\n",
     "tags": [
         "Template Management"
     ],

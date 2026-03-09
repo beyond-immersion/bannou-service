@@ -99,21 +99,21 @@ public sealed class LicenseProxy
     }
 
     /// <summary>
-    /// Delete a board template
+    /// Deprecate a board template
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing BoardTemplateResponse on success.</returns>
-    public Task<ApiResponse<BoardTemplateResponse>> DeleteBoardTemplateAsync(
-        DeleteBoardTemplateRequest request,
+    public Task<ApiResponse<BoardTemplateResponse>> DeprecateBoardTemplateAsync(
+        DeprecateBoardTemplateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<DeleteBoardTemplateRequest, BoardTemplateResponse>(
-            "/license/board-template/delete", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<DeprecateBoardTemplateRequest, BoardTemplateResponse>(
+            "/license/board-template/deprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>

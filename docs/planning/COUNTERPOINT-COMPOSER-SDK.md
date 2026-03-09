@@ -1,10 +1,15 @@
 # Counterpoint Composer SDK: Structural Template Music Authoring
 
-> **Type**: Architectural planning document
-> **Priority**: Medium (creative tooling, not blocking gameplay)
-> **Related**: [VISION.md](../reference/VISION.md) (North Star #5: Emergent Over Authored), [CINEMATIC-SYSTEM.md](CINEMATIC-SYSTEM.md) (parallel SDK pattern)
-> **Inspiration**: *Rigoletto* 1993 film "The Curse"/"The Melody Within" (high-independence counterpoint reveal), Bach's Goldberg Variations (quodlibet), Steve Reich's *Piano Phase* (offset compatibility), *Les Miserables* "One Day More" (deliberate melodic interlock), *The Music Man* "Lida Rose"/"Will I Ever Tell You" (Broadway counterpoint songs), jazz contrafacts (new melody over shared chords), Renaissance parody masses (structural borrowing)
-> **Services**: lib-music (existing L4), MusicTheory (existing SDK), MusicStoryteller (existing SDK), MusicComposer (new SDK)
+> **Type**: Design
+> **Status**: Aspirational
+> **Created**: 2026-02-01
+> **Last Updated**: 2026-03-09
+> **North Stars**: #5
+> **Related Plugins**: Music
+
+## Summary
+
+Proposes a MusicComposer SDK providing structural template workbench tooling for human composers to author counterpoint-compatible music. Templates capture uncopyrightable structural parameters (chord progressions, form, energy curves) and the SDK validates harmonic compatibility between pieces at specified temporal offsets, enabling interlocking regional themes, deity leitmotifs, and generational character music in Arcadia. The SDK does not yet exist; MusicTheory and MusicStoryteller SDKs provide the foundation primitives it would build on.
 
 ---
 

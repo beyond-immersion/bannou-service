@@ -99,19 +99,21 @@ public sealed class LeaderboardProxy
     }
 
     /// <summary>
-    /// Delete leaderboard definition
+    /// Deprecate leaderboard definition
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteLeaderboardDefinitionEventAsync(
-        DeleteLeaderboardDefinitionRequest request,
+    /// <returns>ApiResponse containing LeaderboardDefinitionResponse on success.</returns>
+    public Task<ApiResponse<LeaderboardDefinitionResponse>> DeprecateLeaderboardDefinitionAsync(
+        DeprecateLeaderboardDefinitionRequest request,
         ushort channel = 0,
+        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.SendEventAsync<DeleteLeaderboardDefinitionRequest>(
-            "/leaderboard/definition/delete", request, channel, cancellationToken);
+        return _client.InvokeAsync<DeprecateLeaderboardDefinitionRequest, LeaderboardDefinitionResponse>(
+            "/leaderboard/definition/deprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>

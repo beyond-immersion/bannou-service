@@ -24,7 +24,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Collection Service API](#collection) | `client.Collection` | 22 | Universal content unlock and archive system for collectible ... |
 | [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 31 | Binding agreements between entities with milestone-based pro... |
-| [Currency Service API](#currency) | `client.Currency` | 33 | Multi-currency management service for game economies. |
+| [Currency Service API](#currency) | `client.Currency` | 34 | Multi-currency management service for game economies. |
 | [Bannou Divine Service API](#divine) | `client.Divine` | 22 | Pantheon management service (L4 GameFeatures) for deity enti... |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
 | [Escrow Service API](#escrow) | `client.Escrow` | 22 | Full-custody orchestration layer for multi-party asset excha... |
@@ -445,7 +445,7 @@ Character encounter tracking service for memorable interactions between characte
 | `GetEncountertypeAsync` | `GetEncounterTypeRequest` | `EncounterTypeResponse` | Get encounter type by code |
 | `ListEncountertypesAsync` | `ListEncounterTypesRequest` | `EncounterTypeListResponse` | List all encounter types |
 | `UpdateEncountertypeAsync` | `UpdateEncounterTypeRequest` | `EncounterTypeResponse` | Update encounter type |
-| `DeleteEncountertypeEventAsync` | `DeleteEncounterTypeRequest` | *(fire-and-forget)* | Delete encounter type |
+| `DeprecateencountertypeAsync` | `DeprecateEncounterTypeRequest` | `EncounterTypeResponse` | Deprecate encounter type |
 | `SeedencountertypesAsync` | `SeedEncounterTypesRequest` | `SeedEncounterTypesResponse` | Seed default encounter types |
 
 ### Perspectives
@@ -783,7 +783,7 @@ Binding agreements between entities with milestone-based progression.
 | `GetContracttemplateAsync` | `GetContractTemplateRequest` | `ContractTemplateResponse` | Get template by ID or code |
 | `ListContracttemplatesAsync` | `ListContractTemplatesRequest` | `ListContractTemplatesResponse` | List templates with filters |
 | `UpdateContracttemplateAsync` | `UpdateContractTemplateRequest` | `ContractTemplateResponse` | Update template (not instances) |
-| `DeleteContracttemplateEventAsync` | `DeleteContractTemplateRequest` | *(fire-and-forget)* | Soft-delete template |
+| `DeprecatecontracttemplateAsync` | `DeprecateContractTemplateRequest` | `ContractTemplateResponse` | Deprecate template (Category B — one-way, no delete) |
 
 ---
 
@@ -838,6 +838,7 @@ Multi-currency management service for game economies.
 | `GetCurrencydefinitionAsync` | `GetCurrencyDefinitionRequest` | `CurrencyDefinitionResponse` | Get currency definition by ID or code |
 | `ListCurrencydefinitionsAsync` | `ListCurrencyDefinitionsRequest` | `ListCurrencyDefinitionsResponse` | List currency definitions with filters |
 | `UpdateCurrencydefinitionAsync` | `UpdateCurrencyDefinitionRequest` | `CurrencyDefinitionResponse` | Update mutable fields of a currency definition |
+| `DeprecatecurrencydefinitionAsync` | `DeprecateCurrencyDefinitionRequest` | `CurrencyDefinitionResponse` | Deprecate a currency definition (Category B — one-way, no delete) |
 
 ### Escrow Integration
 
@@ -1330,7 +1331,7 @@ Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
 | `GetLeaderboarddefinitionAsync` | `GetLeaderboardDefinitionRequest` | `LeaderboardDefinitionResponse` | Get leaderboard definition |
 | `ListLeaderboarddefinitionsAsync` | `ListLeaderboardDefinitionsRequest` | `ListLeaderboardDefinitionsResponse` | List leaderboard definitions |
 | `UpdateLeaderboarddefinitionAsync` | `UpdateLeaderboardDefinitionRequest` | `LeaderboardDefinitionResponse` | Update leaderboard definition |
-| `DeleteLeaderboarddefinitionEventAsync` | `DeleteLeaderboardDefinitionRequest` | *(fire-and-forget)* | Delete leaderboard definition |
+| `DeprecateleaderboarddefinitionAsync` | `DeprecateLeaderboardDefinitionRequest` | `LeaderboardDefinitionResponse` | Deprecate leaderboard definition |
 
 ### Rankings
 
@@ -1380,7 +1381,7 @@ Grid-based progression boards via itemized contracts.
 | `GetBoardtemplateAsync` | `GetBoardTemplateRequest` | `BoardTemplateResponse` | Get a board template by ID |
 | `ListBoardtemplatesAsync` | `ListBoardTemplatesRequest` | `ListBoardTemplatesResponse` | List board templates for a game service |
 | `UpdateBoardtemplateAsync` | `UpdateBoardTemplateRequest` | `BoardTemplateResponse` | Update a board template |
-| `DeleteBoardtemplateAsync` | `DeleteBoardTemplateRequest` | `BoardTemplateResponse` | Delete a board template |
+| `DeprecateboardtemplateAsync` | `DeprecateBoardTemplateRequest` | `BoardTemplateResponse` | Deprecate a board template |
 | `SeedboardtemplateAsync` | `SeedBoardTemplateRequest` | `SeedBoardTemplateResponse` | Bulk seed a board template with license definitions |
 
 ### Cleanup
@@ -2558,7 +2559,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 55
-- **Total methods**: 895
+- **Total methods**: 896
 
 ---
 

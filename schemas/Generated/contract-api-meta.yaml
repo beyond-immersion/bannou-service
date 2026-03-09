@@ -274,110 +274,117 @@ paths:
         : \"Contract template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
         \            \"templateId\",\n                \"code\",\n                \"name\",\n                \"minParties\"\
         ,\n                \"maxParties\",\n                \"partyRoles\",\n                \"defaultEnforcementMode\",\n\
-        \                \"transferable\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"templateId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"description\": \"Unique template identifier\"\n   \
-        \             },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Unique template code\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
+        \                \"transferable\",\n                \"isActive\",\n                \"isDeprecated\",\n           \
+        \     \"createdAt\"\n            ],\n            \"properties\": {\n                \"templateId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
+        \"Unique template identifier\"\n                },\n                \"code\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Unique template code\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n   \
+        \             },\n                \"description\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Detailed description\"\n                },\n    \
+        \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Realm ID if realm-specific\"\n  \
+        \              },\n                \"minParties\": {\n                    \"type\": \"integer\",\n               \
+        \     \"description\": \"Minimum parties required\"\n                },\n                \"maxParties\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Maximum parties allowed\"\n       \
+        \         },\n                \"partyRoles\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/PartyRoleDefinition\"\n                    },\n          \
+        \          \"description\": \"Party role definitions\"\n                },\n                \"defaultTerms\": {\n\
+        \                    \"$ref\": \"#/$defs/ContractTerms\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Default contract terms\"\n                },\n                \"milestones\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MilestoneDefinition\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Milestone
+        definitions\"\n                },\n                \"defaultEnforcementMode\": {\n                    \"$ref\": \"\
+        #/$defs/EnforcementMode\",\n                    \"description\": \"Default enforcement mode\"\n                },\n\
+        \                \"transferable\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether contracts can be transferred\"\n                },\n                \"gameMetadata\": {\n            \
+        \        \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Client-only game metadata. No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"isActive\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether template is active\"\n                },\n            \
+        \    \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        template is deprecated (Category B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When the template was deprecated\"\n                },\n\
+        \                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Reason for deprecation\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Creation timestamp\"\n                },\n                \"updatedAt\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n  \
+        \      \"PartyRoleDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Definition of
+        a party role in a contract template\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"role\",\n                \"minCount\",\n                \"maxCount\"\n            ],\n        \
+        \    \"properties\": {\n                \"role\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Role identifier
+        (employer, employee, buyer, seller, etc.)\"\n                },\n                \"minCount\": {\n               \
+        \     \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
+        entities required in this role\"\n                },\n                \"maxCount\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Maximum entities allowed
+        in this role\"\n                },\n                \"allowedEntityTypes\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"object\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Which entity types can fill this role (null
+        for any)\"\n                }\n            }\n        },\n        \"ContractTerms\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Configurable contract terms\",\n            \"additionalProperties\": false,\n \
+        \           \"properties\": {\n                \"duration\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Contract duration (ISO 8601 duration, null
+        for perpetual)\"\n                },\n                \"paymentSchedule\": {\n                    \"$ref\": \"#/$defs/PaymentSchedule\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When payments occur\"\n       \
+        \         },\n                \"paymentFrequency\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Recurring payment frequency (ISO 8601 duration)\"\
+        \n                },\n                \"terminationPolicy\": {\n                    \"$ref\": \"#/$defs/TerminationPolicy\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How contract can be terminated\"\
+        \n                },\n                \"terminationNoticePeriod\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Required notice for termination (ISO
+        8601 duration)\"\n                },\n                \"breachThreshold\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Breaches before auto-termination (0 for no auto)\"\n                },\n                \"gracePeriodForCure\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Realm ID if realm-specific\"\n                },\n                \"minParties\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Minimum parties required\"\n                },\n          \
-        \      \"maxParties\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum
-        parties allowed\"\n                },\n                \"partyRoles\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PartyRoleDefinition\"\n         \
-        \           },\n                    \"description\": \"Party role definitions\"\n                },\n            \
-        \    \"defaultTerms\": {\n                    \"$ref\": \"#/$defs/ContractTerms\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Default contract terms\"\n                },\n                \"milestones\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/MilestoneDefinition\"\n                    },\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Milestone definitions\"\n                },\n                \"defaultEnforcementMode\"\
-        : {\n                    \"$ref\": \"#/$defs/EnforcementMode\",\n                    \"description\": \"Default enforcement
-        mode\"\n                },\n                \"transferable\": {\n                    \"type\": \"boolean\",\n    \
-        \                \"description\": \"Whether contracts can be transferred\"\n                },\n                \"\
-        gameMetadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Client-only game metadata. No Bannou
-        plugin reads specific keys from this field by convention.\"\n                },\n                \"isActive\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\n\
-        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Last update timestamp\"\n     \
-        \           }\n            }\n        },\n        \"PartyRoleDefinition\": {\n            \"type\": \"object\",\n\
-        \            \"description\": \"Definition of a party role in a contract template\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"role\",\n                \"minCount\",\n                \"\
-        maxCount\"\n            ],\n            \"properties\": {\n                \"role\": {\n                    \"type\"\
-        : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                   \
-        \ \"description\": \"Role identifier (employer, employee, buyer, seller, etc.)\"\n                },\n           \
-        \     \"minCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n         \
-        \           \"description\": \"Minimum entities required in this role\"\n                },\n                \"maxCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
-        : \"Maximum entities allowed in this role\"\n                },\n                \"allowedEntityTypes\": {\n     \
-        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Which entity
-        types can fill this role (null for any)\"\n                }\n            }\n        },\n        \"ContractTerms\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
-        \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
-        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
-        duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\": {\n \
-        \                   \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Recurring payment frequency (ISO 8601 duration)\"\n                },\n                \"terminationPolicy\":
-        {\n                    \"$ref\": \"#/$defs/TerminationPolicy\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"How contract can be terminated\"\n                },\n                \"terminationNoticePeriod\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Required notice for termination (ISO 8601 duration)\"\n                },\n                \"breachThreshold\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Breaches before auto-termination (0 for no auto)\"\n             \
-        \   },\n                \"gracePeriodForCure\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Time to cure breach (ISO 8601 duration)\"\n        \
-        \        },\n                \"exclusivity\": {\n                    \"type\": \"boolean\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Whether this contract has an exclusivity clause preventing
-        the entity from entering similar contracts\"\n                },\n                \"nonCompete\": {\n            \
-        \        \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Whether this contract has a non-compete clause\"\n                },\n                \"timeCommitment\": {\n    \
-        \                \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Whether this contract has a time commitment clause\"\n                },\n                \"timeCommitmentType\"\
-        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TimeCommitmentType\"\
-        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Type of time commitment for scheduling constraints\"\n                },\n                \"\
-        clauses\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                \
-        \    \"items\": {\n                        \"$ref\": \"#/$defs/ContractClauseDefinition\"\n                    },\n\
-        \                    \"description\": \"Clause definitions for contract execution (fees, distributions, asset requirements)\"\
-        \n                },\n                \"customTerms\": {\n                    \"type\": \"object\",\n            \
-        \        \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Client-only custom terms. No Bannou plugin reads specific keys from this field by convention.\"\n            \
-        \    }\n            }\n        },\n        \"PaymentSchedule\": {\n            \"type\": \"string\",\n           \
-        \ \"description\": \"When payments occur\",\n            \"enum\": [\n                \"OneTime\",\n             \
-        \   \"Recurring\",\n                \"MilestoneBased\"\n            ]\n        },\n        \"TerminationPolicy\":
-        {\n            \"type\": \"string\",\n            \"description\": \"How the contract can be terminated\",\n     \
-        \       \"enum\": [\n                \"MutualConsent\",\n                \"UnilateralWithNotice\",\n             \
-        \   \"UnilateralImmediate\",\n                \"NonTerminable\"\n            ]\n        },\n        \"TimeCommitmentType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of time commitment for scheduling constraints\"\
-        ,\n            \"enum\": [\n                \"Exclusive\",\n                \"Partial\"\n            ]\n        },\n\
-        \        \"ContractClauseDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"A clause
-        definition for contract execution specifying asset transfers, fees, or requirements\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"id\",\n                \"type\"\n            ],\n       \
-        \     \"properties\": {\n                \"id\": {\n                    \"type\": \"string\",\n                  \
-        \  \"description\": \"Unique identifier for this clause within the contract\"\n                },\n              \
-        \  \"type\": {\n                    \"type\": \"string\",\n                    \"description\": \"Clause type code
-        (fee, distribution, currency_transfer, item_transfer, asset_requirement)\"\n                },\n                \"\
-        party\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Party role reference for this clause\"\n                },\n                \"amount\": {\n\
+        : \"Time to cure breach (ISO 8601 duration)\"\n                },\n                \"exclusivity\": {\n          \
+        \          \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Whether this contract has an exclusivity clause preventing the entity from entering similar contracts\"\n        \
+        \        },\n                \"nonCompete\": {\n                    \"type\": \"boolean\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Whether this contract has a non-compete clause\"\n     \
+        \           },\n                \"timeCommitment\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Whether this contract has a time commitment clause\"\
+        \n                },\n                \"timeCommitmentType\": {\n                    \"allOf\": [\n              \
+        \          {\n                            \"$ref\": \"#/$defs/TimeCommitmentType\"\n                        }\n  \
+        \                  ],\n                    \"nullable\": true,\n                    \"description\": \"Type of time
+        commitment for scheduling constraints\"\n                },\n                \"clauses\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
+        \      \"$ref\": \"#/$defs/ContractClauseDefinition\"\n                    },\n                    \"description\"\
+        : \"Clause definitions for contract execution (fees, distributions, asset requirements)\"\n                },\n  \
+        \              \"customTerms\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only custom terms.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
+        \        \"PaymentSchedule\": {\n            \"type\": \"string\",\n            \"description\": \"When payments occur\"\
+        ,\n            \"enum\": [\n                \"OneTime\",\n                \"Recurring\",\n                \"MilestoneBased\"\
+        \n            ]\n        },\n        \"TerminationPolicy\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How the contract can be terminated\",\n            \"enum\": [\n                \"MutualConsent\",\n         \
+        \       \"UnilateralWithNotice\",\n                \"UnilateralImmediate\",\n                \"NonTerminable\"\n \
+        \           ]\n        },\n        \"TimeCommitmentType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of time commitment for scheduling constraints\",\n            \"enum\": [\n                \"Exclusive\"\
+        ,\n                \"Partial\"\n            ]\n        },\n        \"ContractClauseDefinition\": {\n            \"\
+        type\": \"object\",\n            \"description\": \"A clause definition for contract execution specifying asset transfers,
+        fees, or requirements\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"id\",\n                \"type\"\n            ],\n            \"properties\": {\n                \"id\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for this clause
+        within the contract\"\n                },\n                \"type\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)\"\
+        \n                },\n                \"party\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Party role reference for this clause\"\n          \
+        \      },\n                \"amount\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Amount value (numeric string for template substitution support)\"\n\
+        \                },\n                \"amountType\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"How to interpret the amount (flat, percentage,
+        remainder)\"\n                },\n                \"sourceWallet\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Source wallet identifier or template
+        variable reference\"\n                },\n                \"destinationWallet\": {\n                    \"type\":
+        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Destination wallet identifier
+        or template variable reference\"\n                },\n                \"recipientWallet\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Recipient
+        wallet for fee clauses or template variable reference\"\n                },\n                \"currencyCode\": {\n\
         \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Amount value (numeric string for template substitution support)\"\n                },\n                \"amountType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"How to interpret the amount (flat, percentage, remainder)\"\n                },\n                \"sourceWallet\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source wallet identifier or template variable reference\"\n                },\n                \"destinationWallet\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Destination wallet identifier or template variable reference\"\n                },\n                \"recipientWallet\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Recipient wallet for fee clauses or template variable reference\"\n                },\n                \"currencyCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Currency code for currency-based clauses\"\n                },\n                \"sourceContainer\": {\n     \
         \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source container identifier or template variable reference for item clauses\"\n                },\n          \
@@ -525,110 +532,117 @@ paths:
         : \"Contract template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
         \            \"templateId\",\n                \"code\",\n                \"name\",\n                \"minParties\"\
         ,\n                \"maxParties\",\n                \"partyRoles\",\n                \"defaultEnforcementMode\",\n\
-        \                \"transferable\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"templateId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"description\": \"Unique template identifier\"\n   \
-        \             },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Unique template code\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
+        \                \"transferable\",\n                \"isActive\",\n                \"isDeprecated\",\n           \
+        \     \"createdAt\"\n            ],\n            \"properties\": {\n                \"templateId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
+        \"Unique template identifier\"\n                },\n                \"code\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Unique template code\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n   \
+        \             },\n                \"description\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Detailed description\"\n                },\n    \
+        \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Realm ID if realm-specific\"\n  \
+        \              },\n                \"minParties\": {\n                    \"type\": \"integer\",\n               \
+        \     \"description\": \"Minimum parties required\"\n                },\n                \"maxParties\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Maximum parties allowed\"\n       \
+        \         },\n                \"partyRoles\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/PartyRoleDefinition\"\n                    },\n          \
+        \          \"description\": \"Party role definitions\"\n                },\n                \"defaultTerms\": {\n\
+        \                    \"$ref\": \"#/$defs/ContractTerms\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Default contract terms\"\n                },\n                \"milestones\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MilestoneDefinition\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Milestone
+        definitions\"\n                },\n                \"defaultEnforcementMode\": {\n                    \"$ref\": \"\
+        #/$defs/EnforcementMode\",\n                    \"description\": \"Default enforcement mode\"\n                },\n\
+        \                \"transferable\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether contracts can be transferred\"\n                },\n                \"gameMetadata\": {\n            \
+        \        \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Client-only game metadata. No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"isActive\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether template is active\"\n                },\n            \
+        \    \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        template is deprecated (Category B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When the template was deprecated\"\n                },\n\
+        \                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Reason for deprecation\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Creation timestamp\"\n                },\n                \"updatedAt\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n  \
+        \      \"PartyRoleDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Definition of
+        a party role in a contract template\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"role\",\n                \"minCount\",\n                \"maxCount\"\n            ],\n        \
+        \    \"properties\": {\n                \"role\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Role identifier
+        (employer, employee, buyer, seller, etc.)\"\n                },\n                \"minCount\": {\n               \
+        \     \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
+        entities required in this role\"\n                },\n                \"maxCount\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Maximum entities allowed
+        in this role\"\n                },\n                \"allowedEntityTypes\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"object\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Which entity types can fill this role (null
+        for any)\"\n                }\n            }\n        },\n        \"ContractTerms\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Configurable contract terms\",\n            \"additionalProperties\": false,\n \
+        \           \"properties\": {\n                \"duration\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Contract duration (ISO 8601 duration, null
+        for perpetual)\"\n                },\n                \"paymentSchedule\": {\n                    \"$ref\": \"#/$defs/PaymentSchedule\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When payments occur\"\n       \
+        \         },\n                \"paymentFrequency\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Recurring payment frequency (ISO 8601 duration)\"\
+        \n                },\n                \"terminationPolicy\": {\n                    \"$ref\": \"#/$defs/TerminationPolicy\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How contract can be terminated\"\
+        \n                },\n                \"terminationNoticePeriod\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Required notice for termination (ISO
+        8601 duration)\"\n                },\n                \"breachThreshold\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Breaches before auto-termination (0 for no auto)\"\n                },\n                \"gracePeriodForCure\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Realm ID if realm-specific\"\n                },\n                \"minParties\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Minimum parties required\"\n                },\n          \
-        \      \"maxParties\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum
-        parties allowed\"\n                },\n                \"partyRoles\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PartyRoleDefinition\"\n         \
-        \           },\n                    \"description\": \"Party role definitions\"\n                },\n            \
-        \    \"defaultTerms\": {\n                    \"$ref\": \"#/$defs/ContractTerms\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Default contract terms\"\n                },\n                \"milestones\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/MilestoneDefinition\"\n                    },\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Milestone definitions\"\n                },\n                \"defaultEnforcementMode\"\
-        : {\n                    \"$ref\": \"#/$defs/EnforcementMode\",\n                    \"description\": \"Default enforcement
-        mode\"\n                },\n                \"transferable\": {\n                    \"type\": \"boolean\",\n    \
-        \                \"description\": \"Whether contracts can be transferred\"\n                },\n                \"\
-        gameMetadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Client-only game metadata. No Bannou
-        plugin reads specific keys from this field by convention.\"\n                },\n                \"isActive\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\n\
-        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Last update timestamp\"\n     \
-        \           }\n            }\n        },\n        \"PartyRoleDefinition\": {\n            \"type\": \"object\",\n\
-        \            \"description\": \"Definition of a party role in a contract template\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"role\",\n                \"minCount\",\n                \"\
-        maxCount\"\n            ],\n            \"properties\": {\n                \"role\": {\n                    \"type\"\
-        : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                   \
-        \ \"description\": \"Role identifier (employer, employee, buyer, seller, etc.)\"\n                },\n           \
-        \     \"minCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n         \
-        \           \"description\": \"Minimum entities required in this role\"\n                },\n                \"maxCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
-        : \"Maximum entities allowed in this role\"\n                },\n                \"allowedEntityTypes\": {\n     \
-        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Which entity
-        types can fill this role (null for any)\"\n                }\n            }\n        },\n        \"ContractTerms\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
-        \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
-        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
-        duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\": {\n \
-        \                   \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Recurring payment frequency (ISO 8601 duration)\"\n                },\n                \"terminationPolicy\":
-        {\n                    \"$ref\": \"#/$defs/TerminationPolicy\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"How contract can be terminated\"\n                },\n                \"terminationNoticePeriod\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Required notice for termination (ISO 8601 duration)\"\n                },\n                \"breachThreshold\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Breaches before auto-termination (0 for no auto)\"\n             \
-        \   },\n                \"gracePeriodForCure\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Time to cure breach (ISO 8601 duration)\"\n        \
-        \        },\n                \"exclusivity\": {\n                    \"type\": \"boolean\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Whether this contract has an exclusivity clause preventing
-        the entity from entering similar contracts\"\n                },\n                \"nonCompete\": {\n            \
-        \        \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Whether this contract has a non-compete clause\"\n                },\n                \"timeCommitment\": {\n    \
-        \                \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Whether this contract has a time commitment clause\"\n                },\n                \"timeCommitmentType\"\
-        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TimeCommitmentType\"\
-        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Type of time commitment for scheduling constraints\"\n                },\n                \"\
-        clauses\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                \
-        \    \"items\": {\n                        \"$ref\": \"#/$defs/ContractClauseDefinition\"\n                    },\n\
-        \                    \"description\": \"Clause definitions for contract execution (fees, distributions, asset requirements)\"\
-        \n                },\n                \"customTerms\": {\n                    \"type\": \"object\",\n            \
-        \        \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Client-only custom terms. No Bannou plugin reads specific keys from this field by convention.\"\n            \
-        \    }\n            }\n        },\n        \"PaymentSchedule\": {\n            \"type\": \"string\",\n           \
-        \ \"description\": \"When payments occur\",\n            \"enum\": [\n                \"OneTime\",\n             \
-        \   \"Recurring\",\n                \"MilestoneBased\"\n            ]\n        },\n        \"TerminationPolicy\":
-        {\n            \"type\": \"string\",\n            \"description\": \"How the contract can be terminated\",\n     \
-        \       \"enum\": [\n                \"MutualConsent\",\n                \"UnilateralWithNotice\",\n             \
-        \   \"UnilateralImmediate\",\n                \"NonTerminable\"\n            ]\n        },\n        \"TimeCommitmentType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of time commitment for scheduling constraints\"\
-        ,\n            \"enum\": [\n                \"Exclusive\",\n                \"Partial\"\n            ]\n        },\n\
-        \        \"ContractClauseDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"A clause
-        definition for contract execution specifying asset transfers, fees, or requirements\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"id\",\n                \"type\"\n            ],\n       \
-        \     \"properties\": {\n                \"id\": {\n                    \"type\": \"string\",\n                  \
-        \  \"description\": \"Unique identifier for this clause within the contract\"\n                },\n              \
-        \  \"type\": {\n                    \"type\": \"string\",\n                    \"description\": \"Clause type code
-        (fee, distribution, currency_transfer, item_transfer, asset_requirement)\"\n                },\n                \"\
-        party\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Party role reference for this clause\"\n                },\n                \"amount\": {\n\
+        : \"Time to cure breach (ISO 8601 duration)\"\n                },\n                \"exclusivity\": {\n          \
+        \          \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Whether this contract has an exclusivity clause preventing the entity from entering similar contracts\"\n        \
+        \        },\n                \"nonCompete\": {\n                    \"type\": \"boolean\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Whether this contract has a non-compete clause\"\n     \
+        \           },\n                \"timeCommitment\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Whether this contract has a time commitment clause\"\
+        \n                },\n                \"timeCommitmentType\": {\n                    \"allOf\": [\n              \
+        \          {\n                            \"$ref\": \"#/$defs/TimeCommitmentType\"\n                        }\n  \
+        \                  ],\n                    \"nullable\": true,\n                    \"description\": \"Type of time
+        commitment for scheduling constraints\"\n                },\n                \"clauses\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
+        \      \"$ref\": \"#/$defs/ContractClauseDefinition\"\n                    },\n                    \"description\"\
+        : \"Clause definitions for contract execution (fees, distributions, asset requirements)\"\n                },\n  \
+        \              \"customTerms\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only custom terms.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
+        \        \"PaymentSchedule\": {\n            \"type\": \"string\",\n            \"description\": \"When payments occur\"\
+        ,\n            \"enum\": [\n                \"OneTime\",\n                \"Recurring\",\n                \"MilestoneBased\"\
+        \n            ]\n        },\n        \"TerminationPolicy\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How the contract can be terminated\",\n            \"enum\": [\n                \"MutualConsent\",\n         \
+        \       \"UnilateralWithNotice\",\n                \"UnilateralImmediate\",\n                \"NonTerminable\"\n \
+        \           ]\n        },\n        \"TimeCommitmentType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of time commitment for scheduling constraints\",\n            \"enum\": [\n                \"Exclusive\"\
+        ,\n                \"Partial\"\n            ]\n        },\n        \"ContractClauseDefinition\": {\n            \"\
+        type\": \"object\",\n            \"description\": \"A clause definition for contract execution specifying asset transfers,
+        fees, or requirements\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"id\",\n                \"type\"\n            ],\n            \"properties\": {\n                \"id\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for this clause
+        within the contract\"\n                },\n                \"type\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)\"\
+        \n                },\n                \"party\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Party role reference for this clause\"\n          \
+        \      },\n                \"amount\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Amount value (numeric string for template substitution support)\"\n\
+        \                },\n                \"amountType\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"How to interpret the amount (flat, percentage,
+        remainder)\"\n                },\n                \"sourceWallet\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Source wallet identifier or template
+        variable reference\"\n                },\n                \"destinationWallet\": {\n                    \"type\":
+        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Destination wallet identifier
+        or template variable reference\"\n                },\n                \"recipientWallet\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Recipient
+        wallet for fee clauses or template variable reference\"\n                },\n                \"currencyCode\": {\n\
         \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Amount value (numeric string for template substitution support)\"\n                },\n                \"amountType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"How to interpret the amount (flat, percentage, remainder)\"\n                },\n                \"sourceWallet\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source wallet identifier or template variable reference\"\n                },\n                \"destinationWallet\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Destination wallet identifier or template variable reference\"\n                },\n                \"recipientWallet\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Recipient wallet for fee clauses or template variable reference\"\n                },\n                \"currencyCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Currency code for currency-based clauses\"\n                },\n                \"sourceContainer\": {\n     \
         \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source container identifier or template variable reference for item clauses\"\n                },\n          \
@@ -765,14 +779,16 @@ paths:
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter by realm (null includes cross-realm templates).\"\n                },\n                \"isActive\": {\n\
         \                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Filter by active status.\"\n                },\n                \"searchTerm\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Search in name and
-        description.\"\n                },\n                \"cursor\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Opaque cursor from previous response.
-        Null for first page.\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Number of items per page. Uses service default if not specified.\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        : \"Filter by active status.\"\n                },\n                \"includeDeprecated\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
+        to include deprecated templates (default false).\"\n                },\n                \"searchTerm\": {\n      \
+        \              \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Search in name and description.\"\n                },\n                \"cursor\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Opaque cursor from
+        previous response. Null for first page.\"\n                },\n                \"pageSize\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Number of items per page. Uses service default
+        if not specified.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListContractTemplatesResponse\"\
         ,\n    \"$defs\": {\n        \"ListContractTemplatesResponse\": {\n            \"type\": \"object\",\n           \
         \ \"description\": \"Paginated list of contract templates.\",\n            \"additionalProperties\": false,\n    \
@@ -788,53 +804,59 @@ paths:
         false,\n            \"required\": [\n                \"templateId\",\n                \"code\",\n                \"\
         name\",\n                \"minParties\",\n                \"maxParties\",\n                \"partyRoles\",\n     \
         \           \"defaultEnforcementMode\",\n                \"transferable\",\n                \"isActive\",\n      \
-        \          \"createdAt\"\n            ],\n            \"properties\": {\n                \"templateId\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique template identifier\"\n                },\n                \"code\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Unique template code\"\n                },\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n   \
-        \             },\n                \"description\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Detailed description\"\n                },\n    \
-        \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Realm ID if realm-specific\"\n  \
-        \              },\n                \"minParties\": {\n                    \"type\": \"integer\",\n               \
-        \     \"description\": \"Minimum parties required\"\n                },\n                \"maxParties\": {\n     \
-        \               \"type\": \"integer\",\n                    \"description\": \"Maximum parties allowed\"\n       \
-        \         },\n                \"partyRoles\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/PartyRoleDefinition\"\n                    },\n          \
-        \          \"description\": \"Party role definitions\"\n                },\n                \"defaultTerms\": {\n\
-        \                    \"$ref\": \"#/$defs/ContractTerms\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Default contract terms\"\n                },\n                \"milestones\": {\n     \
-        \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MilestoneDefinition\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Milestone
-        definitions\"\n                },\n                \"defaultEnforcementMode\": {\n                    \"$ref\": \"\
-        #/$defs/EnforcementMode\",\n                    \"description\": \"Default enforcement mode\"\n                },\n\
-        \                \"transferable\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether contracts can be transferred\"\n                },\n                \"gameMetadata\": {\n            \
-        \        \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Client-only game metadata. No Bannou plugin reads specific keys from
-        this field by convention.\"\n                },\n                \"isActive\": {\n                    \"type\": \"\
-        boolean\",\n                    \"description\": \"Whether template is active\"\n                },\n            \
-        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"Creation timestamp\"\n                },\n                \"updatedAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Last update timestamp\"\n                }\n           \
-        \ }\n        },\n        \"PartyRoleDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Definition of a party role in a contract template\",\n            \"additionalProperties\": false,\n         \
-        \   \"required\": [\n                \"role\",\n                \"minCount\",\n                \"maxCount\"\n    \
-        \        ],\n            \"properties\": {\n                \"role\": {\n                    \"type\": \"string\"\
-        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
-        : \"Role identifier (employer, employee, buyer, seller, etc.)\"\n                },\n                \"minCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Minimum entities required in this role\"\n                },\n                \"maxCount\": {\n              \
-        \      \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Maximum
-        entities allowed in this role\"\n                },\n                \"allowedEntityTypes\": {\n                 \
-        \   \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n       \
-        \             },\n                    \"nullable\": true,\n                    \"description\": \"Which entity types
-        can fill this role (null for any)\"\n                }\n            }\n        },\n        \"ContractTerms\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n            \"\
-        additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
+        \          \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n     \
+        \           \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique template identifier\"\n                },\n                \"code\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique template code\"\n  \
+        \              },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Human-readable name\"\n                },\n                \"description\": {\n                 \
+        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Detailed
+        description\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Realm ID if realm-specific\"\n                },\n                \"minParties\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Minimum parties required\"\n                },\n          \
+        \      \"maxParties\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum
+        parties allowed\"\n                },\n                \"partyRoles\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PartyRoleDefinition\"\n         \
+        \           },\n                    \"description\": \"Party role definitions\"\n                },\n            \
+        \    \"defaultTerms\": {\n                    \"$ref\": \"#/$defs/ContractTerms\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Default contract terms\"\n                },\n                \"milestones\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/MilestoneDefinition\"\n                    },\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Milestone definitions\"\n                },\n                \"defaultEnforcementMode\"\
+        : {\n                    \"$ref\": \"#/$defs/EnforcementMode\",\n                    \"description\": \"Default enforcement
+        mode\"\n                },\n                \"transferable\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"description\": \"Whether contracts can be transferred\"\n                },\n                \"\
+        gameMetadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Client-only game metadata. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"isActive\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\n\
+        \                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n           \
+        \         \"description\": \"Whether template is deprecated (Category B \\u2014 one-way)\"\n                },\n \
+        \               \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the template was
+        deprecated\"\n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for deprecation\"\n    \
+        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n  \
+        \              \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Last update timestamp\"\n     \
+        \           }\n            }\n        },\n        \"PartyRoleDefinition\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Definition of a party role in a contract template\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"role\",\n                \"minCount\",\n                \"\
+        maxCount\"\n            ],\n            \"properties\": {\n                \"role\": {\n                    \"type\"\
+        : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                   \
+        \ \"description\": \"Role identifier (employer, employee, buyer, seller, etc.)\"\n                },\n           \
+        \     \"minCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n         \
+        \           \"description\": \"Minimum entities required in this role\"\n                },\n                \"maxCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"Maximum entities allowed in this role\"\n                },\n                \"allowedEntityTypes\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Which entity
+        types can fill this role (null for any)\"\n                }\n            }\n        },\n        \"ContractTerms\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
+        \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
+        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
         duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\": {\n \
         \                   \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n            \
         \        \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\": {\n \
@@ -1043,110 +1065,117 @@ paths:
         : \"Contract template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
         \            \"templateId\",\n                \"code\",\n                \"name\",\n                \"minParties\"\
         ,\n                \"maxParties\",\n                \"partyRoles\",\n                \"defaultEnforcementMode\",\n\
-        \                \"transferable\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"templateId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"description\": \"Unique template identifier\"\n   \
-        \             },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Unique template code\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
+        \                \"transferable\",\n                \"isActive\",\n                \"isDeprecated\",\n           \
+        \     \"createdAt\"\n            ],\n            \"properties\": {\n                \"templateId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
+        \"Unique template identifier\"\n                },\n                \"code\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Unique template code\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n   \
+        \             },\n                \"description\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Detailed description\"\n                },\n    \
+        \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Realm ID if realm-specific\"\n  \
+        \              },\n                \"minParties\": {\n                    \"type\": \"integer\",\n               \
+        \     \"description\": \"Minimum parties required\"\n                },\n                \"maxParties\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Maximum parties allowed\"\n       \
+        \         },\n                \"partyRoles\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/PartyRoleDefinition\"\n                    },\n          \
+        \          \"description\": \"Party role definitions\"\n                },\n                \"defaultTerms\": {\n\
+        \                    \"$ref\": \"#/$defs/ContractTerms\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Default contract terms\"\n                },\n                \"milestones\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MilestoneDefinition\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Milestone
+        definitions\"\n                },\n                \"defaultEnforcementMode\": {\n                    \"$ref\": \"\
+        #/$defs/EnforcementMode\",\n                    \"description\": \"Default enforcement mode\"\n                },\n\
+        \                \"transferable\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether contracts can be transferred\"\n                },\n                \"gameMetadata\": {\n            \
+        \        \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Client-only game metadata. No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"isActive\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether template is active\"\n                },\n            \
+        \    \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        template is deprecated (Category B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When the template was deprecated\"\n                },\n\
+        \                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Reason for deprecation\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Creation timestamp\"\n                },\n                \"updatedAt\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n  \
+        \      \"PartyRoleDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Definition of
+        a party role in a contract template\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"role\",\n                \"minCount\",\n                \"maxCount\"\n            ],\n        \
+        \    \"properties\": {\n                \"role\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Role identifier
+        (employer, employee, buyer, seller, etc.)\"\n                },\n                \"minCount\": {\n               \
+        \     \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
+        entities required in this role\"\n                },\n                \"maxCount\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Maximum entities allowed
+        in this role\"\n                },\n                \"allowedEntityTypes\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"object\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Which entity types can fill this role (null
+        for any)\"\n                }\n            }\n        },\n        \"ContractTerms\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Configurable contract terms\",\n            \"additionalProperties\": false,\n \
+        \           \"properties\": {\n                \"duration\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Contract duration (ISO 8601 duration, null
+        for perpetual)\"\n                },\n                \"paymentSchedule\": {\n                    \"$ref\": \"#/$defs/PaymentSchedule\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When payments occur\"\n       \
+        \         },\n                \"paymentFrequency\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Recurring payment frequency (ISO 8601 duration)\"\
+        \n                },\n                \"terminationPolicy\": {\n                    \"$ref\": \"#/$defs/TerminationPolicy\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How contract can be terminated\"\
+        \n                },\n                \"terminationNoticePeriod\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Required notice for termination (ISO
+        8601 duration)\"\n                },\n                \"breachThreshold\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Breaches before auto-termination (0 for no auto)\"\n                },\n                \"gracePeriodForCure\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Realm ID if realm-specific\"\n                },\n                \"minParties\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Minimum parties required\"\n                },\n          \
-        \      \"maxParties\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum
-        parties allowed\"\n                },\n                \"partyRoles\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PartyRoleDefinition\"\n         \
-        \           },\n                    \"description\": \"Party role definitions\"\n                },\n            \
-        \    \"defaultTerms\": {\n                    \"$ref\": \"#/$defs/ContractTerms\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Default contract terms\"\n                },\n                \"milestones\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/MilestoneDefinition\"\n                    },\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Milestone definitions\"\n                },\n                \"defaultEnforcementMode\"\
-        : {\n                    \"$ref\": \"#/$defs/EnforcementMode\",\n                    \"description\": \"Default enforcement
-        mode\"\n                },\n                \"transferable\": {\n                    \"type\": \"boolean\",\n    \
-        \                \"description\": \"Whether contracts can be transferred\"\n                },\n                \"\
-        gameMetadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Client-only game metadata. No Bannou
-        plugin reads specific keys from this field by convention.\"\n                },\n                \"isActive\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\n\
-        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Last update timestamp\"\n     \
-        \           }\n            }\n        },\n        \"PartyRoleDefinition\": {\n            \"type\": \"object\",\n\
-        \            \"description\": \"Definition of a party role in a contract template\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"role\",\n                \"minCount\",\n                \"\
-        maxCount\"\n            ],\n            \"properties\": {\n                \"role\": {\n                    \"type\"\
-        : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                   \
-        \ \"description\": \"Role identifier (employer, employee, buyer, seller, etc.)\"\n                },\n           \
-        \     \"minCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n         \
-        \           \"description\": \"Minimum entities required in this role\"\n                },\n                \"maxCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
-        : \"Maximum entities allowed in this role\"\n                },\n                \"allowedEntityTypes\": {\n     \
-        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Which entity
-        types can fill this role (null for any)\"\n                }\n            }\n        },\n        \"ContractTerms\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
-        \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
-        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
-        duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\": {\n \
-        \                   \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Recurring payment frequency (ISO 8601 duration)\"\n                },\n                \"terminationPolicy\":
-        {\n                    \"$ref\": \"#/$defs/TerminationPolicy\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"How contract can be terminated\"\n                },\n                \"terminationNoticePeriod\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Required notice for termination (ISO 8601 duration)\"\n                },\n                \"breachThreshold\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Breaches before auto-termination (0 for no auto)\"\n             \
-        \   },\n                \"gracePeriodForCure\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Time to cure breach (ISO 8601 duration)\"\n        \
-        \        },\n                \"exclusivity\": {\n                    \"type\": \"boolean\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Whether this contract has an exclusivity clause preventing
-        the entity from entering similar contracts\"\n                },\n                \"nonCompete\": {\n            \
-        \        \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Whether this contract has a non-compete clause\"\n                },\n                \"timeCommitment\": {\n    \
-        \                \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Whether this contract has a time commitment clause\"\n                },\n                \"timeCommitmentType\"\
-        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TimeCommitmentType\"\
-        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Type of time commitment for scheduling constraints\"\n                },\n                \"\
-        clauses\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                \
-        \    \"items\": {\n                        \"$ref\": \"#/$defs/ContractClauseDefinition\"\n                    },\n\
-        \                    \"description\": \"Clause definitions for contract execution (fees, distributions, asset requirements)\"\
-        \n                },\n                \"customTerms\": {\n                    \"type\": \"object\",\n            \
-        \        \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Client-only custom terms. No Bannou plugin reads specific keys from this field by convention.\"\n            \
-        \    }\n            }\n        },\n        \"PaymentSchedule\": {\n            \"type\": \"string\",\n           \
-        \ \"description\": \"When payments occur\",\n            \"enum\": [\n                \"OneTime\",\n             \
-        \   \"Recurring\",\n                \"MilestoneBased\"\n            ]\n        },\n        \"TerminationPolicy\":
-        {\n            \"type\": \"string\",\n            \"description\": \"How the contract can be terminated\",\n     \
-        \       \"enum\": [\n                \"MutualConsent\",\n                \"UnilateralWithNotice\",\n             \
-        \   \"UnilateralImmediate\",\n                \"NonTerminable\"\n            ]\n        },\n        \"TimeCommitmentType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of time commitment for scheduling constraints\"\
-        ,\n            \"enum\": [\n                \"Exclusive\",\n                \"Partial\"\n            ]\n        },\n\
-        \        \"ContractClauseDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"A clause
-        definition for contract execution specifying asset transfers, fees, or requirements\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"id\",\n                \"type\"\n            ],\n       \
-        \     \"properties\": {\n                \"id\": {\n                    \"type\": \"string\",\n                  \
-        \  \"description\": \"Unique identifier for this clause within the contract\"\n                },\n              \
-        \  \"type\": {\n                    \"type\": \"string\",\n                    \"description\": \"Clause type code
-        (fee, distribution, currency_transfer, item_transfer, asset_requirement)\"\n                },\n                \"\
-        party\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Party role reference for this clause\"\n                },\n                \"amount\": {\n\
+        : \"Time to cure breach (ISO 8601 duration)\"\n                },\n                \"exclusivity\": {\n          \
+        \          \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Whether this contract has an exclusivity clause preventing the entity from entering similar contracts\"\n        \
+        \        },\n                \"nonCompete\": {\n                    \"type\": \"boolean\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Whether this contract has a non-compete clause\"\n     \
+        \           },\n                \"timeCommitment\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Whether this contract has a time commitment clause\"\
+        \n                },\n                \"timeCommitmentType\": {\n                    \"allOf\": [\n              \
+        \          {\n                            \"$ref\": \"#/$defs/TimeCommitmentType\"\n                        }\n  \
+        \                  ],\n                    \"nullable\": true,\n                    \"description\": \"Type of time
+        commitment for scheduling constraints\"\n                },\n                \"clauses\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
+        \      \"$ref\": \"#/$defs/ContractClauseDefinition\"\n                    },\n                    \"description\"\
+        : \"Clause definitions for contract execution (fees, distributions, asset requirements)\"\n                },\n  \
+        \              \"customTerms\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only custom terms.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
+        \        \"PaymentSchedule\": {\n            \"type\": \"string\",\n            \"description\": \"When payments occur\"\
+        ,\n            \"enum\": [\n                \"OneTime\",\n                \"Recurring\",\n                \"MilestoneBased\"\
+        \n            ]\n        },\n        \"TerminationPolicy\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How the contract can be terminated\",\n            \"enum\": [\n                \"MutualConsent\",\n         \
+        \       \"UnilateralWithNotice\",\n                \"UnilateralImmediate\",\n                \"NonTerminable\"\n \
+        \           ]\n        },\n        \"TimeCommitmentType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of time commitment for scheduling constraints\",\n            \"enum\": [\n                \"Exclusive\"\
+        ,\n                \"Partial\"\n            ]\n        },\n        \"ContractClauseDefinition\": {\n            \"\
+        type\": \"object\",\n            \"description\": \"A clause definition for contract execution specifying asset transfers,
+        fees, or requirements\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"id\",\n                \"type\"\n            ],\n            \"properties\": {\n                \"id\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for this clause
+        within the contract\"\n                },\n                \"type\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)\"\
+        \n                },\n                \"party\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Party role reference for this clause\"\n          \
+        \      },\n                \"amount\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Amount value (numeric string for template substitution support)\"\n\
+        \                },\n                \"amountType\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"How to interpret the amount (flat, percentage,
+        remainder)\"\n                },\n                \"sourceWallet\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Source wallet identifier or template
+        variable reference\"\n                },\n                \"destinationWallet\": {\n                    \"type\":
+        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Destination wallet identifier
+        or template variable reference\"\n                },\n                \"recipientWallet\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Recipient
+        wallet for fee clauses or template variable reference\"\n                },\n                \"currencyCode\": {\n\
         \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Amount value (numeric string for template substitution support)\"\n                },\n                \"amountType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"How to interpret the amount (flat, percentage, remainder)\"\n                },\n                \"sourceWallet\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source wallet identifier or template variable reference\"\n                },\n                \"destinationWallet\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Destination wallet identifier or template variable reference\"\n                },\n                \"recipientWallet\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Recipient wallet for fee clauses or template variable reference\"\n                },\n                \"currencyCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Currency code for currency-based clauses\"\n                },\n                \"sourceContainer\": {\n     \
         \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source container identifier or template variable reference for item clauses\"\n                },\n          \
@@ -1252,43 +1281,266 @@ paths:
         contract template. Does not affect existing instances.\\nOnly certain fields can be updated after creation.\\n\",\n\
         \    \"tags\": [\n        \"Templates\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateContractTemplate\"\
         \n}"
-  /contract/template/delete:
+  /contract/template/deprecate:
     post:
-      operationId: deleteContractTemplate
+      operationId: deprecateContractTemplate
       tags:
       - Templates
-      summary: Soft-delete template
+      summary: Deprecate template (Category B — one-way, no delete)
       description: |
-        Soft-deletes a contract template. Existing instances continue to function
+        Deprecates a contract template. Existing instances continue to function
         but no new instances can be created from this template.
+        Category B entity: deprecation is one-way (no undeprecate), no delete endpoint.
+        Idempotent: returns OK if already deprecated.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteContractTemplateRequest'
+              $ref: '#/components/schemas/DeprecateContractTemplateRequest'
       responses:
         '200':
-          description: Template deleted successfully
+          description: Template deprecated successfully (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractTemplateResponse'
         '404':
           description: Template not found
-        '409':
-          description: Template has active instances and cannot be deleted
       x-permissions:
       - role: admin
         states: {}
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteContractTemplateRequest\"\
-        ,\n    \"$defs\": {\n        \"DeleteContractTemplateRequest\": {\n            \"type\": \"object\",\n           \
-        \ \"description\": \"Request to delete a contract template\",\n            \"additionalProperties\": false,\n    \
-        \        \"required\": [\n                \"templateId\"\n            ],\n            \"properties\": {\n        \
-        \        \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"Template ID to delete\"\n                }\n            }\n        }\n   \
-        \ }\n}"
-      x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n    \"summary\": \"Soft-delete template\",\n    \"description\": \"Soft-deletes a contract
-        template. Existing instances continue to function\\nbut no new instances can be created from this template.\\n\",\n\
-        \    \"tags\": [\n        \"Templates\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteContractTemplate\"\
-        \n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateContractTemplateRequest\"\
+        ,\n    \"$defs\": {\n        \"DeprecateContractTemplateRequest\": {\n            \"type\": \"object\",\n        \
+        \    \"description\": \"Request to deprecate a contract template (Category B \\u2014 one-way, no delete)\",\n    \
+        \        \"additionalProperties\": false,\n            \"required\": [\n                \"templateId\"\n         \
+        \   ],\n            \"properties\": {\n                \"templateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Template ID to deprecate\"\n\
+        \                },\n                \"reason\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for
+        deprecation (audit context for Category B entities)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContractTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"ContractTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Contract template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
+        \            \"templateId\",\n                \"code\",\n                \"name\",\n                \"minParties\"\
+        ,\n                \"maxParties\",\n                \"partyRoles\",\n                \"defaultEnforcementMode\",\n\
+        \                \"transferable\",\n                \"isActive\",\n                \"isDeprecated\",\n           \
+        \     \"createdAt\"\n            ],\n            \"properties\": {\n                \"templateId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
+        \"Unique template identifier\"\n                },\n                \"code\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Unique template code\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n   \
+        \             },\n                \"description\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Detailed description\"\n                },\n    \
+        \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Realm ID if realm-specific\"\n  \
+        \              },\n                \"minParties\": {\n                    \"type\": \"integer\",\n               \
+        \     \"description\": \"Minimum parties required\"\n                },\n                \"maxParties\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Maximum parties allowed\"\n       \
+        \         },\n                \"partyRoles\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/PartyRoleDefinition\"\n                    },\n          \
+        \          \"description\": \"Party role definitions\"\n                },\n                \"defaultTerms\": {\n\
+        \                    \"$ref\": \"#/$defs/ContractTerms\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Default contract terms\"\n                },\n                \"milestones\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MilestoneDefinition\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Milestone
+        definitions\"\n                },\n                \"defaultEnforcementMode\": {\n                    \"$ref\": \"\
+        #/$defs/EnforcementMode\",\n                    \"description\": \"Default enforcement mode\"\n                },\n\
+        \                \"transferable\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether contracts can be transferred\"\n                },\n                \"gameMetadata\": {\n            \
+        \        \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Client-only game metadata. No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"isActive\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether template is active\"\n                },\n            \
+        \    \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        template is deprecated (Category B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When the template was deprecated\"\n                },\n\
+        \                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Reason for deprecation\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Creation timestamp\"\n                },\n                \"updatedAt\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n  \
+        \      \"PartyRoleDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Definition of
+        a party role in a contract template\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"role\",\n                \"minCount\",\n                \"maxCount\"\n            ],\n        \
+        \    \"properties\": {\n                \"role\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Role identifier
+        (employer, employee, buyer, seller, etc.)\"\n                },\n                \"minCount\": {\n               \
+        \     \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
+        entities required in this role\"\n                },\n                \"maxCount\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Maximum entities allowed
+        in this role\"\n                },\n                \"allowedEntityTypes\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"object\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Which entity types can fill this role (null
+        for any)\"\n                }\n            }\n        },\n        \"ContractTerms\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Configurable contract terms\",\n            \"additionalProperties\": false,\n \
+        \           \"properties\": {\n                \"duration\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Contract duration (ISO 8601 duration, null
+        for perpetual)\"\n                },\n                \"paymentSchedule\": {\n                    \"$ref\": \"#/$defs/PaymentSchedule\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When payments occur\"\n       \
+        \         },\n                \"paymentFrequency\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Recurring payment frequency (ISO 8601 duration)\"\
+        \n                },\n                \"terminationPolicy\": {\n                    \"$ref\": \"#/$defs/TerminationPolicy\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How contract can be terminated\"\
+        \n                },\n                \"terminationNoticePeriod\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Required notice for termination (ISO
+        8601 duration)\"\n                },\n                \"breachThreshold\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Breaches before auto-termination (0 for no auto)\"\n                },\n                \"gracePeriodForCure\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Time to cure breach (ISO 8601 duration)\"\n                },\n                \"exclusivity\": {\n          \
+        \          \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Whether this contract has an exclusivity clause preventing the entity from entering similar contracts\"\n        \
+        \        },\n                \"nonCompete\": {\n                    \"type\": \"boolean\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Whether this contract has a non-compete clause\"\n     \
+        \           },\n                \"timeCommitment\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Whether this contract has a time commitment clause\"\
+        \n                },\n                \"timeCommitmentType\": {\n                    \"allOf\": [\n              \
+        \          {\n                            \"$ref\": \"#/$defs/TimeCommitmentType\"\n                        }\n  \
+        \                  ],\n                    \"nullable\": true,\n                    \"description\": \"Type of time
+        commitment for scheduling constraints\"\n                },\n                \"clauses\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
+        \      \"$ref\": \"#/$defs/ContractClauseDefinition\"\n                    },\n                    \"description\"\
+        : \"Clause definitions for contract execution (fees, distributions, asset requirements)\"\n                },\n  \
+        \              \"customTerms\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only custom terms.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
+        \        \"PaymentSchedule\": {\n            \"type\": \"string\",\n            \"description\": \"When payments occur\"\
+        ,\n            \"enum\": [\n                \"OneTime\",\n                \"Recurring\",\n                \"MilestoneBased\"\
+        \n            ]\n        },\n        \"TerminationPolicy\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How the contract can be terminated\",\n            \"enum\": [\n                \"MutualConsent\",\n         \
+        \       \"UnilateralWithNotice\",\n                \"UnilateralImmediate\",\n                \"NonTerminable\"\n \
+        \           ]\n        },\n        \"TimeCommitmentType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of time commitment for scheduling constraints\",\n            \"enum\": [\n                \"Exclusive\"\
+        ,\n                \"Partial\"\n            ]\n        },\n        \"ContractClauseDefinition\": {\n            \"\
+        type\": \"object\",\n            \"description\": \"A clause definition for contract execution specifying asset transfers,
+        fees, or requirements\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"id\",\n                \"type\"\n            ],\n            \"properties\": {\n                \"id\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for this clause
+        within the contract\"\n                },\n                \"type\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)\"\
+        \n                },\n                \"party\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Party role reference for this clause\"\n          \
+        \      },\n                \"amount\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Amount value (numeric string for template substitution support)\"\n\
+        \                },\n                \"amountType\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"How to interpret the amount (flat, percentage,
+        remainder)\"\n                },\n                \"sourceWallet\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Source wallet identifier or template
+        variable reference\"\n                },\n                \"destinationWallet\": {\n                    \"type\":
+        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Destination wallet identifier
+        or template variable reference\"\n                },\n                \"recipientWallet\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Recipient
+        wallet for fee clauses or template variable reference\"\n                },\n                \"currencyCode\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Currency code for currency-based clauses\"\n                },\n                \"sourceContainer\": {\n     \
+        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Source container identifier or template variable reference for item clauses\"\n                },\n          \
+        \      \"destinationContainer\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Destination container identifier or template variable reference for item clauses\"\
+        \n                },\n                \"itemCode\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Item code for item-based clauses\"\n           \
+        \     },\n                \"checkLocation\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Location template variable reference for asset requirement
+        checks\"\n                },\n                \"assets\": {\n                    \"type\": \"array\",\n          \
+        \          \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ContractClauseAsset\"\
+        \n                    },\n                    \"description\": \"Asset requirements for asset_requirement clause type\"\
+        \n                }\n            }\n        },\n        \"ContractClauseAsset\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"An asset requirement within a clause definition\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"type\",\n                \"code\",\n                \"amount\"\
+        \n            ],\n            \"properties\": {\n                \"type\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Asset type (currency, item)\"\n                },\n                \"code\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Asset code identifier\"\n \
+        \               },\n                \"amount\": {\n                    \"type\": \"number\",\n                   \
+        \ \"description\": \"Required amount of the asset\"\n                }\n            }\n        },\n        \"MilestoneDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Milestone definition in a template\",\n   \
+        \         \"additionalProperties\": false,\n            \"required\": [\n                \"code\",\n             \
+        \   \"name\",\n                \"sequence\",\n                \"required\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 64,\n\
+        \                    \"description\": \"Unique milestone code within template\"\n                },\n            \
+        \    \"name\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n           \
+        \         \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n     \
+        \               \"type\": \"string\",\n                    \"maxLength\": 1000,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"What this milestone represents\"\n                },\n           \
+        \     \"sequence\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n         \
+        \           \"description\": \"Order in the contract flow\"\n                },\n                \"required\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether milestone must be completed\"\
+        \n                },\n                \"deadline\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Relative deadline (ISO 8601 duration)\"\n      \
+        \          },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
+        optional milestones (default skip). Required milestones always trigger breach.\"\n                },\n           \
+        \     \"onComplete\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
+        \            \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"APIs to call on completion\"\n                },\n                \"onExpire\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"APIs to call if deadline passes\"\n                }\n            }\n        },\n        \"MilestoneDeadlineBehavior\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\"\
+        ,\n            \"enum\": [\n                \"Skip\",\n                \"Warn\",\n                \"Breach\"\n   \
+        \         ]\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Pre-configured API call to execute on contract events\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"serviceName\",\n                \"endpoint\",\n                \"payloadTemplate\"\
+        \n            ],\n            \"properties\": {\n                \"serviceName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Target service name\"\n                },\n                \"\
+        endpoint\": {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint path\"\
+        \n                },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"JSON payload with variable placeholders\"\n                },\n                \"\
+        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Human-readable description\"\n                },\n                \"executionMode\":
+        {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/PreboundApiExecutionMode\"\
+        \n                        }\n                    ],\n                    \"default\": \"sync\",\n                \
+        \    \"description\": \"How to execute the API call\"\n                },\n                \"responseValidation\"\
+        : {\n                    \"$ref\": \"#/$defs/ResponseValidation\",\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Optional validation rules for the response\"\n                }\n            }\n\
+        \        },\n        \"PreboundApiExecutionMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How to execute a prebound API call\",\n            \"enum\": [\n                \"Sync\",\n                \"\
+        Async\",\n                \"FireAndForget\"\n            ]\n        },\n        \"ResponseValidation\": {\n      \
+        \      \"type\": \"object\",\n            \"description\": \"Validation rules for API responses with three-outcome
+        model (success, permanent failure, transient failure)\",\n            \"additionalProperties\": false,\n         \
+        \   \"properties\": {\n                \"successConditions\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\n                 \
+        \   },\n                    \"description\": \"Conditions that must ALL pass for success; if any fail, checks permanent
+        failure conditions\"\n                },\n                \"permanentFailureConditions\": {\n                    \"\
+        type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\
+        \n                    },\n                    \"description\": \"Conditions that indicate permanent failure (clause
+        violated); checked when success conditions fail\"\n                },\n                \"transientFailureStatusCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"integer\"\n                    },\n                    \"description\": \"HTTP status codes indicating transient
+        failure for retry (default 408, 429, 502, 503, 504)\"\n                }\n            }\n        },\n        \"ValidationCondition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A single condition to check against an API
+        response\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n\
+        \            ],\n            \"properties\": {\n                \"type\": {\n                    \"allOf\": [\n  \
+        \                      {\n                            \"$ref\": \"#/$defs/ValidationConditionType\"\n            \
+        \            }\n                    ],\n                    \"description\": \"The type of validation condition to
+        check\"\n                },\n                \"jsonPath\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"JsonPath expression to extract value from
+        response (required for jsonPathEquals/Exists/NotExists, e.g. \\\"$.balance\\\")\"\n                },\n          \
+        \      \"expectedValue\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Expected value for comparison conditions with type coercion (\\\"true\\\"\
+        /\\\"false\\\" for booleans, numeric strings for numbers)\"\n                },\n                \"operator\": {\n\
+        \                    \"$ref\": \"#/$defs/ComparisonOperator\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Comparison operator for numeric comparisons\"\n                },\n              \
+        \  \"statusCodes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
+        \          \"type\": \"integer\"\n                    },\n                    \"description\": \"HTTP status codes
+        for statusCodeIn condition\"\n                }\n            }\n        },\n        \"ValidationConditionType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Type of validation condition\",\n            \"\
+        enum\": [\n                \"StatusCodeIn\",\n                \"JsonPathEquals\",\n                \"JsonPathNotEquals\"\
+        ,\n                \"JsonPathExists\",\n                \"JsonPathNotExists\",\n                \"JsonPathGreaterThan\"\
+        ,\n                \"JsonPathLessThan\",\n                \"JsonPathContains\"\n            ]\n        },\n      \
+        \  \"ComparisonOperator\": {\n            \"type\": \"string\",\n            \"description\": \"Comparison operators
+        for numeric conditions\",\n            \"enum\": [\n                \"Eq\",\n                \"Ne\",\n           \
+        \     \"Gt\",\n                \"Gte\",\n                \"Lt\",\n                \"Lte\"\n            ]\n       \
+        \ },\n        \"EnforcementMode\": {\n            \"type\": \"string\",\n            \"description\": \"How contract
+        breaches are handled\",\n            \"enum\": [\n                \"Advisory\",\n                \"EventOnly\",\n\
+        \                \"ConsequenceBased\",\n                \"Community\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Deprecate template (Category B \\u2014 one-way, no delete)\",\n    \"description\"\
+        : \"Deprecates a contract template. Existing instances continue to function\\nbut no new instances can be created
+        from this template.\\nCategory B entity: deprecation is one-way (no undeprecate), no delete endpoint.\\nIdempotent:
+        returns OK if already deprecated.\\n\",\n    \"tags\": [\n        \"Templates\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"deprecateContractTemplate\"\n}"
   /contract/instance/create:
     post:
       operationId: createContractInstance
@@ -4263,6 +4515,10 @@ components:
           type: boolean
           nullable: true
           description: Filter by active status.
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated templates (default false).
         searchTerm:
           type: string
           nullable: true
@@ -4307,9 +4563,9 @@ components:
           additionalProperties: true
           nullable: true
           description: "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
-    DeleteContractTemplateRequest:
+    DeprecateContractTemplateRequest:
       type: object
-      description: Request to delete a contract template
+      description: Request to deprecate a contract template (Category B — one-way, no delete)
       additionalProperties: false
       required:
       - templateId
@@ -4317,7 +4573,12 @@ components:
         templateId:
           type: string
           format: uuid
-          description: Template ID to delete
+          description: Template ID to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (audit context for Category B entities)
     ContractTemplateResponse:
       type: object
       description: Contract template details
@@ -4332,6 +4593,7 @@ components:
       - defaultEnforcementMode
       - transferable
       - isActive
+      - isDeprecated
       - createdAt
       properties:
         templateId:
@@ -4388,6 +4650,18 @@ components:
         isActive:
           type: boolean
           description: Whether template is active
+        isDeprecated:
+          type: boolean
+          description: Whether template is deprecated (Category B — one-way)
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time

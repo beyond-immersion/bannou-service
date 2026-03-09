@@ -89,7 +89,6 @@ This isn't about AI safety or alignment. It's about the mundane reality that LLM
 │   └── task-creation-reminder.sh
 ├── commands/                  # Custom slash commands
 │   ├── audit-plugin.md        # Single plugin gap auditing
-│   ├── audit-plugins.md       # Batch plugin auditing
 │   ├── check-plugin.md        # Plugin tenet compliance check
 │   ├── implement-feature.md   # Feature implementation workflow
 │   ├── implement-plugin.md    # Plugin implementation workflow
@@ -305,7 +304,7 @@ Skill invoked
     │
     ▼
 Edit .claude/permission-canary.txt
-(toggle trailing space: "canary" ↔ "canary ")
+(toggle case: "canary" ↔ "canarY")
     │
     ├── Edit succeeds → proceed with workflow
     │
@@ -314,7 +313,7 @@ Edit .claude/permission-canary.txt
         No files read. No analysis. No report. Zero work performed.
 ```
 
-**The canary file**: `.claude/permission-canary.txt` contains the word `canary`. The check toggles a trailing space — a change with zero functional consequence that exercises the Edit tool's permission path.
+**The canary file**: `.claude/permission-canary.txt` contains the word `canary`. The check toggles the case of the last letter (`canary` ↔ `canarY`) — a change with zero functional consequence that exercises the Edit tool's permission path. A visible character change is used instead of trailing whitespace because the Edit tool normalizes trailing whitespace, making space-only differences unrepresentable.
 
 ### Why This Exists
 
@@ -335,10 +334,9 @@ Every skill file includes this block immediately after the YAML frontmatter:
 ## ⛔ PERMISSION CANARY (MANDATORY FIRST STEP) ⛔
 
 **Before doing ANY work, you MUST perform this permission check.**
-Edit the file `.claude/permission-canary.txt` — change its content from
-`canary` to `canary ` (add a trailing space), or vice versa
-(remove a trailing space). This is a zero-consequence edit that
-verifies you have Edit permissions.
+Edit the file `.claude/permission-canary.txt` — toggle its content
+between `canary` and `canarY` (flip the case of the last letter).
+This is a zero-consequence edit that verifies you have Edit permissions.
 
 **If the Edit is denied: HARD STOP.**
 Output exactly: `PERMISSION DENIED: Edit tool is not permitted in this
@@ -354,7 +352,7 @@ Zero work. The entire point is to fail before wasting any time.
 | Principle | How the Canary Implements It |
 |-----------|------------------------------|
 | **Fail fast** | First action in every skill; fails before any real work |
-| **Zero consequence** | Toggling a trailing space changes nothing functional |
+| **Zero consequence** | Toggling the case of one letter changes nothing functional |
 | **No workarounds** | Explicitly forbids reading files, generating reports, or creating issues as "fallback" |
 | **Clear error** | Prescribes exact output message so the user knows precisely what happened |
 | **Honest failure** | "If you cannot edit, you cannot audit. Fail honestly." |
@@ -363,7 +361,7 @@ Zero work. The entire point is to fail before wasting any time.
 
 The canary block is present in all 16 skill files in `.claude/commands/`:
 
-`audit-plugin.md`, `audit-plugins.md`, `check-plugin.md`, `implement-feature.md`, `implement-plugin.md`, `investigate-issue.md`, `maintain-faq.md`, `maintain-guide.md`, `maintain-issues.md`, `maintain-operations-doc.md`, `maintain-planning-doc.md`, `maintain-plugin.md`, `map-plugin.md`, `orchestrate-skill.md`, `test-plugin.md`, `update-permissions.md`
+`audit-plugin.md`, `check-plugin.md`, `implement-feature.md`, `implement-plugin.md`, `investigate-issue.md`, `maintain-faq.md`, `maintain-guide.md`, `maintain-issues.md`, `maintain-operations-doc.md`, `maintain-planning-doc.md`, `maintain-plugin.md`, `map-plugin.md`, `orchestrate-skill.md`, `test-plugin.md`, `update-permissions.md`
 
 ### Adding the Canary to New Skills
 
@@ -427,27 +425,6 @@ Finds and handles ONE implementation gap from a plugin's deep dive document.
 | All TENETs satisfied | TENET interpretation needed |
 | Scope < 5 files, < 200 lines | Human judgment required |
 | No business logic decisions | Scope uncertain or large |
-
----
-
-#### `/audit-plugins <count>`
-
-Launches multiple audit agents sequentially, each on a unique plugin.
-
-```bash
-/audit-plugins 3                 # Audit 3 different plugins sequentially
-/audit-plugins 5                 # Audit 5 plugins sequentially
-```
-
-**How it works**:
-1. Randomly selects N unique plugins
-2. Launches agents one at a time (foreground mode)
-3. Each agent runs full `/audit-plugin` workflow
-4. Waits for completion before launching next
-
-**Why sequential?** See [Task Tool Limitations](#task-tool-limitations) below.
-
-**Recommended**: 3-5 plugins per batch
 
 ---
 
@@ -600,7 +577,7 @@ Audits and fixes `x-permissions` on all endpoints for 1-5 plugins, ensuring comp
 
 #### `/orchestrate-skill <skill-name> for <scope>`
 
-Orchestrates running any single-target skill across multiple targets in parallel batches of 3. Supersedes `/audit-plugins` for batch operations. Compaction-safe task tracking.
+Orchestrates running any single-target skill across multiple targets in parallel batches of 3. Compaction-safe task tracking. When used with `audit-plugin`, automatically pre-filters to plugins with actionable gaps via `scripts/select-plugins-for-audit.sh`.
 
 ```bash
 /orchestrate-skill maintain-plugin for all
@@ -666,8 +643,8 @@ See the [Configuration Files](#configuration-files) section above for the full d
 ### For Bulk Progress
 
 ```bash
-# Audit multiple plugins sequentially (parallel not possible due to Skill tool limitation)
-/audit-plugins 3
+# Audit multiple plugins in parallel (auto-filters to plugins with actionable gaps)
+/orchestrate-skill audit-plugin for 5
 ```
 
 ### For Code Changes
@@ -727,8 +704,8 @@ Skill tool works correctly
 - Agents that don't need Skill tool can run in background
 
 **Impact on Commands**:
-- `/audit-plugins` must run sequentially (foreground) instead of in parallel
 - Any command that spawns agents needing Skill must use foreground mode
+- `/orchestrate-skill` avoids this by embedding full skill content in agent prompts instead of using the Skill tool
 
 ### Permission Modes Reference
 

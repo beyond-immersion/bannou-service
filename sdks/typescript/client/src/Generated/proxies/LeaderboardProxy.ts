@@ -61,20 +61,21 @@ export class LeaderboardProxy {
   }
 
   /**
-   * Delete leaderboard definition
+   * Deprecate leaderboard definition
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
-   * @returns Promise that completes when the event is sent.
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
    */
-  async leaderboardDeleteLeaderboardDefinitionEventAsync(
-    request: Schemas['DeleteLeaderboardDefinitionRequest'],
-    channel: number = 0
-  ): Promise<void> {
-    return this.client.sendEventAsync<Schemas['DeleteLeaderboardDefinitionRequest']>(
-      '/leaderboard/definition/delete',
-      request,
-      channel
-    );
+  async leaderboardDeprecateLeaderboardDefinitionAsync(
+    request: Schemas['DeprecateLeaderboardDefinitionRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['LeaderboardDefinitionResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeprecateLeaderboardDefinitionRequest'],
+      Schemas['LeaderboardDefinitionResponse']
+    >('/leaderboard/definition/deprecate', request, channel, timeout);
   }
 
   /**

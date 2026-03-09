@@ -1,14 +1,20 @@
 # Cultural Emergence: Divine Curation of Organic Identity and Custom
 
-> **Status**: Vision Document (design analysis, no implementation)
-> **Priority**: High (Living Game Worlds -- North Star #1, Emergent Over Authored -- North Star #5)
-> **Related**: `docs/planning/SANCTUARIES-AND-SPIRIT-DENS.md`, `docs/planning/LOCATION-BOUND-PRODUCTION.md`, `docs/planning/COMPRESSION-GAMEPLAY-PATTERNS.md`, `docs/planning/DEATH-AND-PLOT-ARMOR.md`, `docs/reference/ORCHESTRATION-PATTERNS.md`
-> **Services**: Divine, Faction, Obligation, Hearsay, Disposition, Actor, Puppetmaster, Workshop, Trade, Environment, Location, Collection, Item, Inventory, Contract, Currency, Worldstate, Seed, Agency
+> **Type**: Vision Document
+> **Status**: Aspirational
+> **Created**: 2026-02-01
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #5
+> **Related Plugins**: Divine, Faction, Obligation, Hearsay, Disposition, Actor, Puppetmaster, Workshop, Trade, Environment, Location, Collection, Item, Inventory, Contract, Currency, Worldstate, Seed, Agency
 > **External Inspiration**: *Ascendance of a Bookworm* (Myne's coming-of-age ceremony, church citizenship rituals, class-differentiated customs), *By the Grace of the Gods* / *Blessed by the Gods* (status boards as cultural artifact), general isekai "status board" trope
+
+## Summary
+
+Describes how divine actors observe emergent material conditions at settlements (dominant production, geography, governance, trade significance) and crystallize them into cultural identity and customs via Hearsay beliefs and Faction norms, requiring zero new services. Customs such as coming-of-age ceremonies, harvest festivals, mourning rites, and trade protocols emerge organically because the divine GOAP planner selects culturally appropriate practices and artifacts from what is actually available and valued in each community. Several key dependencies remain unimplemented, including the Hearsay, Disposition, Agency, Workshop, Trade, and Environment plugins.
 
 ---
 
-## Executive Summary
+## Extended Summary
 
 A fishing village is more than a village that sustains itself off fish. It is a place where the inhabitants **know** they are a fishing village -- where that identity shapes their pride, their customs, their coming-of-age rituals, their relationships with neighboring settlements, and how strangers perceive them. This document describes the pattern by which settlement identities and cultural customs **emerge organically** from observed conditions and are **crystallized into shared reality** by divine actors -- requiring zero new services.
 
@@ -432,7 +438,7 @@ The divine actor's ABML behavior document for cultural curation would be a large
 
 ---
 
-## Summary
+## Conclusion
 
 Culture in Bannou is not designed. It is **observed, named, and formalized** by divine actors who possess the cross-domain perspective to recognize what a settlement has already become. The customs that emerge match their context because they are derived from it. The status board is not a feature -- it is one possible cultural artifact that appears when material conditions, governance structures, and divine aesthetics align to produce a society that values formalized self-knowledge.
 

@@ -329,7 +329,6 @@ struct FDeleteArchiveRequest;
 struct FDeleteArchiveResponse;
 struct FDeleteAreaContentConfigRequest;
 struct FDeleteBoardRequest;
-struct FDeleteBoardTemplateRequest;
 struct FDeleteBundleRequest;
 struct FDeleteBundleResponse;
 struct FDeleteCalendarRequest;
@@ -341,8 +340,6 @@ struct FDeleteContractInstanceRequest;
 struct FDeleteContractInstanceResponse;
 struct FDeleteDocumentRequest;
 struct FDeleteDocumentResponse;
-struct FDeleteEncounterTypeRequest;
-struct FDeleteLeaderboardDefinitionRequest;
 struct FDeleteLocationRequest;
 struct FDeleteMessageRequest;
 struct FDeleteModeRequest;
@@ -365,8 +362,12 @@ struct FDeploymentPhase;
 struct FDepositRequest;
 struct FDepositResponse;
 struct FDeprecateAchievementDefinitionRequest;
+struct FDeprecateBoardTemplateRequest;
+struct FDeprecateCurrencyDefinitionRequest;
+struct FDeprecateEncounterTypeRequest;
 struct FDeprecateEntryTemplateRequest;
 struct FDeprecateFactionRequest;
+struct FDeprecateLeaderboardDefinitionRequest;
 struct FDeprecateLocationRequest;
 struct FDeprecateModeRequest;
 struct FDeprecateQuestDefinitionRequest;
@@ -487,7 +488,6 @@ struct FGetChildRelationshipTypesRequest;
 struct FGetClientCapabilitiesRequest;
 struct FGetCollectionRequest;
 struct FGetCompletionStatsRequest;
-struct FGetCompressDataRequest;
 struct FGetConnectionRequest;
 struct FGetConsentStatusRequest;
 struct FGetConsentStatusResponse;
@@ -964,7 +964,6 @@ struct FResolveBundlesResponse;
 struct FResolvedAsset;
 struct FResolvedBundle;
 struct FResolvedReference;
-struct FResourceArchiveBase;
 struct FResponseValidation;
 struct FRestoreArchiveRequest;
 struct FRestoreArchiveResponse;
@@ -1080,10 +1079,10 @@ struct FStopBroadcastConsentRequest;
 struct FStopWatcherRequest;
 struct FStopWatcherResponse;
 struct FStorageMode;
-struct FStorylineArchive;
+struct FStorylineBackstoryElementType;
+struct FStorylineExperienceType;
 struct FStorylineGoal;
 struct FStorylineLink;
-struct FStorylineParticipation;
 struct FStorylinePlanAction;
 struct FStorylinePlanPhase;
 struct FStorylineRisk;
@@ -3614,6 +3613,18 @@ struct FBoardTemplateResponse
     /** Whether the template is active (can create new board instances) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IsActive = false;
+
+    /** Whether this template has been deprecated (Category B — one-way) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When the template was deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Reason for deprecation (audit context) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
 
     /** When the template was created */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -7659,6 +7670,18 @@ struct FContractTemplateResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IsActive = false;
 
+    /** Whether template is deprecated (Category B — one-way) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When the template was deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Reason for deprecation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
+
     /** Creation timestamp */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
@@ -9543,7 +9566,7 @@ struct FCreateSlotRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FString> Tags;
 
-    /** Custom key-value metadata for the slot */
+    /** Client-only metadata for the slot. No Bannou plugin reads specific keys from this field by convention. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -9842,6 +9865,18 @@ struct FCurrencyDefinitionResponse
     /** Whether definition is active */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IsActive = false;
+
+    /** Whether definition is deprecated (Category B — one-way) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When the definition was deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Reason for deprecation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
 
     /** Creation timestamp */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -10216,20 +10251,6 @@ struct FDeleteBoardRequest
 };
 
 /**
- * Request to delete a board template
- */
-USTRUCT(BlueprintType)
-struct FDeleteBoardTemplateRequest
-{
-    GENERATED_BODY()
-
-    /** Board template to delete */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid BoardTemplateId;
-
-};
-
-/**
  * Request to delete a bundle
  */
 USTRUCT(BlueprintType)
@@ -10404,38 +10425,6 @@ struct FDeleteDocumentResponse
     /** Deadline for recovering the document from trashcan */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime RecoverableUntil;
-
-};
-
-/**
- * Request to delete an encounter type
- */
-USTRUCT(BlueprintType)
-struct FDeleteEncounterTypeRequest
-{
-    GENERATED_BODY()
-
-    /** Code of the type to delete */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Code;
-
-};
-
-/**
- * Request to delete a leaderboard
- */
-USTRUCT(BlueprintType)
-struct FDeleteLeaderboardDefinitionRequest
-{
-    GENERATED_BODY()
-
-    /** ID of the game service */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid GameServiceId;
-
-    /** ID of the leaderboard to delete */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString LeaderboardId;
 
 };
 
@@ -10653,6 +10642,10 @@ struct FDeleteVersionRequest
 {
     GENERATED_BODY()
 
+    /** Game identifier for namespace isolation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString GameId;
+
     /** ID of the owning entity */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid OwnerId;
@@ -10812,6 +10805,60 @@ struct FDeprecateAchievementDefinitionRequest
 };
 
 /**
+ * Request to deprecate a board template (Category B — one-way)
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateBoardTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** Board template to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BoardTemplateId;
+
+    /** Reason for deprecation (audit context for Category B entities) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
+
+};
+
+/**
+ * Request to deprecate a currency definition (Category B — one-way, no delete)
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateCurrencyDefinitionRequest
+{
+    GENERATED_BODY()
+
+    /** Definition ID to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid DefinitionId;
+
+    /** Reason for deprecation (audit context for Category B entities) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
+
+};
+
+/**
+ * Request to deprecate an encounter type (Category B — one-way, no delete). Idempotent — returns OK if already deprecated.
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateEncounterTypeRequest
+{
+    GENERATED_BODY()
+
+    /** Code of the type to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Code;
+
+    /** Reason for deprecation (recommended for audit trail) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
+
+};
+
+/**
  * Request to deprecate an entry template (Category B — one-way, no delete)
  */
 USTRUCT(BlueprintType)
@@ -10844,6 +10891,28 @@ struct FDeprecateFactionRequest
     /** Reason for deprecation (audit context for Category A entities) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString DeprecationReason;
+
+};
+
+/**
+ * Request to deprecate a leaderboard definition (Category B — one-way)
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateLeaderboardDefinitionRequest
+{
+    GENERATED_BODY()
+
+    /** ID of the game service */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** ID of the leaderboard to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString LeaderboardId;
+
+    /** Reason for deprecation (audit context for Category B entities) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
 
 };
 
@@ -10920,7 +10989,7 @@ struct FDeprecateRelationshipTypeRequest
 };
 
 /**
- * Request to deprecate a room type (prevents new room creation)
+ * Request to deprecate a room type (Category B — one-way, no delete). Idempotent — returns OK if already deprecated.
  */
 USTRUCT(BlueprintType)
 struct FDeprecateRoomTypeRequest
@@ -10934,6 +11003,10 @@ struct FDeprecateRoomTypeRequest
     /** Game service scope for the type */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> GameServiceId;
+
+    /** Reason for deprecation (recommended for audit trail) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
 
 };
 
@@ -10996,7 +11069,7 @@ struct FDeprecateStatusTemplateRequest
 };
 
 /**
- * Request to deprecate a template
+ * Request to deprecate a scenario template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated.
  */
 USTRUCT(BlueprintType)
 struct FDeprecateTemplateRequest
@@ -11006,6 +11079,10 @@ struct FDeprecateTemplateRequest
     /** Template ID to deprecate */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid ScenarioTemplateId;
+
+    /** Reason for deprecation (recommended for audit trail) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
 
 };
 
@@ -11546,6 +11623,18 @@ struct FEncounterTypeResponse
     /** Whether the type is active */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IsActive = false;
+
+    /** Whether this type has been deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When the type was deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Why the type was deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
 
     /** When the type was created */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -13848,20 +13937,6 @@ struct FGetCompletionStatsRequest
 };
 
 /**
- * Request to get character data for compression
- */
-USTRUCT(BlueprintType)
-struct FGetCompressDataRequest
-{
-    GENERATED_BODY()
-
-    /** ID of the character to get compress data for */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid CharacterId;
-
-};
-
-/**
  * Request to get a connection by ID or code. One of connectionId or code must be provided.
  */
 USTRUCT(BlueprintType)
@@ -14110,14 +14185,6 @@ USTRUCT(BlueprintType)
 struct FGetEffectsResponse
 {
     GENERATED_BODY()
-
-    /** Entity these effects belong to */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid EntityId;
-
-    /** Entity type discriminator */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FEntityType EntityType;
 
     /** Number of item-based status effects */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -14695,11 +14762,7 @@ struct FGetPlanResponse
 {
     GENERATED_BODY()
 
-    /** Whether the plan was found */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Found = false;
-
-    /** The plan (null if not found) */
+    /** The composed plan */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FComposeResponse> Plan;
 
@@ -15037,11 +15100,7 @@ struct FGetScenarioDefinitionResponse
 {
     GENERATED_BODY()
 
-    /** Whether the scenario was found */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Found = false;
-
-    /** The scenario definition (null if not found) */
+    /** The scenario definition */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FScenarioDefinition> Scenario;
 
@@ -15480,22 +15539,14 @@ struct FGetValidationRulesRequest
 };
 
 /**
- * Response containing validation rules
+ * Response containing validation rules for the requested gameId and sceneType
  */
 USTRUCT(BlueprintType)
 struct FGetValidationRulesResponse
 {
     GENERATED_BODY()
 
-    /** Game ID */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString GameId;
-
-    /** Scene type */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FSceneType SceneType;
-
-    /** Registered rules (null if none) */
+    /** Registered rules (null if none registered for the combination) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FValidationRule> Rules;
 
@@ -15641,7 +15692,7 @@ struct FGrantStatusRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int32> DurationOverrideSeconds;
 
-    /** Arbitrary key-value data passed to contract template values and stored on the status instance. Opaque to Status -- callers define their own semantics. */
+    /** Client-defined metadata. Opaque to Status — stored and returned verbatim. Not a contract between services. Passed to contract template values and stored on the status instance. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -16957,7 +17008,7 @@ struct FJsonPatchOperation
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString From;
 
-    /** Value to use (for add/replace/test operations) */
+    /** Value to use (for add/replace/test operations, null for remove/move/copy) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Value;
 
@@ -17118,6 +17169,18 @@ struct FLeaderboardDefinitionResponse
     /** Whether the leaderboard is publicly visible */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IsPublic = false;
+
+    /** Whether this definition has been deprecated (Category B — one-way) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When the definition was deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Reason for deprecation (audit context) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
 
     /** Current season number (if seasonal) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -17603,6 +17666,10 @@ struct FListBoardTemplatesRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid GameServiceId;
 
+    /** Include deprecated templates in results (default false) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IncludeDeprecated = false;
+
     /** Opaque cursor from previous response. Null for first page. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Cursor;
@@ -17880,6 +17947,10 @@ struct FListContractTemplatesRequest
     /** Filter by active status. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IsActive = false;
+
+    /** Whether to include deprecated templates (default false). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IncludeDeprecated = false;
 
     /** Search in name and description. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -18921,6 +18992,10 @@ struct FListRoomTypesRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Status;
 
+    /** Include deprecated room types in results (excluded by default) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IncludeDeprecated = false;
+
     /** Page number (zero-based) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int32> Page;
@@ -19787,7 +19862,7 @@ struct FLoadResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
 
-    /** Custom metadata (null if none set) */
+    /** Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -20132,7 +20207,7 @@ struct FMapObject
 };
 
 /**
- * Types of marker nodes for spawn points, waypoints, and other positional markers.
+ * Marker code for spawn points, waypoints, and other positional markers.
  */
 USTRUCT(BlueprintType)
 struct FMarkerType
@@ -20659,7 +20734,7 @@ struct FMigrateSaveRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString SlotName;
 
-    /** Specific version to migrate (defaults to latest) */
+    /** Specific version to migrate (null = latest) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int32> VersionNumber;
 
@@ -22231,6 +22306,10 @@ struct FPinVersionRequest
 {
     GENERATED_BODY()
 
+    /** Game identifier for namespace isolation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString GameId;
+
     /** ID of the owning entity */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid OwnerId;
@@ -23565,7 +23644,7 @@ struct FQuerySavesRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString SchemaVersion;
 
-    /** Filter by metadata key-value pairs */
+    /** Filter by client metadata key-value pairs. Matches against client-owned metadata stored on saves. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> MetadataFilter;
 
@@ -25518,36 +25597,6 @@ struct FResolvedReference
 };
 
 /**
- * Base schema for all resource archives that can be stored in
- */
-USTRUCT(BlueprintType)
-struct FResourceArchiveBase
-{
-    GENERATED_BODY()
-
-    /** Unique identifier of the archived resource */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid ResourceId;
-
-    /** Type identifier (e.g., "character", "character-personality", "realm-history") */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString ResourceType;
-
-    /** When this archive was created */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FDateTime ArchivedAt;
-
-    /** Schema version for forward compatibility migration */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    int32 SchemaVersion = 0;
-
-    /** Child archives from dependent resources (populated by lib-resource compression) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TArray<FResourceArchiveBase> NestedArchives;
-
-};
-
-/**
  * Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)
  */
 USTRUCT(BlueprintType)
@@ -25921,7 +25970,7 @@ struct FSaveDeltaRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString DeviceId;
 
-    /** Custom key-value metadata for this delta version */
+    /** Client-only metadata for this delta version. No Bannou plugin reads specific keys from this field by convention. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -26017,7 +26066,7 @@ struct FSaveRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString DeviceId;
 
-    /** Custom metadata (e.g., level, playtime, location) */
+    /** Client-only metadata (e.g., level, playtime, location). No Bannou plugin reads specific keys from this field by convention. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -26435,17 +26484,17 @@ struct FScenarioMutation
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FMutationType MutationType;
 
-    /** Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY) */
+    /** Experience type for PersonalityEvolve mutations */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString ExperienceType;
+    TOptional<FStorylineExperienceType> ExperienceType;
 
     /** Experience intensity for PersonalityEvolve (0.0-1.0) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<float> ExperienceIntensity;
 
-    /** Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL) */
+    /** Backstory element type for BackstoryAdd mutations */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString BackstoryElementType;
+    TOptional<FStorylineBackstoryElementType> BackstoryElementType;
 
     /** Backstory element key for BackstoryAdd */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -26865,7 +26914,7 @@ struct FSceneSummary
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid SceneId;
 
-    /** Game service identifier */
+    /** Game service identifier (null for unpartitioned scenes) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString GameId;
 
@@ -26908,7 +26957,7 @@ struct FSceneSummary
 };
 
 /**
- * Scene classification for querying and validation rule lookup.
+ * Scene classification code for querying and validation rule lookup.
  */
 USTRUCT(BlueprintType)
 struct FSceneType
@@ -27298,14 +27347,6 @@ USTRUCT(BlueprintType)
 struct FSeedEffectsResponse
 {
     GENERATED_BODY()
-
-    /** Entity these effects belong to */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid EntityId;
-
-    /** Entity type discriminator */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FEntityType EntityType;
 
     /** Seed-derived passive effects */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -28197,7 +28238,7 @@ struct FSlotResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime UpdatedAt;
 
-    /** Custom key-value metadata (null if none set) */
+    /** Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -28734,28 +28775,22 @@ struct FStorageMode
 };
 
 /**
- * Complete storyline participation data for archive storage and SDK consumption.
+ * Storyline-owned subset of character-history BackstoryElementType for scenario mutations
  */
 USTRUCT(BlueprintType)
-struct FStorylineArchive
+struct FStorylineBackstoryElementType
 {
     GENERATED_BODY()
 
-    /** Character this data belongs to (equals resourceId) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid CharacterId;
+};
 
-    /** All scenario participations (completed and active) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TArray<FStorylineParticipation> Participations;
-
-    /** Story arcs the character is currently involved in */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TArray<FString> ActiveArcs;
-
-    /** Total count of completed scenarios */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    int32 CompletedStorylines = 0;
+/**
+ * Storyline-owned subset of character-personality ExperienceType for scenario mutations
+ */
+USTRUCT(BlueprintType)
+struct FStorylineExperienceType
+{
+    GENERATED_BODY()
 
 };
 
@@ -28788,60 +28823,6 @@ struct FStorylineLink
     /** Type of relationship (e.g., "opposes", "allies_with", "seeks") */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString LinkType;
-
-};
-
-/**
- * Summary of a scenario participation for archive purposes
- */
-USTRUCT(BlueprintType)
-struct FStorylineParticipation
-{
-    GENERATED_BODY()
-
-    /** Scenario execution ID */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid ExecutionId;
-
-    /** Scenario definition ID (if available) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FGuid> ScenarioId;
-
-    /** Scenario code for lookup */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString ScenarioCode;
-
-    /** Scenario display name */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString ScenarioName;
-
-    /** Character's role in the scenario (primary, secondary, witness) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Role;
-
-    /** Current phase number (or final phase if completed) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    int32 Phase = 0;
-
-    /** Total number of phases in the scenario */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    int32 TotalPhases = 0;
-
-    /** Current status of the scenario execution */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FScenarioStatus Status;
-
-    /** When the scenario was triggered */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FDateTime StartedAt;
-
-    /** When the scenario completed (null if still active) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDateTime> CompletedAt;
-
-    /** Key choices made during the scenario (for narrative hooks) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TArray<FString> Choices;
 
 };
 
@@ -30650,6 +30631,10 @@ USTRUCT(BlueprintType)
 struct FUnpinVersionRequest
 {
     GENERATED_BODY()
+
+    /** Game identifier for namespace isolation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString GameId;
 
     /** ID of the owning entity */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -33247,7 +33232,7 @@ struct FVersionResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
 
-    /** Custom metadata (null if none set) */
+    /** Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 

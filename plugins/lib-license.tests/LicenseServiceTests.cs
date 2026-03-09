@@ -515,7 +515,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     }
 
     [Fact]
-    public async Task DeleteBoardTemplate_ActiveBoardInstances_ReturnsConflict()
+    public async Task DeprecateBoardTemplate_ValidTemplate_ReturnsOK()
     {
         // Arrange
         var template = CreateTestTemplate();
@@ -523,21 +523,24 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             .Setup(s => s.GetAsync($"board-tpl:{TestBoardTemplateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
-        // Board store returns active boards for this template
-        _mockBoardStore
-            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<BoardInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<BoardInstanceModel> { CreateTestBoard() });
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<BoardTemplateModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.DeleteBoardTemplateAsync(
-            new DeleteBoardTemplateRequest { BoardTemplateId = TestBoardTemplateId },
+        var (status, response) = await service.DeprecateBoardTemplateAsync(
+            new DeprecateBoardTemplateRequest { BoardTemplateId = TestBoardTemplateId, Reason = "Superseded" },
             CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Conflict, status);
-        Assert.Null(response);
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     #endregion

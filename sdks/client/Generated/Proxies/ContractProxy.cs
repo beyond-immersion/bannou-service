@@ -99,19 +99,21 @@ public sealed class ContractProxy
     }
 
     /// <summary>
-    /// Soft-delete template
+    /// Deprecate template (Category B — one-way, no delete)
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteContractTemplateEventAsync(
-        DeleteContractTemplateRequest request,
+    /// <returns>ApiResponse containing ContractTemplateResponse on success.</returns>
+    public Task<ApiResponse<ContractTemplateResponse>> DeprecateContractTemplateAsync(
+        DeprecateContractTemplateRequest request,
         ushort channel = 0,
+        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.SendEventAsync<DeleteContractTemplateRequest>(
-            "/contract/template/delete", request, channel, cancellationToken);
+        return _client.InvokeAsync<DeprecateContractTemplateRequest, ContractTemplateResponse>(
+            "/contract/template/deprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>

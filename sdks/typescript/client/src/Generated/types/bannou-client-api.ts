@@ -1153,7 +1153,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/character-encounter/type/delete': {
+  '/character-encounter/type/deprecate': {
     parameters: {
       query?: never;
       header?: never;
@@ -1163,11 +1163,13 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Delete encounter type
-     * @description Delete a custom encounter type. Built-in types cannot be deleted.
-     *     Types with existing encounters cannot be deleted.
+     * Deprecate encounter type
+     * @description Marks an encounter type as deprecated. Deprecated types remain readable
+     *     forever but new encounters cannot reference them.
+     *     Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+     *     no delete. Idempotent — returns OK if already deprecated.
      */
-    post: operations['characterEncounter_deleteEncounterType'];
+    post: operations['characterEncounter_deprecateEncounterType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1307,7 +1309,10 @@ export interface paths {
     put?: never;
     /**
      * Soft-deprecate a room type
-     * @description Sets the room type status to Deprecated. Existing rooms continue to work but no new rooms can be created with this type.
+     * @description Sets the room type status to Deprecated. Existing rooms continue to work
+     *     but no new rooms can be created with this type.
+     *     Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+     *     no delete. Idempotent — returns OK if already deprecated.
      */
     post: operations['chat_DeprecateRoomType'];
     delete?: never;
@@ -2795,6 +2800,29 @@ export interface paths {
      *     are immutable after creation and cannot be changed.
      */
     post: operations['currency_updateCurrencyDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/definition/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a currency definition (Category B — one-way, no delete)
+     * @description Deprecates a currency definition. Existing wallets continue to function
+     *     but no new wallets can be created for this currency.
+     *     Category B entity: deprecation is one-way (no undeprecate), no delete endpoint.
+     *     Idempotent: returns OK if already deprecated.
+     */
+    post: operations['currency_deprecateCurrencyDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4542,6 +4570,8 @@ export interface paths {
     /**
      * Deprecate scenario template
      * @description Sets the template status to Deprecated, preventing new instances.
+     *     Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+     *     no delete. Idempotent — returns OK if already deprecated.
      */
     post: operations['gardener_deprecateTemplate'];
     delete?: never;
@@ -5220,7 +5250,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/leaderboard/definition/delete': {
+  '/leaderboard/definition/deprecate': {
     parameters: {
       query?: never;
       header?: never;
@@ -5230,11 +5260,12 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Delete leaderboard definition
-     * @description Delete a leaderboard and all its scores.
-     *     Developer-only endpoint. This action is irreversible.
+     * Deprecate leaderboard definition
+     * @description Deprecate a leaderboard definition (Category B — one-way, no undeprecate, no delete).
+     *     Existing scores remain queryable; new score submissions to deprecated leaderboards
+     *     are rejected. Idempotent: returns OK if already deprecated.
      */
-    post: operations['leaderboard_deleteLeaderboardDefinition'];
+    post: operations['leaderboard_deprecateLeaderboardDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5405,7 +5436,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/license/board-template/delete': {
+  '/license/board-template/deprecate': {
     parameters: {
       query?: never;
       header?: never;
@@ -5415,11 +5446,12 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Delete a board template
-     * @description Delete a board template. Blocked if active board instances exist
-     *     that reference this template.
+     * Deprecate a board template
+     * @description Deprecate a board template (Category B — one-way, no undeprecate, no delete).
+     *     Existing board instances continue to function; new board creation from this
+     *     template is rejected. Idempotent: returns OK if already deprecated.
      */
-    post: operations['license_deleteBoardTemplate'];
+    post: operations['license_deprecateBoardTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9221,27 +9253,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/storyline/get-compress-data': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get storyline data for compression
-     * @description Called by Resource service during character compression.
-     *     Returns scenario participations, active arcs, and completion counts for archival.
-     */
-    post: operations['storyline_getCompressData'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/subscription/cancel': {
     parameters: {
       query?: never;
@@ -11951,6 +11962,15 @@ export interface components {
       allowedOwnerTypes: components['schemas']['EntityType'][];
       /** @description Whether the template is active (can create new board instances) */
       isActive: boolean;
+      /** @description Whether this template has been deprecated (Category B — one-way) */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When the template was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation (audit context) */
+      deprecationReason?: string | null;
       /**
        * Format: date-time
        * @description When the template was created
@@ -14514,6 +14534,15 @@ export interface components {
       } | null;
       /** @description Whether template is active */
       isActive: boolean;
+      /** @description Whether template is deprecated (Category B — one-way) */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When the template was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
       /**
        * Format: date-time
        * @description Creation timestamp
@@ -15792,7 +15821,7 @@ export interface components {
       compressionType?: components['schemas']['CompressionType'] | null;
       /** @description Searchable tags for slot categorization (e.g., "boss-fight", "chapter-3") */
       tags?: string[] | null;
-      /** @description Custom key-value metadata for the slot */
+      /** @description Client-only metadata for the slot. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: string;
       } | null;
@@ -15999,6 +16028,15 @@ export interface components {
       displayFormat?: string | null;
       /** @description Whether definition is active */
       isActive: boolean;
+      /** @description Whether definition is deprecated (Category B — one-way) */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When the definition was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
       /**
        * Format: date-time
        * @description Creation timestamp
@@ -16251,14 +16289,6 @@ export interface components {
        */
       boardId: string;
     };
-    /** @description Request to delete a board template */
-    DeleteBoardTemplateRequest: {
-      /**
-       * Format: uuid
-       * @description Board template to delete
-       */
-      boardTemplateId: string;
-    };
     /** @description Request to delete a bundle */
     DeleteBundleRequest: {
       /** @description Human-readable bundle identifier to delete */
@@ -16355,21 +16385,6 @@ export interface components {
        * @description Deadline for recovering the document from trashcan
        */
       recoverableUntil: string;
-    };
-    /** @description Request to delete an encounter type */
-    DeleteEncounterTypeRequest: {
-      /** @description Code of the type to delete */
-      code: string;
-    };
-    /** @description Request to delete a leaderboard */
-    DeleteLeaderboardDefinitionRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the game service
-       */
-      gameServiceId: string;
-      /** @description ID of the leaderboard to delete */
-      leaderboardId: string;
     };
     /** @description Request to permanently delete a location from the system */
     DeleteLocationRequest: {
@@ -16482,6 +16497,8 @@ export interface components {
     };
     /** @description Request to permanently delete a specific save version */
     DeleteVersionRequest: {
+      /** @description Game identifier for namespace isolation */
+      gameId: string;
       /**
        * Format: uuid
        * @description ID of the owning entity
@@ -16575,6 +16592,33 @@ export interface components {
       /** @description Audit reason for deprecation, explaining why this achievement is being phased out */
       deprecationReason?: string | null;
     };
+    /** @description Request to deprecate a board template (Category B — one-way) */
+    DeprecateBoardTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Board template to deprecate
+       */
+      boardTemplateId: string;
+      /** @description Reason for deprecation (audit context for Category B entities) */
+      reason?: string | null;
+    };
+    /** @description Request to deprecate a currency definition (Category B — one-way, no delete) */
+    DeprecateCurrencyDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Definition ID to deprecate
+       */
+      definitionId: string;
+      /** @description Reason for deprecation (audit context for Category B entities) */
+      reason?: string | null;
+    };
+    /** @description Request to deprecate an encounter type (Category B — one-way, no delete). Idempotent — returns OK if already deprecated. */
+    DeprecateEncounterTypeRequest: {
+      /** @description Code of the type to deprecate */
+      code: string;
+      /** @description Reason for deprecation (recommended for audit trail) */
+      reason?: string | null;
+    };
     /** @description Request to deprecate an entry template (Category B — one-way, no delete) */
     DeprecateEntryTemplateRequest: {
       /**
@@ -16594,6 +16638,18 @@ export interface components {
       factionId: string;
       /** @description Reason for deprecation (audit context for Category A entities) */
       deprecationReason: string;
+    };
+    /** @description Request to deprecate a leaderboard definition (Category B — one-way) */
+    DeprecateLeaderboardDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the game service
+       */
+      gameServiceId: string;
+      /** @description ID of the leaderboard to deprecate */
+      leaderboardId: string;
+      /** @description Reason for deprecation (audit context for Category B entities) */
+      reason?: string | null;
     };
     /** @description Request to soft-delete a location by marking it as deprecated */
     DeprecateLocationRequest: {
@@ -16632,7 +16688,7 @@ export interface components {
       /** @description Optional reason for deprecation (for audit purposes) */
       reason?: string | null;
     };
-    /** @description Request to deprecate a room type (prevents new room creation) */
+    /** @description Request to deprecate a room type (Category B — one-way, no delete). Idempotent — returns OK if already deprecated. */
     DeprecateRoomTypeRequest: {
       /** @description Room type code to deprecate */
       code: string;
@@ -16641,6 +16697,8 @@ export interface components {
        * @description Game service scope for the type
        */
       gameServiceId?: string | null;
+      /** @description Reason for deprecation (recommended for audit trail) */
+      reason?: string | null;
     };
     /** @description Request to deprecate a scenario definition */
     DeprecateScenarioDefinitionRequest: {
@@ -16674,13 +16732,15 @@ export interface components {
       /** @description Why this template is being deprecated */
       reason: string;
     };
-    /** @description Request to deprecate a template */
+    /** @description Request to deprecate a scenario template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated. */
     DeprecateTemplateRequest: {
       /**
        * Format: uuid
        * @description Template ID to deprecate
        */
       scenarioTemplateId: string;
+      /** @description Reason for deprecation (recommended for audit trail) */
+      reason?: string | null;
     };
     /** @description Request to designate a faction as the realm baseline */
     DesignateRealmBaselineRequest: {
@@ -17004,6 +17064,15 @@ export interface components {
       sortOrder: number;
       /** @description Whether the type is active */
       isActive: boolean;
+      /** @description Whether this type has been deprecated */
+      isDeprecated?: boolean;
+      /**
+       * Format: date-time
+       * @description When the type was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Why the type was deprecated */
+      deprecationReason?: string | null;
       /**
        * Format: date-time
        * @description When the type was created
@@ -18570,14 +18639,6 @@ export interface components {
       /** @description Type of collection to get stats for */
       collectionType: components['schemas']['CollectionType'];
     };
-    /** @description Request to get character data for compression */
-    GetCompressDataRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the character to get compress data for
-       */
-      characterId: string;
-    };
     /** @description Request to get a connection by ID or code. One of connectionId or code must be provided. */
     GetConnectionRequest: {
       /**
@@ -18720,13 +18781,6 @@ export interface components {
     };
     /** @description Unified view of all active effects for an entity */
     GetEffectsResponse: {
-      /**
-       * Format: uuid
-       * @description Entity these effects belong to
-       */
-      entityId: string;
-      /** @description Entity type discriminator */
-      entityType: components['schemas']['EntityType'];
       /** @description Number of item-based status effects */
       itemBasedCount: number;
       /** @description Number of seed-derived passive effects */
@@ -19080,9 +19134,7 @@ export interface components {
     };
     /** @description Retrieved plan */
     GetPlanResponse: {
-      /** @description Whether the plan was found */
-      found: boolean;
-      /** @description The plan (null if not found) */
+      /** @description The composed plan */
       plan?: components['schemas']['ComposeResponse'];
     };
     /** @description Request to retrieve a quest definition by ID or code */
@@ -19301,9 +19353,7 @@ export interface components {
     };
     /** @description Response with scenario definition */
     GetScenarioDefinitionResponse: {
-      /** @description Whether the scenario was found */
-      found: boolean;
-      /** @description The scenario definition (null if not found) */
+      /** @description The scenario definition */
       scenario?: components['schemas']['ScenarioDefinition'];
     };
     /** @description Request for scenario execution history */
@@ -19558,13 +19608,9 @@ export interface components {
       /** @description Scene type */
       sceneType: components['schemas']['SceneType'];
     };
-    /** @description Response containing validation rules */
+    /** @description Response containing validation rules for the requested gameId and sceneType */
     GetValidationRulesResponse: {
-      /** @description Game ID */
-      gameId: string;
-      /** @description Scene type */
-      sceneType: components['schemas']['SceneType'];
-      /** @description Registered rules (null if none) */
+      /** @description Registered rules (null if none registered for the combination) */
       rules?: components['schemas']['ValidationRule'][] | null;
     };
     /** @description Goal definition for GOAP planning with conditions and priority */
@@ -19673,7 +19719,7 @@ export interface components {
       sourceId?: string | null;
       /** @description Override the template's default duration in seconds */
       durationOverrideSeconds?: number | null;
-      /** @description Arbitrary key-value data passed to contract template values and stored on the status instance. Opaque to Status -- callers define their own semantics. */
+      /** @description Client-defined metadata. Opaque to Status — stored and returned verbatim. Not a contract between services. Passed to contract template values and stored on the status instance. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -20535,7 +20581,7 @@ export interface components {
       path: string;
       /** @description Source path (for move/copy operations) */
       from?: string | null;
-      /** @description Value to use (for add/replace/test operations) */
+      /** @description Value to use (for add/replace/test operations, null for remove/move/copy) */
       value?: unknown;
     };
     /**
@@ -20626,6 +20672,15 @@ export interface components {
       isSeasonal: boolean;
       /** @description Whether the leaderboard is publicly visible */
       isPublic: boolean;
+      /** @description Whether this definition has been deprecated (Category B — one-way) */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When the definition was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation (audit context) */
+      deprecationReason?: string | null;
       /** @description Current season number (if seasonal) */
       currentSeason?: number | null;
       /**
@@ -20937,6 +20992,11 @@ export interface components {
        * @description Filter by game service
        */
       gameServiceId: string;
+      /**
+       * @description Include deprecated templates in results (default false)
+       * @default false
+       */
+      includeDeprecated: boolean;
       /** @description Opaque cursor from previous response. Null for first page. */
       cursor?: string | null;
       /** @description Number of items per page. Uses service default if not specified. */
@@ -21095,6 +21155,11 @@ export interface components {
       realmId?: string | null;
       /** @description Filter by active status. */
       isActive?: boolean | null;
+      /**
+       * @description Whether to include deprecated templates (default false).
+       * @default false
+       */
+      includeDeprecated: boolean;
       /** @description Search in name and description. */
       searchTerm?: string | null;
       /** @description Opaque cursor from previous response. Null for first page. */
@@ -21732,6 +21797,11 @@ export interface components {
       /** @description Filter by status */
       status?: components['schemas']['RoomTypeStatus'] | null;
       /**
+       * @description Include deprecated room types in results (excluded by default)
+       * @default false
+       */
+      includeDeprecated: boolean;
+      /**
        * @description Page number (zero-based)
        * @default 0
        */
@@ -22239,7 +22309,7 @@ export interface components {
        * @description Save timestamp
        */
       createdAt: string;
-      /** @description Custom metadata (null if none set) */
+      /** @description Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: string;
       } | null;
@@ -22499,20 +22569,12 @@ export interface components {
       updatedAt: string;
     };
     /**
-     * @description Types of marker nodes for spawn points, waypoints, and other positional markers.
-     *     DESIGN_DECISION: Whether this should be an opaque string instead of enum
-     *     (game-content codes vary per deployment). Tracked for future evaluation.
-     * @enum {string}
+     * @description Marker code for spawn points, waypoints, and other positional markers.
+     *     Opaque string per FOUNDATION TENETS (game-configurable content codes
+     *     vary per deployment). Common values include spawn_point, npc_spawn,
+     *     waypoint, camera_point — but any game can define its own.
      */
-    MarkerType:
-      | 'Generic'
-      | 'SpawnPoint'
-      | 'NpcSpawn'
-      | 'Waypoint'
-      | 'CameraPoint'
-      | 'LightPoint'
-      | 'AudioPoint'
-      | 'TriggerPoint';
+    MarkerType: string;
     /** @description Request to check if a relationship type matches or descends from an ancestor type in the hierarchy */
     MatchesHierarchyRequest: {
       /**
@@ -22804,8 +22866,8 @@ export interface components {
       ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
-      /** @description Specific version to migrate (defaults to latest) */
-      versionNumber?: number;
+      /** @description Specific version to migrate (null = latest) */
+      versionNumber?: number | null;
       /** @description Target schema version to migrate to */
       targetSchemaVersion: string;
       /**
@@ -23782,6 +23844,8 @@ export interface components {
     };
     /** @description Request to pin a save version as a checkpoint to prevent cleanup */
     PinVersionRequest: {
+      /** @description Game identifier for namespace isolation */
+      gameId: string;
       /**
        * Format: uuid
        * @description ID of the owning entity
@@ -24586,7 +24650,7 @@ export interface components {
       pinnedOnly?: boolean | null;
       /** @description Filter by schema version */
       schemaVersion?: string | null;
-      /** @description Filter by metadata key-value pairs */
+      /** @description Filter by client metadata key-value pairs. Matches against client-owned metadata stored on saves. */
       metadataFilter?: {
         [key: string]: string;
       } | null;
@@ -25318,7 +25382,9 @@ export interface components {
       /** @description Schema version identifier */
       schemaVersion: string;
       /** @description JSON Schema definition for validation */
-      schema: Record<string, never>;
+      schema: {
+        [key: string]: unknown;
+      };
       /** @description Previous version this migrates from */
       previousVersion?: string | null;
       /**
@@ -25871,33 +25937,6 @@ export interface components {
       /** @description Depth level of this reference */
       depth: number;
     };
-    /**
-     * @description Base schema for all resource archives that can be stored in
-     *     the resource service's archive bundles and consumed by the
-     *     storyline SDK's ArchiveExtractor.
-     *
-     *     Archives implementing this base schema are marked with
-     *     x-archive-type: true and are automatically collected by
-     *     the archive generation script for SDK model generation.
-     */
-    ResourceArchiveBase: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the archived resource
-       */
-      resourceId: string;
-      /** @description Type identifier (e.g., "character", "character-personality", "realm-history") */
-      resourceType: string;
-      /**
-       * Format: date-time
-       * @description When this archive was created
-       */
-      archivedAt: string;
-      /** @description Schema version for forward compatibility migration */
-      schemaVersion: number;
-      /** @description Child archives from dependent resources (populated by lib-resource compression) */
-      nestedArchives?: components['schemas']['ResourceArchiveBase'][];
-    };
     /** @description Validation rules for API responses with three-outcome model (success, permanent failure, transient failure) */
     ResponseValidation: {
       /** @description Conditions that must ALL pass for success; if any fail, checks permanent failure conditions */
@@ -26063,11 +26102,11 @@ export interface components {
     };
     /**
      * @description Category of save with predefined behaviors.
-     *     QUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).
-     *     AUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).
-     *     MANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).
-     *     CHECKPOINT: Progress markers (max 20 versions, rolling).
-     *     STATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).
+     *     QuickSave: Single-slot fast save, overwritten frequently (max 1 version).
+     *     AutoSave: System-triggered periodic saves (max 5 versions, rolling).
+     *     ManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).
+     *     Checkpoint: Progress markers (max 20 versions, rolling).
+     *     StateSnapshot: Full state captures for debugging (max 3 versions, rolling).
      * @enum {string}
      */
     SaveCategory: 'QuickSave' | 'AutoSave' | 'ManualSave' | 'Checkpoint' | 'StateSnapshot';
@@ -26101,7 +26140,7 @@ export interface components {
       displayName?: string | null;
       /** @description Device identifier for cross-device sync conflict detection */
       deviceId?: string | null;
-      /** @description Custom key-value metadata for this delta version */
+      /** @description Client-only metadata for this delta version. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: string;
       } | null;
@@ -26176,7 +26215,7 @@ export interface components {
        *     enabling opt-in cross-device sync with collision awareness.
        */
       deviceId?: string | null;
-      /** @description Custom metadata (e.g., level, playtime, location) */
+      /** @description Client-only metadata (e.g., level, playtime, location). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: string;
       } | null;
@@ -26473,15 +26512,15 @@ export interface components {
     ScenarioMutation: {
       /** @description Type of mutation to apply */
       mutationType: components['schemas']['MutationType'];
-      /** @description Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY) */
-      experienceType?: string | null;
+      /** @description Experience type for PersonalityEvolve mutations */
+      experienceType?: components['schemas']['StorylineExperienceType'];
       /**
        * Format: float
        * @description Experience intensity for PersonalityEvolve (0.0-1.0)
        */
       experienceIntensity?: number | null;
-      /** @description Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL) */
-      backstoryElementType?: string | null;
+      /** @description Backstory element type for BackstoryAdd mutations */
+      backstoryElementType?: components['schemas']['StorylineBackstoryElementType'];
       /** @description Backstory element key for BackstoryAdd */
       backstoryKey?: string | null;
       /** @description Backstory element value for BackstoryAdd */
@@ -26642,10 +26681,9 @@ export interface components {
       sceneId: string;
       /**
        * @description Game service identifier for partitioning. Treated as opaque string.
-       *     Default is the nil UUID for unpartitioned scenes.
-       * @default 00000000-0000-0000-0000-000000000000
+       *     Null for unpartitioned scenes.
        */
-      gameId: string;
+      gameId?: string | null;
       /** @description Scene classification for querying and validation */
       sceneType: components['schemas']['SceneType'];
       /** @description Human-readable scene name */
@@ -26775,8 +26813,8 @@ export interface components {
        * @description Unique scene identifier
        */
       sceneId: string;
-      /** @description Game service identifier */
-      gameId: string;
+      /** @description Game service identifier (null for unpartitioned scenes) */
+      gameId?: string | null;
       /** @description Scene classification */
       sceneType: components['schemas']['SceneType'];
       /** @description Scene name */
@@ -26803,26 +26841,12 @@ export interface components {
       isCheckedOut: boolean;
     };
     /**
-     * @description Scene classification for querying and validation rule lookup.
-     *     Different types may have different validation requirements per game.
-     *     DESIGN_DECISION: Whether this should be an opaque string instead of enum
-     *     (game-content codes vary per deployment). Tracked for future evaluation.
-     * @enum {string}
+     * @description Scene classification code for querying and validation rule lookup.
+     *     Opaque string per FOUNDATION TENETS (game-configurable content codes
+     *     vary per deployment). Common values include region, city, building,
+     *     dungeon, arena, prefab, cutscene — but any game can define its own.
      */
-    SceneType:
-      | 'Unknown'
-      | 'Region'
-      | 'City'
-      | 'District'
-      | 'Lot'
-      | 'Building'
-      | 'Room'
-      | 'Dungeon'
-      | 'Arena'
-      | 'Vehicle'
-      | 'Prefab'
-      | 'Cutscene'
-      | 'Other';
+    SceneType: string;
     /** @description Registered schema definition with version lineage information */
     SchemaResponse: {
       /** @description Schema namespace */
@@ -26830,7 +26854,9 @@ export interface components {
       /** @description Schema version */
       schemaVersion: string;
       /** @description JSON Schema definition */
-      schema?: Record<string, never>;
+      schema?: {
+        [key: string]: unknown;
+      };
       /** @description Previous version */
       previousVersion?: string | null;
       /** @description Whether migration script is registered */
@@ -27026,13 +27052,6 @@ export interface components {
     };
     /** @description Seed-derived passive effects for an entity */
     SeedEffectsResponse: {
-      /**
-       * Format: uuid
-       * @description Entity these effects belong to
-       */
-      entityId: string;
-      /** @description Entity type discriminator */
-      entityType: components['schemas']['EntityType'];
       /** @description Seed-derived passive effects */
       effects: components['schemas']['SeedEffectEntry'][];
     };
@@ -27569,7 +27588,7 @@ export interface components {
        * @description Last modification timestamp
        */
       updatedAt: string;
-      /** @description Custom key-value metadata (null if none set) */
+      /** @description Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: string;
       } | null;
@@ -27947,23 +27966,33 @@ export interface components {
      */
     StorageMode: 'Durable' | 'Cached' | 'Ephemeral';
     /**
-     * @description Complete storyline participation data for archive storage and SDK consumption.
-     *     Inherits base archive properties from ResourceArchiveBase.
-     *     The characterId field equals resourceId for convenience.
+     * @description Storyline-owned subset of character-history BackstoryElementType for scenario mutations
+     * @enum {string}
      */
-    StorylineArchive: {
-      /**
-       * Format: uuid
-       * @description Character this data belongs to (equals resourceId)
-       */
-      characterId: string;
-      /** @description All scenario participations (completed and active) */
-      participations: components['schemas']['StorylineParticipation'][];
-      /** @description Story arcs the character is currently involved in */
-      activeArcs: string[];
-      /** @description Total count of completed scenarios */
-      completedStorylines: number;
-    } & components['schemas']['ResourceArchiveBase'];
+    StorylineBackstoryElementType:
+      | 'Origin'
+      | 'Occupation'
+      | 'Training'
+      | 'Trauma'
+      | 'Achievement'
+      | 'Secret'
+      | 'Goal'
+      | 'Fear'
+      | 'Belief';
+    /**
+     * @description Storyline-owned subset of character-personality ExperienceType for scenario mutations
+     * @enum {string}
+     */
+    StorylineExperienceType:
+      | 'Trauma'
+      | 'Betrayal'
+      | 'Loss'
+      | 'Victory'
+      | 'Friendship'
+      | 'Redemption'
+      | 'Corruption'
+      | 'Enlightenment'
+      | 'Sacrifice';
     /**
      * @description High-level story goal that drives arc selection.
      *     revenge: Character seeks vengeance for past wrongs
@@ -27982,43 +28011,6 @@ export interface components {
       targetRole: string;
       /** @description Type of relationship (e.g., "opposes", "allies_with", "seeks") */
       linkType: string;
-    };
-    /** @description Summary of a scenario participation for archive purposes */
-    StorylineParticipation: {
-      /**
-       * Format: uuid
-       * @description Scenario execution ID
-       */
-      executionId: string;
-      /**
-       * Format: uuid
-       * @description Scenario definition ID (if available)
-       */
-      scenarioId?: string | null;
-      /** @description Scenario code for lookup */
-      scenarioCode: string;
-      /** @description Scenario display name */
-      scenarioName?: string | null;
-      /** @description Character's role in the scenario (primary, secondary, witness) */
-      role: string;
-      /** @description Current phase number (or final phase if completed) */
-      phase: number;
-      /** @description Total number of phases in the scenario */
-      totalPhases: number;
-      /** @description Current status of the scenario execution */
-      status: components['schemas']['ScenarioStatus'];
-      /**
-       * Format: date-time
-       * @description When the scenario was triggered
-       */
-      startedAt: string;
-      /**
-       * Format: date-time
-       * @description When the scenario completed (null if still active)
-       */
-      completedAt?: string | null;
-      /** @description Key choices made during the scenario (for narrative hooks) */
-      choices?: string[] | null;
     };
     /** @description A planned action in the storyline */
     StorylinePlanAction: {
@@ -29217,6 +29209,8 @@ export interface components {
     };
     /** @description Request to unpin a previously pinned save version */
     UnpinVersionRequest: {
+      /** @description Game identifier for namespace isolation */
+      gameId: string;
       /**
        * Format: uuid
        * @description ID of the owning entity
@@ -30769,7 +30763,7 @@ export interface components {
        * @description Creation timestamp
        */
       createdAt: string;
-      /** @description Custom metadata (null if none set) */
+      /** @description Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: string;
       } | null;
@@ -32766,7 +32760,7 @@ export interface operations {
       };
     };
   };
-  characterEncounter_deleteEncounterType: {
+  characterEncounter_deprecateEncounterType: {
     parameters: {
       query?: never;
       header?: never;
@@ -32775,33 +32769,21 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['DeleteEncounterTypeRequest'];
+        'application/json': components['schemas']['DeprecateEncounterTypeRequest'];
       };
     };
     responses: {
-      /** @description Encounter type deleted successfully */
+      /** @description Encounter type deprecated successfully (or already deprecated) */
       200: {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
-      };
-      /** @description Cannot delete built-in type */
-      400: {
-        headers: {
-          [name: string]: unknown;
+        content: {
+          'application/json': components['schemas']['EncounterTypeResponse'];
         };
-        content?: never;
       };
       /** @description Encounter type not found */
       404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Cannot delete - type is in use by encounters */
-      409: {
         headers: {
           [name: string]: unknown;
         };
@@ -32980,7 +32962,7 @@ export interface operations {
       };
     };
     responses: {
-      /** @description Room type deprecated */
+      /** @description Room type deprecated successfully (or already deprecated) */
       200: {
         headers: {
           [name: string]: unknown;
@@ -35154,6 +35136,37 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Currency definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  currency_deprecateCurrencyDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateCurrencyDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Currency definition deprecated successfully (or already deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CurrencyDefinitionResponse'];
+        };
       };
       /** @description Currency definition not found */
       404: {
@@ -37770,7 +37783,7 @@ export interface operations {
       };
     };
     responses: {
-      /** @description Template deprecated */
+      /** @description Template deprecated successfully (or already deprecated) */
       200: {
         headers: {
           [name: string]: unknown;
@@ -38829,7 +38842,7 @@ export interface operations {
       };
     };
   };
-  leaderboard_deleteLeaderboardDefinition: {
+  leaderboard_deprecateLeaderboardDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -38838,16 +38851,18 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['DeleteLeaderboardDefinitionRequest'];
+        'application/json': components['schemas']['DeprecateLeaderboardDefinitionRequest'];
       };
     };
     responses: {
-      /** @description Leaderboard deleted successfully */
+      /** @description Leaderboard deprecated successfully (or already deprecated) */
       200: {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': components['schemas']['LeaderboardDefinitionResponse'];
+        };
       };
       /** @description Leaderboard not found */
       404: {
@@ -39099,7 +39114,7 @@ export interface operations {
       };
     };
   };
-  license_deleteBoardTemplate: {
+  license_deprecateBoardTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -39108,11 +39123,11 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['DeleteBoardTemplateRequest'];
+        'application/json': components['schemas']['DeprecateBoardTemplateRequest'];
       };
     };
     responses: {
-      /** @description Board template deleted successfully */
+      /** @description Board template deprecated successfully (or already deprecated) */
       200: {
         headers: {
           [name: string]: unknown;
@@ -39123,13 +39138,6 @@ export interface operations {
       };
       /** @description Board template not found */
       404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Active board instances exist for this template */
-      409: {
         headers: {
           [name: string]: unknown;
         };
@@ -44586,37 +44594,6 @@ export interface operations {
         content: {
           'application/json': components['schemas']['GetScenarioHistoryResponse'];
         };
-      };
-    };
-  };
-  storyline_getCompressData: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetCompressDataRequest'];
-      };
-    };
-    responses: {
-      /** @description Compressed data returned */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['StorylineArchive'];
-        };
-      };
-      /** @description No storyline data for character */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
       };
     };
   };

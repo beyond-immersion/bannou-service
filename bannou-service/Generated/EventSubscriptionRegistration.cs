@@ -138,6 +138,9 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
         EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
 
+        // From save-load-events.yaml
+        EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
+
         // From status-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
         EventSubscriptionRegistry.Register<SeedCapabilityUpdatedEvent>("seed.capability.updated");

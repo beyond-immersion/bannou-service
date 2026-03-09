@@ -2638,7 +2638,7 @@ public partial class ItemController
     private static readonly string _DeprecateItemTemplate_Info = """
 {
     "summary": "Deprecate an item template",
-    "description": "Marks an item template as deprecated. Deprecated templates cannot be used\nto create new instances but existing instances remain valid. Optionally\nspecify a migration target template.\n",
+    "description": "Marks an item template as deprecated. Deprecated templates cannot be used\nto create new instances but existing instances remain valid. Optionally\nspecify a migration target template.\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated.\n",
     "tags": [
         "Item Template"
     ],

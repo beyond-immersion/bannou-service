@@ -99,19 +99,21 @@ public sealed class CharacterEncounterProxy
     }
 
     /// <summary>
-    /// Delete encounter type
+    /// Deprecate encounter type
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteEncounterTypeEventAsync(
-        DeleteEncounterTypeRequest request,
+    /// <returns>ApiResponse containing EncounterTypeResponse on success.</returns>
+    public Task<ApiResponse<EncounterTypeResponse>> DeprecateEncounterTypeAsync(
+        DeprecateEncounterTypeRequest request,
         ushort channel = 0,
+        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.SendEventAsync<DeleteEncounterTypeRequest>(
-            "/character-encounter/type/delete", request, channel, cancellationToken);
+        return _client.InvokeAsync<DeprecateEncounterTypeRequest, EncounterTypeResponse>(
+            "/character-encounter/type/deprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>

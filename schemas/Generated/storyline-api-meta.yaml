@@ -314,37 +314,35 @@ paths:
         ID of the plan to retrieve\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetPlanResponse\"\
         ,\n    \"$defs\": {\n        \"GetPlanResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Retrieved plan\",\n            \"required\": [\n                \"found\"\
-        \n            ],\n            \"properties\": {\n                \"found\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether the plan was found\"\n                },\n                \"plan\"\
+        : false,\n            \"description\": \"Retrieved plan\",\n            \"properties\": {\n                \"plan\"\
         : {\n                    \"$ref\": \"#/$defs/ComposeResponse\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"The plan (null if not found)\"\n                }\n            }\n        },\n  \
-        \      \"ComposeResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
-        \           \"description\": \"Composed storyline plan\",\n            \"required\": [\n                \"planId\"\
-        ,\n                \"confidence\",\n                \"goal\",\n                \"arcType\",\n                \"primarySpectrum\"\
-        ,\n                \"phases\",\n                \"generationTimeMs\",\n                \"cached\"\n            ],\n\
-        \            \"properties\": {\n                \"planId\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"uuid\",\n                    \"description\": \"Unique plan identifier\"\n           \
-        \     },\n                \"confidence\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\"\
-        : \"Plan viability score (0-1)\"\n                },\n                \"goal\": {\n                    \"$ref\": \"\
-        #/$defs/StorylineGoal\",\n                    \"description\": \"The goal that was used\"\n                },\n  \
-        \              \"genre\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Inferred or specified genre\"\n                },\n                \"arcType\"\
-        : {\n                    \"$ref\": \"#/$defs/ArcType\",\n                    \"description\": \"Emotional arc type
-        used\"\n                },\n                \"primarySpectrum\": {\n                    \"$ref\": \"#/$defs/SpectrumType\"\
-        ,\n                    \"description\": \"Primary Life Value spectrum\"\n                },\n                \"themes\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Inferred thematic elements\"\n                },\n                \"phases\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylinePlanPhase\"\n\
-        \                    },\n                    \"description\": \"Planned phases with actions\"\n                },\n\
-        \                \"entitiesToSpawn\": {\n                    \"type\": \"array\",\n                    \"items\":
-        {\n                        \"$ref\": \"#/$defs/EntityRequirement\"\n                    },\n                    \"\
-        nullable\": true,\n                    \"description\": \"Entities required for this storyline (descriptions only).\\
-        nCallers decide whether to spawn them.\\n\"\n                },\n                \"links\": {\n                  \
-        \  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylineLink\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Links between
+        \             \"description\": \"The composed plan\"\n                }\n            }\n        },\n        \"ComposeResponse\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Composed storyline plan\",\n            \"required\": [\n                \"planId\",\n                \"confidence\"\
+        ,\n                \"goal\",\n                \"arcType\",\n                \"primarySpectrum\",\n               \
+        \ \"phases\",\n                \"generationTimeMs\",\n                \"cached\"\n            ],\n            \"properties\"\
+        : {\n                \"planId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique plan identifier\"\n                },\n                \"confidence\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\": \"Plan viability score (0-1)\"\
+        \n                },\n                \"goal\": {\n                    \"$ref\": \"#/$defs/StorylineGoal\",\n    \
+        \                \"description\": \"The goal that was used\"\n                },\n                \"genre\": {\n \
+        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Inferred or specified genre\"\n                },\n                \"arcType\": {\n                    \"$ref\"\
+        : \"#/$defs/ArcType\",\n                    \"description\": \"Emotional arc type used\"\n                },\n   \
+        \             \"primarySpectrum\": {\n                    \"$ref\": \"#/$defs/SpectrumType\",\n                  \
+        \  \"description\": \"Primary Life Value spectrum\"\n                },\n                \"themes\": {\n         \
+        \           \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n\
+        \                    },\n                    \"nullable\": true,\n                    \"description\": \"Inferred
+        thematic elements\"\n                },\n                \"phases\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylinePlanPhase\"\n            \
+        \        },\n                    \"description\": \"Planned phases with actions\"\n                },\n          \
+        \      \"entitiesToSpawn\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/EntityRequirement\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Entities required for this storyline (descriptions only).\\nCallers
+        decide whether to spawn them.\\n\"\n                },\n                \"links\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylineLink\"\n    \
+        \                },\n                    \"nullable\": true,\n                    \"description\": \"Links between
         entities in the plan\"\n                },\n                \"risks\": {\n                    \"type\": \"array\"\
         ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylineRisk\"\n               \
         \     },\n                    \"nullable\": true,\n                    \"description\": \"Identified risks or weak
@@ -671,41 +669,49 @@ paths:
         \            \"description\": \"A state mutation to apply during scenario execution\",\n            \"required\":
         [\n                \"mutationType\"\n            ],\n            \"properties\": {\n                \"mutationType\"\
         : {\n                    \"$ref\": \"#/$defs/MutationType\",\n                    \"description\": \"Type of mutation
-        to apply\"\n                },\n                \"experienceType\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Experience type for PersonalityEvolve
-        (e.g., TRAUMA, VICTORY)\"\n                },\n                \"experienceIntensity\": {\n                    \"\
-        type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n         \
-        \           \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Experience
-        intensity for PersonalityEvolve (0.0-1.0)\"\n                },\n                \"backstoryElementType\": {\n   \
-        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)\"\n                },\n                \"backstoryKey\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element key for BackstoryAdd\"\n                },\n                \"backstoryValue\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Backstory element value for BackstoryAdd\"\n                },\n                \"backstoryStrength\": {\n     \
-        \               \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\"\
-        : 0.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element strength for BackstoryAdd (0.0-1.0)\"\n                },\n                \"relationshipTypeCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Relationship type code for RelationshipCreate/End\"\n                },\n                \"otherParticipantRole\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Role name for other participant in multi-character scenarios\"\n                }\n            }\n        },\n\
-        \        \"MutationType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"PersonalityEvolve\"\
-        ,\n                \"BackstoryAdd\",\n                \"RelationshipCreate\",\n                \"RelationshipEnd\"\
-        ,\n                \"Custom\"\n            ],\n            \"description\": \"Types of state mutations a scenario
-        can apply.\\nPersonalityEvolve: Apply experience to evolve personality traits\\nBackstoryAdd: Add backstory element
-        to character history\\nRelationshipCreate: Create relationship between entities\\nRelationshipEnd: End existing relationship\\
-        nCustom: Custom mutation (not executed server-side)\\n\"\n        },\n        \"ScenarioQuestHook\": {\n         \
-        \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Quest to spawn
-        on scenario completion\",\n            \"required\": [\n                \"questCode\"\n            ],\n          \
-        \  \"properties\": {\n                \"questCode\": {\n                    \"type\": \"string\",\n              \
-        \      \"description\": \"Quest definition code to spawn\"\n                },\n                \"delaySeconds\":
-        {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\"\
-        : \"Delay before spawning quest (not implemented in Phase 1)\"\n                },\n                \"termOverrides\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Variable overrides for quest template\"\n                }\n            }\n        }\n    }\n\
-        }"
+        to apply\"\n                },\n                \"experienceType\": {\n                    \"$ref\": \"#/$defs/StorylineExperienceType\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Experience type for PersonalityEvolve
+        mutations\"\n                },\n                \"experienceIntensity\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Experience intensity for PersonalityEvolve
+        (0.0-1.0)\"\n                },\n                \"backstoryElementType\": {\n                    \"$ref\": \"#/$defs/StorylineBackstoryElementType\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Backstory element type for BackstoryAdd
+        mutations\"\n                },\n                \"backstoryKey\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Backstory element key for BackstoryAdd\"\
+        \n                },\n                \"backstoryValue\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Backstory element value for BackstoryAdd\"\
+        \n                },\n                \"backstoryStrength\": {\n                    \"type\": \"number\",\n      \
+        \              \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Backstory element strength for BackstoryAdd
+        (0.0-1.0)\"\n                },\n                \"relationshipTypeCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Relationship type code for RelationshipCreate/End\"\
+        \n                },\n                \"otherParticipantRole\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Role name for other participant in multi-character
+        scenarios\"\n                }\n            }\n        },\n        \"MutationType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"PersonalityEvolve\",\n                \"BackstoryAdd\",\n          \
+        \      \"RelationshipCreate\",\n                \"RelationshipEnd\",\n                \"Custom\"\n            ],\n\
+        \            \"description\": \"Types of state mutations a scenario can apply.\\nPersonalityEvolve: Apply experience
+        to evolve personality traits\\nBackstoryAdd: Add backstory element to character history\\nRelationshipCreate: Create
+        relationship between entities\\nRelationshipEnd: End existing relationship\\nCustom: Custom mutation (not executed
+        server-side)\\n\"\n        },\n        \"StorylineExperienceType\": {\n            \"type\": \"string\",\n       \
+        \     \"enum\": [\n                \"Trauma\",\n                \"Betrayal\",\n                \"Loss\",\n       \
+        \         \"Victory\",\n                \"Friendship\",\n                \"Redemption\",\n                \"Corruption\"\
+        ,\n                \"Enlightenment\",\n                \"Sacrifice\"\n            ],\n            \"description\"\
+        : \"Storyline-owned subset of character-personality ExperienceType for scenario mutations\"\n        },\n        \"\
+        StorylineBackstoryElementType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
+        Origin\",\n                \"Occupation\",\n                \"Training\",\n                \"Trauma\",\n         \
+        \       \"Achievement\",\n                \"Secret\",\n                \"Goal\",\n                \"Fear\",\n    \
+        \            \"Belief\"\n            ],\n            \"description\": \"Storyline-owned subset of character-history
+        BackstoryElementType for scenario mutations\"\n        },\n        \"ScenarioQuestHook\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Quest to spawn on scenario
+        completion\",\n            \"required\": [\n                \"questCode\"\n            ],\n            \"properties\"\
+        : {\n                \"questCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Quest definition code to spawn\"\n                },\n                \"delaySeconds\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\": \"Delay before
+        spawning quest (not implemented in Phase 1)\"\n                },\n                \"termOverrides\": {\n        \
+        \            \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Variable overrides for quest template\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioDefinition\"\
         ,\n    \"$defs\": {\n        \"ScenarioDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"A scenario definition template that can be triggered when conditions are
@@ -822,41 +828,49 @@ paths:
         \            \"description\": \"A state mutation to apply during scenario execution\",\n            \"required\":
         [\n                \"mutationType\"\n            ],\n            \"properties\": {\n                \"mutationType\"\
         : {\n                    \"$ref\": \"#/$defs/MutationType\",\n                    \"description\": \"Type of mutation
-        to apply\"\n                },\n                \"experienceType\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Experience type for PersonalityEvolve
-        (e.g., TRAUMA, VICTORY)\"\n                },\n                \"experienceIntensity\": {\n                    \"\
-        type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n         \
-        \           \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Experience
-        intensity for PersonalityEvolve (0.0-1.0)\"\n                },\n                \"backstoryElementType\": {\n   \
-        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)\"\n                },\n                \"backstoryKey\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element key for BackstoryAdd\"\n                },\n                \"backstoryValue\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Backstory element value for BackstoryAdd\"\n                },\n                \"backstoryStrength\": {\n     \
-        \               \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\"\
-        : 0.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element strength for BackstoryAdd (0.0-1.0)\"\n                },\n                \"relationshipTypeCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Relationship type code for RelationshipCreate/End\"\n                },\n                \"otherParticipantRole\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Role name for other participant in multi-character scenarios\"\n                }\n            }\n        },\n\
-        \        \"MutationType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"PersonalityEvolve\"\
-        ,\n                \"BackstoryAdd\",\n                \"RelationshipCreate\",\n                \"RelationshipEnd\"\
-        ,\n                \"Custom\"\n            ],\n            \"description\": \"Types of state mutations a scenario
-        can apply.\\nPersonalityEvolve: Apply experience to evolve personality traits\\nBackstoryAdd: Add backstory element
-        to character history\\nRelationshipCreate: Create relationship between entities\\nRelationshipEnd: End existing relationship\\
-        nCustom: Custom mutation (not executed server-side)\\n\"\n        },\n        \"ScenarioQuestHook\": {\n         \
-        \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Quest to spawn
-        on scenario completion\",\n            \"required\": [\n                \"questCode\"\n            ],\n          \
-        \  \"properties\": {\n                \"questCode\": {\n                    \"type\": \"string\",\n              \
-        \      \"description\": \"Quest definition code to spawn\"\n                },\n                \"delaySeconds\":
-        {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\"\
-        : \"Delay before spawning quest (not implemented in Phase 1)\"\n                },\n                \"termOverrides\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Variable overrides for quest template\"\n                }\n            }\n        }\n    }\n\
-        }"
+        to apply\"\n                },\n                \"experienceType\": {\n                    \"$ref\": \"#/$defs/StorylineExperienceType\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Experience type for PersonalityEvolve
+        mutations\"\n                },\n                \"experienceIntensity\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Experience intensity for PersonalityEvolve
+        (0.0-1.0)\"\n                },\n                \"backstoryElementType\": {\n                    \"$ref\": \"#/$defs/StorylineBackstoryElementType\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Backstory element type for BackstoryAdd
+        mutations\"\n                },\n                \"backstoryKey\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Backstory element key for BackstoryAdd\"\
+        \n                },\n                \"backstoryValue\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Backstory element value for BackstoryAdd\"\
+        \n                },\n                \"backstoryStrength\": {\n                    \"type\": \"number\",\n      \
+        \              \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Backstory element strength for BackstoryAdd
+        (0.0-1.0)\"\n                },\n                \"relationshipTypeCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Relationship type code for RelationshipCreate/End\"\
+        \n                },\n                \"otherParticipantRole\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Role name for other participant in multi-character
+        scenarios\"\n                }\n            }\n        },\n        \"MutationType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"PersonalityEvolve\",\n                \"BackstoryAdd\",\n          \
+        \      \"RelationshipCreate\",\n                \"RelationshipEnd\",\n                \"Custom\"\n            ],\n\
+        \            \"description\": \"Types of state mutations a scenario can apply.\\nPersonalityEvolve: Apply experience
+        to evolve personality traits\\nBackstoryAdd: Add backstory element to character history\\nRelationshipCreate: Create
+        relationship between entities\\nRelationshipEnd: End existing relationship\\nCustom: Custom mutation (not executed
+        server-side)\\n\"\n        },\n        \"StorylineExperienceType\": {\n            \"type\": \"string\",\n       \
+        \     \"enum\": [\n                \"Trauma\",\n                \"Betrayal\",\n                \"Loss\",\n       \
+        \         \"Victory\",\n                \"Friendship\",\n                \"Redemption\",\n                \"Corruption\"\
+        ,\n                \"Enlightenment\",\n                \"Sacrifice\"\n            ],\n            \"description\"\
+        : \"Storyline-owned subset of character-personality ExperienceType for scenario mutations\"\n        },\n        \"\
+        StorylineBackstoryElementType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
+        Origin\",\n                \"Occupation\",\n                \"Training\",\n                \"Trauma\",\n         \
+        \       \"Achievement\",\n                \"Secret\",\n                \"Goal\",\n                \"Fear\",\n    \
+        \            \"Belief\"\n            ],\n            \"description\": \"Storyline-owned subset of character-history
+        BackstoryElementType for scenario mutations\"\n        },\n        \"ScenarioQuestHook\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Quest to spawn on scenario
+        completion\",\n            \"required\": [\n                \"questCode\"\n            ],\n            \"properties\"\
+        : {\n                \"questCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Quest definition code to spawn\"\n                },\n                \"delaySeconds\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\": \"Delay before
+        spawning quest (not implemented in Phase 1)\"\n                },\n                \"termOverrides\": {\n        \
+        \            \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Variable overrides for quest template\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new scenario definition\",\n    \"description\": \"Creates a reusable
         scenario definition template.\\nScenarios are passive building blocks with triggering conditions,\\nphases, mutations,
         and optional quest hooks.\\n\",\n    \"tags\": [\n        \"Scenario Definitions\"\n    ],\n    \"deprecated\": false,\n\
@@ -898,17 +912,15 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetScenarioDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"GetScenarioDefinitionResponse\": {\n            \"type\": \"object\",\n           \
         \ \"additionalProperties\": false,\n            \"description\": \"Response with scenario definition\",\n        \
-        \    \"required\": [\n                \"found\"\n            ],\n            \"properties\": {\n                \"\
-        found\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the scenario
-        was found\"\n                },\n                \"scenario\": {\n                    \"$ref\": \"#/$defs/ScenarioDefinition\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"The scenario definition (null if
-        not found)\"\n                }\n            }\n        },\n        \"ScenarioDefinition\": {\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A scenario definition
-        template that can be triggered when conditions are met\",\n            \"required\": [\n                \"scenarioId\"\
-        ,\n                \"code\",\n                \"name\",\n                \"triggerConditions\",\n                \"\
-        phases\",\n                \"priority\",\n                \"enabled\",\n                \"createdAt\"\n          \
-        \  ],\n            \"properties\": {\n                \"scenarioId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique scenario definition identifier\"\
+        \    \"properties\": {\n                \"scenario\": {\n                    \"$ref\": \"#/$defs/ScenarioDefinition\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"The scenario definition\"\n   \
+        \             }\n            }\n        },\n        \"ScenarioDefinition\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"A scenario definition template that
+        can be triggered when conditions are met\",\n            \"required\": [\n                \"scenarioId\",\n      \
+        \          \"code\",\n                \"name\",\n                \"triggerConditions\",\n                \"phases\"\
+        ,\n                \"priority\",\n                \"enabled\",\n                \"createdAt\"\n            ],\n  \
+        \          \"properties\": {\n                \"scenarioId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Unique scenario definition identifier\"\
         \n                },\n                \"code\": {\n                    \"type\": \"string\",\n                   \
         \ \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Human-readable
         scenario code (uppercase with underscores)\"\n                },\n                \"name\": {\n                  \
@@ -1017,41 +1029,49 @@ paths:
         \            \"description\": \"A state mutation to apply during scenario execution\",\n            \"required\":
         [\n                \"mutationType\"\n            ],\n            \"properties\": {\n                \"mutationType\"\
         : {\n                    \"$ref\": \"#/$defs/MutationType\",\n                    \"description\": \"Type of mutation
-        to apply\"\n                },\n                \"experienceType\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Experience type for PersonalityEvolve
-        (e.g., TRAUMA, VICTORY)\"\n                },\n                \"experienceIntensity\": {\n                    \"\
-        type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n         \
-        \           \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Experience
-        intensity for PersonalityEvolve (0.0-1.0)\"\n                },\n                \"backstoryElementType\": {\n   \
-        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)\"\n                },\n                \"backstoryKey\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element key for BackstoryAdd\"\n                },\n                \"backstoryValue\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Backstory element value for BackstoryAdd\"\n                },\n                \"backstoryStrength\": {\n     \
-        \               \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\"\
-        : 0.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element strength for BackstoryAdd (0.0-1.0)\"\n                },\n                \"relationshipTypeCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Relationship type code for RelationshipCreate/End\"\n                },\n                \"otherParticipantRole\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Role name for other participant in multi-character scenarios\"\n                }\n            }\n        },\n\
-        \        \"MutationType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"PersonalityEvolve\"\
-        ,\n                \"BackstoryAdd\",\n                \"RelationshipCreate\",\n                \"RelationshipEnd\"\
-        ,\n                \"Custom\"\n            ],\n            \"description\": \"Types of state mutations a scenario
-        can apply.\\nPersonalityEvolve: Apply experience to evolve personality traits\\nBackstoryAdd: Add backstory element
-        to character history\\nRelationshipCreate: Create relationship between entities\\nRelationshipEnd: End existing relationship\\
-        nCustom: Custom mutation (not executed server-side)\\n\"\n        },\n        \"ScenarioQuestHook\": {\n         \
-        \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Quest to spawn
-        on scenario completion\",\n            \"required\": [\n                \"questCode\"\n            ],\n          \
-        \  \"properties\": {\n                \"questCode\": {\n                    \"type\": \"string\",\n              \
-        \      \"description\": \"Quest definition code to spawn\"\n                },\n                \"delaySeconds\":
-        {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\"\
-        : \"Delay before spawning quest (not implemented in Phase 1)\"\n                },\n                \"termOverrides\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Variable overrides for quest template\"\n                }\n            }\n        }\n    }\n\
-        }"
+        to apply\"\n                },\n                \"experienceType\": {\n                    \"$ref\": \"#/$defs/StorylineExperienceType\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Experience type for PersonalityEvolve
+        mutations\"\n                },\n                \"experienceIntensity\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Experience intensity for PersonalityEvolve
+        (0.0-1.0)\"\n                },\n                \"backstoryElementType\": {\n                    \"$ref\": \"#/$defs/StorylineBackstoryElementType\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Backstory element type for BackstoryAdd
+        mutations\"\n                },\n                \"backstoryKey\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Backstory element key for BackstoryAdd\"\
+        \n                },\n                \"backstoryValue\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Backstory element value for BackstoryAdd\"\
+        \n                },\n                \"backstoryStrength\": {\n                    \"type\": \"number\",\n      \
+        \              \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Backstory element strength for BackstoryAdd
+        (0.0-1.0)\"\n                },\n                \"relationshipTypeCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Relationship type code for RelationshipCreate/End\"\
+        \n                },\n                \"otherParticipantRole\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Role name for other participant in multi-character
+        scenarios\"\n                }\n            }\n        },\n        \"MutationType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"PersonalityEvolve\",\n                \"BackstoryAdd\",\n          \
+        \      \"RelationshipCreate\",\n                \"RelationshipEnd\",\n                \"Custom\"\n            ],\n\
+        \            \"description\": \"Types of state mutations a scenario can apply.\\nPersonalityEvolve: Apply experience
+        to evolve personality traits\\nBackstoryAdd: Add backstory element to character history\\nRelationshipCreate: Create
+        relationship between entities\\nRelationshipEnd: End existing relationship\\nCustom: Custom mutation (not executed
+        server-side)\\n\"\n        },\n        \"StorylineExperienceType\": {\n            \"type\": \"string\",\n       \
+        \     \"enum\": [\n                \"Trauma\",\n                \"Betrayal\",\n                \"Loss\",\n       \
+        \         \"Victory\",\n                \"Friendship\",\n                \"Redemption\",\n                \"Corruption\"\
+        ,\n                \"Enlightenment\",\n                \"Sacrifice\"\n            ],\n            \"description\"\
+        : \"Storyline-owned subset of character-personality ExperienceType for scenario mutations\"\n        },\n        \"\
+        StorylineBackstoryElementType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
+        Origin\",\n                \"Occupation\",\n                \"Training\",\n                \"Trauma\",\n         \
+        \       \"Achievement\",\n                \"Secret\",\n                \"Goal\",\n                \"Fear\",\n    \
+        \            \"Belief\"\n            ],\n            \"description\": \"Storyline-owned subset of character-history
+        BackstoryElementType for scenario mutations\"\n        },\n        \"ScenarioQuestHook\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Quest to spawn on scenario
+        completion\",\n            \"required\": [\n                \"questCode\"\n            ],\n            \"properties\"\
+        : {\n                \"questCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Quest definition code to spawn\"\n                },\n                \"delaySeconds\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\": \"Delay before
+        spawning quest (not implemented in Phase 1)\"\n                },\n                \"termOverrides\": {\n        \
+        \            \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Variable overrides for quest template\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a scenario definition by ID or code\",\n    \"description\": \"Retrieves
         a scenario definition by its ID or code.\\nUses read-through cache for performance.\\n\",\n    \"tags\": [\n     \
         \   \"Scenario Definitions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GetScenarioDefinition\"\n\
@@ -1263,17 +1283,17 @@ paths:
         mutation to apply during scenario execution\",\n            \"required\": [\n                \"mutationType\"\n  \
         \          ],\n            \"properties\": {\n                \"mutationType\": {\n                    \"$ref\": \"\
         #/$defs/MutationType\",\n                    \"description\": \"Type of mutation to apply\"\n                },\n\
-        \                \"experienceType\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)\"\n\
-        \                },\n                \"experienceIntensity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Experience intensity for PersonalityEvolve
-        (0.0-1.0)\"\n                },\n                \"backstoryElementType\": {\n                    \"type\": \"string\"\
+        \                \"experienceType\": {\n                    \"$ref\": \"#/$defs/StorylineExperienceType\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Experience type for PersonalityEvolve
+        mutations\"\n                },\n                \"experienceIntensity\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Experience intensity for PersonalityEvolve
+        (0.0-1.0)\"\n                },\n                \"backstoryElementType\": {\n                    \"$ref\": \"#/$defs/StorylineBackstoryElementType\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Backstory element type for BackstoryAdd
-        (e.g., TRAUMA, GOAL)\"\n                },\n                \"backstoryKey\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Backstory element key for
-        BackstoryAdd\"\n                },\n                \"backstoryValue\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Backstory element value for BackstoryAdd\"\
+        mutations\"\n                },\n                \"backstoryKey\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Backstory element key for BackstoryAdd\"\
+        \n                },\n                \"backstoryValue\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Backstory element value for BackstoryAdd\"\
         \n                },\n                \"backstoryStrength\": {\n                    \"type\": \"number\",\n      \
         \              \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
         \                    \"nullable\": true,\n                    \"description\": \"Backstory element strength for BackstoryAdd
@@ -1287,16 +1307,25 @@ paths:
         \            \"description\": \"Types of state mutations a scenario can apply.\\nPersonalityEvolve: Apply experience
         to evolve personality traits\\nBackstoryAdd: Add backstory element to character history\\nRelationshipCreate: Create
         relationship between entities\\nRelationshipEnd: End existing relationship\\nCustom: Custom mutation (not executed
-        server-side)\\n\"\n        },\n        \"ScenarioQuestHook\": {\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"description\": \"Quest to spawn on scenario completion\",\n        \
-        \    \"required\": [\n                \"questCode\"\n            ],\n            \"properties\": {\n             \
-        \   \"questCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Quest definition
-        code to spawn\"\n                },\n                \"delaySeconds\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 0,\n                    \"description\": \"Delay before spawning quest (not implemented
-        in Phase 1)\"\n                },\n                \"termOverrides\": {\n                    \"type\": \"object\"\
-        ,\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n               \
-        \     },\n                    \"nullable\": true,\n                    \"description\": \"Variable overrides for quest
-        template\"\n                }\n            }\n        }\n    }\n}"
+        server-side)\\n\"\n        },\n        \"StorylineExperienceType\": {\n            \"type\": \"string\",\n       \
+        \     \"enum\": [\n                \"Trauma\",\n                \"Betrayal\",\n                \"Loss\",\n       \
+        \         \"Victory\",\n                \"Friendship\",\n                \"Redemption\",\n                \"Corruption\"\
+        ,\n                \"Enlightenment\",\n                \"Sacrifice\"\n            ],\n            \"description\"\
+        : \"Storyline-owned subset of character-personality ExperienceType for scenario mutations\"\n        },\n        \"\
+        StorylineBackstoryElementType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
+        Origin\",\n                \"Occupation\",\n                \"Training\",\n                \"Trauma\",\n         \
+        \       \"Achievement\",\n                \"Secret\",\n                \"Goal\",\n                \"Fear\",\n    \
+        \            \"Belief\"\n            ],\n            \"description\": \"Storyline-owned subset of character-history
+        BackstoryElementType for scenario mutations\"\n        },\n        \"ScenarioQuestHook\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Quest to spawn on scenario
+        completion\",\n            \"required\": [\n                \"questCode\"\n            ],\n            \"properties\"\
+        : {\n                \"questCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Quest definition code to spawn\"\n                },\n                \"delaySeconds\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\": \"Delay before
+        spawning quest (not implemented in Phase 1)\"\n                },\n                \"termOverrides\": {\n        \
+        \            \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Variable overrides for quest template\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioDefinition\"\
         ,\n    \"$defs\": {\n        \"ScenarioDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"A scenario definition template that can be triggered when conditions are
@@ -1413,41 +1442,49 @@ paths:
         \            \"description\": \"A state mutation to apply during scenario execution\",\n            \"required\":
         [\n                \"mutationType\"\n            ],\n            \"properties\": {\n                \"mutationType\"\
         : {\n                    \"$ref\": \"#/$defs/MutationType\",\n                    \"description\": \"Type of mutation
-        to apply\"\n                },\n                \"experienceType\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Experience type for PersonalityEvolve
-        (e.g., TRAUMA, VICTORY)\"\n                },\n                \"experienceIntensity\": {\n                    \"\
-        type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n         \
-        \           \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Experience
-        intensity for PersonalityEvolve (0.0-1.0)\"\n                },\n                \"backstoryElementType\": {\n   \
-        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)\"\n                },\n                \"backstoryKey\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element key for BackstoryAdd\"\n                },\n                \"backstoryValue\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Backstory element value for BackstoryAdd\"\n                },\n                \"backstoryStrength\": {\n     \
-        \               \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\"\
-        : 0.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element strength for BackstoryAdd (0.0-1.0)\"\n                },\n                \"relationshipTypeCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Relationship type code for RelationshipCreate/End\"\n                },\n                \"otherParticipantRole\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Role name for other participant in multi-character scenarios\"\n                }\n            }\n        },\n\
-        \        \"MutationType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"PersonalityEvolve\"\
-        ,\n                \"BackstoryAdd\",\n                \"RelationshipCreate\",\n                \"RelationshipEnd\"\
-        ,\n                \"Custom\"\n            ],\n            \"description\": \"Types of state mutations a scenario
-        can apply.\\nPersonalityEvolve: Apply experience to evolve personality traits\\nBackstoryAdd: Add backstory element
-        to character history\\nRelationshipCreate: Create relationship between entities\\nRelationshipEnd: End existing relationship\\
-        nCustom: Custom mutation (not executed server-side)\\n\"\n        },\n        \"ScenarioQuestHook\": {\n         \
-        \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Quest to spawn
-        on scenario completion\",\n            \"required\": [\n                \"questCode\"\n            ],\n          \
-        \  \"properties\": {\n                \"questCode\": {\n                    \"type\": \"string\",\n              \
-        \      \"description\": \"Quest definition code to spawn\"\n                },\n                \"delaySeconds\":
-        {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\"\
-        : \"Delay before spawning quest (not implemented in Phase 1)\"\n                },\n                \"termOverrides\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Variable overrides for quest template\"\n                }\n            }\n        }\n    }\n\
-        }"
+        to apply\"\n                },\n                \"experienceType\": {\n                    \"$ref\": \"#/$defs/StorylineExperienceType\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Experience type for PersonalityEvolve
+        mutations\"\n                },\n                \"experienceIntensity\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Experience intensity for PersonalityEvolve
+        (0.0-1.0)\"\n                },\n                \"backstoryElementType\": {\n                    \"$ref\": \"#/$defs/StorylineBackstoryElementType\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Backstory element type for BackstoryAdd
+        mutations\"\n                },\n                \"backstoryKey\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Backstory element key for BackstoryAdd\"\
+        \n                },\n                \"backstoryValue\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Backstory element value for BackstoryAdd\"\
+        \n                },\n                \"backstoryStrength\": {\n                    \"type\": \"number\",\n      \
+        \              \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Backstory element strength for BackstoryAdd
+        (0.0-1.0)\"\n                },\n                \"relationshipTypeCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Relationship type code for RelationshipCreate/End\"\
+        \n                },\n                \"otherParticipantRole\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Role name for other participant in multi-character
+        scenarios\"\n                }\n            }\n        },\n        \"MutationType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"PersonalityEvolve\",\n                \"BackstoryAdd\",\n          \
+        \      \"RelationshipCreate\",\n                \"RelationshipEnd\",\n                \"Custom\"\n            ],\n\
+        \            \"description\": \"Types of state mutations a scenario can apply.\\nPersonalityEvolve: Apply experience
+        to evolve personality traits\\nBackstoryAdd: Add backstory element to character history\\nRelationshipCreate: Create
+        relationship between entities\\nRelationshipEnd: End existing relationship\\nCustom: Custom mutation (not executed
+        server-side)\\n\"\n        },\n        \"StorylineExperienceType\": {\n            \"type\": \"string\",\n       \
+        \     \"enum\": [\n                \"Trauma\",\n                \"Betrayal\",\n                \"Loss\",\n       \
+        \         \"Victory\",\n                \"Friendship\",\n                \"Redemption\",\n                \"Corruption\"\
+        ,\n                \"Enlightenment\",\n                \"Sacrifice\"\n            ],\n            \"description\"\
+        : \"Storyline-owned subset of character-personality ExperienceType for scenario mutations\"\n        },\n        \"\
+        StorylineBackstoryElementType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
+        Origin\",\n                \"Occupation\",\n                \"Training\",\n                \"Trauma\",\n         \
+        \       \"Achievement\",\n                \"Secret\",\n                \"Goal\",\n                \"Fear\",\n    \
+        \            \"Belief\"\n            ],\n            \"description\": \"Storyline-owned subset of character-history
+        BackstoryElementType for scenario mutations\"\n        },\n        \"ScenarioQuestHook\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Quest to spawn on scenario
+        completion\",\n            \"required\": [\n                \"questCode\"\n            ],\n            \"properties\"\
+        : {\n                \"questCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Quest definition code to spawn\"\n                },\n                \"delaySeconds\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\": \"Delay before
+        spawning quest (not implemented in Phase 1)\"\n                },\n                \"termOverrides\": {\n        \
+        \            \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Variable overrides for quest template\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a scenario definition\",\n    \"description\": \"Updates an existing
         scenario definition.\\nUses ETag for optimistic concurrency control.\\n\",\n    \"tags\": [\n        \"Scenario Definitions\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateScenarioDefinition\"\n}"
@@ -2091,8 +2128,7 @@ paths:
       description: |
         Called by Resource service during character compression.
         Returns scenario participations, active arcs, and completion counts for archival.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -2279,6 +2315,32 @@ components:
         RelationshipCreate: Create relationship between entities
         RelationshipEnd: End existing relationship
         Custom: Custom mutation (not executed server-side)
+    StorylineExperienceType:
+      type: string
+      enum:
+      - Trauma
+      - Betrayal
+      - Loss
+      - Victory
+      - Friendship
+      - Redemption
+      - Corruption
+      - Enlightenment
+      - Sacrifice
+      description: Storyline-owned subset of character-personality ExperienceType for scenario mutations
+    StorylineBackstoryElementType:
+      type: string
+      enum:
+      - Origin
+      - Occupation
+      - Training
+      - Trauma
+      - Achievement
+      - Secret
+      - Goal
+      - Fear
+      - Belief
+      description: Storyline-owned subset of character-history BackstoryElementType for scenario mutations
     ComposeRequest:
       type: object
       additionalProperties: false
@@ -2481,16 +2543,11 @@ components:
       type: object
       additionalProperties: false
       description: Retrieved plan
-      required:
-      - found
       properties:
-        found:
-          type: boolean
-          description: Whether the plan was found
         plan:
           $ref: '#/components/schemas/ComposeResponse'
           nullable: true
-          description: The plan (null if not found)
+          description: The composed plan
     ListPlansResponse:
       type: object
       additionalProperties: false
@@ -3003,9 +3060,9 @@ components:
           $ref: '#/components/schemas/MutationType'
           description: Type of mutation to apply
         experienceType:
-          type: string
+          $ref: '#/components/schemas/StorylineExperienceType'
           nullable: true
-          description: Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)
+          description: Experience type for PersonalityEvolve mutations
         experienceIntensity:
           type: number
           format: float
@@ -3014,9 +3071,9 @@ components:
           nullable: true
           description: Experience intensity for PersonalityEvolve (0.0-1.0)
         backstoryElementType:
-          type: string
+          $ref: '#/components/schemas/StorylineBackstoryElementType'
           nullable: true
-          description: Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)
+          description: Backstory element type for BackstoryAdd mutations
         backstoryKey:
           type: string
           nullable: true
@@ -3161,16 +3218,11 @@ components:
       type: object
       additionalProperties: false
       description: Response with scenario definition
-      required:
-      - found
       properties:
-        found:
-          type: boolean
-          description: Whether the scenario was found
         scenario:
           $ref: '#/components/schemas/ScenarioDefinition'
           nullable: true
-          description: The scenario definition (null if not found)
+          description: The scenario definition
     ListScenarioDefinitionsRequest:
       type: object
       additionalProperties: false

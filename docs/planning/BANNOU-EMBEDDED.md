@@ -1,8 +1,15 @@
 # Bannou Embedded Mode: In-Process Service Invocation
 
-> **Status**: Investigation complete, implementation not started
-> **Date**: 2026-02-24
-> **Context**: Enabling Bannou services to run fully in-process (e.g., Android game) without HTTP, WebSocket, or external infrastructure
+> **Type**: Design
+> **Status**: Aspirational
+> **Created**: 2026-02-24
+> **Last Updated**: 2026-03-09
+> **North Stars**: #4
+> **Related Plugins**: Mesh, Connect, State, Messaging
+
+## Summary
+
+Describes how Bannou services can run fully in-process without HTTP, WebSocket, or external infrastructure, enabling embedded deployment on Android, desktop, and console. The investigation found that infrastructure libs already support embedded backends, the ASP.NET Core coupling is phantom, and the total implementation is approximately a 2-3 day effort across plugin system decoupling, client generation template changes, and a new embedded host composition root. No implementation has been started.
 
 ---
 

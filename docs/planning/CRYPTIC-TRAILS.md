@@ -1,14 +1,18 @@
 # Cryptic Trails: Distributed Knowledge Puzzles Through Emergent Clue Composition
 
-> **Status**: Design
+> **Type**: Design
+> **Status**: Aspirational
 > **Created**: 2026-02-27
-> **Author**: Lysander (design) + Claude (analysis)
-> **Category**: Cross-cutting mechanic (behavioral + Lexicon/Hearsay extension)
-> **Related Services**: Lexicon (L4), Hearsay (L4), Collection (L2), Seed (L2), Actor (L2), Disposition (L4), Quest (L2), Agency (L4), Gardener (L4), Affix (L4), Loot (L4), Item (L2), Inventory (L2), Puppetmaster (L4)
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #5
+> **Related Plugins**: Lexicon, Hearsay, Collection, Seed, Actor, Disposition, Quest, Agency, Gardener, Affix, Loot, Item, Inventory, Puppetmaster
 > **Related Plans**: [LOGOS-RESONANCE-ITEMS.md](LOGOS-RESONANCE-ITEMS.md), [MEMENTO-INVENTORIES.md](MEMENTO-INVENTORIES.md), [COMPRESSION-GAMEPLAY-PATTERNS.md](COMPRESSION-GAMEPLAY-PATTERNS.md), [DUNGEON-EXTENSIONS-NOTES.md](DUNGEON-EXTENSIONS-NOTES.md)
 > **Related Docs**: [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md), [VISION.md](../reference/VISION.md), [PLAYER-VISION.md](../reference/PLAYER-VISION.md)
 > **Related Deep Dives**: [LEXICON.md](../plugins/LEXICON.md), [HEARSAY.md](../plugins/HEARSAY.md), [DISPOSITION.md](../plugins/DISPOSITION.md), [QUEST.md](../plugins/QUEST.md), [AFFIX.md](../plugins/AFFIX.md), [AGENCY.md](../plugins/AGENCY.md), [SEED.md](../plugins/SEED.md), [COLLECTION.md](../plugins/COLLECTION.md)
-> **Related arcadia-kb**: True Names, Dungeon System, Underworld and Soul Currency System
+
+## Summary
+
+Designs a distributed knowledge puzzle system where NPC characters autonomously discover world secrets by accumulating clues from multiple sources (mementos, item affixes, rumors, documents) and generating hypotheses when their Lexicon discovery tiers cross association visibility thresholds. Composes entirely from existing services (Lexicon, Hearsay, Collection, Seed, Disposition, Actor) with three small extensions: a Hearsay inference channel, skill-gated Lexicon tier offsets, and Discovery Templates as seeded configuration. No prerequisite services are implemented yet; Lexicon, Hearsay, and Disposition are all aspirational.
 
 ---
 

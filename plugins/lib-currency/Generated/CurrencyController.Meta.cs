@@ -296,6 +296,7 @@ public partial class CurrencyController
                 "linkedToItem",
                 "isBaseCurrency",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -478,6 +479,21 @@ public partial class CurrencyController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether definition is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether definition is deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -658,6 +674,7 @@ public partial class CurrencyController
                 "linkedToItem",
                 "isBaseCurrency",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -840,6 +857,21 @@ public partial class CurrencyController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether definition is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether definition is deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -996,6 +1028,11 @@ public partial class CurrencyController
                     "default": false,
                     "description": "Include inactive definitions"
                 },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include deprecated definitions (default false)"
+                },
                 "isBaseCurrency": {
                     "type": "boolean",
                     "nullable": true,
@@ -1055,6 +1092,7 @@ public partial class CurrencyController
                 "linkedToItem",
                 "isBaseCurrency",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -1237,6 +1275,21 @@ public partial class CurrencyController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether definition is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether definition is deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1537,6 +1590,7 @@ public partial class CurrencyController
                 "linkedToItem",
                 "isBaseCurrency",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -1720,6 +1774,21 @@ public partial class CurrencyController
                     "type": "boolean",
                     "description": "Whether definition is active"
                 },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether definition is deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -1844,6 +1913,386 @@ public partial class CurrencyController
             _UpdateCurrencyDefinition_Info,
             _UpdateCurrencyDefinition_RequestSchema,
             _UpdateCurrencyDefinition_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeprecateCurrencyDefinition
+
+    private static readonly string _DeprecateCurrencyDefinition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeprecateCurrencyDefinitionRequest",
+    "$defs": {
+        "DeprecateCurrencyDefinitionRequest": {
+            "type": "object",
+            "description": "Request to deprecate a currency definition (Category B \u2014 one-way, no delete)",
+            "additionalProperties": false,
+            "required": [
+                "definitionId"
+            ],
+            "properties": {
+                "definitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Definition ID to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (audit context for Category B entities)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateCurrencyDefinition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CurrencyDefinitionResponse",
+    "$defs": {
+        "CurrencyDefinitionResponse": {
+            "type": "object",
+            "description": "Currency definition details",
+            "additionalProperties": false,
+            "required": [
+                "definitionId",
+                "code",
+                "name",
+                "scope",
+                "precision",
+                "transferable",
+                "tradeable",
+                "autogainEnabled",
+                "expires",
+                "linkedToItem",
+                "isBaseCurrency",
+                "isActive",
+                "isDeprecated",
+                "createdAt"
+            ],
+            "properties": {
+                "definitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique definition identifier"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique currency code"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description"
+                },
+                "scope": {
+                    "$ref": "#/$defs/CurrencyScope",
+                    "description": "Realm availability scope"
+                },
+                "realmsAvailable": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "nullable": true,
+                    "description": "Available realm IDs"
+                },
+                "precision": {
+                    "$ref": "#/$defs/CurrencyPrecision",
+                    "description": "Decimal precision"
+                },
+                "transferable": {
+                    "type": "boolean",
+                    "description": "Whether transferable between wallets"
+                },
+                "tradeable": {
+                    "type": "boolean",
+                    "description": "Whether usable in trades"
+                },
+                "allowNegative": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether negative balance allowed (null uses plugin default)"
+                },
+                "perWalletCap": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Maximum per-wallet balance"
+                },
+                "capOverflowBehavior": {
+                    "$ref": "#/$defs/CapOverflowBehavior",
+                    "nullable": true,
+                    "description": "Overflow behavior when cap exceeded"
+                },
+                "globalSupplyCap": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Global supply cap"
+                },
+                "dailyEarnCap": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Daily earn cap"
+                },
+                "weeklyEarnCap": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Weekly earn cap"
+                },
+                "earnCapResetTime": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Earn cap reset time"
+                },
+                "autogainEnabled": {
+                    "type": "boolean",
+                    "description": "Whether autogain is enabled"
+                },
+                "autogainMode": {
+                    "$ref": "#/$defs/AutogainMode",
+                    "nullable": true,
+                    "description": "Autogain calculation mode"
+                },
+                "autogainAmount": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Autogain amount per interval"
+                },
+                "autogainInterval": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Autogain interval duration"
+                },
+                "autogainCap": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Autogain balance cap"
+                },
+                "expires": {
+                    "type": "boolean",
+                    "description": "Whether currency can expire"
+                },
+                "expirationPolicy": {
+                    "$ref": "#/$defs/ExpirationPolicy",
+                    "nullable": true,
+                    "description": "Expiration policy"
+                },
+                "expirationDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Fixed expiration date"
+                },
+                "expirationDuration": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expiration duration"
+                },
+                "seasonId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Season ID for expiration"
+                },
+                "linkedToItem": {
+                    "type": "boolean",
+                    "description": "Whether linked to inventory item"
+                },
+                "linkedItemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Linked item template ID"
+                },
+                "linkageMode": {
+                    "$ref": "#/$defs/ItemLinkageMode",
+                    "nullable": true,
+                    "description": "Item linkage mode"
+                },
+                "isBaseCurrency": {
+                    "type": "boolean",
+                    "description": "Whether this is the base currency"
+                },
+                "exchangeRateToBase": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Exchange rate to base currency"
+                },
+                "exchangeRateUpdatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When exchange rate was last updated"
+                },
+                "iconAssetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Icon asset ID"
+                },
+                "displayFormat": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display format string"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether definition is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether definition is deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Creation timestamp"
+                },
+                "modifiedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Last modification timestamp"
+                }
+            }
+        },
+        "CurrencyScope": {
+            "type": "string",
+            "description": "Scope of currency availability across realms",
+            "enum": [
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
+            ]
+        },
+        "CurrencyPrecision": {
+            "type": "string",
+            "description": "How the currency handles decimal values (immutable after creation)",
+            "enum": [
+                "Integer",
+                "Decimal2",
+                "Decimal4",
+                "Decimal8",
+                "DecimalFull",
+                "BigInteger"
+            ]
+        },
+        "CapOverflowBehavior": {
+            "type": "string",
+            "description": "What happens when a credit would exceed the wallet cap",
+            "enum": [
+                "Reject",
+                "CapAndLose",
+                "CapAndReturn"
+            ]
+        },
+        "AutogainMode": {
+            "type": "string",
+            "description": "How autogain (energy/interest) is calculated",
+            "enum": [
+                "Simple",
+                "Compound"
+            ]
+        },
+        "ExpirationPolicy": {
+            "type": "string",
+            "description": "How currency expiration is determined",
+            "enum": [
+                "FixedDate",
+                "DurationFromEarn",
+                "EndOfSeason"
+            ]
+        },
+        "ItemLinkageMode": {
+            "type": "string",
+            "description": "How currency is linked to inventory items",
+            "enum": [
+                "None",
+                "VisualOnly",
+                "ReferenceOnly"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateCurrencyDefinition_Info = """
+{
+    "summary": "Deprecate a currency definition (Category B \u2014 one-way, no delete)",
+    "description": "Deprecates a currency definition. Existing wallets continue to function\nbut no new wallets can be created for this currency.\nCategory B entity: deprecation is one-way (no undeprecate), no delete endpoint.\ nIdempotent: returns OK if already deprecated.\n",
+    "tags": [
+        "Currency Definition"
+    ],
+    "deprecated": false,
+    "operationId": "deprecateCurrencyDefinition"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeprecateCurrencyDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/currency/definition/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateCurrencyDefinition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Currency",
+            "POST",
+            "/currency/definition/deprecate",
+            _DeprecateCurrencyDefinition_Info));
+
+    /// <summary>Returns request schema for DeprecateCurrencyDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/currency/definition/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateCurrencyDefinition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Currency",
+            "POST",
+            "/currency/definition/deprecate",
+            "request-schema",
+            _DeprecateCurrencyDefinition_RequestSchema));
+
+    /// <summary>Returns response schema for DeprecateCurrencyDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/currency/definition/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateCurrencyDefinition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Currency",
+            "POST",
+            "/currency/definition/deprecate",
+            "response-schema",
+            _DeprecateCurrencyDefinition_ResponseSchema));
+
+    /// <summary>Returns full schema for DeprecateCurrencyDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/currency/definition/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateCurrencyDefinition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Currency",
+            "POST",
+            "/currency/definition/deprecate",
+            _DeprecateCurrencyDefinition_Info,
+            _DeprecateCurrencyDefinition_RequestSchema,
+            _DeprecateCurrencyDefinition_ResponseSchema));
 
     #endregion
 
@@ -5887,6 +6336,7 @@ public partial class CurrencyController
                 "linkedToItem",
                 "isBaseCurrency",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -6069,6 +6519,21 @@ public partial class CurrencyController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether definition is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether definition is deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",

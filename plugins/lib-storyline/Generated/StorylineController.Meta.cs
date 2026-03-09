@@ -683,18 +683,11 @@ public partial class StorylineController
             "type": "object",
             "additionalProperties": false,
             "description": "Retrieved plan",
-            "required": [
-                "found"
-            ],
             "properties": {
-                "found": {
-                    "type": "boolean",
-                    "description": "Whether the plan was found"
-                },
                 "plan": {
                     "$ref": "#/$defs/ComposeResponse",
                     "nullable": true,
-                    "description": "The plan (null if not found)"
+                    "description": "The composed plan"
                 }
             }
         },
@@ -763,7 +756,7 @@ public partial class StorylineController
                         "$ref": "#/$defs/EntityRequirement"
                     },
                     "nullable": true,
-                    "description": "Entities required for this storyline (descriptions only).\ nCallers decide whether to spawn them.\n"
+                    "description": "Entities required for this storyline (descriptions only).\nCallers decide whether to spawn them.\n"
                 },
                 "links": {
                     "type": "array",
@@ -1643,9 +1636,9 @@ public partial class StorylineController
                     "description": "Type of mutation to apply"
                 },
                 "experienceType": {
-                    "type": "string",
+                    "$ref": "#/$defs/StorylineExperienceType",
                     "nullable": true,
-                    "description": "Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)"
+                    "description": "Experience type for PersonalityEvolve mutations"
                 },
                 "experienceIntensity": {
                     "type": "number",
@@ -1656,9 +1649,9 @@ public partial class StorylineController
                     "description": "Experience intensity for PersonalityEvolve (0.0-1.0)"
                 },
                 "backstoryElementType": {
-                    "type": "string",
+                    "$ref": "#/$defs/StorylineBackstoryElementType",
                     "nullable": true,
-                    "description": "Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)"
+                    "description": "Backstory element type for BackstoryAdd mutations"
                 },
                 "backstoryKey": {
                     "type": "string",
@@ -1699,7 +1692,37 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\ nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+        },
+        "StorylineExperienceType": {
+            "type": "string",
+            "enum": [
+                "Trauma",
+                "Betrayal",
+                "Loss",
+                "Victory",
+                "Friendship",
+                "Redemption",
+                "Corruption",
+                "Enlightenment",
+                "Sacrifice"
+            ],
+            "description": "Storyline-owned subset of character-personality ExperienceType for scenario mutations"
+        },
+        "StorylineBackstoryElementType": {
+            "type": "string",
+            "enum": [
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
+            ],
+            "description": "Storyline-owned subset of character-history BackstoryElementType for scenario mutations"
         },
         "ScenarioQuestHook": {
             "type": "object",
@@ -2044,9 +2067,9 @@ public partial class StorylineController
                     "description": "Type of mutation to apply"
                 },
                 "experienceType": {
-                    "type": "string",
+                    "$ref": "#/$defs/StorylineExperienceType",
                     "nullable": true,
-                    "description": "Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)"
+                    "description": "Experience type for PersonalityEvolve mutations"
                 },
                 "experienceIntensity": {
                     "type": "number",
@@ -2057,9 +2080,9 @@ public partial class StorylineController
                     "description": "Experience intensity for PersonalityEvolve (0.0-1.0)"
                 },
                 "backstoryElementType": {
-                    "type": "string",
+                    "$ref": "#/$defs/StorylineBackstoryElementType",
                     "nullable": true,
-                    "description": "Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)"
+                    "description": "Backstory element type for BackstoryAdd mutations"
                 },
                 "backstoryKey": {
                     "type": "string",
@@ -2100,7 +2123,37 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\ nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+        },
+        "StorylineExperienceType": {
+            "type": "string",
+            "enum": [
+                "Trauma",
+                "Betrayal",
+                "Loss",
+                "Victory",
+                "Friendship",
+                "Redemption",
+                "Corruption",
+                "Enlightenment",
+                "Sacrifice"
+            ],
+            "description": "Storyline-owned subset of character-personality ExperienceType for scenario mutations"
+        },
+        "StorylineBackstoryElementType": {
+            "type": "string",
+            "enum": [
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
+            ],
+            "description": "Storyline-owned subset of character-history BackstoryElementType for scenario mutations"
         },
         "ScenarioQuestHook": {
             "type": "object",
@@ -2225,18 +2278,11 @@ public partial class StorylineController
             "type": "object",
             "additionalProperties": false,
             "description": "Response with scenario definition",
-            "required": [
-                "found"
-            ],
             "properties": {
-                "found": {
-                    "type": "boolean",
-                    "description": "Whether the scenario was found"
-                },
                 "scenario": {
                     "$ref": "#/$defs/ScenarioDefinition",
                     "nullable": true,
-                    "description": "The scenario definition (null if not found)"
+                    "description": "The scenario definition"
                 }
             }
         },
@@ -2547,9 +2593,9 @@ public partial class StorylineController
                     "description": "Type of mutation to apply"
                 },
                 "experienceType": {
-                    "type": "string",
+                    "$ref": "#/$defs/StorylineExperienceType",
                     "nullable": true,
-                    "description": "Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)"
+                    "description": "Experience type for PersonalityEvolve mutations"
                 },
                 "experienceIntensity": {
                     "type": "number",
@@ -2560,9 +2606,9 @@ public partial class StorylineController
                     "description": "Experience intensity for PersonalityEvolve (0.0-1.0)"
                 },
                 "backstoryElementType": {
-                    "type": "string",
+                    "$ref": "#/$defs/StorylineBackstoryElementType",
                     "nullable": true,
-                    "description": "Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)"
+                    "description": "Backstory element type for BackstoryAdd mutations"
                 },
                 "backstoryKey": {
                     "type": "string",
@@ -2603,7 +2649,37 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\ nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+        },
+        "StorylineExperienceType": {
+            "type": "string",
+            "enum": [
+                "Trauma",
+                "Betrayal",
+                "Loss",
+                "Victory",
+                "Friendship",
+                "Redemption",
+                "Corruption",
+                "Enlightenment",
+                "Sacrifice"
+            ],
+            "description": "Storyline-owned subset of character-personality ExperienceType for scenario mutations"
+        },
+        "StorylineBackstoryElementType": {
+            "type": "string",
+            "enum": [
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
+            ],
+            "description": "Storyline-owned subset of character-history BackstoryElementType for scenario mutations"
         },
         "ScenarioQuestHook": {
             "type": "object",
@@ -3184,9 +3260,9 @@ public partial class StorylineController
                     "description": "Type of mutation to apply"
                 },
                 "experienceType": {
-                    "type": "string",
+                    "$ref": "#/$defs/StorylineExperienceType",
                     "nullable": true,
-                    "description": "Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)"
+                    "description": "Experience type for PersonalityEvolve mutations"
                 },
                 "experienceIntensity": {
                     "type": "number",
@@ -3197,9 +3273,9 @@ public partial class StorylineController
                     "description": "Experience intensity for PersonalityEvolve (0.0-1.0)"
                 },
                 "backstoryElementType": {
-                    "type": "string",
+                    "$ref": "#/$defs/StorylineBackstoryElementType",
                     "nullable": true,
-                    "description": "Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)"
+                    "description": "Backstory element type for BackstoryAdd mutations"
                 },
                 "backstoryKey": {
                     "type": "string",
@@ -3241,6 +3317,36 @@ public partial class StorylineController
                 "Custom"
             ],
             "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+        },
+        "StorylineExperienceType": {
+            "type": "string",
+            "enum": [
+                "Trauma",
+                "Betrayal",
+                "Loss",
+                "Victory",
+                "Friendship",
+                "Redemption",
+                "Corruption",
+                "Enlightenment",
+                "Sacrifice"
+            ],
+            "description": "Storyline-owned subset of character-personality ExperienceType for scenario mutations"
+        },
+        "StorylineBackstoryElementType": {
+            "type": "string",
+            "enum": [
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
+            ],
+            "description": "Storyline-owned subset of character-history BackstoryElementType for scenario mutations"
         },
         "ScenarioQuestHook": {
             "type": "object",
@@ -3585,9 +3691,9 @@ public partial class StorylineController
                     "description": "Type of mutation to apply"
                 },
                 "experienceType": {
-                    "type": "string",
+                    "$ref": "#/$defs/StorylineExperienceType",
                     "nullable": true,
-                    "description": "Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)"
+                    "description": "Experience type for PersonalityEvolve mutations"
                 },
                 "experienceIntensity": {
                     "type": "number",
@@ -3598,9 +3704,9 @@ public partial class StorylineController
                     "description": "Experience intensity for PersonalityEvolve (0.0-1.0)"
                 },
                 "backstoryElementType": {
-                    "type": "string",
+                    "$ref": "#/$defs/StorylineBackstoryElementType",
                     "nullable": true,
-                    "description": "Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)"
+                    "description": "Backstory element type for BackstoryAdd mutations"
                 },
                 "backstoryKey": {
                     "type": "string",
@@ -3641,7 +3747,37 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\ nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+        },
+        "StorylineExperienceType": {
+            "type": "string",
+            "enum": [
+                "Trauma",
+                "Betrayal",
+                "Loss",
+                "Victory",
+                "Friendship",
+                "Redemption",
+                "Corruption",
+                "Enlightenment",
+                "Sacrifice"
+            ],
+            "description": "Storyline-owned subset of character-personality ExperienceType for scenario mutations"
+        },
+        "StorylineBackstoryElementType": {
+            "type": "string",
+            "enum": [
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
+            ],
+            "description": "Storyline-owned subset of character-history BackstoryElementType for scenario mutations"
         },
         "ScenarioQuestHook": {
             "type": "object",

@@ -5,93 +5,87 @@
 
 Planning, design, research, and architectural analysis documents.
 
+## Vision Documents
+
+### ABML/GOAP Expansion Opportunities {#abml-goap-opportunities}
+
+**Type**: Vision Document | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #4 | [Full Document](planning/ABML-GOAP-OPPORTUNITIES.md)
+
+Identifies expansion opportunities for the ABML/GOAP system beyond current NPC cognition, combat choreography, and music composition. Covers adaptive tutorials, procedural quest generation, social dynamics, faction economy simulation, a cinematography SDK, and dialogue evolution as future applications of the behavioral intelligence infrastructure. All opportunities are design-only and require new schemas, services, or extensions to existing plugins before realization.
+
+### Compression Gameplay Patterns: Emergent Gameplay from Archived Entities {#compression-gameplay-patterns}
+
+**Type**: Vision Document | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #2 | [Full Document](planning/COMPRESSION-GAMEPLAY-PATTERNS.md)
+
+Explores gameplay patterns that emerge from treating compressed character archives as generative inputs rather than terminal states. Covers resurrection variants (ghosts, zombies, revenants, clones), procedural quest generation from unfinished business, NPC memory seeding from the dead, legacy mechanics for descendants, live snapshots for AI consumption, and cross-entity compression for scenes, realms, and items. The compression infrastructure in lib-resource and storyline consumption are implemented; the gameplay patterns described here are aspirational designs that would consume that infrastructure.
+
+### Cultural Emergence: Divine Curation of Organic Identity and Custom {#cultural-emergence}
+
+**Type**: Vision Document | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #5 | [Full Document](planning/CULTURAL-EMERGENCE.md)
+
+Describes how divine actors observe emergent material conditions at settlements (dominant production, geography, governance, trade significance) and crystallize them into cultural identity and customs via Hearsay beliefs and Faction norms, requiring zero new services. Customs such as coming-of-age ceremonies, harvest festivals, mourning rites, and trade protocols emerge organically because the divine GOAP planner selects culturally appropriate practices and artifacts from what is actually available and valued in each community. Several key dependencies remain unimplemented, including the Hearsay, Disposition, Agency, Workshop, Trade, and Environment plugins.
+
+## Design
+
+### Actor-Bound Entities: Living Things That Grow Into Autonomous Agents {#actor-bound-entities}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2 | [Full Document](planning/ACTOR-BOUND-ENTITIES.md)
+
+Defines the unified three-stage cognitive progression (Dormant, Stirring, Awakened) for any entity that grows from inert object to autonomous agent. Covers gods, dungeons, living weapons, and future entity types using system realms, Seed growth phases, and the Variable Provider Factory pattern. Validates the composability thesis by demonstrating that living weapons require zero new plugins. No implementation exists yet beyond the foundational services it composes.
+
+This document incorporates and expands `docs/planning/DUNGEON-EXTENSIONS-NOTES.md`. External inspiration: *Tales of Destiny* (Swordians), *Xenoblade Chronicles 2* (Blades), *Persona* (bond = power), *DanMachi* (Falna/blessing system), Dungeon Core LitRPG genre.
+
+### Bannou Embedded Mode: In-Process Service Invocation {#bannou-embedded}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #4 | [Full Document](planning/BANNOU-EMBEDDED.md)
+
+Describes how Bannou services can run fully in-process without HTTP, WebSocket, or external infrastructure, enabling embedded deployment on Android, desktop, and console. The investigation found that infrastructure libs already support embedded backends, the ASP.NET Core coupling is phantom, and the total implementation is approximately a 2-3 day effort across plugin system decoupling, client generation template changes, and a new embedded host composition root. No implementation has been started.
+
+### Behavior Composition: Fingerprinted Components and the Plan Cache {#behavior-composition}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #3, #5 | [Full Document](planning/BEHAVIOR-COMPOSITION.md)
+
+Defines the compositional model for fingerprinted, catalogued, reusable ABML behavior components that can be discovered by similarity, strung together via continuation points, and cached as pre-computed GOAP plans to avoid redundant planning across thousands of similar agents. Builds on four existing systems (ABML compiler, continuation points, GOAP planner, Asset service) to connect them into a unified component registry and plan cache targeting 100K+ concurrent agent scale. No implementation exists yet; all described components (IComponentRegistry, PlanCache, CompositeAssembler, PlanFingerprint) are proposed architecture.
+
+### The Cinematic System: From Combat Dream to Choreographic Reality {#cinematic-system}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #4 | [Full Document](planning/CINEMATIC-SYSTEM.md)
+
+Designs the cinematic composition system, the last remaining structural gap in the Bannou architecture. The runtime for cinematics already exists (CinematicInterpreter, CutsceneCoordinator, IClientCutsceneHandler) but the compositional layer that generates choreographic ABML documents from encounter context is missing. Proposes three new components following the established Theory/Storyteller/Plugin pattern: CinematicTheory SDK for dramatic grammar and spatial reasoning, CinematicStoryteller SDK for GOAP-driven auto-composition, and lib-cinematic (L4) as the thin API wrapper. No implementation exists yet.
+
+### Counterpoint Composer SDK: Structural Template Music Authoring {#counterpoint-composer-sdk}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #5 | [Full Document](planning/COUNTERPOINT-COMPOSER-SDK.md)
+
+Proposes a MusicComposer SDK providing structural template workbench tooling for human composers to author counterpoint-compatible music. Templates capture uncopyrightable structural parameters (chord progressions, form, energy curves) and the SDK validates harmonic compatibility between pieces at specified temporal offsets, enabling interlocking regional themes, deity leitmotifs, and generational character music in Arcadia. The SDK does not yet exist; MusicTheory and MusicStoryteller SDKs provide the foundation primitives it would build on.
+
+### Cryptic Trails: Distributed Knowledge Puzzles Through Emergent Clue Composition {#cryptic-trails}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #5 | [Full Document](planning/CRYPTIC-TRAILS.md)
+
+Designs a distributed knowledge puzzle system where NPC characters autonomously discover world secrets by accumulating clues from multiple sources (mementos, item affixes, rumors, documents) and generating hypotheses when their Lexicon discovery tiers cross association visibility thresholds. Composes entirely from existing services (Lexicon, Hearsay, Collection, Seed, Disposition, Actor) with three small extensions: a Hearsay inference channel, skill-gated Lexicon tier offsets, and Discovery Templates as seeded configuration. No prerequisite services are implemented yet; Lexicon, Hearsay, and Disposition are all aspirational.
+
 ## Research
 
 ### Situationally Triggered Cinematics: Precedent Research {#cinematic-precedent-research}
 
-**Type**: Research reference document | [Full Document](planning/CINEMATIC-PRECEDENT-RESEARCH.md)
+**Type**: Research | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #3 | [Full Document](planning/CINEMATIC-PRECEDENT-RESEARCH.md)
 
-This document captures research across three domains -- combat cinematic triggers, interactive cinematic (QTE) systems, and procedural cinematic theory -- to establish precedent for the compositional layer described in [CINEMATIC-SYSTEM.md](CINEMATIC-SYSTEM.md). The goal is to identify what terminology, design patterns, and formal frameworks already exist for systems that take gameplay state and produce choreographed visual sequences with defined entry/exit points and continuation logic.
-
-### Cinematic Theory Research: Formal Foundations for CinematicTheory SDK {#cinematic-theory-research}
-
-**Type**: Research compilation | [Full Document](planning/CINEMATIC-THEORY-RESEARCH.md)
-
-Three domains of formal theory converge on what a CinematicTheory SDK needs:
-
-## Architectural Analysis
-
-### Behavior Composition: Fingerprinted Components and the Plan Cache {#behavior-composition}
-
-**Type**: Architectural planning document | [Full Document](planning/BEHAVIOR-COMPOSITION.md)
-
-Bannou's behavior system already has the infrastructure for composable behaviors: continuation points create named seams in bytecode, streaming composition injects extensions at those seams, the Asset service stores compiled behaviors for cross-node/client distribution, and content hashing (SHA256) uniquely identifies every compiled behavior. What's missing is the **compositional model** -- the formalized system that treats behaviors as fingerprinted, catalogued, reusable components that can be discovered by similarity, strung together via continuation points, and cached as pre-computed plans to avoid redundant GOAP planning across thousands of similar agents.
-
-### The Cinematic System: From Combat Dream to Choreographic Reality {#cinematic-system}
-
-**Type**: Architectural planning document | [Full Document](planning/CINEMATIC-SYSTEM.md)
-
-The Bannou architecture has exactly one remaining structural gap: **cinematic composition**. Every other system -- from the lowest infrastructure primitive to the highest orchestration layer -- exists as either an implemented plugin, a fully specified design, or both. The cinematic system is the only place where the architecture says "and then this happens" without having defined *how* it happens.
-
-### Counterpoint Composer SDK: Structural Template Music Authoring {#counterpoint-composer-sdk}
-
-**Type**: Architectural planning document | [Full Document](planning/COUNTERPOINT-COMPOSER-SDK.md)
-
-The Bannou music system generates adaptive, procedural music at runtime via MusicTheory (formal harmony/melody) and MusicStoryteller (narrative-driven emotional arcs). This works beautifully for dynamic, situational soundtrack generation. But **composed music** -- regional themes, deity leitmotifs, character themes, cinematic set pieces -- requires human authorship.
-
-## Other
-
-### ABML/GOAP Expansion Opportunities {#abml-goap-opportunities}
-
-**Last Updated**: 2026-02-11 | [Full Document](planning/ABML-GOAP-OPPORTUNITIES.md)
-
-| # | Opportunity | What It Needs From Bannou | Status |
-|---|-------------|--------------------------|--------|
-| 1 | [Adaptive Tutorial/Onboarding](#1-adaptive-tutorial--onboarding-system) | New SDK or service; player state observation pipeline | Design only |
-| 2 | [Procedural Quest Generation](#2-procedural-quest-generation) | Quest template system; GOAP integration in Quest/Storyline | Design only |
-| 3 | [Social Dynamics Engine](#3-social-dynamics-engine) | ABML behavior patterns; possible Relationship schema extensions | Design only |
-| 4 | [Faction/Economy Simulation](#4-faction--economy-simulation) | Faction service or realm-level actor patterns; Currency/Relationship extensions | Design only |
-| 5 | [Cinematography SDK](#5-cinematography-sdk) | New SDK wrapping existing cutscene infrastructure | Design only |
-| 6 | [Dialogue Evolution System](#6-dialogue-evolution-system) | GOAP integration with ABML dialogue document type | Design only |
-| 7+ | [Additional Ideas](#additional-opportunities) | Varies | Sketches only |
-
-### Actor-Bound Entities: Living Things That Grow Into Autonomous Agents {#actor-bound-entities}
-
-**Status**: Vision Document (architectural analysis, no implementation) | [Full Document](planning/ACTOR-BOUND-ENTITIES.md)
-
-Bannou's actor system, seed growth, and dynamic character binding combine to enable a powerful pattern: **entities that begin as inert objects and progressively grow into autonomous agents with personalities, memories, and the full cognitive stack**. This document unifies two implementations of this pattern -- **dungeon cores** and **living weapons** -- and demonstrates that they are structurally identical at the infrastructure level, differing only in domain-specific ceremony.
-
-### Bannou Embedded Mode: In-Process Service Invocation {#bannou-embedded}
-
-**Status**: Investigation complete, implementation not started | [Full Document](planning/BANNOU-EMBEDDED.md)
-
-Bannou's current inter-service invocation path is:
+Compiles precedent research across combat cinematic triggers, interactive cinematic (QTE) systems, procedural cinematic theory, and formal academic frameworks to inform the design of the CinematicStoryteller SDK. Identifies four areas of architectural novelty in the proposed system (GOAP for choreographic composition, continuation points with timeout defaults, progressive agency as continuous variable, and the repeatable Theory/Storyteller/Plugin pattern) while validating key design decisions against established industry patterns. No implementation exists; the cinematic system described in CINEMATIC-SYSTEM.md remains aspirational.
 
 ### Cinematic Research Analysis: What We Actually Have and What To Build With It {#cinematic-research-analysis}
 
-**Type**: Actionability analysis | [Full Document](planning/CINEMATIC-RESEARCH-ANALYSIS.md)
+**Type**: Research | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #5 | [Full Document](planning/CINEMATIC-RESEARCH-ANALYSIS.md)
 
-We have 9 detailed research cards representing deep reads of the sources the research document identified. Here's the honest assessment of what each one delivered versus what was expected.
+Analyzes nine detailed academic research cards covering cinematic theory, camera systems, and dramatic composition to determine which sources map to which SDK layer for the planned CinematicTheory and CinematicStoryteller SDKs. Establishes key architectural decisions including HFSM for camera direction versus GOAP for choreography, three independent composable layers (Structure, Quality, Presentation), and Facade-style greedy sequencing for interactive combat contexts. No implementation exists yet as neither SDK nor the lib-cinematic plugin have been created.
 
-### Compression Gameplay Patterns: Emergent Gameplay from Archived Entities {#compression-gameplay-patterns}
+### Cinematic Theory Research: Formal Foundations for CinematicTheory SDK {#cinematic-theory-research}
 
-**Status**: Vision Document (foundation implemented, gameplay patterns pending) | [Full Document](planning/COMPRESSION-GAMEPLAY-PATTERNS.md)
+**Type**: Research | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2 | [Full Document](planning/CINEMATIC-THEORY-RESEARCH.md)
 
-When a character dies and is compressed, their entire life story -- personality, memories, relationships, history, encounters -- crystallizes into a rich archive. This isn't just data cleanup; it's **generative input for emergence**.
+Compiles formal academic research across three domains -- computational cinematography, fight choreography, and dramatic grammar -- that provide the theoretical foundations for a planned CinematicTheory SDK. Maps specific models (Laban movement analysis, Cohn visual narrative grammar, toric camera space, SAFD stage combat patterns) to a five-layer architecture for procedural combat choreography and camera direction. No implementation exists yet; this is a research compilation informing future SDK design.
 
-### Cryptic Trails: Distributed Knowledge Puzzles Through Emergent Clue Composition {#cryptic-trails}
-
-**Status**: Design | [Full Document](planning/CRYPTIC-TRAILS.md)
-
-A dungeon spawns beneath an ancient city. The entrance is hidden. No quest marker points to it. No NPC says "go here." Instead, a character examining an old sword notices an affix description referencing "depths that predate the city above." A death memento at a tavern records someone who "fell into a hidden passage." A rumor circulates about scratching sounds beneath the inn. A historical text in a library describes darkspawn tunnel construction techniques. Each clue alone is a curiosity. Together, they form a hypothesis: **the old quarter sits atop darkspawn tunnels.**
-
-### Cultural Emergence: Divine Curation of Organic Identity and Custom {#cultural-emergence}
-
-**Status**: Vision Document (design analysis, no implementation) | [Full Document](planning/CULTURAL-EMERGENCE.md)
-
-Culture in Bannou is not designed. It is **observed, named, and formalized** by divine actors who possess the cross-domain perspective to recognize what a settlement has already become. The customs that emerge match their context because they are derived from it. The status board is not a feature -- it is one possible cultural artifact that appears when material conditions, governance structures, and divine aesthetics align to produce a society that values formalized self-knowledge.
-
-No new services. No new plugins. Just divine actors doing what they do: watching the world, understanding what it has become, and giving it the cultural vocabulary to know itself.
+## Other
 
 ### Death & Plot Armor System {#death-and-plot-armor}
 

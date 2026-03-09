@@ -29,10 +29,10 @@ Compliant properties include one of these phrases in their description:
 
 | Metric | Count |
 |--------|-------|
-| Total metadata bag properties | 166 |
+| Total metadata bag properties | 168 |
 | Compliant (has marker) | 150 |
-| Non-compliant (missing marker) | 16 |
-| Compliance rate | 90% |
+| Non-compliant (missing marker) | 18 |
+| Compliance rate | 89% |
 
 ## Properties by Service
 
@@ -344,6 +344,13 @@ Compliant properties include one of these phrases in their description:
 | `RealmHistoricalParticipation` | `metadata` | `realm-history-api.yaml` | Y | Client-provided event-specific details. No Bannou plugin reads specific keys ... |
 | `RecordRealmParticipationRequest` | `metadata` | `realm-history-api.yaml` | Y | Client-provided event-specific details. No Bannou plugin reads specific keys ... |
 
+#### Save Load
+
+| Schema Type | Property | Schema File | Compliant | Description |
+|-------------|----------|-------------|-----------|-------------|
+| `RegisterSchemaRequest` | `schema` | `save-load-api.yaml` | **N** | JSON Schema definition for validation |
+| `SchemaResponse` | `schema` | `save-load-api.yaml` | **N** | JSON Schema definition |
+
 #### Scene
 
 | Schema Type | Property | Schema File | Compliant | Description |
@@ -361,7 +368,7 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `GrantStatusRequest` | `metadata` | `status-api.yaml` | **N** | Arbitrary key-value data passed to contract template values and stored on the... |
+| `GrantStatusRequest` | `metadata` | `status-api.yaml` | **N** | Client-defined metadata. Opaque to Status — stored and returned verbatim. Not... |
 | `StatusInstanceResponse` | `metadata` | `status-api.yaml` | Y | Client-only metadata. No Bannou plugin reads specific keys from this field by... |
 
 ### Common / Shared Schemas
@@ -455,11 +462,13 @@ or is it being misused as a cross-service data contract?
 | Mapping | `IngestPayload` | `data` | `mapping-events.yaml` | Schema-less object data (publisher-defined) |
 | Mapping | `ObjectChangeRecord` | `data` | `mapping-events.yaml` | Object data (for created/updated) |
 | Mapping | `MapUpdatedEvent` | `payload` | `mapping-events.yaml` | Schema-less payload data |
+| Save Load | `RegisterSchemaRequest` | `schema` | `save-load-api.yaml` | JSON Schema definition for validation |
+| Save Load | `SchemaResponse` | `schema` | `save-load-api.yaml` | JSON Schema definition |
 | State | `GetStateResponse` | `value` | `state-api.yaml` | The stored value (null if not found) |
 | State | `SaveStateRequest` | `value` | `state-api.yaml` | Value to store |
 | State | `BulkStateItem` | `value` | `state-api.yaml` | The value (null if not found) |
 | State | `BulkSaveItem` | `value` | `state-api.yaml` | The value to store |
-| Status | `GrantStatusRequest` | `metadata` | `status-api.yaml` | Arbitrary key-value data passed to contract template values and stored on the... |
+| Status | `GrantStatusRequest` | `metadata` | `status-api.yaml` | Client-defined metadata. Opaque to Status — stored and returned verbatim. Not... |
 
 ---
 

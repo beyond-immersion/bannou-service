@@ -1,10 +1,18 @@
 # ABML/GOAP Expansion Opportunities
 
+> **Type**: Vision Document
+> **Status**: Aspirational
 > **Created**: 2026-01-19
-> **Last Updated**: 2026-02-11
-> **Purpose**: Future applications for ABML and GOAP beyond current NPC cognition, combat choreography, and music composition
-> **Scope**: New services, SDKs, and system integrations that leverage behavioral intelligence
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #4
+> **Related Plugins**: Behavior, Actor, Quest, Storyline, Puppetmaster, Faction, Character Encounter, Character Personality, Relationship, Currency, Analytics
 > **Prerequisites**: All foundational services are implemented (currency, item, inventory, contract, escrow, character-encounter, quest, storyline). These opportunities build on that foundation.
+
+## Summary
+
+Identifies expansion opportunities for the ABML/GOAP system beyond current NPC cognition, combat choreography, and music composition. Covers adaptive tutorials, procedural quest generation, social dynamics, faction economy simulation, a cinematography SDK, and dialogue evolution as future applications of the behavioral intelligence infrastructure. All opportunities are design-only and require new schemas, services, or extensions to existing plugins before realization.
+
+---
 
 This document identifies expansion opportunities for ABML/GOAP into new domains. Each requires Bannou service changes (new schemas, new services, or extensions to existing ones) before the game design can be realized.
 
@@ -12,14 +20,14 @@ For current ABML/GOAP architecture, see: [ABML Guide](../guides/ABML.md), [Behav
 
 ---
 
-## Summary
+## Opportunity Index
 
 | # | Opportunity | What It Needs From Bannou | Status |
 |---|-------------|--------------------------|--------|
 | 1 | [Adaptive Tutorial/Onboarding](#1-adaptive-tutorial--onboarding-system) | New SDK or service; player state observation pipeline | Design only |
 | 2 | [Procedural Quest Generation](#2-procedural-quest-generation) | Quest template system; GOAP integration in Quest/Storyline | Design only |
 | 3 | [Social Dynamics Engine](#3-social-dynamics-engine) | ABML behavior patterns; possible Relationship schema extensions | Design only |
-| 4 | [Faction/Economy Simulation](#4-faction--economy-simulation) | Faction service or realm-level actor patterns; Currency/Relationship extensions | Design only |
+| 4 | [Faction/Economy Simulation](#4-faction--economy-simulation) | Faction brain ABML behaviors; realm-level economic state aggregation | Design only |
 | 5 | [Cinematography SDK](#5-cinematography-sdk) | New SDK wrapping existing cutscene infrastructure | Design only |
 | 6 | [Dialogue Evolution System](#6-dialogue-evolution-system) | GOAP integration with ABML dialogue document type | Design only |
 | 7+ | [Additional Ideas](#additional-opportunities) | Varies | Sketches only |
@@ -108,7 +116,7 @@ flows:
 
 ### Arcadia Integration
 
-In Arcadia, the tutorial IS the first generation of a guardian spirit's life. The spirit has minimal agency and learns by watching its character live autonomously. A GOAP-driven tutorial system would control what the spirit can perceive and influence, expanding the UX surface area as the spirit demonstrates understanding -- aligning with the progressive agency model from [PLAYER-VISION.md](~/repos/arcadia-kb/PLAYER-VISION.md).
+In Arcadia, the tutorial IS the first generation of a guardian spirit's life. The spirit has minimal agency and learns by watching its character live autonomously. A GOAP-driven tutorial system would control what the spirit can perceive and influence, expanding the UX surface area as the spirit demonstrates understanding -- aligning with the progressive agency model from [PLAYER-VISION.md](../reference/PLAYER-VISION.md).
 
 ---
 
@@ -438,11 +446,11 @@ flows:
 
 ### What Bannou Needs
 
-This is the most infrastructure-heavy opportunity:
+The Faction service (lib-faction, L4) now exists with seed-based growth, norms, enforcement tiers, territory, guild hierarchy, and political bonds. What remains is the GOAP integration layer:
 
-- **Faction entity model**: Factions don't exist as a service concept. Could be modeled as Actors with a "faction_brain" type, using the existing Actor pool infrastructure. Or could be a new service. Factions need: member rosters, treasury (Currency wallets), territory claims (Location references), political relationships (Relationship service).
+- **Faction brain ABML behaviors**: ABML behavior documents that let factions operate as autonomous actors pursuing economic and political goals. Faction brains would run as actors (category `world-admin` or a new faction-specific category) executing GOAP plans based on faction state.
+- **Faction GOAP world state provider**: A Variable Provider Factory implementation exposing faction-level data (treasury via Currency wallets, territory via faction territory claims, political standing via seed bonds, norm enforcement state). Would feed into faction brain actors.
 - **Realm economic state aggregation**: A way to query realm-level economic data (total currency in circulation, resource prices, trade volume). Currency has some of this (global supply analytics -- see [#211](https://github.com/beyond-immersion/bannou-service/issues/211)) but not realm-scoped.
-- **Faction GOAP world state provider**: Variable Provider Factory for faction-level data (treasury, territory, political standing). Would feed into faction brain actors.
 - **Regional Watcher integration**: Faction brains should interact with Regional Watchers (Puppetmaster). Hermes/Commerce god could manipulate faction dynamics through narrative events ("divine economic intervention").
 
 ---
@@ -655,7 +663,7 @@ GOAP for automated moderation: goals include "maintain positive community", "ide
 - [Quest Deep Dive](../plugins/QUEST.md) - Quest-as-contract architecture
 - [Storyline Deep Dive](../plugins/STORYLINE.md) - Seeded narrative generation
 - [Puppetmaster Deep Dive](../plugins/PUPPETMASTER.md) - Regional watchers, dynamic behavior loading
-- [Regional Watchers Planning](REGIONAL-WATCHERS-BEHAVIOR.md) - God/watcher pattern
+- Regional Watchers Planning - God/watcher pattern (document not yet created)
 
 ---
 

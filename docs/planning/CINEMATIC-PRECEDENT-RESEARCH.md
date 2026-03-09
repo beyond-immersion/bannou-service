@@ -1,9 +1,17 @@
 # Situationally Triggered Cinematics: Precedent Research
 
-> **Type**: Research reference document
-> **Purpose**: Established precedent and formal theory for triggered/on-demand cinematics in games
-> **Related**: [CINEMATIC-SYSTEM.md](CINEMATIC-SYSTEM.md) (the architectural gap this research informs)
-> **Date**: 2026-02-17
+> **Type**: Research
+> **Status**: Aspirational
+> **Created**: 2026-02-17
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #3
+> **Related Plugins**: Actor, Behavior, Agency
+
+---
+
+## Summary
+
+Compiles precedent research across combat cinematic triggers, interactive cinematic (QTE) systems, procedural cinematic theory, and formal academic frameworks to inform the design of the CinematicStoryteller SDK. Identifies four areas of architectural novelty in the proposed system (GOAP for choreographic composition, continuation points with timeout defaults, progressive agency as continuous variable, and the repeatable Theory/Storyteller/Plugin pattern) while validating key design decisions against established industry patterns. No implementation exists; the cinematic system described in CINEMATIC-SYSTEM.md remains aspirational.
 
 ---
 

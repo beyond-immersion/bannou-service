@@ -286,17 +286,19 @@ paths:
         : \"Filter by message format\"\n                },\n                \"status\": {\n                    \"allOf\":
         [\n                        {\n                            \"$ref\": \"#/$defs/RoomTypeStatus\"\n                 \
         \       }\n                    ],\n                    \"nullable\": true,\n                    \"description\": \"\
-        Filter by status\"\n                },\n                \"page\": {\n                    \"type\": \"integer\",\n\
-        \                    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\": \"\
-        Page number (zero-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"\
-        integer\",\n                    \"default\": 20,\n                    \"minimum\": 1,\n                    \"maximum\"\
-        : 100,\n                    \"description\": \"Number of items per page\"\n                }\n            }\n    \
-        \    },\n        \"MessageFormat\": {\n            \"type\": \"string\",\n            \"description\": \"Determines
-        what kind of content a room accepts\",\n            \"enum\": [\n                \"Text\",\n                \"Sentiment\"\
-        ,\n                \"Emoji\",\n                \"Custom\"\n            ]\n        },\n        \"RoomTypeStatus\":
-        {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle status of a room type definition\"\
-        ,\n            \"enum\": [\n                \"Active\",\n                \"Deprecated\"\n            ]\n        }\n\
-        \    }\n}"
+        Filter by status\"\n                },\n                \"includeDeprecated\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": false,\n                    \"description\": \"Include deprecated room
+        types in results (excluded by default)\"\n                },\n                \"page\": {\n                    \"\
+        type\": \"integer\",\n                    \"default\": 0,\n                    \"minimum\": 0,\n                 \
+        \   \"description\": \"Page number (zero-based)\"\n                },\n                \"pageSize\": {\n         \
+        \           \"type\": \"integer\",\n                    \"default\": 20,\n                    \"minimum\": 1,\n  \
+        \                  \"maximum\": 100,\n                    \"description\": \"Number of items per page\"\n        \
+        \        }\n            }\n        },\n        \"MessageFormat\": {\n            \"type\": \"string\",\n         \
+        \   \"description\": \"Determines what kind of content a room accepts\",\n            \"enum\": [\n              \
+        \  \"Text\",\n                \"Sentiment\",\n                \"Emoji\",\n                \"Custom\"\n           \
+        \ ]\n        },\n        \"RoomTypeStatus\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Lifecycle status of a room type definition\",\n            \"enum\": [\n                \"Active\",\n            \
+        \    \"Deprecated\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListRoomTypesResponse\"\
         ,\n    \"$defs\": {\n        \"ListRoomTypesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Paginated list of room type definitions\",\n            \"required\": [\n\
@@ -500,8 +502,11 @@ paths:
     post:
       operationId: DeprecateRoomType
       summary: Soft-deprecate a room type
-      description: Sets the room type status to Deprecated. Existing rooms continue to work but no new rooms can be 
-        created with this type.
+      description: |
+        Sets the room type status to Deprecated. Existing rooms continue to work
+        but no new rooms can be created with this type.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       x-permissions:
       - role: developer
       requestBody:
@@ -512,19 +517,22 @@ paths:
               $ref: '#/components/schemas/DeprecateRoomTypeRequest'
       responses:
         '200':
-          description: Room type deprecated
+          description: Room type deprecated successfully (or already deprecated)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomTypeResponse'
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateRoomTypeRequest\"\
         ,\n    \"$defs\": {\n        \"DeprecateRoomTypeRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Request to deprecate a room type (prevents new room creation)\",\n      \
-        \      \"required\": [\n                \"code\"\n            ],\n            \"properties\": {\n                \"\
-        code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Room type code to deprecate\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Game service scope for the type\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Request to deprecate a room type (Category B \\u2014 one-way, no delete).
+        Idempotent \\u2014 returns OK if already deprecated.\",\n            \"required\": [\n                \"code\"\n \
+        \           ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Room type code to deprecate\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Game service scope for the type\"\n                },\n\
+        \                \"reason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation (recommended
+        for audit trail)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RoomTypeResponse\"\
         ,\n    \"$defs\": {\n        \"RoomTypeResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Room type definition with current configuration and status\",\n         \
@@ -586,8 +594,10 @@ paths:
         : \"Lifecycle status of a room type definition\",\n            \"enum\": [\n                \"Active\",\n        \
         \        \"Deprecated\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Soft-deprecate a room type\",\n    \"description\": \"Sets the room type
-        status to Deprecated. Existing rooms continue to work but no new rooms can be created with this type.\",\n    \"tags\"\
-        : [],\n    \"deprecated\": false,\n    \"operationId\": \"DeprecateRoomType\"\n}"
+        status to Deprecated. Existing rooms continue to work\\nbut no new rooms can be created with this type.\\nCategory
+        B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\\nno delete. Idempotent \\u2014 returns OK if
+        already deprecated.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"DeprecateRoomType\"\
+        \n}"
   /chat/room/create:
     post:
       operationId: CreateRoom
@@ -2568,6 +2578,10 @@ components:
           - $ref: '#/components/schemas/RoomTypeStatus'
           nullable: true
           description: Filter by status
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated room types in results (excluded by default)
         page:
           type: integer
           default: 0
@@ -2635,7 +2649,8 @@ components:
     DeprecateRoomTypeRequest:
       type: object
       additionalProperties: false
-      description: Request to deprecate a room type (prevents new room creation)
+      description: Request to deprecate a room type (Category B — one-way, no delete). Idempotent — returns OK if 
+        already deprecated.
       required:
       - code
       properties:
@@ -2647,6 +2662,11 @@ components:
           format: uuid
           nullable: true
           description: Game service scope for the type
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended for audit trail)
     RoomTypeResponse:
       type: object
       additionalProperties: false

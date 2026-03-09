@@ -450,7 +450,7 @@ public partial class LicenseService : ILicenseService
 
         var results = await _boardTemplateStore.QueryAsync(
             t => t.GameServiceId == body.GameServiceId
-                 && (body.IncludeDeprecated || !t.IsDeprecated),
+                && (body.IncludeDeprecated || !t.IsDeprecated),
             cancellationToken: cancellationToken);
 
         // Simple cursor-based pagination using index offset

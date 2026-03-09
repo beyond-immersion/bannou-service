@@ -1610,15 +1610,17 @@ paths:
           description: Encounter type not found
         '400':
           description: Invalid update data
-  /character-encounter/type/delete:
+  /character-encounter/type/deprecate:
     post:
-      summary: Delete encounter type
-      operationId: characterEncounter_deleteEncounterType
+      summary: Deprecate encounter type
+      operationId: characterEncounter_deprecateEncounterType
       tags:
       - Encounter Type Management
       description: |
-        Delete a custom encounter type. Built-in types cannot be deleted.
-        Types with existing encounters cannot be deleted.
+        Marks an encounter type as deprecated. Deprecated types remain readable
+        forever but new encounters cannot reference them.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       x-permissions:
       - role: developer
       requestBody:
@@ -1626,16 +1628,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteEncounterTypeRequest'
+              $ref: '#/components/schemas/DeprecateEncounterTypeRequest'
       responses:
         '200':
-          description: Encounter type deleted successfully
+          description: Encounter type deprecated successfully (or already 
+            deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterTypeResponse'
         '404':
           description: Encounter type not found
-        '400':
-          description: Cannot delete built-in type
-        '409':
-          description: Cannot delete - type is in use by encounters
   /character-personality/set:
     post:
       summary: Create or update personality for a character
@@ -1779,8 +1782,11 @@ paths:
     post:
       operationId: chat_DeprecateRoomType
       summary: Soft-deprecate a room type
-      description: Sets the room type status to Deprecated. Existing rooms 
-        continue to work but no new rooms can be created with this type.
+      description: |
+        Sets the room type status to Deprecated. Existing rooms continue to work
+        but no new rooms can be created with this type.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       x-permissions:
       - role: developer
       requestBody:
@@ -1791,7 +1797,7 @@ paths:
               $ref: '#/components/schemas/DeprecateRoomTypeRequest'
       responses:
         '200':
-          description: Room type deprecated
+          description: Room type deprecated successfully (or already deprecated)
           content:
             application/json:
               schema:
@@ -3650,6 +3656,35 @@ paths:
                 $ref: '#/components/schemas/CurrencyDefinitionResponse'
         '400':
           description: Attempted to change immutable field
+        '404':
+          description: Currency definition not found
+      x-permissions:
+      - role: developer
+  /currency/definition/deprecate:
+    post:
+      operationId: currency_deprecateCurrencyDefinition
+      tags:
+      - Currency Definition
+      summary: Deprecate a currency definition (Category B — one-way, no delete)
+      description: |
+        Deprecates a currency definition. Existing wallets continue to function
+        but no new wallets can be created for this currency.
+        Category B entity: deprecation is one-way (no undeprecate), no delete endpoint.
+        Idempotent: returns OK if already deprecated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateCurrencyDefinitionRequest'
+      responses:
+        '200':
+          description: Currency definition deprecated successfully (or already 
+            deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyDefinitionResponse'
         '404':
           description: Currency definition not found
       x-permissions:
@@ -5815,8 +5850,10 @@ paths:
   /gardener/template/deprecate:
     post:
       summary: Deprecate scenario template
-      description: Sets the template status to Deprecated, preventing new 
-        instances.
+      description: |
+        Sets the template status to Deprecated, preventing new instances.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       operationId: gardener_deprecateTemplate
       tags:
       - Template Management
@@ -5831,7 +5868,7 @@ paths:
               $ref: '#/components/schemas/DeprecateTemplateRequest'
       responses:
         '200':
-          description: Template deprecated
+          description: Template deprecated successfully (or already deprecated)
           content:
             application/json:
               schema:
@@ -6689,13 +6726,14 @@ paths:
                 $ref: '#/components/schemas/LeaderboardDefinitionResponse'
         '404':
           description: Leaderboard not found
-  /leaderboard/definition/delete:
+  /leaderboard/definition/deprecate:
     post:
-      summary: Delete leaderboard definition
+      summary: Deprecate leaderboard definition
       description: |
-        Delete a leaderboard and all its scores.
-        Developer-only endpoint. This action is irreversible.
-      operationId: leaderboard_deleteLeaderboardDefinition
+        Deprecate a leaderboard definition (Category B — one-way, no undeprecate, no delete).
+        Existing scores remain queryable; new score submissions to deprecated leaderboards
+        are rejected. Idempotent: returns OK if already deprecated.
+      operationId: leaderboard_deprecateLeaderboardDefinition
       tags:
       - Definitions
       x-permissions:
@@ -6706,10 +6744,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteLeaderboardDefinitionRequest'
+              $ref: '#/components/schemas/DeprecateLeaderboardDefinitionRequest'
       responses:
         '200':
-          description: Leaderboard deleted successfully
+          description: Leaderboard deprecated successfully (or already 
+            deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardDefinitionResponse'
         '404':
           description: Leaderboard not found
   /leaderboard/rank/get:
@@ -6918,15 +6961,16 @@ paths:
                 $ref: '#/components/schemas/BoardTemplateResponse'
         '404':
           description: Board template not found
-  /license/board-template/delete:
+  /license/board-template/deprecate:
     post:
-      operationId: license_deleteBoardTemplate
+      operationId: license_deprecateBoardTemplate
       tags:
       - BoardTemplate
-      summary: Delete a board template
+      summary: Deprecate a board template
       description: |
-        Delete a board template. Blocked if active board instances exist
-        that reference this template.
+        Deprecate a board template (Category B — one-way, no undeprecate, no delete).
+        Existing board instances continue to function; new board creation from this
+        template is rejected. Idempotent: returns OK if already deprecated.
       x-permissions:
       - role: developer
         states: {}
@@ -6935,18 +6979,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteBoardTemplateRequest'
+              $ref: '#/components/schemas/DeprecateBoardTemplateRequest'
       responses:
         '200':
-          description: Board template deleted successfully
+          description: Board template deprecated successfully (or already 
+            deprecated)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BoardTemplateResponse'
         '404':
           description: Board template not found
-        '409':
-          description: Active board instances exist for this template
   /license/definition/add:
     post:
       operationId: license_addLicenseDefinition
@@ -9966,7 +10009,6 @@ paths:
       - Scene
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -9995,7 +10037,6 @@ paths:
       - Scene
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -10022,7 +10063,6 @@ paths:
       - Scene
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -10048,7 +10088,6 @@ paths:
       - Scene
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -10080,7 +10119,6 @@ paths:
       - Scene
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -10109,7 +10147,6 @@ paths:
       - Scene
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -10135,7 +10172,6 @@ paths:
       - Versioning
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -10164,7 +10200,6 @@ paths:
       - Versioning
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -10193,7 +10228,6 @@ paths:
       - Versioning
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -10217,7 +10251,6 @@ paths:
       - Versioning
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -10246,7 +10279,6 @@ paths:
       - Versioning
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -10273,7 +10305,6 @@ paths:
       - Validation
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -10298,7 +10329,6 @@ paths:
       - Query
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -10323,7 +10353,6 @@ paths:
       - Query
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -10348,7 +10377,6 @@ paths:
       - Query
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -10373,7 +10401,6 @@ paths:
       - Scene
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -11657,32 +11684,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetScenarioHistoryResponse'
-  /storyline/get-compress-data:
-    post:
-      summary: Get storyline data for compression
-      operationId: storyline_getCompressData
-      tags:
-      - Compression
-      description: |
-        Called by Resource service during character compression.
-        Returns scenario participations, active arcs, and completion counts for archival.
-      x-permissions:
-      - role: developer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetCompressDataRequest'
-      responses:
-        '200':
-          description: Compressed data returned
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StorylineArchive'
-        '404':
-          description: No storyline data for character
   /subscription/cancel:
     post:
       summary: Cancel a subscription
@@ -14783,6 +14784,7 @@ components:
           description: Scene using the asset
         sceneName:
           type: string
+          maxLength: 500
           description: Scene name
         nodeId:
           type: string
@@ -14790,9 +14792,11 @@ components:
           description: Node using the asset
         nodeRefId:
           type: string
+          maxLength: 200
           description: refId of the node
         nodeName:
           type: string
+          maxLength: 500
           description: Node name
         nodeType:
           $ref: '#/components/schemas/NodeType'
@@ -15696,6 +15700,7 @@ components:
       - adjacencyMode
       - allowedOwnerTypes
       - isActive
+      - isDeprecated
       - createdAt
       properties:
         boardTemplateId:
@@ -15741,6 +15746,19 @@ components:
           type: boolean
           description: Whether the template is active (can create new board 
             instances)
+        isDeprecated:
+          type: boolean
+          description: Whether this template has been deprecated (Category B — 
+            one-way)
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (audit context)
         createdAt:
           type: string
           format: date-time
@@ -17735,6 +17753,7 @@ components:
       properties:
         checkoutToken:
           type: string
+          maxLength: 200
           description: Token required for commit/discard/heartbeat
         scene:
           $ref: '#/components/schemas/Scene'
@@ -18368,6 +18387,7 @@ components:
       properties:
         newVersion:
           type: string
+          maxLength: 50
           description: New version after commit
         scene:
           $ref: '#/components/schemas/Scene'
@@ -19809,6 +19829,7 @@ components:
       - defaultEnforcementMode
       - transferable
       - isActive
+      - isDeprecated
       - createdAt
       properties:
         templateId:
@@ -19866,6 +19887,18 @@ components:
         isActive:
           type: boolean
           description: Whether template is active
+        isDeprecated:
+          type: boolean
+          description: Whether template is deprecated (Category B — one-way)
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -22105,7 +22138,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom key-value metadata for the slot
+          description: Client-only metadata for the slot. No Bannou plugin reads
+            specific keys from this field by convention.
     CreateStatusTemplateRequest:
       type: object
       description: Request to create a new status template
@@ -22282,6 +22316,7 @@ components:
       - linkedToItem
       - isBaseCurrency
       - isActive
+      - isDeprecated
       - createdAt
       properties:
         definitionId:
@@ -22429,6 +22464,18 @@ components:
         isActive:
           type: boolean
           description: Whether definition is active
+        isDeprecated:
+          type: boolean
+          description: Whether definition is deprecated (Category B — one-way)
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the definition was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -22786,17 +22833,6 @@ components:
           type: string
           format: uuid
           description: Board instance to delete
-    DeleteBoardTemplateRequest:
-      type: object
-      description: Request to delete a board template
-      additionalProperties: false
-      required:
-      - boardTemplateId
-      properties:
-        boardTemplateId:
-          type: string
-          format: uuid
-          description: Board template to delete
     DeleteBundleRequest:
       type: object
       additionalProperties: false
@@ -22949,31 +22985,6 @@ components:
           type: string
           format: date-time
           description: Deadline for recovering the document from trashcan
-    DeleteEncounterTypeRequest:
-      type: object
-      description: Request to delete an encounter type
-      additionalProperties: false
-      required:
-      - code
-      properties:
-        code:
-          type: string
-          description: Code of the type to delete
-    DeleteLeaderboardDefinitionRequest:
-      type: object
-      description: Request to delete a leaderboard
-      additionalProperties: false
-      required:
-      - gameServiceId
-      - leaderboardId
-      properties:
-        gameServiceId:
-          type: string
-          format: uuid
-          description: ID of the game service
-        leaderboardId:
-          type: string
-          description: ID of the leaderboard to delete
     DeleteLocationRequest:
       description: Request to permanently delete a location from the system
       type: object
@@ -23157,11 +23168,18 @@ components:
       additionalProperties: false
       description: Request to permanently delete a specific save version
       required:
+      - gameId
       - ownerId
       - ownerType
       - slotName
       - versionNumber
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
@@ -23306,6 +23324,57 @@ components:
           nullable: true
           description: Audit reason for deprecation, explaining why this 
             achievement is being phased out
+    DeprecateBoardTemplateRequest:
+      type: object
+      description: Request to deprecate a board template (Category B — one-way)
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (audit context for Category B 
+            entities)
+    DeprecateCurrencyDefinitionRequest:
+      type: object
+      description: Request to deprecate a currency definition (Category B — 
+        one-way, no delete)
+      additionalProperties: false
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition ID to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (audit context for Category B 
+            entities)
+    DeprecateEncounterTypeRequest:
+      type: object
+      description: Request to deprecate an encounter type (Category B — one-way,
+        no delete). Idempotent — returns OK if already deprecated.
+      additionalProperties: false
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: Code of the type to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended for audit trail)
     DeprecateEntryTemplateRequest:
       type: object
       description: Request to deprecate an entry template (Category B — one-way,
@@ -23341,6 +23410,28 @@ components:
           minLength: 1
           maxLength: 1024
           description: Reason for deprecation (audit context for Category A 
+            entities)
+    DeprecateLeaderboardDefinitionRequest:
+      type: object
+      description: Request to deprecate a leaderboard definition (Category B — 
+        one-way)
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (audit context for Category B 
             entities)
     DeprecateLocationRequest:
       description: Request to soft-delete a location by marking it as deprecated
@@ -23408,7 +23499,8 @@ components:
     DeprecateRoomTypeRequest:
       type: object
       additionalProperties: false
-      description: Request to deprecate a room type (prevents new room creation)
+      description: Request to deprecate a room type (Category B — one-way, no 
+        delete). Idempotent — returns OK if already deprecated.
       required:
       - code
       properties:
@@ -23420,6 +23512,11 @@ components:
           format: uuid
           nullable: true
           description: Game service scope for the type
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended for audit trail)
     DeprecateScenarioDefinitionRequest:
       type: object
       additionalProperties: false
@@ -23478,7 +23575,8 @@ components:
           description: Why this template is being deprecated
     DeprecateTemplateRequest:
       type: object
-      description: Request to deprecate a template
+      description: Request to deprecate a scenario template (Category B — 
+        one-way, no delete). Idempotent — returns OK if already deprecated.
       required:
       - scenarioTemplateId
       properties:
@@ -23486,6 +23584,11 @@ components:
           type: string
           format: uuid
           description: Template ID to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended for audit trail)
     DesignateRealmBaselineRequest:
       type: object
       description: Request to designate a faction as the realm baseline
@@ -24000,6 +24103,18 @@ components:
         isActive:
           type: boolean
           description: Whether the type is active
+        isDeprecated:
+          type: boolean
+          description: Whether this type has been deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the type was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Why the type was deprecated
         createdAt:
           type: string
           format: date-time
@@ -25132,6 +25247,8 @@ components:
           nullable: true
           items:
             type: string
+            maxLength: 64
+          maxItems: 100
           description: Specific slots to export (null = all slots)
     ExportSavesResponse:
       type: object
@@ -26373,17 +26490,6 @@ components:
         collectionType:
           $ref: '#/components/schemas/CollectionType'
           description: Type of collection to get stats for
-    GetCompressDataRequest:
-      description: Request to get character data for compression
-      type: object
-      additionalProperties: false
-      required:
-      - characterId
-      properties:
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character to get compress data for
     GetConnectionRequest:
       type: object
       additionalProperties: false
@@ -26600,19 +26706,10 @@ components:
       description: Unified view of all active effects for an entity
       additionalProperties: false
       required:
-      - entityId
-      - entityType
       - itemBasedCount
       - seedDerivedCount
       - effects
       properties:
-        entityId:
-          type: string
-          format: uuid
-          description: Entity these effects belong to
-        entityType:
-          $ref: '#/components/schemas/EntityType'
-          description: Entity type discriminator
         itemBasedCount:
           type: integer
           description: Number of item-based status effects
@@ -27122,16 +27219,11 @@ components:
       type: object
       additionalProperties: false
       description: Retrieved plan
-      required:
-      - found
       properties:
-        found:
-          type: boolean
-          description: Whether the plan was found
         plan:
           $ref: '#/components/schemas/ComposeResponse'
           nullable: true
-          description: The plan (null if not found)
+          description: The composed plan
     GetQuestDefinitionRequest:
       type: object
       description: Request to retrieve a quest definition by ID or code
@@ -27440,16 +27532,11 @@ components:
       type: object
       additionalProperties: false
       description: Response with scenario definition
-      required:
-      - found
       properties:
-        found:
-          type: boolean
-          description: Whether the scenario was found
         scenario:
           $ref: '#/components/schemas/ScenarioDefinition'
           nullable: true
-          description: The scenario definition (null if not found)
+          description: The scenario definition
     GetScenarioHistoryRequest:
       type: object
       additionalProperties: false
@@ -27847,23 +27934,16 @@ components:
     GetValidationRulesResponse:
       type: object
       additionalProperties: false
-      description: Response containing validation rules
-      required:
-      - gameId
-      - sceneType
+      description: Response containing validation rules for the requested gameId
+        and sceneType
       properties:
-        gameId:
-          type: string
-          description: Game ID
-        sceneType:
-          $ref: '#/components/schemas/SceneType'
-          description: Scene type
         rules:
           type: array
           nullable: true
           items:
             $ref: '#/components/schemas/ValidationRule'
-          description: Registered rules (null if none)
+          description: Registered rules (null if none registered for the 
+            combination)
     GoapGoal:
       description: Goal definition for GOAP planning with conditions and 
         priority
@@ -28025,9 +28105,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: "Arbitrary key-value data passed to contract template values
-            and stored on the status instance. Opaque to Status -- callers define
-            their own semantics."
+          description: "Client-defined metadata. Opaque to Status — stored and returned
+            verbatim. Not a contract between services. Passed to contract template
+            values and stored on the status instance."
     GrantStatusResponse:
       type: object
       description: Result of a successful status grant operation
@@ -28430,6 +28510,7 @@ components:
           description: Scene ID
         currentVersion:
           type: string
+          maxLength: 50
           description: Current active version
         versions:
           type: array
@@ -29386,7 +29467,9 @@ components:
           nullable: true
           description: Source path (for move/copy operations)
         value:
-          description: Value to use (for add/replace/test operations)
+          nullable: true
+          description: Value to use (for add/replace/test operations, null for 
+            remove/move/copy)
     JsonPatchOperationType:
       type: string
       enum:
@@ -29505,6 +29588,7 @@ components:
       - updateMode
       - isSeasonal
       - isPublic
+      - isDeprecated
       - createdAt
       - entryCount
       properties:
@@ -29542,6 +29626,19 @@ components:
         isPublic:
           type: boolean
           description: Whether the leaderboard is publicly visible
+        isDeprecated:
+          type: boolean
+          description: Whether this definition has been deprecated (Category B —
+            one-way)
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the definition was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (audit context)
         currentSeason:
           type: integer
           nullable: true
@@ -30007,6 +30104,10 @@ components:
           type: string
           format: uuid
           description: Filter by game service
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated templates in results (default false)
         cursor:
           type: string
           nullable: true
@@ -30266,6 +30367,10 @@ components:
           type: boolean
           nullable: true
           description: Filter by active status.
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated templates (default false).
         searchTerm:
           type: string
           nullable: true
@@ -31264,6 +31369,11 @@ components:
           - $ref: '#/components/schemas/RoomTypeStatus'
           nullable: true
           description: Filter by status
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated room types in results (excluded by 
+            default)
         page:
           type: integer
           default: 0
@@ -32115,7 +32225,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata (null if none set)
+          description: Client-only metadata (null if none set). No Bannou plugin
+            reads specific keys from this field by convention.
     LocationResponse:
       description: Complete location data returned from API operations
       type: object
@@ -32491,19 +32602,13 @@ components:
           description: When the object was last updated
     MarkerType:
       type: string
+      minLength: 1
+      maxLength: 100
       description: |
-        Types of marker nodes for spawn points, waypoints, and other positional markers.
-        DESIGN_DECISION: Whether this should be an opaque string instead of enum
-        (game-content codes vary per deployment). Tracked for future evaluation.
-      enum:
-      - Generic
-      - SpawnPoint
-      - NpcSpawn
-      - Waypoint
-      - CameraPoint
-      - LightPoint
-      - AudioPoint
-      - TriggerPoint
+        Marker code for spawn points, waypoints, and other positional markers.
+        Opaque string per FOUNDATION TENETS (game-configurable content codes
+        vary per deployment). Common values include spawn_point, npc_spawn,
+        waypoint, camera_point — but any game can define its own.
     MatchesHierarchyRequest:
       description: Request to check if a relationship type matches or descends 
         from an ancestor type in the hierarchy
@@ -33035,7 +33140,8 @@ components:
           description: Slot name
         versionNumber:
           type: integer
-          description: Specific version to migrate (defaults to latest)
+          nullable: true
+          description: Specific version to migrate (null = latest)
         targetSchemaVersion:
           type: string
           minLength: 1
@@ -34584,11 +34690,18 @@ components:
       description: Request to pin a save version as a checkpoint to prevent 
         cleanup
       required:
+      - gameId
       - ownerId
       - ownerType
       - slotName
       - versionNumber
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
@@ -35912,7 +36025,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Filter by metadata key-value pairs
+          description: Filter by client metadata key-value pairs. Matches 
+            against client-owned metadata stored on saves.
         offset:
           type: integer
           default: 0
@@ -36801,6 +36915,7 @@ components:
           description: Scene containing the reference
         sceneName:
           type: string
+          maxLength: 500
           description: Name of the referencing scene
         nodeId:
           type: string
@@ -36808,9 +36923,11 @@ components:
           description: Node containing the reference
         nodeRefId:
           type: string
+          maxLength: 200
           description: refId of the referencing node
         nodeName:
           type: string
+          maxLength: 500
           description: Name of the referencing node
     RefreshRequest:
       description: Request to obtain a new access token using a valid refresh 
@@ -37078,6 +37195,7 @@ components:
           description: Schema version identifier
         schema:
           type: object
+          additionalProperties: true
           description: JSON Schema definition for validation
         previousVersion:
           type: string
@@ -37088,6 +37206,7 @@ components:
           nullable: true
           items:
             $ref: '#/components/schemas/JsonPatchOperation'
+          maxItems: 1000
           description: |
             JSON Patch (RFC 6902) operations to migrate from previousVersion.
             Uses JsonPatch.Net library (MIT licensed).
@@ -37969,6 +38088,7 @@ components:
           description: Node ID containing the reference
         refId:
           type: string
+          maxLength: 200
           description: refId of the referencing node
         referencedSceneId:
           type: string
@@ -37977,6 +38097,7 @@ components:
         referencedVersion:
           type: string
           nullable: true
+          maxLength: 50
           description: Version that was resolved
         scene:
           $ref: '#/components/schemas/Scene'
@@ -37985,44 +38106,6 @@ components:
           type: integer
           minimum: 0
           description: Depth level of this reference
-    ResourceArchiveBase:
-      type: object
-      description: |
-        Base schema for all resource archives that can be stored in
-        the resource service's archive bundles and consumed by the
-        storyline SDK's ArchiveExtractor.
-
-        Archives implementing this base schema are marked with
-        x-archive-type: true and are automatically collected by
-        the archive generation script for SDK model generation.
-      required:
-      - resourceId
-      - resourceType
-      - archivedAt
-      - schemaVersion
-      properties:
-        resourceId:
-          type: string
-          format: uuid
-          description: Unique identifier of the archived resource
-        resourceType:
-          type: string
-          description: Type identifier (e.g., "character", 
-            "character-personality", "realm-history")
-        archivedAt:
-          type: string
-          format: date-time
-          description: When this archive was created
-        schemaVersion:
-          type: integer
-          minimum: 1
-          description: Schema version for forward compatibility migration
-        nestedArchives:
-          type: array
-          description: Child archives from dependent resources (populated by 
-            lib-resource compression)
-          items:
-            $ref: '#/components/schemas/ResourceArchiveBase'
     ResponseValidation:
       type: object
       description: Validation rules for API responses with three-outcome model 
@@ -38323,11 +38406,11 @@ components:
       - StateSnapshot
       description: |
         Category of save with predefined behaviors.
-        QUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).
-        AUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).
-        MANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).
-        CHECKPOINT: Progress markers (max 20 versions, rolling).
-        STATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).
+        QuickSave: Single-slot fast save, overwritten frequently (max 1 version).
+        AutoSave: System-triggered periodic saves (max 5 versions, rolling).
+        ManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).
+        Checkpoint: Progress markers (max 20 versions, rolling).
+        StateSnapshot: Full state captures for debugging (max 3 versions, rolling).
     SaveDeltaRequest:
       type: object
       additionalProperties: false
@@ -38393,7 +38476,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom key-value metadata for this delta version
+          description: Client-only metadata for this delta version. No Bannou 
+            plugin reads specific keys from this field by convention.
     SaveDeltaResponse:
       type: object
       additionalProperties: false
@@ -38506,7 +38590,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata (e.g., level, playtime, location)
+          description: Client-only metadata (e.g., level, playtime, location). 
+            No Bannou plugin reads specific keys from this field by convention.
         pinAsCheckpoint:
           type: string
           nullable: true
@@ -38939,10 +39024,9 @@ components:
           $ref: '#/components/schemas/MutationType'
           description: Type of mutation to apply
         experienceType:
-          type: string
+          $ref: '#/components/schemas/StorylineExperienceType'
           nullable: true
-          description: Experience type for PersonalityEvolve (e.g., TRAUMA, 
-            VICTORY)
+          description: Experience type for PersonalityEvolve mutations
         experienceIntensity:
           type: number
           format: float
@@ -38951,10 +39035,9 @@ components:
           nullable: true
           description: Experience intensity for PersonalityEvolve (0.0-1.0)
         backstoryElementType:
-          type: string
+          $ref: '#/components/schemas/StorylineBackstoryElementType'
           nullable: true
-          description: Backstory element type for BackstoryAdd (e.g., TRAUMA, 
-            GOAL)
+          description: Backstory element type for BackstoryAdd mutations
         backstoryKey:
           type: string
           nullable: true
@@ -39201,7 +39284,6 @@ components:
       description: A complete scene document with hierarchical node structure
       required:
       - sceneId
-      - gameId
       - sceneType
       - name
       - version
@@ -39221,12 +39303,12 @@ components:
           description: Unique scene identifier
         gameId:
           type: string
+          nullable: true
           minLength: 1
           maxLength: 200
           description: |
             Game service identifier for partitioning. Treated as opaque string.
-            Default is the nil UUID for unpartitioned scenes.
-          default: "00000000-0000-0000-0000-000000000000"
+            Null for unpartitioned scenes.
         sceneType:
           $ref: '#/components/schemas/SceneType'
           description: Scene classification for querying and validation
@@ -39414,7 +39496,6 @@ components:
       description: Summary of a scene for list results (excludes full node tree)
       required:
       - sceneId
-      - gameId
       - sceneType
       - name
       - version
@@ -39429,19 +39510,24 @@ components:
           description: Unique scene identifier
         gameId:
           type: string
-          description: Game service identifier
+          nullable: true
+          maxLength: 200
+          description: Game service identifier (null for unpartitioned scenes)
         sceneType:
           $ref: '#/components/schemas/SceneType'
           description: Scene classification
         name:
           type: string
+          maxLength: 500
           description: Scene name
         description:
           type: string
           nullable: true
+          maxLength: 2000
           description: Scene description
         version:
           type: string
+          maxLength: 50
           description: Current version
         tags:
           type: array
@@ -39451,6 +39537,7 @@ components:
           description: Scene tags
         nodeCount:
           type: integer
+          minimum: 0
           description: Total number of nodes in scene
         createdAt:
           type: string
@@ -39465,25 +39552,13 @@ components:
           description: Whether scene is currently checked out
     SceneType:
       type: string
+      minLength: 1
+      maxLength: 100
       description: |
-        Scene classification for querying and validation rule lookup.
-        Different types may have different validation requirements per game.
-        DESIGN_DECISION: Whether this should be an opaque string instead of enum
-        (game-content codes vary per deployment). Tracked for future evaluation.
-      enum:
-      - Unknown
-      - Region
-      - City
-      - District
-      - Lot
-      - Building
-      - Room
-      - Dungeon
-      - Arena
-      - Vehicle
-      - Prefab
-      - Cutscene
-      - Other
+        Scene classification code for querying and validation rule lookup.
+        Opaque string per FOUNDATION TENETS (game-configurable content codes
+        vary per deployment). Common values include region, city, building,
+        dungeon, arena, prefab, cutscene — but any game can define its own.
     SchemaResponse:
       type: object
       additionalProperties: false
@@ -39502,6 +39577,7 @@ components:
           description: Schema version
         schema:
           type: object
+          additionalProperties: true
           description: JSON Schema definition
         previousVersion:
           type: string
@@ -39871,17 +39947,8 @@ components:
       description: Seed-derived passive effects for an entity
       additionalProperties: false
       required:
-      - entityId
-      - entityType
       - effects
       properties:
-        entityId:
-          type: string
-          format: uuid
-          description: Entity these effects belong to
-        entityType:
-          $ref: '#/components/schemas/EntityType'
-          description: Entity type discriminator
         effects:
           type: array
           maxItems: 500
@@ -40806,7 +40873,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom key-value metadata (null if none set)
+          description: Client-only metadata (null if none set). No Bannou plugin
+            reads specific keys from this field by convention.
     SortOrder:
       type: string
       enum:
@@ -41366,40 +41434,34 @@ components:
       - Cached
       - Ephemeral
       default: Cached
-    StorylineArchive:
-      type: object
-      x-archive-type: true
-      description: |
-        Complete storyline participation data for archive storage and SDK consumption.
-        Inherits base archive properties from ResourceArchiveBase.
-        The characterId field equals resourceId for convenience.
-      allOf:
-      - $ref: '#/components/schemas/ResourceArchiveBase'
-      additionalProperties: false
-      required:
-      - characterId
-      - participations
-      - activeArcs
-      - completedStorylines
-      properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character this data belongs to (equals resourceId)
-        participations:
-          type: array
-          items:
-            $ref: '#/components/schemas/StorylineParticipation'
-          description: All scenario participations (completed and active)
-        activeArcs:
-          type: array
-          items:
-            type: string
-          description: Story arcs the character is currently involved in
-        completedStorylines:
-          type: integer
-          minimum: 0
-          description: Total count of completed scenarios
+    StorylineBackstoryElementType:
+      type: string
+      enum:
+      - Origin
+      - Occupation
+      - Training
+      - Trauma
+      - Achievement
+      - Secret
+      - Goal
+      - Fear
+      - Belief
+      description: Storyline-owned subset of character-history 
+        BackstoryElementType for scenario mutations
+    StorylineExperienceType:
+      type: string
+      enum:
+      - Trauma
+      - Betrayal
+      - Loss
+      - Victory
+      - Friendship
+      - Redemption
+      - Corruption
+      - Enlightenment
+      - Sacrifice
+      description: Storyline-owned subset of character-personality 
+        ExperienceType for scenario mutations
     StorylineGoal:
       type: string
       enum:
@@ -41434,66 +41496,6 @@ components:
           type: string
           description: Type of relationship (e.g., "opposes", "allies_with", 
             "seeks")
-    StorylineParticipation:
-      type: object
-      description: Summary of a scenario participation for archive purposes
-      additionalProperties: false
-      required:
-      - executionId
-      - scenarioCode
-      - role
-      - phase
-      - totalPhases
-      - status
-      - startedAt
-      properties:
-        executionId:
-          type: string
-          format: uuid
-          description: Scenario execution ID
-        scenarioId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Scenario definition ID (if available)
-        scenarioCode:
-          type: string
-          description: Scenario code for lookup
-        scenarioName:
-          type: string
-          nullable: true
-          description: Scenario display name
-        role:
-          type: string
-          description: Character's role in the scenario (primary, secondary, 
-            witness)
-        phase:
-          type: integer
-          minimum: 0
-          description: Current phase number (or final phase if completed)
-        totalPhases:
-          type: integer
-          minimum: 0
-          description: Total number of phases in the scenario
-        status:
-          $ref: '#/components/schemas/ScenarioStatus'
-          description: Current status of the scenario execution
-        startedAt:
-          type: string
-          format: date-time
-          description: When the scenario was triggered
-        completedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the scenario completed (null if still active)
-        choices:
-          type: array
-          items:
-            type: string
-          nullable: true
-          description: Key choices made during the scenario (for narrative 
-            hooks)
     StorylinePlanAction:
       type: object
       additionalProperties: false
@@ -43388,11 +43390,18 @@ components:
       additionalProperties: false
       description: Request to unpin a previously pinned save version
       required:
+      - gameId
       - ownerId
       - ownerType
       - slotName
       - versionNumber
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
@@ -43424,6 +43433,7 @@ components:
           description: Node ID containing the reference
         refId:
           type: string
+          maxLength: 200
           description: refId of the referencing node
         referencedSceneId:
           type: string
@@ -46125,6 +46135,7 @@ components:
       properties:
         version:
           type: string
+          maxLength: 50
           description: Version string
         createdAt:
           type: string
@@ -46142,6 +46153,7 @@ components:
           description: Summary of changes
         nodeCount:
           type: integer
+          minimum: 0
           description: Node count at this version
     VersionResponse:
       type: object
@@ -46199,7 +46211,8 @@ components:
           nullable: true
           additionalProperties:
             type: string
-          description: Custom metadata (null if none set)
+          description: Client-only metadata (null if none set). No Bannou plugin
+            reads specific keys from this field by convention.
     ViolationRecord:
       type: object
       description: Record of a knowing obligation violation by a character

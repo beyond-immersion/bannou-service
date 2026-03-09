@@ -83,12 +83,19 @@ public static class CurrencyEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(CurrencyPublishedTopics.CurrencyDefinitionCreated, eventData, cancellationToken);
 
-    /// <summary>Published when a currency definition is updated.</summary>
+    /// <summary>Published when a currency definition is updated (including deprecation via changedFields).</summary>
     public static Task<bool> PublishCurrencyDefinitionUpdatedAsync(
         this IMessageBus messageBus,
         CurrencyDefinitionUpdatedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(CurrencyPublishedTopics.CurrencyDefinitionUpdated, eventData, cancellationToken);
+
+    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
+    public static Task<bool> PublishCurrencyDefinitionDeletedAsync(
+        this IMessageBus messageBus,
+        CurrencyDefinitionDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(CurrencyPublishedTopics.CurrencyDefinitionDeleted, eventData, cancellationToken);
 
     /// <summary>Published when a new wallet is created.</summary>
     public static Task<bool> PublishCurrencyWalletCreatedAsync(

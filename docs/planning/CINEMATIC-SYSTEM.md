@@ -1,10 +1,18 @@
 # The Cinematic System: From Combat Dream to Choreographic Reality
 
-> **Type**: Architectural planning document
-> **Priority**: High (last remaining architectural gap)
+> **Type**: Design
+> **Status**: Aspirational
+> **Created**: 2026-02-28
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #4
+> **Related Plugins**: Behavior, Actor, Agency
 > **Related**: [VISION-PROGRESS.md](VISION-PROGRESS.md) (R9), [ACTOR-BOUND-ENTITIES.md](ACTOR-BOUND-ENTITIES.md), [WHY-ARE-THERE-NO-SKILL-MAGIC-OR-COMBAT-PLUGINS.md](../faqs/WHY-ARE-THERE-NO-SKILL-MAGIC-OR-COMBAT-PLUGINS.md)
 > **Inspiration**: *Final Fantasy XVI* (cinematic combat), *Tales of Destiny* (living weapon choreography), *Nier: Automata* (2B/9S combat as character expression)
 > **Services**: lib-cinematic (new L4), CinematicTheory (new SDK), CinematicStoryteller (new SDK)
+
+## Summary
+
+Designs the cinematic composition system, the last remaining structural gap in the Bannou architecture. The runtime for cinematics already exists (CinematicInterpreter, CutsceneCoordinator, IClientCutsceneHandler) but the compositional layer that generates choreographic ABML documents from encounter context is missing. Proposes three new components following the established Theory/Storyteller/Plugin pattern: CinematicTheory SDK for dramatic grammar and spatial reasoning, CinematicStoryteller SDK for GOAP-driven auto-composition, and lib-cinematic (L4) as the thin API wrapper. No implementation exists yet.
 
 ---
 

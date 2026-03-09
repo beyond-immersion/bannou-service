@@ -1,15 +1,20 @@
 # Death & Plot Armor System
 
-> **Status**: Design
+> **Type**: Design
+> **Status**: Aspirational
 > **Created**: 2026-02-18
-> **Author**: Lysander (design) + Claude (analysis)
-> **Category**: Cross-cutting mechanic (behavioral, not plugin)
-> **Related Services**: Status (L4), Seed (L2), Divine (L4), Gardener (L4), Puppetmaster (L4), Actor (L2), Character (L2), Character-Encounter (L4), Character-History (L4), Contract (L1), Music (L4), Agency (L4), Connect (L1)
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2, #5
+> **Related Plugins**: Status, Seed, Divine, Gardener, Puppetmaster, Actor, Character, Character-Encounter, Character-History, Contract, Music, Agency, Connect
 > **Related Plans**: [CINEMATIC-SYSTEM.md](../plans/CINEMATIC-SYSTEM.md), [STORYLINE-COMPOSER-SDK.md](../plans/STORYLINE-COMPOSER-SDK.md)
 > **Related Docs**: [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md), [VISION.md](../reference/VISION.md), [PLAYER-VISION.md](../reference/PLAYER-VISION.md)
 > **Related arcadia-kb**: Underworld and Soul Currency System, Aspiration-Based Guardian Spirit Progression, Strauss-Howe Generational World Evolution
 
 ---
+
+## Summary
+
+Designs the death and plot armor system as a behavioral constraint enforced by god-actors through ABML, not by any service or SDK. Plot armor is a continuous float tracked via the Status service that prevents character death while above zero; god-actors deplete it based on danger intensity, god personality, and narrative position. When plot armor reaches zero, deaths become possible and trigger a multi-phase post-death gameplay sequence (Last Stand, divine judgment, underworld entry) that feeds the content flywheel. No new services are required -- the system composes entirely from existing primitives (Status, Actor, Divine, Cinematic, Character-Encounter, Contract).
 
 ## Executive Summary
 

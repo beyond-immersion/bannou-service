@@ -118,14 +118,19 @@ paths:
         \             \"description\": \"Suggested emotional response\"\n                },\n                \"sortOrder\"\
         : {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\n     \
         \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
-        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
-        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
-        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
-        \   }\n    }\n}"
+        description\": \"Whether the type is active\"\n                },\n                \"isDeprecated\": {\n         \
+        \           \"type\": \"boolean\",\n                    \"description\": \"Whether this type has been deprecated\"\
+        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the type was deprecated\"\n                },\n                \"deprecationReason\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why the
+        type was deprecated\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the type was created\"\
+        \n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n\
+        \                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\"\
+        ,\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"\
+        Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new encounter type\",\n    \"description\": \"Creates a new encounter
         type code for game-specific encounter categories.\\nBuilt-in types (COMBAT, TRADE, etc.) cannot be created via this
         endpoint.\\n\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n    \"\
@@ -176,14 +181,19 @@ paths:
         \             \"description\": \"Suggested emotional response\"\n                },\n                \"sortOrder\"\
         : {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\n     \
         \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
-        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
-        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
-        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
-        \   }\n    }\n}"
+        description\": \"Whether the type is active\"\n                },\n                \"isDeprecated\": {\n         \
+        \           \"type\": \"boolean\",\n                    \"description\": \"Whether this type has been deprecated\"\
+        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the type was deprecated\"\n                },\n                \"deprecationReason\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why the
+        type was deprecated\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the type was created\"\
+        \n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n\
+        \                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\"\
+        ,\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"\
+        Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get encounter type by code\",\n    \"description\": \"Retrieve an encounter
         type by its unique code.\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getEncounterType\"\n}"
@@ -211,13 +221,13 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListEncounterTypesRequest\"\
         ,\n    \"$defs\": {\n        \"ListEncounterTypesRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to list encounter types with optional filtering\",\n            \"additionalProperties\": false,\n   \
-        \         \"properties\": {\n                \"includeInactive\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"default\": false,\n                    \"description\": \"Include soft-deleted types\"\n  \
-        \              },\n                \"builtInOnly\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": false,\n                    \"description\": \"Only return built-in types\"\n                },\n\
-        \                \"customOnly\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
-        \                    \"description\": \"Only return custom types\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        \         \"properties\": {\n                \"includeDeprecated\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"default\": false,\n                    \"description\": \"Include deprecated types in results\"\
+        \n                },\n                \"builtInOnly\": {\n                    \"type\": \"boolean\",\n           \
+        \         \"default\": false,\n                    \"description\": \"Only return built-in types\"\n             \
+        \   },\n                \"customOnly\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Only return custom types\"\n                }\n            }\n  \
+        \      }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeListResponse\"\
         ,\n    \"$defs\": {\n        \"EncounterTypeListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing a list of encounter types\",\n            \"additionalProperties\": false,\n            \"\
@@ -242,14 +252,19 @@ paths:
         : true,\n                    \"description\": \"Suggested emotional response\"\n                },\n             \
         \   \"sortOrder\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\
         \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n   \
-        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
-        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
-        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
-        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
-        \   }\n    }\n}"
+        \      \"description\": \"Whether the type is active\"\n                },\n                \"isDeprecated\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this type has been deprecated\"\
+        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the type was deprecated\"\n                },\n                \"deprecationReason\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why the
+        type was deprecated\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the type was created\"\
+        \n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n\
+        \                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\"\
+        ,\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"\
+        Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all encounter types\",\n    \"description\": \"Retrieve all encounter
         types including built-in and custom types.\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n  \
         \  \"deprecated\": false,\n    \"operationId\": \"listEncounterTypes\"\n}"
@@ -317,27 +332,34 @@ paths:
         \             \"description\": \"Suggested emotional response\"\n                },\n                \"sortOrder\"\
         : {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\n     \
         \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
-        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
-        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
-        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
-        \   }\n    }\n}"
+        description\": \"Whether the type is active\"\n                },\n                \"isDeprecated\": {\n         \
+        \           \"type\": \"boolean\",\n                    \"description\": \"Whether this type has been deprecated\"\
+        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the type was deprecated\"\n                },\n                \"deprecationReason\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why the
+        type was deprecated\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the type was created\"\
+        \n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n\
+        \                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\"\
+        ,\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"\
+        Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update encounter type\",\n    \"description\": \"Update an existing encounter
         type. Built-in types can only have their\\ndescription and defaultEmotionalImpact updated.\\n\",\n    \"tags\": [\n\
         \        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateEncounterType\"\
         \n}"
-  /character-encounter/type/delete:
+  /character-encounter/type/deprecate:
     post:
-      summary: Delete encounter type
-      operationId: deleteEncounterType
+      summary: Deprecate encounter type
+      operationId: deprecateEncounterType
       tags:
       - Encounter Type Management
       description: |
-        Delete a custom encounter type. Built-in types cannot be deleted.
-        Types with existing encounters cannot be deleted.
+        Marks an encounter type as deprecated. Deprecated types remain readable
+        forever but new encounters cannot reference them.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       x-permissions:
       - role: developer
       requestBody:
@@ -345,27 +367,60 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteEncounterTypeRequest'
+              $ref: '#/components/schemas/DeprecateEncounterTypeRequest'
       responses:
         '200':
-          description: Encounter type deleted successfully
+          description: Encounter type deprecated successfully (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterTypeResponse'
         '404':
           description: Encounter type not found
-        '400':
-          description: Cannot delete built-in type
-        '409':
-          description: Cannot delete - type is in use by encounters
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteEncounterTypeRequest\"\
-        ,\n    \"$defs\": {\n        \"DeleteEncounterTypeRequest\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Request to delete an encounter type\",\n            \"additionalProperties\": false,\n          \
-        \  \"required\": [\n                \"code\"\n            ],\n            \"properties\": {\n                \"code\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Code of the type to delete\"\
-        \n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n    \"summary\": \"Delete encounter type\",\n    \"description\": \"Delete a custom encounter
-        type. Built-in types cannot be deleted.\\nTypes with existing encounters cannot be deleted.\\n\",\n    \"tags\": [\n\
-        \        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteEncounterType\"\
-        \n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateEncounterTypeRequest\"\
+        ,\n    \"$defs\": {\n        \"DeprecateEncounterTypeRequest\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"Request to deprecate an encounter type (Category B \\u2014 one-way, no delete). Idempotent \\
+        u2014 returns OK if already deprecated.\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"code\"\n            ],\n            \"properties\": {\n                \"code\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Code of the type to deprecate\"\n   \
+        \             },\n                \"reason\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation
+        (recommended for audit trail)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeResponse\"\
+        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"typeId\",\n                \"code\",\n                \"name\",\n                \"isBuiltIn\"\
+        ,\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
+        \            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n                },\n\
+        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Display name\"\n                },\n                \"description\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Description\"\
+        \n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\",\n             \
+        \       \"description\": \"Whether this is a built-in type\"\n                },\n                \"defaultEmotionalImpact\"\
+        : {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Suggested emotional response\"\n                },\n                \"sortOrder\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\n     \
+        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
+        description\": \"Whether the type is active\"\n                },\n                \"isDeprecated\": {\n         \
+        \           \"type\": \"boolean\",\n                    \"description\": \"Whether this type has been deprecated\"\
+        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the type was deprecated\"\n                },\n                \"deprecationReason\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why the
+        type was deprecated\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the type was created\"\
+        \n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n\
+        \                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\"\
+        ,\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"\
+        Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Deprecate encounter type\",\n    \"description\": \"Marks an encounter
+        type as deprecated. Deprecated types remain readable\\nforever but new encounters cannot reference them.\\nCategory
+        B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\\nno delete. Idempotent \\u2014 returns OK if
+        already deprecated.\\n\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"deprecateEncounterType\"\n}"
   /character-encounter/type/seed:
     post:
       summary: Seed default encounter types
@@ -1965,10 +2020,10 @@ components:
       description: Request to list encounter types with optional filtering
       additionalProperties: false
       properties:
-        includeInactive:
+        includeDeprecated:
           type: boolean
           default: false
-          description: Include soft-deleted types
+          description: Include deprecated types in results
         builtInOnly:
           type: boolean
           default: false
@@ -2006,16 +2061,22 @@ components:
           type: integer
           nullable: true
           description: New display ordering
-    DeleteEncounterTypeRequest:
+    DeprecateEncounterTypeRequest:
       type: object
-      description: Request to delete an encounter type
+      description: Request to deprecate an encounter type (Category B — one-way, no delete). Idempotent — returns OK if 
+        already deprecated.
       additionalProperties: false
       required:
       - code
       properties:
         code:
           type: string
-          description: Code of the type to delete
+          description: Code of the type to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended for audit trail)
     SeedEncounterTypesRequest:
       type: object
       description: Request to seed default encounter types
@@ -2447,6 +2508,18 @@ components:
         isActive:
           type: boolean
           description: Whether the type is active
+        isDeprecated:
+          type: boolean
+          description: Whether this type has been deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the type was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Why the type was deprecated
         createdAt:
           type: string
           format: date-time

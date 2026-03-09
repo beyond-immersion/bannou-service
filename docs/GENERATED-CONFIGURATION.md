@@ -1049,7 +1049,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SAVE_LOAD_ASSET_BUCKET` | string | `game-saves` | MinIO bucket for save assets |
+| `SAVE_LOAD_ASSET_BUCKET` | string | `game-saves` | MinIO/S3 bucket name for save assets |
 | `SAVE_LOAD_ASYNC_UPLOAD_ENABLED` | bool | `true` | Queue uploads to MinIO/S3 instead of synchronous write. Save... |
 | `SAVE_LOAD_AUTO_COLLAPSE_ENABLED` | bool | `true` | Automatically collapse delta chains during cleanup |
 | `SAVE_LOAD_AUTO_COMPRESS_THRESHOLD_BYTES` | int | `1048576` | Auto-compress saves larger than this (default 1MB) |
@@ -1073,10 +1073,12 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_STATE_SNAPSHOT` | int | `3` | Default max versions for STATE_SNAPSHOT category |
 | `SAVE_LOAD_DELTA_SAVES_ENABLED` | bool | `true` | Enable delta/incremental save support |
 | `SAVE_LOAD_DELTA_SIZE_THRESHOLD_PERCENT` | int | `50` | If delta is larger than this percent of full save, store as ... |
+| `SAVE_LOAD_EXPORT_URL_EXPIRY_MINUTES` | int | `60` | Expiry time in minutes for export download URLs |
 | `SAVE_LOAD_GZIP_COMPRESSION_LEVEL` | int | `6` | GZIP compression level (1-9, higher = better compression, sl... |
 | `SAVE_LOAD_HOT_CACHE_TTL_MINUTES` | int | `60` | TTL for hot cache entries in minutes |
 | `SAVE_LOAD_MAX_CONCURRENT_UPLOADS` | int | `10` | Maximum concurrent uploads to storage backend (semaphore). P... |
 | `SAVE_LOAD_MAX_DELTA_CHAIN_LENGTH` | int | `10` | Maximum number of deltas before forcing collapse. Longer cha... |
+| `SAVE_LOAD_MAX_MIGRATION_STEPS` | int | `10` | Maximum number of sequential migration steps allowed in a si... |
 | `SAVE_LOAD_MAX_SAVES_PER_MINUTE` | int | `10` | Rate limit - maximum saves per owner per minute |
 | `SAVE_LOAD_MAX_SAVE_SIZE_BYTES` | int | `104857600` | Maximum size for a single save in bytes (default 100MB) |
 | `SAVE_LOAD_MAX_SLOTS_PER_OWNER` | int | `100` | Maximum save slots per owner entity |
@@ -1086,11 +1088,15 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SAVE_LOAD_MIN_BASE_SIZE_FOR_DELTA_THRESHOLD_BYTES` | int | `1024` | Minimum base save size in bytes before applying delta thresh... |
 | `SAVE_LOAD_PENDING_UPLOAD_TTL_MINUTES` | int | `60` | TTL for pending uploads in Redis. If upload fails repeatedly... |
 | `SAVE_LOAD_SESSION_CLEANUP_GRACE_PERIOD_MINUTES` | int | `5` | Grace period before cleaning up SESSION-owned saves after se... |
+| `SAVE_LOAD_SLOT_METADATA_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock timeout in seconds for slot metadata operat... |
+| `SAVE_LOAD_SLOT_WRITE_LOCK_TIMEOUT_SECONDS` | int | `60` | Distributed lock timeout in seconds for save write operation... |
 | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_ENABLED` | bool | `true` | Enable circuit breaker for storage backend (MinIO/S3). When ... |
 | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_HALF_OPEN_ATTEMPTS` | int | `2` | Successful uploads needed in half-open state to close circui... |
 | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_RESET_SECONDS` | int | `30` | Seconds before attempting to close circuit (half-open state) |
 | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_THRESHOLD` | int | `5` | Number of consecutive failures before circuit opens |
-| `SAVE_LOAD_THUMBNAIL_ALLOWED_FORMATS` | string | `image/jpeg,image/webp,image/png` | Comma-separated list of allowed thumbnail MIME types |
+| `SAVE_LOAD_THUMBNAIL_ALLOW_JPEG` | bool | `true` | Allow image/jpeg format for save thumbnails |
+| `SAVE_LOAD_THUMBNAIL_ALLOW_PNG` | bool | `true` | Allow image/png format for save thumbnails |
+| `SAVE_LOAD_THUMBNAIL_ALLOW_WEBP` | bool | `true` | Allow image/webp format for save thumbnails |
 | `SAVE_LOAD_THUMBNAIL_MAX_SIZE_BYTES` | int | `262144` | Maximum thumbnail size in bytes (default 256KB) |
 | `SAVE_LOAD_UPLOAD_BATCH_INTERVAL_MS` | int | `100` | Interval between upload batch processing cycles |
 | `SAVE_LOAD_UPLOAD_BATCH_SIZE` | int | `5` | Number of pending uploads to process per batch cycle |
@@ -1173,47 +1179,31 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `STORYLINE_CONFIDENCE_ACTION_COUNT_BONUS` | double | `0.15` | Confidence bonus when action count is within acceptable rang... |
-| `STORYLINE_CONFIDENCE_BASE_SCORE` | double | `0.5` | Base confidence score before any bonuses are applied.
- |
-| `STORYLINE_CONFIDENCE_CORE_EVENT_BONUS` | double | `0.15` | Confidence bonus when plan contains core events.
- |
-| `STORYLINE_CONFIDENCE_MAX_ACTION_COUNT` | int | `20` | Maximum action count for action count bonus.
- |
-| `STORYLINE_CONFIDENCE_MIN_ACTION_COUNT` | int | `5` | Minimum action count for action count bonus.
- |
-| `STORYLINE_CONFIDENCE_PHASE_BONUS` | double | `0.2` | Confidence bonus when phase threshold is met.
- |
-| `STORYLINE_CONFIDENCE_PHASE_THRESHOLD` | int | `3` | Minimum number of phases to receive a phase count bonus.
- |
-| `STORYLINE_DEFAULT_GENRE` | string | `drama` | Default genre when not specified and cannot be inferred.
- |
-| `STORYLINE_DEFAULT_PLANNING_URGENCY` | string | `medium` | Default urgency tier for GOAP planning.
-low = more iteration... |
-| `STORYLINE_MAX_SEED_SOURCES` | int | `10` | Maximum number of seed sources per compose request.
- |
+| `STORYLINE_CONFIDENCE_BASE_SCORE` | double | `0.5` | Base confidence score before any bonuses are applied |
+| `STORYLINE_CONFIDENCE_CORE_EVENT_BONUS` | double | `0.15` | Confidence bonus when plan contains core events |
+| `STORYLINE_CONFIDENCE_MAX_ACTION_COUNT` | int | `20` | Maximum action count for action count bonus |
+| `STORYLINE_CONFIDENCE_MIN_ACTION_COUNT` | int | `5` | Minimum action count for action count bonus |
+| `STORYLINE_CONFIDENCE_PHASE_BONUS` | double | `0.2` | Confidence bonus when phase threshold is met |
+| `STORYLINE_CONFIDENCE_PHASE_THRESHOLD` | int | `3` | Minimum number of phases to receive a phase count bonus |
+| `STORYLINE_DEFAULT_GENRE` | string | `drama` | Default genre when not specified and cannot be inferred |
+| `STORYLINE_DEFAULT_PLANNING_URGENCY` | string | `Medium` | Default urgency tier for GOAP planning (Low=1000/20, Medium=... |
+| `STORYLINE_MAX_SEED_SOURCES` | int | `10` | Maximum number of seed sources per compose request |
 | `STORYLINE_PLAN_CACHE_ENABLED` | bool | `true` | Whether to cache deterministic plans (those with explicit se... |
-| `STORYLINE_PLAN_CACHE_TTL_SECONDS` | int | `3600` | TTL in seconds for cached composed plans.
-Default: 3600 (1 h... |
-| `STORYLINE_RISK_MIN_ACTION_THRESHOLD` | int | `3` | Minimum action count before "thin_content" risk is flagged.
- |
-| `STORYLINE_RISK_MIN_PHASE_THRESHOLD` | int | `2` | Minimum phase count before "flat_arc" risk is flagged.
- |
+| `STORYLINE_PLAN_CACHE_TTL_SECONDS` | int | `3600` | TTL in seconds for cached composed plans (default 3600 = 1 h... |
+| `STORYLINE_RISK_MIN_ACTION_THRESHOLD` | int | `3` | Minimum action count before thin_content risk is flagged |
+| `STORYLINE_RISK_MIN_PHASE_THRESHOLD` | int | `2` | Minimum phase count before flat_arc risk is flagged |
 | `STORYLINE_SCENARIO_BACKSTORY_MATCH_BONUS` | double | `0.1` | Bonus added to fit score for each matching backstory conditi... |
-| `STORYLINE_SCENARIO_COOLDOWN_DEFAULT_SECONDS` | int | `86400` | Default cooldown in seconds before a scenario can trigger ag... |
-| `STORYLINE_SCENARIO_DEFINITION_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached scenario definitions (Redis read-t... |
-| `STORYLINE_SCENARIO_FIT_SCORE_BASE_WEIGHT` | double | `0.5` | Base weight for scenario fit score calculation.
-Applied when... |
+| `STORYLINE_SCENARIO_COOLDOWN_DEFAULT_SECONDS` | int | `86400` | Default cooldown in seconds before a scenario can re-trigger... |
+| `STORYLINE_SCENARIO_DEFINITION_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached scenario definitions via Redis rea... |
+| `STORYLINE_SCENARIO_FIT_SCORE_BASE_WEIGHT` | double | `0.5` | Base weight for scenario fit score calculation, applied when... |
 | `STORYLINE_SCENARIO_FIT_SCORE_MINIMUM_THRESHOLD` | double | `0.3` | Minimum fit score required for a scenario to be considered a... |
-| `STORYLINE_SCENARIO_FIT_SCORE_RECOMMEND_THRESHOLD` | double | `0.7` | Fit score threshold above which immediate trigger is recomme... |
 | `STORYLINE_SCENARIO_IDEMPOTENCY_TTL_SECONDS` | int | `3600` | TTL in seconds for idempotency keys to prevent duplicate tri... |
-| `STORYLINE_SCENARIO_LOCATION_MATCH_BONUS` | double | `0.08` | Bonus added to fit score for matching location condition.
- |
+| `STORYLINE_SCENARIO_LOCATION_MATCH_BONUS` | double | `0.08` | Bonus added to fit score for matching location condition |
 | `STORYLINE_SCENARIO_MAX_ACTIVE_PER_CHARACTER` | int | `3` | Maximum number of active (in-progress) scenarios per charact... |
 | `STORYLINE_SCENARIO_RELATIONSHIP_MATCH_BONUS` | double | `0.12` | Bonus added to fit score for each matching relationship cond... |
-| `STORYLINE_SCENARIO_TRAIT_MATCH_BONUS` | double | `0.15` | Bonus added to fit score for each matching trait condition.
- |
+| `STORYLINE_SCENARIO_TRAIT_MATCH_BONUS` | double | `0.15` | Bonus added to fit score for each matching trait condition |
 | `STORYLINE_SCENARIO_TRIGGER_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for the distributed lock during scenario ... |
-| `STORYLINE_SCENARIO_WORLD_STATE_MATCH_BONUS` | double | `0.05` | Bonus added to fit score for matching world state conditions... |
+| `STORYLINE_SCENARIO_WORLD_STATE_MATCH_BONUS` | double | `0.05` | Bonus added to fit score for matching world state conditions |
 
 ### Subscription
 
@@ -1308,9 +1298,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 1014
+- **Total properties**: 1019
 - **Required (no default)**: 58
-- **Optional (has default)**: 956
+- **Optional (has default)**: 961
 
 ## Environment Variable Naming Convention
 

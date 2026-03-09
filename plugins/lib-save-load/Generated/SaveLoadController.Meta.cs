@@ -99,7 +99,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom key-value metadata for the slot"
+                    "description": "Client-only metadata for the slot. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -112,7 +112,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQuickSave: Single-slot fast save, overwritten frequently (max 1 version).\nAutoSave: System-triggered periodic saves (max 5 versions, rolling).\nManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).\nCheckpoint: Progress markers (max 20 versions, rolling).\ nStateSnapshot: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -215,7 +215,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom key-value metadata (null if none set)"
+                    "description": "Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -228,7 +228,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\ nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQuickSave: Single-slot fast save, overwritten frequently (max 1 version).\nAutoSave: System-triggered periodic saves (max 5 versions, rolling).\nManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCheckpoint: Progress markers (max 20 versions, rolling).\nStateSnapshot: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -431,7 +431,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom key-value metadata (null if none set)"
+                    "description": "Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -444,7 +444,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\ nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQuickSave: Single-slot fast save, overwritten frequently (max 1 version).\nAutoSave: System-triggered periodic saves (max 5 versions, rolling).\nManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCheckpoint: Progress markers (max 20 versions, rolling).\nStateSnapshot: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -571,7 +571,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQuickSave: Single-slot fast save, overwritten frequently (max 1 version).\nAutoSave: System-triggered periodic saves (max 5 versions, rolling).\nManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).\nCheckpoint: Progress markers (max 20 versions, rolling).\ nStateSnapshot: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -686,7 +686,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom key-value metadata (null if none set)"
+                    "description": "Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -699,7 +699,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQuickSave: Single-slot fast save, overwritten frequently (max 1 version).\nAutoSave: System-triggered periodic saves (max 5 versions, rolling).\ nManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).\nCheckpoint: Progress markers (max 20 versions, rolling).\nStateSnapshot: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1039,7 +1039,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom key-value metadata (null if none set)"
+                    "description": "Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1052,7 +1052,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\ nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQuickSave: Single-slot fast save, overwritten frequently (max 1 version).\nAutoSave: System-triggered periodic saves (max 5 versions, rolling).\nManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCheckpoint: Progress markers (max 20 versions, rolling).\nStateSnapshot: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1150,6 +1150,7 @@ public partial class SaveLoadController
                         "type": "string",
                         "format": "uuid"
                     },
+                    "maxItems": 100,
                     "description": "Slot IDs to delete"
                 }
             }
@@ -1325,7 +1326,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata (e.g., level, playtime, location)"
+                    "description": "Client-only metadata (e.g., level, playtime, location). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "pinAsCheckpoint": {
                     "type": "string",
@@ -1344,7 +1345,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQuickSave: Single-slot fast save, overwritten frequently (max 1 version).\nAutoSave: System-triggered periodic saves (max 5 versions, rolling).\nManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).\nCheckpoint: Progress markers (max 20 versions, rolling).\nStateSnapshot: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -1625,7 +1626,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata (null if none set)"
+                    "description": "Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -1768,7 +1769,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom key-value metadata for this delta version"
+                    "description": "Client-only metadata for this delta version. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1780,7 +1781,7 @@ public partial class SaveLoadController
                 "Xdelta"
             ],
             "default": "JsonPatch",
-            "description": "Algorithm used for delta computation.\ nJSON_PATCH: RFC 6902, best for structured JSON data\nBSDIFF: Binary diff, good for general binary data\nXDELTA: RFC 3284 VCDIFF, efficient for large binary files\n"
+            "description": "Algorithm used for delta computation.\nJSON_PATCH: RFC 6902, best for structured JSON data\nBSDIFF: Binary diff, good for general binary data\nXDELTA: RFC 3284 VCDIFF, efficient for large binary files\n"
         }
     }
 }
@@ -2028,7 +2029,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata (null if none set)"
+                    "description": "Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2308,11 +2309,19 @@ public partial class SaveLoadController
             "additionalProperties": false,
             "description": "Request to list all versions within a save slot with pagination",
             "required": [
+                "gameId",
                 "ownerId",
                 "ownerType",
                 "slotName"
             ],
             "properties": {
+                "gameId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "Game identifier for namespace isolation"
+                },
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",
@@ -2443,7 +2452,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata (null if none set)"
+                    "description": "Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2517,12 +2526,20 @@ public partial class SaveLoadController
             "additionalProperties": false,
             "description": "Request to pin a save version as a checkpoint to prevent cleanup",
             "required": [
+                "gameId",
                 "ownerId",
                 "ownerType",
                 "slotName",
                 "versionNumber"
             ],
             "properties": {
+                "gameId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "Game identifier for namespace isolation"
+                },
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",
@@ -2624,7 +2641,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata (null if none set)"
+                    "description": "Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2698,12 +2715,20 @@ public partial class SaveLoadController
             "additionalProperties": false,
             "description": "Request to unpin a previously pinned save version",
             "required": [
+                "gameId",
                 "ownerId",
                 "ownerType",
                 "slotName",
                 "versionNumber"
             ],
             "properties": {
+                "gameId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "Game identifier for namespace isolation"
+                },
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",
@@ -2800,7 +2825,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata (null if none set)"
+                    "description": "Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2874,12 +2899,20 @@ public partial class SaveLoadController
             "additionalProperties": false,
             "description": "Request to permanently delete a specific save version",
             "required": [
+                "gameId",
                 "ownerId",
                 "ownerType",
                 "slotName",
                 "versionNumber"
             ],
             "properties": {
+                "gameId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "Game identifier for namespace isolation"
+                },
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",
@@ -3047,7 +3080,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Filter by metadata key-value pairs"
+                    "description": "Filter by client metadata key-value pairs. Matches against client-owned metadata stored on saves."
                 },
                 "offset": {
                     "type": "integer",
@@ -3089,7 +3122,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQuickSave: Single-slot fast save, overwritten frequently (max 1 version).\nAutoSave: System-triggered periodic saves (max 5 versions, rolling).\nManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).\nCheckpoint: Progress markers (max 20 versions, rolling).\nStateSnapshot: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "SaveSortField": {
             "type": "string",
@@ -3215,7 +3248,7 @@ public partial class SaveLoadController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Custom metadata (null if none set)"
+                    "description": "Client-only metadata (null if none set). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3228,7 +3261,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQuickSave: Single-slot fast save, overwritten frequently (max 1 version).\nAutoSave: System-triggered periodic saves (max 5 versions, rolling).\nManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).\nCheckpoint: Progress markers (max 20 versions, rolling).\ nStateSnapshot: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -3374,7 +3407,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQuickSave: Single-slot fast save, overwritten frequently (max 1 version).\nAutoSave: System-triggered periodic saves (max 5 versions, rolling).\ nManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).\nCheckpoint: Progress markers (max 20 versions, rolling).\nStateSnapshot: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -3567,8 +3600,10 @@ public partial class SaveLoadController
                     "type": "array",
                     "nullable": true,
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 64
                     },
+                    "maxItems": 100,
                     "description": "Specific slots to export (null = all slots)"
                 }
             }
@@ -4209,7 +4244,8 @@ public partial class SaveLoadController
                 },
                 "versionNumber": {
                     "type": "integer",
-                    "description": "Specific version to migrate (defaults to latest)"
+                    "nullable": true,
+                    "description": "Specific version to migrate (null = latest)"
                 },
                 "targetSchemaVersion": {
                     "type": "string",
@@ -4362,6 +4398,7 @@ public partial class SaveLoadController
                 },
                 "schema": {
                     "type": "object",
+                    "additionalProperties": true,
                     "description": "JSON Schema definition for validation"
                 },
                 "previousVersion": {
@@ -4375,6 +4412,7 @@ public partial class SaveLoadController
                     "items": {
                         "$ref": "#/$defs/JsonPatchOperation"
                     },
+                    "maxItems": 1000,
                     "description": "JSON Patch (RFC 6902) operations to migrate from previousVersion.\nUses JsonPatch.Net library (MIT licensed).\n"
                 }
             }
@@ -4402,7 +4440,8 @@ public partial class SaveLoadController
                     "description": "Source path (for move/copy operations)"
                 },
                 "value": {
-                    "description": "Value to use (for add/replace/test operations)"
+                    "nullable": true,
+                    "description": "Value to use (for add/replace/test operations, null for remove/move/copy)"
                 }
             }
         },
@@ -4448,6 +4487,7 @@ public partial class SaveLoadController
                 },
                 "schema": {
                     "type": "object",
+                    "additionalProperties": true,
                     "description": "JSON Schema definition"
                 },
                 "previousVersion": {
@@ -4599,6 +4639,7 @@ public partial class SaveLoadController
                 },
                 "schema": {
                     "type": "object",
+                    "additionalProperties": true,
                     "description": "JSON Schema definition"
                 },
                 "previousVersion": {
@@ -4715,7 +4756,7 @@ public partial class SaveLoadController
                 "Checkpoint",
                 "StateSnapshot"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQuickSave: Single-slot fast save, overwritten frequently (max 1 version).\nAutoSave: System-triggered periodic saves (max 5 versions, rolling).\nManualSave: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCheckpoint: Progress markers (max 20 versions, rolling).\nStateSnapshot: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -4732,8 +4773,7 @@ public partial class SaveLoadController
             "description": "Result of admin cleanup operation with storage reclamation details",
             "required": [
                 "versionsDeleted",
-                "bytesFreed",
-                "dryRun"
+                "bytesFreed"
             ],
             "properties": {
                 "versionsDeleted": {
@@ -4748,10 +4788,6 @@ public partial class SaveLoadController
                     "type": "integer",
                     "format": "int64",
                     "description": "Storage freed in bytes"
-                },
-                "dryRun": {
-                    "type": "boolean",
-                    "description": "Whether this was a preview"
                 }
             }
         }

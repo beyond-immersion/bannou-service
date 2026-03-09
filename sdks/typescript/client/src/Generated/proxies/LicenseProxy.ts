@@ -97,21 +97,21 @@ export class LicenseProxy {
   }
 
   /**
-   * Delete a board template
+   * Deprecate a board template
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async licenseDeleteBoardTemplateAsync(
-    request: Schemas['DeleteBoardTemplateRequest'],
+  async licenseDeprecateBoardTemplateAsync(
+    request: Schemas['DeprecateBoardTemplateRequest'],
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BoardTemplateResponse']>> {
     return this.client.invokeAsync<
-      Schemas['DeleteBoardTemplateRequest'],
+      Schemas['DeprecateBoardTemplateRequest'],
       Schemas['BoardTemplateResponse']
-    >('/license/board-template/delete', request, channel, timeout);
+    >('/license/board-template/deprecate', request, channel, timeout);
   }
 
   /**

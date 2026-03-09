@@ -1,10 +1,19 @@
 # Actor-Bound Entities: Living Things That Grow Into Autonomous Agents
 
-> **Status**: Vision Document (architectural analysis, no implementation)
-> **Priority**: High (Living Game Worlds -- North Star #1, Content Flywheel -- North Star #2)
-> **Related**: `docs/plugins/ACTOR.md`, `docs/plugins/DIVINE.md`, `docs/plugins/DUNGEON.md`, `docs/plugins/SEED.md`, `docs/plugins/COLLECTION.md`
-> **Supersedes**: `docs/planning/DUNGEON-EXTENSIONS-NOTES.md` (incorporated and expanded)
-> **External Inspiration**: *Tales of Destiny* (Swordians), *Xenoblade Chronicles 2* (Blades), *Persona* (bond = power), *DanMachi* (Falna/blessing system), Dungeon Core LitRPG genre
+> **Type**: Design
+> **Status**: Aspirational
+> **Created**: 2026-02-16
+> **Last Updated**: 2026-03-09
+> **North Stars**: #1, #2
+> **Related Plugins**: Actor, Divine, Dungeon, Seed, Collection, Character, Relationship, Item, Status, Puppetmaster
+
+---
+
+## Summary
+
+Defines the unified three-stage cognitive progression (Dormant, Stirring, Awakened) for any entity that grows from inert object to autonomous agent. Covers gods, dungeons, living weapons, and future entity types using system realms, Seed growth phases, and the Variable Provider Factory pattern. Validates the composability thesis by demonstrating that living weapons require zero new plugins. No implementation exists yet beyond the foundational services it composes.
+
+This document incorporates and expands `docs/planning/DUNGEON-EXTENSIONS-NOTES.md`. External inspiration: *Tales of Destiny* (Swordians), *Xenoblade Chronicles 2* (Blades), *Persona* (bond = power), *DanMachi* (Falna/blessing system), Dungeon Core LitRPG genre.
 
 ---
 

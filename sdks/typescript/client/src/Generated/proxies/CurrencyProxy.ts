@@ -43,6 +43,24 @@ export class CurrencyProxy {
   }
 
   /**
+   * Deprecate a currency definition (Category B — one-way, no delete)
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async currencyDeprecateCurrencyDefinitionAsync(
+    request: Schemas['DeprecateCurrencyDefinitionRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CurrencyDefinitionResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeprecateCurrencyDefinitionRequest'],
+      Schemas['CurrencyDefinitionResponse']
+    >('/currency/definition/deprecate', request, channel, timeout);
+  }
+
+  /**
    * Get balance for a specific currency in a wallet
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

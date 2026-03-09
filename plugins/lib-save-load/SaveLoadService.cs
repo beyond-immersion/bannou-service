@@ -132,7 +132,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Get category defaults
         var category = body.Category;
-        var maxVersions = body.MaxVersions.HasValue ? body.MaxVersions.Value : GetDefaultMaxVersions(category);
+        var maxVersions = body.MaxVersions ?? GetDefaultMaxVersions(category);
         var compressionType = GetDefaultCompressionType(category);
 
         // Create the slot

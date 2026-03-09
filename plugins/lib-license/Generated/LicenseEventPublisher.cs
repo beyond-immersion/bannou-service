@@ -27,14 +27,14 @@ public static class LicenseEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(LicensePublishedTopics.LicenseBoardTemplateCreated, eventData, cancellationToken);
 
-    /// <summary>Published when a board template is updated.</summary>
+    /// <summary>Published when a board template is updated (including deprecation via changedFields).</summary>
     public static Task<bool> PublishLicenseBoardTemplateUpdatedAsync(
         this IMessageBus messageBus,
         LicenseBoardTemplateUpdatedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(LicensePublishedTopics.LicenseBoardTemplateUpdated, eventData, cancellationToken);
 
-    /// <summary>Published when a board template is deleted.</summary>
+    /// <summary>Unused Category B infrastructure (board templates are never deleted).</summary>
     public static Task<bool> PublishLicenseBoardTemplateDeletedAsync(
         this IMessageBus messageBus,
         LicenseBoardTemplateDeletedEvent eventData,

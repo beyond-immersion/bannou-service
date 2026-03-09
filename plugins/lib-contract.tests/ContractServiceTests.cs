@@ -257,10 +257,10 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
     #endregion
 
-    #region DeleteContractTemplate Tests
+    #region DeprecateContractTemplate Tests
 
     [Fact]
-    public async Task DeleteContractTemplateAsync_ExistingTemplate_ReturnsOK()
+    public async Task DeprecateContractTemplateAsync_ExistingTemplate_ReturnsOK()
     {
         // Arrange
         var service = CreateService();
@@ -271,20 +271,21 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
-        _mockListStore
-            .Setup(s => s.GetAsync("all-templates", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { templateId.ToString() });
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
-        var status = await service.DeleteContractTemplateAsync(
-            new DeleteContractTemplateRequest { TemplateId = templateId });
+        var (status, response) = await service.DeprecateContractTemplateAsync(
+            new DeprecateContractTemplateRequest { TemplateId = templateId, Reason = "Superseded" });
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     [Fact]
-    public async Task DeleteContractTemplateAsync_NonExistent_ReturnsNotFound()
+    public async Task DeprecateContractTemplateAsync_NonExistent_ReturnsNotFound()
     {
         // Arrange
         var service = CreateService();
@@ -295,11 +296,12 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .ReturnsAsync((ContractTemplateModel?)null);
 
         // Act
-        var status = await service.DeleteContractTemplateAsync(
-            new DeleteContractTemplateRequest { TemplateId = templateId });
+        var (status, response) = await service.DeprecateContractTemplateAsync(
+            new DeprecateContractTemplateRequest { TemplateId = templateId });
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 
     #endregion
@@ -5418,43 +5420,30 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
     #endregion
 
-    #region DeleteContractTemplate Non-Deprecated Rejection (Gap 3)
+    #region DeprecateContractTemplate Idempotent (Gap 3)
 
     [Fact]
-    public async Task DeleteContractTemplateAsync_ActiveTemplateWithActiveInstances_ReturnsConflict()
+    public async Task DeprecateContractTemplateAsync_AlreadyDeprecated_ReturnsOK()
     {
-        // Arrange: Template exists, is active (not deprecated), and has active instances
+        // Arrange: Template exists but is already deprecated
         var service = CreateService();
         var templateId = Guid.NewGuid();
         var model = CreateTestTemplateModel(templateId);
-        model.IsActive = true;
-
-        var contractId = Guid.NewGuid();
-        var instance = CreateTestInstanceModel(contractId);
-        instance.TemplateId = templateId;
-        instance.Status = ContractStatus.Active;
+        model.IsDeprecated = true;
+        model.DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-1);
+        model.DeprecationReason = "Previously deprecated";
 
         _mockTemplateStore
             .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
-        _mockListStore
-            .Setup(s => s.GetAsync($"template-idx:{templateId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { contractId.ToString() });
+        // Act — idempotent per IMPLEMENTATION TENETS
+        var (status, response) = await service.DeprecateContractTemplateAsync(
+            new DeprecateContractTemplateRequest { TemplateId = templateId, Reason = "New reason" });
 
-        _mockInstanceStore
-            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
-            {
-                [$"instance:{contractId}"] = instance
-            });
-
-        // Act
-        var status = await service.DeleteContractTemplateAsync(
-            new DeleteContractTemplateRequest { TemplateId = templateId });
-
-        // Assert - Conflict because active instances exist
-        Assert.Equal(StatusCodes.Conflict, status);
+        // Assert - OK without re-saving (idempotent early return)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     #endregion

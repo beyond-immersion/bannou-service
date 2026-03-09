@@ -615,6 +615,7 @@ public partial class ContractController
                 "defaultEnforcementMode",
                 "transferable",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -687,6 +688,21 @@ public partial class ContractController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether template is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether template is deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1286,6 +1302,7 @@ public partial class ContractController
                 "defaultEnforcementMode",
                 "transferable",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -1358,6 +1375,21 @@ public partial class ContractController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether template is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether template is deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1932,6 +1964,11 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Filter by active status."
                 },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include deprecated templates (default false)."
+                },
                 "searchTerm": {
                     "type": "string",
                     "nullable": true,
@@ -2001,6 +2038,7 @@ public partial class ContractController
                 "defaultEnforcementMode",
                 "transferable",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -2073,6 +2111,21 @@ public partial class ContractController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether template is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether template is deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -2692,6 +2745,7 @@ public partial class ContractController
                 "defaultEnforcementMode",
                 "transferable",
                 "isActive",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -2764,6 +2818,21 @@ public partial class ContractController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether template is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether template is deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -3315,16 +3384,16 @@ public partial class ContractController
 
     #endregion
 
-    #region Meta Endpoints for DeleteContractTemplate
+    #region Meta Endpoints for DeprecateContractTemplate
 
-    private static readonly string _DeleteContractTemplate_RequestSchema = """
+    private static readonly string _DeprecateContractTemplate_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DeleteContractTemplateRequest",
+    "$ref": "#/$defs/DeprecateContractTemplateRequest",
     "$defs": {
-        "DeleteContractTemplateRequest": {
+        "DeprecateContractTemplateRequest": {
             "type": "object",
-            "description": "Request to delete a contract template",
+            "description": "Request to deprecate a contract template (Category B \u2014 one-way, no delete)",
             "additionalProperties": false,
             "required": [
                 "templateId"
@@ -3333,7 +3402,13 @@ public partial class ContractController
                 "templateId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Template ID to delete"
+                    "description": "Template ID to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (audit context for Category B entities)"
                 }
             }
         }
@@ -3341,61 +3416,661 @@ public partial class ContractController
 }
 """;
 
-    private static readonly string _DeleteContractTemplate_ResponseSchema = """
-{}
+    private static readonly string _DeprecateContractTemplate_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ContractTemplateResponse",
+    "$defs": {
+        "ContractTemplateResponse": {
+            "type": "object",
+            "description": "Contract template details",
+            "additionalProperties": false,
+            "required": [
+                "templateId",
+                "code",
+                "name",
+                "minParties",
+                "maxParties",
+                "partyRoles",
+                "defaultEnforcementMode",
+                "transferable",
+                "isActive",
+                "isDeprecated",
+                "createdAt"
+            ],
+            "properties": {
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique template identifier"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique template code"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm ID if realm-specific"
+                },
+                "minParties": {
+                    "type": "integer",
+                    "description": "Minimum parties required"
+                },
+                "maxParties": {
+                    "type": "integer",
+                    "description": "Maximum parties allowed"
+                },
+                "partyRoles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PartyRoleDefinition"
+                    },
+                    "description": "Party role definitions"
+                },
+                "defaultTerms": {
+                    "$ref": "#/$defs/ContractTerms",
+                    "nullable": true,
+                    "description": "Default contract terms"
+                },
+                "milestones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/MilestoneDefinition"
+                    },
+                    "nullable": true,
+                    "description": "Milestone definitions"
+                },
+                "defaultEnforcementMode": {
+                    "$ref": "#/$defs/EnforcementMode",
+                    "description": "Default enforcement mode"
+                },
+                "transferable": {
+                    "type": "boolean",
+                    "description": "Whether contracts can be transferred"
+                },
+                "gameMetadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether template is active"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether template is deprecated (Category B \u2014 one-way)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Creation timestamp"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Last update timestamp"
+                }
+            }
+        },
+        "PartyRoleDefinition": {
+            "type": "object",
+            "description": "Definition of a party role in a contract template",
+            "additionalProperties": false,
+            "required": [
+                "role",
+                "minCount",
+                "maxCount"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "Role identifier (employer, employee, buyer, seller, etc.)"
+                },
+                "minCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Minimum entities required in this role"
+                },
+                "maxCount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum entities allowed in this role"
+                },
+                "allowedEntityTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    },
+                    "nullable": true,
+                    "description": "Which entity types can fill this role (null for any)"
+                }
+            }
+        },
+        "ContractTerms": {
+            "type": "object",
+            "description": "Configurable contract terms",
+            "additionalProperties": false,
+            "properties": {
+                "duration": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Contract duration (ISO 8601 duration, null for perpetual)"
+                },
+                "paymentSchedule": {
+                    "$ref": "#/$defs/PaymentSchedule",
+                    "nullable": true,
+                    "description": "When payments occur"
+                },
+                "paymentFrequency": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recurring payment frequency (ISO 8601 duration)"
+                },
+                "terminationPolicy": {
+                    "$ref": "#/$defs/TerminationPolicy",
+                    "nullable": true,
+                    "description": "How contract can be terminated"
+                },
+                "terminationNoticePeriod": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Required notice for termination (ISO 8601 duration)"
+                },
+                "breachThreshold": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Breaches before auto-termination (0 for no auto)"
+                },
+                "gracePeriodForCure": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Time to cure breach (ISO 8601 duration)"
+                },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of time commitment for scheduling constraints"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
+                "customTerms": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
+                }
+            }
+        },
+        "PaymentSchedule": {
+            "type": "string",
+            "description": "When payments occur",
+            "enum": [
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
+            ]
+        },
+        "TerminationPolicy": {
+            "type": "string",
+            "description": "How the contract can be terminated",
+            "enum": [
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "Exclusive",
+                "Partial"
+            ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
+        },
+        "MilestoneDefinition": {
+            "type": "object",
+            "description": "Milestone definition in a template",
+            "additionalProperties": false,
+            "required": [
+                "code",
+                "name",
+                "sequence",
+                "required"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "Unique milestone code within template"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "Human-readable name"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "nullable": true,
+                    "description": "What this milestone represents"
+                },
+                "sequence": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Order in the contract flow"
+                },
+                "required": {
+                    "type": "boolean",
+                    "description": "Whether milestone must be completed"
+                },
+                "deadline": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Relative deadline (ISO 8601 duration)"
+                },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones (default skip). Required milestones always trigger breach."
+                },
+                "onComplete": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PreboundApi"
+                    },
+                    "nullable": true,
+                    "description": "APIs to call on completion"
+                },
+                "onExpire": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PreboundApi"
+                    },
+                    "nullable": true,
+                    "description": "APIs to call if deadline passes"
+                }
+            }
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "Skip",
+                "Warn",
+                "Breach"
+            ]
+        },
+        "PreboundApi": {
+            "type": "object",
+            "description": "Pre-configured API call to execute on contract events",
+            "additionalProperties": false,
+            "required": [
+                "serviceName",
+                "endpoint",
+                "payloadTemplate"
+            ],
+            "properties": {
+                "serviceName": {
+                    "type": "string",
+                    "description": "Target service name"
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "Target endpoint path"
+                },
+                "payloadTemplate": {
+                    "type": "string",
+                    "description": "JSON payload with variable placeholders"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                },
+                "executionMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/PreboundApiExecutionMode"
+                        }
+                    ],
+                    "default": "sync",
+                    "description": "How to execute the API call"
+                },
+                "responseValidation": {
+                    "$ref": "#/$defs/ResponseValidation",
+                    "nullable": true,
+                    "description": "Optional validation rules for the response"
+                }
+            }
+        },
+        "PreboundApiExecutionMode": {
+            "type": "string",
+            "description": "How to execute a prebound API call",
+            "enum": [
+                "Sync",
+                "Async",
+                "FireAndForget"
+            ]
+        },
+        "ResponseValidation": {
+            "type": "object",
+            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
+            "additionalProperties": false,
+            "properties": {
+                "successConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
+                },
+                "permanentFailureConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
+                },
+                "transientFailureStatusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
+                }
+            }
+        },
+        "ValidationCondition": {
+            "type": "object",
+            "description": "A single condition to check against an API response",
+            "additionalProperties": false,
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidationConditionType"
+                        }
+                    ],
+                    "description": "The type of validation condition to check"
+                },
+                "jsonPath": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
+                },
+                "expectedValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
+                },
+                "operator": {
+                    "$ref": "#/$defs/ComparisonOperator",
+                    "nullable": true,
+                    "description": "Comparison operator for numeric comparisons"
+                },
+                "statusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes for statusCodeIn condition"
+                }
+            }
+        },
+        "ValidationConditionType": {
+            "type": "string",
+            "description": "Type of validation condition",
+            "enum": [
+                "StatusCodeIn",
+                "JsonPathEquals",
+                "JsonPathNotEquals",
+                "JsonPathExists",
+                "JsonPathNotExists",
+                "JsonPathGreaterThan",
+                "JsonPathLessThan",
+                "JsonPathContains"
+            ]
+        },
+        "ComparisonOperator": {
+            "type": "string",
+            "description": "Comparison operators for numeric conditions",
+            "enum": [
+                "Eq",
+                "Ne",
+                "Gt",
+                "Gte",
+                "Lt",
+                "Lte"
+            ]
+        },
+        "EnforcementMode": {
+            "type": "string",
+            "description": "How contract breaches are handled",
+            "enum": [
+                "Advisory",
+                "EventOnly",
+                "ConsequenceBased",
+                "Community"
+            ]
+        }
+    }
+}
 """;
 
-    private static readonly string _DeleteContractTemplate_Info = """
+    private static readonly string _DeprecateContractTemplate_Info = """
 {
-    "summary": "Soft-delete template",
-    "description": "Soft-deletes a contract template. Existing instances continue to function\nbut no new instances can be created from this template.\n",
+    "summary": "Deprecate template (Category B \u2014 one-way, no delete)",
+    "description": "Deprecates a contract template. Existing instances continue to function\nbut no new instances can be created from this template.\nCategory B entity: deprecation is one-way (no undeprecate), no delete endpoint.\nIdempotent: returns OK if already deprecated.\n",
     "tags": [
         "Templates"
     ],
     "deprecated": false,
-    "operationId": "deleteContractTemplate"
+    "operationId": "deprecateContractTemplate"
 }
 """;
 
-    /// <summary>Returns endpoint information for DeleteContractTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/template/delete/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteContractTemplate_MetaInfo()
+    /// <summary>Returns endpoint information for DeprecateContractTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/template/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateContractTemplate_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Contract",
             "POST",
-            "/contract/template/delete",
-            _DeleteContractTemplate_Info));
+            "/contract/template/deprecate",
+            _DeprecateContractTemplate_Info));
 
-    /// <summary>Returns request schema for DeleteContractTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/template/delete/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteContractTemplate_MetaRequestSchema()
+    /// <summary>Returns request schema for DeprecateContractTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/template/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateContractTemplate_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Contract",
             "POST",
-            "/contract/template/delete",
+            "/contract/template/deprecate",
             "request-schema",
-            _DeleteContractTemplate_RequestSchema));
+            _DeprecateContractTemplate_RequestSchema));
 
-    /// <summary>Returns response schema for DeleteContractTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/template/delete/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteContractTemplate_MetaResponseSchema()
+    /// <summary>Returns response schema for DeprecateContractTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/template/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateContractTemplate_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Contract",
             "POST",
-            "/contract/template/delete",
+            "/contract/template/deprecate",
             "response-schema",
-            _DeleteContractTemplate_ResponseSchema));
+            _DeprecateContractTemplate_ResponseSchema));
 
-    /// <summary>Returns full schema for DeleteContractTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/template/delete/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteContractTemplate_MetaFullSchema()
+    /// <summary>Returns full schema for DeprecateContractTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/template/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateContractTemplate_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Contract",
             "POST",
-            "/contract/template/delete",
-            _DeleteContractTemplate_Info,
-            _DeleteContractTemplate_RequestSchema,
-            _DeleteContractTemplate_ResponseSchema));
+            "/contract/template/deprecate",
+            _DeprecateContractTemplate_Info,
+            _DeprecateContractTemplate_RequestSchema,
+            _DeprecateContractTemplate_ResponseSchema));
 
     #endregion
 

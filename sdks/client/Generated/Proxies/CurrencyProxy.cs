@@ -99,6 +99,24 @@ public sealed class CurrencyProxy
     }
 
     /// <summary>
+    /// Deprecate a currency definition (Category B — one-way, no delete)
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CurrencyDefinitionResponse on success.</returns>
+    public Task<ApiResponse<CurrencyDefinitionResponse>> DeprecateCurrencyDefinitionAsync(
+        DeprecateCurrencyDefinitionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeprecateCurrencyDefinitionRequest, CurrencyDefinitionResponse>(
+            "/currency/definition/deprecate", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Create a new wallet for an owner
     /// </summary>
     /// <param name="request">The request payload.</param>
