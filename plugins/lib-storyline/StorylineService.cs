@@ -663,7 +663,7 @@ public partial class StorylineService : IStorylineService
     /// <summary>
     /// Soft-deletes a scenario definition.
     /// </summary>
-    public async Task<StatusCodes> DeprecateScenarioDefinitionAsync(
+    public async Task<(StatusCodes, ScenarioDefinition?)> DeprecateScenarioDefinitionAsync(
         DeprecateScenarioDefinitionRequest body,
         CancellationToken cancellationToken)
     {
@@ -672,22 +672,50 @@ public partial class StorylineService : IStorylineService
         var existing = await GetScenarioDefinitionWithCacheAsync(body.ScenarioId, cancellationToken);
         if (existing is null)
         {
-            return StatusCodes.NotFound;
+            return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent success per IMPLEMENTATION TENETS — already deprecated
+        if (existing.IsDeprecated)
+        {
+            return (StatusCodes.OK, BuildScenarioDefinitionResponse(existing));
+        }
+
+        var now = DateTimeOffset.UtcNow;
         existing.IsDeprecated = true;
-        existing.DeprecatedAt = DateTimeOffset.UtcNow;
+        existing.DeprecatedAt = now;
         existing.DeprecationReason = body.Reason;
         existing.Enabled = false;
-        existing.UpdatedAt = DateTimeOffset.UtcNow;
+        existing.UpdatedAt = now;
         existing.Etag = Guid.NewGuid().ToString("N");
 
         var scenarioKey = BuildScenarioDefinitionKey(body.ScenarioId);
         await _scenarioDefinitionStore.SaveAsync(scenarioKey, existing, null, cancellationToken);
         await _scenarioCacheStore.DeleteAsync(scenarioKey, cancellationToken);
 
+        // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
+        await _messageBus.PublishScenarioDefinitionUpdatedAsync(new ScenarioDefinitionUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            ScenarioId = existing.ScenarioId,
+            Code = existing.Code,
+            Name = existing.Name,
+            Description = existing.Description,
+            Priority = existing.Priority,
+            Enabled = existing.Enabled,
+            RealmId = existing.RealmId,
+            GameServiceId = existing.GameServiceId,
+            IsDeprecated = existing.IsDeprecated,
+            DeprecatedAt = existing.DeprecatedAt,
+            DeprecationReason = existing.DeprecationReason,
+            CreatedAt = existing.CreatedAt,
+            UpdatedAt = now,
+            ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason", "enabled" }
+        }, cancellationToken);
+
         _logger.LogInformation("Deprecated scenario definition {ScenarioId}", body.ScenarioId);
-        return StatusCodes.OK;
+        return (StatusCodes.OK, BuildScenarioDefinitionResponse(existing));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

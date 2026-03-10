@@ -1490,7 +1490,7 @@ components:
     ScenarioTemplateResponse:
       type: object
       description: Full scenario template with all fields
-      required: [scenarioTemplateId, code, displayName, description, category, domainWeights, connectivityMode, allowedPhases, maxConcurrentInstances, status, createdAt, updatedAt]
+      required: [scenarioTemplateId, code, displayName, description, category, domainWeights, connectivityMode, allowedPhases, maxConcurrentInstances, status, isDeprecated, createdAt, updatedAt]
       properties:
         scenarioTemplateId:
           type: string
@@ -1555,6 +1555,19 @@ components:
         status:
           $ref: '#/components/schemas/TemplateStatus'
           description: Current lifecycle status
+        isDeprecated:
+          type: boolean
+          description: Whether this template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this template was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time

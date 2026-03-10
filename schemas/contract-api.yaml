@@ -193,6 +193,7 @@ paths:
       description: |
         Creates a new contract instance from a template. The instance starts
         in 'draft' status and must be proposed to parties before activation.
+        Rejects with 400 if template is deprecated.
       requestBody:
         required: true
         content:
@@ -207,7 +208,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ContractInstanceResponse'
         '400':
-          description: Invalid request (missing required parties, invalid terms)
+          description: Invalid request (missing required parties, invalid terms, or template is deprecated)
         '404':
           description: Template not found
       x-permissions:
@@ -1378,6 +1379,7 @@ components:
         deprecationReason:
           type: string
           nullable: true
+          maxLength: 500
           description: Reason for deprecation
         createdAt:
           type: string

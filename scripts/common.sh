@@ -426,3 +426,147 @@ postprocess_enum_pascalcase() {
         /ge;
     ' "$file"
 }
+
+# -----------------------------------------------------------------------------
+# Lifecycle Event Model Generation
+# -----------------------------------------------------------------------------
+
+# Generate lifecycle event C# models from a service's lifecycle events YAML schema.
+# Handles ref resolution, exclusion lists, NSwag invocation, and all post-processing.
+#
+# Prerequisites:
+#   - NSWAG_EXE must be set (call require_nswag first)
+#   - Working directory must be scripts/ (relative paths assume ../schemas/, ../bannou-service/)
+#   - schemas/Generated/{service}-lifecycle-events.yaml must exist (from generate-lifecycle-events.py)
+#
+# Usage: generate_lifecycle_event_models "$SERVICE_NAME"
+# Returns: 0 on success (or if no lifecycle file exists), 1 on failure
+generate_lifecycle_event_models() {
+    local service_name="$1"
+    local service_pascal=$(to_pascal_case "$service_name")
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    local lifecycle_events_file="../schemas/Generated/${service_name}-lifecycle-events.yaml"
+    local lifecycle_events_resolved="../schemas/Generated/${service_name}-lifecycle-events-resolved.yaml"
+    local lifecycle_output_dir="../bannou-service/Generated/Events"
+    local lifecycle_output_file="$lifecycle_output_dir/${service_pascal}LifecycleEvents.cs"
+
+    if [ ! -f "$lifecycle_events_file" ]; then
+        echo -e "${BLUE}ℹ️  No lifecycle events file found (${service_name}-lifecycle-events.yaml)${NC}"
+        return 0
+    fi
+
+    echo -e "${YELLOW}🔄 Found lifecycle events file, generating lifecycle event models...${NC}"
+
+    # Run lifecycle event resolver to handle complex cross-file refs
+    echo -e "${YELLOW}🔄 Checking lifecycle events for complex cross-file refs...${NC}"
+    python3 "$script_dir/resolve-lifecycle-refs.py" "$service_name" 2>&1 | while read line; do echo "  $line"; done
+
+    # Check if a resolved version exists (for schemas with complex cross-file refs)
+    local lifecycle_schema_to_process
+    if [ -f "$lifecycle_events_resolved" ]; then
+        lifecycle_schema_to_process="$lifecycle_events_resolved"
+        echo -e "  📋 Schema: $lifecycle_events_file (using resolved version)"
+    else
+        lifecycle_schema_to_process="$lifecycle_events_file"
+        echo -e "  📋 Schema: $lifecycle_events_file"
+    fi
+    echo -e "  📁 Output: $lifecycle_output_file"
+
+    # Ensure lifecycle events output directory exists
+    mkdir -p "$lifecycle_output_dir"
+
+    # Extract $refs to API schema types from ORIGINAL file (not resolved)
+    # These types exist in the service's API namespace and should be excluded
+    local lifecycle_api_refs=$(extract_api_refs "$lifecycle_events_file" "$service_name")
+
+    # Extract $refs to common-api.yaml types (shared types like EntityType)
+    local lifecycle_common_refs=$(extract_common_api_refs "$lifecycle_events_file")
+
+    # Also extract common-api refs from the resolved schema — inlined complex types
+    # may contain transitive $refs to common-api.yaml that aren't in the original
+    if [ -f "$lifecycle_events_resolved" ]; then
+        local lifecycle_resolved_common_refs=$(extract_common_api_refs "$lifecycle_events_resolved")
+        if [ -n "$lifecycle_resolved_common_refs" ]; then
+            if [ -n "$lifecycle_common_refs" ]; then
+                lifecycle_common_refs=$(echo "${lifecycle_common_refs},${lifecycle_resolved_common_refs}" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
+            else
+                lifecycle_common_refs="$lifecycle_resolved_common_refs"
+            fi
+        fi
+    fi
+
+    # Build exclusion list: base exclusions + any API-referenced types + common types
+    local lifecycle_exclusions="ApiException,ApiException\<TResult\>,BaseServiceEvent"
+
+    # If using resolved schema, extract inlined types (API types that were inlined for NSwag)
+    if [ "$lifecycle_schema_to_process" = "$lifecycle_events_resolved" ]; then
+        echo -e "  ${BLUE}Using resolved schema (complex refs inlined for NSwag)${NC}"
+        local lifecycle_inlined_types=$(extract_inlined_types "$lifecycle_events_resolved")
+        if [ -n "$lifecycle_inlined_types" ]; then
+            lifecycle_exclusions="${lifecycle_exclusions},${lifecycle_inlined_types}"
+            echo -e "  ${BLUE}Excluding inlined API types: ${lifecycle_inlined_types}${NC}"
+        fi
+    fi
+
+    # Always exclude API refs (simple types like enums that aren't inlined but are referenced)
+    if [ -n "$lifecycle_api_refs" ]; then
+        lifecycle_exclusions="${lifecycle_exclusions},${lifecycle_api_refs}"
+        echo -e "  ${BLUE}Excluding API types: ${lifecycle_api_refs}${NC}"
+    fi
+    if [ -n "$lifecycle_common_refs" ]; then
+        lifecycle_exclusions="${lifecycle_exclusions},${lifecycle_common_refs}"
+        echo -e "  ${BLUE}Excluding common types: ${lifecycle_common_refs}${NC}"
+    fi
+
+    # Build namespace usages: base + service namespace if we have API refs
+    # BeyondImmersion.BannouService is always included for common types
+    local lifecycle_namespace_usages="BeyondImmersion.Bannou.Core,BeyondImmersion.BannouService"
+    if [ -n "$lifecycle_api_refs" ]; then
+        lifecycle_namespace_usages="${lifecycle_namespace_usages},BeyondImmersion.BannouService.${service_pascal}"
+    fi
+
+    "$NSWAG_EXE" openapi2csclient \
+        "/input:$lifecycle_schema_to_process" \
+        "/output:$lifecycle_output_file" \
+        "/namespace:BeyondImmersion.BannouService.Events" \
+        "/generateClientClasses:false" \
+        "/generateClientInterfaces:false" \
+        "/generateDtoTypes:true" \
+        "/excludedTypeNames:${lifecycle_exclusions}" \
+        "/additionalNamespaceUsages:${lifecycle_namespace_usages}" \
+        "/jsonLibrary:SystemTextJson" \
+        "/generateNullableReferenceTypes:true" \
+        "/newLineBehavior:LF" \
+        "/templateDirectory:../templates/nswag"
+
+    if [ $? -eq 0 ] && [ -f "$lifecycle_output_file" ]; then
+        # Post-process: Add [JsonRequired] after each [Required] attribute
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding [JsonRequired] attributes...${NC}"
+        sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$lifecycle_output_file"
+
+        # Post-process: Fix EventName shadowing - add 'override' keyword
+        # Base class has 'virtual string EventName', generated classes shadow it without override
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Fixing EventName override...${NC}"
+        sed -i 's/public string EventName { get; set; }/public override string EventName { get; set; }/g' "$lifecycle_output_file"
+
+        # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding enum CS1591 suppressions...${NC}"
+        postprocess_enum_suppressions "$lifecycle_output_file"
+
+        # Post-process: Add XML docs to AdditionalProperties
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding AdditionalProperties XML docs...${NC}"
+        postprocess_additional_properties_docs "$lifecycle_output_file"
+
+        # Post-process: Convert enum member names to proper PascalCase
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Converting enum names to PascalCase...${NC}"
+        postprocess_enum_pascalcase "$lifecycle_output_file"
+
+        local lifecycle_file_size=$(wc -l < "$lifecycle_output_file" 2>/dev/null || echo "0")
+        echo -e "${GREEN}✅ Generated lifecycle event models ($lifecycle_file_size lines)${NC}"
+        return 0
+    else
+        echo -e "${RED}❌ Failed to generate lifecycle event models${NC}"
+        return 1
+    fi
+}

@@ -166,9 +166,10 @@ paths:
       - BoardTemplate
       summary: Deprecate a board template
       description: |
-        Deprecate a board template (Category B — one-way, no undeprecate, no delete).
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
         Existing board instances continue to function; new board creation from this
-        template is rejected. Idempotent: returns OK if already deprecated.
+        template is rejected.
       x-permissions:
       - role: developer
         states: {}
@@ -346,6 +347,7 @@ paths:
         exists (one board per template per owner). For character owners, validates the character
         exists and resolves realm context. Creates an inventory container (slot_only,
         maxSlots = gridWidth * gridHeight) to hold unlocked license items.
+        Rejects with 400 if template is deprecated.
       x-permissions:
       - role: user
         states: {}
@@ -363,7 +365,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/BoardResponse'
         '400':
-          description: Invalid request (inactive template)
+          description: Invalid request (inactive or deprecated template)
         '404':
           description: Character, game service, or board template not found
         '409':

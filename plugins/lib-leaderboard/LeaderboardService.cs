@@ -542,6 +542,11 @@ public partial class LeaderboardService : ILeaderboardService
             return (StatusCodes.NotFound, null);
         }
 
+        if (definition.IsDeprecated)
+        {
+            _logger.LogWarning("Cannot submit batch scores to deprecated leaderboard: {LeaderboardId}", body.LeaderboardId);
+            return (StatusCodes.BadRequest, null);
+        }
 
         var rankingKey = BuildRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
 

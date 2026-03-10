@@ -195,8 +195,9 @@ Service lifetime is **Scoped** (per-request). All state store references are con
 
 - **CreateCurrencyDefinition** (`/currency/definition/create`): Validates code uniqueness via `def-code:` index. If `isBaseCurrency=true`, iterates all definitions to ensure only one base per scope. Generates UUID, saves model with all autogain/expiration/linkage/exchange-rate fields. Creates code-to-ID index. Adds to `all-defs` list. Publishes `currency.definition.created`.
 - **GetCurrencyDefinition** (`/currency/definition/get`): Resolves by ID (direct lookup) or code (via `def-code:` index). Returns full definition response with all fields.
-- **ListCurrencyDefinitions** (`/currency/definition/list`): Loads all definition IDs from `all-defs`. Iterates and loads each. Filters by `scope`, `isBaseCurrency`, `realmId` (global currencies always pass realm filter), and `includeInactive`. No pagination - returns all matching definitions.
-- **UpdateCurrencyDefinition** (`/currency/definition/update`): Loads by ID. Applies partial updates to mutable fields (name, description, transferable, tradeable, allowNegative, caps, autogain settings, exchange rate, icon, displayFormat, isActive). Exchange rate update also sets `ExchangeRateUpdatedAt`. Publishes `currency.definition.updated`.
+- **ListCurrencyDefinitions** (`/currency/definition/list`): Loads all definition IDs from `all-defs`. Iterates and loads each. Filters by `scope`, `isBaseCurrency`, `realmId` (global currencies always pass realm filter), and `includeDeprecated` (default: `false`). No pagination - returns all matching definitions.
+- **UpdateCurrencyDefinition** (`/currency/definition/update`): Loads by ID. Applies partial updates to mutable fields (name, description, transferable, tradeable, allowNegative, caps, autogain settings, exchange rate, icon, displayFormat). Exchange rate update also sets `ExchangeRateUpdatedAt`. Publishes `currency.definition.updated`.
+- **DeprecateCurrencyDefinition** (`/currency/definition/deprecate`): Sets `IsDeprecated=true`, `DeprecatedAt=now`, `DeprecationReason` from optional `reason` parameter. Idempotent — returns OK when already deprecated. Publishes `currency.definition.updated` with `changedFields` containing deprecation fields. No dedicated deprecation event per T31.
 
 ### Wallet Operations (6 endpoints)
 
@@ -514,6 +515,18 @@ Escrow Integration Flow
 6. **Read-only hold queries are eventually consistent**: All mutating balance operations (`CreateHoldAsync`, `CreditCurrencyAsync`, `DebitCurrencyAsync`, `TransferCurrencyAsync`) acquire the same `currency-balance:{walletId}:{currencyDefId}` distributed lock, so mutations are fully serialized — a hold created by one operation is guaranteed visible to the next mutation. However, read-only queries (`GetBalanceAsync`, `BatchGetBalancesAsync`) do NOT acquire the lock and may briefly see stale hold state if a `CreateHoldAsync` is mid-execution (hold saved to MySQL but index not yet updated). This window is sub-millisecond on a single node. For authoritative pre-authorization checks, use `CreateHoldAsync` itself (which reads under lock), not `GetBalanceAsync`.
 
 7. **Conversion has transient cross-currency balance inconsistency**: `ExecuteConversionAsync` uses a two-step saga: debit source currency (under `currency-balance:{walletId}:{fromCurrencyId}` lock), then credit target currency (under `currency-balance:{walletId}:{toCurrencyId}` lock). Between the debit completing and the credit completing, a concurrent `GetBalance` would see the source reduced but the target not yet increased, making the wallet's total cross-currency value appear temporarily lower. This is NOT a double-spending risk — each individual balance operation is fully serialized under its own distributed lock, so no currency can be spent twice. The window is sub-millisecond (between one async call returning and the next starting). If the credit fails, a compensating credit with idempotency key `{key}:compensate` reverses the debit. This is inherent to the saga pattern without distributed transactions and is the correct architectural trade-off.
+
+### Deprecation Lifecycle (T31 Category B)
+
+Currency definitions are **Category B entities** — wallets and balances reference definitions by ID, and existing balances must continue to function after a definition is deprecated. Per T31:
+
+- **Deprecation is one-way**: Once deprecated, a currency definition cannot be undeprecated. No undeprecate endpoint exists.
+- **No delete endpoint**: Currency definitions persist forever. Only deprecation is supported.
+- **No explicit instance creation guard on wallets**: Wallets can still be created for deprecated currencies. The deprecation affects discovery (filtered from list results) rather than preventing wallet creation. This differs from other Category B entities where instance creation is blocked — currency wallets can be created by L2 services (like Escrow) that may need to operate on currencies regardless of deprecation status.
+- **Storage model**: Currency definitions use triple-field deprecation: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?).
+- **Idempotent deprecation**: Deprecating an already-deprecated definition returns `OK` (not `Conflict`).
+- **List filtering**: `ListCurrencyDefinitions` includes `includeDeprecated` parameter (default: `false`).
+- **Events**: Deprecation is communicated via `currency.definition.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per T31).
 
 ### Design Considerations
 

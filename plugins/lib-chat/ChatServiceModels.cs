@@ -102,6 +102,21 @@ internal class ChatRoomTypeModel
     public RoomTypeStatus Status { get; set; }
 
     /// <summary>
+    /// Whether this room type has been deprecated.
+    /// </summary>
+    public bool IsDeprecated { get; set; }
+
+    /// <summary>
+    /// When the room type was deprecated.
+    /// </summary>
+    public DateTimeOffset? DeprecatedAt { get; set; }
+
+    /// <summary>
+    /// Reason for deprecation.
+    /// </summary>
+    public string? DeprecationReason { get; set; }
+
+    /// <summary>
     /// When the room type was created.
     /// </summary>
     public DateTimeOffset CreatedAt { get; set; }

@@ -198,6 +198,7 @@ paths:
         Creates a new item instance from a template. The instance must be placed
         in a container (containerId required). Use lib-inventory's /inventory/add
         for most use cases - this endpoint is for low-level instance creation.
+        Rejects with 400 if template is deprecated.
       requestBody:
         required: true
         content:
@@ -212,11 +213,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ItemInstanceResponse'
         '400':
-          description: Invalid request (validation error)
+          description: Invalid request (validation error or template is deprecated)
         '404':
           description: Template not found
-        '409':
-          description: Template is deprecated
       x-permissions:
       - role: developer
 

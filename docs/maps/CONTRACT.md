@@ -70,7 +70,7 @@ No DI provider/listener interfaces implemented or consumed. No typed service cli
 |-------|-----------|---------|
 | `contract.template.created` | `ContractTemplateCreatedEvent` | CreateContractTemplate |
 | `contract.template.updated` | `ContractTemplateUpdatedEvent` | UpdateContractTemplate |
-| `contract.template.deleted` | `ContractTemplateDeletedEvent` | DeleteContractTemplate |
+| `contract.template.deleted` | `ContractTemplateDeletedEvent` | Unused Category B infrastructure — contract templates are never deleted (T31) |
 | `contract.instance.created` | `ContractInstanceCreatedEvent` | CreateContractInstance |
 | `contract.instance.updated` | `ContractInstanceUpdatedEvent` | ProposeContractInstance, ConsentToContract, TerminateContractInstance, GetContractInstanceStatus (lazy), CompleteMilestone, FailMilestone, GetMilestone (lazy), ReportBreach, UpdateContractMetadata, LockContract, UnlockContract, TransferContractParty, SetContractTemplateValues, ExecuteContract |
 | `contract.instance.deleted` | `ContractInstanceDeletedEvent` | DeleteContractInstance |
@@ -128,7 +128,7 @@ This plugin does not consume external events. Schema declares `x-event-subscript
 | GetContractTemplate | POST /contract/template/get | user | - | - |
 | ListContractTemplates | POST /contract/template/list | user | - | - |
 | UpdateContractTemplate | POST /contract/template/update | admin | template, template-code | contract.template.updated |
-| DeleteContractTemplate | POST /contract/template/delete | admin | template, template-code, all-templates | contract.template.deleted |
+| DeprecateContractTemplate | POST /contract/template/deprecate | admin | template | contract.template.updated |
 | CreateContractInstance | POST /contract/instance/create | user | instance, party-idx, template-idx, status-idx | contract.instance.created |
 | ProposeContractInstance | POST /contract/instance/propose | user | instance, status-idx | contract.proposed, contract.instance.updated |
 | ConsentToContract | POST /contract/instance/consent | user | instance, status-idx | contract.consent-received, contract.accepted, contract.activated, contract.expired, contract.instance.updated |
@@ -173,7 +173,7 @@ WRITE contract-statestore:template:{templateId} <- ContractTemplateModel from re
 WRITE contract-statestore:template-code:{code} <- templateId
 // AddToListAsync acquires index:{all-templates} lock (15s)
 WRITE contract-statestore:all-templates <- append templateId
-PUBLISH contract.template.created { templateId, code, name, isActive, createdAt }
+PUBLISH contract.template.created { templateId, code, name, createdAt }
 RETURN (200, ContractTemplateResponse)
 ```
 
@@ -196,7 +196,7 @@ POST /contract/template/list | Roles: [user]
 READ contract-statestore:all-templates -> templateIds
 FOREACH templateId in templateIds
   READ contract-statestore:template:{templateId}
-  IF request.isActive filter -> skip if mismatch
+  IF !request.includeDeprecated AND model.IsDeprecated -> skip
   IF request.realmId filter -> skip if mismatch
   IF request.searchTerm -> skip if name/description not matching (case-insensitive)
 // Cursor-based pagination: cursor = base64({ offset })
@@ -212,34 +212,30 @@ READ contract-statestore:template:{templateId}                       -> 404 if n
 // Track changed fields for event
 IF request.name provided -> update, track "name"
 IF request.description provided -> update, track "description"
-IF request.isActive provided -> update, track "isActive"
 IF request.gameMetadata provided -> update, track "gameMetadata"
 WRITE contract-statestore:template:{templateId} <- updated model
 PUBLISH contract.template.updated { templateId, code, changedFields }
 RETURN (200, ContractTemplateResponse)
 ```
 
-### DeleteContractTemplate
-POST /contract/template/delete | Roles: [admin]
+### DeprecateContractTemplate
+POST /contract/template/deprecate | Roles: [admin]
 
 ```
 READ contract-statestore:template:{templateId}                       -> 404 if null
-READ contract-statestore:template-idx:{templateId} -> instanceIds
-IF instanceIds has entries in active statuses                        -> 409
-// Soft-delete: mark inactive, remove from discovery indexes
-WRITE contract-statestore:template:{templateId} <- isActive=false
-DELETE contract-statestore:template-code:{code}
-// RemoveFromListAsync acquires index:{all-templates} lock (15s)
-WRITE contract-statestore:all-templates <- remove templateId
-PUBLISH contract.template.deleted { templateId, code }
-RETURN (200)
+IF template.IsDeprecated == true                                     -> 200 (idempotent, per IMPLEMENTATION TENETS)
+// Sets IsDeprecated=true, DeprecatedAt=now, DeprecationReason from request.reason
+WRITE contract-statestore:template:{templateId} <- updated ContractTemplateModel
+PUBLISH contract.template.updated { templateId, code, changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"] }
+RETURN (200, ContractTemplateResponse)
 ```
 
 ### CreateContractInstance
 POST /contract/instance/create | Roles: [user]
 
 ```
-READ contract-statestore:template:{templateId}                       -> 404 if null or inactive
+READ contract-statestore:template:{templateId}                       -> 404 if null
+IF template.IsDeprecated                                             -> 400 (Category B instance creation guard)
 IF request.parties.Count > config.MaxPartiesPerContract              -> 400
 IF config.MaxActiveContractsPerEntity > 0
   FOREACH party in request.parties

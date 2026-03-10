@@ -138,7 +138,10 @@ paths:
       operationId: deprecateQuestDefinition
       tags: [Definitions]
       summary: Mark quest definition as deprecated
-      description: Marks a quest definition as deprecated. No new instances can be created.
+      description: |
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
+        No new quest instances can be created from deprecated definitions.
       x-permissions:
       - role: developer
       requestBody:
@@ -163,7 +166,9 @@ paths:
       operationId: acceptQuest
       tags: [Instances]
       summary: Accept a quest
-      description: Creates a contract instance and auto-consents for the questor. Returns the active quest.
+      description: |
+        Creates a contract instance and auto-consents for the questor. Returns the active quest.
+        Rejects with 400 if definition is deprecated.
       x-permissions:
       - role: user
       requestBody:
@@ -180,7 +185,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QuestInstanceResponse'
         '400':
-          description: Prerequisites not met or already at max quests
+          description: Prerequisites not met, already at max quests, or definition is deprecated
         '404':
           description: Quest definition not found
         '409':

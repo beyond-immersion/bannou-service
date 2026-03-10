@@ -17,7 +17,8 @@
 
 # Generate service-specific event models from {service}-events.yaml files
 # These models are placed in bannou-service/Generated/Events/ so all services can reference them
-# Excludes: *-lifecycle-events.yaml, *-client-events.yaml, common-events.yaml
+# Also generates lifecycle event models (from x-lifecycle in *-events.yaml)
+# Excludes: *-client-events.yaml, common-events.yaml
 
 set -e
 
@@ -33,6 +34,18 @@ log_info "📡 Generating service-specific event models"
 # Find NSwag executable and ensure DOTNET_ROOT is set
 require_nswag
 ensure_dotnet_root
+
+# Pre-process: Generate lifecycle event YAML schemas from x-lifecycle definitions
+# This reads x-lifecycle from *-events.yaml and produces schemas/Generated/*-lifecycle-events.yaml
+# Must run before NSwag so the lifecycle YAML files exist for model generation
+log_info "Pre-processing: Generating lifecycle event schemas from x-lifecycle..."
+if python3 "$SCRIPT_DIR/generate-lifecycle-events.py"; then
+    log_success "Lifecycle event schemas generated successfully"
+else
+    log_error "Failed to generate lifecycle event schemas"
+    exit 1
+fi
+echo ""
 
 # Pre-process: Resolve complex cross-file refs that NSwag can't handle
 # This creates resolved versions in schemas/Generated/ for schemas with complex refs
@@ -167,15 +180,45 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
     fi
 done
 
+# Generate lifecycle event C# models from schemas/Generated/*-lifecycle-events.yaml
+# These were produced by generate-lifecycle-events.py in the pre-processing step above
+echo ""
+log_info "📡 Generating lifecycle event C# models"
+
+LIFECYCLE_GENERATED_COUNT=0
+LIFECYCLE_FAILED_COUNT=0
+
+for LIFECYCLE_SCHEMA in ../schemas/Generated/*-lifecycle-events.yaml; do
+    # Guard against no matches (glob returns literal pattern)
+    [ -f "$LIFECYCLE_SCHEMA" ] || continue
+
+    # Extract service name from filename (e.g., "account-lifecycle-events.yaml" -> "account")
+    LIFECYCLE_FILENAME=$(basename "$LIFECYCLE_SCHEMA")
+    LIFECYCLE_SERVICE_NAME="${LIFECYCLE_FILENAME%-lifecycle-events.yaml}"
+
+    if generate_lifecycle_event_models "$LIFECYCLE_SERVICE_NAME"; then
+        LIFECYCLE_GENERATED_COUNT=$((LIFECYCLE_GENERATED_COUNT + 1))
+    else
+        LIFECYCLE_FAILED_COUNT=$((LIFECYCLE_FAILED_COUNT + 1))
+    fi
+done
+
 echo ""
 echo -e "${BLUE}========================================${NC}"
-if [ $FAILED_COUNT -eq 0 ]; then
+if [ $FAILED_COUNT -eq 0 ] && [ $LIFECYCLE_FAILED_COUNT -eq 0 ]; then
     echo -e "${GREEN}Service events generation complete!${NC}"
-    echo -e "  Generated: ${GENERATED_COUNT} files"
+    echo -e "  Service events: ${GENERATED_COUNT} files"
+    echo -e "  Lifecycle events: ${LIFECYCLE_GENERATED_COUNT} files"
 else
     echo -e "${YELLOW}Service events generation completed with errors${NC}"
-    echo -e "  Generated: ${GENERATED_COUNT} files"
-    echo -e "  ${RED}Failed: ${FAILED_COUNT} files${NC}"
+    echo -e "  Service events: ${GENERATED_COUNT} files"
+    echo -e "  Lifecycle events: ${LIFECYCLE_GENERATED_COUNT} files"
+    if [ $FAILED_COUNT -gt 0 ]; then
+        echo -e "  ${RED}Service events failed: ${FAILED_COUNT} files${NC}"
+    fi
+    if [ $LIFECYCLE_FAILED_COUNT -gt 0 ]; then
+        echo -e "  ${RED}Lifecycle events failed: ${LIFECYCLE_FAILED_COUNT} files${NC}"
+    fi
 fi
 echo -e "${BLUE}========================================${NC}"
 echo ""

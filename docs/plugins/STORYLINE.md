@@ -224,6 +224,20 @@ None identified.
 
 12. **Scenario trigger immediately completes**: The current implementation applies all mutations and spawns all quests synchronously within `TriggerScenarioAsync`, then marks the execution as `Completed`. This is a Phase 1 simplification; true multi-phase execution with background progression is a future capability (see Stubs #6).
 
+### Deprecation Lifecycle (T31 Category B)
+
+Scenario definitions are **Category B entities** — scenario executions reference definitions by ID, and existing executions must continue to function after a definition is deprecated. Per T31:
+
+- **Deprecation is one-way**: Once deprecated, a scenario definition cannot be undeprecated. No undeprecate endpoint exists.
+- **No delete endpoint**: Scenario definitions persist forever. Only deprecation is supported.
+- **Instance creation guard**: `TriggerScenarioAsync` rejects deprecated scenario definitions with `BadRequest` (see Quirk #8).
+- **Storage model**: Scenario definitions use triple-field deprecation: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?).
+- **Idempotent deprecation**: Deprecating an already-deprecated definition returns `OK` (not `Conflict`).
+- **List filtering**: `ListScenarioDefinitions` includes `includeDeprecated` parameter (default: `false`).
+- **Discovery exclusion**: `FindAvailableScenarios` excludes deprecated definitions from results (filtered alongside `Enabled`).
+- **Events**: Deprecation is communicated via `storyline.scenario-definition.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per T31).
+- **Deprecation disables**: `DeprecateScenarioDefinitionAsync` also sets `Enabled = false` as a defense-in-depth measure (see Quirk #8).
+
 ### Design Considerations (Requires Planning)
 
 1. **Archive type handling**: Only handles `character`, `character-history`, `character-encounter`, `character-personality` archive types. Unknown types are logged and skipped. Should realm archives be supported for cross-realm storylines?

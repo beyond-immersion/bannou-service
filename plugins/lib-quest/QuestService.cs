@@ -418,6 +418,31 @@ public partial class QuestService : IQuestService
                 // Invalidate cache
                 await _definitionCache.DeleteAsync(definitionKey, cancellationToken);
 
+                // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
+                await _messageBus.PublishQuestDefinitionUpdatedAsync(new QuestDefinitionUpdatedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    DefinitionId = deprecatedDefinition.DefinitionId,
+                    ContractTemplateId = deprecatedDefinition.ContractTemplateId,
+                    Code = deprecatedDefinition.Code,
+                    Name = deprecatedDefinition.Name,
+                    Description = deprecatedDefinition.Description,
+                    Category = deprecatedDefinition.Category,
+                    Difficulty = deprecatedDefinition.Difficulty,
+                    LevelRequirement = deprecatedDefinition.LevelRequirement,
+                    Repeatable = deprecatedDefinition.Repeatable,
+                    CooldownSeconds = deprecatedDefinition.CooldownSeconds,
+                    DeadlineSeconds = deprecatedDefinition.DeadlineSeconds,
+                    MaxQuestors = deprecatedDefinition.MaxQuestors,
+                    IsDeprecated = deprecatedDefinition.IsDeprecated,
+                    DeprecatedAt = deprecatedDefinition.DeprecatedAt,
+                    DeprecationReason = deprecatedDefinition.DeprecationReason,
+                    GameServiceId = deprecatedDefinition.GameServiceId,
+                    CreatedAt = deprecatedDefinition.CreatedAt,
+                    ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
+                }, cancellationToken);
+
                 _logger.LogInformation("Quest definition deprecated: {DefinitionId}", body.DefinitionId);
                 return (StatusCodes.OK, MapToDefinitionResponse(deprecatedDefinition));
 

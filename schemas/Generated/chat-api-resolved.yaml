@@ -1093,6 +1093,7 @@ components:
       - persistenceMode
       - allowAnonymousSenders
       - status
+      - isDeprecated
       - createdAt
       properties:
         code:
@@ -1149,6 +1150,19 @@ components:
         status:
           $ref: '#/components/schemas/RoomTypeStatus'
           description: Current lifecycle status of the room type
+        isDeprecated:
+          type: boolean
+          description: Whether this room type has been deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this room type was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason provided when this room type was deprecated
         createdAt:
           type: string
           format: date-time

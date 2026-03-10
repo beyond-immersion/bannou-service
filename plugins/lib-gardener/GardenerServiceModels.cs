@@ -332,6 +332,16 @@ internal class ScenarioTemplateModel
     public TemplateStatus Status { get; set; }
 
     /// <summary>
+    /// When the template was deprecated (null if not deprecated).
+    /// </summary>
+    public DateTimeOffset? DeprecatedAt { get; set; }
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated).
+    /// </summary>
+    public string? DeprecationReason { get; set; }
+
+    /// <summary>
     /// When this template was created.
     /// </summary>
     public DateTimeOffset CreatedAt { get; set; }

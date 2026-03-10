@@ -176,7 +176,7 @@ IF null or not Active -> return
 | GetQuestDefinition | POST /quest/definition/get | user | cache (read-through) | - |
 | ListQuestDefinitions | POST /quest/definition/list | user | - | - |
 | UpdateQuestDefinition | POST /quest/definition/update | developer | definition, cache | - |
-| DeprecateQuestDefinition | POST /quest/definition/deprecate | developer | definition, cache | - |
+| DeprecateQuestDefinition | POST /quest/definition/deprecate | developer | definition, cache | quest.definition.updated |
 | AcceptQuest | POST /quest/accept | user | instance, progress, index, resource-ref | quest.accepted |
 | AbandonQuest | POST /quest/abandon | user | instance, index | quest.abandoned |
 | GetQuest | POST /quest/get | user | - | - |
@@ -269,6 +269,7 @@ IF already deprecated
 ETAG-WRITE _definitionStore:"def:{definitionId}"
   -> retry up to MaxConcurrencyRetries                       -> 409 if exhausted
 DELETE _definitionCache:"def:{definitionId}"                  // cache invalidation
+PUBLISH quest.definition.updated { definitionId, code, ..., changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"] }
 RETURN (200, QuestDefinitionResponse)
 ```
 

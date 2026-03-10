@@ -113,7 +113,7 @@
 
 **Defined in schema but NOT currently published**:
 - `storyline.scenario-definition.created` -- CreateScenarioDefinition does not publish this event
-- `storyline.scenario-definition.updated` -- UpdateScenarioDefinition/DeprecateScenarioDefinition do not publish this event
+- `storyline.scenario-definition.updated` -- UpdateScenarioDefinition does not publish this event; DeprecateScenarioDefinition publishes with changedFields
 - `storyline.scenario-definition.deleted` -- Category B infrastructure, never published by design
 - `storyline.scenario.phase-completed` -- Multi-phase execution not yet implemented
 - `storyline.scenario.failed` -- Failure path not yet implemented (current trigger completes atomically)
@@ -158,7 +158,7 @@ This plugin does not consume external events.
 | GetScenarioDefinition | POST /storyline/scenario/get | generated | [user] | scenario-cache (write-through) | - |
 | ListScenarioDefinitions | POST /storyline/scenario/list | generated | [user] | - | - |
 | UpdateScenarioDefinition | POST /storyline/scenario/update | generated | [developer] | scenario-definition, scenario-cache | - |
-| DeprecateScenarioDefinition | POST /storyline/scenario/deprecate | generated | [developer] | scenario-definition, scenario-cache | - |
+| DeprecateScenarioDefinition | POST /storyline/scenario/deprecate | generated | [developer] | scenario-definition, scenario-cache | storyline.scenario-definition.updated |
 | FindAvailableScenarios | POST /storyline/scenario/find-available | generated | [] | - | - |
 | TestScenarioTrigger | POST /storyline/scenario/test | generated | [developer] | - | - |
 | EvaluateScenarioFit | POST /storyline/scenario/evaluate-fit | generated | [] | - | - |
@@ -375,8 +375,8 @@ POST /storyline/scenario/deprecate | Roles: [developer]
 ```
 // see helper: GetScenarioDefinitionWithCacheAsync
 READ scenario definition by ID (cache -> MySQL fallback)         -> 404 if null
+IF existing.IsDeprecated == true                                 -> 200 (idempotent, per IMPLEMENTATION TENETS)
 
-// Set deprecation fields (NOT idempotent -- no early return if already deprecated)
 existing.IsDeprecated = true
 existing.DeprecatedAt = now
 existing.DeprecationReason = body.Reason
@@ -386,8 +386,7 @@ existing.Etag = NewGuid()
 
 WRITE _scenarioDefinitionStore:{scenarioId} <- updated model
 DELETE _scenarioCacheStore:{scenarioId}
-
-// NOTE: storyline.scenario-definition.updated event is NOT published
+PUBLISH storyline.scenario-definition.updated { scenarioId, code, name, ..., changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason", "enabled"] }
 
 RETURN (200)
 ```

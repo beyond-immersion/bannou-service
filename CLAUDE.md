@@ -134,10 +134,9 @@ dotnet build                   # Alternative: direct dotnet build
 
 # If you only changed ONE schema type, use the specific script:
 cd scripts && ./generate-config.sh <service>   # Configuration only (changed *-configuration.yaml)
-scripts/generate-service-events.sh <service>   # † Events only (changed *-events.yaml)
+scripts/generate-service-events.sh              # † Events + lifecycle events (changed *-events.yaml or x-lifecycle)
 cd scripts && ./generate-models.sh <service>   # Models only (changed *-api.yaml models)
 scripts/generate-client-events.sh <service>    # † Client events only (changed *-client-events.yaml)
-cd scripts && python3 generate-lifecycle-events.py  # Lifecycle events only (changed x-lifecycle in *-events.yaml)
 
 # If you changed multiple schema types for ONE service:
 cd scripts && ./generate-service.sh <service>  # All generated code for one service
@@ -166,11 +165,10 @@ make inspect-list PKG="RabbitMQ.Client"
 
 **⚠️ Generation Script Selection Guide**:
 - Changed `schemas/foo-configuration.yaml` → run `cd scripts && ./generate-config.sh foo`
-- Changed `schemas/foo-events.yaml` → run `scripts/generate-service-events.sh foo` (event models) AND `python3 scripts/generate-published-topics.py` (topic constants)
+- Changed `schemas/foo-events.yaml` (events, x-lifecycle, or both) → run `scripts/generate-service-events.sh` (handles both service events and lifecycle events)
+- Changed `x-event-publications` in `schemas/foo-events.yaml` → also run `python3 scripts/generate-published-topics.py` (topic constants)
 - Changed `schemas/foo-api.yaml` (models only) → run `cd scripts && ./generate-models.sh foo`
 - Changed `schemas/foo-client-events.yaml` → run `scripts/generate-client-events.sh foo`
-- Changed `x-lifecycle` in `schemas/foo-events.yaml` → run `cd scripts && python3 generate-lifecycle-events.py`
-- Changed `x-event-publications` in `schemas/foo-events.yaml` → run `python3 scripts/generate-published-topics.py`
 - Changed multiple schema files for `foo` → run `cd scripts && ./generate-service.sh foo`
 - Changed `schemas/common-*.yaml` or multiple services → run `scripts/generate-all-services.sh`
 

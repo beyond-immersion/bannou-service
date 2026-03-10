@@ -249,6 +249,17 @@ public partial class ChatService : IChatService
             });
         }
 
+        // Exclude deprecated types by default unless explicitly requested
+        if (!body.IncludeDeprecated && !body.Status.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.IsDeprecated",
+                Operator = QueryOperator.Equals,
+                Value = false
+            });
+        }
+
         var offset = body.Page * body.PageSize;
         var result = await _roomTypeStore.JsonQueryPagedAsync(
             conditions, offset, body.PageSize,
@@ -355,9 +366,13 @@ public partial class ChatService : IChatService
         }
 
         model.Status = RoomTypeStatus.Deprecated;
-        model.UpdatedAt = DateTimeOffset.UtcNow;
+        model.IsDeprecated = true;
+        model.DeprecatedAt = DateTimeOffset.UtcNow;
+        model.DeprecationReason = body.Reason;
+        model.UpdatedAt = model.DeprecatedAt.Value;
         await _roomTypeStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
 
+        // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
         await _messageBus.PublishChatRoomTypeUpdatedAsync(new ChatRoomTypeUpdatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -369,8 +384,11 @@ public partial class ChatService : IChatService
             PersistenceMode = model.PersistenceMode,
             AllowAnonymousSenders = model.AllowAnonymousSenders,
             Status = model.Status,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = model.CreatedAt,
-            ChangedFields = new List<string> { "status" },
+            ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" },
         }, cancellationToken);
 
         _logger.LogInformation("Deprecated room type {Code}", body.Code);
@@ -2526,6 +2544,9 @@ public partial class ChatService : IChatService
         RateLimitPerMinute = model.RateLimitPerMinute,
         Metadata = model.Metadata,
         Status = model.Status,
+        IsDeprecated = model.IsDeprecated,
+        DeprecatedAt = model.DeprecatedAt,
+        DeprecationReason = model.DeprecationReason,
         CreatedAt = model.CreatedAt,
         UpdatedAt = model.UpdatedAt,
     };

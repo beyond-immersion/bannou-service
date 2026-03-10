@@ -209,7 +209,7 @@ POST /item/template/deprecate | Roles: [admin]
 
 ```
 READ template-store:"tpl:{templateId}"                       -> 404 if null
-// Always writes (does not skip if already deprecated)
+IF template.IsDeprecated == true                             -> 200 (idempotent, per IMPLEMENTATION TENETS)
 // Sets IsDeprecated=true, DeprecatedAt=now, DeprecationReason, MigrationTargetId
 WRITE template-store:"tpl:{templateId}" <- updated ItemTemplateModel
 DELETE template-cache:"tpl:{templateId}"

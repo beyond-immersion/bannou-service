@@ -111,7 +111,7 @@
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `currency.definition.created` | `CurrencyDefinitionCreatedEvent` | CreateCurrencyDefinition |
-| `currency.definition.updated` | `CurrencyDefinitionUpdatedEvent` | UpdateCurrencyDefinition |
+| `currency.definition.updated` | `CurrencyDefinitionUpdatedEvent` | UpdateCurrencyDefinition, DeprecateCurrencyDefinition |
 | `currency.wallet.created` | `CurrencyWalletCreatedEvent` | CreateWallet |
 | `currency.wallet.frozen` | `CurrencyWalletFrozenEvent` | FreezeWallet |
 | `currency.wallet.unfrozen` | `CurrencyWalletUnfrozenEvent` | UnfreezeWallet |
@@ -172,6 +172,7 @@
 | GetCurrencyDefinition | POST /currency/definition/get | [] | - | - |
 | ListCurrencyDefinitions | POST /currency/definition/list | [] | - | - |
 | UpdateCurrencyDefinition | POST /currency/definition/update | developer | def | currency.definition.updated |
+| DeprecateCurrencyDefinition | POST /currency/definition/deprecate | developer | def | currency.definition.updated |
 | CreateWallet | POST /currency/wallet/create | [] | wallet, wallet-owner | currency.wallet.created |
 | GetWallet | POST /currency/wallet/get | [] | - | - |
 | GetOrCreateWallet | POST /currency/wallet/get-or-create | [] | wallet, wallet-owner | currency.wallet.created |
@@ -244,7 +245,7 @@ POST /currency/definition/list | Roles: []
 READ definitions:all-defs                          // JSON list of all definition IDs
 FOREACH definitionId in list
   READ definitions:def:{definitionId}              // skip nulls
-  // Filter in-memory: scope, isBaseCurrency, realmId, includeInactive
+  // Filter in-memory: scope, isBaseCurrency, realmId, includeDeprecated (default: false)
 RETURN (200, ListCurrencyDefinitionsResponse)
 ```
 
@@ -258,7 +259,19 @@ READ definitions:def:{definitionId}                -> 404 if null
 IF exchangeRateToBase changed
   // Set ExchangeRateUpdatedAt (no separate exchange-rate.updated event)
 WRITE definitions:def:{definitionId}               <- mutated model (no ETag)
-PUBLISH currency.definition.updated { definitionId, code, name, scope, precision, isActive, modifiedAt }
+PUBLISH currency.definition.updated { definitionId, code, name, scope, precision, modifiedAt }
+RETURN (200, CurrencyDefinitionResponse)
+```
+
+### DeprecateCurrencyDefinition
+POST /currency/definition/deprecate | Roles: [developer]
+
+```
+READ definitions:def:{definitionId}                -> 404 if null
+IF definition.IsDeprecated == true                 -> 200 (idempotent, per IMPLEMENTATION TENETS)
+// Sets IsDeprecated=true, DeprecatedAt=now, DeprecationReason from request.reason
+WRITE definitions:def:{definitionId}               <- updated CurrencyDefinitionModel
+PUBLISH currency.definition.updated { definitionId, code, changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"] }
 RETURN (200, CurrencyDefinitionResponse)
 ```
 

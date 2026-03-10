@@ -242,7 +242,8 @@ paths:
     post:
       summary: Deprecate a scenario definition
       description: |
-        Soft-deletes a scenario definition by marking it deprecated.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
         Deprecated scenarios are not returned by find-available.
       operationId: DeprecateScenarioDefinition
       tags:
@@ -257,7 +258,11 @@ paths:
               $ref: '#/components/schemas/DeprecateScenarioDefinitionRequest'
       responses:
         '200':
-          description: Scenario deprecated
+          description: Scenario deprecated (Category B, idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioDefinition'
         '404':
           description: Scenario not found
 

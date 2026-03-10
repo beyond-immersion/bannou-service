@@ -62,10 +62,10 @@ info:
       description: Published when a new scenario template is created
     - topic: gardener.scenario-template.updated
       event: ScenarioTemplateUpdatedEvent
-      description: Published when a scenario template is updated
+      description: Published when a scenario template is updated, including deprecation via changedFields
     - topic: gardener.scenario-template.deleted
       event: ScenarioTemplateDeletedEvent
-      description: Published when a scenario template is deleted
+      description: "Unused Category B infrastructure — scenario templates are never deleted, only deprecated. Retained for schema completeness."
     # Custom events - Garden
     - topic: gardener.garden.entered
       event: GardenerGardenEnteredEvent
@@ -121,6 +121,9 @@ x-lifecycle:
       category: { $ref: 'gardener-api.yaml#/components/schemas/ScenarioCategory', required: true, description: "Primary gameplay category" }
       connectivityMode: { $ref: 'gardener-api.yaml#/components/schemas/ConnectivityMode', required: true, description: "World connectivity mode" }
       status: { $ref: 'gardener-api.yaml#/components/schemas/TemplateStatus', required: true, description: "Current lifecycle status" }
+      isDeprecated: { type: boolean, required: true, description: "Whether the scenario template is deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the scenario template was deprecated" }
+      deprecationReason: { type: string, nullable: true, maxLength: 500, description: "Reason for deprecation" }
     sensitive: [content]
 
 paths: {}  # Events don't have HTTP paths

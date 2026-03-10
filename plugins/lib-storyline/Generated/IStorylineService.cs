@@ -67,7 +67,7 @@ public partial interface IStorylineService : IBannouService
         /// <summary>
         /// DeprecateScenarioDefinition operation
         /// </summary>
-        Task<StatusCodes> DeprecateScenarioDefinitionAsync(DeprecateScenarioDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, ScenarioDefinition?)> DeprecateScenarioDefinitionAsync(DeprecateScenarioDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// FindAvailableScenarios operation

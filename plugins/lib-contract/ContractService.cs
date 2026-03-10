@@ -80,21 +80,21 @@ public partial class ContractService : IContractService
     /// </summary>
     /// <param name="templateId">The template ID.</param>
     /// <returns>State store key.</returns>
-    internal static string BuildTemplateKey(Guid templateId) => $"{TEMPLATE_PREFIX}{templateId}";
+    internal static string BuildTemplateKey(Guid templateId) => BuildTemplateKey(templateId);
 
     /// <summary>
     /// Builds the state store key for a contract instance record.
     /// </summary>
     /// <param name="contractId">The contract instance ID.</param>
     /// <returns>State store key.</returns>
-    internal static string BuildInstanceKey(Guid contractId) => $"{INSTANCE_PREFIX}{contractId}";
+    internal static string BuildInstanceKey(Guid contractId) => BuildInstanceKey(contractId);
 
     /// <summary>
     /// Builds the state store key for a breach record.
     /// </summary>
     /// <param name="breachId">The breach ID.</param>
     /// <returns>State store key.</returns>
-    internal static string BuildBreachKey(Guid breachId) => $"{BREACH_PREFIX}{breachId}";
+    internal static string BuildBreachKey(Guid breachId) => BuildBreachKey(breachId);
 
     /// <summary>
     /// Builds the state store key for a party-to-contract index lookup.
@@ -285,7 +285,7 @@ public partial class ContractService : IContractService
         };
 
         // Save template
-        var templateKey = $"{TEMPLATE_PREFIX}{templateId}";
+        var templateKey = BuildTemplateKey(templateId);
         await _templateStore
             .SaveAsync(templateKey, model, cancellationToken: cancellationToken);
 
@@ -324,7 +324,7 @@ public partial class ContractService : IContractService
             return (StatusCodes.BadRequest, null);
         }
 
-        var templateKey = $"{TEMPLATE_PREFIX}{templateId}";
+        var templateKey = BuildTemplateKey(Guid.Parse(templateId));
         var model = await _templateStore
             .GetAsync(templateKey, cancellationToken);
 
@@ -363,7 +363,7 @@ public partial class ContractService : IContractService
         }
 
         // Load all templates
-        var keys = allTemplateIds.Select(id => $"{TEMPLATE_PREFIX}{id}").ToList();
+        var keys = allTemplateIds.Select(id => BuildTemplateKey(Guid.Parse(id))).ToList();
         var bulkResults = await _templateStore
             .GetBulkAsync(keys, cancellationToken);
 
@@ -422,7 +422,7 @@ public partial class ContractService : IContractService
     {
         _logger.LogInformation("Updating contract template: {TemplateId}", body.TemplateId);
 
-        var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
+        var templateKey = BuildTemplateKey(body.TemplateId);
         var model = await _templateStore
             .GetAsync(templateKey, cancellationToken);
 
@@ -477,7 +477,7 @@ public partial class ContractService : IContractService
     {
         _logger.LogInformation("Deprecating contract template: {TemplateId}", body.TemplateId);
 
-        var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
+        var templateKey = BuildTemplateKey(body.TemplateId);
         var model = await _templateStore
             .GetAsync(templateKey, cancellationToken);
 
@@ -523,7 +523,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Creating contract instance from template: {TemplateId}", body.TemplateId);
 
         // Load template
-        var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
+        var templateKey = BuildTemplateKey(body.TemplateId);
         var template = await _templateStore
             .GetAsync(templateKey, cancellationToken);
 
@@ -568,7 +568,7 @@ public partial class ContractService : IContractService
         {
             foreach (var party in body.Parties)
             {
-                var partyIndexKey = $"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}";
+                var partyIndexKey = BuildPartyIndexKey(party.EntityType, party.EntityId);
                 var contractIds = await _listStore
                     .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
 
@@ -577,7 +577,7 @@ public partial class ContractService : IContractService
                 foreach (var contractIdStr in contractIds)
                 {
                     var existingContract = await _instanceStore
-                        .GetAsync($"{INSTANCE_PREFIX}{contractIdStr}", cancellationToken);
+                        .GetAsync(BuildInstanceKey(Guid.Parse(contractIdStr)), cancellationToken);
                     if (existingContract != null && ActiveStatuses.Contains(existingContract.Status))
                     {
                         activeCount++;
@@ -653,17 +653,17 @@ public partial class ContractService : IContractService
         };
 
         // Save instance
-        var instanceKey = $"{INSTANCE_PREFIX}{contractId}";
+        var instanceKey = BuildInstanceKey(contractId);
         await _instanceStore
             .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
 
         // Update indexes
-        await AddToListAsync($"{TEMPLATE_INDEX_PREFIX}{body.TemplateId}", contractId.ToString(), cancellationToken);
-        await AddToListAsync($"{STATUS_INDEX_PREFIX}draft", contractId.ToString(), cancellationToken);
+        await AddToListAsync(BuildTemplateIndexKey(body.TemplateId), contractId.ToString(), cancellationToken);
+        await AddToListAsync(BuildStatusIndexKey("draft"), contractId.ToString(), cancellationToken);
 
         foreach (var party in parties)
         {
-            await AddToListAsync($"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}", contractId.ToString(), cancellationToken);
+            await AddToListAsync(BuildPartyIndexKey(party.EntityType, party.EntityId), contractId.ToString(), cancellationToken);
         }
 
         // Publish event
@@ -680,7 +680,7 @@ public partial class ContractService : IContractService
     {
         _logger.LogInformation("Proposing contract: {ContractId}", body.ContractId);
 
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
         var store = _instanceStore;
 
         // Acquire contract lock for state transition
@@ -721,8 +721,8 @@ public partial class ContractService : IContractService
         }
 
         // Then update indexes
-        await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}draft", body.ContractId.ToString(), cancellationToken);
-        await AddToListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
+        await RemoveFromListAsync(BuildStatusIndexKey("draft"), body.ContractId.ToString(), cancellationToken);
+        await AddToListAsync(BuildStatusIndexKey("proposed"), body.ContractId.ToString(), cancellationToken);
 
         // Then publish events
         await PublishContractProposedEventAsync(model, cancellationToken);
@@ -740,7 +740,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Recording consent for contract: {ContractId} from {EntityId}",
             body.ContractId, body.PartyEntityId);
 
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
         var store = _instanceStore;
 
         // Acquire contract lock for state transition
@@ -791,8 +791,8 @@ public partial class ContractService : IContractService
                 var expiredEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
                 if (expiredEtag != null)
                 {
-                    await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
-                    await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
+                    await RemoveFromListAsync(BuildStatusIndexKey("proposed"), body.ContractId.ToString(), cancellationToken);
+                    await AddToListAsync(BuildStatusIndexKey("expired"), body.ContractId.ToString(), cancellationToken);
                     await PublishContractExpiredEventAsync(model, cancellationToken);
                     await PublishInstanceUpdatedEventAsync(model, new List<string> { "status" }, cancellationToken);
                 }
@@ -873,23 +873,23 @@ public partial class ContractService : IContractService
 
         if (allConsented)
         {
-            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
+            await RemoveFromListAsync(BuildStatusIndexKey("proposed"), body.ContractId.ToString(), cancellationToken);
 
             if (model.Status == ContractStatus.Fulfilled)
             {
                 // Contract with no milestones goes directly to fulfilled
-                await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
+                await AddToListAsync(BuildStatusIndexKey("fulfilled"), body.ContractId.ToString(), cancellationToken);
                 await PublishContractActivatedEventAsync(model, cancellationToken);
                 await PublishContractFulfilledEventAsync(model, cancellationToken);
             }
             else if (model.Status == ContractStatus.Active)
             {
-                await AddToListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
+                await AddToListAsync(BuildStatusIndexKey("active"), body.ContractId.ToString(), cancellationToken);
                 await PublishContractActivatedEventAsync(model, cancellationToken);
             }
             else
             {
-                await AddToListAsync($"{STATUS_INDEX_PREFIX}pending", body.ContractId.ToString(), cancellationToken);
+                await AddToListAsync(BuildStatusIndexKey("pending"), body.ContractId.ToString(), cancellationToken);
             }
 
             await PublishContractAcceptedEventAsync(model, cancellationToken);
@@ -913,7 +913,7 @@ public partial class ContractService : IContractService
         GetContractInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
         var model = await _instanceStore
             .GetAsync(instanceKey, cancellationToken);
 
@@ -941,13 +941,13 @@ public partial class ContractService : IContractService
         // Determine which index to use
         if (body.PartyEntityId.HasValue && body.PartyEntityType.HasValue)
         {
-            var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.PartyEntityType}:{body.PartyEntityId}";
+            var partyIndexKey = BuildPartyIndexKey(body.PartyEntityType.Value, body.PartyEntityId.Value);
             contractIds = await _listStore
                 .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
         }
         else if (body.TemplateId.HasValue)
         {
-            var templateIndexKey = $"{TEMPLATE_INDEX_PREFIX}{body.TemplateId}";
+            var templateIndexKey = BuildTemplateIndexKey(body.TemplateId.Value);
             contractIds = await _listStore
                 .GetAsync(templateIndexKey, cancellationToken) ?? new List<string>();
         }
@@ -957,7 +957,7 @@ public partial class ContractService : IContractService
             contractIds = new List<string>();
             foreach (var status in body.Statuses)
             {
-                var statusIndexKey = $"{STATUS_INDEX_PREFIX}{status.ToString().ToLowerInvariant()}";
+                var statusIndexKey = BuildStatusIndexKey(status.ToString().ToLowerInvariant());
                 var ids = await _listStore
                     .GetAsync(statusIndexKey, cancellationToken) ?? new List<string>();
                 contractIds.AddRange(ids);
@@ -981,7 +981,7 @@ public partial class ContractService : IContractService
         }
 
         // Load contracts
-        var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
+        var keys = contractIds.Select(id => BuildInstanceKey(Guid.Parse(id))).ToList();
         var bulkResults = await _instanceStore
             .GetBulkAsync(keys, cancellationToken);
 
@@ -1026,7 +1026,7 @@ public partial class ContractService : IContractService
     {
         _logger.LogInformation("Terminating contract: {ContractId}", body.ContractId);
 
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
         var store = _instanceStore;
 
         // Acquire contract lock for state transition
@@ -1081,7 +1081,7 @@ public partial class ContractService : IContractService
 
         // Then update indexes
         await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}{previousStatus}", body.ContractId.ToString(), cancellationToken);
-        await AddToListAsync($"{STATUS_INDEX_PREFIX}terminated", body.ContractId.ToString(), cancellationToken);
+        await AddToListAsync(BuildStatusIndexKey("terminated"), body.ContractId.ToString(), cancellationToken);
 
         // Then publish events
         await PublishContractTerminatedEventAsync(model, body.RequestingEntityId,
@@ -1103,7 +1103,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Deleting contract instance: {ContractId}", body.ContractId);
 
         var store = _instanceStore;
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
 
         var model = await store.GetAsync(instanceKey, cancellationToken);
         if (model == null)
@@ -1123,15 +1123,15 @@ public partial class ContractService : IContractService
         await store.DeleteAsync(instanceKey, cancellationToken);
 
         // Remove from all indexes
-        var statusKey = $"{STATUS_INDEX_PREFIX}{model.Status.ToString().ToLowerInvariant()}";
+        var statusKey = BuildStatusIndexKey(model.Status.ToString().ToLowerInvariant());
         await RemoveFromListAsync(statusKey, body.ContractId.ToString(), cancellationToken);
-        await RemoveFromListAsync($"{TEMPLATE_INDEX_PREFIX}{model.TemplateId}", body.ContractId.ToString(), cancellationToken);
+        await RemoveFromListAsync(BuildTemplateIndexKey(model.TemplateId), body.ContractId.ToString(), cancellationToken);
 
         if (model.Parties != null)
         {
             foreach (var party in model.Parties)
             {
-                await RemoveFromListAsync($"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}", body.ContractId.ToString(), cancellationToken);
+                await RemoveFromListAsync(BuildPartyIndexKey(party.EntityType, party.EntityId), body.ContractId.ToString(), cancellationToken);
             }
         }
 
@@ -1141,7 +1141,7 @@ public partial class ContractService : IContractService
             var breachStore = _breachStore;
             foreach (var breachId in model.BreachIds)
             {
-                await breachStore.DeleteAsync($"{BREACH_PREFIX}{breachId}", cancellationToken);
+                await breachStore.DeleteAsync(BuildBreachKey(breachId), cancellationToken);
             }
         }
 
@@ -1157,7 +1157,7 @@ public partial class ContractService : IContractService
         GetContractInstanceStatusRequest body,
         CancellationToken cancellationToken = default)
     {
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
         var store = _instanceStore;
         var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
@@ -1195,17 +1195,17 @@ public partial class ContractService : IContractService
             var activatedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (activatedEtag != null)
             {
-                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}pending", body.ContractId.ToString(), cancellationToken);
+                await RemoveFromListAsync(BuildStatusIndexKey("pending"), body.ContractId.ToString(), cancellationToken);
 
                 if (model.Status == ContractStatus.Fulfilled)
                 {
-                    await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
+                    await AddToListAsync(BuildStatusIndexKey("fulfilled"), body.ContractId.ToString(), cancellationToken);
                     await PublishContractActivatedEventAsync(model, cancellationToken);
                     await PublishContractFulfilledEventAsync(model, cancellationToken);
                 }
                 else
                 {
-                    await AddToListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
+                    await AddToListAsync(BuildStatusIndexKey("active"), body.ContractId.ToString(), cancellationToken);
                     await PublishContractActivatedEventAsync(model, cancellationToken);
                 }
 
@@ -1231,8 +1231,8 @@ public partial class ContractService : IContractService
             var expiredEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (expiredEtag != null)
             {
-                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
-                await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
+                await RemoveFromListAsync(BuildStatusIndexKey("active"), body.ContractId.ToString(), cancellationToken);
+                await AddToListAsync(BuildStatusIndexKey("expired"), body.ContractId.ToString(), cancellationToken);
                 await PublishContractExpiredEventAsync(model, cancellationToken);
                 await PublishInstanceUpdatedEventAsync(model, new List<string> { "status" }, cancellationToken);
             }
@@ -1279,7 +1279,7 @@ public partial class ContractService : IContractService
         List<BreachSummary>? activeBreaches = null;
         if (model.BreachIds?.Count > 0)
         {
-            var breachKeys = model.BreachIds.Select(id => $"{BREACH_PREFIX}{id}").ToList();
+            var breachKeys = model.BreachIds.Select(id => BuildBreachKey(id)).ToList();
             var breaches = await _breachStore
                 .GetBulkAsync(breachKeys, cancellationToken);
 
@@ -1325,7 +1325,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Completing milestone: {MilestoneCode} for contract {ContractId}",
             body.MilestoneCode, body.ContractId);
 
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
         var store = _instanceStore;
 
         // Acquire contract lock for state transition
@@ -1398,8 +1398,8 @@ public partial class ContractService : IContractService
         // Then update indexes (if status changed to fulfilled)
         if (allRequiredComplete && model.Status == ContractStatus.Fulfilled)
         {
-            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
-            await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
+            await RemoveFromListAsync(BuildStatusIndexKey("active"), body.ContractId.ToString(), cancellationToken);
+            await AddToListAsync(BuildStatusIndexKey("fulfilled"), body.ContractId.ToString(), cancellationToken);
             await PublishContractFulfilledEventAsync(model, cancellationToken);
         }
 
@@ -1433,7 +1433,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Failing milestone: {MilestoneCode} for contract {ContractId}",
             body.MilestoneCode, body.ContractId);
 
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
         var store = _instanceStore;
 
         // Acquire contract lock for state transition
@@ -1512,7 +1512,7 @@ public partial class ContractService : IContractService
         GetMilestoneRequest body,
         CancellationToken cancellationToken = default)
     {
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
         var store = _instanceStore;
         var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
@@ -1556,7 +1556,7 @@ public partial class ContractService : IContractService
     {
         _logger.LogInformation("Reporting breach for contract: {ContractId}", body.ContractId);
 
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
         var instanceStore = _instanceStore;
 
         // Acquire contract lock for state transition
@@ -1608,7 +1608,7 @@ public partial class ContractService : IContractService
         };
 
         // Save breach (new entity, no concurrency concern)
-        var breachKey = $"{BREACH_PREFIX}{breachId}";
+        var breachKey = BuildBreachKey(breachId);
         await _breachStore
             .SaveAsync(breachKey, breachModel, cancellationToken: cancellationToken);
 
@@ -1643,7 +1643,7 @@ public partial class ContractService : IContractService
     {
         _logger.LogInformation("Curing breach: {BreachId}", body.BreachId);
 
-        var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
+        var breachKey = BuildBreachKey(body.BreachId);
         var breachStore = _breachStore;
         var (breachModel, etag) = await breachStore.GetWithETagAsync(breachKey, cancellationToken);
 
@@ -1690,7 +1690,7 @@ public partial class ContractService : IContractService
         GetBreachRequest body,
         CancellationToken cancellationToken = default)
     {
-        var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
+        var breachKey = BuildBreachKey(body.BreachId);
         var breachModel = await _breachStore
             .GetAsync(breachKey, cancellationToken);
 
@@ -1713,7 +1713,7 @@ public partial class ContractService : IContractService
     {
         _logger.LogInformation("Updating metadata for contract: {ContractId}", body.ContractId);
 
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
         var store = _instanceStore;
         var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
@@ -1759,7 +1759,7 @@ public partial class ContractService : IContractService
         GetContractMetadataRequest body,
         CancellationToken cancellationToken = default)
     {
-        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceKey = BuildInstanceKey(body.ContractId);
         var model = await _instanceStore
             .GetAsync(instanceKey, cancellationToken);
 
@@ -1788,7 +1788,7 @@ public partial class ContractService : IContractService
         _logger.LogDebug("Checking constraint for entity: {EntityId}", body.EntityId);
 
         // Get active contracts for entity
-        var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.EntityType}:{body.EntityId}";
+        var partyIndexKey = BuildPartyIndexKey(body.EntityType, body.EntityId);
         var contractIds = await _listStore
             .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
 
@@ -1803,7 +1803,7 @@ public partial class ContractService : IContractService
         }
 
         // Load active contracts
-        var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
+        var keys = contractIds.Select(id => BuildInstanceKey(Guid.Parse(id))).ToList();
         var bulkResults = await _instanceStore
             .GetBulkAsync(keys, cancellationToken);
 
@@ -1917,7 +1917,7 @@ public partial class ContractService : IContractService
     {
         _logger.LogDebug("Querying active contracts for entity: {EntityId}", body.EntityId);
 
-        var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.EntityType}:{body.EntityId}";
+        var partyIndexKey = BuildPartyIndexKey(body.EntityType, body.EntityId);
         var contractIds = await _listStore
             .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
 
@@ -1929,7 +1929,7 @@ public partial class ContractService : IContractService
             });
         }
 
-        var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
+        var keys = contractIds.Select(id => BuildInstanceKey(Guid.Parse(id))).ToList();
         var bulkResults = await _instanceStore
             .GetBulkAsync(keys, cancellationToken);
 
@@ -2485,7 +2485,7 @@ public partial class ContractService : IContractService
         };
 
         // Save breach record
-        var breachKey = $"{BREACH_PREFIX}{breachId}";
+        var breachKey = BuildBreachKey(breachId);
         await _breachStore
             .SaveAsync(breachKey, breach, cancellationToken: cancellationToken);
 
@@ -2522,7 +2522,7 @@ public partial class ContractService : IContractService
         foreach (var breachId in contract.BreachIds ?? new List<Guid>())
         {
             var breach = await _breachStore
-                .GetAsync($"{BREACH_PREFIX}{breachId}", cancellationToken);
+                .GetAsync(BuildBreachKey(breachId), cancellationToken);
 
             if (breach != null &&
                 (breach.Status == BreachStatus.Detected || breach.Status == BreachStatus.CurePeriod))
@@ -2558,17 +2558,17 @@ public partial class ContractService : IContractService
         contract.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Save the updated contract
-        var instanceKey = $"{INSTANCE_PREFIX}{contract.ContractId}";
+        var instanceKey = BuildInstanceKey(contract.ContractId);
         await _instanceStore
             .SaveAsync(instanceKey, contract, cancellationToken: cancellationToken);
 
         // Update status index
         await RemoveFromListAsync(
-            $"{STATUS_INDEX_PREFIX}{previousStatus.ToString().ToLowerInvariant()}",
+            BuildStatusIndexKey(previousStatus.ToString().ToLowerInvariant()),
             contract.ContractId.ToString(),
             cancellationToken);
         await AddToListAsync(
-            $"{STATUS_INDEX_PREFIX}terminated",
+            BuildStatusIndexKey("terminated"),
             contract.ContractId.ToString(),
             cancellationToken);
 

@@ -1289,15 +1289,19 @@ public partial class GardenerService : IGardenerService
         if (template.Status == TemplateStatus.Deprecated)
             return (StatusCodes.OK, MapToTemplateResponse(template));
 
+        var now = DateTimeOffset.UtcNow;
         template.Status = TemplateStatus.Deprecated;
-        template.UpdatedAt = DateTimeOffset.UtcNow;
+        template.DeprecatedAt = now;
+        template.DeprecationReason = body.Reason;
+        template.UpdatedAt = now;
         await _templateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken: cancellationToken);
 
+        // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
         await _messageBus.PublishScenarioTemplateUpdatedAsync(
             new ScenarioTemplateUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
+                Timestamp = now,
                 ScenarioTemplateId = template.ScenarioTemplateId,
                 Code = template.Code,
                 DisplayName = template.DisplayName,
@@ -1305,8 +1309,12 @@ public partial class GardenerService : IGardenerService
                 Category = template.Category,
                 ConnectivityMode = template.ConnectivityMode,
                 Status = template.Status,
+                IsDeprecated = true,
+                DeprecatedAt = template.DeprecatedAt,
+                DeprecationReason = template.DeprecationReason,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt
+                UpdatedAt = template.UpdatedAt,
+                ChangedFields = new List<string> { "status", "isDeprecated", "deprecatedAt", "deprecationReason" },
             }, cancellationToken);
 
         _logger.LogInformation(
@@ -1899,6 +1907,9 @@ public partial class GardenerService : IGardenerService
             Content = template.Content != null
                 ? MapToContent(template.Content) : null,
             Status = template.Status,
+            IsDeprecated = template.Status == TemplateStatus.Deprecated,
+            DeprecatedAt = template.DeprecatedAt,
+            DeprecationReason = template.DeprecationReason,
             CreatedAt = template.CreatedAt,
             UpdatedAt = template.UpdatedAt
         };
