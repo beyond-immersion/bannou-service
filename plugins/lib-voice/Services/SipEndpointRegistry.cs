@@ -2,6 +2,8 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Voice.Services;
 
@@ -11,6 +13,7 @@ namespace BeyondImmersion.BannouService.Voice.Services;
 /// Thread-safe for multi-instance deployments (FOUNDATION TENETS).
 /// Participants are keyed by sessionId to support multiple connections from the same account.
 /// </summary>
+[BannouHelperService("sip-endpoint", typeof(IVoiceService), typeof(ISipEndpointRegistry), lifetime: ServiceLifetime.Singleton)]
 public class SipEndpointRegistry : ISipEndpointRegistry
 {
     private readonly IStateStore<List<ParticipantRegistration>> _stateStore;

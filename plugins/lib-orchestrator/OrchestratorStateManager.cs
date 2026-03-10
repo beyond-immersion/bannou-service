@@ -8,6 +8,8 @@ using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using ServiceHealthEntry = BeyondImmersion.BannouService.Orchestrator.ServiceHealthEntry;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LibOrchestrator;
 
@@ -15,6 +17,7 @@ namespace LibOrchestrator;
 /// Manages orchestrator state via lib-state infrastructure.
 /// Uses IStateStoreFactory for Redis operations, replacing direct StackExchange.Redis dependency.
 /// </summary>
+[BannouHelperService("orchestrator-state", typeof(IOrchestratorService), typeof(IOrchestratorStateManager), lifetime: ServiceLifetime.Singleton)]
 public class OrchestratorStateManager : IOrchestratorStateManager
 {
     private readonly ILogger<OrchestratorStateManager> _logger;

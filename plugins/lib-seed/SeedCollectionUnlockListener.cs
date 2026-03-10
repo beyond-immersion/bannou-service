@@ -5,6 +5,8 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Seed;
 
@@ -32,6 +34,7 @@ namespace BeyondImmersion.BannouService.Seed;
 /// the collection grant. See SERVICE-HIERARCHY.md § DI Provider vs Listener.
 /// </para>
 /// </remarks>
+[BannouHelperService("seed-collection-unlock", typeof(ISeedService), typeof(ICollectionUnlockListener), lifetime: ServiceLifetime.Singleton)]
 public class SeedCollectionUnlockListener : ICollectionUnlockListener
 {
     private readonly IQueryableStateStore<SeedModel> _seedStore;

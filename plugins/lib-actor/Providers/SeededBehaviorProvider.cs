@@ -11,6 +11,8 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Providers;
 
@@ -37,6 +39,7 @@ namespace BeyondImmersion.BannouService.Actor.Providers;
 /// where <c>{name}</c> is the identifier used to load the behavior.
 /// </para>
 /// </remarks>
+[BannouHelperService("seeded-behavior", typeof(IActorService), typeof(IBehaviorDocumentProvider), lifetime: ServiceLifetime.Singleton)]
 public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
 {
     private const string ResourcePrefix = "BeyondImmersion.BannouService.Actor.Behaviors.";

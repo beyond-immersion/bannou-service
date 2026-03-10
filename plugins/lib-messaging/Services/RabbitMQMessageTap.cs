@@ -11,6 +11,8 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using RmqExchangeType = RabbitMQ.Client.ExchangeType;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -28,6 +30,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// without type-based routing. This allows tapping arbitrary message types.
 /// </para>
 /// </remarks>
+[BannouHelperService("rabbit-m-q-message-tap", typeof(IMessagingService), typeof(IMessageTap), lifetime: ServiceLifetime.Singleton)]
 public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
 {
     private readonly IChannelManager _channelManager;

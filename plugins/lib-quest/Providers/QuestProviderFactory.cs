@@ -8,6 +8,8 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Quest.Caching;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Quest.Providers;
 
@@ -15,6 +17,7 @@ namespace BeyondImmersion.BannouService.Quest.Providers;
 /// Factory for creating QuestProvider instances.
 /// Registered with DI as IVariableProviderFactory for Actor to discover.
 /// </summary>
+[BannouHelperService("quest-provider", typeof(IQuestService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class QuestProviderFactory : IVariableProviderFactory
 {
     private readonly IQuestDataCache _cache;

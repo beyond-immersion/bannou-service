@@ -399,6 +399,9 @@ Tenets are organized into categories based on when they're needed:
 | Category B clean-deprecated with non-admin permissions | T31 | Use `x-permissions: [role: admin]` — cleanup deletes data (B18) |
 | Category B clean-deprecated not using `DeprecationCleanupHelper` | T31 | Use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` for standardized sweep (B20) |
 | Category B clean-deprecated using service-specific request/response models | T31 | Use shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml` (B17) |
+| Category A merge using service-specific request/response models | T31 | Use shared `MergeDeprecatedRequest`/`MergeDeprecatedResponse` from `common-api.yaml` |
+| Service with `deprecation: true` not implementing marker interface | T31 | Add `IDeprecateAndMergeEntity` (Category A with merge) or `ICleanDeprecatedEntity` (Category B) |
+| Category A merge endpoint not publishing `*.deleted` after `*.merged` | T31 | When `deleteAfterMerge` succeeds, call own delete method which publishes `*.deleted` |
 | Client-facing endpoint accepting accountId in request body | T32 | Remove accountId; use webSocketSessionId; resolve account server-side if needed |
 | Non-boundary service emitting accountId in events | T32 | Use sessionId or domain-specific identifiers (ticketId, matchId) |
 | Polymorphic string field "accountId or service name" | T32, T14 | Use ownerType enum + ownerId; use sessionId for user-initiated operations |

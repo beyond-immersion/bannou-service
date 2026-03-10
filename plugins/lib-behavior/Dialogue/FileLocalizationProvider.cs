@@ -10,6 +10,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.Bannou.Behavior.Dialogue;
 
@@ -34,6 +36,7 @@ namespace BeyondImmersion.Bannou.Behavior.Dialogue;
 /// Keys are hierarchical and accessed via dot notation (e.g., "ui.menu.start").
 /// </para>
 /// </remarks>
+[BannouHelperService("file-localization", typeof(IBehaviorService), typeof(ILocalizationProvider), lifetime: ServiceLifetime.Singleton)]
 public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, IDisposable
 {
     private readonly ConcurrentDictionary<string, ILocalizationSource> _sources;

@@ -9,6 +9,8 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Relationship.Caching;
 using BeyondImmersion.BannouService.Services;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Relationship.Providers;
 
@@ -16,6 +18,7 @@ namespace BeyondImmersion.BannouService.Relationship.Providers;
 /// Factory for creating RelationshipProvider instances.
 /// Registered with DI as IVariableProviderFactory for Actor to discover.
 /// </summary>
+[BannouHelperService("relationship-provider", typeof(IRelationshipService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class RelationshipProviderFactory : IVariableProviderFactory
 {
     private readonly IRelationshipDataCache _cache;

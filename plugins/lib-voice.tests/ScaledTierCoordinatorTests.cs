@@ -49,9 +49,7 @@ public class ScaledTierCoordinatorTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<ScaledTierCoordinator>();
-        Assert.NotNull(CreateCoordinator());
+    {        Assert.NotNull(CreateCoordinator());
     }
 
     #endregion

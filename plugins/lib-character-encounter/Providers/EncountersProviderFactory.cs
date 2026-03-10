@@ -9,6 +9,8 @@ using BeyondImmersion.BannouService.CharacterEncounter.Caching;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.CharacterEncounter.Providers;
 
@@ -16,6 +18,7 @@ namespace BeyondImmersion.BannouService.CharacterEncounter.Providers;
 /// Factory for creating EncountersProvider instances.
 /// Registered with DI as IVariableProviderFactory for Actor to discover.
 /// </summary>
+[BannouHelperService("encounters-provider", typeof(ICharacterEncounterService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class EncountersProviderFactory : IVariableProviderFactory
 {
     private readonly IEncounterDataCache _cache;

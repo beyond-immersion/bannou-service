@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Seed.Caching;
 
@@ -19,6 +20,7 @@ namespace BeyondImmersion.BannouService.Seed.Caching;
 /// Uses ConcurrentDictionary for thread-safety (IMPLEMENTATION TENETS compliant).
 /// Loads data via ISeedClient through mesh, matching the established provider cache pattern.
 /// </summary>
+[BannouHelperService("seed-data", typeof(ISeedService), typeof(ISeedDataCache), lifetime: ServiceLifetime.Singleton)]
 public sealed class SeedDataCache : ISeedDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;

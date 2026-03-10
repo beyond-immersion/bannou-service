@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using System.Reflection;
 using Xunit;
@@ -18,8 +19,25 @@ public class StructuralTests
     /// </summary>
     public static IEnumerable<object[]> AllServiceTypes()
     {
-        // Force all plugin assemblies to load by touching a type from each
-        // (project references alone don't guarantee assembly loading)
+        foreach (var type in DiscoverAttributedTypes<BannouServiceAttribute>())
+            yield return [type];
+    }
+
+    /// <summary>
+    /// Discovers all types with [BannouHelperService] attribute across all loaded assemblies.
+    /// Helper services get constructor and key builder validation but not hierarchy or controller checks.
+    /// </summary>
+    public static IEnumerable<object[]> AllHelperServiceTypes()
+    {
+        foreach (var type in DiscoverAttributedTypes<BannouHelperServiceAttribute>())
+            yield return [type];
+    }
+
+    /// <summary>
+    /// Generic discovery of types with a specific attribute across all loaded plugin assemblies.
+    /// </summary>
+    private static IEnumerable<Type> DiscoverAttributedTypes<TAttribute>() where TAttribute : Attribute
+    {
         EnsureAssembliesLoaded();
 
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -51,10 +69,9 @@ public class StructuralTests
 
             foreach (var type in types)
             {
-                var attr = type.GetCustomAttribute<BannouServiceAttribute>();
-                if (attr != null)
+                if (type.GetCustomAttribute<TAttribute>() != null)
                 {
-                    yield return [type];
+                    yield return type;
                 }
             }
         }
@@ -86,6 +103,99 @@ public class StructuralTests
     public void Service_ReferencesItsStateStores(Type serviceType)
     {
         StateStoreKeyValidator.ValidateStoreReferences(serviceType);
+    }
+
+    [Theory]
+    [MemberData(nameof(AllHelperServiceTypes))]
+    public void HelperService_HasValidConstructor(Type helperType)
+    {
+        ServiceConstructorValidator.ValidateServiceConstructor(helperType);
+    }
+
+    [Theory]
+    [MemberData(nameof(AllHelperServiceTypes))]
+    public void HelperService_HasValidKeyBuilders(Type helperType)
+    {
+        StateStoreKeyValidator.ValidateKeyBuilders(helperType);
+    }
+
+    /// <summary>
+    /// Detects Plugin.cs files that still manually register helper services which have
+    /// [BannouHelperService] with a non-null InterfaceType. These registrations are now
+    /// redundant because PluginLoader auto-discovers and registers them.
+    /// This test provides a cleanup checklist — remove the manual registration lines
+    /// from Plugin.cs and let auto-registration handle them.
+    /// </summary>
+    [Fact]
+    public void Plugins_ShouldNotManuallyRegisterAutoDiscoverableHelpers()
+    {
+        EnsureAssembliesLoaded();
+
+        // Build a set of (interfaceType, implementationType) pairs that are auto-discoverable
+        var autoDiscoverable = new HashSet<(string interfaceName, string implName)>();
+        foreach (var type in DiscoverAttributedTypes<BannouHelperServiceAttribute>())
+        {
+            var attr = type.GetCustomAttribute<BannouHelperServiceAttribute>();
+            if (attr?.InterfaceType != null)
+            {
+                autoDiscoverable.Add((attr.InterfaceType.Name, type.Name));
+            }
+        }
+
+        if (autoDiscoverable.Count == 0)
+            return;
+
+        // Scan all *Plugin.cs files for manual registrations of auto-discoverable types
+        var pluginsDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins");
+        if (!Directory.Exists(pluginsDir))
+            return;
+
+        var redundant = new List<string>();
+        var pluginFiles = Directory.GetFiles(pluginsDir, "*Plugin.cs", SearchOption.AllDirectories);
+
+        foreach (var pluginFile in pluginFiles)
+        {
+            var lines = File.ReadAllLines(pluginFile);
+            var relativePath = Path.GetRelativePath(TestAssemblyDiscovery.RepoRoot, pluginFile);
+
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i].TrimStart();
+
+                // Match patterns: services.AddScoped<IFoo, Foo>() or services.AddSingleton<IFoo, Foo>()
+                // Skip factory lambdas (lines containing "sp =>" or "(sp") — those need manual registration
+                if (!line.StartsWith("services.Add", StringComparison.Ordinal))
+                    continue;
+                if (line.Contains("sp =>") || line.Contains("(sp"))
+                    continue;
+
+                // Extract interface and implementation names from generic arguments
+                var angleBracketStart = line.IndexOf('<');
+                var angleBracketEnd = line.IndexOf('>');
+                if (angleBracketStart < 0 || angleBracketEnd < 0)
+                    continue;
+
+                var generics = line[(angleBracketStart + 1)..angleBracketEnd];
+                var parts = generics.Split(',', StringSplitOptions.TrimEntries);
+                if (parts.Length != 2)
+                    continue;
+
+                var interfaceName = parts[0];
+                var implName = parts[1];
+
+                if (autoDiscoverable.Contains((interfaceName, implName)))
+                {
+                    redundant.Add($"{relativePath}:{i + 1}: services.Add*<{interfaceName}, {implName}>() " +
+                        $"— auto-discoverable via [BannouHelperService], remove manual registration");
+                }
+            }
+        }
+
+        Assert.True(
+            redundant.Count == 0,
+            $"{redundant.Count} manual registration(s) in Plugin.cs files are now redundant " +
+            $"(auto-discoverable via [BannouHelperService]):\n" +
+            string.Join("\n", redundant.Select(r => $"  - {r}")));
     }
 
     /// <summary>
@@ -547,6 +657,130 @@ public class StructuralTests
             $"Plugins using EnumMapping helpers must have corresponding EnumMappingValidator " +
             $"tests in their test project (per ENUM-BOUNDARIES.md):\n" +
             string.Join("\n", failures.Select(f => $"  - {f}")));
+    }
+
+    /// <summary>
+    /// Category A entities that do not yet have merge endpoints implemented.
+    /// These services have <c>deprecation: true</c> in their events schema but are
+    /// not yet ready to implement <see cref="IDeprecateAndMergeEntity"/>. As merge
+    /// endpoints are added, remove the service from this list — the test will enforce
+    /// the interface requirement automatically.
+    /// </summary>
+    private static readonly HashSet<string> DeprecationInterfacePending = new(StringComparer.Ordinal)
+    {
+        // Category A entities without merge endpoint yet (deprecation: true in schema,
+        // but merge not implemented so IDeprecateAndMergeEntity not yet applicable).
+        "seed",             // Seed Type — merge not yet implemented
+        "location",         // Location — merge not yet implemented
+        "status",           // Status Template — merge not yet implemented
+        "faction",          // Faction — merge not yet implemented
+        "transit",          // Transit Mode — merge not yet implemented
+    };
+
+    /// <summary>
+    /// Validates that every service with <c>deprecation: true</c> in its events schema
+    /// implements either <see cref="IDeprecateAndMergeEntity"/> (Category A — world-building
+    /// definitions with merge semantics) or <see cref="ICleanDeprecatedEntity"/> (Category B —
+    /// content templates with cleanup sweep semantics).
+    /// <para>
+    /// This ensures all deprecated entities have a standardized lifecycle pattern and that
+    /// the pattern is discoverable via reflection for tooling and documentation generation.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Services_WithDeprecation_MustImplementDeprecationInterface()
+    {
+        EnsureAssembliesLoaded();
+
+        var schemasDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "schemas");
+        if (!Directory.Exists(schemasDir))
+            return;
+
+        var failures = new List<string>();
+        var deprecatedServices = DiscoverServicesWithDeprecation(schemasDir);
+
+        foreach (var serviceName in deprecatedServices)
+        {
+            if (DeprecationInterfacePending.Contains(serviceName))
+                continue;
+
+            // Find the [BannouService] type for this service name
+            var serviceType = FindServiceTypeByName(serviceName);
+            if (serviceType == null)
+            {
+                failures.Add($"{serviceName}: has deprecation: true but no [BannouService] class found");
+                continue;
+            }
+
+            var implementsMerge = typeof(IDeprecateAndMergeEntity).IsAssignableFrom(serviceType);
+            var implementsClean = typeof(ICleanDeprecatedEntity).IsAssignableFrom(serviceType);
+
+            if (!implementsMerge && !implementsClean)
+            {
+                failures.Add(
+                    $"{serviceType.Name} (service: {serviceName}): has deprecation: true in events schema " +
+                    $"but implements neither IDeprecateAndMergeEntity (Category A) nor " +
+                    $"ICleanDeprecatedEntity (Category B)");
+            }
+        }
+
+        Assert.True(
+            failures.Count == 0,
+            $"Services with deprecated entities must implement a deprecation marker interface " +
+            $"(per IMPLEMENTATION TENETS):\n" +
+            string.Join("\n", failures.Select(f => $"  - {f}")));
+    }
+
+    /// <summary>
+    /// Scans event schema files for <c>deprecation: true</c> and returns the set of
+    /// service names that have at least one deprecated entity.
+    /// </summary>
+    private static HashSet<string> DiscoverServicesWithDeprecation(string schemasDir)
+    {
+        var services = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var file in Directory.GetFiles(schemasDir, "*-events.yaml"))
+        {
+            var fileName = Path.GetFileNameWithoutExtension(file);
+            if (!fileName.EndsWith("-events", StringComparison.Ordinal))
+                continue;
+
+            var serviceName = fileName[..^"-events".Length];
+
+            // Line-based scan — no YAML library needed
+            foreach (var line in File.ReadLines(file))
+            {
+                if (line.TrimStart().StartsWith("deprecation: true", StringComparison.Ordinal))
+                {
+                    services.Add(serviceName);
+                    break;
+                }
+            }
+        }
+
+        return services;
+    }
+
+    /// <summary>
+    /// Finds the [BannouService]-attributed type matching the given service name.
+    /// </summary>
+    private static Type? FindServiceTypeByName(string serviceName)
+    {
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            Type[] types;
+            try { types = assembly.GetTypes(); }
+            catch (ReflectionTypeLoadException) { continue; }
+
+            foreach (var type in types)
+            {
+                var attr = type.GetCustomAttribute<BannouServiceAttribute>();
+                if (attr != null && string.Equals(attr.Name, serviceName, StringComparison.Ordinal))
+                    return type;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

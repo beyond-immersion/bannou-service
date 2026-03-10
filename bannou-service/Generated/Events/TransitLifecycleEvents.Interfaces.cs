@@ -17,6 +17,6 @@ public partial class TransitConnectionCreatedEvent : ILifecycleCreatedEvent { }
 public partial class TransitConnectionUpdatedEvent : ILifecycleUpdatedEvent { }
 public partial class TransitConnectionDeletedEvent : ILifecycleDeletedEvent { }
 
-public partial class TransitModeCreatedEvent : ILifecycleCreatedEvent { }
-public partial class TransitModeUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class TransitModeDeletedEvent : ILifecycleDeletedEvent { }
+public partial class TransitModeCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class TransitModeUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class TransitModeDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }

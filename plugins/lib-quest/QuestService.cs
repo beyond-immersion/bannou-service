@@ -36,7 +36,7 @@ namespace BeyondImmersion.BannouService.Quest;
 /// </para>
 /// </remarks>
 [BannouService("quest", typeof(IQuestService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
-public partial class QuestService : IQuestService
+public partial class QuestService : IQuestService, ICleanDeprecatedEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<QuestService> _logger;

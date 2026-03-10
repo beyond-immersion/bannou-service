@@ -4,6 +4,8 @@ using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Transit.Providers;
 
@@ -38,6 +40,7 @@ namespace BeyondImmersion.BannouService.Transit.Providers;
 /// accessed within the same assembly, avoiding CS0051 exposure issues.
 /// </para>
 /// </remarks>
+[BannouHelperService("transit-variable-provider", typeof(ITransitService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class TransitVariableProviderFactory : IVariableProviderFactory
 {
     private readonly IStateStore<TransitJourneyModel> _journeyStore;

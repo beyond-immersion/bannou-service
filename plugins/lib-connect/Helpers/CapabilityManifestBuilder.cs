@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Connect.Protocol;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Connect.Helpers;
 
@@ -7,6 +9,7 @@ namespace BeyondImmersion.BannouService.Connect.Helpers;
 /// Builds capability manifests for WebSocket clients.
 /// Extracts and filters endpoint information from service mappings for client consumption.
 /// </summary>
+[BannouHelperService("capability-manifest", typeof(IConnectService), typeof(ICapabilityManifestBuilder), lifetime: ServiceLifetime.Singleton)]
 public class CapabilityManifestBuilder : ICapabilityManifestBuilder
 {
     private readonly ILogger<CapabilityManifestBuilder> _logger;

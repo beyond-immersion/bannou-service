@@ -3,12 +3,15 @@ using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LibOrchestrator;
 
 /// <summary>
 /// Event manager for orchestrator events using native messaging infrastructure.
 /// </summary>
+[BannouHelperService("orchestrator-event", typeof(IOrchestratorService), typeof(IOrchestratorEventManager), lifetime: ServiceLifetime.Singleton)]
 public class OrchestratorEventManager : IOrchestratorEventManager
 {
     private readonly ILogger<OrchestratorEventManager> _logger;

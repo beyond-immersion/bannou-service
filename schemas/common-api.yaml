@@ -347,6 +347,63 @@ components:
             type: string
             format: uuid
 
+    MergeDeprecatedRequest:
+      type: object
+      description: |
+        Shared request for Category A deprecation merge. Migrates all referencing
+        entities from a deprecated source definition to a non-deprecated target definition.
+        Used by all Category A services via their merge endpoint.
+
+        **SCHEMA MODIFICATION GATE**: Before modifying, read docs/reference/SCHEMA-RULES.md.
+      additionalProperties: false
+      required:
+        - sourceEntityId
+        - targetEntityId
+      properties:
+        sourceEntityId:
+          type: string
+          format: uuid
+          description: ID of the deprecated entity to merge from (must be deprecated)
+        targetEntityId:
+          type: string
+          format: uuid
+          description: ID of the entity to merge into (must not be deprecated)
+        deleteAfterMerge:
+          type: boolean
+          default: false
+          description: >
+            If true, hard-delete the source entity after successful merge.
+            Skipped automatically on partial failure (any failedEntityIds).
+
+    MergeDeprecatedResponse:
+      type: object
+      description: |
+        Result summary from a Category A deprecation merge operation.
+        Returned by all Category A merge endpoints. Services with multi-entity-type
+        migration may compose this via allOf to add per-type breakdowns.
+      additionalProperties: false
+      required:
+        - totalMigrated
+        - totalFailed
+        - sourceDeleted
+      properties:
+        totalMigrated:
+          type: integer
+          description: Total number of referencing entities successfully migrated to the target
+        totalFailed:
+          type: integer
+          description: Total number of referencing entities that failed to migrate
+        sourceDeleted:
+          type: boolean
+          description: Whether the source entity was hard-deleted after merge (skipped on partial failure)
+        failedEntityIds:
+          type: array
+          description: IDs of entities that failed migration (limited to first 100), null when no failures
+          items:
+            type: string
+            format: uuid
+          nullable: true
+
     CapabilityUpdateType:
       type: string
       enum:

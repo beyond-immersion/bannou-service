@@ -55,9 +55,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<TriggerGoapReplanHandler>();
-        Assert.NotNull(_handler);
+    {        Assert.NotNull(_handler);
     }
 
     #endregion

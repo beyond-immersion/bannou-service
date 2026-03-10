@@ -7,6 +7,8 @@ using Minio;
 using Minio.DataModel.Args;
 using System.Diagnostics;
 using StorageModels = BeyondImmersion.BannouService.Storage;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Asset.Storage;
 
@@ -15,6 +17,7 @@ namespace BeyondImmersion.BannouService.Asset.Storage;
 /// Supports pre-signed URLs, multipart uploads, versioning, and object management.
 /// Uses AWS SDK for presigned URLs (MinIO SDK has Content-Type signing bug).
 /// </summary>
+[BannouHelperService("minio-storage", typeof(IAssetService), typeof(StorageModels.IAssetStorageProvider), lifetime: ServiceLifetime.Singleton)]
 public class MinioStorageProvider : StorageModels.IAssetStorageProvider
 {
     private readonly IMinioClient _minioClient;

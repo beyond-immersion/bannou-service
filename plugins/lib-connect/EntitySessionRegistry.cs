@@ -5,6 +5,8 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -24,6 +26,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// operations. Query operations return empty sets on error so callers degrade gracefully.
 /// </para>
 /// </remarks>
+[BannouHelperService("entity-session", typeof(IConnectService), typeof(IEntitySessionRegistry), lifetime: ServiceLifetime.Singleton)]
 public class EntitySessionRegistry : IEntitySessionRegistry
 {
     private readonly IMessageBus _messageBus;

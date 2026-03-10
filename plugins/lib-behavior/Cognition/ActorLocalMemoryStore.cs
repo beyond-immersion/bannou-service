@@ -8,6 +8,9 @@ using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Behavior;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.Bannou.Behavior.Cognition;
 
@@ -34,6 +37,7 @@ namespace BeyondImmersion.Bannou.Behavior.Cognition;
 /// pipeline.
 /// </para>
 /// </remarks>
+[BannouHelperService("actor-local-memory-store", typeof(IBehaviorService), typeof(IMemoryStore), lifetime: ServiceLifetime.Singleton)]
 public sealed class ActorLocalMemoryStore : IMemoryStore
 {
     /// <summary>State store for individual memory records keyed by entity and memory ID.</summary>

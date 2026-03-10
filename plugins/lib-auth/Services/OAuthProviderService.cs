@@ -9,6 +9,8 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Web;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Auth.Services;
 
@@ -16,6 +18,7 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// Implementation of OAuth provider integrations.
 /// Handles code exchange, user info retrieval, and account linking for Discord, Google, Twitch, and Steam.
 /// </summary>
+[BannouHelperService("o-auth-provider", typeof(IAuthService), typeof(IOAuthProviderService), lifetime: ServiceLifetime.Scoped)]
 public class OAuthProviderService : IOAuthProviderService
 {
     private readonly IAccountClient _accountClient;

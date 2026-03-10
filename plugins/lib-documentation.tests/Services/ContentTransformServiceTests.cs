@@ -26,9 +26,7 @@ public class ContentTransformServiceTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<ContentTransformService>();
-        Assert.NotNull(_service);
+    {        Assert.NotNull(_service);
     }
 
     #endregion

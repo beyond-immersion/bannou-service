@@ -75,6 +75,7 @@ info:
 # Output: schemas/Generated/faction-lifecycle-events.yaml
 x-lifecycle:
   Faction:
+    deprecation: true
     model:
       factionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the faction" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this faction belongs to" }

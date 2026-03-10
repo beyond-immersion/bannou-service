@@ -7,6 +7,8 @@ using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.Bannou.Behavior.Coordination;
 
@@ -22,6 +24,7 @@ namespace BeyondImmersion.Bannou.Behavior.Coordination;
 /// <item>Special bindings ("self", "target") from context</item>
 /// </list>
 /// </remarks>
+[BannouHelperService("entity", typeof(IBehaviorService), typeof(IEntityResolver), lifetime: ServiceLifetime.Singleton)]
 public sealed class EntityResolver : IEntityResolver
 {
     private readonly ILogger<EntityResolver>? _logger;

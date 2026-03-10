@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Escrow;
 
@@ -10,6 +11,7 @@ namespace BeyondImmersion.BannouService.Escrow;
 /// Background service that checks for expired confirmation deadlines
 /// and applies the configured timeout behavior (auto_confirm, dispute, or refund).
 /// </summary>
+[BannouHelperService("escrow-confirmation-timeout", typeof(IEscrowService), typeof(IHostedService), lifetime: ServiceLifetime.Singleton)]
 public class EscrowConfirmationTimeoutService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

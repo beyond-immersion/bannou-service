@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Auth.Services;
 
@@ -28,6 +30,7 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// would need to be extended to write to that external Redis.
 /// </para>
 /// </remarks>
+[BannouHelperService("openresty-edge", typeof(IAuthService), typeof(IEdgeRevocationProvider), lifetime: ServiceLifetime.Scoped)]
 public class OpenrestyEdgeProvider : IEdgeRevocationProvider
 {
     private readonly AuthServiceConfiguration _configuration;

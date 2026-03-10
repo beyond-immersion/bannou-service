@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.IO.Compression;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 
@@ -16,6 +17,7 @@ namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 /// Implementation of save data export and import operations.
 /// Handles archive creation, download, and conflict resolution.
 /// </summary>
+[BannouHelperService("save-export-import", typeof(ISaveLoadService), typeof(ISaveExportImportManager), lifetime: ServiceLifetime.Scoped)]
 public sealed class SaveExportImportManager : ISaveExportImportManager
 {
     /// <summary>Queryable store for save slot metadata (MySQL-backed for LINQ queries).</summary>

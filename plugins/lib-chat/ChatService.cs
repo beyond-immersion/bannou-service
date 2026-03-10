@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Chat;
 /// </para>
 /// </remarks>
 [BannouService("chat", typeof(IChatService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFoundation)]
-public partial class ChatService : IChatService
+public partial class ChatService : IChatService, ICleanDeprecatedEntity
 {
     private const string TYPE_KEY_PREFIX = "type:";
     private const string ROOM_KEY_PREFIX = "room:";

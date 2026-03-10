@@ -35,7 +35,7 @@ namespace BeyondImmersion.BannouService.License;
 /// </para>
 /// </remarks>
 [BannouService("license", typeof(ILicenseService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
-public partial class LicenseService : ILicenseService
+public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<LicenseService> _logger;

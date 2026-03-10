@@ -70,13 +70,6 @@ public class MessagingSubscriptionRecoveryServiceTests
     }
 
     #region Constructor Tests
-
-    [Fact]
-    public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<MessagingSubscriptionRecoveryService>();
-    }
-
     #endregion
 
     #region ExecuteAsync Tests

@@ -11,6 +11,8 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Handlers;
 
@@ -45,6 +47,7 @@ namespace BeyondImmersion.BannouService.Actor.Handlers;
 /// after the specified delay. Uses the standard tap pattern.
 /// </para>
 /// </remarks>
+[BannouHelperService("schedule-event", typeof(IActorService), typeof(IActionHandler), lifetime: ServiceLifetime.Singleton)]
 public sealed class ScheduleEventHandler : IActionHandler
 {
     private const string ACTION_NAME = "schedule_event";

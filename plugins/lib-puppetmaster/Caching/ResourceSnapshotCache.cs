@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Text;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Caching;
 
@@ -26,6 +27,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Caching;
 /// <b>Thread Safety</b>: All operations are thread-safe via ConcurrentDictionary.
 /// </para>
 /// </remarks>
+[BannouHelperService("resource-snapshot", typeof(IPuppetmasterService), typeof(IResourceSnapshotCache), lifetime: ServiceLifetime.Singleton)]
 public sealed class ResourceSnapshotCache : IResourceSnapshotCache
 {
     private readonly IServiceScopeFactory _scopeFactory;

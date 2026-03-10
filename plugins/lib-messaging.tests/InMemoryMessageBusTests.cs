@@ -26,9 +26,7 @@ public class InMemoryMessageBusTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<InMemoryMessageBus>();
-        Assert.NotNull(_messageBus);
+    {        Assert.NotNull(_messageBus);
     }
 
     #endregion

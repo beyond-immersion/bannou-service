@@ -6,6 +6,8 @@ using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LibOrchestrator;
 
@@ -13,6 +15,7 @@ namespace LibOrchestrator;
 /// Manages intelligent service restart logic with Docker container lifecycle management.
 /// Uses Docker.DotNet for container operations (Docker Compose environments).
 /// </summary>
+[BannouHelperService("smart-restart", typeof(IOrchestratorService), typeof(ISmartRestartManager), lifetime: ServiceLifetime.Singleton)]
 public class SmartRestartManager : ISmartRestartManager
 {
     private readonly ILogger<SmartRestartManager> _logger;

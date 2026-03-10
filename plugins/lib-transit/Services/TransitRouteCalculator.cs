@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Transit;
 
@@ -30,6 +32,7 @@ namespace BeyondImmersion.BannouService.Transit;
 /// variable provider when GOAP evaluates results. Returns objective travel data.
 /// </para>
 /// </remarks>
+[BannouHelperService("transit-route", typeof(ITransitService), typeof(ITransitRouteCalculator), lifetime: ServiceLifetime.Singleton)]
 internal sealed class TransitRouteCalculator : ITransitRouteCalculator
 {
     private readonly ITransitConnectionGraphCache _graphCache;

@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using RmqExchangeType = RabbitMQ.Client.ExchangeType;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Messaging;
 
@@ -38,6 +40,7 @@ namespace BeyondImmersion.BannouService.Messaging;
 /// processing requires access to <c>BasicProperties.Headers</c> for metadata extraction.
 /// </para>
 /// </remarks>
+[BannouHelperService("dead-letter-consumer", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
 public sealed class DeadLetterConsumerService : BackgroundService
 {
     /// <summary>

@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 
@@ -15,6 +16,7 @@ namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 /// Implementation of version cleanup operations.
 /// Handles rolling cleanup and slot-level version management.
 /// </summary>
+[BannouHelperService("version-cleanup", typeof(ISaveLoadService), typeof(IVersionCleanupManager), lifetime: ServiceLifetime.Scoped)]
 public sealed class VersionCleanupManager : IVersionCleanupManager
 {
     /// <summary>Queryable store for version manifests (MySQL-backed for LINQ queries).</summary>

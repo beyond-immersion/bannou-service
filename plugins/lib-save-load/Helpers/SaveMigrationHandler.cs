@@ -8,12 +8,14 @@ using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 
 /// <summary>
 /// Implementation of schema registration and save data migration operations.
 /// </summary>
+[BannouHelperService("save-migration", typeof(ISaveLoadService), typeof(ISaveMigrationHandler), lifetime: ServiceLifetime.Scoped)]
 public sealed class SaveMigrationHandler : ISaveMigrationHandler
 {
     /// <summary>Store for schema definitions (basic CRUD operations).</summary>

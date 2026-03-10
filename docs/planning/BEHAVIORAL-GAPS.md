@@ -1,6 +1,6 @@
 # Behavioral Gaps: What the Behavior System Must Become
 
-> **Type**: Gap Analysis
+> **Type**: Architectural Analysis
 > **Status**: Active
 > **Created**: 2026-03-10
 > **Last Updated**: 2026-03-10
@@ -8,7 +8,13 @@
 > **Related Plugins**: Behavior, Actor, Puppetmaster, Cinematic, Director, Agency, Broadcast
 > **Source Documents**: VISION.md, PLAYER-VISION.md, VIDEO-DIRECTOR.md, COMPOSITIONAL-CINEMATICS.md, DEVELOPER-STREAMS.md, BEHAVIOR-COMPOSITION.md, CINEMATIC-SYSTEM.md, ABML-GOAP-OPPORTUNITIES.md, BEHAVIORAL-BOOTSTRAP.md, ACTOR-BOUND-ENTITIES.md
 
-## Executive Summary
+## Summary
+
+Catalogs every identified gap between the behavior system's current implementation (ABML compiler, GOAP planner, Actor runtime, Puppetmaster) and the requirements revealed by planning documents (VIDEO-DIRECTOR, COMPOSITIONAL-CINEMATICS, DEVELOPER-STREAMS, BEHAVIOR-COMPOSITION). The core infrastructure is solid; the missing layers are behavior composition (component registry, plan cache, composite assembly) and domain-specific SDKs and content (cinematic, economic, directing, god-actor behaviors). Gaps are organized into 12 categories with priority tiers and GH issue cross-references.
+
+---
+
+## Context
 
 The Bannou behavior system — ABML compiler, GOAP planner, Actor runtime, and Puppetmaster orchestration — is the keystone of every north star. It powers NPC autonomy (#1), drives the content flywheel (#2), must scale to 100,000+ agents (#3), and enables all emergent systems (#5). The core infrastructure is **solid and implemented**: a multi-phase compiler producing 58+ opcodes, an A*-based GOAP planner, a 5-stage cognition pipeline, 13 variable provider namespaces, continuation point opcodes, and a distributed Actor pool architecture.
 
@@ -87,15 +93,15 @@ This document catalogs every identified gap, organized by architectural category
 
 **GH Issue**: None
 
-### 1.6 No String Operations in Bytecode VM
+### 1.6 String Operations Delegated to Expression Evaluator (Intentional Design)
 
-**Required by**: VIDEO-DIRECTOR (template name matching, theme selection), DEVELOPER-STREAMS (file path context inference, build output parsing)
+**Referenced by**: VIDEO-DIRECTOR (template name matching, theme selection), DEVELOPER-STREAMS (file path context inference, build output parsing)
 
 **Current state**: The stack VM operates on doubles exclusively. String operations exist in the expression evaluator (`upper`, `lower`, `trim`, `split`, `join`, `format`) but not in the bytecode instruction set. `PushString` exists but primarily for output/logging.
 
-**Impact**: Any behavior that needs to process string data (parse file paths, match patterns, format messages) must route through the expression evaluator, which adds overhead and limits composability with stack operations.
+**Assessment**: This is a **deliberate performance decision**, not a gap. A doubles-only stack VM is a common optimization for hot-path evaluation at 100K agent scale -- adding string processing to the bytecode VM would introduce significant memory pressure and complexity. The expression evaluator is the correct architectural location for string operations. Behaviors that need string processing (parsing file paths, matching patterns, formatting messages) route through the expression evaluator, which is acceptable overhead given these are typically low-frequency operations compared to numeric condition evaluation.
 
-**GH Issue**: None
+**Status**: Working as designed. No change needed.
 
 ### 1.7 No Formal Error Recovery in ABML Flows
 
@@ -213,7 +219,9 @@ This document catalogs every identified gap, organized by architectural category
 
 **Current state**: Zero behavior components exist in any registry. No combat exchanges, no routine behaviors (commute, work, meal, rest), no narrative beat components, no music phrase components.
 
-**Impact**: Even if the registry and assembler were built, there is nothing to compose. The component libraries are pure content creation work — hundreds of hand-crafted ABML documents designed for composition. COMPOSITIONAL-CINEMATICS estimates needing 200+ combat components, 50+ dialogue components per register, and 30+ transition components for a single domain.
+**Impact**: Even if the registry and assembler were built, there is nothing to compose. COMPOSITIONAL-CINEMATICS estimates needing 200+ combat components, 50+ dialogue components per register, and 30+ transition components for a single domain.
+
+**Important distinction**: This is fundamentally a **content creation gap**, not an engineering gap. Component libraries are months of hand-crafted ABML authoring work -- hundreds of behavior documents designed for composition, each requiring game design expertise and iterative tuning. This depends on Ring 2 infrastructure (registry, assembler, fingerprinting) existing first, but "fixing" this gap means sustained content creation effort, not code development. It should be planned and resourced differently from the engineering gaps in this document.
 
 **GH Issue**: None
 
@@ -505,6 +513,14 @@ Client-side LLM using activity events + Documentation entries to generate natura
 
 **Impact**: Keyword-based memory search cannot handle semantic similarity ("find memories about betrayal" when the stored memory says "ally turned against me in battle"). Embedding-based search is required for narratively rich NPC memory.
 
+**Architectural constraint**: Embedding computation (ML inference) does NOT belong in Bannou server-side. This follows the same principle as dynamic dialogue and stream commentary: Bannou provides structured data and storage; ML inference runs on client machines or developer infrastructure. The pattern is:
+- **Client SDK / game engine** computes embedding vectors using the developer's own ML resources (embedded model or cloud API)
+- **Bannou** stores and indexes pre-computed vectors via `IMemoryStore`
+- Sorting, tagging, and cross-referencing are the responsibility of the importer/SDK/client when writing memory entries
+- Any after-the-fact semantic connection building is manual maintenance work or client-side ML inference
+
+Bannou's role is vector storage and similarity search (cosine distance over stored vectors), not vector computation. The `IMemoryStore` implementation would accept pre-computed vectors and provide nearest-neighbor queries.
+
 **GH Issue**: #606
 
 ### 9.6 No Game Engine ↔ Actor WebSocket Transport
@@ -583,13 +599,13 @@ Client-side LLM using activity events + Documentation entries to generate natura
 
 **GH Issue**: None
 
-### 11.3 No Perception Filtering for God-Actors
+### 11.3 No Domain-Aware Event Subscription Scoping for God-Actors
 
 **Required by**: BEHAVIORAL-BOOTSTRAP (gods perceive different events differently), VISION (aesthetic preferences)
 
-**Current state**: The 5-stage cognition pipeline exists with attention filtering. But there is no mechanism for god-actors to subscribe to and filter specific event streams based on their domain (Ares perceives battles, Hermes perceives trades, Moira perceives deaths).
+**Current state**: The 5-stage cognition pipeline's attention filtering (Stage 2) **exists and works** -- actors can filter perceptions based on relevance. What is missing is **domain-aware event subscription at the message bus level** so that gods only receive events matching their domain interests in the first place. Currently, a god-actor would need to subscribe to all events in its region and rely on ABML-level attention filtering to discard irrelevant ones.
 
-**Impact**: Without domain-specific perception filtering, god-actors would need to process every event in their region and filter in ABML — which doesn't scale. The attention filter needs domain-aware subscription so gods only receive events matching their interests.
+**Impact**: The attention filter mechanism is correct for within-actor filtering. The gap is upstream: Ares should subscribe only to combat-related event topics, Hermes only to trade-related topics, Moira only to death-related topics. Without topic-level subscription scoping, god-actors in busy regions receive and discard large volumes of irrelevant events, which doesn't scale. The fix is subscription-level filtering (configurable topic subscriptions per actor based on domain metadata), not a new filtering mechanism.
 
 **GH Issue**: None
 

@@ -9,6 +9,8 @@ using BeyondImmersion.BannouService.CharacterPersonality.Caching;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.CharacterPersonality.Providers;
 
@@ -16,6 +18,7 @@ namespace BeyondImmersion.BannouService.CharacterPersonality.Providers;
 /// Factory for creating CombatPreferencesProvider instances.
 /// Registered with DI as IVariableProviderFactory for Actor to discover.
 /// </summary>
+[BannouHelperService("combat-preferences-provider", typeof(ICharacterPersonalityService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class CombatPreferencesProviderFactory : IVariableProviderFactory
 {
     private readonly IPersonalityDataCache _cache;

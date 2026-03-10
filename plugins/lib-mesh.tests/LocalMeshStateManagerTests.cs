@@ -38,13 +38,6 @@ public class LocalMeshStateManagerTests : IAsyncDisposable
     }
 
     #region Constructor Tests
-
-    [Fact]
-    public void Constructor_ShouldNotThrow_WithValidDependencies()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<LocalMeshStateManager>();
-    }
-
     #endregion
 
     #region InitializeAsync Tests

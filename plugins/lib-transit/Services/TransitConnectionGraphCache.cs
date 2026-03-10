@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Transit;
 
@@ -24,6 +26,7 @@ namespace BeyondImmersion.BannouService.Transit;
 /// with message templates. Uses IStateStoreFactory for state access.
 /// </para>
 /// </remarks>
+[BannouHelperService("transit-connection-graph", typeof(ITransitService), typeof(ITransitConnectionGraphCache), lifetime: ServiceLifetime.Singleton)]
 internal sealed class TransitConnectionGraphCache : ITransitConnectionGraphCache
 {
     private readonly IStateStore<List<ConnectionGraphEntry>> _connectionGraphStore;

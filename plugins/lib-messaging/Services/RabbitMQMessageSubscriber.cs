@@ -11,6 +11,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
 using RmqExchangeType = RabbitMQ.Client.ExchangeType;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -27,6 +29,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// Messages are deserialized using BannouJson for consistency across the codebase.
 /// </para>
 /// </remarks>
+[BannouHelperService("rabbit-m-q-message", typeof(IMessagingService), typeof(IMessageSubscriber), lifetime: ServiceLifetime.Singleton)]
 public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDisposable
 {
     private readonly IChannelManager _channelManager;

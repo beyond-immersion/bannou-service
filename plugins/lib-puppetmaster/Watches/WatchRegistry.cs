@@ -4,6 +4,8 @@
 // =============================================================================
 
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 
@@ -23,6 +25,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 /// all its watches are automatically cleaned up.
 /// </para>
 /// </remarks>
+[BannouHelperService("watch", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
 public sealed class WatchRegistry
 {
     // actorId -> { resourceKey -> WatchEntry }

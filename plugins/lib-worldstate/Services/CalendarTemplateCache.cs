@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Worldstate;
 
@@ -8,6 +10,7 @@ namespace BeyondImmersion.BannouService.Worldstate;
 /// In-memory cache for calendar template models backed by MySQL.
 /// Uses a ConcurrentDictionary with timestamp-based TTL expiry.
 /// </summary>
+[BannouHelperService("calendar-template", typeof(IWorldstateService), typeof(ICalendarTemplateCache), lifetime: ServiceLifetime.Singleton)]
 internal sealed class CalendarTemplateCache : ICalendarTemplateCache
 {
     private readonly IStateStore<CalendarTemplateModel> _calendarStore;

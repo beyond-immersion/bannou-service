@@ -5,6 +5,8 @@
 // =============================================================================
 
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 
@@ -22,6 +24,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 /// from x-resource-mapping extensions in event schemas.
 /// </para>
 /// </remarks>
+[BannouHelperService("resource-event", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
 public sealed class ResourceEventMapping
 {
     private readonly ConcurrentDictionary<string, SourceTypeMapping> _sourceToMapping = new();

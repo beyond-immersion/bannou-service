@@ -7,13 +7,6 @@ namespace BeyondImmersion.BannouService.Status.Tests;
 public class StatusServiceTests
 {
     #region Constructor Validation
-
-    [Fact]
-    public void StatusService_ConstructorDependencies_AreValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<StatusService>();
-    }
-
     #endregion
 
     #region Configuration Tests

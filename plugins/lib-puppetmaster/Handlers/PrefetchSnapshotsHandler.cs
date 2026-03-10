@@ -10,6 +10,8 @@ using BeyondImmersion.BannouService.Puppetmaster.Caching;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 
@@ -39,6 +41,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 /// </code>
 /// </para>
 /// </remarks>
+[BannouHelperService("prefetch-snapshots", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
 public sealed class PrefetchSnapshotsHandler : IActionHandler
 {
     private readonly IResourceSnapshotCache _cache;

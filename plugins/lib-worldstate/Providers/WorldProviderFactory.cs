@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Worldstate.Providers;
 
@@ -25,6 +26,7 @@ namespace BeyondImmersion.BannouService.Worldstate.Providers;
 /// exposing internal types in the public constructor (CS0051 prevention).
 /// </para>
 /// </remarks>
+[BannouHelperService("world-provider", typeof(IWorldstateService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class WorldProviderFactory : IVariableProviderFactory
 {
     private readonly IRealmClockCache _clockCache;

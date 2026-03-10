@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Voice.Services;
 
@@ -11,6 +13,7 @@ namespace BeyondImmersion.BannouService.Voice.Services;
 /// Implementation of scaled tier coordinator for SFU-based voice conferencing.
 /// Manages SIP credential generation and RTPEngine integration.
 /// </summary>
+[BannouHelperService("scaled-tier", typeof(IVoiceService), typeof(IScaledTierCoordinator), lifetime: ServiceLifetime.Singleton)]
 public class ScaledTierCoordinator : IScaledTierCoordinator
 {
     private readonly IRtpEngineClient _rtpEngineClient;

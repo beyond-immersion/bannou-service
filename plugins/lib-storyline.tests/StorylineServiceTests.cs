@@ -22,13 +22,6 @@ namespace BeyondImmersion.BannouService.Storyline.Tests;
 public class StorylineServiceTests
 {
     #region Constructor Validation
-
-    [Fact]
-    public void StorylineService_HasValidConstructorPattern()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<StorylineService>();
-    }
-
     #endregion
 
     #region Configuration Tests
@@ -939,7 +932,7 @@ public class StorylineDeprecationTests : ServiceTestBase<StorylineServiceConfigu
         };
 
         // Act
-        var status = await service.DeprecateScenarioDefinitionAsync(request, CancellationToken.None);
+        var (status, _) = await service.DeprecateScenarioDefinitionAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -983,7 +976,7 @@ public class StorylineDeprecationTests : ServiceTestBase<StorylineServiceConfigu
         var request = new DeprecateScenarioDefinitionRequest { ScenarioId = scenarioId };
 
         // Act
-        var status = await service.DeprecateScenarioDefinitionAsync(request, CancellationToken.None);
+        var (status, _) = await service.DeprecateScenarioDefinitionAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);

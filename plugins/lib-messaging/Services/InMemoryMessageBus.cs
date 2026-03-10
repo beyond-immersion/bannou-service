@@ -7,6 +7,8 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -15,6 +17,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// Messages are NOT actually published to any broker - just logged for debugging.
 /// Provides local event fan-out within the same process.
 /// </summary>
+[BannouHelperService("in-memory-message-bus", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
 public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
 {
     private readonly ILogger<InMemoryMessageBus> _logger;

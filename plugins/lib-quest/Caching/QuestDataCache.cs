@@ -8,6 +8,7 @@ using BeyondImmersion.Bannou.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Quest.Caching;
 
@@ -15,6 +16,7 @@ namespace BeyondImmersion.BannouService.Quest.Caching;
 /// Caches character quest data for actor behavior execution.
 /// Uses ConcurrentDictionary for thread-safety (IMPLEMENTATION TENETS compliant).
 /// </summary>
+[BannouHelperService("quest-data", typeof(IQuestService), typeof(IQuestDataCache), lifetime: ServiceLifetime.Singleton)]
 public sealed class QuestDataCache : IQuestDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;

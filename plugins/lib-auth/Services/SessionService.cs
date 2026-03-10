@@ -2,6 +2,8 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Auth.Services;
 
@@ -9,6 +11,7 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// Implementation of session lifecycle management.
 /// Handles session storage, retrieval, indexing, and invalidation in Redis.
 /// </summary>
+[BannouHelperService("session", typeof(IAuthService), typeof(ISessionService), lifetime: ServiceLifetime.Scoped)]
 public class SessionService : ISessionService
 {
     private readonly IMessageBus _messageBus;

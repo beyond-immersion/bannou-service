@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Voice.Clients;
 
@@ -12,6 +14,7 @@ namespace BeyondImmersion.BannouService.Voice.Clients;
 /// Thread-safe implementation suitable for multi-instance deployments (FOUNDATION TENETS).
 /// Uses cookie-prefixed bencode messages as per ng protocol specification.
 /// </summary>
+[BannouHelperService("rtp-engine", typeof(IVoiceService), typeof(IRtpEngineClient), lifetime: ServiceLifetime.Singleton)]
 public class RtpEngineClient : IRtpEngineClient
 {
     private readonly UdpClient _client;

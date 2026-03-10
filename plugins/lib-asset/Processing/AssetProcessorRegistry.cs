@@ -1,10 +1,13 @@
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Asset.Processing;
 
 /// <summary>
 /// Registry for asset processors. Manages processor discovery and routing.
 /// </summary>
+[BannouHelperService("asset-processor", typeof(IAssetService), lifetime: ServiceLifetime.Singleton)]
 public sealed class AssetProcessorRegistry
 {
     private readonly IReadOnlyList<IAssetProcessor> _processors;

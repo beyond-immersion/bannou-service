@@ -8,6 +8,8 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Location.Caching;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Location.Providers;
 
@@ -15,6 +17,7 @@ namespace BeyondImmersion.BannouService.Location.Providers;
 /// Factory for creating LocationContextProvider instances.
 /// Registered with DI as IVariableProviderFactory for Actor to discover.
 /// </summary>
+[BannouHelperService("location-context-provider", typeof(ILocationService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class LocationContextProviderFactory : IVariableProviderFactory
 {
     private readonly ILocationDataCache _cache;

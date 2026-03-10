@@ -157,6 +157,7 @@ Most structural validators are **centralized in `structural-tests/StructuralTest
 | `EventPublishingValidator` | `Service_CallsAllGeneratedEventPublishers` | Declared events never published |
 | `ResourceCleanupValidator` | `Service_HasRequiredCleanupMethods` | Missing cleanup methods for x-references |
 | `PermissionMatrixValidator` | `Service_PermissionRegistrationEndpointCountMatchesSchema` | Permission count mismatches |
+| *(schema scan)* | `Services_WithDeprecation_MustImplementDeprecationInterface` | Services with `deprecation: true` missing `IDeprecateAndMergeEntity` (Cat A) or `ICleanDeprecatedEntity` (Cat B) |
 
 Additionally, IL-level scanning validates no direct `JsonSerializer`, `Environment.GetEnvironmentVariable`, infrastructure client, or `Microsoft.AspNetCore.Http.StatusCodes` usage.
 

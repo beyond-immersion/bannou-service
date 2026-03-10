@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Voice.Services;
 
@@ -8,6 +10,7 @@ namespace BeyondImmersion.BannouService.Voice.Services;
 /// Implementation of P2P mesh topology coordinator.
 /// Manages peer connections and tier upgrade decisions for voice rooms.
 /// </summary>
+[BannouHelperService("p2-p", typeof(IVoiceService), typeof(IP2PCoordinator), lifetime: ServiceLifetime.Singleton)]
 public class P2PCoordinator : IP2PCoordinator
 {
     private readonly ISipEndpointRegistry _endpointRegistry;

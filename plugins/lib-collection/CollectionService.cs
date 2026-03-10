@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Collection;
 /// </para>
 /// </remarks>
 [BannouService("collection", typeof(ICollectionService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
-public partial class CollectionService : ICollectionService
+public partial class CollectionService : ICollectionService, ICleanDeprecatedEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<CollectionService> _logger;

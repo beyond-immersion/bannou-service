@@ -7,6 +7,8 @@ using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.Bannou.Behavior.Dialogue;
 
@@ -26,6 +28,7 @@ namespace BeyondImmersion.Bannou.Behavior.Dialogue;
 /// After resolution, template variables are evaluated in the final text.
 /// </para>
 /// </remarks>
+[BannouHelperService("dialogue", typeof(IBehaviorService), typeof(IDialogueResolver), lifetime: ServiceLifetime.Singleton)]
 public sealed class DialogueResolver : IDialogueResolver
 {
     private readonly IExternalDialogueLoader _loader;

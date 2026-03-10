@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using OtpNet;
 using System.Security.Cryptography;
 using System.Text;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Auth.Services;
 
@@ -12,6 +14,7 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// Handles secret generation/encryption, TOTP validation, recovery code management,
 /// and Redis-backed challenge/setup token lifecycle.
 /// </summary>
+[BannouHelperService("mfa", typeof(IAuthService), typeof(IMfaService), lifetime: ServiceLifetime.Scoped)]
 public class MfaService : IMfaService
 {
     private readonly AuthServiceConfiguration _configuration;

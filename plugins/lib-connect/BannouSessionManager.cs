@@ -2,6 +2,8 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -9,6 +11,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Session management for distributed WebSocket connection state.
 /// Uses Redis state store and message bus for infrastructure access.
 /// </summary>
+[BannouHelperService("bannou-session", typeof(IConnectService), typeof(ISessionManager), lifetime: ServiceLifetime.Singleton)]
 public class BannouSessionManager : ISessionManager
 {
     private readonly IMessageBus _messageBus;

@@ -32,7 +32,7 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// </para>
 /// </remarks>
 [BannouService("gardener", typeof(IGardenerService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
-public partial class GardenerService : IGardenerService
+public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<GardenerService> _logger;

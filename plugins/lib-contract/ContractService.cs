@@ -24,7 +24,7 @@ namespace BeyondImmersion.BannouService.Contract;
 /// </para>
 /// </remarks>
 [BannouService("contract", typeof(IContractService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFoundation)]
-public partial class ContractService : IContractService
+public partial class ContractService : IContractService, ICleanDeprecatedEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly IServiceNavigator _navigator;

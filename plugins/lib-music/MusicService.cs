@@ -15,8 +15,10 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SdkChordQuality = BeyondImmersion.Bannou.MusicTheory.Collections.ChordQuality;
 using SdkContourShape = BeyondImmersion.Bannou.MusicTheory.Melody.ContourShape;
+using SdkModeType = BeyondImmersion.Bannou.MusicTheory.Collections.ModeType;
+using SdkPitchClass = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass;
+using SdkPitchRange = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange;
 
 namespace BeyondImmersion.BannouService.Music;
 
@@ -96,11 +98,11 @@ public partial class MusicService : IMusicService
         var seed = body.Seed ?? Environment.TickCount;
         var random = new Random(seed);
 
-        // Determine key signature (PitchClass has x-sdk-type, no conversion needed)
+        // Convert generated types to SDK types at boundary for Scale construction
         var key = body.Key != null
-            ? new Scale(body.Key.Tonic, TestableToModeType(body.Key.Mode))
+            ? new Scale(MusicServiceMapper.ToSdkPitchClass(body.Key.Tonic), MusicServiceMapper.TestableToModeType(body.Key.Mode))
             : new Scale(
-                (PitchClass)random.Next(12),
+                (SdkPitchClass)random.Next(12),
                 style.ModeDistribution.Select(random));
 
         // Determine tempo
@@ -146,7 +148,7 @@ public partial class MusicService : IMusicService
         // Generate melody over the harmony with Storyteller-guided contour
         var melodyOptions = new MelodyOptions
         {
-            Range = PitchRange.Vocal.Soprano,
+            Range = SdkPitchRange.Vocal.Soprano,
             Contour = GetContourFromStoryResult(storyResult),
             IntervalPreferences = style.IntervalPreferences,
             Density = GetDensityFromStoryResult(storyResult),
@@ -171,14 +173,14 @@ public partial class MusicService : IMusicService
         var response = new GenerateCompositionResponse
         {
             CompositionId = Guid.NewGuid(),
-            MidiJson = midiJson,
+            MidiJson = MusicServiceMapper.ToApiMidiJson(midiJson),
             Metadata = new CompositionMetadata
             {
                 StyleId = body.StyleId,
                 Key = new KeySignature
                 {
-                    Tonic = key.Root,
-                    Mode = TestableToApiMode(key.Mode)
+                    Tonic = MusicServiceMapper.ToApiPitchClass(key.Root),
+                    Mode = MusicServiceMapper.TestableToApiMode(key.Mode)
                 },
                 Tempo = tempo,
                 Bars = totalBars,
@@ -422,7 +424,7 @@ public partial class MusicService : IMusicService
         _logger.LogDebug("Generating progression in {Tonic} {Mode}", body.Key.Tonic, body.Key.Mode);
 
         var seed = body.Seed ?? Environment.TickCount;
-        var scale = new Scale(body.Key.Tonic, TestableToModeType(body.Key.Mode));
+        var scale = new Scale(MusicServiceMapper.ToSdkPitchClass(body.Key.Tonic), MusicServiceMapper.TestableToModeType(body.Key.Mode));
         var generator = new ProgressionGenerator(seed);
 
         var length = body.Length ?? _configuration.DefaultProgressionLength;
@@ -441,9 +443,9 @@ public partial class MusicService : IMusicService
             {
                 Chord = new ChordSymbol
                 {
-                    Root = chord.Chord.Root,
-                    Quality = ToApiChordQuality(chord.Chord.Quality),
-                    Bass = chord.Chord.Bass
+                    Root = MusicServiceMapper.ToApiPitchClass(chord.Chord.Root),
+                    Quality = MusicServiceMapper.ToApiChordQuality(chord.Chord.Quality),
+                    Bass = chord.Chord.Bass.HasValue ? MusicServiceMapper.ToApiPitchClass(chord.Chord.Bass.Value) : null
                 },
                 StartTick = currentTick,
                 DurationTicks = durationTicks,
@@ -483,26 +485,25 @@ public partial class MusicService : IMusicService
         // Infer key from first chord (or default to C major)
         var firstChord = body.Harmony?.FirstOrDefault();
         var root = firstChord?.Chord.Root ?? PitchClass.C;
-        var mode = ModeType.Major;
-        var scale = new Scale(root, mode);
+        var sdkRoot = MusicServiceMapper.ToSdkPitchClass(root);
+        var mode = SdkModeType.Major;
+        var scale = new Scale(sdkRoot, mode);
 
-        // Convert harmony to SDK progression (PitchClass has x-sdk-type, no conversion needed)
+        // Convert harmony to SDK progression (generated→SDK at boundary)
         var progression = body.Harmony?.Select((ce, i) => new ProgressionChord(
-            new Chord(ce.Chord.Root, ToSdkChordQuality(ce.Chord.Quality)),
+            new Chord(MusicServiceMapper.ToSdkPitchClass(ce.Chord.Root), MusicServiceMapper.ToSdkChordQuality(ce.Chord.Quality)),
             ce.RomanNumeral ?? GetRomanNumeral(i),
             i + 1,
             ce.DurationTicks / 480.0
         )).ToList() ?? [];
 
-        // Set up melody options (Pitch and PitchRange have x-sdk-type, no conversion needed)
+        // Convert generated PitchRange to SDK PitchRange at boundary
         var range = body.Range != null
-            ? new PitchRange(
-                new Pitch(body.Range.Value.Low.PitchClass, body.Range.Value.Low.Octave),
-                new Pitch(body.Range.Value.High.PitchClass, body.Range.Value.High.Octave))
-            : PitchRange.Vocal.Soprano;
+            ? MusicServiceMapper.ToSdkPitchRange(body.Range)
+            : SdkPitchRange.Vocal.Soprano;
 
         var contour = body.Contour.HasValue
-            ? ToSdkContourShape(body.Contour.Value)
+            ? MusicServiceMapper.ToSdkContourShape(body.Contour.Value)
             : SdkContourShape.Arch;
 
         var options = new MelodyOptions
@@ -517,10 +518,10 @@ public partial class MusicService : IMusicService
         var generator = new MelodyGenerator(seed);
         var melody = generator.Generate(progression, scale, options);
 
-        // Convert to API response (Pitch is SDK type via x-sdk-type)
+        // Convert SDK melody notes to generated types at boundary
         var notes = melody.Select(n => new NoteEvent
         {
-            Pitch = n.Pitch,
+            Pitch = MusicServiceMapper.ToApiPitch(n.Pitch),
             StartTick = n.StartTick,
             DurationTicks = n.DurationTicks,
             Velocity = n.Velocity
@@ -530,7 +531,7 @@ public partial class MusicService : IMusicService
         var analysis = new MelodyAnalysis
         {
             NoteCount = notes.Count,
-            Contour = ToApiContourShape(contour),
+            Contour = MusicServiceMapper.ToApiContourShape(contour),
             AverageNoteDuration = notes.Count > 0
                 ? (float)notes.Average(n => n.DurationTicks)
                 : 0
@@ -542,7 +543,7 @@ public partial class MusicService : IMusicService
             var maxPitch = notes.MaxBy(n => n.Pitch.MidiNumber);
             if (minPitch != null && maxPitch != null)
             {
-                analysis.Range = new PitchRange(minPitch.Pitch, maxPitch.Pitch);
+                analysis.Range = new PitchRange { Low = minPitch.Pitch, High = maxPitch.Pitch };
             }
         }
 
@@ -565,29 +566,22 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Applying voice leading to {ChordCount} chords", body.Chords?.Count ?? 0);
 
-        // Convert API chords to SDK chords (PitchClass has x-sdk-type, no conversion needed)
+        // Convert generated types to SDK types at boundary
         var chords = body.Chords?.Select(cs =>
-            new Chord(cs.Root, ToSdkChordQuality(cs.Quality), cs.Bass)
+            new Chord(
+                MusicServiceMapper.ToSdkPitchClass(cs.Root),
+                MusicServiceMapper.ToSdkChordQuality(cs.Quality),
+                cs.Bass.HasValue ? MusicServiceMapper.ToSdkPitchClass(cs.Bass.Value) : null)
         ).ToList() ?? [];
 
-        // Set up voice leading rules
-        var rules = new VoiceLeadingRules
-        {
-            AvoidParallelFifths = body.Rules?.AvoidParallelFifths ?? true,
-            AvoidParallelOctaves = body.Rules?.AvoidParallelOctaves ?? true,
-            PreferStepwiseMotion = body.Rules?.PreferStepwiseMotion ?? true,
-            AvoidVoiceCrossing = body.Rules?.AvoidVoiceCrossing ?? true,
-            MaxLeap = body.Rules?.MaxLeap ?? 7
-        };
-
-        var voiceLeader = new VoiceLeader(rules);
+        // Convert generated rules to SDK rules at boundary
+        var sdkRules = MusicServiceMapper.ToSdkVoiceLeadingRules(body.Rules);
+        var voiceLeader = new VoiceLeader(sdkRules);
 
         // Voice the chords (returns voicings and violations together)
         var (voicings, sdkViolations) = voiceLeader.Voice(chords, voiceCount: _configuration.DefaultVoiceCount);
 
-        // VoiceLeadingViolation and Pitch have x-sdk-type, so SDK types are used directly
-
-        // Convert voicings to API response
+        // Convert SDK voicings to generated types at boundary
         var voicedChords = new List<VoicedChord>();
         for (int i = 0; i < voicings.Count && i < (body.Chords?.Count ?? 0); i++)
         {
@@ -597,14 +591,14 @@ public partial class MusicService : IMusicService
             voicedChords.Add(new VoicedChord
             {
                 Symbol = original,
-                Pitches = voicings[i].Pitches.ToList()
+                Pitches = voicings[i].Pitches.Select(MusicServiceMapper.ToApiPitch).ToList()
             });
         }
 
         var response = new VoiceLeadResponse
         {
             Voicings = voicedChords,
-            Violations = sdkViolations.Count > 0 ? sdkViolations.ToList() : null
+            Violations = sdkViolations.Count > 0 ? sdkViolations.Select(MusicServiceMapper.ToApiVoiceLeadingViolation).ToList() : null
         };
 
         await Task.CompletedTask;
@@ -861,50 +855,6 @@ public partial class MusicService : IMusicService
         return curve;
     }
 
-    // ToPitchClass and ToApiPitchClass removed - PitchClass has x-sdk-type (identity conversion)
-
-    // internal for switch coverage unit testing via EnumMappingValidator
-    internal static ModeType TestableToModeType(KeyMode mode) => mode switch
-    {
-        KeyMode.Major => ModeType.Major,
-        KeyMode.Minor => ModeType.Minor,
-        KeyMode.Dorian => ModeType.Dorian,
-        KeyMode.Phrygian => ModeType.Phrygian,
-        KeyMode.Lydian => ModeType.Lydian,
-        KeyMode.Mixolydian => ModeType.Mixolydian,
-        KeyMode.Aeolian => ModeType.Minor,
-        KeyMode.Locrian => ModeType.Locrian,
-        _ => ModeType.Major
-    };
-
-    // internal for switch coverage unit testing via EnumMappingValidator
-    internal static KeyMode TestableToApiMode(ModeType mode) => mode switch
-    {
-        ModeType.Major => KeyMode.Major,
-        ModeType.Minor => KeyMode.Minor,
-        ModeType.Dorian => KeyMode.Dorian,
-        ModeType.Phrygian => KeyMode.Phrygian,
-        ModeType.Lydian => KeyMode.Lydian,
-        ModeType.Mixolydian => KeyMode.Mixolydian,
-        ModeType.Locrian => KeyMode.Locrian,
-        _ => KeyMode.Major
-    };
-
-    // Schema is subset of SDK — every schema value has a matching name in SDK
-    private static SdkChordQuality ToSdkChordQuality(ChordQuality quality) =>
-        quality.MapByName<ChordQuality, SdkChordQuality>();
-
-    // SDK is superset (has MinorMajor7, Power) — extras fall back to Major
-    private static ChordQuality ToApiChordQuality(SdkChordQuality quality) =>
-        quality.MapByNameOrDefault(ChordQuality.Major);
-
-    // Schema is subset of SDK — every schema value has a matching name in SDK
-    private static SdkContourShape ToSdkContourShape(ContourShape contour) =>
-        contour.MapByName<ContourShape, SdkContourShape>();
-
-    // SDK is superset (has InvertedArch, Free) — extras fall back to Arch
-    private static ContourShape ToApiContourShape(SdkContourShape contour) =>
-        contour.MapByNameOrDefault(ContourShape.Arch);
 
     /// <summary>
     /// Derives functional analysis from scale degree.
@@ -933,8 +883,6 @@ public partial class MusicService : IMusicService
         6 => "vii°",
         _ => "I"
     };
-
-    // ConvertToApiMidiJson removed - SDK types used directly via x-sdk-type
 
     private static StyleDefinitionResponse ConvertToStyleResponse(StyleDefinition style)
     {

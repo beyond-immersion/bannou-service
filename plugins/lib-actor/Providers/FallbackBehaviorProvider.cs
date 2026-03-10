@@ -7,6 +7,8 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Providers;
 
@@ -28,6 +30,7 @@ namespace BeyondImmersion.BannouService.Actor.Providers;
 /// </list>
 /// </para>
 /// </remarks>
+[BannouHelperService("fallback-behavior", typeof(IActorService), typeof(IBehaviorDocumentProvider), lifetime: ServiceLifetime.Singleton)]
 public sealed class FallbackBehaviorProvider : IBehaviorDocumentProvider
 {
     private readonly ILogger<FallbackBehaviorProvider> _logger;

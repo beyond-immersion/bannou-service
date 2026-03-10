@@ -66,13 +66,6 @@ public class RabbitMQConnectionManagerTests : IAsyncDisposable
     }
 
     #region Constructor Tests
-
-    [Fact]
-    public void Constructor_IsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<RabbitMQConnectionManager>();
-    }
-
     [Fact]
     public void Constructor_InitializesWithZeroChannels()
     {

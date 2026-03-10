@@ -7,6 +7,8 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
 using System.Numerics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Behavior.Stack;
 
@@ -23,6 +25,7 @@ namespace BeyondImmersion.BannouService.Behavior.Stack;
 /// <item><description>Additive - Values are summed (urgency is summed and clamped)</description></item>
 /// </list>
 /// </remarks>
+[BannouHelperService("intent-stack", typeof(IBehaviorService), typeof(IIntentStackMerger), lifetime: ServiceLifetime.Singleton)]
 public sealed class IntentStackMerger : IIntentStackMerger
 {
     /// <summary>

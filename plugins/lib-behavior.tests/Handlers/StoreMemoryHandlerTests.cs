@@ -31,9 +31,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<StoreMemoryHandler>();
-        Assert.NotNull(_handler);
+    {        Assert.NotNull(_handler);
     }
 
     #endregion

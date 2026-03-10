@@ -3380,7 +3380,7 @@ public class RhythmicDensityAnalyzerTests
     [Fact]
     public void KeyMode_ToModeType_SwitchCoversAllValues() =>
         EnumMappingValidator.AssertSwitchCoversAllValues<KeyMode>(
-            mode => MusicService.TestableToModeType(mode));
+            mode => MusicServiceMapper.TestableToModeType(mode));
 
     /// <summary>
     /// Validates that the ModeType -> KeyMode switch handles all ModeType values.
@@ -3388,7 +3388,39 @@ public class RhythmicDensityAnalyzerTests
     [Fact]
     public void ModeType_ToKeyMode_SwitchCoversAllValues() =>
         EnumMappingValidator.AssertSwitchCoversAllValues<SdkModeType>(
-            mode => MusicService.TestableToApiMode(mode));
+            mode => MusicServiceMapper.TestableToApiMode(mode));
+
+    /// <summary>
+    /// Validates PitchClass full coverage: all 12 schema values match SDK values by name.
+    /// Fails if either side adds/removes/renames a value.
+    /// </summary>
+    [Fact]
+    public void PitchClass_FullCoverage_IsValid() =>
+        EnumMappingValidator.AssertFullCoverage<PitchClass, SdkPitchClass>();
+
+    /// <summary>
+    /// Validates ModeType full coverage: all 15 schema values match SDK values by name.
+    /// Fails if either side adds/removes/renames a value.
+    /// </summary>
+    [Fact]
+    public void ModeType_FullCoverage_IsValid() =>
+        EnumMappingValidator.AssertFullCoverage<ModeType, SdkModeType>();
+
+    /// <summary>
+    /// Validates MidiEventType full coverage: all 4 schema values match SDK values by name.
+    /// Fails if either side adds/removes/renames a value.
+    /// </summary>
+    [Fact]
+    public void MidiEventType_FullCoverage_IsValid() =>
+        EnumMappingValidator.AssertFullCoverage<MidiEventType, SdkMidiEventType>();
+
+    /// <summary>
+    /// Validates VoiceLeadingViolationType full coverage: all 7 schema values match SDK values by name.
+    /// Fails if either side adds/removes/renames a value.
+    /// </summary>
+    [Fact]
+    public void VoiceLeadingViolationType_FullCoverage_IsValid() =>
+        EnumMappingValidator.AssertFullCoverage<VoiceLeadingViolationType, SdkVoiceLeadingViolationType>();
 
     #endregion
 }

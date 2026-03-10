@@ -2,6 +2,8 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Asset.Processing;
 
@@ -9,6 +11,7 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 /// Processor for audio assets.
 /// Handles normalization, format conversion, and compression using FFmpeg.
 /// </summary>
+[BannouHelperService("audio-processor", typeof(IAssetService), typeof(IAssetProcessor), lifetime: ServiceLifetime.Singleton)]
 public sealed class AudioProcessor : IAssetProcessor
 {
     private readonly IAssetStorageProvider _storageProvider;

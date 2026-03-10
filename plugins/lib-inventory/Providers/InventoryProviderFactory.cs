@@ -9,6 +9,8 @@ using BeyondImmersion.BannouService.Inventory.Caching;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Inventory.Providers;
 
@@ -16,6 +18,7 @@ namespace BeyondImmersion.BannouService.Inventory.Providers;
 /// Factory for creating InventoryProvider instances.
 /// Registered with DI as IVariableProviderFactory for Actor to discover.
 /// </summary>
+[BannouHelperService("inventory-provider", typeof(IInventoryService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class InventoryProviderFactory : IVariableProviderFactory
 {
     private readonly IInventoryDataCache _cache;

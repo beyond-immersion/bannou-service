@@ -8,6 +8,8 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.PoolNode;
 
@@ -35,6 +37,7 @@ namespace BeyondImmersion.BannouService.Actor.PoolNode;
 /// </list>
 /// </para>
 /// </remarks>
+[BannouHelperService("actor-pool-node-worker", typeof(IActorService), lifetime: ServiceLifetime.Singleton)]
 public sealed class ActorPoolNodeWorker : BackgroundService
 {
     private readonly IMessageBus _messageBus;

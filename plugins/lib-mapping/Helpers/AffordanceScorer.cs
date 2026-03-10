@@ -1,4 +1,6 @@
 using System.Text.Json;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Mapping.Helpers;
 
@@ -7,6 +9,7 @@ namespace BeyondImmersion.BannouService.Mapping.Helpers;
 /// Extracted from MappingService for improved testability.
 /// All scoring weights come from MappingServiceConfiguration per IMPLEMENTATION TENETS.
 /// </summary>
+[BannouHelperService("affordance", typeof(IMappingService), typeof(IAffordanceScorer), lifetime: ServiceLifetime.Scoped)]
 public class AffordanceScorer : IAffordanceScorer
 {
     private readonly MappingServiceConfiguration _config;

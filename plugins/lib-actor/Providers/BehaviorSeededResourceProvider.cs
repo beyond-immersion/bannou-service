@@ -5,6 +5,8 @@
 
 using BeyondImmersion.BannouService.Providers;
 using System.Reflection;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Providers;
 
@@ -29,6 +31,7 @@ namespace BeyondImmersion.BannouService.Actor.Providers;
 /// </list>
 /// </para>
 /// </remarks>
+[BannouHelperService("behavior-seeded-resource", typeof(IActorService), typeof(ISeededResourceProvider), lifetime: ServiceLifetime.Singleton)]
 public sealed class BehaviorSeededResourceProvider : EmbeddedResourceProvider
 {
     /// <inheritdoc />

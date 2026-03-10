@@ -11,6 +11,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Inventory.Caching;
 
@@ -19,6 +20,7 @@ namespace BeyondImmersion.BannouService.Inventory.Caching;
 /// Uses <see cref="VariableProviderCacheBucket{TKey, TData}"/> for thread-safe
 /// TTL-based caching with stale-data fallback (IMPLEMENTATION TENETS compliant).
 /// </summary>
+[BannouHelperService("inventory-data", typeof(IInventoryService), typeof(IInventoryDataCache), lifetime: ServiceLifetime.Singleton)]
 public sealed class InventoryDataCache : IInventoryDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;

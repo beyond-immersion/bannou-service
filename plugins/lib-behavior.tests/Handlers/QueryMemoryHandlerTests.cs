@@ -31,9 +31,7 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<QueryMemoryHandler>();
-        Assert.NotNull(_handler);
+    {        Assert.NotNull(_handler);
     }
 
     #endregion

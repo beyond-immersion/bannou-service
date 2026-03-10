@@ -20,7 +20,7 @@ namespace BeyondImmersion.BannouService.Realm;
 /// Each realm operates as an independent peer with distinct characteristics.
 /// </summary>
 [BannouService("realm", typeof(IRealmService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
-public partial class RealmService : IRealmService
+public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
 {
     private readonly IStateStore<RealmModel> _realmStore;
     private readonly IStateStore<string> _codeIndexStore;

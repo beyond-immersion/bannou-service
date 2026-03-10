@@ -7,6 +7,8 @@ using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.PoolNode;
 
@@ -19,6 +21,7 @@ namespace BeyondImmersion.BannouService.Actor.PoolNode;
 /// Each pool node has a unique NodeId, so duplicate heartbeats from same node are expected.
 /// </para>
 /// </remarks>
+[BannouHelperService("heartbeat", typeof(IActorService), lifetime: ServiceLifetime.Singleton)]
 public sealed class HeartbeatEmitter : IAsyncDisposable
 {
     private readonly IMessageBus _messageBus;

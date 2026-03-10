@@ -74,9 +74,7 @@ public class SessionServiceTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<SessionService>();
-        Assert.NotNull(_service);
+    {        Assert.NotNull(_service);
     }
 
     #endregion

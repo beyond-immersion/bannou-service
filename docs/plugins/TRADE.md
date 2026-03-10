@@ -3,7 +3,7 @@
 > **Plugin**: lib-trade (not yet created)
 > **Schema**: `schemas/trade-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
-> **State Store**: trade-routes (MySQL), trade-shipments (Redis), trade-shipments-archive (MySQL), trade-tariff-policies (MySQL), trade-tariff-records (MySQL), trade-contraband (MySQL), trade-tax-policies (MySQL), trade-tax-assessments (MySQL), trade-npc-profiles (MySQL), trade-supply-demand (Redis), trade-velocity (Redis), trade-velocity-history (MySQL) — all planned
+> **State Store**: trade-routes (MySQL), trade-shipments (Redis), trade-shipments-archive (MySQL), trade-tariff-policies (MySQL), trade-tariff-records (MySQL), trade-contraband (MySQL), trade-tax-policies (MySQL), trade-tax-assessments (MySQL), trade-npc-profiles (MySQL), trade-supply-demand (Redis), trade-velocity (Redis), trade-velocity-history (MySQL), trade-lock (Redis) — 12 stores, all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
@@ -176,6 +176,46 @@ NEXT CYCLE:
 
 This is the vision from `VISION.md`: *"The economy must be NPC-driven, not player-driven. Supply, demand, pricing, and trade routes emerge from NPC behavior."*
 
+### Distributed Locking
+
+Trade uses `IDistributedLockProvider` for shipment state transition safety across multiple instances.
+
+- **Lock store**: `trade-lock` (Redis)
+- **Lock key pattern**: `trade:shipment:{shipmentId}`
+- **Lock timeout**: Configurable via `ShipmentLockTimeoutSeconds` (default: 30)
+- **Contention response**: 409 Conflict
+
+**Operations requiring locks:**
+- `/trade/shipment/depart` (preparing → in_transit transition)
+- `/trade/shipment/complete-leg` (leg advancement)
+- `/trade/shipment/border-crossing` (checkpoint state update)
+- `/trade/shipment/arrive` (completion)
+- `/trade/shipment/lost` (terminal state)
+
+### Multi-Service Compensation
+
+Per IMPLEMENTATION TENETS, every multi-service orchestration implements catch-block compensation or documents a self-healing mechanism.
+
+**Shipment Create (escrow mode):**
+- Step 1: Create Escrow agreement (lib-escrow)
+- Step 2: Transfer items to escrow custody (lib-inventory)
+- **Compensation**: If Step 2 fails → cancel Escrow agreement (Step 1 rollback). If Step 1 fails → return error, no state changed.
+
+**Shipment Depart:**
+- Step 1: Create Transit journey (lib-transit)
+- Step 2: Update shipment status to in_transit
+- **Compensation**: If Step 2 fails → abandon Transit journey (Step 1 rollback). If Step 1 fails → return error, no state changed.
+
+**Shipment Arrive (escrow mode):**
+- Step 1: Release Escrow to owner at destination (lib-escrow)
+- Step 2: Complete Transit journey (lib-transit)
+- **Self-healing**: If Step 2 fails, Escrow release stands. ShipmentExpirationWorker reconciles orphaned Transit journeys by scanning for arrived shipments with uncompleted journeys.
+
+**Border Crossing (automatic collection):**
+- Step 1: Calculate tariff → create TariffRecord
+- Step 2: Collect payment via lib-currency (if collectionMode == Automatic)
+- **Self-healing**: If Step 2 fails, TariffRecord saved with status Pending. NPC customs officer or game retries collection via `/trade/tariff/collect`.
+
 ---
 
 ## Dependencies
@@ -203,9 +243,9 @@ This is the vision from `VISION.md`: *"The economy must be NPC-driven, not playe
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-market (L4) | Subscribes to `trade.shipment.arrived` for supply arrival price updates |
-| lib-analytics (L4) | Subscribes to `trade.shipment.departed`, `trade.shipment.arrived`, `trade.shipment.lost`, `trade.shipment.border_crossed`, `trade.tariff.collected`, `trade.tariff.evaded` for economic tracking |
-| lib-puppetmaster (L4) | Subscribes to `trade.shipment.departed`, `trade.shipment.border_crossed`, `trade.shipment.lost`, `trade.velocity.alert`, `trade.tax.debt_defaulted` for divine economic intervention |
-| lib-obligation (L4) | Subscribes to `trade.tax.debt_defaulted` for enforcement obligation creation |
+| lib-analytics (L4) | Subscribes to `trade.shipment.departed`, `trade.shipment.arrived`, `trade.shipment.lost`, `trade.shipment.border-crossed`, `trade.tariff.collected`, `trade.tariff.evaded` for economic tracking |
+| lib-puppetmaster (L4) | Subscribes to `trade.shipment.departed`, `trade.shipment.border-crossed`, `trade.shipment.lost`, `trade.velocity.alerted`, `trade.tax.debt-defaulted` for divine economic intervention |
+| lib-obligation (L4) | Subscribes to `trade.tax.debt-defaulted` for enforcement obligation creation |
 | lib-actor (L2) | Consumes `${trade.*}` variables via IVariableProviderFactory (pull-based, hierarchy-safe) |
 
 ---
@@ -219,12 +259,12 @@ TradeRoute:
  id: uuid
 
  # Identification
- name: string # "Iron Road", "Silk Route", "Northern Passage"
- code: string # "iron_road", "silk_route"
- description: string
+ name: string  # "Iron Road", "Silk Route", "Northern Passage" — minLength: 1, maxLength: 200
+ code: string  # "iron_road", "silk_route" — minLength: 1, maxLength: 64
+ description: string (nullable)  # maxLength: 2000
 
  # Ownership (optional -- for personal/guild routes)
- ownerId: uuid # null for system routes
+ ownerId: uuid (nullable)  # null for system routes
  ownerType: string # "system", "character", "guild", "faction", "organization"
 
  # Scope
@@ -239,17 +279,31 @@ TradeRoute:
  totalDistanceKm: decimal
  totalEstimatedGameHours: decimal # Via best common mode
  borderCrossings: integer
- riskProfile: object # { "low": 3, "medium": 1, "high": 0 }
+ riskProfile: RiskProfile
 
  # Status
- status: string # "active", "closed", "dangerous", "seasonal"
+ status: TradeRouteStatus # Active, Closed, Dangerous, Seasonal
 
  # Metadata
  tags: [string] # "maritime", "mountain", "safe", "smuggler"
- seasonalAvailability: object # { "winter": false, "summer": true }
+ seasonalAvailability: [SeasonalAvailabilityEntry]
+
+ # Deprecation (Category A per IMPLEMENTATION TENETS)
+ isDeprecated: boolean
+ deprecatedAt: timestamp          # nullable
+ deprecationReason: string        # nullable, maxLength: 500
 
  createdAt: timestamp
  modifiedAt: timestamp
+
+RiskProfile:
+ low: integer     # Count of low-risk legs
+ medium: integer  # Count of medium-risk legs
+ high: integer    # Count of high-risk legs
+
+SeasonalAvailabilityEntry:
+ season: string        # Game-configurable season name (Category B)
+ available: boolean    # Whether route is open in this season
 
 TradeRouteLeg:
  legIndex: integer # Order in route (0, 1, 2...)
@@ -264,16 +318,16 @@ TradeRouteLeg:
  # Travel metadata (computed from Transit connection + default mode)
  estimatedDurationGameHours: decimal
  distanceKm: decimal
- terrainType: string
+ terrainType: string  # Denormalized from Transit connection. Category B (opaque string) — game-configurable.
 
  # Border crossing
  crossesBorder: boolean
- fromRealmId: uuid # Only if crossesBorder
- toRealmId: uuid # Only if crossesBorder
+ fromRealmId: uuid (nullable)  # only if crossesBorder
+ toRealmId: uuid (nullable)  # only if crossesBorder
 
  # Checkpoint
  hasCheckpoint: boolean
- checkpointLocationId: uuid # Where tariffs are assessed
+ checkpointLocationId: uuid (nullable)  # only if hasCheckpoint
 ```
 
 ### Shipment
@@ -295,7 +349,7 @@ Shipment:
  carrierType: string # "character", "npc"
 
  # Transit journey (created in lib-transit for the carrier)
- transitJourneyId: uuid # The Transit journey tracking this shipment's movement
+ transitJourneyId: uuid (nullable)  # null until departed
 
  # Transit mode
  transitModeCode: string # How this shipment is being moved
@@ -306,31 +360,23 @@ Shipment:
  totalDeclaredValue: decimal # Computed for tariff calculation
 
  # Custody
- escrowAgreementId: uuid # Optional -- if using lib-escrow for safe holding
- custodyMode: string # "escrow" (via lib-escrow), "carrier" (carrier's inventory),
- # "virtual" (game manages custody externally)
+ escrowAgreementId: uuid (nullable)  # only if custodyMode is Escrow
+ custodyMode: CustodyMode # Escrow, Carrier, Virtual
 
  # Status
- status: string
- # preparing -- Being loaded
- # in_transit -- On the move
- # at_checkpoint -- Waiting at border crossing
- # arrived -- Reached destination
- # lost -- Destroyed, stolen, etc.
- # seized -- Confiscated at border
- # abandoned -- Carrier gave up
+ status: ShipmentStatus # Preparing, InTransit, AtCheckpoint, Arrived, Lost, Seized, Abandoned
 
  # Tracking
  departedAtGameTime: decimal
  currentLocationId: uuid
- estimatedArrivalGameTime: decimal
- arrivedAtGameTime: decimal
+ estimatedArrivalGameTime: decimal (nullable)  # null until departed
+ arrivedAtGameTime: decimal (nullable)  # null until arrived
 
  # Incident tracking
  incidents: [ShipmentIncident]
 
  # Financial summary (computed after arrival)
- financialSummary: ShipmentFinancialSummary
+ financialSummary: ShipmentFinancialSummary (nullable)  # null until arrived
 
  createdAt: timestamp
  modifiedAt: timestamp
@@ -352,20 +398,28 @@ ShipmentIncident:
  legIndex: integer
  incidentType: string # "bandit_attack", "storm", "customs_inspection",
  # "spoilage", "breakdown", "smuggling_detected"
- outcome: string # "escaped", "lost_cargo", "delayed", "seized"
- lostGoods: [{ templateId: uuid, quantity: integer }]
- lostCurrency: [{ currencyDefinitionId: uuid, amount: decimal }]
+ outcome: IncidentOutcome # Escaped, LostCargo, Delayed, Seized
+ lostGoods: [GoodsReference]
+ lostCurrency: [CurrencyReference]
  delayGameHours: decimal # Extra time added by this incident
  gameTime: decimal # When the incident occurred
- description: string # Narrative description
+ description: string  # Narrative description — maxLength: 2000
+
+GoodsReference:
+ templateId: uuid     # Item template identifier
+ quantity: integer    # Number of units
+
+CurrencyReference:
+ currencyDefinitionId: uuid  # Currency definition identifier
+ amount: decimal             # Currency amount
 
 ShipmentFinancialSummary:
  totalGoodsValue: decimal # Value of goods at destination prices
  totalTransitCost: decimal # Transit expenses (crew, fuel, wear)
  totalTariffsPaid: decimal # All border tariffs collected
  totalLosses: decimal # Value of lost/seized goods
- netProfit: decimal # Revenue - costs - tariffs - losses
- profitPerGameHour: decimal # Efficiency metric
+ netProfit: decimal  # Computed: totalGoodsValue - totalTransitCost - totalTariffsPaid - totalLosses
+ profitPerGameHour: decimal  # Computed: netProfit / total journey game-hours
 ```
 
 ### Tariff Policy
@@ -376,12 +430,12 @@ TariffPolicy:
  realmId: uuid # Which realm's borders this applies to
 
  # Scope
- scope: string # "realm_wide", "specific_border", "category"
- borderLocationId: uuid # For "specific_border" scope
- direction: string # "import", "export", "both"
+ scope: TariffScope # RealmWide, SpecificBorder, Category
+ borderLocationId: uuid (nullable)  # only for specific_border scope
+ direction: TariffDirection # Import, Export, Both
 
  # Rates
- defaultRate: decimal # e.g., 0.05 = 5%
+ defaultRate: decimal  # e.g., 0.05 = 5% — minimum: 0, maximum: 1
  categoryRates: [ # Category-specific overrides
  { category: string, rate: decimal }
  ]
@@ -394,15 +448,17 @@ TariffPolicy:
  exemptions: [TariffExemption]
 
  # Collection mode
- collectionMode: string # "automatic" | "assessed" | "advisory"
- # automatic: plugin auto-debits via lib-currency
- # assessed: plugin calculates, game/NPCs collect
- # advisory: plugin provides data only
+ collectionMode: CollectionMode # Automatic, Assessed, Advisory
 
  # Status
- status: string # "active", "suspended", "wartime"
+ status: TariffPolicyStatus # Active, Suspended, Wartime
  effectiveFrom: timestamp
- effectiveUntil: timestamp # null = indefinite
+ effectiveUntil: timestamp (nullable)  # null = indefinite
+
+ # Deprecation (Category A per IMPLEMENTATION TENETS)
+ isDeprecated: boolean
+ deprecatedAt: timestamp          # nullable
+ deprecationReason: string        # nullable, maxLength: 500
 
  createdAt: timestamp
  modifiedAt: timestamp
@@ -410,17 +466,17 @@ TariffPolicy:
 TariffExemption:
  entityType: string # "character", "guild", "faction", "organization"
  entityId: uuid
- exemptionType: string # "full", "partial"
- partialRate: decimal # Rate when partially exempt
- reason: string # "diplomatic_immunity", "guild_agreement", "noble_privilege"
- expiresAt: timestamp # null = permanent
+ exemptionType: ExemptionType # Full, Partial
+ partialRate: decimal (nullable)  # only for partial exemption
+ reason: string  # "diplomatic_immunity", "guild_agreement", "noble_privilege" — maxLength: 500
+ expiresAt: timestamp (nullable)  # null = permanent
 
 TariffRecord:
  id: uuid
  shipmentId: uuid
  policyId: uuid
  legIndex: integer # Which leg triggered this tariff
- borderType: string # "internal", "external"
+ borderType: BorderType # Internal, External
 
  # Calculated amounts
  goodsTariff: decimal # Tariff on goods
@@ -428,19 +484,19 @@ TariffRecord:
  totalTariff: decimal # Combined
 
  # Actual collection
- collectionStatus: string # "pending", "collected", "partial", "evaded", "exempt"
+ collectionStatus: TariffCollectionStatus # Pending, Collected, Partial, Evaded, Exempt
  amountCollected: decimal
- collectedBy: uuid # NPC customs officer who collected (null if automatic)
+ collectedBy: uuid (nullable)  # null if automatic collection
  collectedAtGameTime: decimal
 
  # Smuggling data
- declaredGoods: [{ templateId: uuid, quantity: integer }]
+ declaredGoods: [GoodsReference]
  actualGoods: [{ templateId: uuid, quantity: integer, hidden: boolean }]
- declaredCurrency: [{ currencyDefinitionId: uuid, amount: decimal }]
+ declaredCurrency: [CurrencyReference]
  actualCurrency: [{ currencyDefinitionId: uuid, amount: decimal, hidden: boolean }]
  inspectionOccurred: boolean
  smugglingDetected: boolean
- seizures: [{ templateId: uuid, quantity: integer }]
+ seizures: [GoodsReference]
 ```
 
 ### Contraband Definition
@@ -451,20 +507,25 @@ ContrabandDefinition:
  realmId: uuid
 
  # What is contraband
- type: string # "item_category", "item_template", "currency"
+ type: ContrabandTargetType # ItemCategory, ItemTemplate, Currency
  targetId: uuid # Template ID or Currency Definition ID
  targetCategory: string # "weapons", "narcotics", "religious_artifacts", "magical"
 
  # Severity
- severity: string # "restricted" | "prohibited" | "capital_offense"
+ severity: ContrabandSeverity # Restricted, Prohibited, CapitalOffense
 
  # Consequences (advisory -- game enforces)
  suggestedFine: decimal
- suggestedPenalty: string # "confiscation", "imprisonment", "exile", "death"
+ suggestedPenalty: string # "confiscation", "imprisonment", "exile", "death" -- Category B — advisory consequences, game-enforced, Trade does not branch on these values
 
  # Status
  effectiveFrom: timestamp
- effectiveUntil: timestamp # null = permanent
+ effectiveUntil: timestamp (nullable)  # null = permanent
+
+ # Deprecation (Category A per IMPLEMENTATION TENETS)
+ isDeprecated: boolean
+ deprecatedAt: timestamp          # nullable
+ deprecationReason: string        # nullable, maxLength: 500
 
  createdAt: timestamp
  modifiedAt: timestamp
@@ -476,12 +537,12 @@ ContrabandDefinition:
 TaxPolicy:
  id: uuid
  realmId: uuid
- taxType: string # "transaction", "income", "property", "wealth", "sales", "custom"
+ taxType: TaxType # Transaction, Income, Property, Wealth, Sales, Custom
  name: string # "Heartlands Property Tax", "Royal Sales Tax"
  description: string
 
  # Rate
- baseRate: decimal # e.g., 0.05 = 5%
+ baseRate: decimal  # e.g., 0.05 = 5% — minimum: 0, maximum: 1
  progressiveBrackets: [TaxBracket] # Optional for progressive taxation
 
  # Exemptions
@@ -490,26 +551,31 @@ TaxPolicy:
  ]
 
  # Collection
- collectionMode: string # "automatic" | "assessed" | "advisory"
- collectionTarget: string # "void" (pure sink), "realm_treasury", "faction_treasury"
- collectionTargetId: uuid # Wallet or entity to receive tax revenue (null for void)
+ collectionMode: CollectionMode # Automatic, Assessed, Advisory
+ collectionTarget: TaxCollectionTarget # Void, RealmTreasury, FactionTreasury
+ collectionTargetId: uuid (nullable)  # null for void
 
  # For assessed taxes
- assessmentFrequency: string # "weekly", "monthly", "seasonal", "annual" (game-time)
+ assessmentFrequency: AssessmentFrequency # Weekly, Monthly, Seasonal, Annual
  gracePeriod: string # "7_game_days", "30_game_days"
  latePenaltyRate: decimal # Additional rate per period overdue
 
  # Status
- status: string # "active", "suspended"
+ status: TariffPolicyStatus # Active, Suspended
  effectiveFrom: timestamp
- effectiveUntil: timestamp
+ effectiveUntil: timestamp (nullable)  # null = indefinite
+
+ # Deprecation (Category A per IMPLEMENTATION TENETS)
+ isDeprecated: boolean
+ deprecatedAt: timestamp          # nullable
+ deprecationReason: string        # nullable, maxLength: 500
 
  createdAt: timestamp
  modifiedAt: timestamp
 
 TaxBracket:
  threshold: decimal # Income/wealth above this amount
- rate: decimal # Rate applied to the amount above threshold
+ rate: decimal  # Rate applied to the amount above threshold — minimum: 0, maximum: 1
 
 TaxAssessment:
  id: uuid
@@ -522,11 +588,11 @@ TaxAssessment:
  assessedValue: decimal # Base value being taxed
  taxDue: decimal # Calculated tax amount
  effectiveRate: decimal # Actual rate after brackets/exemptions
- bracketApplied: string # Which bracket was used
+ bracketThreshold: decimal (nullable)  # Threshold of bracket applied, null if flat rate
 
  # Payment tracking
  dueDate: timestamp # Game-time deadline
- status: string # "pending", "partial", "paid", "overdue", "defaulted"
+ status: TaxAssessmentStatus # Pending, Partial, Paid, Overdue, Defaulted
  amountPaid: decimal
  penaltiesAccrued: decimal
  lastPaymentGameTime: decimal
@@ -534,14 +600,14 @@ TaxAssessment:
  createdAt: timestamp
  modifiedAt: timestamp
 
-TaxDebt:
+TaxDebtSummary:  # Computed aggregate view — not a stored entity. Aggregated from overdue TaxAssessment records on query.
  taxpayerId: uuid
  taxpayerType: string
  realmId: uuid
  totalOwed: decimal # Across all overdue assessments
  oldestDueDate: timestamp
  assessmentCount: integer
- suggestedConsequences: [string] # "wage_garnishment", "asset_seizure", "imprisonment"
+ suggestedConsequences: [string] # "wage_garnishment", "asset_seizure", "imprisonment" -- Category B — advisory consequences, game-enforced, Trade does not branch on these values
 ```
 
 ### NPC Economic Profile
@@ -551,8 +617,7 @@ NpcEconomicProfile:
  characterId: uuid # Links to Character service
 
  # Economic role
- economicRole: string # "merchant", "craftsman", "farmer", "miner",
- # "fisher", "laborer", "noble", "consumer", "none"
+ economicRole: EconomicRole # Merchant, Craftsman, Farmer, Miner, Fisher, Laborer, Noble, Consumer, None
 
  # Production (what they make or gather)
  produces: [NpcProductionEntry]
@@ -591,12 +656,12 @@ NpcConsumptionEntry:
  substitutes: [uuid] # Alternative template IDs if primary unavailable
 
 NpcTradingPersonality:
- riskTolerance: decimal # 0-1: willingness to invest in risky ventures
- priceAwareness: decimal # 0-1: how closely they track market prices
- loyaltyFactor: decimal # 0-1: preference for repeat trading partners
- hoarding: decimal # 0-1: tendency to stockpile beyond immediate need
- bargainDrive: decimal # 0-1: how aggressively they negotiate
- explorationRange: decimal # 0-1: willingness to seek distant markets
+ riskTolerance: decimal  # minimum: 0, maximum: 1 — willingness to invest in risky ventures
+ priceAwareness: decimal  # minimum: 0, maximum: 1 — how closely they track market prices
+ loyaltyFactor: decimal  # minimum: 0, maximum: 1 — preference for repeat trading partners
+ hoarding: decimal  # minimum: 0, maximum: 1 — tendency to stockpile beyond immediate need
+ bargainDrive: decimal  # minimum: 0, maximum: 1 — how aggressively they negotiate
+ explorationRange: decimal  # minimum: 0, maximum: 1 — willingness to seek distant markets
 ```
 
 ### Supply/Demand Snapshot
@@ -644,13 +709,13 @@ SupplyDemandItem:
 EconomicVelocityMetrics:
  realmId: uuid
  currencyDefinitionId: uuid
- locationId: uuid # null for realm-wide metrics
+ locationId: uuid (nullable)  # null for realm-wide metrics
  periodStart: decimal # Game-time period start
  periodEnd: decimal # Game-time period end
 
  # Velocity
  velocity: decimal # Transaction volume / average stock
- velocityTrend: string # "accelerating", "stable", "decelerating", "stagnant"
+ velocityTrend: VelocityTrend # Accelerating, Stable, Decelerating, Stagnant
 
  # Transaction volume
  transactionCount: integer
@@ -661,15 +726,15 @@ EconomicVelocityMetrics:
  totalCurrencyInCirculation: decimal
  averageEntityWealth: decimal
  medianEntityWealth: decimal
- wealthGiniCoefficient: decimal # 0 = perfect equality, 1 = one entity has all
+ wealthGiniCoefficient: decimal  # minimum: 0, maximum: 1 — 0 = perfect equality, 1 = one entity has all
 
  # Faucets
  totalFaucetAmount: decimal
- faucetsByType: object # { "quest_reward": 500, "vendor_sale": 300, ... }
+ faucets: [FaucetEntry]
 
  # Sinks
  totalSinkAmount: decimal
- sinksByType: object # { "vendor_purchase": 200, "tariff": 100, ... }
+ sinks: [SinkEntry]
 
  # Net flow
  netFlow: decimal # Faucets - Sinks (positive = inflationary)
@@ -685,6 +750,14 @@ EconomicVelocityMetrics:
  ]
 
  computedAt: timestamp
+
+FaucetEntry:
+ type: string       # Faucet source category (Category B opaque string — game-configurable)
+ amount: decimal    # Total amount from this source
+
+SinkEntry:
+ type: string       # Sink category (Category B opaque string — game-configurable)
+ amount: decimal    # Total amount to this sink
 ```
 
 ---
@@ -695,7 +768,7 @@ EconomicVelocityMetrics:
 
 ```yaml
 /trade/route/create:
- access: authenticated
+ x-permissions: []
  description: "Create a named trade route from a sequence of locations"
  request:
  name: string
@@ -711,7 +784,7 @@ EconomicVelocityMetrics:
  }
  ]
  tags: [string] # Optional
- seasonalAvailability: object # Optional
+ seasonalAvailability: [SeasonalAvailabilityEntry] # Optional
  response: { route: TradeRoute }
  errors:
  - ROUTE_CODE_ALREADY_EXISTS
@@ -725,7 +798,7 @@ EconomicVelocityMetrics:
  connections must be established in lib-transit first.
 
 /trade/route/get:
- access: user
+ x-permissions: []
  description: "Get a trade route by ID or code"
  request:
  routeId: uuid # One required
@@ -735,7 +808,7 @@ EconomicVelocityMetrics:
  - ROUTE_NOT_FOUND
 
 /trade/route/query:
- access: user
+ x-permissions: []
  description: "Query trade routes by location, owner, tags, or realm"
  request:
  fromLocationId: uuid # Optional -- routes starting here
@@ -748,12 +821,13 @@ EconomicVelocityMetrics:
  status: string # Optional
  maxLegs: integer # Optional
  maxDurationGameHours: decimal # Optional
- page: integer
- pageSize: integer
+ includeDeprecated: boolean # default: false
+ page: integer  # minimum: 1
+ pageSize: integer  # minimum: 1, maximum: 100
  response: { routes: [TradeRoute], totalCount: integer }
 
 /trade/route/update:
- access: authenticated
+ x-permissions: []
  description: "Update a trade route's properties or legs"
  request:
  routeId: uuid
@@ -762,7 +836,7 @@ EconomicVelocityMetrics:
  status: string # Optional
  legs: [{ fromLocationId, toLocationId }] # Optional -- replaces all legs
  tags: [string] # Optional
- seasonalAvailability: object # Optional
+ seasonalAvailability: [SeasonalAvailabilityEntry] # Optional
  response: { route: TradeRoute }
  errors:
  - ROUTE_NOT_FOUND
@@ -770,23 +844,47 @@ EconomicVelocityMetrics:
  - ACTIVE_SHIPMENTS_ON_ROUTE # Cannot change legs while shipments are in transit
 
 /trade/route/delete:
- access: authenticated
+ x-permissions: []
  description: "Delete a trade route"
  request:
  routeId: uuid
- response: { deleted: boolean }
+ response: { }
  errors:
  - ROUTE_NOT_FOUND
  - NOT_OWNER
  - ACTIVE_SHIPMENTS_ON_ROUTE
+ notes: |
+ Rejects with BadRequest if `isDeprecated == false`. Entity must be deprecated before deletion.
+
+/trade/route/deprecate:
+ x-permissions: []
+ description: "Deprecate a trade route (Category A — reversible)"
+ request:
+ routeId: uuid
+ reason: string              # optional, maxLength: 500
+ response: { route: TradeRoute }
+ notes: |
+ Sets isDeprecated=true, deprecatedAt=now, deprecationReason=reason.
+ Returns OK if already deprecated (idempotent).
+ Emits trade.route.updated with changedFields containing deprecation fields.
+
+/trade/route/undeprecate:
+ x-permissions: []
+ description: "Undeprecate a trade route (Category A — reversible)"
+ request:
+ routeId: uuid
+ response: { route: TradeRoute }
+ notes: |
+ Clears isDeprecated, deprecatedAt, deprecationReason.
+ Returns OK if not deprecated (idempotent).
 
 /trade/route/estimate-cost:
- access: user
+ x-permissions: []
  description: "Estimate the total cost of shipping goods along a route"
  request:
  routeId: uuid
  goods: [{ templateId: uuid, quantity: integer, unitValue: decimal }]
- currencies: [{ currencyDefinitionId: uuid, amount: decimal }]
+ currencies: [CurrencyReference]
  transitModeCode: string # Which transit mode to use
  carrierId: uuid # Optional -- for entity-specific transit cost modifiers
  response:
@@ -801,7 +899,7 @@ EconomicVelocityMetrics:
  currencyExchangeLoss: decimal
  }
  ]
- riskAssessment: object # { expectedLoss: decimal, worstCase: decimal }
+ riskAssessment: RiskAssessment
  estimatedDurationGameHours: decimal
  estimatedProfit: decimal # Revenue at destination prices - all costs
  notes: |
@@ -809,13 +907,17 @@ EconomicVelocityMetrics:
  Calls lib-transit route/calculate for travel time.
  Looks up applicable tariff policies for border crossings.
  Queries supply/demand snapshots for destination prices.
+
+RiskAssessment:
+ expectedLoss: decimal  # Expected value of cargo loss based on route risk
+ worstCase: decimal     # Maximum possible loss
 ```
 
 ### Shipment Lifecycle
 
 ```yaml
 /trade/shipment/create:
- access: authenticated
+ x-permissions: []
  description: "Create a shipment (status: preparing)"
  request:
  routeId: uuid
@@ -826,7 +928,7 @@ EconomicVelocityMetrics:
  transitModeCode: string # How the carrier will travel
  goods: [{ itemInstanceId: uuid, declared: boolean }]
  currencies: [{ currencyDefinitionId: uuid, amount: decimal, declared: boolean }]
- custodyMode: string # "escrow", "carrier", "virtual"
+ custodyMode: CustodyMode # Escrow, Carrier, Virtual
  response: { shipment: Shipment }
  errors:
  - ROUTE_NOT_FOUND
@@ -844,7 +946,7 @@ EconomicVelocityMetrics:
  Does NOT start the journey -- call /trade/shipment/depart for that.
 
 /trade/shipment/depart:
- access: authenticated
+ x-permissions: []
  description: "Start a prepared shipment (creates Transit journey, status: in_transit)"
  request:
  shipmentId: uuid
@@ -859,7 +961,7 @@ EconomicVelocityMetrics:
  and /transit/journey/depart. Stores the transitJourneyId on the shipment.
 
 /trade/shipment/complete-leg:
- access: authenticated
+ x-permissions: []
  description: "Mark a shipment leg as completed (carrier arrived at waypoint)"
  request:
  shipmentId: uuid
@@ -869,14 +971,14 @@ EconomicVelocityMetrics:
  {
  incidentType: string # "bandit_attack", "storm", "spoilage", "breakdown"
  outcome: string # "escaped", "lost_cargo", "delayed"
- lostGoods: [{ templateId: uuid, quantity: integer }]
- lostCurrency: [{ currencyDefinitionId: uuid, amount: decimal }]
+ lostGoods: [GoodsReference]
+ lostCurrency: [CurrencyReference]
  delayGameHours: decimal
  description: string
  }
  ]
  response: { shipment: Shipment }
- emits: trade.shipment.leg_completed
+ emits: trade.shipment.leg-completed
  errors:
  - SHIPMENT_NOT_FOUND
  - INVALID_STATUS
@@ -888,15 +990,15 @@ EconomicVelocityMetrics:
  Records any incidents and updates financial summary.
 
 /trade/shipment/border-crossing:
- access: authenticated
+ x-permissions: []
  description: "Record a border crossing event with customs interaction"
  request:
  shipmentId: uuid
  legIndex: integer
 
  # What the carrier declared
- declaredGoods: [{ templateId: uuid, quantity: integer }]
- declaredCurrency: [{ currencyDefinitionId: uuid, amount: decimal }]
+ declaredGoods: [GoodsReference]
+ declaredCurrency: [CurrencyReference]
 
  # What was actually carried (full truth -- game knows this)
  actualGoods: [{ templateId: uuid, quantity: integer, hidden: boolean }]
@@ -912,8 +1014,8 @@ EconomicVelocityMetrics:
  tariffRecord: TariffRecord
  estimatedTariff: decimal
  actualTariffCollected: decimal
- seizures: [{ templateId: uuid, quantity: integer }]
- emits: trade.shipment.border_crossed
+ seizures: [GoodsReference]
+ emits: trade.shipment.border-crossed
  emits: trade.tariff.collected # If tariff was collected
  emits: trade.tariff.evaded # If smuggling succeeded
  errors:
@@ -928,13 +1030,13 @@ EconomicVelocityMetrics:
  Gods monitoring smuggling rates can see both declared and actual.
 
 /trade/shipment/arrive:
- access: authenticated
+ x-permissions: []
  description: "Mark a shipment as arrived at destination"
  request:
  shipmentId: uuid
  arrivedAtGameTime: decimal
- actualGoods: [{ templateId: uuid, quantity: integer }]
- actualCurrency: [{ currencyDefinitionId: uuid, amount: decimal }]
+ actualGoods: [GoodsReference]
+ actualCurrency: [CurrencyReference]
  response: { shipment: Shipment }
  emits: trade.shipment.arrived
  errors:
@@ -947,14 +1049,14 @@ EconomicVelocityMetrics:
  Computes financial summary (revenue, costs, tariffs, losses, profit).
 
 /trade/shipment/lost:
- access: authenticated
+ x-permissions: []
  description: "Mark a shipment as lost (destroyed, stolen, sunk)"
  request:
  shipmentId: uuid
  reason: string
  recoverable: boolean
- lostGoods: [{ templateId: uuid, quantity: integer }]
- lostCurrency: [{ currencyDefinitionId: uuid, amount: decimal }]
+ lostGoods: [GoodsReference]
+ lostCurrency: [CurrencyReference]
  response: { shipment: Shipment }
  emits: trade.shipment.lost
  errors:
@@ -965,7 +1067,7 @@ EconomicVelocityMetrics:
  Abandons the Transit journey via /transit/journey/abandon.
 
 /trade/shipment/get:
- access: user
+ x-permissions: []
  description: "Get a shipment by ID"
  request:
  shipmentId: uuid
@@ -974,7 +1076,7 @@ EconomicVelocityMetrics:
  - SHIPMENT_NOT_FOUND
 
 /trade/shipment/list:
- access: user
+ x-permissions: []
  description: "List shipments by owner, carrier, route, or realm"
  request:
  ownerId: uuid # Optional
@@ -983,8 +1085,8 @@ EconomicVelocityMetrics:
  realmId: uuid # Optional
  status: string # Optional
  activeOnly: boolean # Default true
- page: integer
- pageSize: integer
+ page: integer  # minimum: 1
+ pageSize: integer  # minimum: 1, maximum: 100
  response: { shipments: [Shipment], totalCount: integer }
 ```
 
@@ -992,34 +1094,35 @@ EconomicVelocityMetrics:
 
 ```yaml
 /trade/tariff/policy/create:
- access: admin
+ x-permissions: [role: admin]
  description: "Create a tariff policy for a realm's borders"
  request:
  realmId: uuid
- scope: string # "realm_wide", "specific_border", "category"
+ scope: TariffScope # RealmWide, SpecificBorder, Category
  borderLocationId: uuid # For "specific_border" scope
- direction: string # "import", "export", "both"
+ direction: TariffDirection # Import, Export, Both
  defaultRate: decimal
  categoryRates: [{ category: string, rate: decimal }]
  itemRates: [{ templateId: uuid, rate: decimal }]
  currencyRate: decimal
- collectionMode: string # "automatic", "assessed", "advisory"
+ collectionMode: CollectionMode # Automatic, Assessed, Advisory
  exemptions: [TariffExemption]
  effectiveFrom: timestamp
  effectiveUntil: timestamp # Optional
  response: { policy: TariffPolicy }
 
 /trade/tariff/policy/list:
- access: user
+ x-permissions: []
  description: "List tariff policies for a realm"
  request:
  realmId: uuid
  includeExpired: boolean # Default false
+ includeDeprecated: boolean # default: false
  scope: string # Optional filter
  response: { policies: [TariffPolicy] }
 
 /trade/tariff/policy/update:
- access: admin
+ x-permissions: [role: admin]
  description: "Update a tariff policy"
  request:
  policyId: uuid
@@ -1034,14 +1137,33 @@ EconomicVelocityMetrics:
  errors:
  - POLICY_NOT_FOUND
 
+/trade/tariff/policy/deprecate:
+ x-permissions: [role: admin]
+ description: "Deprecate a tariff policy (Category A — reversible)"
+ request:
+ policyId: uuid
+ reason: string              # optional, maxLength: 500
+ response: { policy: TariffPolicy }
+ notes: |
+ Sets isDeprecated=true, deprecatedAt=now, deprecationReason=reason.
+ Returns OK if already deprecated (idempotent).
+
+/trade/tariff/policy/undeprecate:
+ x-permissions: [role: admin]
+ description: "Undeprecate a tariff policy (Category A — reversible)"
+ request:
+ policyId: uuid
+ response: { policy: TariffPolicy }
+ notes: Returns OK if not deprecated (idempotent).
+
 /trade/tariff/calculate:
- access: user
+ x-permissions: []
  description: "Calculate tariffs for goods/currency crossing a border (pure calculation)"
  request:
  fromRealmId: uuid
  toRealmId: uuid
  goods: [{ templateId: uuid, quantity: integer, unitValue: decimal }]
- currencies: [{ currencyDefinitionId: uuid, amount: decimal }]
+ currencies: [CurrencyReference]
  entityId: uuid # Optional -- for exemption checking
  response:
  totalTariff: decimal
@@ -1054,7 +1176,7 @@ EconomicVelocityMetrics:
  Uses currently active tariff policies for the border.
 
 /trade/tariff/collect:
- access: authenticated
+ x-permissions: []
  description: "Record tariff collection (called by game or NPC customs officer)"
  request:
  tariffRecordId: uuid # From border-crossing response
@@ -1063,7 +1185,7 @@ EconomicVelocityMetrics:
  response:
  tariffRecord: TariffRecord
  remainingDue: decimal
- transaction: object # Currency transaction reference
+ transaction: TransactionReference
  emits: trade.tariff.collected
  errors:
  - TARIFF_RECORD_NOT_FOUND
@@ -1072,20 +1194,23 @@ EconomicVelocityMetrics:
  notes: |
  Calls lib-currency /currency/debit internally.
  If collectionTarget is not "void", credits the target wallet.
+
+TransactionReference:
+ transactionId: uuid  # Reference to the Currency transaction
 ```
 
 ### Contraband
 
 ```yaml
 /trade/contraband/define:
- access: admin
+ x-permissions: [role: admin]
  description: "Define an item or currency as contraband in a realm"
  request:
  realmId: uuid
- type: string # "item_category", "item_template", "currency"
+ type: ContrabandTargetType # ItemCategory, ItemTemplate, Currency
  targetId: uuid # Template ID or Currency Definition ID
  targetCategory: string # For "item_category" type
- severity: string # "restricted", "prohibited", "capital_offense"
+ severity: ContrabandSeverity # Restricted, Prohibited, CapitalOffense
  suggestedFine: decimal
  suggestedPenalty: string
  effectiveFrom: timestamp
@@ -1093,22 +1218,41 @@ EconomicVelocityMetrics:
  response: { definition: ContrabandDefinition }
 
 /trade/contraband/list:
- access: user
+ x-permissions: []
  description: "List contraband definitions for a realm"
  request:
  realmId: uuid
  includeExpired: boolean # Default false
+ includeDeprecated: boolean # default: false
  response: { definitions: [ContrabandDefinition] }
 
+/trade/contraband/deprecate:
+ x-permissions: [role: admin]
+ description: "Deprecate a contraband definition (Category A — reversible)"
+ request:
+ definitionId: uuid
+ reason: string              # optional, maxLength: 500
+ response: { definition: ContrabandDefinition }
+ notes: |
+ Sets isDeprecated=true, deprecatedAt=now, deprecationReason=reason.
+ Returns OK if already deprecated (idempotent).
+
+/trade/contraband/undeprecate:
+ x-permissions: [role: admin]
+ description: "Undeprecate a contraband definition (Category A — reversible)"
+ request:
+ definitionId: uuid
+ response: { definition: ContrabandDefinition }
+ notes: Returns OK if not deprecated (idempotent).
+
 /trade/contraband/check:
- access: user
+ x-permissions: []
  description: "Check if goods/currency are contraband in a realm"
  request:
  realmId: uuid
- goods: [{ templateId: uuid, quantity: integer }]
- currencies: [{ currencyDefinitionId: uuid, amount: decimal }]
+ goods: [GoodsReference]
+ currencies: [CurrencyReference]
  response:
- hasContraband: boolean
  violations: [
  {
  type: string
@@ -1126,19 +1270,19 @@ EconomicVelocityMetrics:
 
 ```yaml
 /trade/tax/policy/create:
- access: admin
+ x-permissions: [role: admin]
  description: "Create a tax policy for a realm"
  request:
  realmId: uuid
- taxType: string # "transaction", "income", "property", "wealth", "sales", "custom"
+ taxType: TaxType # Transaction, Income, Property, Wealth, Sales, Custom
  name: string
  description: string
  baseRate: decimal
  progressiveBrackets: [TaxBracket] # Optional
- collectionMode: string # "automatic", "assessed", "advisory"
- collectionTarget: string # "void", "realm_treasury", "faction_treasury"
+ collectionMode: CollectionMode # Automatic, Assessed, Advisory
+ collectionTarget: TaxCollectionTarget # Void, RealmTreasury, FactionTreasury
  collectionTargetId: uuid # Optional
- assessmentFrequency: string # For assessed taxes
+ assessmentFrequency: AssessmentFrequency # For assessed taxes
  gracePeriod: string # Optional
  latePenaltyRate: decimal # Optional
  exemptions: [{ entityType, entityId, reason }]
@@ -1147,16 +1291,36 @@ EconomicVelocityMetrics:
  response: { policy: TaxPolicy }
 
 /trade/tax/policy/list:
- access: user
+ x-permissions: []
  description: "List tax policies for a realm"
  request:
  realmId: uuid
  taxType: string # Optional filter
  includeExpired: boolean
+ includeDeprecated: boolean # default: false
  response: { policies: [TaxPolicy] }
 
+/trade/tax/policy/deprecate:
+ x-permissions: [role: admin]
+ description: "Deprecate a tax policy (Category A — reversible)"
+ request:
+ policyId: uuid
+ reason: string              # optional, maxLength: 500
+ response: { policy: TaxPolicy }
+ notes: |
+ Sets isDeprecated=true, deprecatedAt=now, deprecationReason=reason.
+ Returns OK if already deprecated (idempotent).
+
+/trade/tax/policy/undeprecate:
+ x-permissions: [role: admin]
+ description: "Undeprecate a tax policy (Category A — reversible)"
+ request:
+ policyId: uuid
+ response: { policy: TaxPolicy }
+ notes: Returns OK if not deprecated (idempotent).
+
 /trade/tax/calculate:
- access: user
+ x-permissions: []
  description: "Calculate tax due for a given value and policy (pure calculation)"
  request:
  policyId: uuid
@@ -1165,12 +1329,12 @@ EconomicVelocityMetrics:
  response:
  taxDue: decimal
  effectiveRate: decimal
- bracketApplied: string
+ bracketThreshold: decimal (nullable)  # Threshold of bracket applied, null if flat rate
  exemptionApplied: boolean
  exemptionReason: string
 
 /trade/tax/assess:
- access: admin
+ x-permissions: [role: admin]
  description: "Create a tax assessment for an entity"
  request:
  policyId: uuid
@@ -1179,13 +1343,13 @@ EconomicVelocityMetrics:
  assessedValue: decimal
  dueDate: timestamp # Game-time deadline
  response: { assessment: TaxAssessment }
- emits: trade.tax.assessment_created
+ emits: trade.tax.assessment-created
  notes: |
  Can be called manually by admin or automatically by the
  TaxAssessmentWorker for assessed-mode tax policies.
 
 /trade/tax/pay:
- access: authenticated
+ x-permissions: []
  description: "Record a tax payment"
  request:
  assessmentId: uuid
@@ -1194,8 +1358,8 @@ EconomicVelocityMetrics:
  response:
  assessment: TaxAssessment
  remainingDue: decimal
- transaction: object
- emits: trade.tax.payment_received
+ transaction: TransactionReference
+ emits: trade.tax.payment-received
  errors:
  - ASSESSMENT_NOT_FOUND
  - INSUFFICIENT_FUNDS
@@ -1205,23 +1369,23 @@ EconomicVelocityMetrics:
  If collectionTarget is not "void", credits the target wallet.
 
 /trade/tax/debt/get:
- access: user
+ x-permissions: []
  description: "Get total tax debt for an entity"
  request:
  taxpayerId: uuid
  realmId: uuid # Optional
- response: { debt: TaxDebt, assessments: [TaxAssessment] }
+ response: { debt: TaxDebtSummary, assessments: [TaxAssessment] }
 
 /trade/tax/debt/list-delinquent:
- access: admin
+ x-permissions: []
  description: "List entities with overdue tax debt"
  request:
  realmId: uuid
  minOwed: decimal # Optional minimum debt
  minDaysOverdue: integer # Optional minimum days overdue
- page: integer
- pageSize: integer
- response: { debts: [TaxDebt], totalCount: integer }
+ page: integer  # minimum: 1
+ pageSize: integer  # minimum: 1, maximum: 100
+ response: { debts: [TaxDebtSummary], totalCount: integer }
  notes: |
  Used by NPC tax collectors to determine who to visit.
  Also used by divine oversight for economic health monitoring.
@@ -1231,7 +1395,7 @@ EconomicVelocityMetrics:
 
 ```yaml
 /trade/npc/profile/get:
- access: admin
+ x-permissions: []
  description: "Get an NPC's economic profile"
  request:
  characterId: uuid
@@ -1240,7 +1404,7 @@ EconomicVelocityMetrics:
  - PROFILE_NOT_FOUND
 
 /trade/npc/profile/set:
- access: developer
+ x-permissions: [role: developer]
  description: "Create or update an NPC's economic profile"
  request:
  characterId: uuid
@@ -1253,7 +1417,7 @@ EconomicVelocityMetrics:
  response: { profile: NpcEconomicProfile }
 
 /trade/npc/market-analysis:
- access: authenticated
+ x-permissions: []
  description: "Get a market analysis from an NPC's perspective (bounded by their knowledge)"
  request:
  characterId: uuid # NPC performing analysis
@@ -1286,7 +1450,7 @@ EconomicVelocityMetrics:
 
 ```yaml
 /trade/supply-demand/snapshot:
- access: user
+ x-permissions: []
  description: "Get current supply/demand snapshot for a location"
  request:
  locationId: uuid
@@ -1294,7 +1458,7 @@ EconomicVelocityMetrics:
  response: { snapshot: SupplyDemandSnapshot }
 
 /trade/supply-demand/price-differential:
- access: user
+ x-permissions: []
  description: "Find price differentials between locations for an item"
  request:
  templateId: uuid
@@ -1323,7 +1487,7 @@ EconomicVelocityMetrics:
 
 ```yaml
 /trade/velocity/summary:
- access: admin
+ x-permissions: [role: admin]
  description: "Get economic velocity metrics for a realm or location"
  request:
  realmId: uuid
@@ -1334,7 +1498,7 @@ EconomicVelocityMetrics:
  response: { metrics: EconomicVelocityMetrics }
 
 /trade/velocity/hotspots:
- access: admin
+ x-permissions: [role: admin]
  description: "Find locations with unusually high or low economic velocity"
  request:
  realmId: uuid
@@ -1346,7 +1510,7 @@ EconomicVelocityMetrics:
  locationCode: string
  velocity: decimal
  deviationFromMean: decimal
- trend: string # "accelerating", "stable", "decelerating"
+ trend: VelocityTrend
  }
  ]
  coldspots: [ # Locations with velocity < healthy min
@@ -1355,18 +1519,22 @@ EconomicVelocityMetrics:
  locationCode: string
  velocity: decimal
  daysSinceLastTransaction: integer
- trend: string
+ trend: VelocityTrend
  }
  ]
  realmAverage: decimal
- healthyRange: object # { min: config, max: config }
+ healthyRange: VelocityHealthRange
  notes: |
  Used by divine economic actors to identify intervention targets.
  Hermes sees a coldspot → spawns business opportunity.
  Nemesis sees a hotspot → targets the speculator.
 
+VelocityHealthRange:
+ min: decimal  # From config.HealthyVelocityMin
+ max: decimal  # From config.HealthyVelocityMax
+
 /trade/velocity/faucet-sink-balance:
- access: admin
+ x-permissions: [role: admin]
  description: "Get faucet/sink balance for a realm's economy"
  request:
  realmId: uuid
@@ -1374,15 +1542,54 @@ EconomicVelocityMetrics:
  period: string # "day", "week", "month"
  response:
  totalFaucets: decimal
- faucetsByType: object # { "quest_reward": 500, "loot_drop": 300, ... }
+ faucets: [FaucetEntry]
  totalSinks: decimal
- sinksByType: object # { "vendor_purchase": 200, "tariff": 100, "tax": 50, ... }
+ sinks: [SinkEntry]
  netFlow: decimal # Positive = inflationary pressure
  trend: string # "inflationary", "deflationary", "balanced"
- inflationRisk: string # "low", "moderate", "high", "critical"
+ inflationRisk: InflationRisk # Low, Moderate, High, Critical
 ```
 
-**Total endpoints: 37**
+### Resource Cleanup
+
+```yaml
+/trade/cleanup-by-character:
+  x-permissions: []
+  description: "Resource cleanup callback — delete all Trade data referencing a deleted character"
+  request:
+    characterId: uuid
+  response: { }
+  notes: |
+    Called by lib-resource when a Character is deleted.
+    Deletes NPC economic profiles, updates shipments (carrier/owner references),
+    cleans tax assessments where taxpayerType is Character.
+
+/trade/cleanup-by-realm:
+  x-permissions: []
+  description: "Resource cleanup callback — delete all Trade data referencing a deleted realm"
+  request:
+    realmId: uuid
+  response: { }
+  notes: |
+    Called by lib-resource when a Realm is deleted.
+    Deletes trade routes, tariff policies, contraband definitions, tax policies,
+    tax assessments, supply/demand snapshots, and velocity metrics scoped to the realm.
+
+/trade/cleanup-by-location:
+  x-permissions: []
+  description: "Resource cleanup callback — delete all Trade data referencing a deleted location"
+  request:
+    locationId: uuid
+  response: { }
+  notes: |
+    Called by lib-resource when a Location is deleted.
+    Removes trade route legs referencing the location, updates NPC profiles
+    with matching homeLocationId, removes supply/demand snapshots for the location.
+```
+
+**Total endpoints: 48**
+
+Note: Shipment, TariffRecord, TaxAssessment, and NpcEconomicProfile are instance/record entities — they use immediate delete or terminal status, not deprecation lifecycle.
 
 ---
 
@@ -1402,7 +1609,7 @@ EconomicVelocityMetrics:
 | `terrainType` (on route leg) | B (Content Code) | Opaque string | Game-configurable terrain classifications for route segments. |
 | `transitModeCode` | B (Content Code) | Opaque string | References transit mode codes from lib-transit. Game-configurable movement types. |
 | `category` (on tariff rate) | B (Content Code) | Opaque string | Game-configurable item/goods categories for tariff rate overrides. |
-| `type` (on contraband definition) | B (Content Code) | Opaque string | Contraband targeting types (item_category, item_template, currency). |
+| `type` (on contraband definition) | C (System State) | Service-specific enum | System-owned targeting types. Trade's code branches on these values to determine different lookup logic (match by category vs template ID vs currency). Category C per T14 decision tree test 4. |
 | `targetCategory` | B (Content Code) | Opaque string | Game-configurable categories for contraband definitions (weapons, narcotics, religious_artifacts, magical). |
 | `exemptionType` | C (System State) | Service-specific enum | Finite set of tariff exemption levels (full, partial). System-owned. |
 | `borderType` | C (System State) | Service-specific enum | Finite set of border classifications (internal, external). System-owned; affects tariff applicability. |
@@ -1410,12 +1617,160 @@ EconomicVelocityMetrics:
 | `collectionStatus` (on tariff record) | C (System State) | Service-specific enum | Finite set of tariff collection states (pending, collected, partial, evaded, exempt). System-owned state tracking. |
 | `taxType` | C (System State) | Service-specific enum | Finite set of tax categories (transaction, income, property, wealth, sales, custom). System-owned; each type has distinct assessment and collection logic. |
 | `scope` (on tariff policy) | C (System State) | Service-specific enum | Finite set of tariff scopes (realm_wide, specific_border, category). System-owned; determines tariff applicability rules. |
+| `reason` (on tariff exemption) | B (Content Code) | Opaque string | Game-configurable exemption reasons. Trade does not branch on specific reason values. |
 
 ---
 
 ## Events
 
+### Schema Extension Attributes
+
+#### x-lifecycle
+
+```yaml
+# schemas/trade-events.yaml
+x-lifecycle:
+  TradeRoute:
+    topic_prefix: trade
+    # Generates: trade.route.created, trade.route.updated, trade.route.deleted
+  TariffPolicy:
+    topic_prefix: trade
+    # Generates: trade.tariff-policy.created, trade.tariff-policy.updated, trade.tariff-policy.deleted
+  ContrabandDefinition:
+    topic_prefix: trade
+    # Generates: trade.contraband-definition.created, trade.contraband-definition.updated, trade.contraband-definition.deleted
+  TaxPolicy:
+    topic_prefix: trade
+    # Generates: trade.tax-policy.created, trade.tax-policy.updated, trade.tax-policy.deleted
+  NpcEconomicProfile:
+    topic_prefix: trade
+    # Generates: trade.npc-economic-profile.created, trade.npc-economic-profile.updated, trade.npc-economic-profile.deleted
+```
+
+Note: Category A entities (TradeRoute, TariffPolicy, TaxPolicy, ContrabandDefinition) get full created/updated/deleted lifecycle. NpcEconomicProfile also gets lifecycle events for profile management.
+
+#### x-event-publications
+
+```yaml
+x-event-publications:
+  # Lifecycle events (auto-generated from x-lifecycle)
+  - topic: trade.route.created
+  - topic: trade.route.updated
+  - topic: trade.route.deleted
+  - topic: trade.tariff-policy.created
+  - topic: trade.tariff-policy.updated
+  - topic: trade.tariff-policy.deleted
+  - topic: trade.contraband-definition.created
+  - topic: trade.contraband-definition.updated
+  - topic: trade.contraband-definition.deleted
+  - topic: trade.tax-policy.created
+  - topic: trade.tax-policy.updated
+  - topic: trade.tax-policy.deleted
+  - topic: trade.npc-economic-profile.created
+  - topic: trade.npc-economic-profile.updated
+  - topic: trade.npc-economic-profile.deleted
+  # Custom events (manually defined schemas)
+  - topic: trade.shipment.created
+    event: TradeShipmentCreatedEvent
+  - topic: trade.shipment.departed
+    event: TradeShipmentDepartedEvent
+  - topic: trade.shipment.leg-completed
+    event: TradeShipmentLegCompletedEvent
+  - topic: trade.shipment.border-crossed
+    event: TradeShipmentBorderCrossedEvent
+  - topic: trade.shipment.arrived
+    event: TradeShipmentArrivedEvent
+  - topic: trade.shipment.lost
+    event: TradeShipmentLostEvent
+  - topic: trade.tariff.collected
+    event: TradeTariffCollectedEvent
+  - topic: trade.tariff.evaded
+    event: TradeTariffEvadedEvent
+  - topic: trade.tax.assessment-created
+    event: TradeTaxAssessmentCreatedEvent
+  - topic: trade.tax.payment-received
+    event: TradeTaxPaymentReceivedEvent
+  - topic: trade.tax.debt-defaulted
+    event: TradeTaxDebtDefaultedEvent
+  - topic: trade.velocity.alerted
+    event: TradeVelocityAlertedEvent
+  - topic: trade.supply-demand.shifted
+    event: TradeSupplyDemandShiftedEvent
+  - topic: trade.route.status-changed
+    event: TradeRouteStatusChangedEvent
+```
+
+#### x-event-subscriptions
+
+```yaml
+x-event-subscriptions:
+  - topic: transit.connection.status-changed
+    event: TransitConnectionStatusChangedEvent
+    handler: HandleTransitConnectionStatusChangedAsync
+    # Note: Verify topic name against Transit's actual published topic during implementation
+```
+
+#### x-resource-mapping
+
+Events consumed by Puppetmaster include `x-resource-mapping` for watch subscriptions:
+
+```yaml
+# Puppetmaster-consumed events with resource mapping
+trade.shipment.departed:
+  x-resource-mapping:
+    realmId: realmId
+
+trade.shipment.border-crossed:
+  x-resource-mapping:
+    realmId: realmId
+
+trade.shipment.lost:
+  x-resource-mapping:
+    realmId: realmId
+
+trade.velocity.alerted:
+  x-resource-mapping:
+    realmId: realmId
+
+trade.tax.debt-defaulted:
+  x-resource-mapping:
+    realmId: realmId
+```
+
+#### x-references
+
+```yaml
+x-references:
+  - target: character
+    fields: [characterId]
+    policy: cascade
+    cleanup:
+      endpoint: /trade/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
+    # Affects: NPC economic profiles, shipments (carrierId), tax assessments (taxpayerId when taxpayerType=Character)
+
+  - target: realm
+    fields: [realmId]
+    policy: cascade
+    cleanup:
+      endpoint: /trade/cleanup-by-realm
+      payloadTemplate: '{"realmId": "{{resourceId}}"}'
+    # Affects: Trade routes, tariff policies, contraband definitions, tax policies, tax assessments, supply/demand snapshots, velocity metrics
+
+  - target: location
+    fields: [locationId, fromLocationId, toLocationId, homeLocationId, checkpointLocationId, borderLocationId]
+    policy: cascade
+    cleanup:
+      endpoint: /trade/cleanup-by-location
+      payloadTemplate: '{"locationId": "{{resourceId}}"}'
+    # Affects: Trade route legs, NPC profile homeLocationId, supply/demand snapshots
+```
+
+All custom events MUST use `allOf` with `BaseServiceEvent` from `common-events.yaml`, include `eventName` property with default matching the topic, and use `additionalProperties: false`.
+
 ### Published Events
+
+Note: Lifecycle events (created/updated/deleted) for TradeRoute, TariffPolicy, ContrabandDefinition, TaxPolicy, and NpcEconomicProfile are auto-generated via x-lifecycle above and are NOT listed here. Only custom events are listed below.
 
 ```yaml
 # Shipment lifecycle events
@@ -1428,10 +1783,10 @@ trade.shipment.departed:
  - Analytics (L4): shipment volume tracking
  - Puppetmaster (L4): regional watchers notice trade activity
 
-trade.shipment.leg_completed:
+trade.shipment.leg-completed:
  payload: { shipmentId, legIndex, remainingLegs, currentLocationId, incidentCount, realmId }
 
-trade.shipment.border_crossed:
+trade.shipment.border-crossed:
  payload: { shipmentId, legIndex, fromRealmId, toRealmId, tariffCollected, smugglingAttempted, smugglingDetected }
  consumers:
  - Analytics (L4): customs revenue tracking, smuggling rate monitoring
@@ -1462,29 +1817,29 @@ trade.tariff.evaded:
  - Puppetmaster (L4): gods notice smuggling patterns
 
 # Tax events
-trade.tax.assessment_created:
+trade.tax.assessment-created:
  payload: { assessmentId, policyId, taxpayerId, taxpayerType, taxDue, dueDate, realmId }
  # NOTE: Actor (L2) cannot subscribe to this L4 event per tenets.
  # Tax collector NPCs receive this data via ${trade.tax_debt.*} Variable Provider
  # or Trade calls Actor's API directly (L4→L2 is valid direction).
 
-trade.tax.payment_received:
+trade.tax.payment-received:
  payload: { assessmentId, taxpayerId, amount, remainingDue, realmId }
 
-trade.tax.debt_defaulted:
+trade.tax.debt-defaulted:
  payload: { taxpayerId, taxpayerType, totalOwed, realmId, suggestedConsequences }
  consumers:
  - Puppetmaster (L4): debt collection narratives, arrest warrants
  - Obligation (L4): creates enforcement obligations
 
 # Economic signal events
-trade.velocity.alert:
+trade.velocity.alerted:
  payload: { realmId, locationId, currencyDefinitionId, velocity, threshold, alertType }
- alertType: "stagnant" | "overheated" | "critical_imbalance"
+ alertType: VelocityAlertType # Stagnant, Overheated, CriticalImbalance
  consumers:
  - Puppetmaster (L4): divine economic intervention triggers
 
-trade.supply_demand.shift:
+trade.supply-demand.shifted:
  payload: { locationId, realmId, templateId, previousSupplyLevel, newSupplyLevel, priceChange }
  consumers:
  - Market (L4): vendor catalog pricing adjustment
@@ -1492,11 +1847,8 @@ trade.supply_demand.shift:
  # NPC economic behavior accesses supply/demand data via ${trade.supply.*}
  # and ${trade.demand.*} Variable Provider (pull-based, hierarchy-safe).
 
-# Route events
-trade.route.created:
- payload: { routeId, code, ownerId, ownerType, realmId, legCount }
-
-trade.route.status_changed:
+# Route events (trade.route.created is auto-generated via x-lifecycle)
+trade.route.status-changed:
  payload: { routeId, code, previousStatus, newStatus, reason, realmId }
  # NOTE: Actor (L2) cannot subscribe to this L4 event per tenets.
  # Merchant NPCs access route status via ${trade.*} Variable Provider
@@ -1507,8 +1859,10 @@ trade.route.status_changed:
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `transit.connection.status_changed` | `HandleTransitConnectionStatusChangedAsync` | Updates trade route viability when a Transit connection changes status (closed, seasonal, etc.) |
+| `transit.connection.status-changed` (verify against Transit's actual published topic name during implementation) | `HandleTransitConnectionStatusChangedAsync` | Updates trade route viability when a Transit connection changes status (closed, seasonal, etc.) |
 | Market price events (soft, when available) | `HandleMarketPriceChangedAsync` | Enriches supply/demand snapshots with current Market price data |
+
+**Account deletion**: Trade has no directly account-owned data. All entity ownership is via Character, Guild, Organization, or Faction entities. Account deletion cascades through Character deletion (Character subscribes to `account.deleted` per T28 obligation), which triggers Trade's x-references cleanup callback for `characterId`. Therefore, Trade does NOT need a direct `account.deleted` handler — cleanup is handled transitively via lib-resource x-references on `characterId`.
 
 ---
 
@@ -1521,62 +1875,115 @@ TradeServiceConfiguration:
  HealthyVelocityMin:
  type: number
  default: 0.3
+ minimum: 0
  description: "Minimum velocity considered healthy. Below this triggers stagnation alerts."
  env: TRADE_HEALTHY_VELOCITY_MIN
 
  HealthyVelocityMax:
  type: number
  default: 4.0
+ minimum: 0
  description: "Maximum velocity considered healthy. Above this triggers overheating alerts."
  env: TRADE_HEALTHY_VELOCITY_MAX
 
  VelocityCalculationIntervalSeconds:
  type: integer
  default: 300
+ minimum: 1
  description: "How often the velocity worker recomputes metrics (real-time seconds)"
  env: TRADE_VELOCITY_CALCULATION_INTERVAL_SECONDS
 
  SupplyDemandRefreshIntervalSeconds:
  type: integer
  default: 120
+ minimum: 1
  description: "How often supply/demand snapshots are recomputed (real-time seconds)"
  env: TRADE_SUPPLY_DEMAND_REFRESH_INTERVAL_SECONDS
 
  DefaultTransitCostPerKmPerKg:
  type: number
  default: 0.01
+ minimum: 0
  description: "Default cost per km per kg of cargo for transit cost estimation"
  env: TRADE_DEFAULT_TRANSIT_COST_PER_KM_PER_KG
 
  MaxShipmentLegs:
  type: integer
  default: 12
+ minimum: 1
+ maximum: 100
  description: "Maximum legs a trade route can have"
  env: TRADE_MAX_SHIPMENT_LEGS
 
  ShipmentExpirationGameDays:
  type: number
  default: 30.0
+ minimum: 0
  description: "Game-days after which a 'preparing' shipment is auto-expired"
  env: TRADE_SHIPMENT_EXPIRATION_GAME_DAYS
 
  TaxAssessmentWorkerIntervalSeconds:
  type: integer
  default: 600
+ minimum: 1
  description: "How often the tax assessment worker runs (real-time seconds)"
  env: TRADE_TAX_ASSESSMENT_WORKER_INTERVAL_SECONDS
 
  PriceDifferentialMinPercent:
  type: number
  default: 10.0
+ minimum: 0
  description: "Minimum price differential percentage to report as an arbitrage opportunity"
  env: TRADE_PRICE_DIFFERENTIAL_MIN_PERCENT
 
  VelocityHistoryRetentionGameDays:
  type: integer
  default: 90
+ minimum: 1
  description: "How many game-days of velocity history to retain"
  env: TRADE_VELOCITY_HISTORY_RETENTION_GAME_DAYS
+
+ ShipmentLockTimeoutSeconds:
+ type: integer
+ default: 30
+ minimum: 1
+ description: "Timeout in seconds for distributed locks on shipment state transitions"
+ env: TRADE_SHIPMENT_LOCK_TIMEOUT_SECONDS
+
+ ShipmentExpirationWorkerIntervalSeconds:
+ type: integer
+ default: 300
+ minimum: 1
+ description: "How often the shipment expiration worker runs (real-time seconds)"
+ env: TRADE_SHIPMENT_EXPIRATION_WORKER_INTERVAL_SECONDS
+
+ VelocityWorkerStartupDelaySeconds:
+ type: integer
+ default: 15
+ minimum: 0
+ description: "Startup delay before velocity worker begins first cycle"
+ env: TRADE_VELOCITY_WORKER_STARTUP_DELAY_SECONDS
+
+ SupplyDemandWorkerStartupDelaySeconds:
+ type: integer
+ default: 10
+ minimum: 0
+ description: "Startup delay before supply/demand worker begins first cycle"
+ env: TRADE_SUPPLY_DEMAND_WORKER_STARTUP_DELAY_SECONDS
+
+ TaxAssessmentWorkerStartupDelaySeconds:
+ type: integer
+ default: 20
+ minimum: 0
+ description: "Startup delay before tax assessment worker begins first cycle"
+ env: TRADE_TAX_ASSESSMENT_WORKER_STARTUP_DELAY_SECONDS
+
+ ShipmentExpirationWorkerStartupDelaySeconds:
+ type: integer
+ default: 30
+ minimum: 0
+ description: "Startup delay before shipment expiration worker begins first cycle"
+ env: TRADE_SHIPMENT_EXPIRATION_WORKER_STARTUP_DELAY_SECONDS
 ```
 
 ---
@@ -1609,109 +2016,82 @@ TradeServiceConfiguration:
 # schemas/state-stores.yaml additions
 
 trade-routes:
- backend: mysql
- description: "Trade route definitions with legs (durable)"
- key_format: "trade:route:{routeId}"
- indexes:
- - realmId
- - ownerId
- - code
- - status
+  backend: mysql
+  table: trade_routes
+  service: Trade
+  purpose: Trade route definitions with legs (durable)
 
 trade-shipments:
- backend: redis
- description: "Active shipments (hot state)"
- key_format: "trade:shipment:{shipmentId}"
- notes: |
- Active and recently-completed shipments in Redis for fast access.
- Archived to MySQL by background worker after completion.
+  backend: redis
+  prefix: "trade:shipment"
+  service: Trade
+  purpose: Active shipments (hot state, archived to MySQL after completion)
 
 trade-shipments-archive:
- backend: mysql
- description: "Archived shipments (historical record)"
- key_format: "trade:shipment:archive:{shipmentId}"
- indexes:
- - routeId
- - ownerId
- - carrierId
- - realmId
- - status
- - departedAtGameTime
+  backend: mysql
+  table: trade_shipments_archive
+  service: Trade
+  purpose: Archived shipments (historical record)
 
 trade-tariff-policies:
- backend: mysql
- description: "Tariff policy definitions (durable)"
- key_format: "trade:tariff:policy:{policyId}"
- indexes:
- - realmId
- - scope
- - status
+  backend: mysql
+  table: trade_tariff_policies
+  service: Trade
+  purpose: Tariff policy definitions (durable)
 
 trade-tariff-records:
- backend: mysql
- description: "Tariff collection records (durable audit trail)"
- key_format: "trade:tariff:record:{recordId}"
- indexes:
- - shipmentId
- - policyId
- - realmId
+  backend: mysql
+  table: trade_tariff_records
+  service: Trade
+  purpose: Tariff collection records (durable audit trail)
 
 trade-contraband:
- backend: mysql
- description: "Contraband definitions (durable)"
- key_format: "trade:contraband:{definitionId}"
- indexes:
- - realmId
- - type
+  backend: mysql
+  table: trade_contraband
+  service: Trade
+  purpose: Contraband definitions (durable)
 
 trade-tax-policies:
- backend: mysql
- description: "Tax policy definitions (durable)"
- key_format: "trade:tax:policy:{policyId}"
- indexes:
- - realmId
- - taxType
- - status
+  backend: mysql
+  table: trade_tax_policies
+  service: Trade
+  purpose: Tax policy definitions (durable)
 
 trade-tax-assessments:
- backend: mysql
- description: "Tax assessment records (durable)"
- key_format: "trade:tax:assessment:{assessmentId}"
- indexes:
- - taxpayerId
- - policyId
- - realmId
- - status
- - dueDate
+  backend: mysql
+  table: trade_tax_assessments
+  service: Trade
+  purpose: Tax assessment records (durable)
 
 trade-npc-profiles:
- backend: mysql
- description: "NPC economic profiles (durable)"
- key_format: "trade:npc:profile:{characterId}"
- indexes:
- - economicRole
- - homeLocationId
+  backend: mysql
+  table: trade_npc_profiles
+  service: Trade
+  purpose: NPC economic profiles (durable)
 
 trade-supply-demand:
- backend: redis
- description: "Computed supply/demand snapshots (ephemeral, recomputed periodically)"
- key_format: "trade:supply:{locationId}"
- ttl: 300 # 5 minutes, refreshed by worker
+  backend: redis
+  prefix: "trade:supply"
+  service: Trade
+  purpose: Computed supply/demand snapshots (ephemeral, recomputed periodically)
 
 trade-velocity:
- backend: redis
- description: "Computed velocity metrics (ephemeral, recomputed periodically)"
- key_format: "trade:velocity:{realmId}:{currencyDefinitionId}:{locationId}"
- ttl: 600 # 10 minutes, refreshed by worker
+  backend: redis
+  prefix: "trade:velocity"
+  service: Trade
+  purpose: Computed velocity metrics (ephemeral, recomputed periodically)
 
 trade-velocity-history:
- backend: mysql
- description: "Historical velocity metrics for trend analysis"
- key_format: "trade:velocity:history:{realmId}:{periodStart}"
- indexes:
- - realmId
- - currencyDefinitionId
- - periodStart
+  backend: mysql
+  table: trade_velocity_history
+  service: Trade
+  purpose: Historical velocity metrics for trend analysis
+
+trade-lock:
+  backend: redis
+  prefix: "trade:lock"
+  service: Trade
+  purpose: Distributed locks for shipment state transitions and concurrent operations
 ```
 
 ---
@@ -1825,6 +2205,8 @@ ${trade.trading_radius}:
  description: "How far this entity is willing to travel for trade (game-km)"
 ```
 
+> **Naming convention**: Variable provider paths follow established snake_case convention, consistent with other providers (`${personality.risk_tolerance}`, `${world.time_of_day}`, `${location.current_depth}`). This is the standard for variable provider namespaces and is NOT an event topic naming violation.
+
 ### GOAP Integration Example
 
 ```yaml
@@ -1871,6 +2253,10 @@ goap_action: trade_run_to_capital
 ```yaml
 VelocityCalculationWorker:
  interval: config.VelocityCalculationIntervalSeconds
+ pattern: |
+   T6 canonical background worker: configurable startup delay,
+   double-catch cancellation filter, WorkerErrorPublisher.TryPublishWorkerErrorAsync
+   for cycle failures, per-cycle telemetry span via ITelemetryProvider.StartActivity
  description: |
  Periodically computes economic velocity metrics per realm, currency,
  and location. Queries lib-currency transaction history and computes:
@@ -1879,7 +2265,7 @@ VelocityCalculationWorker:
  - Gini coefficient for wealth distribution
  - Hotspot/coldspot identification
 
- Publishes trade.velocity.alert events when velocity exits the healthy
+ Publishes trade.velocity.alerted events when velocity exits the healthy
  range (config.HealthyVelocityMin to config.HealthyVelocityMax).
 
  Results are cached in Redis (trade-velocity) and archived to MySQL
@@ -1895,6 +2281,10 @@ VelocityCalculationWorker:
 ```yaml
 SupplyDemandSnapshotWorker:
  interval: config.SupplyDemandRefreshIntervalSeconds
+ pattern: |
+   T6 canonical background worker: configurable startup delay,
+   double-catch cancellation filter, WorkerErrorPublisher.TryPublishWorkerErrorAsync
+   for cycle failures, per-cycle telemetry span via ITelemetryProvider.StartActivity
  description: |
  Periodically recomputes supply/demand snapshots per location.
  Aggregates data from:
@@ -1903,7 +2293,7 @@ SupplyDemandSnapshotWorker:
  - Market listings (available supply and recent prices)
  - Inventory queries (local stock levels)
 
- Publishes trade.supply_demand.shift events when significant changes occur.
+ Publishes trade.supply-demand.shifted events when significant changes occur.
 
  Results cached in Redis (trade-supply-demand) for fast variable
  provider access.
@@ -1920,6 +2310,10 @@ SupplyDemandSnapshotWorker:
 ```yaml
 TaxAssessmentWorker:
  interval: config.TaxAssessmentWorkerIntervalSeconds
+ pattern: |
+   T6 canonical background worker: configurable startup delay,
+   double-catch cancellation filter, WorkerErrorPublisher.TryPublishWorkerErrorAsync
+   for cycle failures, per-cycle telemetry span via ITelemetryProvider.StartActivity
  description: |
  Processes assessed-mode tax policies. For each policy with
  assessmentFrequency, checks if the current game-time has crossed
@@ -1930,7 +2324,7 @@ TaxAssessmentWorker:
  For property taxes: queries lib-inventory container ownership.
  For income taxes: queries transaction history since last assessment.
 
- Publishes trade.tax.assessment_created for each new assessment.
+ Publishes trade.tax.assessment-created for each new assessment.
  NPC tax collectors subscribe to these events to begin collection.
 
  dependencies:
@@ -1943,7 +2337,11 @@ TaxAssessmentWorker:
 
 ```yaml
 ShipmentExpirationWorker:
- interval: 300 # Every 5 minutes (real-time)
+ interval: config.ShipmentExpirationWorkerIntervalSeconds
+ pattern: |
+   T6 canonical background worker: configurable startup delay,
+   double-catch cancellation filter, WorkerErrorPublisher.TryPublishWorkerErrorAsync
+   for cycle failures, per-cycle telemetry span via ITelemetryProvider.StartActivity
  description: |
  Scans for shipments in "preparing" status older than
  config.ShipmentExpirationGameDays. Expires them and returns
@@ -1963,7 +2361,7 @@ Trade routes are economic overlays on Transit connections. Every trade route leg
 - **Route creation**: Validates Transit connections exist for each leg
 - **Travel time estimation**: `/transit/route/calculate` for cost estimation
 - **Shipment movement**: Creates Transit journeys for carriers
-- **Connection status**: Subscribes to `transit.connection.status_changed` to update trade route viability
+- **Connection status**: Subscribes to `transit.connection.status-changed` (verify against Transit's actual published topic name during implementation) to update trade route viability
 
 ### Currency (L2) -- Hard Dependency
 
@@ -2036,7 +2434,7 @@ The velocity monitoring system is designed to feed god actors (via Puppetmaster)
 ```
 Trade velocity worker computes metrics
  ↓
-trade.velocity.alert event published
+trade.velocity.alerted event published
  ↓
 Hermes (god actor via Puppetmaster) subscribes
  ↓
@@ -2064,7 +2462,7 @@ Hermes satisfied → moves attention elsewhere
 
 With 100,000+ NPCs and perhaps 5% acting as merchants, that's ~5,000 NPC merchants. If each maintains 1-2 active shipments, the system handles ~10,000 concurrent shipments in Redis. At ~2KB per shipment document, total Redis footprint is ~20MB -- negligible.
 
-Shipment lifecycle events (departed, leg_completed, arrived) at ~10,000 shipments with an average journey of 3 legs = ~40,000 events per game-day. At 24:1 time ratio, that's ~1,700 events per real-hour, well within RabbitMQ capacity.
+Shipment lifecycle events (departed, leg-completed, arrived) at ~10,000 shipments with an average journey of 3 legs = ~40,000 events per game-day. At 24:1 time ratio, that's ~1,700 events per real-hour, well within RabbitMQ capacity.
 
 ### Velocity Computation
 
@@ -2095,6 +2493,17 @@ The entire Trade service is aspirational. No schema files, generated code, or se
 8. `TradeServiceModels.cs` -- Internal storage models
 9. `TradeVariableProviderFactory.cs` -- IVariableProviderFactory implementation for `${trade.*}`
 10. Background workers: VelocityCalculationWorker, SupplyDemandSnapshotWorker, TaxAssessmentWorker, ShipmentExpirationWorker
+
+### Schema Creation Requirements
+
+When creating `trade-api.yaml`, `trade-events.yaml`, and `trade-configuration.yaml`:
+
+1. **x-service-layer**: Set `x-service-layer: GameFeatures` at root level of `trade-api.yaml`
+2. **servers**: Use `servers: [{ url: http://localhost:5012 }]`
+3. **additionalProperties: false**: Required on ALL request, response, event, and data model schemas
+4. **Property descriptions**: Every property MUST have a `description` field (missing descriptions cause CS1591 compiler warnings). Use inline comments from this deep dive as source material.
+5. **Custom event inheritance**: All custom events MUST use `allOf` with `BaseServiceEvent` from `common-events.yaml`, include `eventName` property with `default:` matching the topic, and use `additionalProperties: false`.
+6. **Configuration descriptions**: MUST be single-line (multi-line YAML blocks produce malformed C# XML docs).
 
 ---
 
@@ -2134,11 +2543,23 @@ The entire Trade service is aspirational. No schema files, generated code, or se
 
 #### Design Considerations (Requires Planning)
 
-1. **Enum type safety (MUST FIX at schema creation time)**: The data models use `string` with inline value comments for 17 fields that must be proper schema-defined enums. See enum table below.
+1. **Enum type safety (CORRECTED in audit)**: All Category C enum fields have been identified with PascalCase values and suggested enum names in the Enum Reference table below. Must be defined as proper schema enums at schema creation time.
 
-2. **Untyped object fields (MUST FIX at schema creation time)**: Five fields use `type: object` without property definitions (`riskProfile`, `seasonalAvailability`, `faucetsByType`, `sinksByType`, `riskAssessment`). Need proper typed schemas or explicit `additionalProperties: true` metadata bag documentation.
+2. **Untyped object fields (RESOLVED)**: All previously untyped object fields have been replaced with named schemas (`RiskProfile`, `SeasonalAvailabilityEntry`, `FaucetEntry`, `SinkEntry`, `RiskAssessment`, `VelocityHealthRange`, `TransactionReference`). See Untyped Object Reference (RESOLVED) table below.
 
-3. **Resource cleanup endpoints missing**: Trade stores NPC economic profiles keyed by `characterId` (L2 entity) and tariff/tax/contraband policies keyed by `realmId`. Per FOUNDATION TENETS, Trade must register references via lib-resource and implement cleanup callback endpoints (e.g., `/trade/cleanup-by-character`, `/trade/cleanup-by-realm`). No cleanup endpoints are currently defined in the API section.
+3. **Resource cleanup endpoints (RESOLVED in audit)**: x-references declarations added for `character`, `realm`, and `location` targets with cascade policy. Three cleanup callback endpoints (`/trade/cleanup-by-character`, `/trade/cleanup-by-realm`, `/trade/cleanup-by-location`) added to the API Endpoints section. Account deletion is handled transitively via Character's `account.deleted` handler triggering the `characterId` cleanup callback.
+
+11. **Polymorphic type field enum strategy** `AUDIT:NEEDS_DESIGN`
+   `ownerType` on TradeRoute includes "system" (not in EntityType). `ownerType` on Shipment includes "caravan_company" (not in EntityType). `carrierType` includes "npc" (NPCs are Characters in Bannou). `taxpayerType` includes "household" (not in EntityType). Per T14 decision tree test 3: valid values include non-entity roles. Options: (a) Service-specific enums (TradeOwnerType, CarrierType, TaxpayerType), or (b) Remap non-standard values to EntityType (caravan_company→Organization, npc→Character, system→??) and use `$ref: EntityType`. Decision required before schema creation.
+
+12. **Shipment status state machine reconciliation** `AUDIT:NEEDS_DESIGN`
+   Data model defines 7 states: Preparing, InTransit, AtCheckpoint, Arrived, Lost, Seized, Abandoned. Visual Aid diagram shows different states: CREATED, LOADING, IN_TRANSIT, ARRIVED, COMPLETED, CANCELLED, LOST/DELAYED, DISPUTED. Must unify to one canonical state set before schema creation.
+
+13. **NpcTradingPersonality vs Character-Personality overlap** `AUDIT:NEEDS_DESIGN`
+   NpcTradingPersonality defines 6 personality traits (riskTolerance, priceAwareness, loyaltyFactor, hoarding, bargainDrive, explorationRange) stored in Trade's NPC profile. Character-Personality (L4) manages personality traits via `${personality.*}` variable provider. Question: Should economic personality traits come from `${personality.*}` (avoiding data duplication) or be stored independently in Trade (providing economic-specific granularity)? Both are L4, so either approach is hierarchy-valid.
+
+14. **NPC market-analysis recommendations format** `AUDIT:NEEDS_DESIGN`
+   `/trade/npc/market-analysis` response includes `recommendations: [string]` with values like "Buy iron locally". If consumed by GOAP behaviors: should be structured `NpcRecommendation` objects with typed action, item, location, profit fields. If display-only: strings are acceptable. Decision depends on how ABML economic action handlers will consume this data.
 
 4. **NPC profile ownership**: Should NPC economic profiles live in Trade or in a shared location? **Recommendation**: Trade owns economic profiles because they're inseparable from trade logistics. The profile is consumed by the Trade variable provider and GOAP integration. Other services that need economic data query Trade.
 
@@ -2160,41 +2581,57 @@ Fields that must become proper enums at schema creation time:
 
 | Model | Field | Values | Suggested Enum Name |
 |-------|-------|--------|---------------------|
-| TradeRoute | status | active, closed, dangerous, seasonal | TradeRouteStatus |
-| Shipment | status | preparing, in_transit, at_checkpoint, arrived, lost, seized, abandoned | ShipmentStatus |
-| Shipment | custodyMode | escrow, carrier, virtual | CustodyMode |
-| ShipmentIncident | incidentType | bandit_attack, storm, customs_inspection, spoilage, breakdown, smuggling_detected | ShipmentIncidentType |
-| ShipmentIncident | outcome | escaped, lost_cargo, delayed, seized | IncidentOutcome |
-| TariffPolicy | scope | realm_wide, specific_border, category | TariffScope |
-| TariffPolicy | direction | import, export, both | TariffDirection |
-| TariffPolicy | collectionMode | automatic, assessed, advisory | CollectionMode |
-| TariffPolicy | status | active, suspended, wartime | TariffPolicyStatus |
-| TariffRecord | collectionStatus | pending, collected, partial, evaded, exempt | TariffCollectionStatus |
-| TariffRecord | borderType | internal, external | BorderType |
-| TariffExemption | exemptionType | full, partial | ExemptionType |
-| ContrabandDefinition | severity | restricted, prohibited, capital_offense | ContrabandSeverity |
-| TaxPolicy | taxType | transaction, income, property, wealth, sales, custom | TaxType |
-| TaxPolicy | collectionTarget | void, realm_treasury, faction_treasury | TaxCollectionTarget |
-| TaxAssessment | status | pending, partial, paid, overdue, defaulted | TaxAssessmentStatus |
-| EconomicVelocityMetrics | velocityTrend | accelerating, stable, decelerating, stagnant | VelocityTrend |
+| TradeRoute | status | Active, Closed, Dangerous, Seasonal | TradeRouteStatus |
+| Shipment | status | Preparing, InTransit, AtCheckpoint, Arrived, Lost, Seized, Abandoned | ShipmentStatus |
+| Shipment | custodyMode | Escrow, Carrier, Virtual | CustodyMode |
+| ShipmentIncident | outcome | Escaped, LostCargo, Delayed, Seized | IncidentOutcome |
+| TariffPolicy | scope | RealmWide, SpecificBorder, Category | TariffScope |
+| TariffPolicy | direction | Import, Export, Both | TariffDirection |
+| TariffPolicy | collectionMode | Automatic, Assessed, Advisory | CollectionMode |
+| TariffPolicy | status | Active, Suspended, Wartime | TariffPolicyStatus |
+| TariffRecord | collectionStatus | Pending, Collected, Partial, Evaded, Exempt | TariffCollectionStatus |
+| TariffRecord | borderType | Internal, External | BorderType |
+| TariffExemption | exemptionType | Full, Partial | ExemptionType |
+| ContrabandDefinition | severity | Restricted, Prohibited, CapitalOffense | ContrabandSeverity |
+| ContrabandDefinition | type | ItemCategory, ItemTemplate, Currency | ContrabandTargetType |
+| TaxPolicy | taxType | Transaction, Income, Property, Wealth, Sales, Custom | TaxType |
+| TaxPolicy | collectionTarget | Void, RealmTreasury, FactionTreasury | TaxCollectionTarget |
+| TaxAssessment | status | Pending, Partial, Paid, Overdue, Defaulted | TaxAssessmentStatus |
+| EconomicVelocityMetrics | velocityTrend | Accelerating, Stable, Decelerating, Stagnant | VelocityTrend |
+| NpcEconomicProfile | economicRole | Merchant, Craftsman, Farmer, Miner, Fisher, Laborer, Noble, Consumer, None | EconomicRole |
+| TaxPolicy | assessmentFrequency | Weekly, Monthly, Seasonal, Annual | AssessmentFrequency |
+| velocity alert event | alertType | Stagnant, Overheated, CriticalImbalance | VelocityAlertType |
+| faucet-sink-balance response | inflationRisk | Low, Moderate, High, Critical | InflationRisk |
 
 For polymorphic `ownerType`/`carrierType`/`taxpayerType` fields: use the shared `EntityType` enum from `common-api.yaml` where values are known, or use opaque strings only if the set must remain extensible across layers (per IMPLEMENTATION TENETS exception #3).
 
-### Untyped Object Reference
+### Untyped Object Reference (RESOLVED)
 
-| Model | Field | Fix |
-|-------|-------|-----|
-| TradeRoute | riskProfile | Define `RiskProfile` schema with typed risk-level counts |
-| TradeRoute | seasonalAvailability | Define typed array of `SeasonalAvailabilityEntry` (like Transit does) |
-| EconomicVelocityMetrics | faucetsByType | Define `FaucetBreakdown` with known faucet type keys |
-| EconomicVelocityMetrics | sinksByType | Define `SinkBreakdown` with known sink type keys |
-| Route estimate-cost | riskAssessment | Define `RiskAssessment` schema with `expectedLoss`, `worstCase` |
+All previously untyped object fields have been replaced with named schemas:
+
+| Model | Field | Resolution |
+|-------|-------|------------|
+| TradeRoute | riskProfile | `RiskProfile` typed schema |
+| TradeRoute | seasonalAvailability | `[SeasonalAvailabilityEntry]` typed array |
+| EconomicVelocityMetrics | faucetsByType | `[FaucetEntry]` typed array (renamed to `faucets`) |
+| EconomicVelocityMetrics | sinksByType | `[SinkEntry]` typed array (renamed to `sinks`) |
+| Route estimate-cost response | riskAssessment | `RiskAssessment` typed schema |
+| Velocity hotspots response | healthyRange | `VelocityHealthRange` typed schema |
+| Tariff collect / Tax pay response | transaction | `TransactionReference` typed schema |
 
 ---
 
 ## Work Tracking
 
-*No active work items. Service is aspirational.*
+| Issue | Title | Status | Notes |
+|-------|-------|--------|-------|
+| #427 | Economy Layer: Market, Trade & Taxation | Open | Master tracking issue. This deep dive supersedes #427's design details for Trade. Market still needs separate deep dive. |
+| #414 | Faction economy - Trade regulation via seed capabilities | Open | Trade's integration surface documented in Dependencies/Faction section. Faction-side design unresolved. |
+| #428 | ABML Economic Action Handlers | Open | Prerequisite for NPC merchant GOAP decisions. Trade-specific handlers (create_shipment, query_trade_route) needed post-implementation. |
+| #429 | Analytics: Economic Velocity & Distribution | Open | Velocity computation absorbed into Trade (VelocityCalculationWorker). Analytics retains wealth distribution metrics. Issue scope needs update. |
+| #478 | Currency: Universal value anchoring | Open | Currency prerequisite for exchange rates in border crossing tariff calculations. |
+| #153 | Escrow Asset Transfer Integration Broken | Open | **BLOCKER** for Trade's custodyMode: Escrow. Escrow asset transfer integration currently broken. |
+| #524 | Transit: Caravan formations | Open | Trade caravans and Transit caravan formations are tightly coupled. |
 
 ---
 

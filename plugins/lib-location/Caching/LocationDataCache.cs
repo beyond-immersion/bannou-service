@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Location.Caching;
 
@@ -17,6 +18,7 @@ namespace BeyondImmersion.BannouService.Location.Caching;
 /// Uses ConcurrentDictionary for thread-safety (IMPLEMENTATION TENETS compliant).
 /// Loads data via ILocationClient and IRealmClient through mesh, matching the established provider cache pattern.
 /// </summary>
+[BannouHelperService("location-data", typeof(ILocationService), typeof(ILocationDataCache), lifetime: ServiceLifetime.Singleton)]
 public sealed class LocationDataCache : ILocationDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;

@@ -6,6 +6,8 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -27,6 +29,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// RabbitMQMessageBus, RabbitMQMessageSubscriber) to be tested without real RabbitMQ.
 /// </para>
 /// </remarks>
+[BannouHelperService("rabbit-m-q-connection", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
 public sealed class RabbitMQConnectionManager : IChannelManager
 {
     private readonly ILogger<RabbitMQConnectionManager> _logger;

@@ -10,6 +10,8 @@ using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Handlers;
 
@@ -35,6 +37,7 @@ namespace BeyondImmersion.BannouService.Actor.Handlers;
 /// Character Brain behaviors can handle commands via flows named <c>on_command_{command_name}</c>.
 /// </para>
 /// </remarks>
+[BannouHelperService("actor-command", typeof(IActorService), typeof(IActionHandler), lifetime: ServiceLifetime.Singleton)]
 public sealed class ActorCommandHandler : IActionHandler
 {
     private const string ActionName = "actor_command";

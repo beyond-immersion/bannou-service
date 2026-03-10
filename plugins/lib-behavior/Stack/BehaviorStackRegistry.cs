@@ -7,12 +7,15 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Behavior.Stack;
 
 /// <summary>
 /// Thread-safe registry for entity behavior stacks.
 /// </summary>
+[BannouHelperService("behavior-stack", typeof(IBehaviorService), typeof(IBehaviorStackRegistry), lifetime: ServiceLifetime.Singleton)]
 public sealed class BehaviorStackRegistry : IBehaviorStackRegistry
 {
     private readonly ConcurrentDictionary<Guid, IBehaviorStack> _stacks;

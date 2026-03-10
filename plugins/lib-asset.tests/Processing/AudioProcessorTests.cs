@@ -71,10 +71,6 @@ public class AudioProcessorTests
     /// <summary>
     /// Validates the AudioProcessor constructor follows proper DI patterns.
     /// </summary>
-    [Fact]
-    public void AudioProcessor_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<AudioProcessor>();
-
     #endregion
 
     #region CanProcess Tests

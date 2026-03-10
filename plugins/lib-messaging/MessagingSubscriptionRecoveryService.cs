@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Messaging;
 
@@ -7,6 +9,7 @@ namespace BeyondImmersion.BannouService.Messaging;
 /// Background service that recovers external HTTP callback subscriptions on startup.
 /// Also periodically refreshes TTL on persisted subscriptions to keep them alive.
 /// </summary>
+[BannouHelperService("messaging-subscription-recovery", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
 public sealed class MessagingSubscriptionRecoveryService : BackgroundService
 {
     private readonly ILogger<MessagingSubscriptionRecoveryService> _logger;

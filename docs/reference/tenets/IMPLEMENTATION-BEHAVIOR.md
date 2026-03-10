@@ -604,13 +604,15 @@ These are foundational definitions that other entities reference by ID. Deletion
 
 **Current Category A entities**: Species, Realm, Relationship Type, Seed Type, Location, Faction, Status Template, Transit Mode.
 
+**Marker interface**: Services implementing Category A merge MUST implement `IDeprecateAndMergeEntity` (in `bannou-service/Services/`). The structural test `Services_WithDeprecation_MustImplementDeprecationInterface` validates that all services with `deprecation: true` implement either `IDeprecateAndMergeEntity` (Category A with merge) or `ICleanDeprecatedEntity` (Category B). Category A entities pending merge implementation are tracked in the `DeprecationInterfacePending` exception set in `structural-tests/StructuralTests.cs`.
+
 **Lifecycle**: `Active` → `Deprecated` → (optional `Merge`) → `Delete`
 
 **Required endpoints**:
 - `POST /{entity}/deprecate` — marks deprecated, publishes `*.updated` event
 - `POST /{entity}/undeprecate` — reverses deprecation (decisions can be reversed)
 - `POST /{entity}/delete` — permanent removal (MUST reject if not deprecated)
-- `POST /{entity}/merge` — optional, for entities with many cross-service references
+- `POST /{entity}/merge` — optional, for entities with many cross-service references; uses shared `MergeDeprecatedRequest`/`MergeDeprecatedResponse` from `common-api.yaml`
 
 **Required storage fields** (triple-field model on internal `*Model`):
 
@@ -640,6 +642,8 @@ All three fields are MANDATORY for Category A. `DeprecationReason` provides audi
 These are templates/definitions where instances persist independently. The template must remain readable forever because historical instances reference it. Deprecation prevents new instances while preserving the template as a read-only archive.
 
 **Current Category B entities**: Item Template, Quest Definition, Chat Room Type, Gardener Scenario Template, Storyline Scenario Definition, Achievement Definition, Contract Template, Currency Definition, Character-Encounter EncounterType, Collection Entry Template, License Board Template, Leaderboard Definition.
+
+**Marker interface**: Services implementing Category B deprecation MUST implement `ICleanDeprecatedEntity` (in `bannou-service/Services/`). The structural test `Services_WithDeprecation_MustImplementDeprecationInterface` validates this for all services with `deprecation: true` in their events schema.
 
 **Lifecycle**: `Active` → `Deprecated` → (clean-deprecated sweep removes when zero instances remain)
 
@@ -797,15 +801,28 @@ includeDeprecated:
 
 Merge is an OPTIONAL extension for Category A entities with many cross-service references. Not all Category A entities need merge — it's valuable when thousands of instances reference the deprecated definition and manual migration is impractical.
 
+**Marker interface**: Services implementing merge MUST implement `IDeprecateAndMergeEntity` (in `bannou-service/Services/`). The structural test `Services_WithDeprecation_MustImplementDeprecationInterface` validates that all services with `deprecation: true` implement either `IDeprecateAndMergeEntity` (Category A with merge) or `ICleanDeprecatedEntity` (Category B with cleanup). Category A entities pending merge implementation are tracked in the `DeprecationInterfacePending` exception list.
+
+**Shared models**: All merge endpoints use shared request/response models from `common-api.yaml`:
+- `MergeDeprecatedRequest` — `sourceEntityId`, `targetEntityId`, `deleteAfterMerge`
+- `MergeDeprecatedResponse` — `totalMigrated`, `totalFailed`, `sourceDeleted`, `failedEntityIds`
+
+Services with multi-entity-type migration (e.g., Realm migrates species + locations + characters) may compose `MergeDeprecatedResponse` via `allOf` to add per-type breakdowns.
+
 **Requirements when implementing merge**:
-1. Source entity MUST be deprecated (reject with `BadRequest` if not)
-2. Target entity MUST NOT be deprecated (reject with `BadRequest` if deprecated)
-3. Use distributed locks on both source and target entity indexes
-4. Track partial failures in a `failedEntityIds` response field
-5. Support optional `deleteAfterMerge` flag (skipped automatically on partial failure)
-6. Publish `*.merged` event with source ID, target ID, migrated count, and failed IDs
+1. Service class MUST implement `IDeprecateAndMergeEntity`
+2. Merge endpoint MUST use shared `MergeDeprecatedRequest`/`MergeDeprecatedResponse` from `common-api.yaml`
+3. Source entity MUST be deprecated (reject with `BadRequest` if not)
+4. Target entity MUST NOT be deprecated (reject with `BadRequest` if deprecated)
+5. Use distributed locks on both source and target entity indexes
+6. Track partial failures in `failedEntityIds` response field
+7. Support optional `deleteAfterMerge` flag (skipped automatically on partial failure)
+8. Publish `*.merged` event with source ID, target ID, migrated count, and failed IDs
+9. When `deleteAfterMerge` is true and no failures: call the service's own delete method, which publishes the `*.deleted` lifecycle event AFTER the `*.merged` event — this convention ensures all lifecycle consumers see both events in order
 
 **Current entities with merge**: Species, Realm, Relationship Type.
+
+**Category A entities pending merge**: Seed Type, Location, Faction, Status Template, Transit Mode.
 
 ### Cross-Service Deprecation Checks
 

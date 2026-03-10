@@ -84,9 +84,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<ActorPoolNodeWorker>();
-        Assert.NotNull(CreateWorker());
+    {        Assert.NotNull(CreateWorker());
     }
 
     #endregion

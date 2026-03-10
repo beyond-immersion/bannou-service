@@ -163,13 +163,6 @@ public class ActorRunnerTests
     }
 
     #region Constructor Tests
-
-    [Fact]
-    public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<ActorRunner>();
-    }
-
     [Fact]
     public void Constructor_ValidParameters_SetsProperties()
     {

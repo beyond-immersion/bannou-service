@@ -47,9 +47,7 @@ public class SearchIndexServiceTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<SearchIndexService>();
-        Assert.NotNull(_service);
+    {        Assert.NotNull(_service);
     }
 
     #endregion

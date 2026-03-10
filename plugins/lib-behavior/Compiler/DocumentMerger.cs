@@ -7,6 +7,9 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Behavior;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.Bannou.Behavior.Compiler;
 
@@ -15,6 +18,7 @@ namespace BeyondImmersion.Bannou.Behavior.Compiler;
 /// All imported flows are renamed with their namespace prefix.
 /// This enables bytecode compilation to produce a single self-contained model.
 /// </summary>
+[BannouHelperService("document", typeof(IBehaviorService), typeof(IDocumentMerger), lifetime: ServiceLifetime.Singleton)]
 public sealed class DocumentMerger : IDocumentMerger
 {
     /// <summary>

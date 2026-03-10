@@ -2,6 +2,8 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Gardener;
 
@@ -24,6 +26,7 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// Follows the same pattern as SeedCollectionUnlockListener.
 /// </para>
 /// </remarks>
+[BannouHelperService("gardener-seed-evolution", typeof(IGardenerService), typeof(ISeedEvolutionListener), lifetime: ServiceLifetime.Singleton)]
 public class GardenerSeedEvolutionListener : ISeedEvolutionListener
 {
     /// <summary>Ephemeral store for garden instance records (Redis).</summary>

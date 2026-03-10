@@ -79,9 +79,7 @@ public class BannouSessionManagerTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<BannouSessionManager>();
-        Assert.NotNull(_sessionManager);
+    {        Assert.NotNull(_sessionManager);
     }
 
     #endregion

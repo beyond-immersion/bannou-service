@@ -50,9 +50,7 @@ public class RepositorySyncSchedulerServiceTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<RepositorySyncSchedulerService>();
-        using var service = new RepositorySyncSchedulerService(
+    {        using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
             _configuration,

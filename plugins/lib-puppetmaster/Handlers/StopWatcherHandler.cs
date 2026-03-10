@@ -10,6 +10,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 
@@ -31,6 +32,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 /// Puppetmaster service.
 /// </para>
 /// </remarks>
+[BannouHelperService("stop-watcher", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
 public sealed class StopWatcherHandler : IActionHandler
 {
     private readonly IServiceScopeFactory _scopeFactory;

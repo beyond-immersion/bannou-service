@@ -3,6 +3,8 @@
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Mesh.Services;
 
@@ -11,6 +13,7 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 /// Does NOT use Redis or lib-state - all routing is local to the current process.
 /// All service calls route to "bannou" (the omnipotent default).
 /// </summary>
+[BannouHelperService("local-mesh-state", typeof(IMeshService), typeof(IMeshStateManager), lifetime: ServiceLifetime.Singleton)]
 public sealed class LocalMeshStateManager : IMeshStateManager
 {
     private readonly ILogger<LocalMeshStateManager> _logger;

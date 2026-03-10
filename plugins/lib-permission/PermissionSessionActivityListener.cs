@@ -2,6 +2,8 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Permission;
 
@@ -30,6 +32,7 @@ namespace BeyondImmersion.BannouService.Permission;
 /// is retained as it comes from a different source.
 /// </para>
 /// </remarks>
+[BannouHelperService("permission-session-activity", typeof(IPermissionService), typeof(ISessionActivityListener), lifetime: ServiceLifetime.Singleton)]
 public class PermissionSessionActivityListener : ISessionActivityListener
 {
     private readonly PermissionService _permissionService;

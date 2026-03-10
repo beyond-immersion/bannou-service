@@ -5,6 +5,8 @@ using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -21,6 +23,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </list>
 /// When inactive, no registration, discovery, connections, or timers are created.
 /// </remarks>
+[BannouHelperService("inter-node-broadcast", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
 public sealed class InterNodeBroadcastManager : IDisposable
 {
     private const string BROADCAST_REGISTRY_KEY = "broadcast-registry";

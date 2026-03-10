@@ -283,10 +283,10 @@ components:
       - requirements
       - fatigueRatePerGameHour
       - noiseLevelNormalized
-      - isDeprecated
       - modifiedAt
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -352,25 +352,13 @@ components:
           items:
             type: string
             format: uuid
-        isDeprecated: &id036
-          type: boolean
-          description: "Whether this mode is deprecated"
-        deprecatedAt: &id037
-          type: string
-          format: date-time
-          nullable: true
-          description: "When deprecation occurred (null if not deprecated)"
-        deprecationReason: &id038
-          type: string
-          nullable: true
-          description: "Why this mode was deprecated (null if not deprecated)"
-        tags: &id039
+        tags: &id036
           type: array
           nullable: true
           description: "Freeform classification tags"
           items:
             type: string
-        modifiedAt: &id040
+        modifiedAt: &id037
           type: string
           format: date-time
           description: "When the mode was last modified"
@@ -382,6 +370,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the transit mode was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this transit mode is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the transit mode was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     TransitModeUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -402,10 +403,10 @@ components:
       - requirements
       - fatigueRatePerGameHour
       - noiseLevelNormalized
-      - isDeprecated
       - modifiedAt
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -426,11 +427,8 @@ components:
         fatigueRatePerGameHour: *id033
         noiseLevelNormalized: *id034
         realmRestrictions: *id035
-        isDeprecated: *id036
-        deprecatedAt: *id037
-        deprecationReason: *id038
-        tags: *id039
-        modifiedAt: *id040
+        tags: *id036
+        modifiedAt: *id037
         createdAt:
           type: string
           format: date-time
@@ -439,6 +437,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the transit mode was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this transit mode is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the transit mode was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -464,10 +475,10 @@ components:
       - requirements
       - fatigueRatePerGameHour
       - noiseLevelNormalized
-      - isDeprecated
       - modifiedAt
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -487,11 +498,8 @@ components:
         fatigueRatePerGameHour: *id033
         noiseLevelNormalized: *id034
         realmRestrictions: *id035
-        isDeprecated: *id036
-        deprecatedAt: *id037
-        deprecationReason: *id038
-        tags: *id039
-        modifiedAt: *id040
+        tags: *id036
+        modifiedAt: *id037
         createdAt:
           type: string
           format: date-time
@@ -500,6 +508,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the transit mode was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this transit mode is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the transit mode was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

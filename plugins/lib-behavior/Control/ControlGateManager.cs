@@ -8,6 +8,8 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Behavior.Control;
 
@@ -20,6 +22,7 @@ namespace BeyondImmersion.BannouService.Behavior.Control;
 /// When cinematic coordination becomes active, this must be backed by lib-state (Redis)
 /// to ensure control gates are visible across all nodes.
 /// </remarks>
+[BannouHelperService("control-gate", typeof(IBehaviorService), typeof(IControlGateRegistry), lifetime: ServiceLifetime.Singleton)]
 public sealed class ControlGateManager : IControlGateRegistry
 {
     private readonly ConcurrentDictionary<Guid, IControlGate> _gates;

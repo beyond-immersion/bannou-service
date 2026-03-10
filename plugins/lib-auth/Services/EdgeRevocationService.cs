@@ -2,6 +2,8 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Auth.Services;
 
@@ -17,6 +19,7 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// - Implements timeout handling with CancellationTokenSource
 /// </para>
 /// </remarks>
+[BannouHelperService("edge-revocation", typeof(IAuthService), typeof(IEdgeRevocationService), lifetime: ServiceLifetime.Scoped)]
 public class EdgeRevocationService : IEdgeRevocationService
 {
     /// <summary>

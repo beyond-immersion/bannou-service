@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Behavior;
 
@@ -12,6 +13,7 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// Manages behavior bundles for efficient storage and retrieval.
 /// Behaviors can be grouped into bundles for bulk download by clients.
 /// </summary>
+[BannouHelperService("behavior-bundle", typeof(IBehaviorService), typeof(IBehaviorBundleManager), lifetime: ServiceLifetime.Scoped)]
 public class BehaviorBundleManager : IBehaviorBundleManager
 {
     /// <summary>State store for behavior metadata records keyed by behavior ID.</summary>

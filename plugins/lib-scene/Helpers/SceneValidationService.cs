@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Scene.Helpers;
 
@@ -6,6 +8,7 @@ namespace BeyondImmersion.BannouService.Scene.Helpers;
 /// Validates scene structures and applies game-specific validation rules.
 /// Extracted from SceneService for improved testability.
 /// </summary>
+[BannouHelperService("scene-validation", typeof(ISceneService), typeof(ISceneValidationService), lifetime: ServiceLifetime.Scoped)]
 public class SceneValidationService : ISceneValidationService
 {
     // refId validation pattern: must start with lowercase letter, followed by lowercase letters, digits, or underscores

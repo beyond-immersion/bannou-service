@@ -7,6 +7,8 @@ using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Pool;
 
@@ -22,6 +24,7 @@ namespace BeyondImmersion.BannouService.Actor.Pool;
 /// <b>IMPLEMENTATION TENETS:</b> All state is in Redis, safe for multi-instance control planes.
 /// </para>
 /// </remarks>
+[BannouHelperService("actor-pool", typeof(IActorService), typeof(IActorPoolManager), lifetime: ServiceLifetime.Singleton)]
 public sealed class ActorPoolManager : IActorPoolManager
 {
     private readonly ILogger<ActorPoolManager> _logger;

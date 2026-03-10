@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Xml;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Escrow;
 
@@ -11,6 +12,7 @@ namespace BeyondImmersion.BannouService.Escrow;
 /// Background service that checks for expired escrows and transitions them
 /// to the Expired state with automatic refund of any deposits.
 /// </summary>
+[BannouHelperService("escrow-expiration", typeof(IEscrowService), typeof(IHostedService), lifetime: ServiceLifetime.Singleton)]
 public class EscrowExpirationService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

@@ -9,6 +9,8 @@ using BeyondImmersion.BannouService.CharacterHistory.Caching;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.CharacterHistory.Providers;
 
@@ -16,6 +18,7 @@ namespace BeyondImmersion.BannouService.CharacterHistory.Providers;
 /// Factory for creating BackstoryProvider instances.
 /// Registered with DI as IVariableProviderFactory for Actor to discover.
 /// </summary>
+[BannouHelperService("backstory-provider", typeof(ICharacterHistoryService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class BackstoryProviderFactory : IVariableProviderFactory
 {
     private readonly IBackstoryCache _cache;

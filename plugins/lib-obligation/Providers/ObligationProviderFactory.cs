@@ -3,6 +3,8 @@ using BeyondImmersion.BannouService.Obligation;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Obligation.Providers;
 
@@ -16,6 +18,7 @@ namespace BeyondImmersion.BannouService.Obligation.Providers;
 /// returns an empty provider (zero obligations). The cache is populated by contract
 /// lifecycle event handlers and the QueryObligations/InvalidateCache endpoints.
 /// </remarks>
+[BannouHelperService("obligation-provider", typeof(IObligationService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class ObligationProviderFactory : IVariableProviderFactory
 {
     private readonly IStateStore<ObligationManifestModel> _cacheStore;

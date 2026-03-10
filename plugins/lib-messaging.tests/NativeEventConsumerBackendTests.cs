@@ -49,9 +49,7 @@ public class NativeEventConsumerBackendTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<NativeEventConsumerBackend>();
-        Assert.NotNull(CreateBackend());
+    {        Assert.NotNull(CreateBackend());
     }
 
     #endregion

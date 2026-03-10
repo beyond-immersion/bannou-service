@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Worldstate;
 
@@ -82,6 +84,7 @@ internal class CalendarLookup
 /// and game-seconds decomposition without any I/O or async operations.
 /// Caches precomputed lookup tables per calendar template for O(1) period/season resolution.
 /// </summary>
+[BannouHelperService("worldstate-time", typeof(IWorldstateService), typeof(IWorldstateTimeCalculator), lifetime: ServiceLifetime.Singleton)]
 internal class WorldstateTimeCalculator : IWorldstateTimeCalculator
 {
     private readonly ConcurrentDictionary<string, CalendarLookup> _lookupCache = new();

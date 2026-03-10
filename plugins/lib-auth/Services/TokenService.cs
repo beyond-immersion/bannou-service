@@ -9,6 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Auth.Services;
 
@@ -16,6 +18,7 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// Implementation of token management operations.
 /// Handles JWT generation, validation, and refresh token management.
 /// </summary>
+[BannouHelperService("token", typeof(IAuthService), typeof(ITokenService), lifetime: ServiceLifetime.Scoped)]
 public class TokenService : ITokenService
 {
     private readonly ISessionService _sessionService;

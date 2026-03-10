@@ -4,6 +4,8 @@ using BeyondImmersion.BannouService.Services;
 using Docker.DotNet;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LibOrchestrator.Backends;
 
@@ -11,6 +13,7 @@ namespace LibOrchestrator.Backends;
 /// Detects available container orchestration backends and selects the best one.
 /// Priority order: Kubernetes > Portainer > Swarm > Compose
 /// </summary>
+[BannouHelperService("backend", typeof(IOrchestratorService), typeof(IBackendDetector), lifetime: ServiceLifetime.Singleton)]
 public class BackendDetector : IBackendDetector
 {
     private readonly ILogger<BackendDetector> _logger;

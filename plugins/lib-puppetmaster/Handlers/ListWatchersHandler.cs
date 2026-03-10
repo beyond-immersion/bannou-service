@@ -10,6 +10,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 
@@ -39,6 +40,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 /// Puppetmaster service.
 /// </para>
 /// </remarks>
+[BannouHelperService("list-watchers", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
 public sealed class ListWatchersHandler : IActionHandler
 {
     private readonly IServiceScopeFactory _scopeFactory;

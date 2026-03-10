@@ -2,6 +2,8 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Providers;
 
@@ -9,6 +11,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Providers;
 /// Behavior document provider that loads behaviors from the asset service via cache.
 /// Priority 100 (highest) - checked before seeded and fallback providers.
 /// </summary>
+[BannouHelperService("dynamic-behavior", typeof(IPuppetmasterService), typeof(IBehaviorDocumentProvider), lifetime: ServiceLifetime.Singleton)]
 public sealed class DynamicBehaviorProvider : IBehaviorDocumentProvider
 {
     private readonly IBehaviorDocumentCache _cache;

@@ -824,7 +824,6 @@ components:
     # ============================================================================
 
     MidiJson:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.MidiJson
       description: MIDI-JSON format representation of a musical piece
       type: object
       additionalProperties: false
@@ -849,7 +848,6 @@ components:
           description: MIDI tracks
 
     MidiHeader:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.MidiHeader
       description: MIDI file header information
       type: object
       additionalProperties: false
@@ -884,7 +882,6 @@ components:
           description: Key signature changes
 
     MidiTrack:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack
       description: A single MIDI track containing events
       type: object
       additionalProperties: false
@@ -914,7 +911,6 @@ components:
           description: Track events
 
     MidiEvent:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.MidiEvent
       description: A single MIDI event
       type: object
       additionalProperties: false
@@ -1060,7 +1056,6 @@ components:
           description: Pitches from lowest to highest voice
 
     Pitch:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch
       description: A specific pitch with pitch class and octave
       type: object
       additionalProperties: false
@@ -1083,13 +1078,11 @@ components:
           description: MIDI note number (computed if not provided)
 
     PitchClass:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass
       description: A pitch class (note name without octave)
       type: string
       enum: [C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B]
 
     PitchRange:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange
       description: A pitch range from low to high
       type: object
       additionalProperties: false
@@ -1120,7 +1113,6 @@ components:
           description: Mode/scale type
 
     TempoEvent:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent
       description: A tempo change event
       type: object
       additionalProperties: false
@@ -1140,7 +1132,6 @@ components:
           description: Tempo in BPM
 
     TimeSignatureEvent:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent
       description: A time signature change event
       type: object
       additionalProperties: false
@@ -1165,7 +1156,6 @@ components:
           description: Beat unit (4 = quarter, 8 = eighth)
 
     KeySignatureEvent:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent
       description: A key signature change event
       type: object
       additionalProperties: false
@@ -1186,7 +1176,6 @@ components:
           description: Mode/scale type
 
     ModeType:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Collections.ModeType
       description: Musical mode/scale type
       type: string
       enum:
@@ -1207,7 +1196,6 @@ components:
       - Chromatic
 
     MidiEventType:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.MidiEventType
       description: MIDI event type
       type: string
       enum:
@@ -1221,7 +1209,6 @@ components:
     # ============================================================================
 
     ModeDistribution:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Style.ModeDistribution
       description: Probability distribution over musical modes
       type: object
       additionalProperties: false
@@ -1556,7 +1543,6 @@ components:
     # ============================================================================
 
     VoiceLeadingRules:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingRules
       description: Rules for voice leading
       type: object
       additionalProperties: false
@@ -1585,7 +1571,6 @@ components:
           description: Maximum leap in semitones
 
     VoiceLeadingViolationType:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType
       description: Type of voice leading rule violation
       type: string
       enum:
@@ -1598,7 +1583,6 @@ components:
       - DoubledLeadingTone
 
     VoiceLeadingViolation:
-      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolation
       description: A voice leading rule violation
       type: object
       additionalProperties: false

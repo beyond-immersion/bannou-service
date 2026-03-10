@@ -3,6 +3,8 @@ using FFMpegCore;
 using FFMpegCore.Pipes;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Asset.Processing;
 
@@ -10,6 +12,7 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 /// FFmpeg-based audio transcoding service using FFMpegCore.
 /// Uses process isolation (LGPL compliant - no code linking).
 /// </summary>
+[BannouHelperService("f-fmpeg", typeof(IAssetService), typeof(IFFmpegService), lifetime: ServiceLifetime.Singleton)]
 public sealed class FFmpegService : IFFmpegService
 {
     private readonly AssetServiceConfiguration _configuration;

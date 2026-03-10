@@ -6,6 +6,7 @@
 > **Layer**: GameFeatures
 > **State Stores**: music-styles (MySQL, unused), music-compositions (Redis)
 > **Short**: Pure-computation music generation using formal theory (MusicTheory + MusicStoryteller SDKs)
+> **Implementation Map**: [docs/maps/MUSIC.md](../maps/MUSIC.md)
 
 ---
 
@@ -88,6 +89,7 @@ This plugin does not consume external events.
 | `MusicServiceConfiguration` | Singleton | Cache TTL config |
 | `IStateStoreFactory` | Singleton | Redis composition cache access |
 | `IMessageBus` | Scoped | Error event publishing |
+| `MusicServiceMapper` | Static | A2 boundary mapping between generated API types and MusicTheory SDK types |
 
 Service lifetime is **Scoped** (per-request). No background services.
 
@@ -220,7 +222,7 @@ None identified.
 
 3. **Melody infers key from first chord**: `GenerateMelodyAsync` uses the root of the first harmony chord as the key center with Major mode. Does not attempt to detect actual key from the full progression.
 
-4. **SDK types cross the API boundary**: Several types (PitchClass, Pitch, PitchRange, VoiceLeadingViolation) use `x-sdk-type` annotations meaning the API models are the actual SDK types. Changes to SDK types directly affect the API contract.
+4. ~~**SDK types cross the API boundary**~~: **FIXED** (2026-03-10) — All 16 `x-sdk-type` annotations removed from `music-api.yaml`. NSwag now generates all types natively. `MusicServiceMapper.cs` provides A2 boundary mapping (per IMPLEMENTATION TENETS T25 Case 5) between generated API types and SDK types. SDK changes no longer affect the API contract.
 
 ### Design Considerations (Requires Planning)
 
@@ -237,7 +239,7 @@ None identified.
 5. **No rate limiting on generation**: Composition generation is CPU-intensive (Storyteller + Theory + Rendering). No protection against burst requests exhausting compute resources.
  <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/206 -->
 
-6. **x-sdk-type migration scope**: 16 `x-sdk-type` annotations in `music-api.yaml` reference the MusicTheory SDK. The `x-sdk-type` mechanism is designed for the Core SDK only. These annotations work today but represent a legacy pattern that may need migration to `$ref`-based shared types or inline definitions if the generation pipeline changes. Low urgency — no functional impact.
+6. ~~**x-sdk-type migration scope**~~: **FIXED** (2026-03-10) — All 16 `x-sdk-type` annotations removed. Types are now NSwag-generated with A2 boundary mapping in `MusicServiceMapper.cs`. MusicTheory SDK project reference removed from `bannou-service.csproj` (only needed in `lib-music.csproj`). 4 new `EnumMappingValidator.AssertFullCoverage` tests added for PitchClass, ModeType, MidiEventType, VoiceLeadingViolationType.
 
 7. **Configuration validation constraints**: The 4 contour/density configuration properties have `minimum`/`maximum` constraints in the schema, but NSwag does not generate runtime validation for configuration classes. Consider adding manual validation in service startup if strict bounds enforcement is needed.
 
@@ -265,6 +267,13 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **MelodyAnalysis.Contour**: Changed from `string` to `$ref: ContourShape` enum type.
 - **progression length default**: Extracted hardcoded `8` to `DefaultProgressionLength` config property. Made `length` nullable in schema (was required with sentinel `> 0` check).
 
+### Completed (2026-03-10) — x-sdk-type Remediation
+
+- **Known Quirk #4** (SDK types cross API boundary): FIXED — Removed all 16 `x-sdk-type` annotations from `music-api.yaml`. NSwag now generates PitchClass, ModeType, Pitch, PitchRange, MidiJson, MidiHeader, MidiTrack, MidiEvent, MidiEventType, TempoEvent, TimeSignatureEvent, KeySignatureEvent, ModeDistribution, VoiceLeadingRules, VoiceLeadingViolation, VoiceLeadingViolationType natively.
+- **Design Consideration #6** (x-sdk-type migration): FIXED — Created `MusicServiceMapper.cs` (A2 boundary mapper per IMPLEMENTATION TENETS T25 Case 5) with ~27 methods: 8 enum MapByName pairs, 6 superset/lossy enum mappings (moved from MusicService.cs), 13 object conversion methods (Pitch, PitchRange, VoiceLeadingRules, VoiceLeadingViolation, full MIDI tree).
+- **Project reference cleanup**: Removed MusicTheory SDK reference from `bannou-service.csproj` (no longer needed now that generated models replace SDK types at the API layer; lib-music retains its own reference).
+- **Enum boundary tests**: Added 4 new `AssertFullCoverage` tests (PitchClass, ModeType, MidiEventType, VoiceLeadingViolationType). Updated 2 existing switch coverage tests to reference `MusicServiceMapper` instead of `MusicService`. Total: 210 tests passing.
+
 ### Pending Design
 
 - **Stubs #1-2, Potential Extension #1, Design Consideration #1** (Unused state store / CreateStyle persistence): [#188](https://github.com/beyond-immersion/bannou-service/issues/188) - Requires decision on whether to implement custom styles or remove unused store
@@ -274,5 +283,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Potential Extension #5** (Composer Layer): [#431](https://github.com/beyond-immersion/bannou-service/issues/431) - Personality-driven generation layer with 5-dimension personality model, preference evolution, and ABML integration
 - **Design Consideration #4** (Event publishing): [#205](https://github.com/beyond-immersion/bannou-service/issues/205) - Needs decision on whether composition analytics are needed
 - **Design Consideration #5** (Rate limiting): [#206](https://github.com/beyond-immersion/bannou-service/issues/206) - Needs design for appropriate limits and enforcement point
-- **Design Consideration #6** (x-sdk-type migration): 16 annotations reference MusicTheory SDK; works today but is a legacy pattern outside the intended Core SDK scope
 - **Design Consideration #7** (Config validation constraints): Contour/density config properties have schema-level min/max but no runtime enforcement in generated config class

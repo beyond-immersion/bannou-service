@@ -7,6 +7,8 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Asset.Pool;
 
@@ -23,6 +25,7 @@ namespace BeyondImmersion.BannouService.Asset.Pool;
 /// Uses per-pool-type indexes to avoid expensive KEYS/SCAN operations.
 /// </para>
 /// </remarks>
+[BannouHelperService("asset-processor-pool", typeof(IAssetService), typeof(IAssetProcessorPoolManager), lifetime: ServiceLifetime.Singleton)]
 public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
 {
     private readonly ITelemetryProvider _telemetryProvider;

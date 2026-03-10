@@ -10,6 +10,8 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Handlers;
 
@@ -37,6 +39,7 @@ namespace BeyondImmersion.BannouService.Actor.Handlers;
 /// This follows the "tap" pattern - actors subscribe to their character's perception channel.
 /// </para>
 /// </remarks>
+[BannouHelperService("emit-perception", typeof(IActorService), typeof(IActionHandler), lifetime: ServiceLifetime.Singleton)]
 public sealed class EmitPerceptionHandler : IActionHandler
 {
     private const string ACTION_NAME = "emit_perception";

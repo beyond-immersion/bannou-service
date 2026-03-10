@@ -50,11 +50,6 @@ public class MfaServiceTests
     }
 
     #region Constructor Tests
-
-    [Fact]
-    public void MfaService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<MfaService>();
-
     #endregion
 
     #region GenerateSecret Tests

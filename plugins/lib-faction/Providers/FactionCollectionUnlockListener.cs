@@ -9,6 +9,8 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Faction.Providers;
 
@@ -32,6 +34,7 @@ namespace BeyondImmersion.BannouService.Faction.Providers;
 /// <c>IEnumerable&lt;ICollectionUnlockListener&gt;</c> and calls it during GrantEntryAsync.
 /// </para>
 /// </remarks>
+[BannouHelperService("faction-collection-unlock", typeof(IFactionService), typeof(ICollectionUnlockListener), lifetime: ServiceLifetime.Singleton)]
 public class FactionCollectionUnlockListener : ICollectionUnlockListener
 {
     /// <summary>Durable store for per-entity membership list aggregates (MySQL).</summary>

@@ -2,6 +2,8 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Asset.Processing;
 
@@ -10,6 +12,7 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 /// Currently performs validation and copies assets unchanged to processed location.
 /// Actual processing (compression, resizing, format conversion) not yet implemented.
 /// </summary>
+[BannouHelperService("texture-processor", typeof(IAssetService), typeof(IAssetProcessor), lifetime: ServiceLifetime.Singleton)]
 public sealed class TextureProcessor : IAssetProcessor
 {
     private readonly IAssetStorageProvider _storageProvider;

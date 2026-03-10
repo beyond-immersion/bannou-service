@@ -10,6 +10,8 @@ using BeyondImmersion.BannouService.Puppetmaster.Watches;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 
@@ -28,6 +30,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 /// </code>
 /// </para>
 /// </remarks>
+[BannouHelperService("unwatch", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
 public sealed class UnwatchHandler : IActionHandler
 {
     private readonly WatchRegistry _registry;

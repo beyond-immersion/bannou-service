@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.CharacterHistory.Caching;
 
@@ -17,6 +18,7 @@ namespace BeyondImmersion.BannouService.CharacterHistory.Caching;
 /// Composes <see cref="VariableProviderCacheBucket{TKey, TData}"/> for thread-safe
 /// TTL-based caching with stale-data fallback (IMPLEMENTATION TENETS compliant).
 /// </summary>
+[BannouHelperService("backstory", typeof(ICharacterHistoryService), typeof(IBackstoryCache), lifetime: ServiceLifetime.Singleton)]
 public sealed class BackstoryCache : IBackstoryCache
 {
     private readonly IServiceScopeFactory _scopeFactory;

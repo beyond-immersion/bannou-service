@@ -105,9 +105,7 @@ public class DeadLetterConsumerServiceTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<DeadLetterConsumerService>();
-        using var service = CreateService();
+    {        using var service = CreateService();
         Assert.NotNull(service);
     }
 

@@ -31,7 +31,7 @@ namespace BeyondImmersion.BannouService.Leaderboard;
 /// </para>
 /// </remarks>
 [BannouService("leaderboard", typeof(ILeaderboardService), lifetime: ServiceLifetime.Scoped)]
-public partial class LeaderboardService : ILeaderboardService
+public partial class LeaderboardService : ILeaderboardService, ICleanDeprecatedEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<LeaderboardService> _logger;

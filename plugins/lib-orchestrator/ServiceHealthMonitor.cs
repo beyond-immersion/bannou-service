@@ -6,6 +6,8 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 namespace LibOrchestrator;
 
 /// <summary>
@@ -14,6 +16,7 @@ namespace LibOrchestrator;
 /// Writes heartbeat data and service routing to state stores for dynamic routing.
 /// Publishes FullServiceMappingsEvent periodically and on routing changes.
 /// </summary>
+[BannouHelperService("service-health", typeof(IOrchestratorService), typeof(IServiceHealthMonitor), lifetime: ServiceLifetime.Singleton)]
 public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
 {
     private readonly ILogger<ServiceHealthMonitor> _logger;

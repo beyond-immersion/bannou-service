@@ -4,6 +4,8 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -22,6 +24,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// bannou-service before any plugins load).
 /// </para>
 /// </remarks>
+[BannouHelperService("messaging-unhandled-exception", typeof(IMessagingService), typeof(IUnhandledExceptionHandler), lifetime: ServiceLifetime.Singleton)]
 public sealed class MessagingUnhandledExceptionHandler : IUnhandledExceptionHandler
 {
     private static readonly AsyncLocal<bool> _isPublishing = new();

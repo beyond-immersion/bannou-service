@@ -6,12 +6,14 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Caching;
 
 /// <summary>
 /// Thread-safe cache for ABML behavior documents loaded from the asset service.
 /// </summary>
+[BannouHelperService("behavior-document", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
 public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
 {
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();

@@ -9,6 +9,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Mesh.Services;
 
@@ -17,6 +19,7 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 /// Uses IMeshStateManager directly for endpoint resolution to avoid circular dependencies.
 /// This is infrastructure that all generated clients depend on, so it cannot use generated clients.
 /// </summary>
+[BannouHelperService("mesh-invocation", typeof(IMeshService), typeof(IMeshInvocationClient), lifetime: ServiceLifetime.Singleton)]
 public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 {
     private readonly IMeshStateManager _stateManager;

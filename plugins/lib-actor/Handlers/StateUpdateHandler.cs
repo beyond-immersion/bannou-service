@@ -9,6 +9,8 @@ using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Handlers;
 
@@ -39,6 +41,7 @@ namespace BeyondImmersion.BannouService.Actor.Handlers;
 /// - decrement: Decrement numeric value
 /// </para>
 /// </remarks>
+[BannouHelperService("state-update", typeof(IActorService), typeof(IActionHandler), lifetime: ServiceLifetime.Singleton)]
 public sealed class StateUpdateHandler : IActionHandler
 {
     private const string ACTION_NAME = "state_update";

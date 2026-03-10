@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Currency.Caching;
 
@@ -18,6 +19,7 @@ namespace BeyondImmersion.BannouService.Currency.Caching;
 /// Uses ConcurrentDictionary for thread-safety (IMPLEMENTATION TENETS compliant).
 /// Cache is keyed by (characterId, realmId) to support realm-scoped wallets.
 /// </summary>
+[BannouHelperService("currency-data", typeof(ICurrencyService), typeof(ICurrencyDataCache), lifetime: ServiceLifetime.Singleton)]
 public sealed class CurrencyDataCache : ICurrencyDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;

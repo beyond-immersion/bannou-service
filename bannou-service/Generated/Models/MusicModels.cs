@@ -24,12 +24,22 @@
 
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Music;
-using BeyondImmersion.Bannou.MusicTheory.Collections;
-using BeyondImmersion.Bannou.MusicTheory.Harmony;
-using BeyondImmersion.Bannou.MusicTheory.Output;
-using BeyondImmersion.Bannou.MusicTheory.Pitch;
-using BeyondImmersion.Bannou.MusicTheory.Style;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Music;
 
@@ -796,6 +806,180 @@ public partial class EmotionalStateSnapshot
 }
 
 /// <summary>
+/// MIDI-JSON format representation of a musical piece
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MidiJson
+{
+
+    /// <summary>
+    /// MIDI header information
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("header")]
+    public MidiHeader? Header { get; set; } = default!;
+
+    /// <summary>
+    /// Ticks per beat (PPQN)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ticksPerBeat")]
+    [System.ComponentModel.DataAnnotations.Range(24, 960)]
+    public int TicksPerBeat { get; set; } = 480;
+
+    /// <summary>
+    /// MIDI tracks
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tracks")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<MidiTrack> Tracks { get; set; } = new System.Collections.ObjectModel.Collection<MidiTrack>();
+
+}
+
+/// <summary>
+/// MIDI file header information
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MidiHeader
+{
+
+    /// <summary>
+    /// MIDI format type (0, 1, or 2)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("format")]
+    [System.ComponentModel.DataAnnotations.Range(0, 2)]
+    public int Format { get; set; } = 1;
+
+    /// <summary>
+    /// Composition name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    public string? Name { get; set; } = default!;
+
+    /// <summary>
+    /// Tempo changes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tempos")]
+    public System.Collections.Generic.ICollection<TempoEvent>? Tempos { get; set; } = default!;
+
+    /// <summary>
+    /// Time signature changes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timeSignatures")]
+    public System.Collections.Generic.ICollection<TimeSignatureEvent>? TimeSignatures { get; set; } = default!;
+
+    /// <summary>
+    /// Key signature changes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("keySignatures")]
+    public System.Collections.Generic.ICollection<KeySignatureEvent>? KeySignatures { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A single MIDI track containing events
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MidiTrack
+{
+
+    /// <summary>
+    /// Track name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    public string? Name { get; set; } = default!;
+
+    /// <summary>
+    /// MIDI channel
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("channel")]
+    [System.ComponentModel.DataAnnotations.Range(0, 15)]
+    public int Channel { get; set; } = 0;
+
+    /// <summary>
+    /// GM instrument number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instrument")]
+    [System.ComponentModel.DataAnnotations.Range(0, 127)]
+    public int? Instrument { get; set; } = default!;
+
+    /// <summary>
+    /// Track events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("events")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<MidiEvent> Events { get; set; } = new System.Collections.ObjectModel.Collection<MidiEvent>();
+
+}
+
+/// <summary>
+/// A single MIDI event
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MidiEvent
+{
+
+    /// <summary>
+    /// Absolute tick position
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tick")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int Tick { get; set; } = default!;
+
+    /// <summary>
+    /// Event type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("type")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MidiEventType Type { get; set; } = default!;
+
+    /// <summary>
+    /// MIDI note number (for note events)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("note")]
+    [System.ComponentModel.DataAnnotations.Range(0, 127)]
+    public int? Note { get; set; } = default!;
+
+    /// <summary>
+    /// Note velocity (for note events)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("velocity")]
+    [System.ComponentModel.DataAnnotations.Range(0, 127)]
+    public int? Velocity { get; set; } = default!;
+
+    /// <summary>
+    /// Note duration in ticks (for noteOn with implicit noteOff)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("duration")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int? Duration { get; set; } = default!;
+
+    /// <summary>
+    /// Program number (for programChange)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("program")]
+    [System.ComponentModel.DataAnnotations.Range(0, 127)]
+    public int? Program { get; set; } = default!;
+
+    /// <summary>
+    /// Controller number (for controlChange)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("controller")]
+    [System.ComponentModel.DataAnnotations.Range(0, 127)]
+    public int? Controller { get; set; } = default!;
+
+    /// <summary>
+    /// Controller value (for controlChange)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("value")]
+    [System.ComponentModel.DataAnnotations.Range(0, 127)]
+    public int? Value { get; set; } = default!;
+
+}
+
+/// <summary>
 /// A musical note event with timing and pitch
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -936,6 +1120,110 @@ public partial class VoicedChord
 }
 
 /// <summary>
+/// A specific pitch with pitch class and octave
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Pitch
+{
+
+    /// <summary>
+    /// Pitch class (note name)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("pitchClass")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PitchClass PitchClass { get; set; } = default!;
+
+    /// <summary>
+    /// Octave number (middle C = C4)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("octave")]
+    [System.ComponentModel.DataAnnotations.Range(0, 9)]
+    public int Octave { get; set; } = default!;
+
+    /// <summary>
+    /// MIDI note number (computed if not provided)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("midiNumber")]
+    [System.ComponentModel.DataAnnotations.Range(0, 127)]
+    public int MidiNumber { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A pitch class (note name without octave)
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum PitchClass
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"C")]
+    C = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Cs")]
+    Cs = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"D")]
+    D = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Ds")]
+    Ds = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"E")]
+    E = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"F")]
+    F = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Fs")]
+    Fs = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"G")]
+    G = 7,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Gs")]
+    Gs = 8,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"A")]
+    A = 9,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"As")]
+    As = 10,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"B")]
+    B = 11,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// A pitch range from low to high
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PitchRange
+{
+
+    /// <summary>
+    /// Lowest pitch (inclusive)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("low")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public Pitch Low { get; set; } = new Pitch();
+
+    /// <summary>
+    /// Highest pitch (inclusive)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("high")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public Pitch High { get; set; } = new Pitch();
+
+}
+
+/// <summary>
 /// A key signature with tonic and mode
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -959,6 +1247,237 @@ public partial class KeySignature
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public KeyMode Mode { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A tempo change event
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TempoEvent
+{
+
+    /// <summary>
+    /// Tick position
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tick")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int Tick { get; set; } = default!;
+
+    /// <summary>
+    /// Tempo in BPM
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bpm")]
+    [System.ComponentModel.DataAnnotations.Range(20F, 400F)]
+    public float Bpm { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A time signature change event
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TimeSignatureEvent
+{
+
+    /// <summary>
+    /// Tick position
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tick")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int Tick { get; set; } = default!;
+
+    /// <summary>
+    /// Beats per measure
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("numerator")]
+    [System.ComponentModel.DataAnnotations.Range(1, 32)]
+    public int Numerator { get; set; } = default!;
+
+    /// <summary>
+    /// Beat unit (4 = quarter, 8 = eighth)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("denominator")]
+    [System.ComponentModel.DataAnnotations.Range(1, 32)]
+    public int Denominator { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A key signature change event
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class KeySignatureEvent
+{
+
+    /// <summary>
+    /// Tick position
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tick")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int Tick { get; set; } = default!;
+
+    /// <summary>
+    /// Tonic pitch class
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tonic")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PitchClass Tonic { get; set; } = default!;
+
+    /// <summary>
+    /// Mode/scale type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ModeType Mode { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Musical mode/scale type
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ModeType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Major")]
+    Major = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Minor")]
+    Minor = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Dorian")]
+    Dorian = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Phrygian")]
+    Phrygian = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Lydian")]
+    Lydian = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Mixolydian")]
+    Mixolydian = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Aeolian")]
+    Aeolian = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Locrian")]
+    Locrian = 7,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HarmonicMinor")]
+    HarmonicMinor = 8,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"MelodicMinor")]
+    MelodicMinor = 9,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"MajorPentatonic")]
+    MajorPentatonic = 10,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"MinorPentatonic")]
+    MinorPentatonic = 11,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Blues")]
+    Blues = 12,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"WholeTone")]
+    WholeTone = 13,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Chromatic")]
+    Chromatic = 14,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// MIDI event type
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MidiEventType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"NoteOn")]
+    NoteOn = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"NoteOff")]
+    NoteOff = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ProgramChange")]
+    ProgramChange = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ControlChange")]
+    ControlChange = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Probability distribution over musical modes
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ModeDistribution
+{
+
+    /// <summary>
+    /// Probability of major mode
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("major")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float Major { get; set; } = 0.0F;
+
+    /// <summary>
+    /// Probability of natural minor
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("minor")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float Minor { get; set; } = 0.0F;
+
+    /// <summary>
+    /// Probability of dorian mode
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dorian")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float Dorian { get; set; } = 0.0F;
+
+    /// <summary>
+    /// Probability of phrygian mode
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("phrygian")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float Phrygian { get; set; } = 0.0F;
+
+    /// <summary>
+    /// Probability of lydian mode
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("lydian")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float Lydian { get; set; } = 0.0F;
+
+    /// <summary>
+    /// Probability of mixolydian mode
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mixolydian")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float Mixolydian { get; set; } = 0.0F;
+
+    /// <summary>
+    /// Probability of aeolian mode
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("aeolian")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float Aeolian { get; set; } = 0.0F;
+
+    /// <summary>
+    /// Probability of locrian mode
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locrian")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float Locrian { get; set; } = 0.0F;
 
 }
 
@@ -1307,6 +1826,124 @@ public partial class MelodyAnalysis
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("averageNoteDuration")]
     public float? AverageNoteDuration { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Rules for voice leading
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class VoiceLeadingRules
+{
+
+    /// <summary>
+    /// Avoid parallel perfect fifths
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("avoidParallelFifths")]
+    public bool AvoidParallelFifths { get; set; } = true;
+
+    /// <summary>
+    /// Avoid parallel octaves
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("avoidParallelOctaves")]
+    public bool AvoidParallelOctaves { get; set; } = true;
+
+    /// <summary>
+    /// Prefer stepwise voice motion
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("preferStepwiseMotion")]
+    public bool PreferStepwiseMotion { get; set; } = true;
+
+    /// <summary>
+    /// Avoid voice crossing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("avoidVoiceCrossing")]
+    public bool AvoidVoiceCrossing { get; set; } = true;
+
+    /// <summary>
+    /// Maximum leap in semitones
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxLeap")]
+    [System.ComponentModel.DataAnnotations.Range(1, 12)]
+    public int MaxLeap { get; set; } = 7;
+
+}
+
+/// <summary>
+/// Type of voice leading rule violation
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum VoiceLeadingViolationType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ParallelFifths")]
+    ParallelFifths = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ParallelOctaves")]
+    ParallelOctaves = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"VoiceCrossing")]
+    VoiceCrossing = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"VoiceOverlap")]
+    VoiceOverlap = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"LargeLeap")]
+    LargeLeap = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"UnresolvedLeap")]
+    UnresolvedLeap = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"DoubledLeadingTone")]
+    DoubledLeadingTone = 6,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// A voice leading rule violation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class VoiceLeadingViolation
+{
+
+    /// <summary>
+    /// Type of violation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("type")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public VoiceLeadingViolationType Type { get; set; } = default!;
+
+    /// <summary>
+    /// Position in the progression (0-based)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("position")]
+    public int Position { get; set; } = default!;
+
+    /// <summary>
+    /// Voice indices involved (0 = bass)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("voices")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<int> Voices { get; set; } = new System.Collections.ObjectModel.Collection<int>();
+
+    /// <summary>
+    /// Severity (true = error, false = warning)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isError")]
+    public bool IsError { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("message")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Message { get; set; } = default!;
 
 }
 

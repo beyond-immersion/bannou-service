@@ -28,7 +28,7 @@ namespace BeyondImmersion.BannouService.CharacterEncounter;
 /// </para>
 /// </remarks>
 [BannouService("character-encounter", typeof(ICharacterEncounterService), lifetime: ServiceLifetime.Scoped)]
-public partial class CharacterEncounterService : ICharacterEncounterService
+public partial class CharacterEncounterService : ICharacterEncounterService, ICleanDeprecatedEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<CharacterEncounterService> _logger;

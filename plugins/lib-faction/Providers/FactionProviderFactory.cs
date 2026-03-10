@@ -7,6 +7,8 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Faction.Providers;
 
@@ -20,6 +22,7 @@ namespace BeyondImmersion.BannouService.Faction.Providers;
 /// Actor (L2) discovers this factory via <c>IEnumerable&lt;IVariableProviderFactory&gt;</c>.
 /// </para>
 /// </remarks>
+[BannouHelperService("faction-provider", typeof(IFactionService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class FactionProviderFactory : IVariableProviderFactory
 {
     /// <summary>Durable store for per-entity membership list aggregates (MySQL).</summary>

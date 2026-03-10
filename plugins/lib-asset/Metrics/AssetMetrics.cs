@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Asset.Metrics;
 
@@ -7,6 +9,7 @@ namespace BeyondImmersion.BannouService.Asset.Metrics;
 /// Prometheus-compatible metrics for the Asset service.
 /// Uses System.Diagnostics.Metrics which can be exported via OpenTelemetry.
 /// </summary>
+[BannouHelperService("asset-metrics", typeof(IAssetService), lifetime: ServiceLifetime.Singleton)]
 public sealed class AssetMetrics : IDisposable
 {
     private readonly Meter _meter;

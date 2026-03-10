@@ -74,9 +74,7 @@ public class TokenServiceTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<TokenService>();
-        Assert.NotNull(_service);
+    {        Assert.NotNull(_service);
     }
 
     #endregion

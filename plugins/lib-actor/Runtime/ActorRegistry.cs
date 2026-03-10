@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 
@@ -6,6 +8,7 @@ namespace BeyondImmersion.BannouService.Actor.Runtime;
 /// Thread-safe registry for tracking active actor instances.
 /// Uses ConcurrentDictionary internally per IMPLEMENTATION TENETS (Multi-Instance Safety).
 /// </summary>
+[BannouHelperService("actor", typeof(IActorService), typeof(IActorRegistry), lifetime: ServiceLifetime.Singleton)]
 public sealed class ActorRegistry : IActorRegistry
 {
     private readonly ConcurrentDictionary<string, IActorRunner> _actors = new();

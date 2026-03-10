@@ -9,6 +9,8 @@ using BeyondImmersion.BannouService.Currency.Caching;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Currency.Providers;
 
@@ -16,6 +18,7 @@ namespace BeyondImmersion.BannouService.Currency.Providers;
 /// Factory for creating CurrencyProvider instances.
 /// Registered with DI as IVariableProviderFactory for Actor to discover.
 /// </summary>
+[BannouHelperService("currency-provider", typeof(ICurrencyService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class CurrencyProviderFactory : IVariableProviderFactory
 {
     private readonly ICurrencyDataCache _cache;

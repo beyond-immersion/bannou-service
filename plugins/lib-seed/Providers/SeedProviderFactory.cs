@@ -9,6 +9,8 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Seed.Caching;
 using BeyondImmersion.BannouService.Services;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Seed.Providers;
 
@@ -16,6 +18,7 @@ namespace BeyondImmersion.BannouService.Seed.Providers;
 /// Factory for creating SeedProvider instances.
 /// Registered with DI as IVariableProviderFactory for Actor to discover.
 /// </summary>
+[BannouHelperService("seed-provider", typeof(ISeedService), typeof(IVariableProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class SeedProviderFactory : IVariableProviderFactory
 {
     private readonly ISeedDataCache _cache;

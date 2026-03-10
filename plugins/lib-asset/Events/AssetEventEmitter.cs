@@ -3,6 +3,8 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Asset.Events;
 
@@ -10,6 +12,7 @@ namespace BeyondImmersion.BannouService.Asset.Events;
 /// Implementation of IAssetEventEmitter that uses IClientEventPublisher
 /// to emit asset events to client sessions via RabbitMQ pub/sub.
 /// </summary>
+[BannouHelperService("asset-event", typeof(IAssetService), typeof(IAssetEventEmitter), lifetime: ServiceLifetime.Scoped)]
 public class AssetEventEmitter : IAssetEventEmitter
 {
     private readonly IClientEventPublisher _publisher;

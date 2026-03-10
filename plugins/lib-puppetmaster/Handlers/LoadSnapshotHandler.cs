@@ -11,6 +11,8 @@ using BeyondImmersion.BannouService.Puppetmaster.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 
@@ -44,6 +46,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 /// null for all paths (graceful degradation).
 /// </para>
 /// </remarks>
+[BannouHelperService("load-snapshot", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
 public sealed class LoadSnapshotHandler : IActionHandler
 {
     private readonly IResourceSnapshotCache _cache;

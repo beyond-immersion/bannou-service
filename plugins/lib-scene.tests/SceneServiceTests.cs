@@ -21,13 +21,6 @@ namespace BeyondImmersion.BannouService.Scene.Tests;
 public class SceneServiceTests
 {
     #region Constructor Validation
-
-    [Fact]
-    public void SceneService_HasValidConstructorPattern()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<SceneService>();
-    }
-
     #endregion
 
     #region Key Builder Tests

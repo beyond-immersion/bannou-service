@@ -71,9 +71,7 @@ public class ActorLocalMemoryStoreTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<ActorLocalMemoryStore>();
-        Assert.NotNull(_memoryStore);
+    {        Assert.NotNull(_memoryStore);
     }
 
     #endregion

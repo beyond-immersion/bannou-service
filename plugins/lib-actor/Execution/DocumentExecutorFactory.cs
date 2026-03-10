@@ -14,6 +14,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Actor.Execution;
 
@@ -21,6 +22,7 @@ namespace BeyondImmersion.BannouService.Actor.Execution;
 /// Factory for creating DocumentExecutor instances with cognition handlers.
 /// Handlers are resolved via DI to enable proper dependency injection.
 /// </summary>
+[BannouHelperService("document-executor", typeof(IActorService), typeof(IDocumentExecutorFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class DocumentExecutorFactory : IDocumentExecutorFactory
 {
     private readonly IServiceProvider _serviceProvider;

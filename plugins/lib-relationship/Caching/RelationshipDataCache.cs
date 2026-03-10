@@ -10,6 +10,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Relationship.Caching;
 
@@ -18,6 +19,7 @@ namespace BeyondImmersion.BannouService.Relationship.Caching;
 /// Uses <see cref="VariableProviderCacheBucket{TKey, TData}"/> for thread-safe
 /// TTL-based caching with stale-data fallback (IMPLEMENTATION TENETS compliant).
 /// </summary>
+[BannouHelperService("relationship-data", typeof(IRelationshipService), typeof(IRelationshipDataCache), lifetime: ServiceLifetime.Singleton)]
 public sealed class RelationshipDataCache : IRelationshipDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;

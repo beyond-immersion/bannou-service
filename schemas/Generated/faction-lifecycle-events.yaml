@@ -25,9 +25,9 @@ components:
       - isRealmBaseline
       - status
       - memberCount
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -74,18 +74,6 @@ components:
         memberCount: &id011
           type: integer
           description: "Current number of members"
-        isDeprecated: &id012
-          type: boolean
-          description: "Whether this faction is deprecated"
-        deprecatedAt: &id013
-          type: string
-          format: date-time
-          nullable: true
-          description: "When the faction was deprecated (null if not deprecated)"
-        deprecationReason: &id014
-          type: string
-          nullable: true
-          description: "Reason for deprecation (null if not deprecated)"
         createdAt:
           type: string
           format: date-time
@@ -94,6 +82,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the faction was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this faction is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the faction was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     FactionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -112,9 +113,9 @@ components:
       - isRealmBaseline
       - status
       - memberCount
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -132,9 +133,6 @@ components:
         status: *id009
         currentPhase: *id010
         memberCount: *id011
-        isDeprecated: *id012
-        deprecatedAt: *id013
-        deprecationReason: *id014
         createdAt:
           type: string
           format: date-time
@@ -143,6 +141,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the faction was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this faction is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the faction was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -166,9 +177,9 @@ components:
       - isRealmBaseline
       - status
       - memberCount
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -185,9 +196,6 @@ components:
         status: *id009
         currentPhase: *id010
         memberCount: *id011
-        isDeprecated: *id012
-        deprecatedAt: *id013
-        deprecationReason: *id014
         createdAt:
           type: string
           format: date-time
@@ -196,6 +204,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the faction was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this faction is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the faction was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

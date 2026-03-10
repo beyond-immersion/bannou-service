@@ -6,6 +6,8 @@
 using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Behavior.Stack;
 
@@ -158,6 +160,7 @@ public interface ISituationalTriggerManager
 /// <summary>
 /// Default implementation of situational trigger manager.
 /// </summary>
+[BannouHelperService("situational-trigger", typeof(IBehaviorService), typeof(ISituationalTriggerManager), lifetime: ServiceLifetime.Singleton)]
 public sealed class SituationalTriggerManager : ISituationalTriggerManager
 {
     private readonly ConcurrentDictionary<string, SituationalTriggerDefinition> _triggerDefinitions;

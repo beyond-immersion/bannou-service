@@ -84,9 +84,7 @@ public class EntitySessionRegistryTests
 
     [Fact]
     public void Constructor_WithValidDependencies_CreatesInstance()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<EntitySessionRegistry>();
-        Assert.NotNull(_registry);
+    {        Assert.NotNull(_registry);
     }
 
     #endregion

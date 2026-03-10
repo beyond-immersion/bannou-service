@@ -9,6 +9,8 @@ using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Handlers;
 
@@ -34,6 +36,7 @@ namespace BeyondImmersion.BannouService.Actor.Handlers;
 /// For distributed deployments, actors should use query_options instead.
 /// </para>
 /// </remarks>
+[BannouHelperService("query-actor-state", typeof(IActorService), typeof(IActionHandler), lifetime: ServiceLifetime.Singleton)]
 public sealed class QueryActorStateHandler : IActionHandler
 {
     private const string ACTION_NAME = "query_actor_state";

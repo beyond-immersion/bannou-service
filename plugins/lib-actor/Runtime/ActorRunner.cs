@@ -16,6 +16,8 @@ using System.Text.Json;
 using System.Threading.Channels;
 using GoapAction = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction;
 using GoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 
@@ -23,6 +25,7 @@ namespace BeyondImmersion.BannouService.Actor.Runtime;
 /// Core actor runtime that executes behavior loops with bounded channels for perception/message queues.
 /// Each actor instance has one runner that manages its lifecycle.
 /// </summary>
+[BannouHelperService("actor", typeof(IActorService), lifetime: ServiceLifetime.Singleton)]
 public sealed class ActorRunner : IActorRunner
 {
     private readonly ILogger<ActorRunner> _logger;

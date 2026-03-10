@@ -10,6 +10,8 @@ using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Handlers;
 
@@ -34,6 +36,7 @@ namespace BeyondImmersion.BannouService.Actor.Handlers;
 /// objects with action preferences, availability, and risk assessments.
 /// </para>
 /// </remarks>
+[BannouHelperService("actor-query", typeof(IActorService), typeof(IActionHandler), lifetime: ServiceLifetime.Singleton)]
 public sealed class ActorQueryHandler : IActionHandler
 {
     private const string ActionName = "actor_query";

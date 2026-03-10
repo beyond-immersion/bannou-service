@@ -103,6 +103,7 @@ x-lifecycle:
       crossRealm: { type: boolean, required: true, description: "Whether this connection spans realm boundaries" }
       modifiedAt: { type: string, format: date-time, required: true, description: "Timestamp when the connection was last modified" }
   TransitMode:
+    deprecation: true
     model:
       code: { type: string, primary: true, required: true, description: "Unique identifier code for the transit mode" }
       name: { type: string, required: true, description: "Human-readable name" }

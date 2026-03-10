@@ -10,6 +10,8 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Achievement.Providers;
 
@@ -29,6 +31,7 @@ namespace BeyondImmersion.BannouService.Achievement.Providers;
 ///   <item><c>parameters</c>: Must include <c>gameServiceId</c> (Guid); optionally <c>entityType</c> (EntityType, defaults to Character)</item>
 /// </list>
 /// </remarks>
+[BannouHelperService("achievement-prerequisite-provider", typeof(IAchievementService), typeof(IPrerequisiteProviderFactory), lifetime: ServiceLifetime.Singleton)]
 public sealed class AchievementPrerequisiteProviderFactory : IPrerequisiteProviderFactory
 {
     private readonly IStateStore<EntityProgressData> _progressStore;

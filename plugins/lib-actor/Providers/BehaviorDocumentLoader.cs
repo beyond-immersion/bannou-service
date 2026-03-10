@@ -8,6 +8,8 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Providers;
 
@@ -29,6 +31,7 @@ namespace BeyondImmersion.BannouService.Actor.Providers;
 /// sorted by priority descending. The first provider that can serve a behavior reference wins.
 /// </para>
 /// </remarks>
+[BannouHelperService("behavior-document", typeof(IActorService), lifetime: ServiceLifetime.Singleton)]
 public sealed class BehaviorDocumentLoader : IBehaviorDocumentLoader
 {
     private readonly IReadOnlyList<IBehaviorDocumentProvider> _providers;

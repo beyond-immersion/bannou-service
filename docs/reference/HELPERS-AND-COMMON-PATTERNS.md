@@ -666,6 +666,7 @@ These validations live entirely in `structural-tests/` (no `test-utilities/` cou
 | `Service_NoDirectInfrastructureImports` | No direct Redis/RabbitMQ/MySQL references in non-L0 (IL scan) |
 | `Service_UsesCorrectStatusCodesEnum` | No `Microsoft.AspNetCore.Http.StatusCodes` references (IL scan) |
 | `PluginsUsingEnumMapping_MustHaveEnumMappingValidatorTests` | Plugins using `EnumMapping` have `EnumMappingValidator` tests |
+| `Services_WithDeprecation_MustImplementDeprecationInterface` | Services with `deprecation: true` implement `IDeprecateAndMergeEntity` or `ICleanDeprecatedEntity` |
 
 ### Schema Validation (`SchemaValidationTests.cs`)
 
@@ -786,6 +787,8 @@ Resolves service names to app-ids for mesh routing.
 ## 15. Category B Deprecation Template
 
 Category B entities are content templates where instances persist independently — the template must remain readable forever because historical instances reference it. T31 defines the rules; this section provides the copy-paste reference implementation. See [IMPLEMENTATION-BEHAVIOR.md § Category B Reference Pattern](tenets/IMPLEMENTATION-BEHAVIOR.md#category-b-reference-pattern-checklist) for the full checklist.
+
+**Marker interface**: Services implementing Category B deprecation MUST implement `ICleanDeprecatedEntity` (in `bannou-service/Services/`). The structural test `Services_WithDeprecation_MustImplementDeprecationInterface` enforces this for all services with `deprecation: true` in their events schema.
 
 **Reference implementations**: `lib-item` (Item Template) for lifecycle infrastructure and storage, `lib-collection` (Collection Entry Template) for correct idempotent endpoint pattern.
 
@@ -1138,8 +1141,12 @@ public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedTempla
 | Validate enum mappings (per-plugin) | `EnumMappingValidator` | `test-utilities/` → per-plugin `lib-*.tests/` |
 | Validate schema conventions | `SchemaValidationTests` | `structural-tests/` |
 | Validate lifecycle field hygiene | `SchemaParser` | `structural-tests/` |
+| Validate deprecation interface compliance | `Services_WithDeprecation_MustImplementDeprecationInterface` | `structural-tests/` |
+| Mark service as Category A (merge) | `IDeprecateAndMergeEntity` | `Services/IDeprecateAndMergeEntity.cs` |
+| Mark service as Category B (cleanup) | `ICleanDeprecatedEntity` | `Services/ICleanDeprecatedEntity.cs` |
 | Add Category B deprecation to a template entity | Category B Deprecation Template | § 15 (schema + implementation patterns) |
 | Implement clean-deprecated sweep | `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` | `Helpers/DeprecationCleanupHelper.cs` |
+| Implement Category A merge endpoint | `MergeDeprecatedRequest`/`MergeDeprecatedResponse` | `common-api.yaml` shared models |
 
 ---
 

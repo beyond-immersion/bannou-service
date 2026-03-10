@@ -1654,10 +1654,6 @@ public class TransitServiceTests
     /// <summary>
     /// TransitRouteCalculator constructor should be valid for DI.
     /// </summary>
-    [Fact]
-    public void TransitRouteCalculator_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<TransitRouteCalculator>();
-
     /// <summary>
     /// Creates a TransitRouteCalculator with fresh mocks for isolated route calculator tests.
     /// Returns the calculator and its mock dependencies for per-test setup.

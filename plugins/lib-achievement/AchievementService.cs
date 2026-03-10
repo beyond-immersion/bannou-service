@@ -37,7 +37,7 @@ namespace BeyondImmersion.BannouService.Achievement;
 /// </para>
 /// </remarks>
 [BannouService("achievement", typeof(IAchievementService), lifetime: ServiceLifetime.Scoped)]
-public partial class AchievementService : IAchievementService
+public partial class AchievementService : IAchievementService, ICleanDeprecatedEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly ICacheableStateStore<AchievementDefinitionData> _definitionStore;

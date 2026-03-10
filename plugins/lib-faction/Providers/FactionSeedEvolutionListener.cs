@@ -9,6 +9,8 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Faction.Providers;
 
@@ -30,6 +32,7 @@ namespace BeyondImmersion.BannouService.Faction.Providers;
 /// Follows the same pattern as GardenerSeedEvolutionListener.
 /// </para>
 /// </remarks>
+[BannouHelperService("faction-seed-evolution", typeof(IFactionService), typeof(ISeedEvolutionListener), lifetime: ServiceLifetime.Singleton)]
 public class FactionSeedEvolutionListener : ISeedEvolutionListener
 {
     /// <summary>Durable store for faction entity records (MySQL).</summary>

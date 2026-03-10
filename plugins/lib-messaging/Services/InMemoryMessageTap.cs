@@ -4,6 +4,8 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -21,6 +23,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// exchange/routing is simulated by publishing to a combined topic.
 /// </para>
 /// </remarks>
+[BannouHelperService("in-memory-message-tap", typeof(IMessagingService), typeof(IMessageTap), lifetime: ServiceLifetime.Singleton)]
 public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
 {
     private readonly InMemoryMessageBus _messageBus;

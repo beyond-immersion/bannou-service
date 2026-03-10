@@ -55,7 +55,7 @@ namespace BeyondImmersion.BannouService.Storyline;
 /// </para>
 /// </remarks>
 [BannouService("storyline", typeof(IStorylineService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
-public partial class StorylineService : IStorylineService
+public partial class StorylineService : IStorylineService, ICleanDeprecatedEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly IResourceClient _resourceClient;

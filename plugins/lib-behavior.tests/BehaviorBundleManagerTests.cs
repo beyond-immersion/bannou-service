@@ -69,9 +69,7 @@ public class BehaviorBundleManagerTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<BehaviorBundleManager>();
-        Assert.NotNull(CreateManager());
+    {        Assert.NotNull(CreateManager());
     }
 
     #endregion

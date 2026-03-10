@@ -6,12 +6,15 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 
 /// <summary>
 /// Factory for creating ActorRunner instances with proper DI.
 /// </summary>
+[BannouHelperService("actor-runner", typeof(IActorService), typeof(IActorRunnerFactory), lifetime: ServiceLifetime.Singleton)]
 public class ActorRunnerFactory : IActorRunnerFactory
 {
     private readonly IMessageBus _messageBus;

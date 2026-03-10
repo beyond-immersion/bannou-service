@@ -18,7 +18,7 @@ namespace BeyondImmersion.BannouService.Relationship;
 /// relationship type taxonomy (definitions, hierarchy, deprecation, merge, seed).
 /// </summary>
 [BannouService("relationship", typeof(IRelationshipService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
-public partial class RelationshipService : IRelationshipService
+public partial class RelationshipService : IRelationshipService, IDeprecateAndMergeEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<RelationshipService> _logger;

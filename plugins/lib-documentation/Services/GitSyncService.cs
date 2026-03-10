@@ -4,6 +4,8 @@ using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Documentation.Services;
 
@@ -11,6 +13,7 @@ namespace BeyondImmersion.BannouService.Documentation.Services;
 /// Git repository synchronization service using LibGit2Sharp.
 /// Provides clone, pull, and file discovery operations for documentation bindings.
 /// </summary>
+[BannouHelperService("git-sync", typeof(IDocumentationService), typeof(IGitSyncService), lifetime: ServiceLifetime.Singleton)]
 public class GitSyncService : IGitSyncService
 {
     private readonly ILogger<GitSyncService> _logger;

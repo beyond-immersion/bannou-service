@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 
@@ -12,6 +13,7 @@ namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 /// Implementation of version data loading operations.
 /// Handles hot cache access, asset service retrieval, and delta chain reconstruction.
 /// </summary>
+[BannouHelperService("version-data", typeof(ISaveLoadService), typeof(IVersionDataLoader), lifetime: ServiceLifetime.Scoped)]
 public sealed class VersionDataLoader : IVersionDataLoader
 {
     /// <summary>Hot cache store for fast save data retrieval (Redis-backed with TTL).</summary>

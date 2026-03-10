@@ -2,6 +2,8 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Status;
 
@@ -18,6 +20,7 @@ namespace BeyondImmersion.BannouService.Status;
 /// across all nodes.
 /// </para>
 /// </remarks>
+[BannouHelperService("status-seed-evolution", typeof(IStatusService), typeof(ISeedEvolutionListener), lifetime: ServiceLifetime.Singleton)]
 public class StatusSeedEvolutionListener : ISeedEvolutionListener
 {
     private readonly StatusServiceConfiguration _configuration;

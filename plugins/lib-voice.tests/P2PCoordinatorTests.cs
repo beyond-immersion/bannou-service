@@ -44,9 +44,7 @@ public class P2PCoordinatorTests
 
     [Fact]
     public void ConstructorIsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<P2PCoordinator>();
-        Assert.NotNull(CreateCoordinator());
+    {        Assert.NotNull(CreateCoordinator());
     }
 
     #endregion

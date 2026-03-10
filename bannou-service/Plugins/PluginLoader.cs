@@ -63,6 +63,7 @@ public class PluginLoader
     // Types discovered for registration in DI
     private readonly List<Type> _clientTypesToRegister = new();
     private readonly List<(Type interfaceType, Type implementationType, ServiceLifetime lifetime)> _serviceTypesToRegister = new();
+    private readonly List<(Type interfaceType, Type implementationType, ServiceLifetime lifetime)> _helperServiceTypesToRegister = new();
     private readonly List<(Type configurationType, ServiceLifetime lifetime)> _configurationTypesToRegister = new();
 
     // Static set of valid environment variable prefixes for forwarding to deployed containers
@@ -325,6 +326,7 @@ public class PluginLoader
 
         _clientTypesToRegister.Clear();
         _serviceTypesToRegister.Clear();
+        _helperServiceTypesToRegister.Clear();
         _configurationTypesToRegister.Clear();
 
         // FIRST: Scan the host assembly (bannou-service) for centralized client types
@@ -344,6 +346,7 @@ public class PluginLoader
                 if (_enabledPlugins.Any(p => p.PluginName == pluginName))
                 {
                     DiscoverServiceTypes(assembly, pluginName);
+                    DiscoverHelperServiceTypes(assembly, pluginName);
                     // Note: Configuration discovery happens later to ensure service types are registered first
                 }
                 else
@@ -374,8 +377,8 @@ public class PluginLoader
             }
         }
 
-        _logger.LogInformation("Type discovery complete. {ClientCount} client types, {ServiceCount} service types, {ConfigCount} configuration types",
-            _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _configurationTypesToRegister.Count);
+        _logger.LogInformation("Type discovery complete. {ClientCount} client types, {ServiceCount} service types, {HelperCount} helper service types, {ConfigCount} configuration types",
+            _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _helperServiceTypesToRegister.Count, _configurationTypesToRegister.Count);
     }
 
     /// <summary>
@@ -429,6 +432,38 @@ public class PluginLoader
 
         _logger.LogDebug("Discovered {Count} service types in assembly {AssemblyName}",
             serviceTypes.Count(t => t.GetCustomAttribute<BannouServiceAttribute>() != null), assembly.GetName().Name);
+    }
+
+    /// <summary>
+    /// Discover helper service types using BannouHelperServiceAttribute.
+    /// Only registers types that have a non-null InterfaceType (simple interface→implementation registrations).
+    /// Types without InterfaceType require manual registration in Plugin.cs (multi-implementation, factory lambdas, etc.).
+    /// </summary>
+    private void DiscoverHelperServiceTypes(Assembly assembly, string pluginName)
+    {
+        var helperTypes = assembly.GetTypes()
+            .Where(t => !t.IsInterface && !t.IsAbstract && t.GetCustomAttribute<BannouHelperServiceAttribute>() != null)
+            .ToList();
+
+        foreach (var helperType in helperTypes)
+        {
+            var attr = helperType.GetCustomAttribute<BannouHelperServiceAttribute>()!;
+
+            if (attr.InterfaceType == null)
+            {
+                _logger.LogDebug("Skipping helper {HelperType} — no InterfaceType (requires manual registration)",
+                    helperType.Name);
+                continue;
+            }
+
+            _helperServiceTypesToRegister.Add((attr.InterfaceType, helperType, attr.Lifetime));
+            _logger.LogDebug("Will auto-register helper: {Interface} -> {Implementation} ({Lifetime})",
+                attr.InterfaceType.Name, helperType.Name, attr.Lifetime);
+        }
+
+        _logger.LogDebug("Discovered {Count} auto-registrable helper service types in assembly {AssemblyName}",
+            helperTypes.Count(t => t.GetCustomAttribute<BannouHelperServiceAttribute>()?.InterfaceType != null),
+            assembly.GetName().Name);
     }
 
     /// <summary>
@@ -531,8 +566,8 @@ public class PluginLoader
     /// <param name="services">Service collection</param>
     public void ConfigureServices(IServiceCollection services)
     {
-        _logger.LogInformation("Centrally registering {ClientCount} client types, {ServiceCount} service types, and {ConfigCount} configuration types",
-            _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _configurationTypesToRegister.Count);
+        _logger.LogInformation("Centrally registering {ClientCount} client types, {ServiceCount} service types, {HelperCount} helper service types, and {ConfigCount} configuration types",
+            _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _helperServiceTypesToRegister.Count, _configurationTypesToRegister.Count);
 
         // STAGE 1: Register ALL client types (even from disabled plugins for dependencies)
         RegisterClientTypes(services);
@@ -558,6 +593,11 @@ public class PluginLoader
                 throw; // Re-throw to fail startup if plugin configuration fails
             }
         }
+
+        // STAGE 5: Auto-register helper services discovered via [BannouHelperService] attribute.
+        // Runs AFTER plugin.ConfigureServices() so that manual registrations take precedence.
+        // Only registers types not already in the collection (safe incremental migration).
+        RegisterHelperServiceTypes(services);
 
         _logger.LogInformation("Service configuration complete - centralized type registration finished");
     }
@@ -646,6 +686,46 @@ public class PluginLoader
         }
 
         _logger.LogInformation("Registered {Count} service types in DI", _serviceTypesToRegister.Count);
+    }
+
+    /// <summary>
+    /// Register helper service types discovered via [BannouHelperService] attribute.
+    /// Only registers types not already present in the service collection (prevents duplicates
+    /// when Plugin.ConfigureServices() has already registered the type manually).
+    /// This enables incremental migration: as manual registrations are removed from Plugin.cs,
+    /// auto-registration automatically takes over.
+    /// </summary>
+    private void RegisterHelperServiceTypes(IServiceCollection services)
+    {
+        var autoRegistered = 0;
+        var skippedAlreadyRegistered = 0;
+
+        foreach (var (interfaceType, implementationType, lifetime) in _helperServiceTypesToRegister)
+        {
+            // Check if this exact interface→implementation pair is already registered
+            // (Plugin.ConfigureServices may have registered it manually)
+            var alreadyRegistered = services.Any(sd =>
+                sd.ServiceType == interfaceType &&
+                sd.ImplementationType == implementationType);
+
+            if (alreadyRegistered)
+            {
+                _logger.LogDebug(
+                    "Skipping auto-registration of helper {Interface} -> {Implementation} (already registered by plugin)",
+                    interfaceType.Name, implementationType.Name);
+                skippedAlreadyRegistered++;
+                continue;
+            }
+
+            services.Add(new ServiceDescriptor(interfaceType, implementationType, lifetime));
+            _logger.LogDebug("Auto-registered helper: {Interface} -> {Implementation} ({Lifetime})",
+                interfaceType.Name, implementationType.Name, lifetime);
+            autoRegistered++;
+        }
+
+        _logger.LogInformation(
+            "Helper service registration complete. {AutoRegistered} auto-registered, {Skipped} skipped (already registered by plugin)",
+            autoRegistered, skippedAlreadyRegistered);
     }
 
     /// <summary>

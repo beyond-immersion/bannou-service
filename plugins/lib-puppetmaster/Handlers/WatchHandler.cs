@@ -10,6 +10,8 @@ using BeyondImmersion.BannouService.Puppetmaster.Watches;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 
@@ -35,6 +37,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 /// the Puppetmaster service injects a perception into the actor's bounded channel.
 /// </para>
 /// </remarks>
+[BannouHelperService("watch", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
 public sealed class WatchHandler : IActionHandler
 {
     private readonly WatchRegistry _registry;

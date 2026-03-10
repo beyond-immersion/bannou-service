@@ -3,6 +3,8 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
 using System.Text;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Auth.Services;
 
@@ -24,6 +26,7 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// </list>
 /// </para>
 /// </remarks>
+[BannouHelperService("cloudflare-edge", typeof(IAuthService), typeof(IEdgeRevocationProvider), lifetime: ServiceLifetime.Scoped)]
 public class CloudflareEdgeProvider : IEdgeRevocationProvider
 {
     private readonly AuthServiceConfiguration _configuration;
