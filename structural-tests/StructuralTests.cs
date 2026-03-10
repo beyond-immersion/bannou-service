@@ -356,7 +356,7 @@ public class StructuralTests
         Assert.True(
             File.Exists(eventsFilePath),
             $"{serviceType.Name}: missing {eventsFileName} in lib-{serviceName}/ " +
-            $"— T6 requires partial class split for event handlers");
+            $"— FOUNDATION TENETS requires partial class split for event handlers");
     }
 
     /// <summary>
@@ -380,7 +380,7 @@ public class StructuralTests
         Assert.True(
             found.Count == 0,
             $"{serviceType.Name}: directly references JsonSerializer.{string.Join(", ", found)} " +
-            $"— use BannouJson instead (T20)");
+            $"— use BannouJson instead (IMPLEMENTATION TENETS)");
     }
 
     /// <summary>
@@ -403,7 +403,7 @@ public class StructuralTests
         Assert.True(
             found.Count == 0,
             $"{serviceType.Name}: directly calls Environment.GetEnvironmentVariable() " +
-            $"— use service configuration class instead (T21)");
+            $"— use service configuration class instead (IMPLEMENTATION TENETS)");
     }
 
     /// <summary>
@@ -452,7 +452,7 @@ public class StructuralTests
         Assert.True(
             violations.Count == 0,
             $"{serviceType.Name} (Layer {attr.Layer}): directly references infrastructure types " +
-            $"— use lib-state/lib-messaging/lib-mesh instead (T4):\n" +
+            $"— use lib-state/lib-messaging/lib-mesh instead (FOUNDATION TENETS):\n" +
             string.Join("\n", violations.Select(v => $"  - {v}")));
     }
 
@@ -485,7 +485,7 @@ public class StructuralTests
         Assert.True(
             found.Count == 0,
             $"{serviceType.Name}: references Microsoft.AspNetCore.Http.StatusCodes " +
-            $"({string.Join(", ", found)}) — use BannouService.StatusCodes instead (T8)");
+            $"({string.Join(", ", found)}) — use BannouService.StatusCodes instead (IMPLEMENTATION TENETS)");
     }
 
     /// <summary>

@@ -1456,11 +1456,13 @@ components:
           description: Whether this capability is available at all.
 
     SeedTypeResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: Full seed type definition response.
       required: [seedTypeCode, displayName, description, maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, 
-          bondPermanent, isDeprecated]
+          bondPermanent]
       properties:
         seedTypeCode:
           type: string
@@ -1525,18 +1527,6 @@ components:
             $ref: '#/components/schemas/CollectionGrowthMapping'
           description: Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to 
             collection unlocks.
-        isDeprecated:
-          type: boolean
-          description: Whether this seed type is deprecated and cannot be used for new seeds.
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp when this seed type was deprecated.
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Optional reason for deprecation.
 
     ListSeedTypesResponse:
       type: object
@@ -1647,6 +1637,30 @@ components:
         status:
           $ref: '#/components/schemas/SeedStatus'
           description: Partner's seed status.
+    DeprecationFields:
+      type: object
+      description: |
+        Standard deprecation fields for template and definition entities.
+        Compose into response models via allOf. Both Category A (world-building
+        definitions with undeprecate/delete) and Category B (content templates,
+        deprecate-only) use the same three-field model.
+      required:
+      - isDeprecated
+      properties:
+        isDeprecated:
+          type: boolean
+          description: Whether this entity is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the entity was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+
     EntityType:
       type: string
       description: |
@@ -1677,4 +1691,5 @@ components:
       - Other
 
 x-inlined-types:
+- DeprecationFields
 - EntityType

@@ -279,7 +279,7 @@ Reconnection Support
 1. ~~**Reconnection does not republish accept/decline shortcuts**~~: **FIXED** (2026-03-03) - Added `PublishMatchShortcutsAsync` call in reconnection handler.
 
 **Hardening pass fixes (2026-03-06)**:
-- Fixed T32/`MatchmakingMatchDeclinedEvent` now uses ticket IDs (`DeclinedByTicketId`, `AffectedTicketIds`, `RequeuingTicketIds`) instead of account IDs. Removed `Guid.Empty` sentinel.
+- Fixed `MatchmakingMatchDeclinedEvent` now uses ticket IDs (`DeclinedByTicketId`, `AffectedTicketIds`, `RequeuingTicketIds`) instead of account IDs. Removed `Guid.Empty` sentinel.
 - Fixed Lock timeouts in `MatchmakingService.cs` now use `MatchLockTimeoutSeconds` and `ListLockTimeoutSeconds` configuration properties instead of hardcoded values.
 - Fixed `MatchmakingAlgorithm.MatchesQuery` now logs query parse exceptions at Debug level instead of silently swallowing them.
 - Fixed NRT: `QueueResponse.sessionGameType` added to required array; `CreateQueueRequest.partySkillAggregation` marked nullable; `MatchFoundClientEvent.acceptTimeoutSeconds` added to required array.

@@ -200,11 +200,11 @@ get_repo_root() {
 }
 
 # -----------------------------------------------------------------------------
-# Schema Reference Detection Functions (T26: Schema Reference Hierarchy)
+# Schema Reference Detection Functions (Schema Reference Hierarchy)
 # -----------------------------------------------------------------------------
 
 # Extract $refs pointing to API schema types
-# Per T26: events/lifecycle/config can $ref types from their service's -api.yaml
+# Per SCHEMA-RULES: events/lifecycle/config can $ref types from their service's -api.yaml
 # These types are already generated in *Models.cs, so we exclude them
 # Usage: API_REFS=$(extract_api_refs "$schema_file" "$service_name")
 # Returns: Comma-separated list of type names, or empty string if none found

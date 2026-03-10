@@ -2886,4 +2886,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             UpdatedAt = data.UpdatedAtUnix.HasValue ? DateTimeOffset.FromUnixTimeSeconds(data.UpdatedAtUnix.Value) : null
         };
     }
+
+    /// <inheritdoc />
+    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedEncounterTypesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

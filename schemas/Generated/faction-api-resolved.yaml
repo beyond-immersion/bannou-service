@@ -27,14 +27,13 @@ info:
     - Seed type "faction" registered at startup with growth phases and capability rules
     - Capability checks gate norm and territory endpoints
     - Implements ISeedEvolutionListener for growth/phase/capability notifications
-      (DI interface for lower-to-higher communication per FOUNDATION TENETS, T27
-      "DI interfaces for lower<->higher"; in-process guaranteed delivery, writes
-      to distributed state for multi-node safety)
+      (DI interface for lower-to-higher communication per FOUNDATION TENETS;
+      in-process guaranteed delivery, writes to distributed state for multi-node safety)
 
     **Collection-to-Seed Pipeline**:
     - Implements ICollectionUnlockListener to convert member activity collection entries
       into faction seed growth via tag prefix matching (governance, commerce, military)
-      (DI interface for lower-to-higher communication per FOUNDATION TENETS, T27;
+      (DI interface for lower-to-higher communication per FOUNDATION TENETS;
       in-process guaranteed delivery, writes to distributed state via lib-seed API)
     - Member activities grow the faction's seed, unlocking organizational capabilities
 
@@ -1070,10 +1069,9 @@ components:
 
     FactionStatus:
       type: string
-      description: Lifecycle status of a faction entity
+      description: Operational lifecycle status of a faction entity (orthogonal to deprecation)
       enum:
       - Active
-      - Deprecated
       - Dissolved
 
     FactionMemberRole:
@@ -1132,6 +1130,7 @@ components:
       - realmId
       - isRealmBaseline
       - status
+      - isDeprecated
       - memberCount
       - createdAt
       - updatedAt
@@ -1178,12 +1177,16 @@ components:
           description: Associated seed for growth tracking (null if seed creation failed)
         status:
           $ref: '#/components/schemas/FactionStatus'
-          description: Current lifecycle status
+          description: Current operational lifecycle status (orthogonal to deprecation)
         currentPhase:
           type: string
           nullable: true
           maxLength: 64
           description: Current seed growth phase (denormalized from lib-seed for convenience)
+        isDeprecated:
+          type: boolean
+          description: Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION 
+            TENETS triple-field model)
         deprecatedAt:
           type: string
           format: date-time
@@ -1294,7 +1297,7 @@ components:
         status:
           $ref: '#/components/schemas/FactionStatus'
           nullable: true
-          description: Filter by lifecycle status
+          description: Filter by operational lifecycle status (Active/Dissolved)
         parentFactionId:
           type: string
           format: uuid
@@ -2446,6 +2449,10 @@ components:
           description: Child archives from dependent resources (populated by lib-resource compression)
           items:
             $ref: '#/components/schemas/ResourceArchiveBase'
+
+    # ==========================================================================
+    # Deprecation Fields
+    # ==========================================================================
 
 x-inlined-types:
 - ResourceArchiveBase

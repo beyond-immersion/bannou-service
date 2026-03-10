@@ -37,7 +37,7 @@ NPCs need to know their own status effects to make decisions. A poisoned NPC sho
 
 ### Entity-Agnostic Design Is Intentional and Must Be Preserved
 
-Status uses the shared `EntityType` enum from `common-api.yaml` because effects apply to ANYTHING: characters, accounts, locations, realms, factions, dungeon cores. An environmental effect on a location (perpetual fog), a realm-wide curse, an account subscription benefit (double XP), a faction-wide morale boost -- all use the same Status primitives. The polymorphic ownership pattern (shared with Collection, License, Seed) uses the shared enum per IMPLEMENTATION TENETS (T14/T25).
+Status uses the shared `EntityType` enum from `common-api.yaml` because effects apply to ANYTHING: characters, accounts, locations, realms, factions, dungeon cores. An environmental effect on a location (perpetual fog), a realm-wide curse, an account subscription benefit (double XP), a faction-wide morale boost -- all use the same Status primitives. The polymorphic ownership pattern (shared with Collection, License, Seed) uses the shared enum per IMPLEMENTATION TENETS.
 
 ---
 
@@ -432,7 +432,7 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 ### Intentional Quirks (Documented Behavior)
 
-- **Polymorphic ownership with EntityType enum**: Entity types use the shared `EntityType` enum from `common-api.yaml` per IMPLEMENTATION TENETS (T14/T25). Status does NOT validate entity existence -- the caller is responsible for ensuring the entity exists before granting statuses.
+- **Polymorphic ownership with EntityType enum**: Entity types use the shared `EntityType` enum from `common-api.yaml` per IMPLEMENTATION TENETS. Status does NOT validate entity existence -- the caller is responsible for ensuring the entity exists before granting statuses.
 
 - **No Status-specific expiration worker**: Time-based expiration is entirely delegated to lib-item's native decay system (#407). Status subscribes to `item.expired` events to clean up its own records. For contract-backed statuses, the contract template includes prebound APIs that call `/status/remove` on milestone expiry. Status never polls for expirations -- it is always event-driven.
 

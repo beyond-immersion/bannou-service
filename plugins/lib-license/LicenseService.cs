@@ -2296,4 +2296,7 @@ public partial class LicenseService : ILicenseService
     }
 
     #endregion
+
+    /// <inheritdoc />
+    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedBoardTemplatesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

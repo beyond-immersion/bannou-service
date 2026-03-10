@@ -2496,4 +2496,7 @@ public partial class ItemService : IItemService
     }
 
     #endregion
+
+    /// <inheritdoc />
+    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedItemTemplatesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

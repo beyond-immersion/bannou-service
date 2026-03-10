@@ -2025,4 +2025,7 @@ public partial class GardenerService : IGardenerService
     #endregion
 
     #endregion
+
+    /// <inheritdoc />
+    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedTemplatesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

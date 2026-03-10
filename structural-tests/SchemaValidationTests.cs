@@ -266,7 +266,7 @@ public class SchemaValidationTests
         Assert.True(
             violations.Count == 0,
             $"Found {violations.Count} endpoint(s) without x-permissions across " +
-            $"{grouped.Count()} schema file(s) (T13):{report}");
+            $"{grouped.Count()} schema file(s) (FOUNDATION TENETS: X-Permissions):{report}");
     }
 
     /// <summary>

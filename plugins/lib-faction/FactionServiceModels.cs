@@ -48,7 +48,7 @@ internal class FactionModel
     /// <summary>Associated seed for growth tracking (null before seed creation).</summary>
     public Guid? SeedId { get; set; }
 
-    /// <summary>Current lifecycle status.</summary>
+    /// <summary>Current operational lifecycle status (orthogonal to deprecation).</summary>
     public FactionStatus Status { get; set; }
 
     /// <summary>Current seed growth phase (null if no seed).</summary>
@@ -56,6 +56,9 @@ internal class FactionModel
 
     /// <summary>Current member count (denormalized).</summary>
     public int MemberCount { get; set; }
+
+    /// <summary>Whether this faction is deprecated and should not accept new references.</summary>
+    public bool IsDeprecated { get; set; }
 
     /// <summary>When the faction was deprecated (null if not deprecated).</summary>
     public DateTimeOffset? DeprecatedAt { get; set; }

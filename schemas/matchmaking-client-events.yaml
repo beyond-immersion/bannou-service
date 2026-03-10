@@ -351,5 +351,5 @@ components:
     # ============================================
     # Supporting Types
     # NOTE: CancelReason is defined in matchmaking-api.yaml
-    # and referenced via $ref per IMPLEMENTATION TENETS (T26)
+    # and referenced via $ref per IMPLEMENTATION TENETS
     # ============================================

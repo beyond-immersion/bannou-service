@@ -953,4 +953,7 @@ public partial class LeaderboardService : ILeaderboardService
     #region Permission Registration
 
     #endregion
+
+    /// <inheritdoc />
+    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedLeaderboardDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

@@ -172,7 +172,7 @@ info:
 **x-event-subscriptions** (consumed events):
 - `analytics.score.updated` -> `AnalyticsScoreUpdatedEvent` -> `HandleAnalyticsScoreUpdated` -- detect domain-relevant achievements for divinity generation [SOFT: Analytics is L4]
 
-> **Note**: Character deletion cleanup is handled via `x-references` + cleanup endpoints (T28), NOT via `character.deleted` event subscription. See Step 1a for `x-references` declaration and Step 7 for cleanup endpoint implementations.
+> **Note**: Character deletion cleanup is handled via `x-references` + cleanup endpoints, NOT via `character.deleted` event subscription. See Step 1a for `x-references` declaration and Step 7 for cleanup endpoint implementations.
 
 **x-event-publications** (published events):
 - Lifecycle events from x-lifecycle: `deity.created`, `deity.updated`, `deity.deleted`
@@ -512,7 +512,7 @@ Internal storage models (not API-facing):
 - **`AttentionSlotModel`**: DeityId (Guid), CharacterId (Guid), Priority (AttentionPriority), LastActionAt (DateTimeOffset), CumulativeImpression (double)
 - **`DivinityEventModel`**: EventId (Guid), DeityId (Guid), CharacterId (Guid?), Domain (string, opaque domain code), Amount (double), Source (string), SourceEventId (Guid?), CreatedAt (DateTimeOffset)
 
-All models use proper types per T25 (enums, Guids, DateTimeOffset). Nullable for optional fields per T26.
+All models use proper types (enums, Guids, DateTimeOffset). Nullable for optional fields.
 
 ### Step 5: Create Event Handlers
 
@@ -537,7 +537,7 @@ Partial class of DivineService. The generated `DivineEventsController.cs` handle
 A `BackgroundService` that manages deity attention slot decay.
 
 **Loop** (every `AttentionWorkerIntervalSeconds`):
-1. Acquire distributed lock `divine:lock:attention-worker` (T9 multi-instance safety -- only one instance processes at a time)
+1. Acquire distributed lock `divine:lock:attention-worker` (multi-instance safety -- only one instance processes at a time)
 2. Load all active deities from MySQL
 3. For each deity with attention slots in Redis:
    a. Check each slot's `LastActionAt` against `AttentionDecayIntervalMinutes`
@@ -551,7 +551,7 @@ A `BackgroundService` that manages deity attention slot decay.
 A `BackgroundService` that batches divinity generation events into currency credits.
 
 **Loop** (every `DivinityGenerationWorkerIntervalSeconds`):
-1. Acquire distributed lock `divine:lock:divinity-generation-worker` (T9 multi-instance safety -- only one instance processes at a time)
+1. Acquire distributed lock `divine:lock:divinity-generation-worker` (multi-instance safety -- only one instance processes at a time)
 2. Drain pending `DivinityEventModel` entries from `divine-divinity-events` Redis store
 3. Aggregate by deityId (sum amounts per deity)
 4. For each deity with pending divinity:
@@ -594,7 +594,7 @@ Partial class with `[BannouService("divine", typeof(IDivineService), lifetime: S
 - `_divinityEventStore` = GetStore\<DivinityEventModel\>(StateStoreDefinitions.DivineDivinityEvents)
 - `_lockProvider` for distributed locks
 
-**Key method implementations** (all follow T7 error handling, T8 return pattern):
+**Key method implementations** (all follow standard error handling and return pattern):
 
 | Method | Key Logic |
 |--------|-----------|
@@ -618,8 +618,8 @@ Partial class with `[BannouService("divine", typeof(IDivineService), lifetime: S
 | `RegisterFollowerAsync` | Validate deity and character exist. Create relationship via `IRelationshipClient.CreateRelationshipAsync` (type: `deity_follower`). Increment deity's FollowerCount. Add character to deity's attention slots if capacity available. Publish `divine.follower.registered` event. |
 | `UnregisterFollowerAsync` | Validate deity and character exist. Delete relationship via `IRelationshipClient.DeleteRelationshipAsync`. Decrement deity's FollowerCount. Remove character from deity's attention slots. Publish `divine.follower.removed` event. |
 | `GetFollowersAsync` | Query relationships by deityId and type `deity_follower` via `IRelationshipClient`. Paginate results. |
-| `CleanupByCharacterAsync` | Called by lib-resource when a character is deleted (T28 cleanup endpoint). Query blessings by characterId -- revoke all active blessings. Remove follower relationships for this character from all deities. Update follower counts. Clear attention slots. Publish `divine.follower.removed` and `divine.blessing.revoked` events as applicable. |
-| `CleanupByGameServiceAsync` | Called by lib-resource when a game service is deleted (T28 cleanup endpoint). Query all deities for this gameServiceId. For each deity: deactivate, revoke blessings, remove followers, delete deity record. Publish lifecycle deleted events. |
+| `CleanupByCharacterAsync` | Called by lib-resource when a character is deleted (cleanup endpoint). Query blessings by characterId -- revoke all active blessings. Remove follower relationships for this character from all deities. Update follower counts. Clear attention slots. Publish `divine.follower.removed` and `divine.blessing.revoked` events as applicable. |
+| `CleanupByGameServiceAsync` | Called by lib-resource when a game service is deleted (cleanup endpoint). Query all deities for this gameServiceId. For each deity: deactivate, revoke blessings, remove followers, delete deity record. Publish lifecycle deleted events. |
 
 **State key patterns**:
 - Deity: `deity:{deityId}`
@@ -690,7 +690,7 @@ Following testing patterns from TESTING-PATTERNS.md:
 - `RegisterFollower_AttentionCapacityFull_RegistersButNoAttentionSlot`
 - `GetFollowers_ReturnsPagedFollowers`
 
-**Cleanup endpoint tests** (T28):
+**Cleanup endpoint tests**:
 - `CleanupByCharacter_WithBlessings_RevokesAllAndRemovesFollower`
 - `CleanupByCharacter_NotFollower_NoOp`
 - `CleanupByGameService_DeletesAllDeitiesAndDependents`
@@ -804,14 +804,14 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | Register deity_domain seed type on startup | `ISeedClient.RegisterSeedTypeAsync` |
 | Create domain power seed for deity | `ISeedClient.CreateSeedAsync` (ownerType: "deity", seedTypeCode: config.DeitySeedTypeCode) |
 
-### Character -> Divine (via lib-resource cleanup, T28)
+### Character -> Divine (via lib-resource cleanup)
 
 | Trigger | Endpoint | Action |
 |---------|----------|--------|
 | Character deleted | `/divine/cleanup-by-character` | Revoke all blessings, remove follower bonds, clear attention slots |
 | Game service deleted | `/divine/cleanup-by-game-service` | Delete all deities and dependent data for the game service |
 
-> **Note**: Cleanup is triggered by lib-resource calling the cleanup endpoints declared in `x-references`, NOT via event subscription to `character.deleted`. This follows T28 (Resource-Managed Cleanup).
+> **Note**: Cleanup is triggered by lib-resource calling the cleanup endpoints declared in `x-references`, NOT via event subscription to `character.deleted`. This follows the Resource-Managed Cleanup pattern per FOUNDATION TENETS.
 
 ### Analytics -> Divine (consumed events, soft)
 

@@ -2634,4 +2634,7 @@ public partial class QuestService : IQuestService
     }
 
     #endregion
+
+    /// <inheritdoc />
+    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedQuestDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

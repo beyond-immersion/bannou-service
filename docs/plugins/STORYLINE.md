@@ -265,7 +265,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Hardening pass (2026-03-09)** - Comprehensive tenet compliance audit and fixes:
  - Removed `Found` boolean from `GetPlanResponse` and `GetScenarioDefinitionResponse`; `GetPlanAsync` returns `NotFound` on miss
  - Changed `x-permissions` on `/storyline/get-compress-data` to `[]` (service-to-service only)
- - T25/Changed `StorylinePlanComposedEvent` fields `goal`, `arcType`, `primarySpectrum` from `type: string` to `$ref` enum types
+ - Changed `StorylinePlanComposedEvent` fields `goal`, `arcType`, `primarySpectrum` from `type: string` to `$ref` enum types
  - `ScenarioMutation.experienceType` and `backstoryElementType` changed from `type: string` to Storyline-owned enums (`StorylineExperienceType`, `StorylineBackstoryElementType`) with A2 boundary `MapByName` mapping to CharacterPersonality/CharacterHistory enums; `EnumMappingValidator` subset tests added
  - Removed dead config property `ScenarioFitScoreRecommendThreshold`
  - Replaced all inline topic strings with `StorylinePublishedTopics` constants

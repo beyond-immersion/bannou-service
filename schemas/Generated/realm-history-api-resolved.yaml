@@ -988,5 +988,9 @@ components:
           items:
             $ref: '#/components/schemas/ResourceArchiveBase'
 
+    # ==========================================================================
+    # Deprecation Fields
+    # ==========================================================================
+
 x-inlined-types:
 - ResourceArchiveBase

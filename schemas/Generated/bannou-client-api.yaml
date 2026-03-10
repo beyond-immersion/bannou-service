@@ -2930,6 +2930,7 @@ paths:
       description: |
         Creates a new contract instance from a template. The instance starts
         in 'draft' status and must be proposed to parties before activation.
+        Rejects with 400 if template is deprecated.
       requestBody:
         required: true
         content:
@@ -2944,7 +2945,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ContractInstanceResponse'
         '400':
-          description: Invalid request (missing required parties, invalid terms)
+          description: Invalid request (missing required parties, invalid terms,
+            or template is deprecated)
         '404':
           description: Template not found
       x-permissions:
@@ -3100,7 +3102,7 @@ paths:
         Permanently deletes a contract instance that has reached a terminal state
         (Fulfilled, Terminated, Expired, or Declined). Removes the instance record
         and all associated index entries. Breach records associated with the
-        contract are also deleted. This is a hard delete per T31 (instances use
+        contract are also deleted. This is a hard delete per IMPLEMENTATION TENETS (instances use
         immediate deletion, not deprecation).
       requestBody:
         required: true
@@ -6425,6 +6427,7 @@ paths:
         Creates a new item instance from a template. The instance must be placed
         in a container (containerId required). Use lib-inventory's /inventory/add
         for most use cases - this endpoint is for low-level instance creation.
+        Rejects with 400 if template is deprecated.
       requestBody:
         required: true
         content:
@@ -6439,11 +6442,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/ItemInstanceResponse'
         '400':
-          description: Invalid request (validation error)
+          description: Invalid request (validation error or template is 
+            deprecated)
         '404':
           description: Template not found
-        '409':
-          description: Template is deprecated
       x-permissions:
       - role: developer
   /item/instance/get:
@@ -6968,9 +6970,10 @@ paths:
       - BoardTemplate
       summary: Deprecate a board template
       description: |
-        Deprecate a board template (Category B — one-way, no undeprecate, no delete).
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
         Existing board instances continue to function; new board creation from this
-        template is rejected. Idempotent: returns OK if already deprecated.
+        template is rejected.
       x-permissions:
       - role: developer
         states: {}
@@ -7144,6 +7147,7 @@ paths:
         exists (one board per template per owner). For character owners, validates the character
         exists and resolves realm context. Creates an inventory container (slot_only,
         maxSlots = gridWidth * gridHeight) to hold unlocked license items.
+        Rejects with 400 if template is deprecated.
       x-permissions:
       - role: user
         states: {}
@@ -7161,7 +7165,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/BoardResponse'
         '400':
-          description: Invalid request (inactive template)
+          description: Invalid request (inactive or deprecated template)
         '404':
           description: Character, game service, or board template not found
         '409':
@@ -8686,8 +8690,10 @@ paths:
       tags:
       - Definitions
       summary: Mark quest definition as deprecated
-      description: Marks a quest definition as deprecated. No new instances can 
-        be created.
+      description: |
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
+        No new quest instances can be created from deprecated definitions.
       x-permissions:
       - role: developer
       requestBody:
@@ -8711,8 +8717,9 @@ paths:
       tags:
       - Instances
       summary: Accept a quest
-      description: Creates a contract instance and auto-consents for the 
-        questor. Returns the active quest.
+      description: |
+        Creates a contract instance and auto-consents for the questor. Returns the active quest.
+        Rejects with 400 if definition is deprecated.
       x-permissions:
       - role: user
       requestBody:
@@ -8729,7 +8736,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/QuestInstanceResponse'
         '400':
-          description: Prerequisites not met or already at max quests
+          description: Prerequisites not met, already at max quests, or 
+            definition is deprecated
         '404':
           description: Quest definition not found
         '409':
@@ -11593,7 +11601,8 @@ paths:
     post:
       summary: Deprecate a scenario definition
       description: |
-        Soft-deletes a scenario definition by marking it deprecated.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
         Deprecated scenarios are not returned by find-available.
       operationId: storyline_DeprecateScenarioDefinition
       tags:
@@ -11608,7 +11617,11 @@ paths:
               $ref: '#/components/schemas/DeprecateScenarioDefinitionRequest'
       responses:
         '200':
-          description: Scenario deprecated
+          description: Scenario deprecated (Category B, idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioDefinition'
         '404':
           description: Scenario not found
   /storyline/scenario/test:
@@ -13535,6 +13548,8 @@ components:
           description: BCrypt-hashed single-use recovery codes. Auth service 
             generates and verifies. Account stores opaque hashes.
     AchievementDefinitionResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       description: Achievement definition details
       additionalProperties: false
@@ -13546,7 +13561,6 @@ components:
       - achievementType
       - points
       - isActive
-      - isDeprecated
       - earnedCount
       - createdAt
       properties:
@@ -13649,20 +13663,6 @@ components:
         isActive:
           type: boolean
           description: Whether achievement is earnable
-        isDeprecated:
-          type: boolean
-          description: Whether this definition is deprecated and should not be 
-            used for new progress
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When deprecation occurred, null if not deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Audit reason for deprecation, null if not deprecated
         earnedCount:
           type: integer
           format: int64
@@ -15686,6 +15686,8 @@ components:
             $ref: '#/components/schemas/BoardNodeState'
           description: All license nodes with their current status
     BoardTemplateResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       description: Board template with all fields
       additionalProperties: false
@@ -15700,7 +15702,6 @@ components:
       - adjacencyMode
       - allowedOwnerTypes
       - isActive
-      - isDeprecated
       - createdAt
       properties:
         boardTemplateId:
@@ -15746,19 +15747,6 @@ components:
           type: boolean
           description: Whether the template is active (can create new board 
             instances)
-        isDeprecated:
-          type: boolean
-          description: Whether this template has been deprecated (Category B — 
-            one-way)
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the template was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Reason for deprecation (audit context)
         createdAt:
           type: string
           format: date-time
@@ -19446,7 +19434,7 @@ components:
         Schema defining required context variables for behavior execution.
         Structure is compiler-generated from ABML context declarations.
         Keys are variable names, values describe expected types and sources.
-        No Bannou service reads specific keys by convention (T29 compliant) —
+        No Bannou service reads specific keys by convention —
         this schema is consumed by the ActorRunner interpreter at runtime.
       additionalProperties: true
     ContourShape:
@@ -19816,6 +19804,8 @@ components:
           nullable: true
           description: When contract expires
     ContractTemplateResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       description: Contract template details
       additionalProperties: false
@@ -19829,7 +19819,6 @@ components:
       - defaultEnforcementMode
       - transferable
       - isActive
-      - isDeprecated
       - createdAt
       properties:
         templateId:
@@ -19887,18 +19876,6 @@ components:
         isActive:
           type: boolean
           description: Whether template is active
-        isDeprecated:
-          type: boolean
-          description: Whether template is deprecated (Category B — one-way)
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the template was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -22300,6 +22277,8 @@ components:
           nullable: true
           description: Evidence of cure
     CurrencyDefinitionResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       description: Currency definition details
       additionalProperties: false
@@ -22316,7 +22295,6 @@ components:
       - linkedToItem
       - isBaseCurrency
       - isActive
-      - isDeprecated
       - createdAt
       properties:
         definitionId:
@@ -22464,18 +22442,6 @@ components:
         isActive:
           type: boolean
           description: Whether definition is active
-        isDeprecated:
-          type: boolean
-          description: Whether definition is deprecated (Category B — one-way)
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the definition was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -23589,6 +23555,29 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (recommended for audit trail)
+    DeprecationFields:
+      type: object
+      description: |
+        Standard deprecation fields for template and definition entities.
+        Compose into response models via allOf. Both Category A (world-building
+        definitions with undeprecate/delete) and Category B (content templates,
+        deprecate-only) use the same three-field model.
+      required:
+      - isDeprecated
+      properties:
+        isDeprecated:
+          type: boolean
+          description: Whether this entity is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the entity was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     DesignateRealmBaselineRequest:
       type: object
       description: Request to designate a faction as the realm baseline
@@ -24064,6 +24053,8 @@ components:
           type: number
           description: Valence level (0-1)
     EncounterTypeResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       description: Response containing an encounter type
       additionalProperties: false
@@ -24103,18 +24094,6 @@ components:
         isActive:
           type: boolean
           description: Whether the type is active
-        isDeprecated:
-          type: boolean
-          description: Whether this type has been deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the type was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Why the type was deprecated
         createdAt:
           type: string
           format: date-time
@@ -24369,6 +24348,8 @@ components:
           description: Arbitrary custom data for game-specific metadata. No 
             Bannou plugin reads specific keys from this field by convention.
     EntryTemplateResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       description: Entry template with all fields
       additionalProperties: false
@@ -24380,7 +24361,6 @@ components:
       - displayName
       - hideWhenLocked
       - itemTemplateId
-      - isDeprecated
       - createdAt
       properties:
         entryTemplateId:
@@ -24453,20 +24433,6 @@ components:
           type: string
           nullable: true
           description: Composer or creator name
-        isDeprecated:
-          type: boolean
-          description: Whether this entry template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When this template was deprecated (null if not 
-            deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
         createdAt:
           type: string
           format: date-time
@@ -29009,6 +28975,8 @@ components:
       - RealmSpecific
       - MultiRealm
     ItemTemplateResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       description: Item template details
       additionalProperties: false
@@ -29029,7 +28997,6 @@ components:
       - hasDurability
       - tags
       - isActive
-      - isDeprecated
       - createdAt
       - updatedAt
       properties:
@@ -29187,19 +29154,6 @@ components:
         isActive:
           type: boolean
           description: Whether template is active
-        isDeprecated:
-          type: boolean
-          description: Whether template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When template was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation
         migrationTargetId:
           type: string
           format: uuid
@@ -29577,6 +29531,8 @@ components:
             not set)
           nullable: true
     LeaderboardDefinitionResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       description: Leaderboard definition details
       additionalProperties: false
@@ -29588,7 +29544,6 @@ components:
       - updateMode
       - isSeasonal
       - isPublic
-      - isDeprecated
       - createdAt
       - entryCount
       properties:
@@ -29626,19 +29581,6 @@ components:
         isPublic:
           type: boolean
           description: Whether the leaderboard is publicly visible
-        isDeprecated:
-          type: boolean
-          description: Whether this definition has been deprecated (Category B —
-            one-way)
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the definition was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Reason for deprecation (audit context)
         currentSeason:
           type: integer
           nullable: true
@@ -32228,6 +32170,8 @@ components:
           description: Client-only metadata (null if none set). No Bannou plugin
             reads specific keys from this field by convention.
     LocationResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       description: Complete location data returned from API operations
       type: object
       additionalProperties: false
@@ -32238,7 +32182,6 @@ components:
       - name
       - locationType
       - depth
-      - isDeprecated
       - boundsPrecision
       - coordinateMode
       - createdAt
@@ -32273,18 +32216,6 @@ components:
         depth:
           type: integer
           description: Depth in hierarchy (0 for root locations)
-        isDeprecated:
-          type: boolean
-          description: Whether this location is deprecated and cannot be used
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp when this location was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Optional reason for deprecation
         bounds:
           allOf:
           - $ref: '#/components/schemas/BoundingBox3D'
@@ -36133,6 +36064,8 @@ components:
       - Tutorial
       description: Category of quest for organization
     QuestDefinitionResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       description: Complete quest definition including objectives, 
         prerequisites, and rewards
@@ -36147,7 +36080,6 @@ components:
       - repeatable
       - maxQuestors
       - objectives
-      - isDeprecated
       - createdAt
       - gameServiceId
       properties:
@@ -36216,19 +36148,6 @@ components:
           items:
             type: string
           description: Tags
-        isDeprecated:
-          type: boolean
-          description: Whether this quest definition is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the quest definition was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -37441,6 +37360,8 @@ components:
           type: integer
           description: Total number of relationship types returned
     RelationshipTypeResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       description: Complete representation of a relationship type including 
         hierarchy, inverse, and deprecation information
       type: object
@@ -37450,7 +37371,6 @@ components:
       - code
       - name
       - isBidirectional
-      - isDeprecated
       - depth
       - createdAt
       - updatedAt
@@ -37499,19 +37419,6 @@ components:
           type: boolean
           description: Whether the relationship is the same in both directions 
             (e.g., SIBLING)
-        isDeprecated:
-          type: boolean
-          description: Whether this type is deprecated and cannot be used for 
-            new relationships
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp when this type was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Optional reason for deprecation
         depth:
           type: integer
           description: Depth in the hierarchy (0 for root types)
@@ -38281,6 +38188,8 @@ components:
       - Reputation
       description: Type of reward granted on quest completion
     RoomTypeResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: Room type definition with current configuration and status
@@ -38753,6 +38662,8 @@ components:
           nullable: true
           description: Location code within the realm
     ScenarioDefinition:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: A scenario definition template that can be triggered when 
@@ -38845,20 +38756,6 @@ components:
             type: string
           nullable: true
           description: Classification tags for filtering
-        isDeprecated:
-          type: boolean
-          default: false
-          description: Whether scenario definition is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the scenario definition was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -38873,6 +38770,8 @@ components:
           nullable: true
           description: ETag for optimistic concurrency
     ScenarioDefinitionSummary:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: Summary of a scenario definition
@@ -38900,19 +38799,6 @@ components:
         enabled:
           type: boolean
           description: Whether enabled
-        isDeprecated:
-          type: boolean
-          description: Whether deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation
         conditionCount:
           type: integer
           description: Number of trigger conditions
@@ -39190,6 +39076,8 @@ components:
       - Abandoned
       description: Current lifecycle status of a scenario instance
     ScenarioTemplateResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       description: Full scenario template with all fields
       required:
@@ -40216,6 +40104,8 @@ components:
           type: integer
           description: Number of templates skipped (duplicates)
     SeedTypeResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: Full seed type definition response.
@@ -40228,7 +40118,6 @@ components:
       - growthPhases
       - bondCardinality
       - bondPermanent
-      - isDeprecated
       properties:
         seedTypeCode:
           type: string
@@ -40296,19 +40185,6 @@ components:
             $ref: '#/components/schemas/CollectionGrowthMapping'
           description: Collection-to-growth-domain mappings for this seed type. 
             Null if this type does not respond to collection unlocks.
-        isDeprecated:
-          type: boolean
-          description: Whether this seed type is deprecated and cannot be used 
-            for new seeds.
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp when this seed type was deprecated.
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Optional reason for deprecation.
     SelectContentForAreaRequest:
       type: object
       description: Request to select content for an area based on unlocked 
@@ -41276,6 +41152,8 @@ components:
           nullable: true
           description: Message displayed during maintenance mode
     StatusTemplateResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       description: Status template with all fields
       additionalProperties: false
@@ -41290,7 +41168,6 @@ components:
       - maxStacks
       - stackBehavior
       - itemTemplateId
-      - isDeprecated
       - createdAt
       properties:
         statusTemplateId:
@@ -41346,21 +41223,6 @@ components:
           format: uuid
           nullable: true
           description: Asset identifier for this status effect's icon
-        isDeprecated:
-          type: boolean
-          description: Whether this template is deprecated and unavailable for 
-            new grants
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When this template was deprecated (null if not 
-            deprecated)
-        deprecationReason:
-          type: string
-          maxLength: 500
-          nullable: true
-          description: Why this template was deprecated (null if not deprecated)
         createdAt:
           type: string
           format: date-time
@@ -42667,6 +42529,8 @@ components:
           description: Game-time when this leg was completed. Null if pending or
             in_progress.
     TransitMode:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: A transit mode defining movement capabilities (e.g., walking,
@@ -42682,7 +42546,6 @@ components:
       - requirements
       - fatigueRatePerGameHour
       - noiseLevelNormalized
-      - isDeprecated
       - createdAt
       - modifiedAt
       properties:
@@ -42764,18 +42627,6 @@ components:
           items:
             type: string
             format: uuid
-        isDeprecated:
-          type: boolean
-          description: Whether this mode is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When deprecation occurred. Null if not deprecated.
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Why this mode was deprecated. Null if not deprecated.
         tags:
           type: array
           nullable: true

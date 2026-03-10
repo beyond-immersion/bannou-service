@@ -80,7 +80,8 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
             var faction = await _factionStore.GetAsync(FactionService.FactionKey(membership.FactionId), ct);
             if (faction == null) continue;
 
-            // Filter to realm-relevant factions — skip factions in other realms
+            // Filter to realm-relevant active factions — skip deprecated or other-realm factions
+            if (faction.IsDeprecated || faction.Status != FactionStatus.Active) continue;
             if (faction.RealmId != realmId) continue;
 
             factions.Add(new FactionProvider.FactionSnapshot(

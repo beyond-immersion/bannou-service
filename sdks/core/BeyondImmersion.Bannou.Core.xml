@@ -337,6 +337,43 @@
             The type/name of the event - usually also the topic it's published on.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Core.IDeprecatableEntity">
+            <summary>
+            Interface for entities that support the deprecation lifecycle per IMPLEMENTATION TENETS.
+            Implemented by generated lifecycle event classes when the entity's
+            <c>x-lifecycle</c> definition includes <c>deprecation: true</c>.
+            </summary>
+            <remarks>
+            <para>
+            Two deprecation categories exist (Category A: world-building definitions,
+            Category B: content templates), but both share the same three-field model.
+            The category distinction affects endpoint design (deprecate/undeprecate/delete
+            vs deprecate-only), not the data contract.
+            </para>
+            <para>
+            Deprecation state changes are published via <c>*.updated</c> events with
+            <c>ChangedFields</c> containing "isDeprecated", "deprecatedAt", and
+            "deprecationReason" — not via dedicated deprecation events.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.IDeprecatableEntity.IsDeprecated">
+            <summary>
+            Whether this entity is deprecated.
+            Deprecated entities should not be used for new instance creation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.IDeprecatableEntity.DeprecatedAt">
+            <summary>
+            When the entity was deprecated. Null if not deprecated.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.IDeprecatableEntity.DeprecationReason">
+            <summary>
+            Reason for deprecation. Null if not deprecated or no reason provided.
+            Maximum 500 characters.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Core.ILifecycleEvent">
             <summary>
             Base interface for all lifecycle events (created, updated, deleted).

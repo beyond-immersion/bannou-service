@@ -270,13 +270,13 @@ components:
             $ref: '#/components/schemas/ResourceArchiveBase'
 
     # ==========================================================================
-    # Deprecation Fields (T31)
+    # Deprecation Fields
     # ==========================================================================
 
     DeprecationFields:
       type: object
       description: |
-        Standard deprecation fields for template and definition entities (T31).
+        Standard deprecation fields for template and definition entities.
         Compose into response models via allOf. Both Category A (world-building
         definitions with undeprecate/delete) and Category B (content templates,
         deprecate-only) use the same three-field model.

@@ -25,6 +25,7 @@ components:
       - isRealmBaseline
       - status
       - memberCount
+      - isDeprecated
       - createdAt
       - updatedAt
       properties:
@@ -65,7 +66,7 @@ components:
           description: "Associated seed for growth tracking"
         status: &id009
           $ref: ../faction-api.yaml#/components/schemas/FactionStatus
-          description: "Current lifecycle status"
+          description: "Current operational lifecycle status"
         currentPhase: &id010
           type: string
           nullable: true
@@ -73,12 +74,15 @@ components:
         memberCount: &id011
           type: integer
           description: "Current number of members"
-        deprecatedAt: &id012
+        isDeprecated: &id012
+          type: boolean
+          description: "Whether this faction is deprecated"
+        deprecatedAt: &id013
           type: string
           format: date-time
           nullable: true
           description: "When the faction was deprecated (null if not deprecated)"
-        deprecationReason: &id013
+        deprecationReason: &id014
           type: string
           nullable: true
           description: "Reason for deprecation (null if not deprecated)"
@@ -108,6 +112,7 @@ components:
       - isRealmBaseline
       - status
       - memberCount
+      - isDeprecated
       - createdAt
       - updatedAt
       - changedFields
@@ -127,8 +132,9 @@ components:
         status: *id009
         currentPhase: *id010
         memberCount: *id011
-        deprecatedAt: *id012
-        deprecationReason: *id013
+        isDeprecated: *id012
+        deprecatedAt: *id013
+        deprecationReason: *id014
         createdAt:
           type: string
           format: date-time
@@ -160,6 +166,7 @@ components:
       - isRealmBaseline
       - status
       - memberCount
+      - isDeprecated
       - createdAt
       - updatedAt
       properties:
@@ -178,8 +185,9 @@ components:
         status: *id009
         currentPhase: *id010
         memberCount: *id011
-        deprecatedAt: *id012
-        deprecationReason: *id013
+        isDeprecated: *id012
+        deprecatedAt: *id013
+        deprecationReason: *id014
         createdAt:
           type: string
           format: date-time

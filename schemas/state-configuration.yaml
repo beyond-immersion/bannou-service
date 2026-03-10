@@ -88,7 +88,7 @@ x-service-configuration:
       description: "Time window in seconds for deduplicating identical error events. Events with the same store+operation+errorType are published at most once per window."
       env: STATE_ERROR_EVENT_DEDUPLICATION_WINDOW_SECONDS
       default: 60
-    # Note: DefaultConsistency was removed as dead config (IMPLEMENTATION TENETS T21).
+    # Note: DefaultConsistency was removed as dead config (per IMPLEMENTATION TENETS).
     # Consistency is specified per-request via StateOptions.Consistency, not as a global default.
     # The ConsistencyLevel enum remains available in state-api.yaml for per-request use.
     # Note: Telemetry (metrics/tracing) is controlled centrally via lib-telemetry configuration.

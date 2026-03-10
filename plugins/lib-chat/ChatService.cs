@@ -2793,4 +2793,7 @@ public partial class ChatService : IChatService
                 }, ct);
         }
     }
+
+    /// <inheritdoc />
+    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedRoomTypesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

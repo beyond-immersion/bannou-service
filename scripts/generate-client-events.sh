@@ -133,7 +133,7 @@ for schema_file in "${CLIENT_EVENT_SCHEMAS[@]}"; do
 
     echo -e "${BLUE}  🔧 Processing $service_name...${NC}"
 
-    # Extract $refs to API schema types (T26: Schema Reference Hierarchy)
+    # Extract $refs to API schema types (Schema Reference Hierarchy)
     # Client events often reference enums/types from the service's API schema
     API_REFS=$(extract_api_refs "$schema_file" "$service_name")
 

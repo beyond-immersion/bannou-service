@@ -442,7 +442,7 @@ components:
         Schema defining required context variables for behavior execution.
         Structure is compiler-generated from ABML context declarations.
         Keys are variable names, values describe expected types and sources.
-        No Bannou service reads specific keys by convention (T29 compliant) —
+        No Bannou service reads specific keys by convention —
         this schema is consumed by the ActorRunner interpreter at runtime.
       additionalProperties: true
 
@@ -566,7 +566,7 @@ components:
           description: |
             Planner-owned dynamic world state bag for GOAP A* search.
             Keys are arbitrary world state variable names, values are current state.
-            No Bannou service reads specific keys by convention (T29 compliant).
+            No Bannou service reads specific keys by convention.
           example:
             hunger: 0.8
             gold: 50
@@ -679,7 +679,7 @@ components:
           description: |
             Planner-owned dynamic world state bag for plan validation.
             Keys are arbitrary world state variable names, values are current state.
-            No Bannou service reads specific keys by convention (T29 compliant).
+            No Bannou service reads specific keys by convention.
         activeGoals:
           type: array
           items:

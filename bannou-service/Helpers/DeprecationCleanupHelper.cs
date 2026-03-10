@@ -1,8 +1,8 @@
 #nullable enable
 
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Helpers;
 

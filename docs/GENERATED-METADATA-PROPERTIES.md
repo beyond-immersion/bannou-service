@@ -4,11 +4,11 @@
 > **Do not edit manually** - regenerate with `make generate-docs`
 
 This document tracks all `additionalProperties: true` properties across Bannou schemas
-for FOUNDATION TENETS (T29: No Metadata Bag Contracts) compliance.
+for FOUNDATION TENETS (No Metadata Bag Contracts) compliance.
 
 ## What Metadata Bags Are For
 
-Per T29, `additionalProperties: true` serves exactly **two** legitimate purposes:
+Per FOUNDATION TENETS, `additionalProperties: true` serves exactly **two** legitimate purposes:
 
 1. **Client-side display data** - Game clients store rendering hints, UI preferences,
    or display-only information that no Bannou service consumes.
@@ -409,7 +409,7 @@ Compliant properties include one of these phrases in their description:
 ## Structural Exceptions
 
 These properties use `additionalProperties: true` for structural reasons that are
-fundamentally different from metadata bags. They are **not subject to T29** because
+fundamentally different from metadata bags. They are **not subject to the No Metadata Bag Contracts rule** because
 they are not data contracts between services -- they are the infrastructure primitives
 that other services build on, or they represent genuinely polymorphic payloads whose
 shape is defined by authored content rather than service convention.
@@ -472,4 +472,4 @@ or is it being misused as a cross-service data contract?
 
 ---
 
-*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for T29 (No Metadata Bag Contracts).*
+*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for FOUNDATION TENETS (No Metadata Bag Contracts).*

@@ -15,7 +15,7 @@ info:
     - topic: account.deleted
       event: AccountDeletedEvent
       handler: HandleAccountDeleted
-      description: Delete all save slots, versions, hot cache entries, and associated assets owned by the deleted account (T28 Account Deletion Cleanup Obligation)
+      description: Delete all save slots, versions, hot cache entries, and associated assets owned by the deleted account (Account Deletion Cleanup Obligation)
   x-event-publications:
     # SaveSlot lifecycle events (auto-generated from x-lifecycle)
     - topic: save.load.save-slot.created

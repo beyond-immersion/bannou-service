@@ -16,7 +16,7 @@ info:
       collection entries feeding faction seed growth (in-process, tag prefix matching,
       writes to distributed state via lib-seed API).
     - Resource cleanup handled via x-references cleanup callbacks (per FOUNDATION
-      TENETS, T28 "Resource-Managed Cleanup"), NOT via event subscriptions to
+      TENETS, "Resource-Managed Cleanup"), NOT via event subscriptions to
       character.deleted, realm.deleted, or location.deleted.
 
     **Topic Naming**: Uses dot-separated format (faction.member.added).
@@ -84,9 +84,10 @@ x-lifecycle:
       isRealmBaseline: { type: boolean, required: true, description: "Whether this is the realm baseline cultural faction" }
       parentFactionId: { type: string, format: uuid, nullable: true, description: "Parent faction in hierarchy" }
       seedId: { type: string, format: uuid, nullable: true, description: "Associated seed for growth tracking" }
-      status: { $ref: 'faction-api.yaml#/components/schemas/FactionStatus', required: true, description: "Current lifecycle status" }
+      status: { $ref: 'faction-api.yaml#/components/schemas/FactionStatus', required: true, description: "Current operational lifecycle status" }
       currentPhase: { type: string, nullable: true, description: "Current seed growth phase" }
       memberCount: { type: integer, required: true, description: "Current number of members" }
+      isDeprecated: { type: boolean, required: true, description: "Whether this faction is deprecated" }
       deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the faction was deprecated (null if not deprecated)" }
       deprecationReason: { type: string, nullable: true, description: "Reason for deprecation (null if not deprecated)" }
     sensitive: []

@@ -2942,7 +2942,7 @@ paths:
         Permanently deletes a contract instance that has reached a terminal state
         (Fulfilled, Terminated, Expired, or Declined). Removes the instance record
         and all associated index entries. Breach records associated with the
-        contract are also deleted. This is a hard delete per T31 (instances use
+        contract are also deleted. This is a hard delete per IMPLEMENTATION TENETS (instances use
         immediate deletion, not deprecation).
       requestBody:
         required: true
@@ -2978,8 +2978,9 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Hard-delete a terminal contract instance\",\n    \"description\": \"Permanently
         deletes a contract instance that has reached a terminal state\\n(Fulfilled, Terminated, Expired, or Declined). Removes
         the instance record\\nand all associated index entries. Breach records associated with the\\ncontract are also deleted.
-        This is a hard delete per T31 (instances use\\nimmediate deletion, not deprecation).\\n\",\n    \"tags\": [\n    \
-        \    \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteContractInstance\"\n}"
+        This is a hard delete per IMPLEMENTATION TENETS (instances use\\nimmediate deletion, not deprecation).\\n\",\n   \
+        \ \"tags\": [\n        \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteContractInstance\"\
+        \n}"
   /contract/instance/get-status:
     post:
       operationId: getContractInstanceStatus

@@ -594,7 +594,7 @@ paths:
           description: Deity not found
 
   # =========================================================================
-  # Resource Cleanup (2 endpoints) - Called by lib-resource (T28)
+  # Resource Cleanup (2 endpoints) - Called by lib-resource
   # =========================================================================
 
   /divine/cleanup-by-character:

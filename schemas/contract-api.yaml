@@ -398,7 +398,7 @@ paths:
         Permanently deletes a contract instance that has reached a terminal state
         (Fulfilled, Terminated, Expired, or Declined). Removes the instance record
         and all associated index entries. Breach records associated with the
-        contract are also deleted. This is a hard delete per T31 (instances use
+        contract are also deleted. This is a hard delete per IMPLEMENTATION TENETS (instances use
         immediate deletion, not deprecation).
       requestBody:
         required: true

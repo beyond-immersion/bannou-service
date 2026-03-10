@@ -27,14 +27,13 @@ info:
     - Seed type "faction" registered at startup with growth phases and capability rules
     - Capability checks gate norm and territory endpoints
     - Implements ISeedEvolutionListener for growth/phase/capability notifications
-      (DI interface for lower-to-higher communication per FOUNDATION TENETS, T27
-      "DI interfaces for lower<->higher"; in-process guaranteed delivery, writes
-      to distributed state for multi-node safety)
+      (DI interface for lower-to-higher communication per FOUNDATION TENETS;
+      in-process guaranteed delivery, writes to distributed state for multi-node safety)
 
     **Collection-to-Seed Pipeline**:
     - Implements ICollectionUnlockListener to convert member activity collection entries
       into faction seed growth via tag prefix matching (governance, commerce, military)
-      (DI interface for lower-to-higher communication per FOUNDATION TENETS, T27;
+      (DI interface for lower-to-higher communication per FOUNDATION TENETS;
       in-process guaranteed delivery, writes to distributed state via lib-seed API)
     - Member activities grow the faction's seed, unlocking organizational capabilities
 

@@ -1736,6 +1736,8 @@ public partial class AchievementService : IAchievementService
             definition.AchievementId, string.Join(", ", changedFields));
     }
 
+    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedAchievementDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
     #endregion
 
     #region Permission Registration
