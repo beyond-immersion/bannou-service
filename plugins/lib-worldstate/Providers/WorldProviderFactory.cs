@@ -1,8 +1,8 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
-using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Worldstate.Providers;
 

@@ -5,11 +5,11 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Location.Caching;
 

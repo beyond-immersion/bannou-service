@@ -69,7 +69,8 @@ public class BehaviorBundleManagerTests
 
     [Fact]
     public void ConstructorIsValid()
-    {        Assert.NotNull(CreateManager());
+    {
+        Assert.NotNull(CreateManager());
     }
 
     #endregion

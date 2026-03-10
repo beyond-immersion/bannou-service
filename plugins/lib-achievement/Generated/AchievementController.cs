@@ -129,7 +129,7 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Cleanup sweep completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedResponse>> CleanDeprecatedAchievementDefinitions(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedStringKeyResponse>> CleanDeprecatedAchievementDefinitions(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -552,7 +552,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
     /// <returns>Cleanup sweep completed</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("achievement/definition/clean-deprecated")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedResponse>> CleanDeprecatedAchievementDefinitions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedStringKeyResponse>> CleanDeprecatedAchievementDefinitions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(

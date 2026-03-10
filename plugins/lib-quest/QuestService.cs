@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
@@ -2636,5 +2637,73 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
     #endregion
 
     /// <inheritdoc />
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedQuestDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedQuestDefinitionsAsync(
+        CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.quest", "QuestService.CleanDeprecatedDefinitionsAsync");
+
+        // Query all deprecated definitions from MySQL
+        var deprecated = await _definitionStore.QueryAsync(
+            d => d.IsDeprecated, cancellationToken: cancellationToken);
+
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecated,
+            getEntityId: d => d.DefinitionId,
+            getDeprecatedAt: d => d.DeprecatedAt,
+            hasActiveInstancesAsync: async (d, ct) =>
+            {
+                var activeInstances = await _instanceStore.QueryAsync(
+                    i => i.DefinitionId == d.DefinitionId && i.Status == QuestStatus.Active,
+                    cancellationToken: ct);
+                return activeInstances.Any();
+            },
+            deleteAndPublishAsync: async (d, ct) =>
+            {
+                // Delete from MySQL definition store
+                var definitionKey = BuildDefinitionKey(d.DefinitionId);
+                await _definitionStore.DeleteAsync(definitionKey, ct);
+
+                // Invalidate Redis definition cache
+                await _definitionCache.DeleteAsync(definitionKey, ct);
+
+                // Publish lifecycle deleted event
+                await _messageBus.PublishQuestDefinitionDeletedAsync(new QuestDefinitionDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    DefinitionId = d.DefinitionId,
+                    ContractTemplateId = d.ContractTemplateId,
+                    Code = d.Code,
+                    Name = d.Name,
+                    Description = d.Description,
+                    Category = d.Category,
+                    Difficulty = d.Difficulty,
+                    LevelRequirement = d.LevelRequirement,
+                    Repeatable = d.Repeatable,
+                    CooldownSeconds = d.CooldownSeconds,
+                    DeadlineSeconds = d.DeadlineSeconds,
+                    MaxQuestors = d.MaxQuestors,
+                    GameServiceId = d.GameServiceId,
+                    CreatedAt = d.CreatedAt,
+                    UpdatedAt = DateTimeOffset.UtcNow,
+                    IsDeprecated = d.IsDeprecated,
+                    DeprecatedAt = d.DeprecatedAt,
+                    DeprecationReason = d.DeprecationReason
+                }, ct);
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        return (StatusCodes.OK, new CleanDeprecatedResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
 }

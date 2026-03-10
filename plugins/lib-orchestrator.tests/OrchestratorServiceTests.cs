@@ -1201,7 +1201,8 @@ public class OrchestratorStateManagerTests
 
     [Fact]
     public void OrchestratorStateManager_ConstructorIsValid()
-    {        using var manager = new OrchestratorStateManager(
+    {
+        using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>(),
             new OrchestratorServiceConfiguration(),

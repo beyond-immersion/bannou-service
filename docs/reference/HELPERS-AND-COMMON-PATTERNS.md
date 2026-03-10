@@ -561,16 +561,45 @@ Marks service implementation classes for automatic DI discovery:
 public partial class LocationService : ILocationService { }
 ```
 
+### BannouHelperServiceAttribute
+
+**File**: `bannou-service/Attributes/BannouHelperServiceAttribute.cs`
+
+Marks helper/sub-service classes within a plugin for automatic DI discovery by PluginLoader. Helpers are registered in Stage 5 (after `plugin.ConfigureServices()`), with duplicate-safe checking to avoid `IEnumerable<T>` duplicates.
+
+```csharp
+[BannouHelperService(typeof(AuthService), typeof(ITokenService), ServiceLifetime.Scoped)]
+public class TokenService : ITokenService { }
+```
+
+- `parentServiceType`: The `[BannouService]`-attributed type this helper belongs to
+- `interfaceType`: The service interface (if `null`, helper requires manual registration in Plugin.cs)
+- `lifetime`: DI lifetime (defaults to `Scoped`)
+
+**Auto-registration**: When `interfaceType` is provided, PluginLoader auto-registers the helper — no Plugin.cs entry needed. The structural test `Plugins_ShouldNotManuallyRegisterAutoDiscoverableHelpers` detects redundant manual registrations.
+
 ### ServiceConfigurationAttribute
 
 **File**: `bannou-service/Attributes/ServiceConfigurationAttribute.cs`
 
-Marks configuration classes with env prefix binding:
+Marks configuration classes with env prefix binding. Three constructors:
 
 ```csharp
+// App-level config (no associated service)
 [ServiceConfiguration(envPrefix: "BANNOU_")]
-public class LocationServiceConfiguration { }
+public class AppConfiguration : BaseServiceConfiguration { }
+
+// Service config with Type reference (standard — generated for main service configs)
+[ServiceConfiguration(typeof(LocationService))]
+public class LocationServiceConfiguration : BaseServiceConfiguration { }
+
+// Service config with string name (for helper configs — lazy assembly scanning)
+// Used when config is generated before the service class exists (schema-first ordering)
+[ServiceConfiguration("auth", envPrefix: "AUTH_TOKEN_")]
+public class AuthTokenConfiguration : BaseServiceConfiguration { }
 ```
+
+The string-name constructor resolves the service type lazily via assembly scanning at runtime, avoiding ordering dependencies where configuration classes are generated before the service implementation class. This is the constructor used by `x-helper-configurations` in config schemas.
 
 ### ResourceCleanupRequiredAttribute
 

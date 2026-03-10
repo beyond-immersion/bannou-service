@@ -1,9 +1,9 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Escrow;
 

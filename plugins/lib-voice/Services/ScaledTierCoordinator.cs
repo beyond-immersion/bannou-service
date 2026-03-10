@@ -1,11 +1,11 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice.Clients;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
-using BeyondImmersion.BannouService.Attributes;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Voice.Services;
 

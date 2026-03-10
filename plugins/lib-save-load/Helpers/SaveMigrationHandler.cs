@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.SaveLoad.Compression;
 using BeyondImmersion.BannouService.SaveLoad.Migration;
@@ -8,7 +9,6 @@ using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 

@@ -3,10 +3,10 @@
 // Exposes embedded ABML behaviors via the lib-resource seeded resource API.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Providers;
-using System.Reflection;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Providers;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Actor.Providers;
 

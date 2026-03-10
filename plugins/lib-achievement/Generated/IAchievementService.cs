@@ -57,7 +57,7 @@ public partial interface IAchievementService : IBannouService
         /// <summary>
         /// CleanDeprecatedAchievementDefinitions operation
         /// </summary>
-        Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedAchievementDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedAchievementDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// GetAchievementProgress operation

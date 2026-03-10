@@ -33,7 +33,8 @@ public class RtpEngineClientTests : IDisposable
 
     [Fact]
     public void ConstructorIsValid()
-    {        using var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object, _mockTelemetryProvider.Object, timeoutSeconds: 5);
+    {
+        using var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object, _mockTelemetryProvider.Object, timeoutSeconds: 5);
         Assert.NotNull(client);
     }
 

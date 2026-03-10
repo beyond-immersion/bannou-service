@@ -9,12 +9,12 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Execution.Handlers;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Actor.Execution;
 

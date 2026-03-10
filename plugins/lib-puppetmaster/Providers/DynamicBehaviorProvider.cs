@@ -1,8 +1,8 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Providers;

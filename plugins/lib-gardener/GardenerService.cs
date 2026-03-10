@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Puppetmaster;
@@ -2027,5 +2028,97 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
     #endregion
 
     /// <inheritdoc />
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedTemplatesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedTemplatesAsync(
+        CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.gardener", "GardenerService.CleanDeprecatedTemplatesAsync");
+
+        // 1. Query all deprecated scenario templates from MySQL
+        var deprecatedResults = await _templateStore.JsonQueryAsync(
+            new List<QueryCondition>
+            {
+                new QueryCondition
+                {
+                    Path = "$.Status",
+                    Operator = QueryOperator.Equals,
+                    Value = TemplateStatus.Deprecated.ToString()
+                }
+            }, cancellationToken);
+
+        var deprecatedTemplates = deprecatedResults.Select(r => r.Value).ToList();
+
+        if (deprecatedTemplates.Count == 0)
+        {
+            return (StatusCodes.OK, new CleanDeprecatedResponse
+            {
+                Cleaned = 0,
+                Remaining = 0,
+                Errors = 0,
+                CleanedIds = new List<Guid>()
+            });
+        }
+
+        // Pre-load active scenario account IDs and their scenarios for instance checking
+        var activeAccountIds = await _gardenCacheStore.GetSetAsync<Guid>(
+            ActiveScenariosTrackingKey, cancellationToken);
+
+        var activeScenarioTemplateIds = new HashSet<Guid>();
+        foreach (var accountId in activeAccountIds)
+        {
+            var scenario = await _scenarioStore.GetAsync(ScenarioKey(accountId), cancellationToken);
+            if (scenario != null)
+            {
+                activeScenarioTemplateIds.Add(scenario.ScenarioTemplateId);
+            }
+        }
+
+        // 2. Delegate to shared helper (per IMPLEMENTATION TENETS — B20)
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecatedTemplates,
+            getEntityId: t => t.ScenarioTemplateId,
+            getDeprecatedAt: t => t.DeprecatedAt,
+            hasActiveInstancesAsync: (t, ct) =>
+                Task.FromResult(activeScenarioTemplateIds.Contains(t.ScenarioTemplateId)),
+            deleteAndPublishAsync: async (t, ct) =>
+            {
+                // Remove template from MySQL store
+                await _templateStore.DeleteAsync(TemplateKey(t.ScenarioTemplateId), ct);
+
+                // Publish gardener.scenario-template.deleted lifecycle event
+                await _messageBus.PublishScenarioTemplateDeletedAsync(
+                    new ScenarioTemplateDeletedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        ScenarioTemplateId = t.ScenarioTemplateId,
+                        Code = t.Code,
+                        DisplayName = t.DisplayName,
+                        Description = t.Description,
+                        Category = t.Category,
+                        ConnectivityMode = t.ConnectivityMode,
+                        Status = t.Status,
+                        CreatedAt = t.CreatedAt,
+                        UpdatedAt = t.UpdatedAt,
+                        IsDeprecated = true,
+                        DeprecatedAt = t.DeprecatedAt,
+                        DeprecationReason = t.DeprecationReason,
+                        DeletedReason = "Cleaned via deprecation sweep"
+                    }, ct);
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        // 3. Map helper result to generated response
+        return (StatusCodes.OK, new CleanDeprecatedResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
 }

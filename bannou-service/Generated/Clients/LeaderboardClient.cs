@@ -117,7 +117,7 @@ public partial interface ILeaderboardClient
     /// </remarks>
     /// <returns>Cleanup sweep completed</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<CleanDeprecatedResponse> CleanDeprecatedLeaderboardDefinitionsAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<CleanDeprecatedStringKeyResponse> CleanDeprecatedLeaderboardDefinitionsAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -815,7 +815,7 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
     /// </remarks>
     /// <returns>Cleanup sweep completed</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<CleanDeprecatedResponse> CleanDeprecatedLeaderboardDefinitionsAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<CleanDeprecatedStringKeyResponse> CleanDeprecatedLeaderboardDefinitionsAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -861,7 +861,7 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<CleanDeprecatedResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<CleanDeprecatedStringKeyResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);

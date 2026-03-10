@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
@@ -2357,5 +2358,77 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
     #endregion
 
     /// <inheritdoc />
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedEntryTemplatesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedEntryTemplatesAsync(
+        CleanDeprecatedRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.collection", "CollectionService.CleanDeprecatedEntryTemplatesAsync");
+
+        // Query all deprecated entry templates
+        var deprecatedTemplates = await _entryTemplateStore.QueryAsync(
+            t => t.IsDeprecated,
+            cancellationToken: cancellationToken);
+
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecatedTemplates,
+            getEntityId: t => t.EntryTemplateId,
+            getDeprecatedAt: t => t.DeprecatedAt,
+            hasActiveInstancesAsync: async (t, ct) =>
+            {
+                // Check if any collection instance has granted entries referencing this template's code
+                var collections = await _collectionStore.QueryAsync(
+                    c => c.CollectionType == t.CollectionType && c.GameServiceId == t.GameServiceId,
+                    cancellationToken: ct);
+
+                foreach (var collection in collections)
+                {
+                    var cache = await LoadOrRebuildCollectionCacheAsync(collection, ct);
+                    if (cache.UnlockedEntries.Any(e => e.Code == t.Code))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            },
+            deleteAndPublishAsync: async (t, ct) =>
+            {
+                // Delete from both primary key and code lookup key
+                await _entryTemplateStore.DeleteAsync(BuildTemplateKey(t.EntryTemplateId), ct);
+                await _entryTemplateStore.DeleteAsync(
+                    BuildTemplateByCodeKey(t.GameServiceId, t.CollectionType, t.Code), ct);
+
+                // Publish the lifecycle deleted event
+                await _messageBus.PublishCollectionEntryTemplateDeletedAsync(
+                    new CollectionEntryTemplateDeletedEvent
+                    {
+                        EntryTemplateId = t.EntryTemplateId,
+                        Code = t.Code,
+                        CollectionType = t.CollectionType,
+                        GameServiceId = t.GameServiceId,
+                        DisplayName = t.DisplayName,
+                        Category = t.Category,
+                        HideWhenLocked = t.HideWhenLocked,
+                        ItemTemplateId = t.ItemTemplateId,
+                        CreatedAt = t.CreatedAt,
+                        UpdatedAt = t.UpdatedAt ?? t.CreatedAt,
+                        DeletedReason = "Clean-deprecated sweep: deprecated with zero active instances"
+                    },
+                    ct);
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        return (StatusCodes.OK, new CleanDeprecatedResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
 }

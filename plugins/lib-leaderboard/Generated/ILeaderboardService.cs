@@ -57,7 +57,7 @@ public partial interface ILeaderboardService : IBannouService
         /// <summary>
         /// CleanDeprecatedLeaderboardDefinitions operation
         /// </summary>
-        Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedLeaderboardDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedLeaderboardDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// SubmitScore operation

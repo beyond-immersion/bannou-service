@@ -71,7 +71,8 @@ public class ActorLocalMemoryStoreTests
 
     [Fact]
     public void ConstructorIsValid()
-    {        Assert.NotNull(_memoryStore);
+    {
+        Assert.NotNull(_memoryStore);
     }
 
     #endregion

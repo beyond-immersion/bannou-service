@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter.Caching;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
@@ -2887,6 +2888,89 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
         };
     }
 
-    /// <inheritdoc />
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedEncounterTypesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    /// <summary>
+    /// Sweeps deprecated encounter types with zero remaining encounters.
+    /// Uses DeprecationCleanupHelper for standardized per-item error isolation,
+    /// grace period evaluation, dry-run support, and logging (per IMPLEMENTATION TENETS B20).
+    /// </summary>
+    public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedEncounterTypesAsync(
+        CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.character-encounter", "CharacterEncounterService.CleanDeprecatedEncounterTypesAsync");
+
+        // Load all encounter types and filter to deprecated ones
+        var allKeys = await GetAllTypeKeysAsync(_encounterTypeStore, cancellationToken);
+        var deprecatedTypes = new List<EncounterTypeData>();
+        foreach (var key in allKeys)
+        {
+            var data = await _encounterTypeStore.GetAsync(key, cancellationToken);
+            if (data is { IsDeprecated: true })
+            {
+                deprecatedTypes.Add(data);
+            }
+        }
+
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecatedTypes,
+            getEntityId: t => t.TypeId,
+            getDeprecatedAt: t => t.DeprecatedAt,
+            hasActiveInstancesAsync: async (t, ct) =>
+            {
+                // Check the type-encounter index to see if any encounters reference this type
+                var typeEncounterIndex = await _typeEncounterIndexStore.GetAsync(
+                    $"{TYPE_ENCOUNTER_INDEX_PREFIX}{t.Code}", ct);
+                return typeEncounterIndex != null && typeEncounterIndex.EncounterIds.Count > 0;
+            },
+            deleteAndPublishAsync: async (t, ct) =>
+            {
+                // Delete the encounter type record
+                await _encounterTypeStore.DeleteAsync($"{TYPE_KEY_PREFIX}{t.Code}", ct);
+
+                // Remove from custom type index (only custom types are in this index)
+                if (!t.IsBuiltIn)
+                {
+                    await RemoveFromCustomTypeIndexAsync(t.Code, ct);
+                }
+
+                // Delete the type-encounter index entry (should be empty, but clean up the key)
+                await _typeEncounterIndexStore.DeleteAsync(
+                    $"{TYPE_ENCOUNTER_INDEX_PREFIX}{t.Code}", ct);
+
+                // Publish the lifecycle deleted event
+                var now = DateTimeOffset.UtcNow;
+                await _messageBus.PublishEncounterTypeDeletedAsync(
+                    new EncounterTypeDeletedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = now,
+                        TypeId = t.TypeId,
+                        Code = t.Code,
+                        Name = t.Name,
+                        Description = t.Description,
+                        IsBuiltIn = t.IsBuiltIn,
+                        SortOrder = t.SortOrder,
+                        IsActive = t.IsActive,
+                        CreatedAt = DateTimeOffset.FromUnixTimeSeconds(t.CreatedAtUnix),
+                        UpdatedAt = now,
+                        IsDeprecated = t.IsDeprecated,
+                        DeprecatedAt = t.DeprecatedAt,
+                        DeprecationReason = t.DeprecationReason,
+                        DeletedReason = "Clean-deprecated sweep: deprecated with zero active encounters"
+                    }, ct);
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        return (StatusCodes.OK, new CleanDeprecatedResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
 }

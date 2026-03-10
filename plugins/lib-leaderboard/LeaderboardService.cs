@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -50,6 +51,7 @@ public partial class LeaderboardService : ILeaderboardService, ICleanDeprecatedE
     private const string SEASON_INDEX_PREFIX = "leaderboard-seasons";
     private const string RANKING_KEY_PREFIX = "lb:";
     private const string MEMBER_KEY_PREFIX = "member:";
+    private const string GAME_SERVICE_INDEX_KEY = "leaderboard-game-services";
 
     /// <summary>
     /// Initializes a new instance of the LeaderboardService.
@@ -167,6 +169,12 @@ public partial class LeaderboardService : ILeaderboardService, ICleanDeprecatedE
         await _definitionStore.AddToSetAsync(
             BuildDefinitionIndexKey(body.GameServiceId),
             body.LeaderboardId,
+            cancellationToken: cancellationToken);
+
+        // Track game service ID for clean-deprecated sweep enumeration
+        await _definitionStore.AddToSetAsync(
+            GAME_SERVICE_INDEX_KEY,
+            body.GameServiceId.ToString(),
             cancellationToken: cancellationToken);
 
         if (definition.IsSeasonal && definition.CurrentSeason.HasValue)
@@ -954,6 +962,136 @@ public partial class LeaderboardService : ILeaderboardService, ICleanDeprecatedE
 
     #endregion
 
-    /// <inheritdoc />
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedLeaderboardDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    /// <summary>
+    /// Category B cleanup sweep for deprecated leaderboard definitions.
+    /// Permanently removes deprecated definitions with zero remaining scores,
+    /// subject to an optional grace period. Publishes leaderboard.definition.deleted
+    /// events for each removed definition. Uses shared DeprecationCleanupHelper
+    /// per IMPLEMENTATION TENETS.
+    /// </summary>
+    public async Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedLeaderboardDefinitionsAsync(
+        CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.leaderboard", "LeaderboardService.CleanDeprecatedLeaderboardDefinitionsAsync");
+
+        // Collect all deprecated definitions across all game services
+        var gameServiceIds = await _definitionStore.GetSetAsync<string>(GAME_SERVICE_INDEX_KEY, cancellationToken);
+        var deprecated = new List<LeaderboardDefinitionData>();
+
+        foreach (var gameServiceIdStr in gameServiceIds)
+        {
+            if (!Guid.TryParse(gameServiceIdStr, out var gameServiceId))
+            {
+                _logger.LogWarning("Invalid game service ID in leaderboard index: {Value}", gameServiceIdStr);
+                continue;
+            }
+
+            var indexKey = BuildDefinitionIndexKey(gameServiceId);
+            var leaderboardIds = await _definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
+
+            foreach (var leaderboardId in leaderboardIds)
+            {
+                var defKey = BuildDefinitionKey(gameServiceId, leaderboardId);
+                var definition = await _definitionStore.GetAsync(defKey, cancellationToken);
+                if (definition is not null && definition.IsDeprecated)
+                {
+                    deprecated.Add(definition);
+                }
+            }
+        }
+
+        // Delegate to shared helper per IMPLEMENTATION TENETS (B20)
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecated,
+            getEntityId: d => d.LeaderboardId,
+            getDeprecatedAt: d => d.DeprecatedAt,
+            hasActiveInstancesAsync: async (d, ct) =>
+            {
+                // Check current/non-seasonal ranking sorted set for scores
+                var rankingKey = BuildRankingKey(d.GameServiceId, d.LeaderboardId, d.CurrentSeason);
+                var entryCount = await _rankingStore.SortedSetCountAsync(rankingKey, ct);
+                if (entryCount > 0)
+                    return true;
+
+                // For seasonal leaderboards, check all archived seasons for scores
+                if (d.IsSeasonal)
+                {
+                    var seasonIndexKey = BuildSeasonIndexKey(d.GameServiceId, d.LeaderboardId);
+                    var seasons = await _definitionStore.GetSetAsync<int>(seasonIndexKey, ct);
+                    foreach (var season in seasons)
+                    {
+                        var seasonRankingKey = BuildRankingKey(d.GameServiceId, d.LeaderboardId, season);
+                        var seasonCount = await _rankingStore.SortedSetCountAsync(seasonRankingKey, ct);
+                        if (seasonCount > 0)
+                            return true;
+                    }
+                }
+
+                return false;
+            },
+            deleteAndPublishAsync: async (d, ct) =>
+            {
+                var defKey = BuildDefinitionKey(d.GameServiceId, d.LeaderboardId);
+
+                // Delete definition from primary store
+                await _definitionStore.DeleteAsync(defKey, ct);
+
+                // Remove from per-game-service definition index set
+                await _definitionStore.RemoveFromSetAsync(
+                    BuildDefinitionIndexKey(d.GameServiceId),
+                    d.LeaderboardId,
+                    ct);
+
+                // Clean up ranking sorted sets (current/non-seasonal)
+                var rankingKey = BuildRankingKey(d.GameServiceId, d.LeaderboardId, d.CurrentSeason);
+                await _rankingStore.SortedSetDeleteAsync(rankingKey, ct);
+
+                // Clean up all archived season ranking data
+                if (d.IsSeasonal)
+                {
+                    var seasonIndexKey = BuildSeasonIndexKey(d.GameServiceId, d.LeaderboardId);
+                    var seasons = await _definitionStore.GetSetAsync<int>(seasonIndexKey, ct);
+                    foreach (var season in seasons)
+                    {
+                        var seasonRankingKey = BuildRankingKey(d.GameServiceId, d.LeaderboardId, season);
+                        await _rankingStore.SortedSetDeleteAsync(seasonRankingKey, ct);
+                    }
+
+                    // Delete the season index set itself
+                    await _definitionStore.DeleteSetAsync(seasonIndexKey, ct);
+                }
+
+                // Publish lifecycle deleted event
+                await _messageBus.PublishLeaderboardDefinitionDeletedAsync(new LeaderboardDefinitionDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    GameServiceId = d.GameServiceId,
+                    LeaderboardId = d.LeaderboardId,
+                    DisplayName = d.DisplayName,
+                    SortOrder = d.SortOrder,
+                    UpdateMode = d.UpdateMode,
+                    IsSeasonal = d.IsSeasonal,
+                    IsPublic = d.IsPublic,
+                    CreatedAt = d.CreatedAt,
+                    IsDeprecated = d.IsDeprecated,
+                    DeprecatedAt = d.DeprecatedAt,
+                    DeprecationReason = d.DeprecationReason
+                }, ct);
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        return (StatusCodes.OK, new CleanDeprecatedStringKeyResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
 }

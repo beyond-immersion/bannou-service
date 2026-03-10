@@ -1,13 +1,13 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Actor.Execution;
 using BeyondImmersion.BannouService.Actor.Providers;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
-using Microsoft.Extensions.Logging;
-using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 

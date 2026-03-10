@@ -183,7 +183,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedStringKeyResponse'
 
   /leaderboard/score/submit:
     post:

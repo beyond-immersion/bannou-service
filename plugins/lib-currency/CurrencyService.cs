@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Currency.Caching;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
@@ -2860,5 +2861,91 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity
     #endregion
 
     /// <inheritdoc />
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedCurrencyDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedCurrencyDefinitionsAsync(
+        CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.currency", "CurrencyService.CleanDeprecatedCurrencyDefinitionsAsync");
+
+        // Load all deprecated definitions via the all-defs index (no queryable store for definitions)
+        var allDefsJson = await _definitionStringStore.GetAsync(ALL_DEFS_KEY, cancellationToken);
+        var allIds = string.IsNullOrEmpty(allDefsJson)
+            ? new List<string>()
+            : BannouJson.Deserialize<List<string>>(allDefsJson) ?? new List<string>();
+
+        var deprecated = new List<CurrencyDefinitionModel>();
+        foreach (var id in allIds)
+        {
+            var model = await _definitionStore.GetAsync($"{DEF_PREFIX}{id}", cancellationToken);
+            if (model is not null && model.IsDeprecated)
+            {
+                deprecated.Add(model);
+            }
+        }
+
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecated,
+            getEntityId: d => d.DefinitionId,
+            getDeprecatedAt: d => d.DeprecatedAt,
+            hasActiveInstancesAsync: async (d, ct) =>
+            {
+                // Check if any wallets still hold balances for this currency
+                var balanceCurrencyJson = await _balanceStringStore.GetAsync(
+                    $"{BALANCE_CURRENCY_INDEX}{d.DefinitionId}", ct);
+                if (string.IsNullOrEmpty(balanceCurrencyJson))
+                    return false;
+
+                var walletIds = BannouJson.Deserialize<List<string>>(balanceCurrencyJson);
+                return walletIds is not null && walletIds.Count > 0;
+            },
+            deleteAndPublishAsync: async (d, ct) =>
+            {
+                // Delete definition from primary store
+                await _definitionStore.DeleteAsync($"{DEF_PREFIX}{d.DefinitionId}", ct);
+
+                // Remove code-to-ID reverse lookup index
+                await _definitionStringStore.DeleteAsync($"{DEF_CODE_INDEX}{d.Code}", ct);
+
+                // Remove from base currency index if applicable
+                if (d.IsBaseCurrency)
+                {
+                    await _definitionStringStore.DeleteAsync($"{BASE_CURRENCY_INDEX}{d.Scope}", ct);
+                }
+
+                // Remove from all-defs list
+                await RemoveFromListAsync(_definitionStringStore, ALL_DEFS_KEY, d.DefinitionId.ToString(), ct);
+
+                // Publish lifecycle deleted event
+                await _messageBus.PublishCurrencyDefinitionDeletedAsync(new CurrencyDefinitionDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    DefinitionId = d.DefinitionId,
+                    Code = d.Code,
+                    Name = d.Name,
+                    Scope = d.Scope,
+                    Precision = d.Precision,
+                    IsActive = d.IsActive,
+                    ModifiedAt = d.ModifiedAt,
+                    CreatedAt = d.CreatedAt,
+                    UpdatedAt = DateTimeOffset.UtcNow,
+                    IsDeprecated = d.IsDeprecated,
+                    DeprecatedAt = d.DeprecatedAt,
+                    DeprecationReason = d.DeprecationReason
+                }, ct);
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        return (StatusCodes.OK, new CleanDeprecatedResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
 }

@@ -5,12 +5,12 @@
 // =============================================================================
 
 using BeyondImmersion.BannouService.Abml.Cognition;
-using BeyondImmersion.BannouService.Services;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.Bannou.Behavior.Cognition;
 

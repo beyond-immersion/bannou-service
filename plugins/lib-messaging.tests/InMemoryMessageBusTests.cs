@@ -26,7 +26,8 @@ public class InMemoryMessageBusTests
 
     [Fact]
     public void ConstructorIsValid()
-    {        Assert.NotNull(_messageBus);
+    {
+        Assert.NotNull(_messageBus);
     }
 
     #endregion

@@ -2,8 +2,10 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -11,8 +13,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
 using RmqExchangeType = RabbitMQ.Client.ExchangeType;
-using BeyondImmersion.BannouService.Attributes;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 

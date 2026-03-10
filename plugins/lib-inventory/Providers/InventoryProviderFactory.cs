@@ -5,12 +5,12 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Inventory.Caching;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
-using System.Diagnostics;
-using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Inventory.Providers;
 

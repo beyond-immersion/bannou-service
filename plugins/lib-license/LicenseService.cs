@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
@@ -2298,5 +2299,84 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
     #endregion
 
     /// <inheritdoc />
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedBoardTemplatesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedBoardTemplatesAsync(
+        CleanDeprecatedRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.license", "LicenseService.CleanDeprecatedBoardTemplatesAsync");
+
+        // Query all deprecated board templates
+        var deprecatedTemplates = await _boardTemplateStore.QueryAsync(
+            t => t.IsDeprecated,
+            cancellationToken: cancellationToken);
+
+        // Delegate to shared helper per IMPLEMENTATION TENETS (B20)
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecatedTemplates,
+            getEntityId: t => t.BoardTemplateId,
+            getDeprecatedAt: t => t.DeprecatedAt,
+            hasActiveInstancesAsync: async (t, ct) =>
+            {
+                // Check if any board instances reference this template
+                var boards = await _boardStore.QueryAsync(
+                    b => b.BoardTemplateId == t.BoardTemplateId,
+                    cancellationToken: ct);
+                return boards.Count > 0;
+            },
+            deleteAndPublishAsync: async (t, ct) =>
+            {
+                // Delete all license definitions for this template
+                var definitions = await _definitionStore.QueryAsync(
+                    d => d.BoardTemplateId == t.BoardTemplateId,
+                    cancellationToken: ct);
+
+                foreach (var def in definitions)
+                {
+                    await _definitionStore.DeleteAsync(
+                        BuildDefinitionKey(t.BoardTemplateId, def.Code), ct);
+                }
+
+                // Delete the board template record
+                await _boardTemplateStore.DeleteAsync(
+                    BuildTemplateKey(t.BoardTemplateId), ct);
+
+                // Publish the lifecycle deleted event
+                await _messageBus.PublishLicenseBoardTemplateDeletedAsync(
+                    new LicenseBoardTemplateDeletedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        BoardTemplateId = t.BoardTemplateId,
+                        GameServiceId = t.GameServiceId,
+                        Name = t.Name,
+                        GridWidth = t.GridWidth,
+                        GridHeight = t.GridHeight,
+                        BoardContractTemplateId = t.BoardContractTemplateId,
+                        AdjacencyMode = t.AdjacencyMode,
+                        IsActive = t.IsActive,
+                        CreatedAt = t.CreatedAt,
+                        UpdatedAt = t.UpdatedAt ?? t.CreatedAt,
+                        IsDeprecated = t.IsDeprecated,
+                        DeprecatedAt = t.DeprecatedAt,
+                        DeprecationReason = t.DeprecationReason,
+                        DeletedReason = "Clean-deprecated sweep: deprecated with zero active board instances"
+                    },
+                    ct);
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        // Map helper result to generated response
+        return (StatusCodes.OK, new CleanDeprecatedResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
 }

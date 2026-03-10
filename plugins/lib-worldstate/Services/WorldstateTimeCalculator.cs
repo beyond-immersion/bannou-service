@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Worldstate;
 

@@ -51,7 +51,8 @@ public class HeartbeatEmitterTests
 
     [Fact]
     public async Task ConstructorIsValid()
-    {        await using var emitter = CreateEmitter();
+    {
+        await using var emitter = CreateEmitter();
         Assert.NotNull(emitter);
     }
 

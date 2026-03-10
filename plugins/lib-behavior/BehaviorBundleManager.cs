@@ -1,11 +1,11 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Asset;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Behavior;
 

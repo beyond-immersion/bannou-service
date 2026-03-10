@@ -3,9 +3,9 @@
 // Dual-indexed registry mapping actors to watched resources and vice versa.
 // =============================================================================
 
-using System.Collections.Concurrent;
 using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 

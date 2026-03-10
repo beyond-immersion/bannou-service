@@ -59,7 +59,7 @@ Run `make generate` or `scripts/generate-all-services.sh` to execute the full pi
 | 6. Client Events | `common-client-events.yaml` + `{service}-client-events.yaml` | Common: `bannou-service/Generated/CommonClientEventsModels.cs`; Service: `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
 | 7. Meta Schemas | `{service}-api.yaml` | `schemas/Generated/{service}-api-meta.yaml` |
 | 8. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
-| 9. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` |
+| 9. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` + helper configs |
 | 10. Permissions | `x-permissions` in api.yaml | `{Service}PermissionRegistration.cs` |
 | 11. Event Subscriptions | `x-event-subscriptions` | `{Service}ServiceEvents.cs` (one-time template) |
 
@@ -354,6 +354,38 @@ x-service-configuration:
       default: 100
       description: Maximum concurrent connections
 ```
+
+### x-helper-configurations (Helper Service Configuration)
+
+Defined in `{service}-configuration.yaml` alongside `x-service-configuration`. Generates additional configuration classes for helper/sub-services within the same plugin, each with their own env var prefix.
+
+```yaml
+x-helper-configurations:
+  token:
+    properties:
+      JwtExpirationMinutes:
+        type: integer
+        env: AUTH_TOKEN_JWT_EXPIRATION_MINUTES
+        default: 60
+        minimum: 1
+        maximum: 1440
+      RefreshTokenTtlDays:
+        type: integer
+        env: AUTH_TOKEN_REFRESH_TOKEN_TTL_DAYS
+        default: 30
+```
+
+**Generated output**: `lib-{service}/Generated/{Service}{Helper}Configuration.cs` — one file per helper entry.
+
+Each helper config class:
+- Uses `[ServiceConfiguration("{service-name}", envPrefix: "{SERVICE}_{HELPER}_")]` with the string-based constructor (lazy service type resolution via assembly scanning)
+- Extends `BaseServiceConfiguration`
+- Supports the same property types, defaults, validation attributes, and `$ref` enums as the main config
+- Env var prefix follows the pattern `{SERVICE}_{HELPER}_` (e.g., `AUTH_TOKEN_` for auth's `token` helper)
+
+**When to use**: When a plugin has distinct helper services (e.g., `TokenService`, `EmailService` within auth) that have their own configuration concerns separate from the main service config. This keeps configuration organized by responsibility rather than lumping everything into a single config class.
+
+**Property rules**: Same as [Configuration Schema Rules](#configuration-schema-rules) — every property needs `env`, proper prefix, and follows NRT/default conventions.
 
 ### x-references (Resource Reference Tracking)
 
@@ -772,6 +804,10 @@ DefaultCompression:
 ### Rule 6: Single-Line Descriptions Only
 
 Descriptions MUST be single-line. Multi-line YAML blocks (`|` or `>`) produce malformed C# XML documentation comments that cause compile errors.
+
+### Rule 7: Helper Configurations Follow Main Config Rules
+
+Properties inside `x-helper-configurations` follow all the same rules (Rules 1-6) as `x-service-configuration`. The `env` prefix should follow the pattern `{SERVICE}_{HELPER}_{PROPERTY}` (e.g., `AUTH_TOKEN_JWT_EXPIRATION_MINUTES`). See [x-helper-configurations](#x-helper-configurations-helper-service-configuration) for the schema pattern.
 
 ### Well-Formed Configuration Property
 

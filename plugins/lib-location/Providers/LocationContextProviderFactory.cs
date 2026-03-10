@@ -5,10 +5,10 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Location.Caching;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Location.Providers;

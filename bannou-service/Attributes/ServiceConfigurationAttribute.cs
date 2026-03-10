@@ -66,4 +66,36 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
             EnvPrefix = $"{normalizedName}_";
         }
     }
+
+    /// <summary>
+    /// Initializes a new instance of the ServiceConfigurationAttribute using the service name
+    /// instead of a Type reference. This allows configuration classes to be generated before
+    /// the service implementation class exists (typical for schema-first development).
+    /// The service type is resolved lazily at runtime via assembly scanning.
+    /// </summary>
+    /// <param name="serviceName">The service name (e.g., "auth", "game-session") matching [BannouService].Name.</param>
+    /// <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
+    public ServiceConfigurationAttribute(string serviceName, string envPrefix)
+    {
+        if (string.IsNullOrWhiteSpace(serviceName))
+            throw new ArgumentNullException(nameof(serviceName));
+        if (string.IsNullOrWhiteSpace(envPrefix))
+            throw new ArgumentNullException(nameof(envPrefix));
+
+        // Resolve the service type lazily from loaded assemblies
+        ServiceImplementationType = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(a =>
+            {
+                try { return a.GetTypes(); }
+                catch (ReflectionTypeLoadException) { return []; }
+            })
+            .FirstOrDefault(t =>
+            {
+                var attr = t.GetCustomAttribute<BannouServiceAttribute>();
+                return attr != null && attr.Name.Equals(serviceName, StringComparison.OrdinalIgnoreCase);
+            });
+
+        ServiceAttribute = ServiceImplementationType?.GetCustomAttribute<BannouServiceAttribute>();
+        EnvPrefix = envPrefix;
+    }
 }

@@ -419,6 +419,249 @@ public class {service_pascal}ServiceConfiguration : BaseServiceConfiguration
 
     print('}')
 
+    # =========================================================================
+    # Helper service configurations (x-helper-configurations)
+    # Generates additional config classes per helper with {SERVICE}_{HELPER}_ prefix.
+    # =========================================================================
+    if 'x-helper-configurations' in schema:
+        helper_configs = schema['x-helper-configurations']
+        output_dir = '$OUTPUT_DIR'
+
+        for helper_name, helper_section in helper_configs.items():
+            helper_pascal = to_pascal_case(helper_name)
+            helper_class_name = f'{service_pascal}{helper_pascal}Configuration'
+            service_upper = service_name.upper().replace('-', '_')
+            helper_upper = helper_name.upper().replace('-', '_')
+            helper_env_prefix = f'{service_upper}_{helper_upper}_'
+
+            helper_properties = helper_section.get('properties', helper_section) if helper_section else {}
+
+            # Track helper-specific enums
+            helper_enum_types = []
+            helper_sdk_namespaces = set()
+
+            helper_config_props = []
+            for prop_name, prop_info in (helper_properties or {}).items():
+                prop_type = prop_info.get('type', 'string')
+                prop_format = prop_info.get('format', None)
+                prop_default = prop_info.get('default', None)
+                prop_description = prop_info.get('description', f'{prop_name} configuration property')
+                prop_env_var = prop_info.get('env', f'{helper_env_prefix}{prop_name.upper()}')
+                prop_nullable = prop_info.get('nullable', False)
+                prop_enum = prop_info.get('enum', None)
+                prop_ref = prop_info.get('\$ref', None)
+
+                # Validation keywords
+                prop_minimum = prop_info.get('minimum', None)
+                prop_maximum = prop_info.get('maximum', None)
+                prop_exclusive_min = prop_info.get('exclusiveMinimum', False)
+                prop_exclusive_max = prop_info.get('exclusiveMaximum', False)
+                prop_min_length = prop_info.get('minLength', None)
+                prop_max_length = prop_info.get('maxLength', None)
+                prop_pattern = prop_info.get('pattern', None)
+                prop_multiple_of = prop_info.get('multipleOf', None)
+
+                if prop_ref:
+                    ref_type_name = prop_ref.split('/')[-1]
+                    csharp_type = ref_type_name
+                    prop_enum = True
+                    if api_schema and 'components' in api_schema and 'schemas' in api_schema['components']:
+                        ref_schema = api_schema['components']['schemas'].get(ref_type_name)
+                        if ref_schema and 'x-sdk-type' in ref_schema:
+                            sdk_type = ref_schema['x-sdk-type']
+                            last_dot = sdk_type.rfind('.')
+                            if last_dot > 0:
+                                helper_sdk_namespaces.add(sdk_type[:last_dot])
+                elif prop_enum and prop_type == 'string':
+                    enum_type_name = to_pascal_case(prop_name)
+                    if enum_type_name in existing_api_enums:
+                        csharp_type = enum_type_name
+                    else:
+                        helper_enum_types.append({
+                            'name': enum_type_name,
+                            'values': prop_enum,
+                            'description': prop_description
+                        })
+                        csharp_type = enum_type_name
+                else:
+                    if prop_format == 'uuid':
+                        csharp_type = 'Guid'
+                    elif prop_format == 'int64':
+                        csharp_type = 'long'
+                    elif prop_format == 'date-time':
+                        csharp_type = 'DateTime'
+                    elif prop_format == 'float':
+                        csharp_type = 'float'
+                    else:
+                        csharp_type = {
+                            'string': 'string',
+                            'integer': 'int',
+                            'number': 'double',
+                            'boolean': 'bool',
+                            'array': 'string[]'
+                        }.get(prop_type, 'string')
+
+                is_enum = prop_enum is not None
+                if csharp_type == 'string':
+                    nullable_suffix = '?' if prop_nullable else ''
+                elif is_enum:
+                    nullable_suffix = '' if prop_default is not None else '?'
+                else:
+                    nullable_suffix = '?' if prop_default is None else ''
+                default_value = ''
+
+                if prop_default is not None:
+                    if is_enum:
+                        enum_value = to_pascal_case(str(prop_default))
+                        default_value = f' = {csharp_type}.{enum_value};'
+                    elif csharp_type == 'string':
+                        default_value = f' = \"{prop_default}\";'
+                    elif csharp_type == 'bool':
+                        default_value = f' = {str(prop_default).lower()};'
+                    elif csharp_type == 'string[]':
+                        if isinstance(prop_default, list):
+                            array_items = ', '.join(f'\"{item}\"' for item in prop_default)
+                            default_value = f' = [{array_items}];'
+                        else:
+                            default_value = f' = {prop_default};'
+                    elif csharp_type == 'long':
+                        default_value = f' = {prop_default}L;'
+                    elif csharp_type == 'Guid':
+                        default_value = f' = Guid.Parse(\"{prop_default}\");'
+                    elif csharp_type == 'float':
+                        default_value = f' = {prop_default}f;'
+                    else:
+                        default_value = f' = {prop_default};'
+                elif csharp_type == 'string' and not prop_nullable:
+                    default_value = ' = string.Empty;'
+                    prop_info['is_required'] = True
+
+                property_name = to_property_name(prop_name)
+                is_required = prop_info.get('is_required', False)
+
+                helper_config_props.append({
+                    'name': property_name,
+                    'type': csharp_type + nullable_suffix,
+                    'default': default_value,
+                    'description': prop_description,
+                    'env_var': prop_env_var,
+                    'is_required': is_required,
+                    'minimum': prop_minimum,
+                    'maximum': prop_maximum,
+                    'exclusive_min': prop_exclusive_min,
+                    'exclusive_max': prop_exclusive_max,
+                    'min_length': prop_min_length,
+                    'max_length': prop_max_length,
+                    'pattern': prop_pattern,
+                    'multiple_of': prop_multiple_of
+                })
+
+            # Write helper config to separate file
+            helper_output_path = f'{output_dir}/{helper_class_name}.cs'
+            with open(helper_output_path, 'w') as hf:
+                hf.write(f'''//----------------------
+// <auto-generated>
+//     Generated from OpenAPI schema: schemas/{service_name}-configuration.yaml
+//     Helper configuration for: {helper_name}
+//
+//     WARNING: DO NOT EDIT THIS FILE (FOUNDATION TENETS)
+//     This file is auto-generated from configuration schema.
+//     Any manual changes will be overwritten on next generation.
+// </auto-generated>
+//----------------------
+
+using System.ComponentModel.DataAnnotations;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
+''')
+                for ns in sorted(helper_sdk_namespaces):
+                    hf.write(f'using {ns};\\n')
+
+                hf.write(f'''
+#nullable enable
+
+namespace BeyondImmersion.BannouService.{service_pascal};
+''')
+
+                # Generate helper-specific enums
+                for enum_type in helper_enum_types:
+                    escaped_desc = escape_xml_description(enum_type['description'])
+                    hf.write(f'''
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// {escaped_desc}
+/// </summary>
+public enum {enum_type['name']}
+{{
+''')
+                    for value in enum_type['values']:
+                        member_name = to_pascal_case(str(value))
+                        hf.write(f'    {member_name},\\n')
+                    hf.write('''}}
+#pragma warning restore CS1591
+''')
+
+                hf.write(f'''/// <summary>
+/// Configuration class for {helper_pascal} helper service ({service_pascal} plugin).
+/// Properties are automatically bound from environment variables with prefix {helper_env_prefix}.
+/// </summary>
+[ServiceConfiguration(\"{service_name}\", envPrefix: \"{helper_env_prefix}\")]
+public class {helper_class_name} : BaseServiceConfiguration
+{{
+''')
+
+                for prop in helper_config_props:
+                    required_attr = '    [Required(AllowEmptyStrings = false)]\\n' if prop.get('is_required', False) else ''
+
+                    range_attr = ''
+                    has_min = prop.get('minimum') is not None
+                    has_max = prop.get('maximum') is not None
+                    if has_min or has_max:
+                        range_parts = []
+                        if has_min:
+                            range_parts.append('Minimum = ' + str(prop['minimum']))
+                        if has_max:
+                            range_parts.append('Maximum = ' + str(prop['maximum']))
+                        if prop.get('exclusive_min', False):
+                            range_parts.append('ExclusiveMinimum = true')
+                        if prop.get('exclusive_max', False):
+                            range_parts.append('ExclusiveMaximum = true')
+                        range_attr = '    [ConfigRange(' + ', '.join(range_parts) + ')]\\n'
+
+                    string_length_attr = ''
+                    has_min_length = prop.get('min_length') is not None
+                    has_max_length = prop.get('max_length') is not None
+                    if has_min_length or has_max_length:
+                        length_parts = []
+                        if has_min_length:
+                            length_parts.append('MinLength = ' + str(prop['min_length']))
+                        if has_max_length:
+                            length_parts.append('MaxLength = ' + str(prop['max_length']))
+                        string_length_attr = '    [ConfigStringLength(' + ', '.join(length_parts) + ')]\\n'
+
+                    pattern_attr = ''
+                    if prop.get('pattern'):
+                        escaped_pattern = prop['pattern'].replace('\"', '\"\"')
+                        pattern_attr = '    [ConfigPattern(@\"' + escaped_pattern + '\")]\\n'
+
+                    multiple_of_attr = ''
+                    if prop.get('multiple_of') is not None:
+                        multiple_of_attr = '    [ConfigMultipleOf(' + str(prop['multiple_of']) + ')]\\n'
+
+                    escaped_prop_desc = escape_xml_description(prop['description'])
+                    hf.write(f'''    /// <summary>
+    /// {escaped_prop_desc}
+    /// Environment variable: {prop['env_var']}
+    /// </summary>
+{required_attr}{range_attr}{string_length_attr}{pattern_attr}{multiple_of_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
+
+''')
+
+                hf.write('}\\n')
+
+            print(f'# Generated helper configuration: {helper_class_name} -> {helper_output_path}', file=sys.stderr)
+
 except FileNotFoundError:
     print(f'Schema file not found: $SCHEMA_FILE', file=sys.stderr)
     sys.exit(1)
@@ -431,6 +674,20 @@ except Exception as e:
 if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated service configuration ($FILE_SIZE lines)${NC}"
+
+    # Report helper configurations if any were generated
+    if grep -q "x-helper-configurations" "$SCHEMA_FILE" 2>/dev/null; then
+        HELPER_COUNT=$(python3 -c "
+import yaml
+with open('$SCHEMA_FILE', 'r') as f:
+    schema = yaml.safe_load(f)
+helpers = schema.get('x-helper-configurations', {})
+print(len(helpers))
+" 2>/dev/null || echo "0")
+        if [ "$HELPER_COUNT" -gt 0 ]; then
+            echo -e "${GREEN}✅ Generated $HELPER_COUNT helper configuration(s)${NC}"
+        fi
+    fi
 
     if ! grep -q "x-service-configuration" "$SCHEMA_FILE"; then
         echo -e "${YELLOW}💡 Add 'x-service-configuration:' section to schema for custom configuration properties${NC}"

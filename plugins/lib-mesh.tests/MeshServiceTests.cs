@@ -2035,7 +2035,8 @@ public class MeshInvocationClientTests : IDisposable
 
     [Fact]
     public void ConstructorIsValid()
-    {        Assert.NotNull(CreateClient());
+    {
+        Assert.NotNull(CreateClient());
     }
 
     #endregion

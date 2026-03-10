@@ -49,7 +49,8 @@ public class NativeEventConsumerBackendTests
 
     [Fact]
     public void ConstructorIsValid()
-    {        Assert.NotNull(CreateBackend());
+    {
+        Assert.NotNull(CreateBackend());
     }
 
     #endregion

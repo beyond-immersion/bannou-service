@@ -173,6 +173,12 @@ Proposes a self-hosted Git server as a Bannou plugin (lib-git) using git.exe pro
 
 ## Architectural Analysis
 
+### Behavioral Gaps: What the Behavior System Must Become {#behavioral-gaps}
+
+**Type**: Architectural Analysis | **Status**: Active | **Last Updated**: 2026-03-10 | **North Stars**: #1, #2, #3, #5 | [Full Document](planning/BEHAVIORAL-GAPS.md)
+
+Catalogs every identified gap between the behavior system's current implementation (ABML compiler, GOAP planner, Actor runtime, Puppetmaster) and the requirements revealed by planning documents (VIDEO-DIRECTOR, COMPOSITIONAL-CINEMATICS, DEVELOPER-STREAMS, BEHAVIOR-COMPOSITION). The core infrastructure is solid; the missing layers are behavior composition (component registry, plan cache, composite assembly) and domain-specific SDKs and content (cinematic, economic, directing, god-actor behaviors). Gaps are organized into 12 categories with priority tiers and GH issue cross-references.
+
 ### Compositional Cinematics: The Anime Production Paradigm for Real-Time 3D {#compositional-cinematics}
 
 **Type**: Architectural Analysis | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #5 | [Full Document](planning/COMPOSITIONAL-CINEMATICS.md)
@@ -187,7 +193,7 @@ Records the results of a full cross-service architectural audit comparing VISION
 
 ## Summary
 
-- **Documents in catalog**: 28
+- **Documents in catalog**: 29
 
 ---
 

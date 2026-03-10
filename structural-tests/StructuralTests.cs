@@ -199,6 +199,52 @@ public class StructuralTests
     }
 
     /// <summary>
+    /// Lists helper services (types with [BannouHelperService]) whose parent plugin
+    /// has no corresponding helper configuration class (a type with [ServiceConfiguration]
+    /// in the same assembly whose class name contains the helper type's name or a
+    /// recognizable prefix). This is informational — not all helpers need dedicated
+    /// configuration. Run this test directly to produce the checklist.
+    /// </summary>
+    [Fact(Skip = "Informational — produces a checklist of helpers without dedicated configuration classes")]
+    public void HelperServices_ShouldHaveConfigurationClasses()
+    {
+        EnsureAssembliesLoaded();
+
+        var helpersWithoutConfig = new List<string>();
+
+        foreach (var helperType in DiscoverAttributedTypes<BannouHelperServiceAttribute>())
+        {
+            var attr = helperType.GetCustomAttribute<BannouHelperServiceAttribute>()!;
+
+            // Find all ServiceConfiguration types in the same assembly
+            var configTypes = helperType.Assembly.GetTypes()
+                .Where(t => t.GetCustomAttribute<ServiceConfigurationAttribute>() != null)
+                .ToList();
+
+            // Check if any config class name contains the helper type name (minus "Service" suffix)
+            // e.g., TokenService -> AuthTokenConfiguration, EmailService -> AuthEmailConfiguration
+            var helperBaseName = helperType.Name;
+            if (helperBaseName.EndsWith("Service", StringComparison.Ordinal))
+                helperBaseName = helperBaseName[..^"Service".Length];
+
+            var hasConfig = configTypes.Any(ct =>
+                ct.Name.Contains(helperBaseName, StringComparison.OrdinalIgnoreCase));
+
+            if (!hasConfig)
+            {
+                var parentName = attr.ParentServiceType?.Name ?? "unknown";
+                helpersWithoutConfig.Add($"{parentName} -> {helperType.Name} (no *{helperBaseName}Configuration found)");
+            }
+        }
+
+        Assert.True(
+            helpersWithoutConfig.Count == 0,
+            $"{helpersWithoutConfig.Count} helper service(s) have no dedicated configuration class " +
+            $"(consider adding x-helper-configurations to the service's config schema):\n" +
+            string.Join("\n", helpersWithoutConfig.Select(h => $"  - {h}")));
+    }
+
+    /// <summary>
     /// Validates that each service's generated controller correctly implements
     /// IBannouController (via the generated I{Service}Controller interface) and
     /// has the [BannouController] attribute pointing to the correct service interface.

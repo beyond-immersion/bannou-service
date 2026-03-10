@@ -6,6 +6,7 @@ using BeyondImmersion.Bannou.StorylineTheory.Archives;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -2528,5 +2529,84 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
     #endregion
 
     /// <inheritdoc />
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedScenarioDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedScenarioDefinitionsAsync(
+        CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.storyline", "StorylineService.CleanDeprecatedScenarioDefinitionsAsync");
+
+        // 1. Query all deprecated scenario definitions from MySQL
+        var deprecatedDefinitions = await _scenarioDefinitionStore.QueryAsync(
+            d => d.IsDeprecated, cancellationToken);
+
+        if (deprecatedDefinitions.Count == 0)
+        {
+            return (StatusCodes.OK, new CleanDeprecatedResponse
+            {
+                Cleaned = 0,
+                Remaining = 0,
+                Errors = 0,
+                CleanedIds = new List<Guid>()
+            });
+        }
+
+        // 2. Delegate to shared helper per IMPLEMENTATION TENETS (B20)
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecatedDefinitions,
+            getEntityId: d => d.ScenarioId,
+            getDeprecatedAt: d => d.DeprecatedAt,
+            hasActiveInstancesAsync: async (d, ct) =>
+            {
+                // Check if any scenario executions with Active status reference this definition
+                var executions = await _scenarioExecutionStore.QueryAsync(
+                    e => e.ScenarioId == d.ScenarioId && e.Status == ScenarioStatus.Active, ct);
+                return executions.Count > 0;
+            },
+            deleteAndPublishAsync: async (d, ct) =>
+            {
+                var scenarioKey = BuildScenarioDefinitionKey(d.ScenarioId);
+
+                // Remove from primary MySQL store
+                await _scenarioDefinitionStore.DeleteAsync(scenarioKey, ct);
+
+                // Remove from Redis cache
+                await _scenarioCacheStore.DeleteAsync(scenarioKey, ct);
+
+                // Publish storyline.scenario-definition.deleted lifecycle event
+                await _messageBus.PublishScenarioDefinitionDeletedAsync(
+                    new ScenarioDefinitionDeletedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        ScenarioId = d.ScenarioId,
+                        Code = d.Code,
+                        Name = d.Name,
+                        Description = d.Description,
+                        Priority = d.Priority,
+                        Enabled = d.Enabled,
+                        RealmId = d.RealmId,
+                        GameServiceId = d.GameServiceId,
+                        CreatedAt = d.CreatedAt,
+                        UpdatedAt = d.UpdatedAt ?? d.CreatedAt,
+                        IsDeprecated = d.IsDeprecated,
+                        DeprecatedAt = d.DeprecatedAt,
+                        DeprecationReason = d.DeprecationReason,
+                        DeletedReason = "Cleaned via deprecation sweep"
+                    }, ct);
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        // 3. Map helper result to generated response
+        return (StatusCodes.OK, new CleanDeprecatedResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
 }

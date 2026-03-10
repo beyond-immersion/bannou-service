@@ -97,7 +97,6 @@ public partial class MusicController
             }
         },
         "PitchClass": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -283,7 +282,6 @@ public partial class MusicController
             }
         },
         "MidiJson": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiJson",
             "description": "MIDI-JSON format representation of a musical piece",
             "type": "object",
             "additionalProperties": false,
@@ -314,7 +312,6 @@ public partial class MusicController
             }
         },
         "MidiHeader": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiHeader",
             "description": "MIDI file header information",
             "type": "object",
             "additionalProperties": false,
@@ -358,7 +355,6 @@ public partial class MusicController
             }
         },
         "TempoEvent": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent",
             "description": "A tempo change event",
             "type": "object",
             "additionalProperties": false,
@@ -382,7 +378,6 @@ public partial class MusicController
             }
         },
         "TimeSignatureEvent": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent",
             "description": "A time signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -412,7 +407,6 @@ public partial class MusicController
             }
         },
         "KeySignatureEvent": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent",
             "description": "A key signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -438,7 +432,6 @@ public partial class MusicController
             }
         },
         "PitchClass": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -457,7 +450,6 @@ public partial class MusicController
             ]
         },
         "ModeType": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Collections.ModeType",
             "description": "Musical mode/scale type",
             "type": "string",
             "enum": [
@@ -479,7 +471,6 @@ public partial class MusicController
             ]
         },
         "MidiTrack": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack",
             "description": "A single MIDI track containing events",
             "type": "object",
             "additionalProperties": false,
@@ -516,7 +507,6 @@ public partial class MusicController
             }
         },
         "MidiEvent": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiEvent",
             "description": "A single MIDI event",
             "type": "object",
             "additionalProperties": false,
@@ -578,7 +568,6 @@ public partial class MusicController
             }
         },
         "MidiEventType": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiEventType",
             "description": "MIDI event type",
             "type": "string",
             "enum": [
@@ -792,7 +781,6 @@ public partial class MusicController
             }
         },
         "MidiJson": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiJson",
             "description": "MIDI-JSON format representation of a musical piece",
             "type": "object",
             "additionalProperties": false,
@@ -823,7 +811,6 @@ public partial class MusicController
             }
         },
         "MidiHeader": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiHeader",
             "description": "MIDI file header information",
             "type": "object",
             "additionalProperties": false,
@@ -867,7 +854,6 @@ public partial class MusicController
             }
         },
         "TempoEvent": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent",
             "description": "A tempo change event",
             "type": "object",
             "additionalProperties": false,
@@ -891,7 +877,6 @@ public partial class MusicController
             }
         },
         "TimeSignatureEvent": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent",
             "description": "A time signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -921,7 +906,6 @@ public partial class MusicController
             }
         },
         "KeySignatureEvent": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent",
             "description": "A key signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -947,7 +931,6 @@ public partial class MusicController
             }
         },
         "PitchClass": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -966,7 +949,6 @@ public partial class MusicController
             ]
         },
         "ModeType": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Collections.ModeType",
             "description": "Musical mode/scale type",
             "type": "string",
             "enum": [
@@ -988,7 +970,6 @@ public partial class MusicController
             ]
         },
         "MidiTrack": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack",
             "description": "A single MIDI track containing events",
             "type": "object",
             "additionalProperties": false,
@@ -1025,7 +1006,6 @@ public partial class MusicController
             }
         },
         "MidiEvent": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiEvent",
             "description": "A single MIDI event",
             "type": "object",
             "additionalProperties": false,
@@ -1087,7 +1067,6 @@ public partial class MusicController
             }
         },
         "MidiEventType": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiEventType",
             "description": "MIDI event type",
             "type": "string",
             "enum": [
@@ -1326,7 +1305,6 @@ public partial class MusicController
             }
         },
         "ModeDistribution": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Style.ModeDistribution",
             "description": "Probability distribution over musical modes",
             "type": "object",
             "additionalProperties": false,
@@ -1503,7 +1481,6 @@ public partial class MusicController
             }
         },
         "TimeSignatureEvent": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent",
             "description": "A time signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -1896,7 +1873,6 @@ public partial class MusicController
             }
         },
         "ModeDistribution": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Style.ModeDistribution",
             "description": "Probability distribution over musical modes",
             "type": "object",
             "additionalProperties": false,
@@ -2104,7 +2080,6 @@ public partial class MusicController
             }
         },
         "TimeSignatureEvent": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent",
             "description": "A time signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -2284,7 +2259,6 @@ public partial class MusicController
             }
         },
         "ModeDistribution": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Style.ModeDistribution",
             "description": "Probability distribution over musical modes",
             "type": "object",
             "additionalProperties": false,
@@ -2461,7 +2435,6 @@ public partial class MusicController
             }
         },
         "TimeSignatureEvent": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent",
             "description": "A time signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -2708,7 +2681,6 @@ public partial class MusicController
             }
         },
         "PitchClass": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -2845,7 +2817,6 @@ public partial class MusicController
             }
         },
         "PitchClass": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -3146,7 +3117,6 @@ public partial class MusicController
             }
         },
         "PitchClass": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -3183,7 +3153,6 @@ public partial class MusicController
             ]
         },
         "PitchRange": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange",
             "description": "A pitch range from low to high",
             "type": "object",
             "additionalProperties": false,
@@ -3203,7 +3172,6 @@ public partial class MusicController
             }
         },
         "Pitch": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch",
             "description": "A specific pitch with pitch class and octave",
             "type": "object",
             "additionalProperties": false,
@@ -3306,7 +3274,6 @@ public partial class MusicController
             }
         },
         "Pitch": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch",
             "description": "A specific pitch with pitch class and octave",
             "type": "object",
             "additionalProperties": false,
@@ -3334,7 +3301,6 @@ public partial class MusicController
             }
         },
         "PitchClass": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -3392,7 +3358,6 @@ public partial class MusicController
             }
         },
         "PitchRange": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange",
             "description": "A pitch range from low to high",
             "type": "object",
             "additionalProperties": false,
@@ -3557,7 +3522,6 @@ public partial class MusicController
             }
         },
         "PitchClass": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -3594,7 +3558,6 @@ public partial class MusicController
             ]
         },
         "PitchRange": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange",
             "description": "A pitch range from low to high",
             "type": "object",
             "additionalProperties": false,
@@ -3614,7 +3577,6 @@ public partial class MusicController
             }
         },
         "Pitch": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch",
             "description": "A specific pitch with pitch class and octave",
             "type": "object",
             "additionalProperties": false,
@@ -3642,7 +3604,6 @@ public partial class MusicController
             }
         },
         "VoiceLeadingRules": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingRules",
             "description": "Rules for voice leading",
             "type": "object",
             "additionalProperties": false,
@@ -3765,7 +3726,6 @@ public partial class MusicController
             }
         },
         "PitchClass": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -3802,7 +3762,6 @@ public partial class MusicController
             ]
         },
         "Pitch": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch",
             "description": "A specific pitch with pitch class and octave",
             "type": "object",
             "additionalProperties": false,
@@ -3830,7 +3789,6 @@ public partial class MusicController
             }
         },
         "VoiceLeadingViolation": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolation",
             "description": "A voice leading rule violation",
             "type": "object",
             "additionalProperties": false,
@@ -3868,7 +3826,6 @@ public partial class MusicController
             }
         },
         "VoiceLeadingViolationType": {
-            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType",
             "description": "Type of voice leading rule violation",
             "type": "string",
             "enum": [

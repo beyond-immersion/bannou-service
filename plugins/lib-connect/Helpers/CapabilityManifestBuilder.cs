@@ -1,7 +1,7 @@
-using BeyondImmersion.BannouService.Connect.Protocol;
-using Microsoft.Extensions.Logging;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Connect.Protocol;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Connect.Helpers;
 

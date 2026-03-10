@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
@@ -80,21 +81,21 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
     /// </summary>
     /// <param name="templateId">The template ID.</param>
     /// <returns>State store key.</returns>
-    internal static string BuildTemplateKey(Guid templateId) => BuildTemplateKey(templateId);
+    internal static string BuildTemplateKey(Guid templateId) => $"{TEMPLATE_PREFIX}{templateId}";
 
     /// <summary>
     /// Builds the state store key for a contract instance record.
     /// </summary>
     /// <param name="contractId">The contract instance ID.</param>
     /// <returns>State store key.</returns>
-    internal static string BuildInstanceKey(Guid contractId) => BuildInstanceKey(contractId);
+    internal static string BuildInstanceKey(Guid contractId) => $"{INSTANCE_PREFIX}{contractId}";
 
     /// <summary>
     /// Builds the state store key for a breach record.
     /// </summary>
     /// <param name="breachId">The breach ID.</param>
     /// <returns>State store key.</returns>
-    internal static string BuildBreachKey(Guid breachId) => BuildBreachKey(breachId);
+    internal static string BuildBreachKey(Guid breachId) => $"{BREACH_PREFIX}{breachId}";
 
     /// <summary>
     /// Builds the state store key for a party-to-contract index lookup.
@@ -3208,5 +3209,118 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
     #endregion
 
     /// <inheritdoc />
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedContractTemplatesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedContractTemplatesAsync(
+        CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.CleanDeprecatedContractTemplatesAsync");
+
+        // 1. Load all template IDs and fetch their models to find deprecated ones
+        var allTemplateIds = await _listStore
+            .GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
+
+        if (allTemplateIds.Count == 0)
+        {
+            return (StatusCodes.OK, new CleanDeprecatedResponse
+            {
+                Cleaned = 0,
+                Remaining = 0,
+                Errors = 0,
+                CleanedIds = new List<Guid>()
+            });
+        }
+
+        var keys = allTemplateIds
+            .Select(id => $"{TEMPLATE_PREFIX}{Guid.Parse(id)}")
+            .ToList();
+        var bulkResults = await _templateStore.GetBulkAsync(keys, cancellationToken);
+
+        var deprecatedTemplates = bulkResults
+            .Where(kvp => kvp.Value is { IsDeprecated: true })
+            .Select(kvp => kvp.Value)
+            .ToList();
+
+        if (deprecatedTemplates.Count == 0)
+        {
+            return (StatusCodes.OK, new CleanDeprecatedResponse
+            {
+                Cleaned = 0,
+                Remaining = 0,
+                Errors = 0,
+                CleanedIds = new List<Guid>()
+            });
+        }
+
+        // 2. Delegate to shared helper (per IMPLEMENTATION TENETS — B20)
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecatedTemplates,
+            getEntityId: t => t.TemplateId,
+            getDeprecatedAt: t => t.DeprecatedAt,
+            hasActiveInstancesAsync: async (t, ct) =>
+            {
+                // Check template-idx for any contract instances referencing this template
+                var instanceIds = await _listStore.GetAsync(
+                    BuildTemplateIndexKey(t.TemplateId), ct);
+                return instanceIds is { Count: > 0 };
+            },
+            deleteAndPublishAsync: async (t, ct) =>
+            {
+                // Remove from template store
+                await _templateStore.DeleteAsync(
+                    $"{TEMPLATE_PREFIX}{t.TemplateId}", ct);
+
+                // Remove code index
+                if (!string.IsNullOrEmpty(t.Code))
+                {
+                    await _stringStore.DeleteAsync(
+                        $"{TEMPLATE_CODE_INDEX}{t.Code}", ct);
+                }
+
+                // Remove from all-templates list
+                await RemoveFromListAsync(
+                    ALL_TEMPLATES_KEY, t.TemplateId.ToString(), ct);
+
+                // Remove template-idx entry (should be empty since we verified no instances)
+                await _listStore.DeleteAsync(
+                    BuildTemplateIndexKey(t.TemplateId), ct);
+
+                // Publish contract.template.deleted lifecycle event
+                await _messageBus.PublishContractTemplateDeletedAsync(
+                    new ContractTemplateDeletedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        TemplateId = t.TemplateId,
+                        Code = t.Code,
+                        Name = t.Name,
+                        Description = t.Description,
+                        RealmId = t.RealmId,
+                        MinParties = t.MinParties,
+                        MaxParties = t.MaxParties,
+                        DefaultEnforcementMode = t.DefaultEnforcementMode,
+                        Transferable = t.Transferable,
+                        IsActive = t.IsActive,
+                        IsDeprecated = t.IsDeprecated,
+                        DeprecatedAt = t.DeprecatedAt,
+                        DeprecationReason = t.DeprecationReason,
+                        CreatedAt = t.CreatedAt,
+                        UpdatedAt = t.UpdatedAt ?? t.CreatedAt,
+                        DeletedReason = "Cleaned via deprecation sweep"
+                    }, ct);
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        // 3. Map helper result to generated response
+        return (StatusCodes.OK, new CleanDeprecatedResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
 }

@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -2498,5 +2499,134 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
     #endregion
 
     /// <inheritdoc />
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedItemTemplatesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedItemTemplatesAsync(
+        CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.item", "ItemService.CleanDeprecatedItemTemplatesAsync");
+
+        // 1. Load all template IDs and fetch their models to find deprecated ones
+        var allTemplateIdsJson = await _templateStringStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken);
+        var allTemplateIds = string.IsNullOrEmpty(allTemplateIdsJson)
+            ? new List<string>()
+            : BannouJson.Deserialize<List<string>>(allTemplateIdsJson) ?? new List<string>();
+
+        if (allTemplateIds.Count == 0)
+        {
+            return (StatusCodes.OK, new CleanDeprecatedResponse
+            {
+                Cleaned = 0,
+                Remaining = 0,
+                Errors = 0,
+                CleanedIds = new List<Guid>()
+            });
+        }
+
+        var keys = allTemplateIds
+            .Select(id => BuildTemplateKey(Guid.Parse(id)))
+            .ToList();
+        var bulkResults = await _templateStore.GetBulkAsync(keys, cancellationToken);
+
+        var deprecatedTemplates = bulkResults
+            .Where(kvp => kvp.Value is { IsDeprecated: true })
+            .Select(kvp => kvp.Value)
+            .ToList();
+
+        if (deprecatedTemplates.Count == 0)
+        {
+            return (StatusCodes.OK, new CleanDeprecatedResponse
+            {
+                Cleaned = 0,
+                Remaining = 0,
+                Errors = 0,
+                CleanedIds = new List<Guid>()
+            });
+        }
+
+        // 2. Delegate to shared helper (per IMPLEMENTATION TENETS — B20)
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecatedTemplates,
+            getEntityId: t => t.TemplateId,
+            getDeprecatedAt: t => t.DeprecatedAt,
+            hasActiveInstancesAsync: async (t, ct) =>
+            {
+                // Check inst-template:{templateId} index for any instances referencing this template
+                var instanceIdsJson = await _instanceStringStore.GetAsync(
+                    $"{INST_TEMPLATE_INDEX}{t.TemplateId}", ct);
+                if (string.IsNullOrEmpty(instanceIdsJson)) return false;
+                var instanceIds = BannouJson.Deserialize<List<string>>(instanceIdsJson);
+                return instanceIds is { Count: > 0 };
+            },
+            deleteAndPublishAsync: async (t, ct) =>
+            {
+                // Remove template from primary store
+                await _templateStore.DeleteAsync(BuildTemplateKey(t.TemplateId), ct);
+
+                // Remove code uniqueness index
+                await _templateStringStore.DeleteAsync(
+                    $"{TPL_CODE_INDEX}{t.GameId}:{t.Code}", ct);
+
+                // Remove from game-scoped template list
+                await RemoveFromListAsync(
+                    _templateStringStore, $"{TPL_GAME_INDEX}{t.GameId}",
+                    t.TemplateId.ToString(), ct);
+
+                // Remove from global template list
+                await RemoveFromListAsync(
+                    _templateStringStore, ALL_TEMPLATES_KEY,
+                    t.TemplateId.ToString(), ct);
+
+                // Invalidate template cache
+                await InvalidateTemplateCacheAsync(t.TemplateId.ToString(), ct);
+
+                // Clean up instance template index (should be empty since hasActiveInstances was false)
+                await _instanceStringStore.DeleteAsync(
+                    $"{INST_TEMPLATE_INDEX}{t.TemplateId}", ct);
+
+                // Publish item.template.deleted lifecycle event
+                await _messageBus.PublishItemTemplateDeletedAsync(
+                    new ItemTemplateDeletedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        TemplateId = t.TemplateId,
+                        Code = t.Code,
+                        GameId = t.GameId,
+                        Name = t.Name,
+                        Description = t.Description,
+                        Category = t.Category,
+                        Rarity = t.Rarity,
+                        QuantityModel = t.QuantityModel,
+                        MaxStackSize = t.MaxStackSize,
+                        Scope = t.Scope,
+                        SoulboundType = t.SoulboundType,
+                        Tradeable = t.Tradeable,
+                        Destroyable = t.Destroyable,
+                        HasDurability = t.HasDurability,
+                        MaxDurability = t.MaxDurability,
+                        IsActive = t.IsActive,
+                        MigrationTargetId = t.MigrationTargetId,
+                        CreatedAt = t.CreatedAt,
+                        UpdatedAt = t.UpdatedAt,
+                        IsDeprecated = t.IsDeprecated,
+                        DeprecatedAt = t.DeprecatedAt,
+                        DeprecationReason = t.DeprecationReason,
+                        DeletedReason = "Cleaned via deprecation sweep"
+                    }, ct);
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        // 3. Map helper result to generated response
+        return (StatusCodes.OK, new CleanDeprecatedResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
 }

@@ -57,7 +57,8 @@ public class SipEndpointRegistryTests
 
     [Fact]
     public void ConstructorIsValid()
-    {        Assert.NotNull(CreateRegistry());
+    {
+        Assert.NotNull(CreateRegistry());
     }
 
     #endregion

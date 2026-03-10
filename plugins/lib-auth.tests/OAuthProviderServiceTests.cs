@@ -288,7 +288,8 @@ public class OAuthProviderServiceTests : IDisposable
 
     [Fact]
     public void ConstructorIsValid()
-    {        Assert.NotNull(_service);
+    {
+        Assert.NotNull(_service);
     }
 
     #endregion

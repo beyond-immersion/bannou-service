@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Protocol;
@@ -2795,5 +2796,90 @@ public partial class ChatService : IChatService, ICleanDeprecatedEntity
     }
 
     /// <inheritdoc />
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedRoomTypesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedRoomTypesAsync(
+        CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.CleanDeprecatedRoomTypesAsync");
+
+        // Query all deprecated room types
+        var deprecatedResults = await _roomTypeStore.JsonQueryAsync(
+            new List<QueryCondition>
+            {
+                new() { Path = "$.IsDeprecated", Operator = QueryOperator.Equals, Value = true }
+            },
+            cancellationToken);
+
+        // Delegate to shared helper — TEntity is the query result (key + value)
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecatedResults,
+            getEntityId: r => BuildDeterministicGuid(r.Key),
+            getDeprecatedAt: r => r.Value.DeprecatedAt,
+            hasActiveInstancesAsync: async (r, ct) =>
+            {
+                // Check if any rooms reference this room type code
+                var roomCount = await _roomStore.JsonCountAsync(
+                    new List<QueryCondition>
+                    {
+                        new() { Path = "$.RoomTypeCode", Operator = QueryOperator.Equals, Value = r.Value.Code }
+                    },
+                    ct);
+                return roomCount > 0;
+            },
+            deleteAndPublishAsync: async (r, ct) =>
+            {
+                // Delete from room type store
+                await _roomTypeStore.DeleteAsync(r.Key, ct);
+
+                // Publish lifecycle deleted event
+                await _messageBus.PublishChatRoomTypeDeletedAsync(new ChatRoomTypeDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Code = r.Value.Code,
+                    DisplayName = r.Value.DisplayName,
+                    GameServiceId = r.Value.GameServiceId,
+                    MessageFormat = r.Value.MessageFormat,
+                    PersistenceMode = r.Value.PersistenceMode,
+                    AllowAnonymousSenders = r.Value.AllowAnonymousSenders,
+                    Status = r.Value.Status,
+                    CreatedAt = r.Value.CreatedAt,
+                    UpdatedAt = r.Value.UpdatedAt ?? r.Value.CreatedAt,
+                    IsDeprecated = r.Value.IsDeprecated,
+                    DeprecatedAt = r.Value.DeprecatedAt,
+                    DeprecationReason = r.Value.DeprecationReason,
+                    DeletedReason = "Category B clean-deprecated sweep",
+                }, ct);
+
+                _logger.LogInformation(
+                    "Deleted deprecated room type {Code} (scope: {Scope})",
+                    r.Value.Code, r.Value.GameServiceId?.ToString() ?? "global");
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        // Map helper result to generated response
+        return (StatusCodes.OK, new CleanDeprecatedResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
+
+    /// <summary>
+    /// Builds a deterministic GUID from a string key using SHA-256.
+    /// Room types use composite string keys (type:{scope}:{code}) rather than GUIDs,
+    /// so this produces a stable identifier for the CleanDeprecatedResponse.CleanedIds field.
+    /// </summary>
+    internal static Guid BuildDeterministicGuid(string key)
+    {
+        var hash = System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(key));
+        return new Guid(hash.AsSpan(0, 16));
+    }
 }

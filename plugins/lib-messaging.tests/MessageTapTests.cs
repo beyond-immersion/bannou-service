@@ -42,7 +42,8 @@ public class InMemoryMessageTapTests : IDisposable
 
     [Fact]
     public void ConstructorIsValid()
-    {        Assert.NotNull(_messageTap);
+    {
+        Assert.NotNull(_messageTap);
     }
 
     #endregion

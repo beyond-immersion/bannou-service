@@ -110,6 +110,81 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
     #endregion
 
+    #region Key Builder Tests
+
+    [Fact]
+    public void BuildTemplateKey_ReturnsCorrectFormat()
+    {
+        var templateId = Guid.NewGuid();
+        var key = ContractService.BuildTemplateKey(templateId);
+        Assert.Equal($"template:{templateId}", key);
+    }
+
+    [Fact]
+    public void BuildInstanceKey_ReturnsCorrectFormat()
+    {
+        var contractId = Guid.NewGuid();
+        var key = ContractService.BuildInstanceKey(contractId);
+        Assert.Equal($"instance:{contractId}", key);
+    }
+
+    [Fact]
+    public void BuildBreachKey_ReturnsCorrectFormat()
+    {
+        var breachId = Guid.NewGuid();
+        var key = ContractService.BuildBreachKey(breachId);
+        Assert.Equal($"breach:{breachId}", key);
+    }
+
+    [Fact]
+    public void BuildPartyIndexKey_ReturnsCorrectFormat()
+    {
+        var entityId = Guid.NewGuid();
+        var key = ContractService.BuildPartyIndexKey(EntityType.Character, entityId);
+        Assert.Equal($"party-idx:{EntityType.Character}:{entityId}", key);
+    }
+
+    [Fact]
+    public void BuildTemplateIndexKey_ReturnsCorrectFormat()
+    {
+        var templateId = Guid.NewGuid();
+        var key = ContractService.BuildTemplateIndexKey(templateId);
+        Assert.Equal($"template-idx:{templateId}", key);
+    }
+
+    [Fact]
+    public void BuildStatusIndexKey_ReturnsCorrectFormat()
+    {
+        var key = ContractService.BuildStatusIndexKey("active");
+        Assert.Equal("status-idx:active", key);
+    }
+
+    [Fact]
+    public void BuildTemplateKey_DifferentIds_ReturnDifferentKeys()
+    {
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+        Assert.NotEqual(ContractService.BuildTemplateKey(id1), ContractService.BuildTemplateKey(id2));
+    }
+
+    [Fact]
+    public void BuildInstanceKey_DifferentIds_ReturnDifferentKeys()
+    {
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+        Assert.NotEqual(ContractService.BuildInstanceKey(id1), ContractService.BuildInstanceKey(id2));
+    }
+
+    [Fact]
+    public void BuildBreachKey_DifferentIds_ReturnDifferentKeys()
+    {
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+        Assert.NotEqual(ContractService.BuildBreachKey(id1), ContractService.BuildBreachKey(id2));
+    }
+
+    #endregion
+
     #region CreateContractTemplate Tests
 
     [Fact]

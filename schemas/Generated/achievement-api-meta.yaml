@@ -734,7 +734,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedStringKeyResponse'
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
         }"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\

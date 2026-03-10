@@ -573,6 +573,114 @@ public partial class CleanDeprecatedResponse
 }
 
 /// <summary>
+/// Result summary from a Category B deprecation cleanup sweep for
+/// <br/>entities with developer-assigned string identifiers (e.g., achievement
+/// <br/>and leaderboard definitions). Identical to CleanDeprecatedResponse
+/// <br/>except cleanedIds are plain strings rather than UUIDs.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanDeprecatedStringKeyResponse
+{
+
+    /// <summary>
+    /// Number of deprecated entities removed (or eligible, if dryRun)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cleaned")]
+    public int Cleaned { get; set; } = default!;
+
+    /// <summary>
+    /// Number of deprecated entities still having active instances or within grace period
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("remaining")]
+    public int Remaining { get; set; } = default!;
+
+    /// <summary>
+    /// Number of entities that failed during cleanup processing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errors")]
+    public int Errors { get; set; } = default!;
+
+    /// <summary>
+    /// IDs of successfully cleaned (or eligible) entities
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cleanedIds")]
+    public System.Collections.Generic.ICollection<string> CleanedIds { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Shared request for Category A deprecation merge. Migrates all referencing
+/// <br/>entities from a deprecated source definition to a non-deprecated target definition.
+/// <br/>Used by all Category A services via their merge endpoint.
+/// <br/>
+/// <br/>**SCHEMA MODIFICATION GATE**: Before modifying, read docs/reference/SCHEMA-RULES.md.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MergeDeprecatedRequest
+{
+
+    /// <summary>
+    /// ID of the deprecated entity to merge from (must be deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceEntityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid SourceEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity to merge into (must not be deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetEntityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid TargetEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// If true, hard-delete the source entity after successful merge. Skipped automatically on partial failure (any failedEntityIds).
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deleteAfterMerge")]
+    public bool DeleteAfterMerge { get; set; } = false;
+
+}
+
+/// <summary>
+/// Result summary from a Category A deprecation merge operation.
+/// <br/>Returned by all Category A merge endpoints. Services with multi-entity-type
+/// <br/>migration may compose this via allOf to add per-type breakdowns.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MergeDeprecatedResponse
+{
+
+    /// <summary>
+    /// Total number of referencing entities successfully migrated to the target
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalMigrated")]
+    public int TotalMigrated { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of referencing entities that failed to migrate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalFailed")]
+    public int TotalFailed { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the source entity was hard-deleted after merge (skipped on partial failure)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceDeleted")]
+    public bool SourceDeleted { get; set; } = default!;
+
+    /// <summary>
+    /// IDs of entities that failed migration (limited to first 100), null when no failures
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedEntityIds")]
+    public System.Collections.Generic.ICollection<System.Guid>? FailedEntityIds { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Type of capability update — full capabilities or delta changes
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation

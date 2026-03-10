@@ -347,6 +347,34 @@ components:
             type: string
             format: uuid
 
+    CleanDeprecatedStringKeyResponse:
+      type: object
+      description: |
+        Result summary from a Category B deprecation cleanup sweep for
+        entities with developer-assigned string identifiers (e.g., achievement
+        and leaderboard definitions). Identical to CleanDeprecatedResponse
+        except cleanedIds are plain strings rather than UUIDs.
+      additionalProperties: false
+      required:
+        - cleaned
+        - remaining
+        - errors
+      properties:
+        cleaned:
+          type: integer
+          description: Number of deprecated entities removed (or eligible, if dryRun)
+        remaining:
+          type: integer
+          description: Number of deprecated entities still having active instances or within grace period
+        errors:
+          type: integer
+          description: Number of entities that failed during cleanup processing
+        cleanedIds:
+          type: array
+          description: IDs of successfully cleaned (or eligible) entities
+          items:
+            type: string
+
     MergeDeprecatedRequest:
       type: object
       description: |

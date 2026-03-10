@@ -44,7 +44,8 @@ public class P2PCoordinatorTests
 
     [Fact]
     public void ConstructorIsValid()
-    {        Assert.NotNull(CreateCoordinator());
+    {
+        Assert.NotNull(CreateCoordinator());
     }
 
     #endregion

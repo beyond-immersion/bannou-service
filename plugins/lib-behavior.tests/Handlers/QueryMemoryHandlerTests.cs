@@ -31,7 +31,8 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
 
     [Fact]
     public void ConstructorIsValid()
-    {        Assert.NotNull(_handler);
+    {
+        Assert.NotNull(_handler);
     }
 
     #endregion

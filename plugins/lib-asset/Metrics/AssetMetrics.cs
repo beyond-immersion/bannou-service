@@ -1,7 +1,7 @@
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
 using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 namespace BeyondImmersion.BannouService.Asset.Metrics;
 

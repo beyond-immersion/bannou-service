@@ -60,7 +60,7 @@ public class CurrencyServiceTests
         // Most currency endpoints have x-permissions: [] (service-to-service only via lib-mesh).
         Assert.NotNull(endpoints);
         Assert.NotEmpty(endpoints);
-        Assert.Equal(12, endpoints.Count);
+        Assert.Equal(13, endpoints.Count);
     }
 
     [Fact]

@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Achievement.Sync;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
@@ -1736,7 +1737,122 @@ public partial class AchievementService : IAchievementService, ICleanDeprecatedE
             definition.AchievementId, string.Join(", ", changedFields));
     }
 
-    public Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedAchievementDefinitionsAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    /// <summary>
+    /// Category B cleanup sweep for deprecated achievement definitions.
+    /// Iterates all game services, finds deprecated definitions past the grace period
+    /// with zero earned count, and permanently removes them. Publishes
+    /// achievement.definition.deleted lifecycle events for each removed definition.
+    /// Uses shared DeprecationCleanupHelper per IMPLEMENTATION TENETS.
+    /// </summary>
+    public async Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedAchievementDefinitionsAsync(
+        CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.achievement", "AchievementService.CleanDeprecatedAchievementDefinitionsAsync");
+
+        // Collect all deprecated definitions across all game services
+        var gameServiceIds = await _definitionStore.GetSetAsync<string>(GAME_SERVICE_INDEX_KEY, cancellationToken);
+        var deprecated = new List<AchievementDefinitionData>();
+
+        foreach (var gameServiceIdStr in gameServiceIds)
+        {
+            if (!Guid.TryParse(gameServiceIdStr, out var gameServiceId))
+            {
+                _logger.LogWarning("Invalid game service ID in achievement index: {Value}", gameServiceIdStr);
+                continue;
+            }
+
+            var indexKey = BuildDefinitionIndexKey(gameServiceId);
+            var achievementIds = await _definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
+
+            foreach (var achievementId in achievementIds)
+            {
+                var defKey = BuildDefinitionKey(gameServiceId, achievementId);
+                var definition = await _definitionStore.GetAsync(defKey, cancellationToken);
+                if (definition is not null && definition.IsDeprecated)
+                {
+                    deprecated.Add(definition);
+                }
+            }
+        }
+
+        // Delegate to shared helper per IMPLEMENTATION TENETS (B20)
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecated,
+            getEntityId: d => d.AchievementId,
+            getDeprecatedAt: d => d.DeprecatedAt,
+            hasActiveInstancesAsync: (d, ct) =>
+            {
+                // EarnedCount > 0 means entities have unlocked this achievement;
+                // treat as having active instances to preserve data integrity
+                return Task.FromResult(d.EarnedCount > 0);
+            },
+            deleteAndPublishAsync: async (d, ct) =>
+            {
+                var defKey = BuildDefinitionKey(d.GameServiceId, d.AchievementId);
+
+                // Delete definition from primary store
+                await _definitionStore.DeleteAsync(defKey, ct);
+
+                // Remove from definition index set
+                await _definitionStore.RemoveFromSetAsync(
+                    BuildDefinitionIndexKey(d.GameServiceId),
+                    d.AchievementId,
+                    ct);
+
+                // Publish lifecycle deleted event
+                await _messageBus.TryPublishAsync("achievement.definition.deleted", new AchievementDefinitionDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    GameServiceId = d.GameServiceId,
+                    AchievementId = d.AchievementId,
+                    DisplayName = d.DisplayName,
+                    Description = d.Description,
+                    HiddenDescription = d.HiddenDescription,
+                    Category = d.Category,
+                    AchievementType = d.AchievementType,
+                    EntityTypes = d.EntityTypes?.ToList(),
+                    ProgressTarget = d.ProgressTarget,
+                    Points = d.Points,
+                    IconUrl = d.IconUrl,
+                    Platforms = d.Platforms?.ToList(),
+                    PlatformMappings = d.PlatformMappings?.Select(m => new PlatformMapping
+                    {
+                        Platform = m.Platform,
+                        PlatformAchievementId = m.PlatformAchievementId
+                    }).ToList(),
+                    Prerequisites = d.Prerequisites?.ToList(),
+                    ScoreType = d.ScoreType,
+                    MilestoneType = d.MilestoneType,
+                    MilestoneValue = d.MilestoneValue,
+                    MilestoneName = d.MilestoneName,
+                    LeaderboardId = d.LeaderboardId,
+                    RankThreshold = d.RankThreshold,
+                    IsActive = d.IsActive,
+                    EarnedCount = d.EarnedCount,
+                    Metadata = d.Metadata,
+                    CreatedAt = d.CreatedAt,
+                    UpdatedAt = DateTimeOffset.UtcNow,
+                    IsDeprecated = d.IsDeprecated,
+                    DeprecatedAt = d.DeprecatedAt,
+                    DeprecationReason = d.DeprecationReason
+                }, ct);
+            },
+            body.GracePeriodDays,
+            body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        return (StatusCodes.OK, new CleanDeprecatedStringKeyResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList()
+        });
+    }
 
     #endregion
 

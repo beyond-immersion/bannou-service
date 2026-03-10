@@ -37,7 +37,8 @@ public class GitSyncServiceTests
 
     [Fact]
     public void ConstructorIsValid()
-    {        Assert.NotNull(_service);
+    {
+        Assert.NotNull(_service);
     }
 
     #endregion

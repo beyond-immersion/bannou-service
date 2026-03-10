@@ -1,6 +1,6 @@
-using System.Text.Json;
 using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Mapping.Helpers;
 
