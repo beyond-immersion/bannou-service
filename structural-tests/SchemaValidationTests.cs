@@ -414,4 +414,94 @@ public class SchemaValidationTests
             $"Found {violations.Count} client event schema(s) not using allOf with " +
             $"BaseClientEvent across {grouped.Count()} file(s):{report}");
     }
+
+    /// <summary>
+    /// Validates that x-lifecycle model definitions do not manually define createdAt or updatedAt.
+    /// These fields are auto-injected by generate-lifecycle-events.py and should not be duplicated
+    /// in the source schema. The generation pipeline safely strips them, but their presence indicates
+    /// stale schema definitions that should be cleaned up.
+    /// </summary>
+    [Fact]
+    public void LifecycleModels_DoNotContainAutoInjectedTimestampFields()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetEventSchemaFiles())
+        {
+            var fileName = Path.GetFileName(file);
+
+            foreach (var entity in SchemaParser.GetLifecycleEntities(file))
+            {
+                var duplicateFields = entity.ModelFields
+                    .Where(f => SchemaParser.LifecycleAutoInjectedFields.Contains(f))
+                    .ToList();
+
+                foreach (var field in duplicateFields)
+                {
+                    violations.Add($"{fileName}: {entity.EntityName}.model.{field}");
+                }
+            }
+        }
+
+        var grouped = violations
+            .GroupBy(v => v.Split(':')[0])
+            .OrderBy(g => g.Key);
+
+        var report = string.Join("\n", grouped.Select(g =>
+            $"\n  [{g.Key}] ({g.Count()} field(s)):\n" +
+            string.Join("\n", g.Select(v => $"    - {v}"))));
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} manually-defined lifecycle timestamp field(s) across " +
+            $"{grouped.Count()} schema file(s). These are auto-injected by " +
+            $"generate-lifecycle-events.py and should be removed from x-lifecycle model blocks:{report}");
+    }
+
+    /// <summary>
+    /// Validates that x-lifecycle model definitions with deprecation: true do not manually define
+    /// isDeprecated, deprecatedAt, or deprecationReason. These fields are auto-injected by
+    /// generate-lifecycle-events.py when deprecation is enabled. The generation pipeline safely
+    /// strips them, but their presence indicates stale schema definitions.
+    /// </summary>
+    [Fact]
+    public void LifecycleModels_DoNotContainAutoInjectedDeprecationFields()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetEventSchemaFiles())
+        {
+            var fileName = Path.GetFileName(file);
+
+            foreach (var entity in SchemaParser.GetLifecycleEntities(file))
+            {
+                if (!entity.HasDeprecation)
+                    continue;
+
+                var duplicateFields = entity.ModelFields
+                    .Where(f => SchemaParser.DeprecationAutoInjectedFields.Contains(f))
+                    .ToList();
+
+                foreach (var field in duplicateFields)
+                {
+                    violations.Add($"{fileName}: {entity.EntityName}.model.{field}");
+                }
+            }
+        }
+
+        var grouped = violations
+            .GroupBy(v => v.Split(':')[0])
+            .OrderBy(g => g.Key);
+
+        var report = string.Join("\n", grouped.Select(g =>
+            $"\n  [{g.Key}] ({g.Count()} field(s)):\n" +
+            string.Join("\n", g.Select(v => $"    - {v}"))));
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} manually-defined deprecation field(s) across " +
+            $"{grouped.Count()} schema file(s). When deprecation: true is set, these are " +
+            $"auto-injected by generate-lifecycle-events.py and should be removed from " +
+            $"x-lifecycle model blocks:{report}");
+    }
 }

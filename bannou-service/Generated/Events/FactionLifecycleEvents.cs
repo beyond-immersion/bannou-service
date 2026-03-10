@@ -120,7 +120,7 @@ public partial class FactionCreatedEvent : BaseServiceEvent
     public System.Guid? SeedId { get; set; } = default!;
 
     /// <summary>
-    /// Current lifecycle status
+    /// Current operational lifecycle status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -139,6 +139,12 @@ public partial class FactionCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("memberCount")]
     public int MemberCount { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this faction is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
 
     /// <summary>
     /// When the faction was deprecated (null if not deprecated)
@@ -244,7 +250,7 @@ public partial class FactionUpdatedEvent : BaseServiceEvent
     public System.Guid? SeedId { get; set; } = default!;
 
     /// <summary>
-    /// Current lifecycle status
+    /// Current operational lifecycle status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -263,6 +269,12 @@ public partial class FactionUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("memberCount")]
     public int MemberCount { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this faction is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
 
     /// <summary>
     /// When the faction was deprecated (null if not deprecated)
@@ -376,7 +388,7 @@ public partial class FactionDeletedEvent : BaseServiceEvent
     public System.Guid? SeedId { get; set; } = default!;
 
     /// <summary>
-    /// Current lifecycle status
+    /// Current operational lifecycle status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -395,6 +407,12 @@ public partial class FactionDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("memberCount")]
     public int MemberCount { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this faction is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
 
     /// <summary>
     /// When the faction was deprecated (null if not deprecated)

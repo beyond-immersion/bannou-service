@@ -166,6 +166,10 @@ Service lifetime is **Scoped** (per-request). One background service: `MemoryDec
 - **UpdatePerspective** (`/character-encounter/update-perspective`): Finds perspective, re-loads with ETag for optimistic concurrency. Applies partial updates (emotionalImpact, sentimentShift, rememberedAs). Uses `TrySaveAsync` with ETag; returns Conflict on concurrent modification. Publishes `encounter.perspective.updated` with previous and new values.
 - **RefreshMemory** (`/character-encounter/refresh-memory`): Finds perspective, re-loads with ETag. Adds boost amount (request-provided or config default) to memory strength. Clamps to [0, 1]. Uses ETag concurrency. Publishes `encounter.memory.refreshed`. Counteracts memory decay.
 
+### Deprecation Cleanup (1 endpoint, not yet implemented)
+
+- **CleanDeprecatedEncounterTypes** (`/character-encounter/type/clean-deprecated`): **NOT IMPLEMENTED** (`NotImplementedException` stub). Admin-only. Should sweep deprecated encounter types where the `type-enc-idx-{CODE}` index contains zero encounters. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) and `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds). Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` per T31 B20-B22.
+
 ### Admin (3 endpoints)
 
 - **DeleteEncounter** (`/character-encounter/delete`): Hard delete. Deletes all perspectives for the encounter. Deletes encounter record. Cleans up pair indexes and location index. Publishes `encounter.deleted` with `deletedByCharacterCleanup = false`.
@@ -358,7 +362,7 @@ Index Architecture
 
 ## Stubs & Unimplemented Features
 
-No stubs or unimplemented features remain.
+1. **`CleanDeprecatedEncounterTypesAsync` not implemented**: `POST /character-encounter/type/clean-deprecated` is schema-defined and generated (controller, interface) but the service method throws `NotImplementedException`. Should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per T31 B20-B22. Sweeps deprecated encounter types with zero remaining encounters referencing them. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. `x-permissions: [role: admin]`.
 
 ---
 

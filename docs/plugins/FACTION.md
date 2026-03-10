@@ -132,7 +132,7 @@ Used for faction create/update/delete, membership add/remove/role-change, territ
 | `violationType` | B (Game Content Type) | Opaque string | Norm violation type code (e.g., `"theft"`, `"deception"`, `"violence"`, `"contraband"`). Vocabulary defined externally by contract templates and lib-obligation's action tag mappings. New violation types require no schema changes. |
 | `seedTypeCode` | B (Game Content Type) | Opaque string | Seed type identifier for faction growth tracking (default: `"faction"`). Configured per game via `FACTION_SEED_TYPE_CODE`. Follows the Seed service's opaque code pattern. |
 | `currentPhase` | B (Game Content Type) | Opaque string (nullable) | Current seed growth phase label (e.g., `"nascent"`, `"established"`, `"influential"`, `"dominant"`). Phase labels are defined per seed type in lib-seed configuration, not by lib-faction. |
-| `status` (on `FactionResponse`) | C (System State/Mode) | `FactionStatus` enum | Faction lifecycle state (`Active`, `Deprecated`, `Dissolved`). Controls whether the faction accepts new members and operations. |
+| `status` (on `FactionResponse`) | C (System State/Mode) | `FactionStatus` enum | Faction operational lifecycle state (`Active`, `Dissolved`). Orthogonal to deprecation — a faction can be Active but deprecated (no new references) or Dissolved but not deprecated (dissolved is an operational end-state, deprecation prevents new references). |
 | `role` | C (System State/Mode) | `FactionMemberRole` enum | Membership role hierarchy (`Leader`, `Officer`, `Member`, `Recruit`). Determines permissions within the faction. |
 | `severity` | C (System State/Mode) | `NormSeverity` enum | Norm enforcement intensity (`Advisory`, `Standard`, `Strict`). Controls how strongly a norm is enforced. |
 | `scope` | C (System State/Mode) | `NormScope` enum | Norm applicability (`Internal`, `External`). Whether a norm applies to faction members only or to all entities in territory. |
@@ -231,8 +231,8 @@ Standard CRUD on faction entities with code-uniqueness enforcement per game serv
 - **GetByCode** (`/faction/get-by-code`): Lookup by game service + code.
 - **List** (`/faction/list`): Paginated cursor-based listing. Filters by game service, realm, status, parent faction, top-level only, and realm baseline flags.
 - **Update** (`/faction/update`): Acquires distributed lock. Handles partial updates (null fields skipped). Publishes updated event with `changedFields` list.
-- **Deprecate** (`/faction/deprecate`): Sets status to `Deprecated`. Prevents new member additions.
-- **Undeprecate** (`/faction/undeprecate`): Restores status to `Active`.
+- **Deprecate** (`/faction/deprecate`): Sets `IsDeprecated = true` with triple-field model (per IMPLEMENTATION TENETS). Prevents new references. Orthogonal to operational status — a deprecated faction retains its `Active` or `Dissolved` status.
+- **Undeprecate** (`/faction/undeprecate`): Clears `IsDeprecated` flag and deprecation metadata.
 - **Delete** (`/faction/delete`): Acquires lock, cascades member removals, territory releases, and norm deletions. Publishes deleted event.
 - **Seed** (`/faction/seed`): Bulk create with two-pass parent resolution (like Location). Skips duplicates by code lookup key. Returns created/skipped/failed counts.
 - **DesignateRealmBaseline** (`/faction/designate-realm-baseline`): Marks a faction as the realm baseline cultural faction. Replaces previous baseline if one existed. Publishes designation event.
@@ -301,7 +301,7 @@ Implements `IVariableProviderFactory` (via `FactionProviderFactory`) providing t
 | Variable | Type | Description |
 |----------|------|-------------|
 | `${faction.CODE.name}` | string | Faction display name |
-| `${faction.CODE.status}` | string | Faction status (e.g., "Active", "Deprecated") |
+| `${faction.CODE.status}` | string | Faction operational status (e.g., "Active", "Dissolved") |
 | `${faction.CODE.phase}` | string? | Current seed growth phase |
 | `${faction.CODE.is_realm_baseline}` | bool | Whether this is the realm baseline faction |
 | `${faction.CODE.member_count}` | int | Total member count |

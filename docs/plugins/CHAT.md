@@ -120,7 +120,7 @@ Room Lifecycle & Storage Bifurcation
 
 ## Stubs & Unimplemented Features
 
-None. All 32 API endpoints are fully implemented with complete business logic, validation, event publishing, and error handling.
+1. **`CleanDeprecatedRoomTypesAsync` (clean-deprecated endpoint)**: `POST /chat/type/clean-deprecated` is schema-defined and generated (controller + interface) but the service method throws `NotImplementedException`. Sweeps deprecated room types with zero remaining rooms. Uses shared `CleanDeprecatedRequest` (`gracePeriodDays`, `dryRun`) / `CleanDeprecatedResponse` (`cleaned`, `remaining`, `errors`, `cleanedIds`) from `common-api.yaml`. Roles: `[admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
 
 ---
 

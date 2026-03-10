@@ -89,7 +89,7 @@ The Collection service (L2 GameFoundation) manages universal content unlock and 
 
 ## Stubs & Unimplemented Features
 
-*No known stubs.*
+1. **`CleanDeprecatedEntryTemplatesAsync` (clean-deprecated endpoint)**: `POST /collection/entry-template/clean-deprecated` is schema-defined and generated (controller + interface) but the service method throws `NotImplementedException`. Sweeps deprecated entry templates with zero remaining entries. Uses shared `CleanDeprecatedRequest` (`gracePeriodDays`, `dryRun`) / `CleanDeprecatedResponse` (`cleaned`, `remaining`, `errors`, `cleanedIds`) from `common-api.yaml`. Roles: `[admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
 
 ## Potential Extensions
 

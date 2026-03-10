@@ -98,13 +98,13 @@ public static class TransitEventPublisher
         => messageBus.TryPublishAsync(TransitPublishedTopics.TransitDiscoveryRevealed, eventData, cancellationToken);
 
     /// <summary>Published when a new transit mode is registered.</summary>
-    public static Task<bool> PublishTransitModeRegisteredAsync(
+    public static Task<bool> PublishTransitModeCreatedAsync(
         this IMessageBus messageBus,
-        TransitModeRegisteredEvent eventData,
+        TransitModeCreatedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(TransitPublishedTopics.TransitModeRegistered, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(TransitPublishedTopics.TransitModeCreated, eventData, cancellationToken);
 
-    /// <summary>Published when a transit mode is updated (covers property changes and deprecation state).</summary>
+    /// <summary>Published when a transit mode is updated (covers property changes and deprecation state via changedFields).</summary>
     public static Task<bool> PublishTransitModeUpdatedAsync(
         this IMessageBus messageBus,
         TransitModeUpdatedEvent eventData,

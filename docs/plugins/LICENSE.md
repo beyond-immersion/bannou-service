@@ -159,6 +159,10 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 
 ## API Endpoints (Implementation Notes)
 
+### Board Template Deprecation Cleanup (1 endpoint, not yet implemented)
+
+- **CleanDeprecatedBoardTemplates** (`/license/board-template/clean-deprecated`): **NOT IMPLEMENTED** (`NotImplementedException` stub). Admin-only. Should sweep deprecated board templates where zero board instances reference them. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) and `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds). Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` per T31 B20-B22.
+
 ### Board Template Management (6 endpoints, developer role)
 
 Standard CRUD on board templates with `CreateBoardTemplateAsync` validating game service existence, contract template existence, starting nodes within grid bounds, `allowedOwnerTypes` mapping to `ContainerOwnerType` (two-gate validation: gate 1 at template creation, gate 2 at board creation), and defaulting adjacency mode from config. `UpdateBoardTemplateAsync` acquires a template-level distributed lock before mutation, validates any updated `allowedOwnerTypes`, and publishes a lifecycle event. `DeprecateBoardTemplateAsync` marks a template as deprecated (idempotent — returns OK if already deprecated) and publishes `*.updated` event with `changedFields`. No delete endpoint — board templates are Category B entities (instances persist independently).
@@ -274,7 +278,7 @@ Unlock License Flow (under distributed lock, saga-ordered)
 
 ## Stubs & Unimplemented Features
 
-No stubs or unimplemented features at this time.
+1. **`CleanDeprecatedBoardTemplatesAsync` not implemented**: `POST /license/board-template/clean-deprecated` is schema-defined and generated (controller, interface) but the service method throws `NotImplementedException`. Should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per T31 B20-B22. Sweeps deprecated board templates with zero remaining board instances. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. `x-permissions: [role: admin]`.
 
 ---
 

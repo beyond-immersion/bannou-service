@@ -16,3 +16,7 @@ namespace BeyondImmersion.BannouService.Events;
 public partial class TransitConnectionCreatedEvent : ILifecycleCreatedEvent { }
 public partial class TransitConnectionUpdatedEvent : ILifecycleUpdatedEvent { }
 public partial class TransitConnectionDeletedEvent : ILifecycleDeletedEvent { }
+
+public partial class TransitModeCreatedEvent : ILifecycleCreatedEvent { }
+public partial class TransitModeUpdatedEvent : ILifecycleUpdatedEvent { }
+public partial class TransitModeDeletedEvent : ILifecycleDeletedEvent { }

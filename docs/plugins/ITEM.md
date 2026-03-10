@@ -360,6 +360,7 @@ Contract Binding Patterns
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/486 -->
 2. **`IItemInstanceDestructionListener` dispatch**: `DestroyItemInstanceAsync` does not yet dispatch to registered listeners for L4 per-item data cleanup. The interface and dispatch logic need to be implemented. See DI Listener Dispatch section above.
 <!-- AUDIT:NEEDS_IMPLEMENTATION:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/490 -->
+3. **`CleanDeprecatedItemTemplatesAsync` (clean-deprecated endpoint)**: `POST /item/template/clean-deprecated` is schema-defined and generated (controller + interface) but the service method throws `NotImplementedException`. Sweeps deprecated item templates with zero remaining instances. Uses shared `CleanDeprecatedRequest` (`gracePeriodDays`, `dryRun`) / `CleanDeprecatedResponse` (`cleaned`, `remaining`, `errors`, `cleanedIds`) from `common-api.yaml`. Roles: `[admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
 
 ---
 

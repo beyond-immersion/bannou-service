@@ -469,6 +469,7 @@ Escrow Integration Flow
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/473 -->
 7. **Transaction retention cleanup**: `TransactionRetentionDays` config exists but old transactions are only filtered at query time, never actually deleted. Transactions accumulate indefinitely.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
+8. **CleanDeprecatedCurrencyDefinitionsAsync** (`POST /currency/definition/clean-deprecated`): Schema-defined and generated (controller + interface) but service implementation throws `NotImplementedException`. Sweeps deprecated currency definitions with zero remaining wallets. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) / `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds) from `common-api.yaml`. Permissions: `[role: admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
 
 ---
 

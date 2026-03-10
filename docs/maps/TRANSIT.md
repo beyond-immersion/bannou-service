@@ -11,7 +11,7 @@
 | Layer | L2 GameFoundation |
 | Endpoints | 33 |
 | State Stores | transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis), transit-lock (Redis) |
-| Events Published | 14 (transit.mode.registered, transit.mode.updated, transit.mode.deleted, transit.connection.created, transit.connection.updated, transit.connection.deleted, transit.connection.status-changed, transit.journey.departed, transit.journey.waypoint-reached, transit.journey.arrived, transit.journey.interrupted, transit.journey.resumed, transit.journey.abandoned, transit.discovery.revealed) |
+| Events Published | 14 (transit.mode.created, transit.mode.updated, transit.mode.deleted, transit.connection.created, transit.connection.updated, transit.connection.deleted, transit.connection.status-changed, transit.journey.departed, transit.journey.waypoint-reached, transit.journey.arrived, transit.journey.interrupted, transit.journey.resumed, transit.journey.abandoned, transit.discovery.revealed) |
 | Events Consumed | 1 (worldstate.season-changed) |
 | Client Events | 3 (transit.journey.updated, transit.discovery.revealed, transit.connection.status-changed) |
 | Background Services | 2 (SeasonalConnectionWorker, JourneyArchivalWorker) |
@@ -107,9 +107,9 @@
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `transit.mode.registered` | `TransitModeRegisteredEvent` | RegisterMode |
-| `transit.mode.updated` | `TransitModeUpdatedEvent` | UpdateMode, DeprecateMode, UndeprecateMode (includes changedFields) |
-| `transit.mode.deleted` | `TransitModeDeletedEvent` | DeleteMode |
+| `transit.mode.created` | `TransitModeCreatedEvent` (x-lifecycle) | RegisterMode |
+| `transit.mode.updated` | `TransitModeUpdatedEvent` (x-lifecycle) | UpdateMode, DeprecateMode, UndeprecateMode (includes changedFields) |
+| `transit.mode.deleted` | `TransitModeDeletedEvent` (x-lifecycle) | DeleteMode |
 | `transit.connection.created` | `TransitConnectionCreatedEvent` (x-lifecycle) | CreateConnection, BulkSeedConnections (new) |
 | `transit.connection.updated` | `TransitConnectionUpdatedEvent` (x-lifecycle) | UpdateConnection, BulkSeedConnections (updated) |
 | `transit.connection.deleted` | `TransitConnectionDeletedEvent` (x-lifecycle) | DeleteConnection |
@@ -161,7 +161,7 @@
 
 | Method | Route | Roles | Mutates | Publishes |
 |--------|-------|-------|---------|-----------|
-| RegisterMode | POST /transit/mode/register | developer | mode | transit.mode.registered |
+| RegisterMode | POST /transit/mode/register | developer | mode | transit.mode.created |
 | GetMode | POST /transit/mode/get | user | - | - |
 | ListModes | POST /transit/mode/list | user | - | - |
 | UpdateMode | POST /transit/mode/update | developer | mode | transit.mode.updated |
@@ -206,7 +206,7 @@ POST /transit/mode/register | Roles: [developer]
 LOCK transit-lock:"mode:{code}" -> 409 if fails
  READ mode-store:"mode:{code}" -> 409 if exists
  WRITE mode-store:"mode:{code}" <- TransitModeModel from request
- PUBLISH transit.mode.registered { full mode entity }
+ PUBLISH transit.mode.created { full mode entity }
 RETURN (200, ModeResponse)
 ```
 
@@ -286,7 +286,7 @@ LOCK transit-lock:"mode:{code}" -> 409 if fails
  // scan Redis journey index for active journey conflicts
  IF Redis journey conflict found -> 400 (active journeys use mode)
  DELETE mode-store:"mode:{code}"
- PUBLISH transit.mode.deleted { code, deletedReason }
+ PUBLISH transit.mode.deleted { full mode entity, deletedReason }
 RETURN (200, DeleteModeResponse)
 ```
 

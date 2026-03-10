@@ -426,9 +426,9 @@ public class TransitServiceTests
         Assert.False(capturedModel.IsDeprecated);
 
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
-        var registeredEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.mode.registered");
+        var registeredEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.mode.created");
         Assert.NotNull(registeredEvent.Event);
-        var typedEvent = Assert.IsType<TransitModeRegisteredEvent>(registeredEvent.Event);
+        var typedEvent = Assert.IsType<TransitModeCreatedEvent>(registeredEvent.Event);
         Assert.Equal("horseback", typedEvent.Code);
         Assert.Equal("Horseback Riding", typedEvent.Name);
     }

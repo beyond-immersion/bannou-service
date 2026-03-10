@@ -268,8 +268,8 @@ public partial class TransitService : ITransitService
 
         await _modeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
 
-        // Publish transit.mode.registered event
-        await PublishModeRegisteredEventAsync(model, cancellationToken);
+        // Publish transit.mode.created lifecycle event
+        await PublishModeCreatedEventAsync(model, cancellationToken);
 
         _logger.LogInformation("Registered transit mode {ModeCode}", body.Code);
         return (StatusCodes.OK, new ModeResponse { Mode = MapModeToApi(model) });
@@ -574,7 +574,7 @@ public partial class TransitService : ITransitService
         await _modeStore.DeleteAsync(key, cancellationToken);
 
         // Publish transit.mode.deleted event
-        await PublishModeDeletedEventAsync(model.Code, model.DeprecationReason ?? "deprecated_mode_deleted", cancellationToken);
+        await PublishModeDeletedEventAsync(model, model.DeprecationReason ?? "deprecated_mode_deleted", cancellationToken);
 
         _logger.LogInformation("Deleted transit mode {ModeCode}", body.Code);
         return (StatusCodes.OK, new DeleteModeResponse());
@@ -972,13 +972,74 @@ public partial class TransitService : ITransitService
     #region Mode Event Publishing
 
     /// <summary>
-    /// Publishes a transit.mode.registered event with full entity data.
+    /// Publishes a transit.mode.created lifecycle event with full entity data.
     /// </summary>
-    private async Task PublishModeRegisteredEventAsync(TransitModeModel model, CancellationToken cancellationToken)
+    private async Task PublishModeCreatedEventAsync(TransitModeModel model, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishModeRegisteredEventAsync");
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishModeCreatedEventAsync");
 
-        var eventModel = new TransitModeRegisteredEvent
+        var eventModel = MapModelToModeCreatedEvent(model);
+
+        var published = await _messageBus.PublishTransitModeCreatedAsync(eventModel, cancellationToken);
+        if (published)
+        {
+            _logger.LogDebug("Published transit.mode.created event for {ModeCode}", model.Code);
+        }
+        else
+        {
+            _logger.LogWarning("Failed to publish transit.mode.created event for {ModeCode}", model.Code);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a transit.mode.updated lifecycle event with current state and changed fields.
+    /// Used for property updates, deprecation, and undeprecation.
+    /// </summary>
+    private async Task PublishModeUpdatedEventAsync(TransitModeModel model, IEnumerable<string> changedFields, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishModeUpdatedEventAsync");
+
+        var changedFieldsList = changedFields.ToList();
+        var eventModel = MapModelToModeUpdatedEvent(model, changedFieldsList);
+
+        var published = await _messageBus.PublishTransitModeUpdatedAsync(eventModel, cancellationToken);
+        if (published)
+        {
+            _logger.LogDebug("Published transit.mode.updated event for {ModeCode} with changed fields: {ChangedFields}",
+                model.Code, string.Join(", ", changedFieldsList));
+        }
+        else
+        {
+            _logger.LogWarning("Failed to publish transit.mode.updated event for {ModeCode}", model.Code);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a transit.mode.deleted lifecycle event after mode removal.
+    /// </summary>
+    private async Task PublishModeDeletedEventAsync(TransitModeModel model, string deletedReason, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishModeDeletedEventAsync");
+
+        var eventModel = MapModelToModeDeletedEvent(model, deletedReason);
+
+        var published = await _messageBus.PublishTransitModeDeletedAsync(eventModel, cancellationToken);
+        if (published)
+        {
+            _logger.LogDebug("Published transit.mode.deleted event for {ModeCode}", model.Code);
+        }
+        else
+        {
+            _logger.LogWarning("Failed to publish transit.mode.deleted event for {ModeCode}", model.Code);
+        }
+    }
+
+    /// <summary>
+    /// Maps a TransitModeModel to a TransitModeCreatedEvent.
+    /// </summary>
+    private static TransitModeCreatedEvent MapModelToModeCreatedEvent(TransitModeModel model)
+    {
+        return new TransitModeCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1014,71 +1075,94 @@ public partial class TransitService : ITransitService
             CreatedAt = model.CreatedAt,
             ModifiedAt = model.ModifiedAt
         };
-
-        var published = await _messageBus.PublishTransitModeRegisteredAsync(eventModel, cancellationToken);
-        if (published)
-        {
-            _logger.LogDebug("Published transit.mode.registered event for {ModeCode}", model.Code);
-        }
-        else
-        {
-            _logger.LogWarning("Failed to publish transit.mode.registered event for {ModeCode}", model.Code);
-        }
     }
 
     /// <summary>
-    /// Publishes a transit.mode.updated event with current state and changed fields.
-    /// Used for property updates, deprecation, and undeprecation.
+    /// Maps a TransitModeModel to a TransitModeUpdatedEvent with changed fields.
     /// </summary>
-    private async Task PublishModeUpdatedEventAsync(TransitModeModel model, IEnumerable<string> changedFields, CancellationToken cancellationToken)
+    private static TransitModeUpdatedEvent MapModelToModeUpdatedEvent(TransitModeModel model, List<string> changedFields)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishModeUpdatedEventAsync");
-
-        var changedFieldsList = changedFields.ToList();
-        var eventModel = new TransitModeUpdatedEvent
+        return new TransitModeUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Mode = MapModeToApi(model),
-            ChangedFields = changedFieldsList
+            Code = model.Code,
+            Name = model.Name,
+            Description = model.Description,
+            BaseSpeedKmPerGameHour = model.BaseSpeedKmPerGameHour,
+            TerrainSpeedModifiers = model.TerrainSpeedModifiers?.Select(t => new TerrainSpeedModifier
+            {
+                TerrainType = t.TerrainType,
+                Multiplier = t.Multiplier
+            }).ToList(),
+            PassengerCapacity = model.PassengerCapacity,
+            CargoCapacityKg = model.CargoCapacityKg,
+            CargoSpeedPenaltyRate = model.CargoSpeedPenaltyRate,
+            CompatibleTerrainTypes = model.CompatibleTerrainTypes.ToList(),
+            ValidEntityTypes = model.ValidEntityTypes?.ToList(),
+            Requirements = new TransitModeRequirements
+            {
+                RequiredItemTag = model.Requirements.RequiredItemTag,
+                AllowedSpeciesCodes = model.Requirements.AllowedSpeciesCodes?.ToList(),
+                ExcludedSpeciesCodes = model.Requirements.ExcludedSpeciesCodes?.ToList(),
+                MinimumPartySize = model.Requirements.MinimumPartySize,
+                MaximumEntitySizeCategory = model.Requirements.MaximumEntitySizeCategory
+            },
+            FatigueRatePerGameHour = model.FatigueRatePerGameHour,
+            NoiseLevelNormalized = model.NoiseLevelNormalized,
+            RealmRestrictions = model.RealmRestrictions?.ToList(),
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            Tags = model.Tags?.ToList(),
+            CreatedAt = model.CreatedAt,
+            ModifiedAt = model.ModifiedAt,
+            ChangedFields = changedFields
         };
-
-        var published = await _messageBus.PublishTransitModeUpdatedAsync(eventModel, cancellationToken);
-        if (published)
-        {
-            _logger.LogDebug("Published transit.mode.updated event for {ModeCode} with changed fields: {ChangedFields}",
-                model.Code, string.Join(", ", changedFieldsList));
-        }
-        else
-        {
-            _logger.LogWarning("Failed to publish transit.mode.updated event for {ModeCode}", model.Code);
-        }
     }
 
     /// <summary>
-    /// Publishes a transit.mode.deleted event after mode removal.
+    /// Maps a TransitModeModel to a TransitModeDeletedEvent with deletion reason.
     /// </summary>
-    private async Task PublishModeDeletedEventAsync(string code, string deletedReason, CancellationToken cancellationToken)
+    private static TransitModeDeletedEvent MapModelToModeDeletedEvent(TransitModeModel model, string deletedReason)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishModeDeletedEventAsync");
-
-        var eventModel = new TransitModeDeletedEvent
+        return new TransitModeDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Code = code,
+            Code = model.Code,
+            Name = model.Name,
+            Description = model.Description,
+            BaseSpeedKmPerGameHour = model.BaseSpeedKmPerGameHour,
+            TerrainSpeedModifiers = model.TerrainSpeedModifiers?.Select(t => new TerrainSpeedModifier
+            {
+                TerrainType = t.TerrainType,
+                Multiplier = t.Multiplier
+            }).ToList(),
+            PassengerCapacity = model.PassengerCapacity,
+            CargoCapacityKg = model.CargoCapacityKg,
+            CargoSpeedPenaltyRate = model.CargoSpeedPenaltyRate,
+            CompatibleTerrainTypes = model.CompatibleTerrainTypes.ToList(),
+            ValidEntityTypes = model.ValidEntityTypes?.ToList(),
+            Requirements = new TransitModeRequirements
+            {
+                RequiredItemTag = model.Requirements.RequiredItemTag,
+                AllowedSpeciesCodes = model.Requirements.AllowedSpeciesCodes?.ToList(),
+                ExcludedSpeciesCodes = model.Requirements.ExcludedSpeciesCodes?.ToList(),
+                MinimumPartySize = model.Requirements.MinimumPartySize,
+                MaximumEntitySizeCategory = model.Requirements.MaximumEntitySizeCategory
+            },
+            FatigueRatePerGameHour = model.FatigueRatePerGameHour,
+            NoiseLevelNormalized = model.NoiseLevelNormalized,
+            RealmRestrictions = model.RealmRestrictions?.ToList(),
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            Tags = model.Tags?.ToList(),
+            CreatedAt = model.CreatedAt,
+            ModifiedAt = model.ModifiedAt,
             DeletedReason = deletedReason
         };
-
-        var published = await _messageBus.PublishTransitModeDeletedAsync(eventModel, cancellationToken);
-        if (published)
-        {
-            _logger.LogDebug("Published transit.mode.deleted event for {ModeCode}", code);
-        }
-        else
-        {
-            _logger.LogWarning("Failed to publish transit.mode.deleted event for {ModeCode}", code);
-        }
     }
 
     #endregion

@@ -51,9 +51,9 @@ public static class TransitPublishedTopics
     public const string TransitDiscoveryRevealed = "transit.discovery.revealed";
 
     /// <summary>Published when a new transit mode is registered.</summary>
-    public const string TransitModeRegistered = "transit.mode.registered";
+    public const string TransitModeCreated = "transit.mode.created";
 
-    /// <summary>Published when a transit mode is updated (covers property changes and deprecation state).</summary>
+    /// <summary>Published when a transit mode is updated (covers property changes and deprecation state via changedFields).</summary>
     public const string TransitModeUpdated = "transit.mode.updated";
 
     /// <summary>Published when a deprecated transit mode is permanently deleted.</summary>

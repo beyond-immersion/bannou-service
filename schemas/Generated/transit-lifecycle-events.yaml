@@ -263,3 +263,244 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    TransitModeCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to transit.mode.created when a transitmode is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - code
+      - name
+      - description
+      - baseSpeedKmPerGameHour
+      - passengerCapacity
+      - cargoCapacityKg
+      - compatibleTerrainTypes
+      - requirements
+      - fatigueRatePerGameHour
+      - noiseLevelNormalized
+      - isDeprecated
+      - modifiedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: transit.mode.created
+          description: 'Event type identifier: transit.mode.created'
+        code: &id022
+          type: string
+          description: "Unique identifier code for the transit mode"
+        name: &id023
+          type: string
+          description: "Human-readable name"
+        description: &id024
+          type: string
+          description: "Detailed description of the transit mode"
+        baseSpeedKmPerGameHour: &id025
+          type: number
+          format: decimal
+          description: "Base speed in game-kilometers per game-hour"
+        terrainSpeedModifiers: &id026
+          type: array
+          nullable: true
+          description: "Per-terrain speed multipliers (null means base speed applies uniformly)"
+          items:
+            $ref: '../transit-api.yaml#/components/schemas/TerrainSpeedModifier'
+        passengerCapacity: &id027
+          type: integer
+          description: "Maximum number of entities that can ride"
+        cargoCapacityKg: &id028
+          type: number
+          format: decimal
+          description: "Weight capacity in game-kg"
+        cargoSpeedPenaltyRate: &id029
+          type: number
+          format: decimal
+          nullable: true
+          description: "Per-mode cargo speed penalty rate (null means use plugin config default)"
+        compatibleTerrainTypes: &id030
+          type: array
+          description: "Terrain types this mode can traverse (empty means all terrain)"
+          items:
+            type: string
+        validEntityTypes: &id031
+          type: array
+          nullable: true
+          description: "Entity types allowed to use this mode (null means no restriction)"
+          items:
+            type: string
+        requirements: &id032
+          $ref: ../transit-api.yaml#/components/schemas/TransitModeRequirements
+          description: "Requirements that must be met to use this mode"
+        fatigueRatePerGameHour: &id033
+          type: number
+          format: decimal
+          description: "Stamina cost per game-hour of travel"
+        noiseLevelNormalized: &id034
+          type: number
+          format: decimal
+          description: "Noise level from 0.0 (silent) to 1.0 (loud)"
+        realmRestrictions: &id035
+          type: array
+          nullable: true
+          description: "Realm IDs where this mode is available (null means all realms)"
+          items:
+            type: string
+            format: uuid
+        isDeprecated: &id036
+          type: boolean
+          description: "Whether this mode is deprecated"
+        deprecatedAt: &id037
+          type: string
+          format: date-time
+          nullable: true
+          description: "When deprecation occurred (null if not deprecated)"
+        deprecationReason: &id038
+          type: string
+          nullable: true
+          description: "Why this mode was deprecated (null if not deprecated)"
+        tags: &id039
+          type: array
+          nullable: true
+          description: "Freeform classification tags"
+          items:
+            type: string
+        modifiedAt: &id040
+          type: string
+          format: date-time
+          description: "When the mode was last modified"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the transit mode was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the transit mode was last updated (set to createdAt on creation)
+    TransitModeUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to transit.mode.updated when a transitmode is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - code
+      - name
+      - description
+      - baseSpeedKmPerGameHour
+      - passengerCapacity
+      - cargoCapacityKg
+      - compatibleTerrainTypes
+      - requirements
+      - fatigueRatePerGameHour
+      - noiseLevelNormalized
+      - isDeprecated
+      - modifiedAt
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: transit.mode.updated
+          description: 'Event type identifier: transit.mode.updated'
+        code: *id022
+        name: *id023
+        description: *id024
+        baseSpeedKmPerGameHour: *id025
+        terrainSpeedModifiers: *id026
+        passengerCapacity: *id027
+        cargoCapacityKg: *id028
+        cargoSpeedPenaltyRate: *id029
+        compatibleTerrainTypes: *id030
+        validEntityTypes: *id031
+        requirements: *id032
+        fatigueRatePerGameHour: *id033
+        noiseLevelNormalized: *id034
+        realmRestrictions: *id035
+        isDeprecated: *id036
+        deprecatedAt: *id037
+        deprecationReason: *id038
+        tags: *id039
+        modifiedAt: *id040
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the transit mode was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the transit mode was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    TransitModeDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to transit.mode.deleted when a transitmode is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - code
+      - name
+      - description
+      - baseSpeedKmPerGameHour
+      - passengerCapacity
+      - cargoCapacityKg
+      - compatibleTerrainTypes
+      - requirements
+      - fatigueRatePerGameHour
+      - noiseLevelNormalized
+      - isDeprecated
+      - modifiedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: transit.mode.deleted
+          description: 'Event type identifier: transit.mode.deleted'
+        code: *id022
+        name: *id023
+        description: *id024
+        baseSpeedKmPerGameHour: *id025
+        terrainSpeedModifiers: *id026
+        passengerCapacity: *id027
+        cargoCapacityKg: *id028
+        cargoSpeedPenaltyRate: *id029
+        compatibleTerrainTypes: *id030
+        validEntityTypes: *id031
+        requirements: *id032
+        fatigueRatePerGameHour: *id033
+        noiseLevelNormalized: *id034
+        realmRestrictions: *id035
+        isDeprecated: *id036
+        deprecatedAt: *id037
+        deprecationReason: *id038
+        tags: *id039
+        modifiedAt: *id040
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the transit mode was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the transit mode was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

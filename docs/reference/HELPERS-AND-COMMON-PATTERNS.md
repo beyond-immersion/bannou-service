@@ -974,15 +974,118 @@ public async Task<(StatusCodes, ListTemplatesResponse?)> ListTemplatesAsync(
 }
 ```
 
+### Clean-Deprecated Endpoint (B17–B22)
+
+Category B entities support a cleanup sweep that permanently removes deprecated templates with zero remaining instances. This is the Category B safe deletion mechanism — there is no per-entity delete endpoint.
+
+#### API Schema Pattern
+
+All clean-deprecated endpoints use shared request/response models from `common-api.yaml`:
+
+```yaml
+  /myservice/template/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedTemplates
+      tags:
+      - Template
+      summary: Clean deprecated templates with zero remaining instances
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        templates and permanently removes those with zero remaining instances,
+        subject to an optional grace period. Publishes template.deleted events for
+        each removed template. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+```
+
+**Shared models** (`common-api.yaml`):
+- `CleanDeprecatedRequest`: `gracePeriodDays` (int, default 0), `dryRun` (bool, default false)
+- `CleanDeprecatedResponse`: `cleaned` (int), `remaining` (int), `errors` (int), `cleanedIds` (uuid array)
+
+#### Implementation Pattern
+
+**File**: `bannou-service/Helpers/DeprecationCleanupHelper.cs`
+
+All clean-deprecated implementations MUST use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` (per T31 B20). The helper provides standardized per-item error isolation, grace period evaluation, dry-run support, logging, and telemetry. The service provides delegates for storage access and event publishing (inherently service-specific).
+
+```csharp
+public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedTemplatesAsync(
+    CleanDeprecatedRequest body, CancellationToken ct)
+{
+    using var activity = _telemetryProvider.StartActivity(
+        "bannou.myservice", "MyService.CleanDeprecatedTemplatesAsync");
+
+    // 1. Query all deprecated entities
+    var deprecated = await _templateStore.QueryAsync(
+        t => t.IsDeprecated, ct);
+
+    // 2. Delegate to shared helper
+    var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+        deprecated,
+        getEntityId: t => t.TemplateId,
+        getDeprecatedAt: t => t.DeprecatedAt,
+        hasActiveInstancesAsync: async (t, c) =>
+            await _instanceStore.ExistsAsync(BuildInstancesByTemplateKey(t.TemplateId), c),
+        deleteAndPublishAsync: async (t, c) =>
+        {
+            await _templateStore.DeleteAsync(BuildTemplateKey(t.TemplateId), c);
+            // Remove from indexes, caches, etc.
+            await _messageBus.PublishTemplateDeletedAsync(new TemplateDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                TemplateId = t.TemplateId,
+                // ... lifecycle fields ...
+            }, c);
+        },
+        body.GracePeriodDays,
+        body.DryRun,
+        _logger,
+        _telemetryProvider,
+        ct);
+
+    // 3. Map helper result to generated response
+    return (StatusCodes.OK, new CleanDeprecatedResponse
+    {
+        Cleaned = result.Cleaned,
+        Remaining = result.Remaining,
+        Errors = result.Errors,
+        CleanedIds = result.CleanedIds.ToList()
+    });
+}
+```
+
+**Key points:**
+- The `*.deleted` lifecycle event (previously unused infrastructure) is now published here
+- `hasActiveInstancesAsync` is service-specific — each service checks its own instance stores
+- `deleteAndPublishAsync` must handle all stores, indexes, and caches for the entity
+- The helper's `CleanupSweepResult` maps trivially to the generated `CleanDeprecatedResponse`
+
 ### What NOT to Include
 
 | Anti-Pattern | Why |
 |---|---|
 | `POST /{entity}/undeprecate` | Category B deprecation is one-way and terminal |
-| `POST /{entity}/delete` | Template persists forever (future safe deletion pattern will add this) |
+| `POST /{entity}/delete` (per-entity) | Use `clean-deprecated` sweep instead — no per-entity delete for Category B |
 | `409` response for "already deprecated" | Violates idempotency — return `OK` |
 | Dedicated `*.deprecated` event | Use `*.updated` with changedFields |
 | `isActive` field for deprecation | `isActive` is a separate concept (admin disable); deprecation is `isDeprecated` |
+| Service-specific request/response for clean-deprecated | Use shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml` |
+| Custom cleanup loop without `DeprecationCleanupHelper` | Use the helper for standardized error isolation, grace period, and logging (B20) |
 
 ---
 
@@ -1006,6 +1109,7 @@ public async Task<(StatusCodes, ListTemplatesResponse?)> ListTemplatesAsync(
 | Validate event publishing (test) | `EventPublishingValidator` | `test-utilities/` |
 | Validate resource cleanup (test) | `ResourceCleanupValidator` | `test-utilities/` |
 | Add Category B deprecation to a template entity | Category B Deprecation Template | § 15 (schema + implementation patterns) |
+| Implement clean-deprecated sweep | `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` | `Helpers/DeprecationCleanupHelper.cs` |
 
 ---
 

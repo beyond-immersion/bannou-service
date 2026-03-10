@@ -173,7 +173,8 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(FactionStatus.Deprecated, response.Status);
+        Assert.Equal(FactionStatus.Active, response.Status);
+        Assert.True(response.IsDeprecated);
         Assert.NotNull(response.DeprecatedAt);
         Assert.Equal("No longer relevant", response.DeprecationReason);
     }
@@ -184,7 +185,8 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         // Arrange
         var service = CreateService();
         var factionId = Guid.NewGuid();
-        var model = CreateTestFactionModel(factionId, FactionStatus.Deprecated);
+        var model = CreateTestFactionModel(factionId, FactionStatus.Active);
+        model.IsDeprecated = true;
         model.DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-1);
         model.DeprecationReason = "Previously deprecated";
 
@@ -204,7 +206,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(FactionStatus.Deprecated, response.Status);
+        Assert.True(response.IsDeprecated);
 
         // Verify no save was attempted (already in desired state)
         _mockFactionStore.Verify(
@@ -261,7 +263,8 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         // Arrange
         var service = CreateService();
         var factionId = Guid.NewGuid();
-        var model = CreateTestFactionModel(factionId, FactionStatus.Deprecated);
+        var model = CreateTestFactionModel(factionId, FactionStatus.Active);
+        model.IsDeprecated = true;
         model.DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-1);
         model.DeprecationReason = "Was deprecated";
 

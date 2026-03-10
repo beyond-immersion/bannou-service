@@ -13,7 +13,7 @@
 |-------|-------|
 | Plugin | lib-quest |
 | Layer | L2 GameFoundation |
-| Endpoints | 17 |
+| Endpoints | 18 |
 | State Stores | quest-definition-statestore (MySQL), quest-instance-statestore (MySQL), quest-objective-progress (Redis), quest-definition-cache (Redis), quest-character-index (Redis), quest-cooldown (Redis) |
 | Events Published | 5 (quest.accepted, quest.objective.progressed, quest.completed, quest.failed, quest.abandoned) |
 | Events Consumed | 7 (3 contract, 4 self-subscription) |
@@ -190,6 +190,7 @@ IF null or not Active -> return
 | HandleQuestCompleted | POST /quest/internal/quest-completed | [] | instance, index, cooldown | quest.completed |
 | GetCompressData | POST /quest/get-compress-data | developer | - | - |
 | DeleteByCharacter | POST /quest/delete-by-character | [] | instance, progress, cooldown, index, resource-ref | quest.abandoned (per instance) |
+| CleanDeprecatedQuestDefinitions | POST /quest/definition/clean-deprecated | admin | definition, cache | quest.definition.deleted |
 
 ---
 
@@ -582,6 +583,29 @@ FOREACH questCode in index.CompletedQuestCodes // per-item try-catch
 DELETE _characterIndex:"char:{characterId}"
 
 RETURN (200, DeleteByCharacterResponse { instancesAbandoned, progressRecordsDeleted, cooldownsDeleted })
+```
+
+### CleanDeprecatedQuestDefinitions
+POST /quest/definition/clean-deprecated | Roles: [admin]
+
+**Status: UNIMPLEMENTED** (`NotImplementedException` stub)
+
+```
+// Implementation should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
+// per IMPLEMENTATION TENETS Category B clean-deprecated (B20-B22).
+//
+// Expected pseudocode:
+// QUERY all definitions WHERE IsDeprecated == true
+// CALL DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+//   deprecatedEntities: deprecated definitions,
+//   getEntityId: d => d.DefinitionId,
+//   getDeprecatedAt: d => d.DeprecatedAt,
+//   hasActiveInstancesAsync: query instance store for any Active instances with this definitionId,
+//   deleteAndPublishAsync: delete definition + invalidate cache, publish quest.definition.deleted,
+//   gracePeriodDays: body.GracePeriodDays,
+//   dryRun: body.DryRun,
+//   logger, telemetryProvider, ct)
+// RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ```
 
 ---

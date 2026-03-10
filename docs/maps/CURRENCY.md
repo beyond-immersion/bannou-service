@@ -11,7 +11,7 @@
 |-------|-------|
 | Plugin | lib-currency |
 | Layer | L2 GameFoundation |
-| Endpoints | 33 |
+| Endpoints | 34 |
 | State Stores | currency-definitions (MySQL), currency-wallets (MySQL), currency-balances (MySQL), currency-transactions (MySQL), currency-holds (MySQL), currency-balance-cache (Redis), currency-holds-cache (Redis), currency-idempotency (Redis), currency-lock (Redis) |
 | Events Published | 18 (currency.credited, currency.debited, currency.transferred, currency.autogain.calculated, currency.earn-cap.reached, currency.wallet-cap.reached, currency.expired, currency.exchange-rate.updated, currency.definition.created, currency.definition.updated, currency.wallet.created, currency.wallet.frozen, currency.wallet.unfrozen, currency.wallet.closed, currency.hold.created, currency.hold.captured, currency.hold.released, currency.hold.expired) |
 | Events Consumed | 4 (1 external: account.deleted; 3 self-subscription for cache invalidation) |
@@ -202,6 +202,7 @@
 | CaptureHold | POST /currency/hold/capture | [] | hold, bal, tx, hold-wallet, idempotency | currency.hold.captured, currency.debited |
 | ReleaseHold | POST /currency/hold/release | [] | hold, hold-wallet | currency.hold.released |
 | GetHold | POST /currency/hold/get | [] | - | - |
+| CleanDeprecatedCurrencyDefinitions | POST /currency/definition/clean-deprecated | admin | def, def-code, all-defs | *(unimplemented)* |
 | CurrencyExpirationTaskService.ProcessExpirationCycleAsync | background | - | bal, tx | currency.expired |
 | HoldExpirationTaskService.ProcessHoldExpirationCycleAsync | background | - | hold, hold-wallet | currency.hold.expired |
 
@@ -739,6 +740,17 @@ IF cache hit
 READ holds:hold:{holdId} -> 404 if null
 WRITE holds-cache:hold:{holdId} // Populate cache on miss
 RETURN (200, HoldResponse)
+```
+
+### CleanDeprecatedCurrencyDefinitions
+POST /currency/definition/clean-deprecated | Roles: [admin]
+
+```
+// UNIMPLEMENTED — throws NotImplementedException
+// Should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
+// Sweeps deprecated currency definitions with zero remaining wallets
+// Uses shared CleanDeprecatedRequest (gracePeriodDays, dryRun)
+// Returns shared CleanDeprecatedResponse (cleaned, remaining, errors, cleanedIds)
 ```
 
 ---

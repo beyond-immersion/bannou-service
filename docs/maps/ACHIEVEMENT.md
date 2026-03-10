@@ -13,7 +13,7 @@
 |-------|-------|
 | Plugin | lib-achievement |
 | Layer | L4 GameFeatures |
-| Endpoints | 12 |
+| Endpoints | 13 |
 | State Stores | achievement-definition (Redis), achievement-progress (Redis), achievement-sync (Redis), achievement-lock (Redis) |
 | Events Published | 5 (achievement.definition.created, achievement.definition.updated, achievement.progress.unlocked, achievement.progress.updated, achievement.platform.synced) |
 | Events Consumed | 3 (analytics.score.updated, analytics.milestone.reached, leaderboard.rank.changed) |
@@ -130,6 +130,7 @@
 | ListUnlockedAchievements | POST /achievement/list-unlocked | [user] | - | - |
 | SyncPlatformAchievements | POST /achievement/platform/sync | [admin] | - | achievement.platform.synced |
 | GetPlatformSyncStatus | POST /achievement/platform/status | [] | - | - |
+| CleanDeprecatedAchievementDefinitions | POST /achievement/definition/clean-deprecated | [admin] | definition, definition-index | achievement.definition.deleted |
 | CleanupByCharacter | POST /achievement/cleanup-by-character | [] | progress | - |
 
 ---
@@ -348,6 +349,19 @@ FOREACH syncProvider in _platformSyncs
   // SyncedCount, FailedCount, LastSyncAt, LastError from PlatformSyncTrackingData
   // PendingCount is null (sync is synchronous, no queue)
 RETURN (200, PlatformSyncStatusResponse { entityId, entityType, platforms })
+```
+
+### CleanDeprecatedAchievementDefinitions
+POST /achievement/definition/clean-deprecated | Roles: [admin]
+
+**NOT IMPLEMENTED** — `NotImplementedException` stub. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` per T31 B20-B22.
+
+```
+// Uses shared CleanDeprecatedRequest (gracePeriodDays, dryRun) / CleanDeprecatedResponse
+// Should iterate all game services, find deprecated definitions with zero progress records,
+// and delete those that have been deprecated longer than gracePeriodDays.
+// Uses DeprecationCleanupHelper.ExecuteCleanupSweepAsync for standardized sweep logic.
+THROW NotImplementedException
 ```
 
 ### CleanupByCharacter

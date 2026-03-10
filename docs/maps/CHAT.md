@@ -11,7 +11,7 @@
 |-------|-------|
 | Plugin | lib-chat |
 | Layer | L1 AppFoundation |
-| Endpoints | 32 |
+| Endpoints | 33 |
 | State Stores | chat-room-types (MySQL), chat-rooms (MySQL), chat-rooms-cache (Redis), chat-messages (MySQL), chat-messages-ephemeral (Redis), chat-participants (Redis), chat-bans (MySQL), chat-lock (Redis) |
 | Events Published | 17 (room-type.created, room-type.updated, room.created, room.updated, room.deleted, room.locked, room.archived, participant.joined, participant.left, participant.kicked, participant.banned, participant.unbanned, participant.muted, participant.unmuted, participant.role-changed, message.sent, message.deleted) |
 | Events Consumed | 4 (contract.fulfilled, contract.breach.detected, contract.terminated, contract.expired) |
@@ -188,6 +188,7 @@ All handlers paginate with `ContractRoomQueryBatchSize` and cap at `MaxContractR
 | AdminForceCleanup | POST /chat/admin/cleanup | admin | room, cache, participants | chat.room.deleted/archived |
 | Typing | POST /chat/typing | [] | typing | - |
 | EndTyping | POST /chat/end-typing | [] | typing | - |
+| CleanDeprecatedRoomTypes | POST /chat/type/clean-deprecated | admin | room-type | chat.room-type.deleted |
 
 ---
 
@@ -710,6 +711,29 @@ DELETE typing:active SortedSetRemove("{roomId:N}:{sessionId:N}")
 IF was present
  PUSH ChatTypingStoppedClientEvent via IEntitySessionRegistry to room sessions
 RETURN (200)
+```
+
+### CleanDeprecatedRoomTypes
+POST /chat/type/clean-deprecated | Roles: [admin]
+
+**Status: UNIMPLEMENTED** (`NotImplementedException` stub)
+
+```
+// Implementation should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
+// per IMPLEMENTATION TENETS Category B clean-deprecated (B20-B22).
+//
+// Expected pseudocode:
+// QUERY all room types WHERE Status == Deprecated
+// CALL DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+//   deprecatedEntities: deprecated room types,
+//   getEntityId: rt => rt.RoomTypeId (or derive from code),
+//   getDeprecatedAt: rt => rt.DeprecatedAt,
+//   hasActiveInstancesAsync: query rooms store for any rooms with this roomTypeCode,
+//   deleteAndPublishAsync: delete room type + publish chat.room-type.deleted,
+//   gracePeriodDays: body.GracePeriodDays,
+//   dryRun: body.DryRun,
+//   logger, telemetryProvider, ct)
+// RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ```
 
 ---

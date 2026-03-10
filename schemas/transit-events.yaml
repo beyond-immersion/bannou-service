@@ -51,13 +51,13 @@ info:
       event: TransitDiscoveryRevealedEvent
       description: Published when a discoverable connection is revealed to an entity
 
-    # Mode events (custom -- register/update semantics, not standard CRUD lifecycle)
-    - topic: transit.mode.registered
-      event: TransitModeRegisteredEvent
+    # Mode lifecycle events (x-lifecycle generated)
+    - topic: transit.mode.created
+      event: TransitModeCreatedEvent
       description: Published when a new transit mode is registered
     - topic: transit.mode.updated
       event: TransitModeUpdatedEvent
-      description: Published when a transit mode is updated (covers property changes and deprecation state)
+      description: Published when a transit mode is updated (covers property changes and deprecation state via changedFields)
     - topic: transit.mode.deleted
       event: TransitModeDeletedEvent
       description: Published when a deprecated transit mode is permanently deleted
@@ -102,6 +102,56 @@ x-lifecycle:
       toRealmId: { type: string, format: uuid, required: true, description: "Realm of the destination location" }
       crossRealm: { type: boolean, required: true, description: "Whether this connection spans realm boundaries" }
       modifiedAt: { type: string, format: date-time, required: true, description: "Timestamp when the connection was last modified" }
+  TransitMode:
+    model:
+      code: { type: string, primary: true, required: true, description: "Unique identifier code for the transit mode" }
+      name: { type: string, required: true, description: "Human-readable name" }
+      description: { type: string, required: true, description: "Detailed description of the transit mode" }
+      baseSpeedKmPerGameHour: { type: number, format: decimal, required: true, description: "Base speed in game-kilometers per game-hour" }
+      terrainSpeedModifiers:
+        type: array
+        nullable: true
+        description: "Per-terrain speed multipliers (null means base speed applies uniformly)"
+        items:
+          $ref: 'transit-api.yaml#/components/schemas/TerrainSpeedModifier'
+      passengerCapacity: { type: integer, required: true, description: "Maximum number of entities that can ride" }
+      cargoCapacityKg: { type: number, format: decimal, required: true, description: "Weight capacity in game-kg" }
+      cargoSpeedPenaltyRate: { type: number, format: decimal, nullable: true, description: "Per-mode cargo speed penalty rate (null means use plugin config default)" }
+      compatibleTerrainTypes:
+        type: array
+        required: true
+        description: "Terrain types this mode can traverse (empty means all terrain)"
+        items:
+          type: string
+      validEntityTypes:
+        type: array
+        nullable: true
+        description: "Entity types allowed to use this mode (null means no restriction)"
+        items:
+          type: string
+      requirements:
+        $ref: 'transit-api.yaml#/components/schemas/TransitModeRequirements'
+        required: true
+        description: "Requirements that must be met to use this mode"
+      fatigueRatePerGameHour: { type: number, format: decimal, required: true, description: "Stamina cost per game-hour of travel" }
+      noiseLevelNormalized: { type: number, format: decimal, required: true, description: "Noise level from 0.0 (silent) to 1.0 (loud)" }
+      realmRestrictions:
+        type: array
+        nullable: true
+        description: "Realm IDs where this mode is available (null means all realms)"
+        items:
+          type: string
+          format: uuid
+      isDeprecated: { type: boolean, required: true, description: "Whether this mode is deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When deprecation occurred (null if not deprecated)" }
+      deprecationReason: { type: string, nullable: true, description: "Why this mode was deprecated (null if not deprecated)" }
+      tags:
+        type: array
+        nullable: true
+        description: "Freeform classification tags"
+        items:
+          type: string
+      modifiedAt: { type: string, format: date-time, required: true, description: "When the mode was last modified" }
 
 components:
   schemas:
@@ -614,171 +664,6 @@ components:
           type: boolean
           description: Whether the discovered connection spans realm boundaries
 
-    # === Mode Events (Custom -- register/update semantics, not standard CRUD lifecycle) ===
-
-    TransitModeRegisteredEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-      type: object
-      additionalProperties: false
-      description: Published when a new transit mode is registered
-      required:
-        - eventName
-        - eventId
-        - timestamp
-        - code
-        - name
-        - description
-        - baseSpeedKmPerGameHour
-        - passengerCapacity
-        - cargoCapacityKg
-        - compatibleTerrainTypes
-        - requirements
-        - fatigueRatePerGameHour
-        - noiseLevelNormalized
-        - isDeprecated
-        - createdAt
-        - modifiedAt
-      properties:
-        eventName:
-          type: string
-          default: transit.mode.registered
-          description: 'Event type identifier: transit.mode.registered'
-        code:
-          type: string
-          description: Unique identifier code for the transit mode
-        name:
-          type: string
-          description: Human-readable name
-        description:
-          type: string
-          description: Detailed description of the transit mode
-        baseSpeedKmPerGameHour:
-          type: number
-          format: decimal
-          description: Base speed in game-kilometers per game-hour
-        terrainSpeedModifiers:
-          type: array
-          nullable: true
-          description: Per-terrain speed multipliers (null means base speed applies uniformly)
-          items:
-            $ref: 'transit-api.yaml#/components/schemas/TerrainSpeedModifier'
-        passengerCapacity:
-          type: integer
-          description: Maximum number of entities that can ride
-        cargoCapacityKg:
-          type: number
-          format: decimal
-          description: Weight capacity in game-kg
-        cargoSpeedPenaltyRate:
-          type: number
-          format: decimal
-          nullable: true
-          description: Per-mode cargo speed penalty rate (null means use plugin config default)
-        compatibleTerrainTypes:
-          type: array
-          description: Terrain types this mode can traverse (empty means all terrain)
-          items:
-            type: string
-        validEntityTypes:
-          type: array
-          nullable: true
-          description: Entity types allowed to use this mode (null means no restriction)
-          items:
-            type: string
-        requirements:
-          allOf:
-            - $ref: 'transit-api.yaml#/components/schemas/TransitModeRequirements'
-          description: Requirements that must be met to use this mode
-        fatigueRatePerGameHour:
-          type: number
-          format: decimal
-          description: Stamina cost per game-hour of travel
-        noiseLevelNormalized:
-          type: number
-          format: decimal
-          description: Noise level from 0.0 (silent) to 1.0 (loud)
-        realmRestrictions:
-          type: array
-          nullable: true
-          description: Realm IDs where this mode is available (null means all realms)
-          items:
-            type: string
-            format: uuid
-        isDeprecated:
-          type: boolean
-          description: Whether this mode is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When deprecation occurred (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Why this mode was deprecated (null if not deprecated)
-        tags:
-          type: array
-          nullable: true
-          description: Freeform classification tags
-          items:
-            type: string
-        createdAt:
-          type: string
-          format: date-time
-          description: When the mode was created
-        modifiedAt:
-          type: string
-          format: date-time
-          description: When the mode was last modified
-
-    TransitModeUpdatedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-      type: object
-      additionalProperties: false
-      description: Published when a transit mode is updated (covers property changes and deprecation state via changedFields)
-      required:
-        - eventName
-        - eventId
-        - timestamp
-        - mode
-        - changedFields
-      properties:
-        eventName:
-          type: string
-          default: transit.mode.updated
-          description: 'Event type identifier: transit.mode.updated'
-        mode:
-          allOf:
-            - $ref: 'transit-api.yaml#/components/schemas/TransitMode'
-          description: Full entity data for the updated transit mode
-        changedFields:
-          type: array
-          description: List of fields that changed (deprecation includes isDeprecated, deprecatedAt, deprecationReason)
-          items:
-            type: string
-
-    TransitModeDeletedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-      type: object
-      additionalProperties: false
-      description: Published when a deprecated transit mode is permanently deleted
-      required:
-        - eventName
-        - eventId
-        - timestamp
-        - code
-        - deletedReason
-      properties:
-        eventName:
-          type: string
-          default: transit.mode.deleted
-          description: 'Event type identifier: transit.mode.deleted'
-        code:
-          type: string
-          description: The deleted mode's code (full entity no longer exists)
-        deletedReason:
-          type: string
-          description: Why the mode was deleted
+    # === Mode Events ===
+    # TransitMode lifecycle events (Created, Updated, Deleted) are auto-generated
+    # from x-lifecycle above. See: schemas/Generated/transit-lifecycle-events.yaml

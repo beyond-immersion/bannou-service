@@ -13,7 +13,7 @@
 |-------|-------|
 | Plugin | lib-item |
 | Layer | L2 GameFoundation |
-| Endpoints | 16 |
+| Endpoints | 17 |
 | State Stores | item-template-store (MySQL), item-template-cache (Redis), item-instance-store (MySQL), item-instance-cache (Redis), item-lock (Redis) |
 | Events Published | 11 (item.template.created, item.template.updated, item.instance.created, item.instance.modified, item.instance.destroyed, item.instance.bound, item.instance.unbound, item.used, item.use-failed, item.use-step-completed, item.use-step-failed) |
 | Events Consumed | 0 |
@@ -137,6 +137,7 @@ This plugin does not consume external events.
 | ListItemsByContainer | POST /item/instance/list-by-container | user | - | - |
 | ListItemsByTemplate | POST /item/instance/list-by-template | admin | - | - |
 | BatchGetItemInstances | POST /item/instance/batch-get | user | - | - |
+| CleanDeprecatedItemTemplates | POST /item/template/clean-deprecated | admin | template, code-index, game-index, all-index, cache | item.template.deleted |
 
 ---
 
@@ -451,6 +452,31 @@ FOREACH instanceId in body.instanceIds
   READ instance via bulk cache read-through
 // Separate found items from not-found IDs
 RETURN (200, BatchGetItemInstancesResponse { items, notFound })
+```
+
+---
+
+### CleanDeprecatedItemTemplates
+POST /item/template/clean-deprecated | Roles: [admin]
+
+**Status: UNIMPLEMENTED** (`NotImplementedException` stub)
+
+```
+// Implementation should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
+// per IMPLEMENTATION TENETS Category B clean-deprecated (B20-B22).
+//
+// Expected pseudocode:
+// QUERY all templates WHERE IsDeprecated == true
+// CALL DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+//   deprecatedEntities: deprecated templates,
+//   getEntityId: t => t.TemplateId,
+//   getDeprecatedAt: t => t.DeprecatedAt,
+//   hasActiveInstancesAsync: check inst-template:{templateId} list is non-empty,
+//   deleteAndPublishAsync: delete template + indexes + cache, publish item.template.deleted,
+//   gracePeriodDays: body.GracePeriodDays,
+//   dryRun: body.DryRun,
+//   logger, telemetryProvider, ct)
+// RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ```
 
 ---

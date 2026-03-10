@@ -13,7 +13,7 @@
 |-------|-------|
 | Plugin | lib-collection |
 | Layer | L2 GameFoundation |
-| Endpoints | 22 |
+| Endpoints | 23 |
 | State Stores | collection-entry-templates (MySQL), collection-instances (MySQL), collection-area-content-configs (MySQL), collection-cache (Redis), collection-lock (Redis) |
 | Events Published | 11 (entry-template.created/updated/deleted, created, deleted, area-content-config.created/updated/deleted, entry-unlocked, entry-grant-failed, milestone-reached, discovery-advanced) |
 | Events Consumed | 1 (account.deleted) |
@@ -152,6 +152,7 @@ Note: `collection.entry-template.deleted` is defined in the lifecycle schema but
 | DeleteAreaContentConfig | POST /collection/content/area-config/delete | developer | area-config (id + code keys) | area-content-config.deleted |
 | AdvanceDiscovery | POST /collection/discovery/advance | user | cache | discovery-advanced |
 | CleanupByCharacter | POST /collection/cleanup-by-character | developer | collection (id + owner keys), cache, container | deleted |
+| CleanDeprecatedEntryTemplates | POST /collection/entry-template/clean-deprecated | admin | template (id + code keys) | entry-template.deleted |
 
 ---
 
@@ -608,3 +609,28 @@ FOREACH collection in results
 ```
 
 Account cleanup uses event subscription (Account Deletion Cleanup Obligation). Character cleanup uses lib-resource cascade callback.
+
+---
+
+### CleanDeprecatedEntryTemplates
+POST /collection/entry-template/clean-deprecated | Roles: [admin]
+
+**Status: UNIMPLEMENTED** (`NotImplementedException` stub)
+
+```
+// Implementation should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
+// per IMPLEMENTATION TENETS Category B clean-deprecated (B20-B22).
+//
+// Expected pseudocode:
+// QUERY all entry templates WHERE IsDeprecated == true
+// CALL DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+//   deprecatedEntities: deprecated templates,
+//   getEntityId: t => t.EntryTemplateId,
+//   getDeprecatedAt: t => t.DeprecatedAt,
+//   hasActiveInstancesAsync: check if any collection cache references this entry code,
+//   deleteAndPublishAsync: delete template from both keys + publish collection.entry-template.deleted,
+//   gracePeriodDays: body.GracePeriodDays,
+//   dryRun: body.DryRun,
+//   logger, telemetryProvider, ct)
+// RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
+```

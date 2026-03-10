@@ -172,6 +172,8 @@ State Store Key Relationships
 
 8. **ScenarioAvailableEvent**: The topic constant exists (`StorylinePublishedTopics.ScenarioAvailable`) and the event schema is defined, but no code path currently publishes it. It would be emitted by a background process detecting newly available scenarios.
 
+9. **CleanDeprecatedScenarioDefinitionsAsync** (`POST /storyline/scenario/clean-deprecated`): Schema-defined and generated (controller + interface) but service implementation throws `NotImplementedException`. Sweeps deprecated scenario definitions with zero remaining storyline instances. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) / `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds) from `common-api.yaml`. Permissions: `[role: admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
+
 ---
 
 ## Potential Extensions

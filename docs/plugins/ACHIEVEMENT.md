@@ -99,6 +99,7 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 | ~~Per-entity sync history tracking~~ | ~~Not implemented~~ | **FIXED** (2026-03-08) — Added `achievement-sync` Redis state store with `PlatformSyncTrackingData` model. `RecordSyncOutcomeAsync` tracks sync outcomes with ETag-based optimistic concurrency. `GetPlatformSyncStatusAsync` now reads real data. `PendingCount` remains null (sync is immediate success/failure, no pending concept). |
 | TotalEligibleEntities population | Not implemented | Field exists on definition but is never written to by any endpoint; rarity calc only works when manually populated <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/581 --> |
 | `SetProgressAsync` on platforms | Not called | IPlatformAchievementSync defines it, SteamAchievementSync implements it, but the service only calls `UnlockAsync` (never syncs incremental progress) <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/592 --> |
+| `CleanDeprecatedAchievementDefinitionsAsync` | Not implemented | `POST /achievement/definition/clean-deprecated` is schema-defined and generated (controller, interface) but the service method throws `NotImplementedException`. Should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` per T31 B20-B22. Sweeps deprecated definitions with zero remaining progress records. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. `x-permissions: [role: admin]`. |
 
 ## Potential Extensions
 

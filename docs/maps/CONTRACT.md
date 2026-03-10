@@ -13,7 +13,7 @@
 |-------|-------|
 | Plugin | lib-contract |
 | Layer | L1 AppFoundation |
-| Endpoints | 31 |
+| Endpoints | 32 |
 | State Stores | contract-statestore (Redis), contract-lock (Redis) |
 | Events Published | 27 (`contract.template.created`, `contract.template.updated`, `contract.template.deleted`, `contract.instance.created`, `contract.instance.updated`, `contract.instance.deleted`, `contract.proposed`, `contract.consent-received`, `contract.accepted`, `contract.activated`, `contract.milestone.completed`, `contract.milestone.failed`, `contract.breach.detected`, `contract.breach.cured`, `contract.fulfilled`, `contract.terminated`, `contract.expired`, `contract.payment.due`, `contract.prebound-api.executed`, `contract.prebound-api.failed`, `contract.prebound-api.validation-failed`, `contract.locked`, `contract.unlocked`, `contract.party.transferred`, `contract.clausetype.registered`, `contract.templatevalues.set`, `contract.executed`) |
 | Events Consumed | 0 |
@@ -155,6 +155,7 @@ This plugin does not consume external events. Schema declares `x-event-subscript
 | SetContractTemplateValues | POST /contract/instance/set-template-values | developer | instance | contract.templatevalues.set, contract.instance.updated |
 | CheckAssetRequirements | POST /contract/instance/check-asset-requirements | developer | - | - |
 | ExecuteContract | POST /contract/instance/execute | developer | instance, idempotency | contract.executed, contract.prebound-api.*, contract.instance.updated |
+| CleanDeprecatedContractTemplates | POST /contract/template/clean-deprecated | admin | template, template-code, all-templates | *(unimplemented)* |
 
 ---
 
@@ -727,6 +728,17 @@ LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if 
  PUBLISH contract.executed { contractId, templateCode, distributionCount, distributionResults }
  PUBLISH contract.instance.updated { contractId, status, changedFields=["executedAt","executionIdempotencyKey","executionDistributions"] }
 RETURN (200, ExecuteContractResponse { contractId, distributions })
+```
+
+### CleanDeprecatedContractTemplates
+POST /contract/template/clean-deprecated | Roles: [admin]
+
+```
+// UNIMPLEMENTED — throws NotImplementedException
+// Should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
+// Sweeps deprecated contract templates with zero remaining contract instances
+// Uses shared CleanDeprecatedRequest (gracePeriodDays, dryRun)
+// Returns shared CleanDeprecatedResponse (cleaned, remaining, errors, cleanedIds)
 ```
 
 ---

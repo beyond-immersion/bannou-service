@@ -127,7 +127,7 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 
 ## Stubs & Unimplemented Features
 
-None — all previously identified stubs have been implemented.
+1. **`CleanDeprecatedQuestDefinitionsAsync` (clean-deprecated endpoint)**: `POST /quest/definition/clean-deprecated` is schema-defined and generated (controller + interface) but the service method throws `NotImplementedException`. Sweeps deprecated quest definitions with zero remaining active instances. Uses shared `CleanDeprecatedRequest` (`gracePeriodDays`, `dryRun`) / `CleanDeprecatedResponse` (`cleaned`, `remaining`, `errors`, `cleanedIds`) from `common-api.yaml`. Roles: `[admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
 
 ---
 

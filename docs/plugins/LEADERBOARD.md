@@ -110,6 +110,10 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 ## API Endpoints (Implementation Notes)
 
+### Definition Deprecation Cleanup (1 endpoint, not yet implemented)
+
+- **CleanDeprecatedLeaderboardDefinitions** (`/leaderboard/definition/clean-deprecated`): **NOT IMPLEMENTED** (`NotImplementedException` stub). Admin-only. Should sweep deprecated leaderboard definitions where the ranking sorted set contains zero scores. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) and `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds). Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` per T31 B20-B22.
+
 ### Definitions (5 endpoints)
 
 - **CreateLeaderboardDefinition** (`/leaderboard/definition/create`): Checks for existing definition (Conflict on duplicate). Saves definition with entity types, sort order, update mode, seasonal flag, typed `scoreType`/`ratingType` for analytics event matching. If seasonal, sets `CurrentSeason=1`. Adds to per-gameService definition index via `AddToSetAsync`. Publishes `leaderboard.definition.created` lifecycle event.
@@ -226,6 +230,7 @@ Season Lifecycle
 <!-- AUDIT:NEEDS_DESIGN:2026-03-06:Per-season timestamp storage requires using the leaderboard-season MySQL store or adding per-season Redis keys -->
 3. **Batch submit ignores UpdateMode**: `SubmitScoreBatch` always uses Replace mode regardless of the leaderboard's configured `UpdateMode`. Individual `SubmitScore` respects the mode.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-06:Honoring UpdateMode in batch requires per-entry read-before-write which negates batch performance benefits -->
+4. **`CleanDeprecatedLeaderboardDefinitionsAsync` not implemented**: `POST /leaderboard/definition/clean-deprecated` is schema-defined and generated (controller, interface) but the service method throws `NotImplementedException`. Should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per T31 B20-B22. Sweeps deprecated leaderboard definitions with zero remaining scores. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. `x-permissions: [role: admin]`.
 
 ---
 

@@ -312,7 +312,7 @@ Prebound API Batched Execution
 
 ## Stubs & Unimplemented Features
 
-*No stubs currently tracked.*
+1. **CleanDeprecatedContractTemplatesAsync** (`POST /contract/template/clean-deprecated`): Schema-defined and generated (controller + interface) but service implementation throws `NotImplementedException`. Sweeps deprecated contract templates with zero remaining contract instances. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) / `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds) from `common-api.yaml`. Permissions: `[role: admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
 
 ---
 

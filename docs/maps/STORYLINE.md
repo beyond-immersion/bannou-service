@@ -13,7 +13,7 @@
 |-------|-------|
 | Plugin | lib-storyline |
 | Layer | L4 GameFeatures |
-| Endpoints | 15 |
+| Endpoints | 16 |
 | State Stores | storyline-plans (Redis), storyline-plan-index (Redis), storyline-scenario-definitions (MySQL), storyline-scenario-executions (MySQL), storyline-scenario-cache (Redis), storyline-scenario-cooldown (Redis), storyline-scenario-active (Redis), storyline-scenario-idempotency (Redis), storyline-lock (Redis) |
 | Events Published | 3 actually published (storyline.plan.composed, storyline.scenario.triggered, storyline.scenario.completed); 6 additional defined in schema but not yet published (storyline.scenario-definition.created, storyline.scenario-definition.updated, storyline.scenario-definition.deleted, storyline.scenario.phase-completed, storyline.scenario.failed, storyline.scenario.available) |
 | Events Consumed | 0 |
@@ -166,6 +166,7 @@ This plugin does not consume external events.
 | GetActiveScenarios | POST /storyline/scenario/get-active | generated | [user] | - | - |
 | GetScenarioHistory | POST /storyline/scenario/get-history | generated | [user] | - | - |
 | GetCompressData | POST /storyline/get-compress-data | generated | [] | - | - |
+| CleanDeprecatedScenarioDefinitions | POST /storyline/scenario/clean-deprecated | generated | [admin] | scenario-definition | *(unimplemented)* |
 
 ---
 
@@ -612,6 +613,17 @@ FOREACH execution in characterExecutions
 activeArcs = activeScenarioCodes.Select(code => code.Split('_')[0]).Distinct()
 
 RETURN (200, StorylineArchive { resourceId=characterId, resourceType="storyline", archivedAt, schemaVersion=1, characterId, participations, activeArcs, completedStorylines })
+```
+
+### CleanDeprecatedScenarioDefinitions
+POST /storyline/scenario/clean-deprecated | Roles: [admin]
+
+```
+// UNIMPLEMENTED — throws NotImplementedException
+// Should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
+// Sweeps deprecated scenario definitions with zero remaining storyline instances
+// Uses shared CleanDeprecatedRequest (gracePeriodDays, dryRun)
+// Returns shared CleanDeprecatedResponse (cleaned, remaining, errors, cleanedIds)
 ```
 
 ---

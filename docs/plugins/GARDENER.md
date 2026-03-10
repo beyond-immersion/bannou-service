@@ -554,6 +554,8 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 10. **Per-template MaxConcurrentInstances enforcement**: Templates store a `MaxConcurrentInstances` value but it is never checked during scenario entry. Only the global `MaxConcurrentScenariosGlobal` is enforced.
 
+11. **CleanDeprecatedTemplatesAsync** (`POST /gardener/template/clean-deprecated`): Schema-defined and generated (controller + interface) but service implementation throws `NotImplementedException`. Sweeps deprecated scenario templates with zero remaining garden instances. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) / `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds) from `common-api.yaml`. Permissions: `[role: admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
+
 ## Potential Extensions
 
 1. **Scenario history cleanup**: History records in MySQL accumulate indefinitely. No retention policy or cleanup mechanism exists. A background worker or configurable retention window (similar to transaction history in lib-currency) would prevent unbounded growth.
@@ -684,6 +686,8 @@ Player connects → Gardener triggers divine actor for garden-tending
 - [ ] **Stub #13**: Multiple garden types (lobby, in-game, housing, post-game, cooperative). Housing garden is the first validation target -- see [Housing Garden Pattern](#housing-garden-pattern-no-plugin-required) and [VOXEL-BUILDER-SDK.md](../planning/VOXEL-BUILDER-SDK.md)
 - [ ] **Stub #14**: Per-garden entity associations (characters, collections, inventories, wallets)
 - [ ] **Stub #16**: Dynamic character switching within a garden (entity binding updates on switch)
+
+- [ ] **Implementation Gap #11**: Implement `CleanDeprecatedTemplatesAsync` (`POST /gardener/template/clean-deprecated`) using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`
 
 ### P3 -- Documentation & Cleanup
 
